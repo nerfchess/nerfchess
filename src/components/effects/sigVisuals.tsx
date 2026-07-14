@@ -628,7 +628,36 @@ function ColossusBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <path d="M16.5 13 H19 M21 13 H23.5" stroke="#e6bf6a" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
         }
-      />
+      >
+        {/* tell: the ground shudders where the titan is about to break out */}
+        <span
+          className="fx-sig-quake absolute left-[30%] top-[62%] block h-[12%] w-[40%] rounded-[2px]"
+          style={{ background: "rgba(120,120,128,0.35)", border: "1px solid rgba(76,76,83,0.6)", animationDelay: `${delayMs}ms` }}
+        />
+        {/* fiction: dust plumes kicked off its shoulders as it heaves free */}
+        {[
+          { l: 29, t: 38, d: 280 },
+          { l: 62, t: 40, d: 350 },
+        ].map((p, i) => (
+          <span
+            key={`dust${i}`}
+            className="fx-sig-ash absolute block rounded-full"
+            style={{ left: `${p.l}%`, top: `${p.t}%`, width: "9%", height: "8%", background: "rgba(176,166,143,0.5)", animationDelay: `${delayMs + p.d}ms` }}
+          />
+        ))}
+        {/* settle: loose chips of its shell crumble away as it stands */}
+        {[
+          { l: 40, t: 56, d: 0 },
+          { l: 52, t: 60, d: 90 },
+          { l: 47, t: 52, d: 180 },
+        ].map((c, i) => (
+          <span
+            key={`chip${i}`}
+            className="fx-sig-crumble absolute block rounded-[1px]"
+            style={{ left: `${c.l}%`, top: `${c.t}%`, width: "2.4%", height: "2.4%", background: "#8c8c92", animationDelay: `${delayMs + 900 + c.d}ms` }}
+          />
+        ))}
+      </GodEvent>
     );
   }
   return (
@@ -1618,16 +1647,27 @@ function ChainFreezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
 /** Gorgon Stare (single champion / basilisk): a green petrifying beam bores in
  * as grey stone climbs the piece; a slit-pupil eye glares on the lead square. */
 function GorgonStareBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  // Kintsugi-walnut retheme: the gaze still lands as a green beam, but what
+  // it leaves behind is the NEW walnut — burl-brown bark climbing the piece,
+  // molten-gold seams flashing, wood chips spitting off (matching the
+  // redesigned WalnutPiece it hands off to).
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span
         className="fx-sig-petrify absolute inset-x-[16%] bottom-[8%] top-[8%] block rounded-[1px]"
-        style={{ background: "rgba(150,150,156,0.7)", animationDelay: `${delayMs}ms` }}
+        style={{ background: "linear-gradient(0deg, rgba(58,36,21,0.85), rgba(90,58,32,0.4))", animationDelay: `${delayMs}ms` }}
       />
       <span
         className="fx-sig-shaft absolute left-[40%] top-0 block h-[70%] w-[20%]"
         style={{ background: "rgba(126,181,154,0.5)", animationDelay: `${delayMs}ms` }}
       />
+      <span className="fx-sig-seamflash absolute left-[34%] top-[12%] block h-[72%] w-[32%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+        <svg viewBox="0 0 16 36" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M8 2 L6.5 9 L9.5 14 L7 20 L9.5 26 L8 34" fill="none" stroke="#ffd76a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7 11 L3.5 13 M9 23 L12.5 25" fill="none" stroke="#ffd76a" strokeWidth="0.9" strokeLinecap="round" />
+        </svg>
+      </span>
+      <ShardBurst vectors={BURST_MED} fill="#3a2415" stroke="#7a5b23" delayMs={delayMs + 260} sizePct={8} />
       {lead && (
         <span className="fx-sig-flash absolute left-[28%] top-[30%] block h-[24%] w-[44%]" style={{ animationDelay: `${delayMs + 80}ms` }}>
           <svg viewBox="0 0 24 12" className="h-full w-full" aria-hidden="true">
@@ -1682,10 +1722,17 @@ function MedusaGazeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* Kintsugi-walnut retheme: the full gaze walnutizes — burl bark wash +
+          a gold-seam flash under the whipping snake-hair ring. */}
       <span
         className="fx-sig-petrify absolute inset-x-[18%] bottom-[8%] top-[8%] block rounded-[1px]"
-        style={{ background: "rgba(146,146,152,0.72)", animationDelay: `${delayMs}ms` }}
+        style={{ background: "linear-gradient(0deg, rgba(58,36,21,0.82), rgba(90,58,32,0.42))", animationDelay: `${delayMs}ms` }}
       />
+      <span className="fx-sig-seamflash absolute left-[36%] top-[14%] block h-[68%] w-[28%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 16 36" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M8 2 L6.5 9 L9.5 14 L7 20 L9.5 26 L8 34" fill="none" stroke="#ffd76a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
       <span className="fx-sig-gaze absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
         <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
           <g stroke="#8fb59a" strokeWidth="1.6" fill="none" strokeLinecap="round">
@@ -5270,30 +5317,95 @@ function MassPetrifyBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   );
 }
 
-/** Walnut Queen: a walnut shell closes over the queen, a stone leaf drifting
- * off; lead is a small settle. */
-function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
-  if (lead) {
-    return (
-      <BoardWideLead wash="rgba(150,110,66,0.24)" boom="rgba(93,58,30,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M20 4 C31 4 36 13 36 22 C36 32 29 38 20 38 C11 38 4 32 4 22 C4 13 9 4 20 4 Z" fill="rgba(150,110,66,0.85)" stroke="#5d3a1e" strokeWidth="1.4" strokeLinejoin="round" />
-          <path d="M20 5 V37 M8 16 C16 20 24 20 32 16 M8 28 C16 24 24 24 32 28" stroke="#5d3a1e" strokeWidth="1" fill="none" />
+/** The kintsugi walnut SNAP — the walnut family's shared one-shot flash,
+ * matching the redesigned persistent WalnutPiece (#3a2415 burl, #ffd76a
+ * molten-gold kintsugi seams): bark ribbons spiral up the piece (tell), the
+ * burl shell halves snap shut (strike), the gold seams flash twice, and a
+ * wood-chip burst scatters (settle). Fills its positioned wrapper. */
+function KintsugiSnap({
+  delayMs,
+  chips = BURST_MED,
+  chipSizePct = 9,
+}: {
+  delayMs: number;
+  chips?: typeof BURST_MED;
+  chipSizePct?: number;
+}) {
+  return (
+    <span className="absolute inset-0 block">
+      {/* tell: bark ribbons spiral up around the piece */}
+      {[
+        { dx: "-120%", rot: "220deg", l: "20%", t: "46%", d: 0 },
+        { dx: "120%", rot: "-200deg", l: "52%", t: "52%", d: 70 },
+        { dx: "-40%", rot: "260deg", l: "38%", t: "40%", d: 140 },
+      ].map((b, i) => (
+        <span
+          key={i}
+          className="fx-sig-barkspiral absolute block h-[14%] w-[28%]"
+          style={{ left: b.l, top: b.t, "--dx": b.dx, "--rot": b.rot, animationDelay: `${delayMs + b.d}ms` } as React.CSSProperties}
+        >
+          <svg viewBox="0 0 12 5" className="h-full w-full" aria-hidden="true">
+            <path d="M1 4 C4 1 8 1 11 3" fill="none" stroke="#3a2415" strokeWidth="2" strokeLinecap="round" />
+            <path d="M2 3.4 C4.6 1.8 7.6 1.8 10 3" fill="none" stroke="#7a5b23" strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+      {/* strike: the burl shell halves SNAP shut */}
+      <span className="fx-sig-shutl absolute left-[16%] top-[14%] block h-[68%] w-[34%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 17 34" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M16.5 2 C7 3.5 1.5 10 1.5 17 C1.5 24 7 30.5 16.5 32 Z" fill="#3a2415" stroke="#201208" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M13 5 C7 8 4 12 4 17 C4 22 7 26 13 29" fill="none" stroke="#5a3a20" strokeWidth="0.9" />
         </svg>
-      </BoardWideLead>
+      </span>
+      <span className="fx-sig-shutr absolute left-[50%] top-[14%] block h-[68%] w-[34%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 17 34" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M0.5 2 C10 3.5 15.5 10 15.5 17 C15.5 24 10 30.5 0.5 32 Z" fill="#3a2415" stroke="#201208" strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M4 5 C10 8 13 12 13 17 C13 22 10 26 4 29" fill="none" stroke="#5a3a20" strokeWidth="0.9" />
+        </svg>
+      </span>
+      {/* the molten-gold kintsugi seams flash along the join */}
+      <span className="fx-sig-seamflash absolute left-[34%] top-[12%] block h-[72%] w-[32%]" style={{ animationDelay: `${delayMs + 430}ms` }}>
+        <svg viewBox="0 0 16 36" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+          <path d="M8 1 L6.5 8 L9.5 13 L7 19 L9.5 25 L7.5 30 L8 35" fill="none" stroke="#ffd76a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M8 1 L6.5 8 L9.5 13 L7 19 L9.5 25 L7.5 30 L8 35" fill="none" stroke="#fff4d6" strokeWidth="0.7" strokeLinejoin="round" />
+          <path d="M7 10 L3 12 M9 22 L13 24 M8 28 L4.5 31" fill="none" stroke="#ffd76a" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      </span>
+      {/* settle: the wood-chip burst + one gold glint spat off the seam */}
+      <ShardBurst vectors={chips} fill="#3a2415" stroke="#7a5b23" delayMs={delayMs + 470} sizePct={chipSizePct} />
+      <span
+        className="fx-sig-star absolute left-[45%] top-[38%] block h-[10%] w-[10%]"
+        style={{ "--dx": "60%", "--dy": "-220%", "--rot": "160deg", animationDelay: `${delayMs + 520}ms` } as React.CSSProperties}
+      >
+        <SparkStar />
+      </span>
+    </span>
+  );
+}
+
+/** Walnut Queen: the kintsugi walnut takes the queen — bark ribbons spiral
+ * up, the burl shell snaps shut, the molten-gold seams flash, wood chips
+ * burst (matching the redesigned WalnutPiece it hands off to). */
+function WalnutCurseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    // Marquee upgrade — THE GOLDEN BURL: the whole crop dims to heartwood
+    // brown while a colossal kintsugi walnut assembles over the board — the
+    // spiral of bark, the SNAP, the gold-seam flash — and twin shockwaves
+    // (one molten gold, one deep burl) roll past the edges.
+    return (
+      <BoardWideStage>
+        <BoardWash color="rgba(58,36,21,0.28)" delayMs={delayMs} />
+        <span className="absolute inset-[30%] block">
+          <KintsugiSnap delayMs={delayMs + 100} chips={BURST_BIG} chipSizePct={7} />
+        </span>
+        <BoardBoom delayMs={delayMs + 640} color="rgba(255,215,106,0.9)" thickness={4} />
+        <BoardBoom delayMs={delayMs + 820} color="rgba(58,36,21,0.85)" />
+      </BoardWideStage>
     );
   }
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-      <span className="fx-sig-grow absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <path d="M20 4 C31 4 36 13 36 22 C36 32 29 38 20 38 C11 38 4 32 4 22 C4 13 9 4 20 4 Z" fill="rgba(150,110,66,0.85)" stroke="#5d3a1e" strokeWidth="1.4" strokeLinejoin="round" />
-          <path d="M20 5 V37 M8 16 C16 20 24 20 32 16 M8 28 C16 24 24 24 32 28" stroke="#5d3a1e" strokeWidth="1" fill="none" />
-        </svg>
-      </span>
+      <KintsugiSnap delayMs={delayMs} />
     </span>
   );
 }
@@ -6877,8 +6989,7 @@ function MandateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         {/* the signature: gold glow under ink, revealed left to right by the
             sliding-mask pair (wrapper slides right, inner slides left) */}
         <span className="fx-sig-maskslide absolute left-[36%] top-[46%] block h-[10%] w-[28%]" style={{ animationDelay: `${signAt}ms` }}>
-          <span className="fx-sig-maskslide-inner absolute inset-0 block">
-            <span className="absolute inset-0 block" style={{ animationDelay: `${signAt}ms` }} />
+          <span className="fx-sig-maskslide-inner absolute inset-0 block" style={{ animationDelay: `${signAt}ms` }}>
             <svg viewBox="0 0 56 20" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
               <path d={MANDATE_SIGNATURE} fill="none" stroke="rgba(255,232,150,0.75)" strokeWidth="3.6" strokeLinecap="round" />
               <path d={MANDATE_SIGNATURE} fill="none" stroke="#8a6414" strokeWidth="1.3" strokeLinecap="round" />

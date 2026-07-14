@@ -781,12 +781,12 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       ))}
       {/* two stride after-images ghost in behind her along the diagonal */}
       <Prop left="30%" top="42%" width="28%" height="31%">
-        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 380, { "--pnp-x": "-14%", "--pnp-y": "12%" })}>
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 640, { "--pnp-x": "-14%", "--pnp-y": "12%" })}>
           <Portrait src="/newjeans/hyein.svg" />
         </span>
       </Prop>
       <Prop left="32.5%" top="37%" width="30%" height="33%">
-        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 470, { "--pnp-x": "-10%", "--pnp-y": "9%" })}>
+        <span className="pnp-ghost block h-full w-full" style={dv(delayMs + 740, { "--pnp-x": "-10%", "--pnp-y": "9%" })}>
           <Portrait src="/newjeans/hyein.svg" />
         </span>
       </Prop>
