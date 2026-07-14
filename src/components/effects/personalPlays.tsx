@@ -1396,10 +1396,10 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       </Prop>
       {/* charm hearts burst off the cross point */}
       {[
-        { x: "-190%", y: "-110%", r: "22deg", s: 1, dl: 850 },
-        { x: "180%", y: "-140%", r: "-26deg", s: 0.85, dl: 910 },
-        { x: "-140%", y: "150%", r: "18deg", s: 0.8, dl: 970 },
-        { x: "200%", y: "100%", r: "-18deg", s: 0.9, dl: 1030 },
+        { x: "-190%", y: "-110%", r: "22deg", s: 1, dl: 950 },
+        { x: "180%", y: "-140%", r: "-26deg", s: 0.85, dl: 1010 },
+        { x: "-140%", y: "150%", r: "18deg", s: 0.8, dl: 1070 },
+        { x: "200%", y: "100%", r: "-18deg", s: 0.9, dl: 1130 },
       ].map((k, i) => (
         <Prop key={i} left="47%" top="44%" width="6%" height="6%">
           <svg viewBox="0 0 20 20" className="h-full w-full">
@@ -1412,7 +1412,7 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       {/* gold star winks where the sweeps crossed */}
       <Prop left="46.5%" top="46.5%" width="7%" height="7%">
         <svg viewBox="0 0 20 20" className="h-full w-full">
-          <g className="pnp-star" style={d(delayMs + 780)}><SparkStar x={10} y={10} s={1.4} fill="#ffd76a" /></g>
+          <g className="pnp-star" style={d(delayMs + 880)}><SparkStar x={10} y={10} s={1.4} fill="#ffd76a" /></g>
         </svg>
       </Prop>
       <Ring color="rgba(255,143,177,0.9)" delayMs={delayMs + 1200} />
@@ -1469,6 +1469,8 @@ function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
   return (
     <Wide>
       <Wash color="rgba(255,157,192,0.16)" delayMs={delayMs} />
+      {/* TELL: a soft stage light warms the floor before the feather falls */}
+      <Glow left="42%" top="36%" width="16%" height="14%" color="rgba(255,157,192,0.4)" delayMs={delayMs} />
       {/* the hero feather drifts down and sways, trailing grace */}
       <Prop left="45%" top="20%" width="10%" height="16%">
         <svg viewBox="0 0 40 60" className="h-full w-full">

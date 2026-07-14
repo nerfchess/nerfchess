@@ -6847,19 +6847,70 @@ function AscendancyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 
 /** Divine Mandate: a sealed decree stamps down and a heaven-ward halo falls over
  * the enemy piece that defects to your side. */
+// The looping ceremonial signature stroke (drawn twice: gold glow under ink).
+const MANDATE_SIGNATURE =
+  "M3 14 C6 6 10 5 11 9 C12 13 8 16 6 13 C10 8 16 4 19 8 C21 11 18 15 15 13 C19 7 26 5 29 9 C31 12 28 15 25 13 C30 6 38 5 41 9 C43 12 40 15 37 13 C42 7 49 6 53 10";
+
 function MandateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-  // Batch 13 — board-wide lead upgrade: the lead flourish now takes over the
-  // whole crop (palette wash + the card's own motif writ large + a shockwave
-  // past the board edges) instead of a square-local pop.
   if (lead) {
+    // Marquee upgrade — SIGN THE BOARD: the imperial mandate scroll unrolls
+    // down the middle of the board (the tell), a quill walks the parchment
+    // drawing a looping glowing signature (revealed by a sliding mask — no
+    // dashoffset, transform only), and the wax seal STAMPS home with a flash
+    // and a ring shockwave. No fingerprint anywhere.
+    const signAt = delayMs + 700; // the quill waits for the scroll to unroll
+    const sealAt = signAt + 950; // the seal waits for the signature
     return (
-      <BoardWideLead wash="rgba(255,232,150,0.24)" boom="rgba(242,231,200,0.85)" delayMs={delayMs} motifClass="fx-sig-grow">
-        <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
-          <rect x="9" y="7" width="22" height="26" rx="1" fill="#f2e7c8" stroke="#8a6414" strokeWidth="1.2" />
-          <path d="M13 13 H27 M13 18 H27 M13 23 H23" stroke="#b79a5a" strokeWidth="1" strokeLinecap="round" />
-          <circle cx="20" cy="30" r="4" fill="#c25248" stroke="#7a2f28" strokeWidth="1" />
-        </svg>
-      </BoardWideLead>
+      <BoardWideStage>
+        <BoardWash color="rgba(255,232,150,0.22)" delayMs={delayMs} />
+        {/* the scroll, unrolling top to bottom */}
+        <span className="fx-sig-unroll absolute left-[33%] top-[26%] block h-[46%] w-[34%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 40 54" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+            <rect x="4" y="3" width="32" height="48" rx="1.5" fill="#f2e7c8" stroke="#8a6414" strokeWidth="1.2" />
+            {/* rolled ends */}
+            <rect x="2" y="0.6" width="36" height="4.4" rx="2.2" fill="#e0cf9e" stroke="#8a6414" strokeWidth="1" />
+            <rect x="2" y="49" width="36" height="4.4" rx="2.2" fill="#e0cf9e" stroke="#8a6414" strokeWidth="1" />
+            {/* the decree lines above the signature block */}
+            <path d="M9 11 H31 M9 15.5 H31 M9 20 H26" stroke="#b79a5a" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the signature: gold glow under ink, revealed left to right by the
+            sliding-mask pair (wrapper slides right, inner slides left) */}
+        <span className="fx-sig-maskslide absolute left-[36%] top-[46%] block h-[10%] w-[28%]" style={{ animationDelay: `${signAt}ms` }}>
+          <span className="fx-sig-maskslide-inner absolute inset-0 block">
+            <span className="absolute inset-0 block" style={{ animationDelay: `${signAt}ms` }} />
+            <svg viewBox="0 0 56 20" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
+              <path d={MANDATE_SIGNATURE} fill="none" stroke="rgba(255,232,150,0.75)" strokeWidth="3.6" strokeLinecap="round" />
+              <path d={MANDATE_SIGNATURE} fill="none" stroke="#8a6414" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+          </span>
+        </span>
+        {/* the quill, walking the line as the stroke appears */}
+        <span className="fx-sig-quill absolute left-[47%] top-[40%] block h-[10%] w-[6%]" style={{ animationDelay: `${signAt}ms` }}>
+          <svg viewBox="0 0 16 26" className="h-full w-full" aria-hidden="true">
+            {/* the feather, nib down */}
+            <path d="M6 22 C4 15 6 7 13 1 C14 8 12 16 8 21 Z" fill="#f2e7c8" stroke="#8a6414" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M9 18 C9 12 10 7 12.5 3" fill="none" stroke="#b79a5a" strokeWidth="0.7" />
+            <path d="M6 22 L5 25.5" stroke="#3a2a1a" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the wax seal STAMPS home... */}
+        <span className="fx-sig-sealstamp absolute left-[44.5%] top-[58.5%] block h-[9%] w-[11%]" style={{ animationDelay: `${sealAt}ms` }}>
+          <svg viewBox="0 0 24 20" className="h-full w-full" aria-hidden="true">
+            <ellipse cx="12" cy="10" rx="10.4" ry="8.8" fill="#c25248" stroke="#7a2f28" strokeWidth="1.2" />
+            <ellipse cx="12" cy="10" rx="6.2" ry="5.2" fill="none" stroke="#f2e7c8" strokeWidth="0.9" />
+            {/* the crowned sigil pressed into the wax */}
+            <path d="M8.5 12.5 L9 8 L10.8 10 L12 7 L13.2 10 L15 8 L15.5 12.5 Z" fill="#f2e7c8" stroke="#7a2f28" strokeWidth="0.6" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* ...with a wax flash and the ring shockwave rolling past the edges */}
+        <span
+          className="fx-sig-flash absolute left-[45%] top-[59%] block h-[8%] w-[10%] rounded-full"
+          style={{ background: "rgba(255,214,160,0.75)", animationDelay: `${sealAt + 280}ms` }}
+        />
+        <BoardBoom delayMs={sealAt + 320} color="rgba(230,191,106,0.9)" thickness={4} />
+        <BoardBoom delayMs={sealAt + 490} color="rgba(194,82,72,0.8)" />
+      </BoardWideStage>
     );
   }
   return (
@@ -7431,6 +7482,42 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
               animationDelay: `${delayMs + 60}ms`,
             }}
           />
+          {/* the tell: a glitchy terminal cursor blinks awake on the board */}
+          <span className="fx-sig-cursor absolute left-[31%] top-[30.5%] block h-[4.5%] w-[2%]" style={{ animationDelay: `${delayMs}ms` }}>
+            <svg viewBox="0 0 8 18" className="h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="6" height="16" fill="#8ff0a4" stroke="#1d3a2a" strokeWidth="0.8" />
+            </svg>
+          </span>
+          {/* the INFECTION: jagged green packet-trails crawl square to square
+              (one square ~7% of this canvas), each hop popping in a beat after
+              the last under the scanline flicker */}
+          {[
+            { l: 32, t: 31, d: 0 },
+            { l: 39, t: 30.4, d: 90 },
+            { l: 46, t: 31.6, d: 180 },
+            { l: 46.6, t: 38.5, d: 270 },
+            { l: 53.4, t: 38, d: 360 },
+            { l: 53, t: 45, d: 450 },
+            { l: 60, t: 45.6, d: 540 },
+          ].map((p, i) => (
+            <span
+              key={`pk${i}`}
+              className="fx-sig-packet absolute block rounded-[1px]"
+              style={{ left: `${p.l}%`, top: `${p.t}%`, width: "3.4%", height: "3.4%", background: "rgba(126,181,154,0.75)", border: "1px solid #8ff0a4", animationDelay: `${delayMs + 180 + p.d}ms` }}
+            />
+          ))}
+          {[
+            { l: 40, t: 60, d: 120 },
+            { l: 40.6, t: 53, d: 220 },
+            { l: 47.4, t: 53.6, d: 320 },
+            { l: 47, t: 46.4, d: 420 },
+          ].map((p, i) => (
+            <span
+              key={`pk2${i}`}
+              className="fx-sig-packet absolute block rounded-[1px]"
+              style={{ left: `${p.l}%`, top: `${p.t}%`, width: "3.4%", height: "3.4%", background: "rgba(126,181,154,0.55)", border: "1px solid #7eb59a", animationDelay: `${delayMs + 180 + p.d}ms` }}
+            />
+          ))}
           {VIRUS_COLS.map((c, i) => (
             <span key={i} className="fx-sig-codefall absolute top-[-28%] block h-[64%] w-[2.4%]" style={{ left: c.left, animationDelay: `${delayMs + c.d}ms` }}>
               <CodeColumn />
@@ -7440,16 +7527,15 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <span key={`b${i}`} className="fx-sig-sweepbar absolute left-[-30%] block h-[2.6%] w-[160%] rounded-[1px]" style={{ top: b.top, background: b.c, animationDelay: `${delayMs + b.d}ms` }} />
           ))}
           <span className="fx-sig-flash absolute inset-[42%] block rounded-[1px]" style={{ background: "rgba(224,119,107,0.4)", animationDelay: `${delayMs + 120}ms` }} />
-          {/* The system gives up: an error window slams up mid-board, shakes,
-              and blinks out — the comedic beat of the takeover. */}
-          <span className="fx-cast-errorwin absolute left-[42%] top-[42%] block h-[10%] w-[16%]" style={{ animationDelay: `${delayMs + 620}ms` }}>
-            <svg viewBox="0 0 64 40" className="h-full w-full" aria-hidden="true">
-              <rect x="1" y="1" width="62" height="38" rx="2" fill="#141e2b" stroke="#7eb59a" strokeWidth="1.4" />
-              <rect x="1" y="1" width="62" height="8" rx="2" fill="#7eb59a" />
-              <path d="M56 3 L60 7 M60 3 L56 7" stroke="#141e2b" strokeWidth="1.4" strokeLinecap="round" />
-              <path d="M10 16 L18 24 M18 16 L10 24" stroke="#e0776b" strokeWidth="2.4" strokeLinecap="round" />
-              <path d="M24 17 H54 M24 22 H48 M24 27 H52" stroke="#8aa0b4" strokeWidth="1.6" strokeLinecap="round" />
-              <rect x="38" y="30" width="18" height="6" rx="1" fill="#e0776b" />
+          {/* the readout: the infection reports its haul — an '8s DRAINED'
+              terminal chip slams up, holds a beat, and pixel-dissolves */}
+          <span className="fx-sig-chip absolute left-[41%] top-[44%] block h-[6.5%] w-[18%]" style={{ animationDelay: `${delayMs + 1000}ms` }}>
+            <svg viewBox="0 0 72 24" className="h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="70" height="22" rx="2" fill="#0c1410" stroke="#7eb59a" strokeWidth="1.4" />
+              <rect x="5" y="5" width="3.6" height="14" fill="#8ff0a4" opacity="0.85" />
+              <text x="13" y="17" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" fontSize="11.5" fontWeight="bold" fill="#8ff0a4" letterSpacing="0.8">
+                8s DRAINED
+              </text>
             </svg>
           </span>
         </span>
@@ -7678,36 +7764,100 @@ function GoldWheelBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     />
   );
   if (lead) {
-    // God-tier pass — FORTUNA'S FLOOR SHOW: the colossal payout wheel spins
-    // down over the whole crop, gold god-rays breaking from the sky as it
-    // settles, and the jackpot pays out in a board-wide coin rain and twin
-    // gilded shockwaves.
+    // Marquee upgrade — FORTUNA'S FLOOR SHOW, now with the house lever: the
+    // gilded pit lever is CRANKED and the arm recoils (the tell), only then
+    // does the colossal payout wheel spin down, the pointer tick-tick-slowing
+    // off the pegs; the winning coin-wedge flares under the pointer as it
+    // lands, and the jackpot pays out — a coin fountain bursting off the hub
+    // and raining TOWARD the bottom edge under gold god-rays and twin gilded
+    // shockwaves.
+    const spinAt = delayMs + 420; // the wheel only turns once the lever is thrown
     return (
-      <WheelSpinPlay
-        wide
-        delayMs={delayMs}
-        disc={disc}
-        wash="rgba(244,196,48,0.22)"
-        boom="rgba(244,196,48,0.9)"
-        landFx={
-          <>
-            {GOD_FAN.map((s, i) => (
-              <span
-                key={i}
-                className="absolute left-1/2 top-[6%] block h-[62%]"
-                style={{ width: s.w, marginLeft: `calc(${s.w} / -2)`, transform: `rotate(${s.r})`, transformOrigin: "50% 0%" }}
-              >
-                <span
-                  className="fx-sig-shaft absolute inset-0 block"
-                  style={{ background: "linear-gradient(180deg, rgba(255,236,178,0.8), transparent 78%)", animationDelay: `${delayMs + s.d}ms` }}
+      <BoardWideStage>
+        <BoardWash color="rgba(244,196,48,0.22)" delayMs={delayMs} />
+        {/* the tell: the house lever, cranked hard, arm recoiling */}
+        <span className="fx-sig-wheelfade absolute left-[65%] top-[46.5%] block h-[5%] w-[8%]" style={{ animationDelay: `${delayMs}ms` }}>
+          <svg viewBox="0 0 16 10" className="h-full w-full" aria-hidden="true">
+            <rect x="1" y="2" width="14" height="7" rx="1.4" fill="#7a5b23" stroke="#3a2a1a" strokeWidth="1" />
+            <circle cx="8" cy="5.5" r="1.6" fill="#e6bf6a" stroke="#3a2a1a" strokeWidth="0.7" />
+          </svg>
+        </span>
+        <span
+          className="fx-sig-leverpull absolute left-[66.5%] top-[35%] block h-[13%] w-[5%]"
+          style={{ transformOrigin: "50% 90%", animationDelay: `${delayMs}ms` }}
+        >
+          <svg viewBox="0 0 10 26" className="h-full w-full" aria-hidden="true">
+            <path d="M5 24 V5" stroke="#7a5b23" strokeWidth="2.6" strokeLinecap="round" />
+            <path d="M5 24 V6" stroke="#e6bf6a" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="5" cy="4" r="3.4" fill="#e0776b" stroke="#7a2f28" strokeWidth="1" />
+          </svg>
+        </span>
+        {/* the wheel: spin-down, pointer ticking itself slow off the pegs */}
+        <span className="fx-sig-wheelfade absolute inset-[27%] block" style={{ animationDelay: `${spinAt}ms` }}>
+          <span className="fx-sig-wheelspin absolute inset-0 block" style={{ animationDelay: `${spinAt}ms` }}>
+            {disc}
+            {/* the winning wedge (the one the pointer lands in after the
+                1044deg spin-down) flares gold — mounted inside the spinning
+                wrapper so it lands exactly under the pointer */}
+            <span className="absolute inset-0 block">
+              <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
+                <path
+                  className="fx-sig-wedgeglow"
+                  style={{ animationDelay: `${spinAt + 1020}ms` }}
+                  d="M20 20 L29 4.41 A18 18 0 0 1 35.59 11 Z"
+                  fill="rgba(255,244,200,0.95)"
+                  stroke="#fff2c9"
+                  strokeWidth="0.8"
+                  strokeLinejoin="round"
                 />
-              </span>
-            ))}
-            <BoardRain delayMs={delayMs + 950} render={() => coin} />
-            <BoardBoom delayMs={delayMs + 1140} color="rgba(255,236,178,0.8)" thickness={4} />
-          </>
-        }
-      />
+              </svg>
+            </span>
+          </span>
+          <span className="fx-sig-tick absolute left-[44%] top-[-6%] block h-[16%] w-[12%]" style={{ animationDelay: `${spinAt}ms` }}>
+            <svg viewBox="0 0 12 18" className="h-full w-full" aria-hidden="true">
+              <path d="M1 1 H11 L6 16 Z" fill="#f4f7f2" stroke="#4a5560" strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span
+            className="fx-sig-flash absolute inset-[30%] block rounded-full"
+            style={{ background: "rgba(255,244,200,0.75)", animationDelay: `${spinAt + 1000}ms` }}
+          />
+        </span>
+        {/* gold god-rays break as the wheel settles */}
+        {GOD_FAN.map((s, i) => (
+          <span
+            key={i}
+            className="absolute left-1/2 top-[6%] block h-[62%]"
+            style={{ width: s.w, marginLeft: `calc(${s.w} / -2)`, transform: `rotate(${s.r})`, transformOrigin: "50% 0%" }}
+          >
+            <span
+              className="fx-sig-shaft absolute inset-0 block"
+              style={{ background: "linear-gradient(180deg, rgba(255,236,178,0.8), transparent 78%)", animationDelay: `${spinAt + 900 + s.d}ms` }}
+            />
+          </span>
+        ))}
+        {/* the PAYOUT: a coin fountain off the hub, raining to the bottom edge */}
+        {[
+          { dx: "-520%", rot: "-300deg", d: 0 },
+          { dx: "-300%", rot: "260deg", d: 45 },
+          { dx: "-100%", rot: "-220deg", d: 20 },
+          { dx: "110%", rot: "240deg", d: 60 },
+          { dx: "320%", rot: "-260deg", d: 30 },
+          { dx: "540%", rot: "300deg", d: 75 },
+        ].map((c, i) => (
+          <span
+            key={`pay${i}`}
+            className="fx-sig-coinpay absolute left-[48%] top-[46%] block h-[4%] w-[4%]"
+            style={{ "--dx": c.dx, "--rot": c.rot, animationDelay: `${spinAt + 1000 + c.d}ms` } as React.CSSProperties}
+          >
+            {coin}
+          </span>
+        ))}
+        <BoardRain delayMs={spinAt + 1060} render={() => coin} />
+        <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={spinAt + 1000} sizePct={6} />
+        <BoardBoom delayMs={spinAt + 1150} color="rgba(244,196,48,0.9)" />
+        <BoardBoom delayMs={spinAt + 1320} color="rgba(255,236,178,0.8)" thickness={4} />
+      </BoardWideStage>
     );
   }
   return <WheelSpinPlay wide={false} delayMs={delayMs} disc={disc} wash="" boom="" />;
@@ -11168,6 +11318,16 @@ function TotalWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <BoardWideStage>
         <BoardWash color="rgba(194,64,58,0.24)" delayMs={delayMs} />
         <Letterbox delayMs={delayMs} />
+        {/* the war-drum tell: two concentric shock rims pulse IN over the
+            impact point — the air tightens before the fist ever falls */}
+        <span
+          className="fx-sig-rimin absolute left-[38%] top-[44%] block h-[20%] w-[24%] rounded-full"
+          style={{ border: "3px solid rgba(224,119,107,0.9)", animationDelay: `${delayMs}ms` }}
+        />
+        <span
+          className="fx-sig-rimin absolute left-[32%] top-[39%] block h-[30%] w-[36%] rounded-full"
+          style={{ border: "2px solid rgba(194,64,58,0.8)", animationDelay: `${delayMs + 90}ms` }}
+        />
         {/* the colossal armoured fist, winding up and coming DOWN */}
         <span className="gp-fist absolute left-[36%] top-[18%] block h-[38%] w-[28%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
           <svg viewBox="0 0 36 44" className="h-full w-full" aria-hidden="true">
@@ -11233,6 +11393,34 @@ function TotalWarBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <ShardBurst vectors={BURST_BIG} fill="#e0776b" stroke="#5a1512" delayMs={delayMs + 820} sizePct={6} />
         {[0, 1, 2].map((i) => (
           <BoardBoom key={i} delayMs={delayMs + 840 + i * 170} color="rgba(224,119,107,0.85)" thickness={4 - i} />
+        ))}
+        {/* the settle: battlefield ash drifts off the crater... */}
+        {[
+          { l: 40, t: 46, d: 0 },
+          { l: 52, t: 42, d: 130 },
+          { l: 45, t: 52, d: 260 },
+        ].map((a, i) => (
+          <span
+            key={`ash${i}`}
+            className="fx-sig-ash absolute block rounded-full"
+            style={{ left: `${a.l}%`, top: `${a.t}%`, width: "9%", height: "7%", background: "rgba(122,96,88,0.5)", animationDelay: `${delayMs + 1480 + a.d}ms` }}
+          />
+        ))}
+        {/* ...and three torn battle-standard scraps flutter down after it */}
+        {[
+          { l: 37, t: 30, c: "#c2403a", d: 0 },
+          { l: 50, t: 26, c: "#f4e9c8", d: 140 },
+          { l: 60, t: 32, c: "#7a2f28", d: 260 },
+        ].map((s, i) => (
+          <span
+            key={`scrap${i}`}
+            className="fx-sig-scrapfall absolute block"
+            style={{ left: `${s.l}%`, top: `${s.t}%`, width: "3.5%", height: "3%", animationDelay: `${delayMs + 1440 + s.d}ms` }}
+          >
+            <svg viewBox="0 0 12 10" className="h-full w-full" aria-hidden="true">
+              <path d="M1 1 H11 L9 5 L11 9 H1 Z" fill={s.c} stroke="#3a1512" strokeWidth="0.8" strokeLinejoin="round" />
+            </svg>
+          </span>
         ))}
       </BoardWideStage>
     );

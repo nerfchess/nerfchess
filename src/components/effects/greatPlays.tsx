@@ -1489,11 +1489,86 @@ function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
         </svg>
         <span className="absolute block" style={{ left: "37%", top: "42%", width: "22%", height: "26%" }}>{glyph}</span>
       </span>
+      {/* bespoke: The Wild Hunt — spectral hounds course behind the horn-bearer
+          and the Hunt's two diagonals blaze through the chosen square */}
+      {flourish === "hunt" && (
+        <>
+          {[
+            { l: 26, t: 42, d: 280 },
+            { l: 20, t: 36, d: 420 },
+          ].map((v, i) => (
+            <span key={i} className="grp-sweep-fast absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "12%", height: "8%", animationDelay: `${delayMs + v.d}ms` }}>
+              <svg viewBox="0 0 16 10" className="block h-full w-full" aria-hidden="true">
+                <path
+                  d="M1.6 6 C3 3.6 6 2.6 9 3.2 L11.4 1.6 L13 3 L11.6 4.4 C12.4 6 11 7.6 9 8 L9.6 9.4 H7.8 L7 8 H4.4 L3.6 9.4 H2 L2.6 7.4 C2 7 1.6 6.6 1.6 6 Z"
+                  fill={tint(p1, 0.45)}
+                  stroke={tint(p1, 0.85)}
+                  strokeWidth="0.5"
+                  {...SJ}
+                />
+              </svg>
+            </span>
+          ))}
+          {["45deg", "-45deg"].map((rot, i) => (
+            <span key={rot} className="absolute block" style={{ left: "36%", top: "42%", width: "28%", height: "1.6%", rotate: rot }}>
+              <span
+                className="grp-beam absolute inset-0 block"
+                style={{ background: `linear-gradient(90deg, transparent, ${tint(p1, 0.9)} 50%, transparent)`, transformOrigin: "50% 50%", animationDelay: `${delayMs + 720 + i * 90}ms` }}
+              />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Dragon Mount — flame licks catch along the charge line */}
+      {flourish === "dragon" &&
+        [
+          { l: 36, t: 56, d: 0 },
+          { l: 46, t: 58, d: 110 },
+          { l: 56, t: 56, d: 220 },
+        ].map((v, i) => (
+          <span key={i} className="grp-candle absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "4%", height: "6%", animationDelay: `${delayMs + 520 + v.d}ms` }}>
+            <svg viewBox="0 0 6 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 0.8 C5 3 5.4 5.4 3 8.8 C0.6 5.4 1 3 3 0.8 Z" fill="#d6234f" stroke="#7a2e0e" strokeWidth="0.4" {...SJ} />
+              <path d="M3 4 C4 5.2 4 6.6 3 7.8 C2 6.6 2 5.2 3 4 Z" fill="#ffd166" />
+            </svg>
+          </span>
+        ))}
+      {/* bespoke: Bobrito Bandito — the log hangs cocked at the top of the
+          swing (hold it... hold it...) and THEN the bonk lands, stars and all */}
+      {flourish === "sahur" && (
+        <>
+          <span className="grp-shiver absolute block" style={{ left: "56%", top: "26%", width: "12%", height: "10%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="1" y="3" width="12" height="4" rx="2" transform="rotate(-32 7 5)" fill="#8a6a3a" stroke="#4a3a22" strokeWidth="0.6" />
+            </svg>
+          </span>
+          <span className="grp-bonk absolute block" style={{ left: "60%", top: "36%", width: "7%", height: "9%", animationDelay: `${delayMs + 1020 + hold}ms` }}>
+            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="4" cy="3" r="1.6" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.5" />
+              <path d="M2 9.4 C2 6.6 6 6.6 6 9.4 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+          {[
+            { l: 58, t: 30, d: 0 },
+            { l: 65, t: 28, d: 90 },
+            { l: 62, t: 34, d: 180 },
+          ].map((v, i) => (
+            <span key={i} className="grp-glint absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "3.2%", height: "3.2%", animationDelay: `${delayMs + 1140 + hold + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill="#ffd76a" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
       {/* impact at the far wing: flare + sparks + the single stampede-shock */}
-      <Flash delayMs={delayMs + 820} color={tint(p1, 0.7)} left={56} top={38} w={16} h={12} />
-      <Sparks delayMs={delayMs + 860} fill={p1} stroke={p2} cx={63} cy={43} />
-      <Boom delayMs={delayMs + 900} color={tint(p1, 0.85)} thickness={4} />
-      <Glint delayMs={delayMs + 1220} color={p1} left={62} top={33} />
+      <Flash delayMs={delayMs + 820 + hold} color={tint(p1, 0.7)} left={56} top={38} w={16} h={12} />
+      <Sparks delayMs={delayMs + 860 + hold} fill={p1} stroke={p2} cx={63} cy={43} />
+      <Boom delayMs={delayMs + 900 + hold} color={tint(p1, 0.85)} thickness={4} />
+      <Glint delayMs={delayMs + 1220 + hold} color={p1} left={62} top={33} />
+      {/* settle: the kicked-up trail dust sinks back to the boards */}
+      <Afterglow delayMs={delayMs + 1040 + hold} color={tint(p1, 0.22)} left={44} top={34} w={26} h={18} />
+      <Settle delayMs={delayMs + 1080 + hold} dir="fall" render={(i) => <Mote color={tint(i % 2 ? p2 : p0, 0.65)} />} />
     </Stage>
   );
 }
@@ -2503,17 +2578,20 @@ const GLYPH: Record<string, ReactNode> = {
    rides the removal diff or Board's diff-less lead branch.
    ========================================================================== */
 
-/** Bind a template + palette + glyph + config into a SigPlugin entry. */
+/** Bind a template + palette + glyph + config into a SigPlugin entry. The
+ * optional trailing `flourish` keys a bespoke extra scene for a marquee card
+ * (rendering only — the config object is untouched). */
 function G(
   Template: ComponentType<TemplateProps>,
   palette: Palette,
   glyph: ReactNode,
   config: SigPlugin["config"],
+  flourish?: string,
 ): SigPlugin {
   return {
     config,
     Render: function GreatPlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} />;
+      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} flourish={flourish} />;
     },
   };
 }
@@ -2584,7 +2662,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- StoneGaze (the walnut / petrify pool) -------------------------------- */
   medusas_verdict: G(StoneGaze, ["#8d8d94", "#7fae5a", "#4c4c53"], GLYPH.medusas_verdict, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "petrify", source: "walnut",
-  }),
+  }, "medusa"),
   granite_ramparts: G(StoneGaze, ["#8a8478", "#c9b89a", "#4a4036"], GLYPH.granite_ramparts, {
     ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
   }),
@@ -2608,7 +2686,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   eternal_statue: G(StoneGaze, ["#c9c9cf", "#7fae5a", "#6e6e74"], GLYPH.eternal_statue, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut",
-  }),
+  }, "statue"),
   nerf_hammer: G(StoneGaze, ["#8a6a4a", "#ff9d3d", "#4a3a2a"], GLYPH.nerf_hammer, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "petrify", source: "walnut",
   }),
@@ -2616,7 +2694,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- ColdFront (the freeze pool) --------------------------------------------- */
   the_big_chill: G(ColdFront, ["#9fd8ff", "#e8f8ff", "#3f7fb5"], GLYPH.the_big_chill, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
-  }),
+  }, "bigchill"),
   frozen_moment: G(ColdFront, ["#bfe6ff", "#ffffff", "#4f8fd1"], GLYPH.frozen_moment, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice",
   }),
@@ -2634,7 +2712,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   total_freeze: G(ColdFront, ["#bfe6ff", "#e8f8ff", "#3f6f9f"], GLYPH.total_freeze, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
-  }),
+  }, "totalfreeze"),
 
   /* --- SiegeRoll (bombs / demolitions / barrages) --------------------------------- */
   atomic_captures: G(SiegeRoll, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.atomic_captures, {
@@ -2651,7 +2729,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   wc_confetti_cannon: G(SiegeRoll, ["#c94ad1", "#ffcf4d", "#3a1030"], GLYPH.wc_confetti_cannon, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
-  }),
+  }, "confetti"),
   we_firestorm: G(SiegeRoll, ["#ff7a29", "#ffd166", "#3a1c12"], GLYPH.we_firestorm, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm",
   }),
@@ -2731,10 +2809,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   time_stop_short: G(ClockSpire, ["#3a3766", "#6fe3ff", "#12122a"], GLYPH.time_stop_short, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockcage", source: "frozen",
-  }),
+  }, "timestop"),
   time_rewind: G(ClockSpire, ["#5b2b8f", "#6fe3ff", "#2a1030"], GLYPH.time_rewind, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage",
-  }),
+  }, "rewind"),
   lost_days: G(ClockSpire, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.lost_days, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun",
   }),
@@ -2745,7 +2823,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- CardRite (drafts / fates / contracts / paperwork) -------------------------------------------- */
   sever: G(CardRite, ["#6b4a8f", "#c94a5a", "#2a1030"], GLYPH.sever, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "sever"),
   draft_domination: G(CardRite, ["#3a3a45", "#c94a5a", "#1c1c22"], GLYPH.draft_domination, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
   }),
@@ -2757,10 +2835,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   the_tower: G(CardRite, ["#2c3e6b", "#c94a3a", "#12122a"], GLYPH.the_tower, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cataclysm",
-  }),
+  }, "tower"),
   death_arcana: G(CardRite, ["#12081f", "#8f6bff", "#0d0618"], GLYPH.death_arcana, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "extinction",
-  }),
+  }, "death"),
   chess_diff: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.chess_diff, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation",
   }),
@@ -2824,7 +2902,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- CrownForge (promotions / reforgings) --------------------------------------------------------- */
   double_queen: G(CrownForge, ["#ffd76a", "#fff2c9", "#8a6414"], GLYPH.double_queen, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
-  }),
+  }, "doublequeen"),
   twin_queens: G(CrownForge, ["#ffd76a", "#ffe9b0", "#7a5b23"], GLYPH.twin_queens, {
     ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain",
   }),
@@ -2842,7 +2920,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   royal_ascension: G(CrownForge, ["#b98cff", "#ffd76a", "#3b1a5e"], GLYPH.royal_ascension, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation",
-  }),
+  }, "ascension"),
   second_king: G(CrownForge, ["#ffd76a", "#ffe9b0", "#8a6a3a"], GLYPH.second_king, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
   }),
@@ -2868,7 +2946,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   mirror_of_souls: G(RiftGate, ["#5a8fc0", "#bfe6ff", "#2c3e6b"], GLYPH.mirror_of_souls, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
-  }),
+  }, "mirror"),
   wa_conjure_rook: G(RiftGate, ["#8f6bff", "#e3d0ff", "#2a1030"], GLYPH.wa_conjure_rook, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockcage", source: "summon",
   }),
@@ -2882,11 +2960,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- BeastRush (hunts / mounts / charges) ------------------------------------------------------------- */
   wild_hunt: G(BeastRush, ["#3b1a5e", "#b98cff", "#12081f"], GLYPH.wild_hunt, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "rampage",
-  }),
+  }, "hunt"),
   dragon_mount: G(BeastRush, ["#4a8f5f", "#d6234f", "#1c4a2c"], GLYPH.dragon_mount, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz",
-  }),
+  }, "dragon"),
   sahur: G(BeastRush, ["#8a6a3a", "#c94a3a", "#4a3a22"], GLYPH.sahur, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
-  }),
+  }, "sahur"),
 };
