@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "gen:icons": "npm run server:build && node scripts/gen-card-icons.mjs",
-    "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs",
+    "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs && node scripts/check-sig-plugins.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",

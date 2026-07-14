@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Autumn maple">
+  <defs>
+    <linearGradient id="al-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbe9c4"/><stop offset="1" stop-color="#f4c98a"/></linearGradient>
+    <linearGradient id="al-can" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2a63a"/><stop offset="1" stop-color="#d0521f"/></linearGradient>
+    <linearGradient id="al-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a3e"/><stop offset="1" stop-color="#9c6428"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#al-sky)"/>
+  <circle cx="158" cy="46" r="24" fill="#fff2cf" opacity="0.7"/>
+  <!-- ground -->
+  <path d="M0 150 Q100 140 200 150 V200 H0 Z" fill="url(#al-ground)"/>
+  <!-- trunk -->
+  <path d="M92 200 Q96 150 90 96 Q96 100 100 96 Q104 100 110 96 Q104 150 108 200 Z" fill="#6b4526"/>
+  <path d="M90 130 q-14 -6 -22 -18 M110 120 q14 -4 24 -16 M96 108 q-8 -8 -8 -18" stroke="#6b4526" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- canopy -->
+  <g fill="url(#al-can)">
+    <ellipse cx="100" cy="70" rx="60" ry="46"/>
+    <ellipse cx="58" cy="82" rx="30" ry="26"/>
+    <ellipse cx="146" cy="80" rx="32" ry="28"/>
+    <ellipse cx="100" cy="46" rx="36" ry="26"/>
+  </g>
+  <g fill="#f4c24a" opacity="0.8"><circle cx="70" cy="60" r="10"/><circle cx="130" cy="56" r="12"/><circle cx="100" cy="90" r="10"/><circle cx="48" cy="76" r="8"/></g>
+  <g fill="#c0431a" opacity="0.7"><circle cx="88" cy="52" r="8"/><circle cx="150" cy="92" r="8"/><circle cx="64" cy="98" r="7"/></g>
+  <!-- falling leaves -->
+  <g fill="#d0521f">
+    <path d="M40 140 l4 -6 4 6 -4 6 z"/><path d="M150 150 l5 -7 5 7 -5 7 z"/><path d="M30 170 l3 -5 3 5 -3 5 z"/>
+  </g>
+  <g fill="#f2a63a"><path d="M170 132 l4 -6 4 6 -4 6 z"/><path d="M120 168 l3 -5 3 5 -3 5 z"/><path d="M64 158 l3 -5 3 5 -3 5 z"/></g>
+  <g stroke="#8a5a2a" stroke-width="1" opacity="0.4"><path d="M20 178 q10 -3 20 0 M120 182 q12 -3 24 0"/></g>
+</svg>

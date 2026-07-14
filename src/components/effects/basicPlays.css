@@ -10,12 +10,12 @@
      state is carried by the card's own zone overlay, never by the play;
    - all bsp-* classes are hidden outright under reduced motion (guard at the
      bottom of this file);
-   - this is the BASIC band, hyped up (owner: "you don't need to make the
-     tier 1-4 animations so small"; size pass: "animations are too small in
-     general"): one clean beat, ~1.2-1.6s, a bigger centered emblem scene
-     (~44% of the crop; tier-4 bold ~49%) with one modest built-in flourish —
-     but still NO shockwaves, NO board-darkening washes, NO colossal figures.
-     Plus a compact per-square target hit.
+   - this is the BASIC band, rebuilt as real scenes (owner, third pass: "so
+     many of the current ones are so basic and look like basic icons just
+     disguised as animations"): each play stages a full-crop spectacle layer
+     (bsp-x-*: directional fronts, particle bursts, shock rings, beams) under
+     an emblem that arrives on a real trajectory. Plus a compact per-square
+     target hit.
    - SOLE EXCEPTION: the bsp-hg-* tracks at the bottom belong to
      ww_high_ground, the one TIER 7 card in this module — a bespoke
      full-board takeover (wash + terraces + colossal summit + twin
@@ -389,6 +389,101 @@
   100% { opacity: 0; transform: scale(2.15); }
 }
 .bsp-hg-shock { animation: bsp-hg-shock 1s ease-out both; }
+
+/* --- Spectacle layer (bsp-x-*) ---------------------------------------------
+   Owner pass: "so many of the current ones are so basic and look like basic
+   icons just disguised as animations". Every basic-band play now stages a
+   full-crop choreography BEHIND its emblem (a directional front crossing the
+   board, themed particles, shock rings, a sweeping beam) and the emblem
+   itself ARRIVES on a real trajectory instead of fading in. Transform and
+   opacity only; every track ends at opacity 0; the bsp- prefix keeps all of
+   it under the reduced-motion guard below. */
+
+/* Emblem arrival trajectories (outer wrapper around the whole emblem). */
+@keyframes bsp-x-slamdown {
+  0% { opacity: 0; transform: translateY(-230%) scale(1.15); }
+  45% { opacity: 1; transform: translateY(0) scale(1); }
+  58% { transform: translateY(-6%) scaleY(0.92) scaleX(1.07); }
+  70% { transform: translateY(0) scale(1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.bsp-x-slamdown { animation: bsp-x-slamdown 0.85s cubic-bezier(0.5, 0, 0.7, 0.4) both; }
+
+@keyframes bsp-x-hurl {
+  0% { opacity: 0; transform: translateX(-300%) rotate(-38deg) scale(0.8); }
+  50% { opacity: 1; transform: translateX(6%) rotate(5deg) scale(1.04); }
+  68% { transform: translateX(-2%) rotate(-2deg) scale(1); }
+  100% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+}
+.bsp-x-hurl { animation: bsp-x-hurl 0.8s cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+@keyframes bsp-x-riseup {
+  0% { opacity: 0; transform: translateY(190%) scale(0.7); }
+  55% { opacity: 1; transform: translateY(-7%) scale(1.05); }
+  75% { transform: translateY(2%) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.bsp-x-riseup { animation: bsp-x-riseup 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+@keyframes bsp-x-warpin {
+  0% { opacity: 0; transform: scale(3.2) rotate(24deg); }
+  45% { opacity: 1; transform: scale(0.94) rotate(-4deg); }
+  65% { transform: scale(1.04) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.bsp-x-warpin { animation: bsp-x-warpin 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Whole-scene exit: the arrival wrapper fades everything out at the end so
+   the emblem's own track no longer needs to (they still do; this is belt and
+   braces for the composed scene). */
+@keyframes bsp-x-scene {
+  0%, 78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.bsp-x-scene { animation: bsp-x-scene 1.7s linear both; }
+
+/* Directional front: a tilted gradient band crossing the whole crop
+   (--fx / --fy set the travel vector, --frot the band's tilt). */
+@keyframes bsp-x-front {
+  0% { opacity: 0; transform: translate(calc(var(--fx) * -1), calc(var(--fy) * -1)) rotate(var(--frot)); }
+  22% { opacity: 0.85; }
+  78% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate(var(--fx), var(--fy)) rotate(var(--frot)); }
+}
+.bsp-x-front { animation: bsp-x-front 1.05s cubic-bezier(0.3, 0.2, 0.4, 1) both; }
+
+/* Shock ring expanding well past the emblem (board-scale payoff). */
+@keyframes bsp-x-ring {
+  0% { opacity: 0; transform: scale(0.18); }
+  18% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.bsp-x-ring { animation: bsp-x-ring 1s ease-out both; }
+
+/* Themed particle: launched outward on --dx/--dy with spin, decelerating. */
+@keyframes bsp-x-part {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.5); }
+  14% { opacity: 1; transform: translate(calc(var(--dx) * 0.35), calc(var(--dy) * 0.35)) rotate(calc(var(--rot) * 0.4)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.6); }
+}
+.bsp-x-part { animation: bsp-x-part 1.15s cubic-bezier(0.15, 0.6, 0.4, 1) both; }
+
+/* Ambient drift: motes rising or falling across the crop (--dy signed). */
+@keyframes bsp-x-drift {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  25% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(var(--dy)) scale(1); }
+}
+.bsp-x-drift { animation: bsp-x-drift 1.4s ease-out both; }
+
+/* Sweeping beam: a light shaft pivoting across the crop around its base. */
+@keyframes bsp-x-beam {
+  0% { opacity: 0; transform: rotate(var(--b0)); }
+  25% { opacity: 0.75; }
+  75% { opacity: 0.55; }
+  100% { opacity: 0; transform: rotate(var(--b1)); }
+}
+.bsp-x-beam { animation: bsp-x-beam 1.2s ease-in-out both; transform-origin: 50% 100%; }
 
 /* --- Reduced motion --------------------------------------------------------- */
 /* Defensive: the mounting layers already gate on prefers-reduced-motion, but

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Tropical beach">
+  <defs>
+    <linearGradient id="pb-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59b7e8"/><stop offset="1" stop-color="#c8ecf6"/></linearGradient>
+    <linearGradient id="pb-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fbfc4"/><stop offset="1" stop-color="#1f8fae"/></linearGradient>
+    <linearGradient id="pb-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e3bd"/><stop offset="1" stop-color="#e0c68e"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#pb-sky)"/>
+  <circle cx="150" cy="44" r="16" fill="#fff7d6" opacity="0.9"/>
+  <g fill="#ffffff" opacity="0.9"><ellipse cx="46" cy="38" rx="26" ry="8"/><ellipse cx="72" cy="32" rx="15" ry="5"/></g>
+  <rect x="0" y="96" width="200" height="44" fill="url(#pb-sea)"/>
+  <g stroke="#bff0f2" stroke-width="1.4" opacity="0.6" fill="none"><path d="M10 108 q14 -4 28 0 q14 4 28 0 M120 116 q14 -4 28 0 q14 4 28 0 M40 128 q16 -4 32 0"/></g>
+  <path d="M0 132 Q100 120 200 132 V200 H0 Z" fill="url(#pb-sand)"/>
+  <path d="M0 134 Q100 122 200 134" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.8"/>
+  <!-- palm left -->
+  <path d="M40 200 Q30 140 40 96" stroke="#7a4f2e" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <g fill="#2f7a3a">
+    <path d="M40 96 Q8 84 -6 98 Q22 88 42 102 Z"/>
+    <path d="M40 96 Q70 80 92 90 Q64 86 42 102 Z"/>
+    <path d="M40 96 Q22 68 2 62 Q30 78 44 100 Z"/>
+    <path d="M40 96 Q58 66 82 62 Q52 78 44 100 Z"/>
+    <path d="M40 96 Q40 66 40 58 Q46 80 44 100 Z"/>
+  </g>
+  <g fill="#8a5a30"><circle cx="34" cy="104" r="3"/><circle cx="46" cy="104" r="3"/></g>
+  <!-- starfish + shells -->
+  <g transform="translate(120,168)" fill="#e88f5a"><path d="M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z"/></g>
+  <g fill="#f0d9c0"><ellipse cx="150" cy="180" rx="6" ry="4"/><path d="M150 176 v8 M146 178 l8 4 M154 178 l-8 4" stroke="#d9b58a" stroke-width="0.8"/></g>
+  <ellipse cx="90" cy="184" rx="5" ry="3" fill="#e6c8ec"/>
+</svg>

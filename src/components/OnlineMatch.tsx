@@ -106,11 +106,6 @@ const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
 const DRAFT_REVEAL_EASE_MS = 450;
 const DRAFT_REVEAL_HOLD_MS = 4000;
 
-// The post-draft "waiting for opponent" overlay must never linger: after this
-// long the full-screen version collapses to the non-blocking corner pill so
-// the board stays fully usable while the straggler decides.
-const WAITING_OVERLAY_AUTO_HIDE_MS = 4500;
-
 /** Wall-clock read, kept out of render bodies so the compiler treats callers as
  * pure (the value is only ever used inside handlers/effects). */
 function nowMs(): number {
@@ -419,10 +414,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // skipped", so the waiting overlay never falsely claims a skip. Set on
   // pick/bank and on my dtResolved; reset when any new round is dealt.
   const [myDraftResolved, setMyDraftResolved] = useState(false);
-  // The full-screen waiting overlay has out-stayed its welcome: collapse it to
-  // the non-blocking corner pill (see WAITING_OVERLAY_AUTO_HIDE_MS).
-  const [waitTimedOut, setWaitTimedOut] = useState(false);
-  // Player clicked the post-draft waiting card away (collapses to the pill).
+  // Player clicked the post-draft waiting card away (collapses to the banner).
   const [waitingMinimized, setWaitingMinimized] = useState(false);
   const [oppDrafting, setOppDrafting] = useState(() => {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
@@ -565,16 +557,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           : isDraft && myOfferOpen && !oppDrafting
             ? myColor
             : game.board.turn;
-  useEffect(() => {
-    const waiting = isDraft && !game?.result && oppDrafting && (draftSubmitted || !myOfferOpen);
-    if (!waiting) {
-      queueMicrotask(() => setWaitTimedOut(false));
-      return;
-    }
-    const id = window.setTimeout(() => setWaitTimedOut(true), WAITING_OVERLAY_AUTO_HIDE_MS);
-    return () => window.clearTimeout(id);
-  }, [isDraft, oppDrafting, draftSubmitted, myOfferOpen, game?.result]);
-
   // Skip-pause: when a card the opponent played SKIPS my draft this round, the
   // server still opens the shared lock-in window and pauses BOTH clocks, but I
   // get no dtOffer frame (no offer was rolled for me), so I never learn the
@@ -2873,34 +2855,43 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       )}
 
       {/* Simultaneous draft, my side resolved (pick sent or already applied)
-          but the opponent's is still open: a waiting screen holds while the
-          free window runs. Once it expires the screen shrinks to a corner
-          pill — the board stays usable and the dawdler burns their own
-          clock, so a straggling (or vanished) opponent can never lock this
-          player out of the game. */}
+          but the opponent's is still open. The waiting card holds — with no
+          dark backdrop and the board fully visible/usable above it — and never
+          auto-hides: it stays until the opponent locks in, so a straggling (or
+          vanished) opponent can never make the game *feel* frozen. The player
+          may still manually minimize the card; when they do (or once the free
+          window ends and the dawdler is burning their own clock), it collapses
+          into a prominent, persistent top banner rather than an easily-missed
+          corner pill. While oppDrafting is true this notice never fully
+          disappears, so the player always knows the game is alive, not stuck. */}
       {showWaitingOverlay &&
-        (draftGraceOver || waitTimedOut || waitingMinimized ? (
-          <div className="pointer-events-none fixed bottom-24 right-3 z-40 sm:bottom-16 lg:bottom-4">
+        (draftGraceOver || waitingMinimized ? (
+          <div className="pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4 sm:top-4">
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
               role="status"
               aria-live="polite"
-              className="plate flex items-center gap-2 border-gold/40 px-3 py-2"
+              className="waiting-banner plate pointer-events-none flex max-w-[92vw] items-center gap-2.5 border-gold/40 px-4 py-2 shadow-plate"
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
-              <span className="font-display text-xs text-parchment-200">
-                {/* The pill can collapse here BEFORE the free window ends
-                    (auto-hide / manual dismiss): saying "on their clock" then
-                    reported the charge ~5s early. Only claim it once the
-                    window has truly expired. */}
-                {genuinelySkipped
-                  ? draftGraceOver
-                    ? "Your draft was skipped. Opponent is choosing, on their clock now."
-                    : "Your draft was skipped. Opponent is choosing — clocks paused."
-                  : draftGraceOver
-                    ? "Opponent is still choosing, on their clock now."
-                    : "Opponent is still choosing — clocks paused."}
+              {/* Pulsing dot: a live "ping" ripple plus the shared flicker, both
+                  dropped under prefers-reduced-motion (see globals.css). */}
+              <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
+                <span className="waiting-ping absolute inline-flex h-full w-full rounded-full bg-gold/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-gold animate-flicker" />
+              </span>
+              <span className="font-display text-xs text-parchment-200 sm:text-sm">
+                {genuinelySkipped ? "Your draft was skipped — " : ""}
+                Waiting for{" "}
+                <span className="text-gold">{oppName}</span>{" "}
+                to finish drafting
+                <span className="waiting-ellipsis" aria-hidden />{" "}
+                <span className="text-parchment-300">— you&rsquo;re not stuck</span>
+                {/* Only claim "on their clock" once the free window has truly
+                    expired; before then both clocks are still paused. */}
+                <span className="smallcaps ml-2 text-[10px] text-parchment-400">
+                  {draftGraceOver ? "on their clock now" : "clocks paused"}
+                </span>
               </span>
             </motion.div>
           </div>
@@ -2919,7 +2910,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 if (e.key === "Enter" || e.key === " " || e.key === "Escape") setWaitingMinimized(true);
               }}
               title="Dismiss"
-              className="plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
+              className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
               <div className="smallcaps text-[10px] text-parchment-400">
                 {genuinelySkipped
@@ -2929,7 +2920,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   : "Buff draft"}
               </div>
               <h2 className="font-display text-xl text-parchment mt-0.5">
-                {genuinelySkipped ? "Your draft was skipped" : "Waiting for opponent"}
+                {genuinelySkipped ? "Your draft was skipped" : `Waiting for ${oppName}`}
               </h2>
               {genuinelySkipped && (
                 <p className="mt-1 text-[11px] leading-snug text-parchment-300">
@@ -2950,7 +2941,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <LockInCountdown deadline={draftDeadline} className="mt-3" />
               )}
               <p className="mt-2 text-[10px] leading-snug text-parchment-400">
-                Both clocks stay paused until the pick window runs out. Tap to dismiss.
+                Both clocks stay paused until the pick window runs out. Tap to minimize (a banner stays up).
               </p>
             </motion.div>
           </div>

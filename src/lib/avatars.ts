@@ -69,6 +69,68 @@ export function isCustomAvatar(value: unknown): value is string {
   );
 }
 
+// House-persona profile pictures. A second class of "not a real upload" avatar
+// used only by house-player accounts: hand-authored scenic/object SVGs served
+// as static files, so a slice of the roster reads like ordinary users who
+// uploaded a random photo (a beach, a coffee mug, a houseplant) instead of the
+// piece-on-plate presets. Stored in users.avatar as the id "house_pfp:<name>"
+// and rendered as <img src="/house-pfp/<name>.svg">. Like the flower presets
+// these are never offered to real accounts: isAvatarId rejects them and the
+// avatar upload route only accepts isAvatarId or isCustomAvatar, so a regular
+// player can never claim one. The /mod/house editor's picker is the one place
+// they're selectable (see HOUSE_AVATAR_IDS in lib/server/bots.ts).
+export const HOUSE_PFP_PREFIX = "house_pfp:";
+export const HOUSE_PFP_NAMES = [
+  "mountain_lake",
+  "beach_sunset",
+  "city_night",
+  "forest_path",
+  "desert_dunes",
+  "lake_cabin",
+  "sailboat",
+  "lavender_field",
+  "aurora",
+  "waterfall",
+  "tent_stars",
+  "autumn_leaves",
+  "lighthouse",
+  "hot_air_balloons",
+  "koi_pond",
+  "snowy_peak",
+  "palm_beach",
+  "sunflowers",
+  "flower_vase",
+  "coffee_mug",
+  "monstera",
+  "fruit_bowl",
+  "bicycle",
+  "record_player",
+  "tea_set",
+  "succulents",
+  "bookshelf",
+  "potted_cactus",
+  "cat_sunset",
+  "rainy_neon",
+] as const;
+
+const HOUSE_PFP_SET = new Set<string>(HOUSE_PFP_NAMES);
+
+/** All house-pfp avatar ids in stored ("house_pfp:<name>") form. */
+export const HOUSE_PFP_IDS: string[] = HOUSE_PFP_NAMES.map((n) => HOUSE_PFP_PREFIX + n);
+
+export function isHousePfp(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.startsWith(HOUSE_PFP_PREFIX) &&
+    HOUSE_PFP_SET.has(value.slice(HOUSE_PFP_PREFIX.length))
+  );
+}
+
+/** The static file path for a house-pfp id. Caller must have checked isHousePfp. */
+export function housePfpSrc(value: string): string {
+  return `/house-pfp/${value.slice(HOUSE_PFP_PREFIX.length)}.svg`;
+}
+
 /** The avatar to show: the stored preset when valid, else a stable default
  *  hashed from the username so the same player always looks the same. */
 export function avatarIdFor(name: string, stored?: string | null): string {

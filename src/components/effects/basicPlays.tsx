@@ -4,14 +4,15 @@
 // registry contract. Self-contained: own SVG, own CSS (basicPlays.css),
 // transform/opacity only. Do NOT import from BoardEffects.tsx.
 //
-// Design brief (owner: "animations for all the tiers 1 to 8, still unique
-// animations, maybe they don't need to be as extravagant" — later hyped:
-// "you don't need to make the tier 1-4 animations so small, you can hype it
-// up a bit more"): ONE clean beat, ~1.2-1.6s, NO shockwaves, NO
-// board-darkening washes, NO colossal figures. Each play is a centered
-// emblem scene (~44% of the crop; tier-4 bold ~49%) carrying one modest
-// built-in flourish (see EmblemFlourish), plus a compact per-square target
-// hit for zone-fed cards.
+// Design brief (owner, third pass: "so many of the current ones are so basic
+// and look like basic icons just disguised as animations"): every play is now
+// a REAL scene, ~1.4-1.7s. The themed emblem is still the centrepiece (its
+// template + palette + face icon keep each card unique), but it arrives on a
+// genuine trajectory (slam / hurl / rise / warp, see TRAJ_BY_FX) over a
+// full-crop SceneFx choreography themed by mechanic family: a directional
+// front crossing the board, themed particle bursts, shock rings, sweeping
+// beams (see FX_SPECS). The old "one modest flourish" rule is retired; the
+// per-square TargetHit for zone-fed cards is unchanged.
 //
 // SOLE EXCEPTION: ww_high_ground is a TIER 7 card that lives in this module,
 // so its play is a bespoke FULL-BOARD TAKEOVER (HighGroundTakeover, below the
@@ -189,35 +190,56 @@ function EmblemFlourish({ cls, delayMs }: { cls: string; delayMs: number }) {
  * reads as ~44% of the visible crop, ~49% for tier-4 bold cuts (was 22/26 =
  * ~38%/~45%). `cls` picks the entrance keyframe and also selects the scene's
  * built-in flourish. */
+/** Which arrival trajectory each fx family rides in on (see bsp-x-* CSS). */
+const TRAJ_BY_FX: Record<string, string> = {
+  ward: "warpin", curse: "slamdown", chain: "hurl", frost: "warpin",
+  stone: "slamdown", glint: "hurl", leap: "riseup", muster: "riseup",
+  edict: "hurl", draw: "hurl", gaze: "warpin", lock: "slamdown",
+  spirit: "riseup", loot: "slamdown", clock: "warpin", bell: "slamdown",
+  grove: "riseup", prism: "slamdown", banner: "riseup", ink: "warpin",
+};
+
 function Emblem({
   bold,
   cls,
   delayMs,
   children,
   style,
+  fx,
+  palette,
 }: {
   bold: boolean;
   cls: string;
   delayMs: number;
   children: ReactNode;
   style?: CSSProperties;
+  /** mechanic-family spectacle staged behind the emblem (with `palette`) */
+  fx?: FxKind;
+  palette?: Palette;
 }) {
-  const s = bold ? 28 : 25;
+  const s = bold ? 33 : 30;
+  const traj = (fx && TRAJ_BY_FX[fx]) || "warpin";
   return (
-    <span
-      className={`${cls} absolute block`}
-      style={{
-        left: `${50 - s / 2}%`,
-        top: `${47 - s / 2}%`,
-        width: `${s}%`,
-        height: `${s}%`,
-        animationDelay: `${delayMs}ms`,
-        ...style,
-      }}
-    >
-      {children}
-      <EmblemFlourish cls={cls} delayMs={delayMs + 380} />
-    </span>
+    <>
+      {fx && palette ? <SceneFx kind={fx} palette={palette} delayMs={delayMs} /> : null}
+      {/* Outer span rides the arrival trajectory; the inner span still plays
+          the template's own entrance/settle beat, so the two compose. */}
+      <span
+        className={`bsp-x-${traj} absolute block`}
+        style={{
+          left: `${50 - s / 2}%`,
+          top: `${47 - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          animationDelay: `${delayMs}ms`,
+        }}
+      >
+        <span className={`${cls} absolute inset-0 block`} style={{ animationDelay: `${delayMs + 70}ms`, ...style }}>
+          {children}
+          <EmblemFlourish cls={cls} delayMs={delayMs + 420} />
+        </span>
+      </span>
+    </>
   );
 }
 
@@ -346,6 +368,168 @@ function TargetHit({
   );
 }
 
+/* --- Spectacle layer ----------------------------------------------------------
+   Owner pass ("so many of the current ones are so basic and look like basic
+   icons just disguised as animations"): every lead now stages a full-crop
+   choreography BEHIND its emblem — a directional front crossing the board,
+   themed particles bursting outward, shock rings, a sweeping beam — themed by
+   the template's mechanic family, and the emblem ARRIVES on a real trajectory
+   (slam / hurl / rise / warp) instead of fading in place. The old one-beat
+   emblem art is kept as the scene's centrepiece so template + palette + icon
+   still guarantees per-card uniqueness. */
+
+type FxKind =
+  | "ward" | "curse" | "chain" | "frost" | "stone" | "glint" | "leap"
+  | "muster" | "edict" | "draw" | "gaze" | "lock" | "spirit" | "loot"
+  | "clock" | "bell" | "grove" | "prism" | "banner" | "ink";
+
+interface FxSpec {
+  /** tilted gradient band crossing the crop: band tilt + travel vector (own-size %) */
+  front?: { rot: string; fx: string; fy: string; h: number };
+  rings?: number;
+  /** pivoting light shaft: start/end rotation */
+  beam?: [string, string];
+  parts: { accent: HitAccent; n: number; spread: number };
+  /** ambient motes: signed own-size travel (negative rises) */
+  drift?: { dy: string; n: number };
+}
+
+const FX_SPECS: Record<FxKind, FxSpec> = {
+  ward:   { rings: 3, beam: ["-38deg", "38deg"], parts: { accent: "spark", n: 6, spread: 13 }, drift: { dy: "-620%", n: 5 } },
+  curse:  { front: { rot: "0deg", fx: "0%", fy: "140%", h: 7 }, rings: 2, parts: { accent: "stone", n: 8, spread: 15 }, drift: { dy: "520%", n: 5 } },
+  chain:  { front: { rot: "-14deg", fx: "115%", fy: "0%", h: 4 }, parts: { accent: "link", n: 8, spread: 16 }, rings: 1 },
+  frost:  { front: { rot: "8deg", fx: "125%", fy: "0%", h: 9 }, parts: { accent: "frost", n: 9, spread: 15 }, drift: { dy: "540%", n: 6 } },
+  stone:  { rings: 2, parts: { accent: "stone", n: 10, spread: 17 }, drift: { dy: "460%", n: 4 } },
+  glint:  { front: { rot: "-24deg", fx: "130%", fy: "-36%", h: 3 }, beam: ["-52deg", "52deg"], parts: { accent: "spark", n: 7, spread: 15 } },
+  leap:   { front: { rot: "0deg", fx: "120%", fy: "0%", h: 3 }, rings: 1, parts: { accent: "spark", n: 8, spread: 16 }, drift: { dy: "-380%", n: 4 } },
+  muster: { front: { rot: "0deg", fx: "0%", fy: "-120%", h: 6 }, parts: { accent: "spark", n: 7, spread: 14 }, drift: { dy: "-560%", n: 6 } },
+  edict:  { front: { rot: "0deg", fx: "125%", fy: "0%", h: 8 }, parts: { accent: "mote", n: 6, spread: 12 }, drift: { dy: "460%", n: 4 } },
+  draw:   { front: { rot: "16deg", fx: "115%", fy: "-24%", h: 5 }, parts: { accent: "mote", n: 8, spread: 15 } },
+  gaze:   { beam: ["-58deg", "58deg"], rings: 2, parts: { accent: "spark", n: 5, spread: 11 } },
+  lock:   { front: { rot: "90deg", fx: "0%", fy: "130%", h: 5 }, rings: 1, parts: { accent: "link", n: 7, spread: 13 }, drift: { dy: "420%", n: 4 } },
+  spirit: { beam: ["-20deg", "20deg"], parts: { accent: "mote", n: 7, spread: 12 }, drift: { dy: "-680%", n: 7 } },
+  loot:   { rings: 2, parts: { accent: "spark", n: 10, spread: 16 }, drift: { dy: "-420%", n: 5 } },
+  clock:  { rings: 3, beam: ["0deg", "300deg"], parts: { accent: "mote", n: 6, spread: 12 } },
+  bell:   { rings: 3, parts: { accent: "spark", n: 6, spread: 13 }, drift: { dy: "-460%", n: 4 } },
+  grove:  { front: { rot: "4deg", fx: "0%", fy: "-110%", h: 7 }, parts: { accent: "leaf", n: 9, spread: 15 }, drift: { dy: "-520%", n: 6 } },
+  prism:  { beam: ["-64deg", "64deg"], rings: 2, parts: { accent: "spark", n: 9, spread: 16 }, drift: { dy: "-380%", n: 4 } },
+  banner: { front: { rot: "0deg", fx: "0%", fy: "-130%", h: 6 }, rings: 1, parts: { accent: "spark", n: 8, spread: 15 }, drift: { dy: "-500%", n: 6 } },
+  ink:    { front: { rot: "-18deg", fx: "120%", fy: "26%", h: 8 }, parts: { accent: "mote", n: 9, spread: 15 }, drift: { dy: "480%", n: 5 } },
+};
+
+/** Deterministic launch directions (degrees + stagger ms) for the burst. */
+const FX_DIRS = [
+  { a: 12, d: 0 }, { a: 55, d: 35 }, { a: 98, d: 15 }, { a: 141, d: 50 },
+  { a: 184, d: 25 }, { a: 227, d: 60 }, { a: 263, d: 8 }, { a: 306, d: 40 },
+  { a: 338, d: 70 }, { a: 79, d: 80 },
+];
+
+const FX_DRIFT_XS = [31, 38, 45, 52, 59, 66, 35.5];
+
+function SceneFx({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  const s = FX_SPECS[kind];
+  return (
+    <span className="absolute inset-0 block" aria-hidden="true">
+      {s.front && (
+        <span
+          className="bsp-x-front absolute block"
+          style={
+            {
+              left: "27%",
+              top: `${47 - s.front.h / 2}%`,
+              width: "46%",
+              height: `${s.front.h}%`,
+              background: `linear-gradient(90deg, transparent, ${tint(p1, 0.5)}, ${tint(p0, 0.32)}, transparent)`,
+              "--fx": s.front.fx,
+              "--fy": s.front.fy,
+              "--frot": s.front.rot,
+              animationDelay: `${delayMs}ms`,
+            } as CSSProperties
+          }
+        />
+      )}
+      {Array.from({ length: s.rings ?? 0 }, (_, i) => (
+        <span
+          key={`r${i}`}
+          className="bsp-x-ring absolute block rounded-full"
+          style={{
+            left: "29%",
+            top: "26%",
+            width: "42%",
+            height: "42%",
+            border: `3px solid ${tint(i % 2 ? p0 : p1, 0.8)}`,
+            animationDelay: `${delayMs + 260 + i * 150}ms`,
+          }}
+        />
+      ))}
+      {s.beam && (
+        <span
+          className="bsp-x-beam absolute block"
+          style={
+            {
+              left: "48.6%",
+              top: "22%",
+              width: "2.8%",
+              height: "25%",
+              background: `linear-gradient(180deg, ${tint(p1, 0.7)}, transparent)`,
+              "--b0": s.beam[0],
+              "--b1": s.beam[1],
+              animationDelay: `${delayMs + 120}ms`,
+            } as CSSProperties
+          }
+        />
+      )}
+      {FX_DIRS.slice(0, s.parts.n).map((v, i) => {
+        const rad = (v.a * Math.PI) / 180;
+        // travel is spec'd in canvas %, converted to own-size % (box is 2.2%)
+        const dx = Math.round(((Math.cos(rad) * s.parts.spread) / 2.2) * 100);
+        const dy = Math.round(((Math.sin(rad) * s.parts.spread * 0.72) / 2.2) * 100);
+        return (
+          <span
+            key={`p${i}`}
+            className="bsp-x-part absolute block"
+            style={
+              {
+                left: "48.9%",
+                top: "45.9%",
+                width: "2.2%",
+                height: "2.2%",
+                "--dx": `${dx}%`,
+                "--dy": `${dy}%`,
+                "--rot": `${(i % 2 ? -1 : 1) * (140 + i * 25)}deg`,
+                animationDelay: `${delayMs + 240 + v.d}ms`,
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              {shardShape(s.parts.accent, i % 3 === 1 ? p0 : p1, p2)}
+            </svg>
+          </span>
+        );
+      })}
+      {s.drift &&
+        FX_DRIFT_XS.slice(0, s.drift.n).map((x, i) => (
+          <span
+            key={`d${i}`}
+            className="bsp-x-drift absolute block rounded-full"
+            style={
+              {
+                left: `${x}%`,
+                top: s.drift!.dy.startsWith("-") ? `${58 - (i % 3) * 4}%` : `${30 + (i % 3) * 4}%`,
+                width: "1.4%",
+                height: "1.4%",
+                background: tint(i % 2 ? p0 : p1, 0.85),
+                "--dy": s.drift!.dy,
+                animationDelay: `${delayMs + 180 + i * 90}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+    </span>
+  );
+}
+
 /* =============================================================================
    Template 1: SigilRing — a warding ring settles over the centre, its compass
    ticks kindle one by one, and the card's face glows at its heart.
@@ -362,7 +546,7 @@ function SigilRing({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-settle" delayMs={delayMs}>
+      <Emblem bold={bold} fx="ward" palette={palette} cls="bsp-settle" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <circle cx="20" cy="20" r="16.4" fill={tint(p0, 0.1)} stroke={tint(p1, 0.9)} strokeWidth="1.3" />
           <circle cx="20" cy="20" r="12.6" fill="none" stroke={tint(p2, 0.6)} strokeWidth="0.6" strokeDasharray="2.4 1.7" />
@@ -398,7 +582,7 @@ function RuneStamp({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-stamp" delayMs={delayMs}>
+      <Emblem bold={bold} fx="curse" palette={palette} cls="bsp-stamp" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <path d="M20 2 L34 9 L37 24 L27 37 L13 37 L3 24 L6 9 Z" fill={tint(p2, 0.85)} stroke={p0} strokeWidth="1.4" {...SJ} />
           <path d="M20 6.5 L30.5 11.7 L32.8 23 L25 32.8 L15 32.8 L7.2 23 L9.5 11.7 Z" fill="none" stroke={tint(p1, 0.55)} strokeWidth="0.7" strokeDasharray="3 2" />
@@ -437,7 +621,7 @@ function ChainLash({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-drop" delayMs={delayMs}>
+      <Emblem bold={bold} fx="chain" palette={palette} cls="bsp-drop" delayMs={delayMs}>
         <span className="bsp-taut absolute block" style={{ left: "-6%", top: "40%", width: "112%", height: "20%", animationDelay: `${delayMs + 180}ms` }}>
           <svg viewBox="0 0 56 10" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             {Array.from({ length: 7 }, (_, i) => (
@@ -472,7 +656,7 @@ function ColdSnap({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="frost" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-spoke" delayMs={delayMs}>
+      <Emblem bold={bold} fx="frost" palette={palette} cls="bsp-spoke" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           {[0, 60, 120].map((r) => (
             <g key={r} transform={`rotate(${r} 20 20)`}>
@@ -508,7 +692,7 @@ function StoneShell({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="stone" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-shudder" delayMs={delayMs + 420}>
+      <Emblem bold={bold} fx="stone" palette={palette} cls="bsp-shudder" delayMs={delayMs + 420}>
         <Face Icon={Icon} color={p1} delayMs={delayMs} left={32} top={30} size={36} />
         <span className="bsp-close-l absolute block" style={{ left: "8%", top: "12%", width: "42%", height: "76%", animationDelay: `${delayMs + 160}ms` }}>
           <svg viewBox="0 0 20 36" className="block h-full w-full" aria-hidden="true">
@@ -565,7 +749,7 @@ function GlintArc({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="glint" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <path d="M3 27 C10 12 30 12 37 25" fill="none" stroke={tint(p2, 0.55)} strokeWidth="1" strokeDasharray="2.6 2" strokeLinecap="round" />
         </svg>
@@ -596,7 +780,7 @@ function HoofSpring({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-rise" delayMs={delayMs}>
+      <Emblem bold={bold} fx="leap" palette={palette} cls="bsp-rise" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "30%", top: "52%", width: "40%", height: "40%", animationDelay: `${delayMs + 80}ms` }}>
           <svg viewBox="0 0 20 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <path d="M3 18.6 H17 M4 15.4 H16 M5 12.2 H15 M6 9 H14" fill="none" stroke={p0} strokeWidth="1.6" strokeLinecap="round" />
@@ -645,7 +829,7 @@ function PennantRaise({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="muster" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "24%", top: "4%", width: "7%", height: "92%", animationDelay: `${delayMs}ms` }}>
           <svg viewBox="0 0 4 40" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <rect x="1.1" y="1.5" width="1.8" height="38" rx="0.9" fill={p2} />
@@ -679,7 +863,7 @@ function ScrollSnap({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="edict" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-scroll absolute block" style={{ left: "16%", top: "6%", width: "68%", height: "82%", animationDelay: `${delayMs}ms` }}>
           <svg viewBox="0 0 28 34" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <rect x="1.4" y="3.4" width="25.2" height="27.4" rx="2" fill={tint(p0, 0.96)} stroke={p2} strokeWidth="0.9" />
@@ -703,7 +887,7 @@ function CardFlick({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="draw" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="absolute block" style={{ left: "18%", top: "26%", width: "38%", height: "58%" }}>
           <svg viewBox="0 0 16 24" className="block h-full w-full" aria-hidden="true">
             <rect x="2.4" y="2.6" width="12" height="18.6" rx="2" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.8" transform="rotate(-7 8 12)" />
@@ -736,7 +920,7 @@ function EyeBlink({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-blink" delayMs={delayMs} style={{ transformOrigin: "50% 50%" }}>
+      <Emblem bold={bold} fx="gaze" palette={palette} cls="bsp-blink" delayMs={delayMs} style={{ transformOrigin: "50% 50%" }}>
         <svg viewBox="0 0 40 24" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
           <path d="M2 12 C10 2.5 30 2.5 38 12 C30 21.5 10 21.5 2 12 Z" fill={tint(p2, 0.85)} stroke={p0} strokeWidth="1.1" {...SJ} />
           <circle cx="20" cy="12" r="7.6" fill={tint(p0, 0.35)} stroke={p1} strokeWidth="1.1" />
@@ -757,7 +941,7 @@ function KeyTurn({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-drop" delayMs={delayMs}>
+      <Emblem bold={bold} fx="lock" palette={palette} cls="bsp-drop" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <rect x="6" y="6" width="28" height="28" rx="4" fill={tint(p2, 0.92)} stroke={p0} strokeWidth="1.2" />
           <circle cx="20" cy="20" r="8.4" fill="none" stroke={tint(p1, 0.6)} strokeWidth="0.8" strokeDasharray="2 1.6" />
@@ -788,7 +972,7 @@ function LanternLift({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-lift" delayMs={delayMs}>
+      <Emblem bold={bold} fx="spirit" palette={palette} cls="bsp-lift" delayMs={delayMs}>
         <span className="bsp-breathe absolute block rounded-full" style={{ left: "22%", top: "16%", width: "56%", height: "60%", background: tint(p1, 0.3), animationDelay: `${delayMs + 200}ms` }} />
         <svg viewBox="0 0 24 34" className="absolute block h-full w-full" aria-hidden="true">
           <path d="M9 3.4 H15 M12 1 V3.4" fill="none" stroke={p2} strokeWidth="1.2" strokeLinecap="round" />
@@ -829,7 +1013,7 @@ function SatchelDrop({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-plop" delayMs={delayMs}>
+      <Emblem bold={bold} fx="loot" palette={palette} cls="bsp-plop" delayMs={delayMs}>
         <svg viewBox="0 0 32 30" className="absolute block h-full w-full" aria-hidden="true">
           <path d="M4 12 H28 V25 a3 3 0 0 1 -3 3 H7 a3 3 0 0 1 -3 -3 Z" fill={tint(p2, 0.95)} stroke={p0} strokeWidth="1.2" {...SJ} />
           <path d="M4 12 C4 7 9 4 16 4 C23 4 28 7 28 12 L26 15 H6 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
@@ -868,7 +1052,7 @@ function CogTick({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="clock" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-turn absolute block" style={{ left: "8%", top: "12%", width: "64%", height: "64%", animationDelay: `${delayMs + 120}ms` }}>
           <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
             <path d={cogPath(20, 20, 17)} fill={tint(p2, 0.9)} stroke={p0} strokeWidth="1.2" {...SJ} />
@@ -896,7 +1080,7 @@ function BellToll({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="bell" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-swing absolute block" style={{ left: "24%", top: "0%", width: "52%", height: "62%", animationDelay: `${delayMs + 80}ms` }}>
           <svg viewBox="0 0 24 28" className="block h-full w-full" aria-hidden="true">
             <path d="M11 1.6 H13 V4 H11 Z" fill={p2} />
@@ -927,7 +1111,7 @@ function LeafSpin({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="leaf" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-facein" delayMs={delayMs}>
+      <Emblem bold={bold} fx="grove" palette={palette} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "38%", top: "48%", width: "24%", height: "46%", animationDelay: `${delayMs + 60}ms` }}>
           <svg viewBox="0 0 10 20" className="block h-full w-full" aria-hidden="true">
             <path d="M5 19 V6" fill="none" stroke={p2} strokeWidth="1.4" strokeLinecap="round" />
@@ -964,7 +1148,7 @@ function PrismFlash({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-drop" delayMs={delayMs}>
+      <Emblem bold={bold} fx="prism" palette={palette} cls="bsp-drop" delayMs={delayMs}>
         <span className="absolute block" style={{ left: "10%", top: "26%", width: "38%", height: "48%" }}>
           <svg viewBox="0 0 16 20" className="block h-full w-full" aria-hidden="true">
             <path d="M8 1.6 L15 18.4 H1 Z" fill={tint(p2, 0.55)} stroke={p0} strokeWidth="1" {...SJ} />
@@ -1002,7 +1186,7 @@ function BannerMuster({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-drop" delayMs={delayMs}>
+      <Emblem bold={bold} fx="banner" palette={palette} cls="bsp-drop" delayMs={delayMs}>
         <svg viewBox="0 0 30 40" className="absolute block h-full w-full" aria-hidden="true">
           <rect x="13.9" y="2" width="2.2" height="36" rx="1.1" fill={p2} />
           <path d="M8 2.6 H22" stroke={p2} strokeWidth="1.6" strokeLinecap="round" />
@@ -1036,7 +1220,7 @@ function InkSplash({ palette, Icon, bold, lead, delayMs }: TemplateProps) {
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
     <Stage>
-      <Emblem bold={bold} cls="bsp-blot" delayMs={delayMs}>
+      <Emblem bold={bold} fx="ink" palette={palette} cls="bsp-blot" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="absolute block h-full w-full" aria-hidden="true">
           <path
             d="M20 3 C27 3 33 6 35.5 12 C38 18 36 26 30 31 C24 36 14 36.5 8.5 31.5 C3 26.5 2.5 17 6.5 11 C10 5.5 14 3 20 3 Z"
@@ -1343,7 +1527,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Pawn Nerf (t3 hex)
   pawn_nerf: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "pawn_nerf", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }),
   // Pin Breaker (t3 movement)
-  pin_breaker: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "pin_breaker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
   // Spooked Steeds (t3 hex)
   spooked_steeds: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "spooked_steeds", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }),
   // Static Field (t3 protection)
@@ -1723,9 +1906,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- CogTick ----------------------------------------------------------- */
   // Free Retreat (t1 tempo)
-  free_retreat: B(CogTick, ["#c9a84c","#6fe3ff","#3a3026"], "free_retreat", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
   // Rewind One (t3 tempo)
-  rewind_one: B(CogTick, ["#a8925a","#aee2ff","#33291a"], "rewind_one", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
   // Wasted Hour (t3 hex)
   wasted_hour: B(CogTick, ["#bf9c50","#9fdcf0","#362c1c"], "wasted_hour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun" }),
   // Lost Weekend (t4 hex)
@@ -1747,7 +1928,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Hunter's Relief (t2 nerf)
   hunters_relief: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "hunters_relief", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Loosen the Leash (t2 nerf)
-  loosen_the_leash: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "loosen_the_leash", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Slack in the Chain (t2 nerf)
   slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Break the Nerf (t3 nerf)
@@ -1755,9 +1935,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Grace Period (t3 nerf)
   grace_period: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "grace_period", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Half Measure (t3 nerf)
-  half_measure: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "half_measure", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Piece Parole (t3 nerf)
-  piece_parole: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "piece_parole", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Timely Lull (t3 nerf)
   timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
   // Underdog's Grit (t3 nerf)
@@ -1831,7 +2009,6 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- BannerMuster ------------------------------------------------------ */
   // Decoy (t2 protection)
-  decoy: B(BannerMuster, ["#c94a3a","#d8dee9","#331410"], "decoy", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege" }),
   // Regenerate (t3 pieces)
   regenerate: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "regenerate", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
   // Summon Knight (t3 pieces)
@@ -1851,7 +2028,6 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- InkSplash --------------------------------------------------------- */
   // Shadow Step (t2 movement)
-  shadow_step: B(InkSplash, ["#7b6bd1","#d6c9f0","#16142a"], "shadow_step", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
   // Glamour (t3 pieces)
   glamour: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "glamour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
   // Piece Steal (t3 pieces)

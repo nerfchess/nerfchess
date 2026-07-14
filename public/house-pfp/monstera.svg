@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Potted monstera plant">
+  <defs>
+    <linearGradient id="mo-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe7da"/><stop offset="1" stop-color="#d8cbb6"/></linearGradient>
+    <linearGradient id="mo-leaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8a44"/><stop offset="1" stop-color="#2f5e2a"/></linearGradient>
+    <linearGradient id="mo-pot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d98a5a"/><stop offset="1" stop-color="#a85f34"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#mo-wall)"/>
+  <rect x="0" y="164" width="200" height="36" fill="#c2b39a"/>
+  <path d="M0 164 H200" stroke="#a08a6c" stroke-width="1.5" opacity="0.6"/>
+  <!-- monstera leaves -->
+  <g fill="url(#mo-leaf)" stroke="#264e22" stroke-width="1">
+    <path d="M100 150 Q60 130 52 90 Q50 66 74 58 Q96 52 106 78 Q112 104 100 150 Z"/>
+    <path d="M100 150 Q140 128 150 86 Q152 62 128 56 Q106 52 96 80 Q90 106 100 150 Z"/>
+    <path d="M100 148 Q98 100 96 60 Q98 40 112 42 Q126 46 124 70 Q118 110 100 148 Z"/>
+  </g>
+  <!-- fenestration slits -->
+  <g stroke="#dfe6c0" stroke-width="0" fill="#efe7da">
+    <path d="M70 84 q10 4 12 14 q-8 -2 -12 -14 z" opacity="0.9"/>
+    <path d="M74 106 q10 4 12 14 q-8 -2 -12 -14 z" opacity="0.9"/>
+    <path d="M130 84 q-10 4 -12 14 q8 -2 12 -14 z" opacity="0.9"/>
+    <path d="M126 106 q-10 4 -12 14 q8 -2 12 -14 z" opacity="0.9"/>
+    <path d="M110 70 q6 4 6 14 q-6 -2 -6 -14 z" opacity="0.9"/>
+    <path d="M108 96 q6 4 6 14 q-6 -2 -6 -14 z" opacity="0.9"/>
+  </g>
+  <!-- veins -->
+  <g stroke="#3a6b32" stroke-width="1" opacity="0.6" fill="none">
+    <path d="M100 148 Q80 120 70 88 M100 148 Q120 120 130 90 M100 148 L108 60"/>
+  </g>
+  <!-- stems -->
+  <g stroke="#5c7f38" stroke-width="3" fill="none" stroke-linecap="round"><path d="M100 150 Q96 156 96 164 M100 150 Q104 156 106 164"/></g>
+  <!-- pot -->
+  <path d="M74 164 H126 L120 200 H80 Z" fill="url(#mo-pot)"/>
+  <path d="M70 158 H130 V166 Q100 172 70 166 Z" fill="#e09a68"/>
+  <path d="M78 168 Q76 184 82 198" stroke="#ffffff" stroke-width="2" opacity="0.25" fill="none"/>
+  <ellipse cx="100" cy="158" rx="30" ry="5" fill="#b7724a"/>
+</svg>

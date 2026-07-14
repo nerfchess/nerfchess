@@ -25,13 +25,16 @@ import { isBoon } from "@/engine/buff";
 // opponent-move-filtering passives, unimplemented cards, and all nerfs, which
 // read as "cards missing from the god panel").
 //
-// Summoning is still narrower than listing: a card is grantable HIDDEN only
-// when it can sit in a hand without revealing itself — instants fire the
-// moment they are acquired, and an opponent-move-filtering passive must be
-// felt by the opponent to keep the boards in sync. The server enforces
-// exactly this (worker.ts adminGrant), so cards it would reject render
-// disabled with the reason instead of being hidden. Nerfs are opening
-// handicaps, not hand cards, so they are browse-only reference here.
+// Summoning is now unconditional at the card level: EVERY implemented buff,
+// hex, boon, item, and apex/mythic card is grantable (worker.ts adminGrant
+// dropped the old "cannot be summoned hidden" gate). A hideable card lands
+// face-down in hand; a self-revealing card (an instant, which fires the moment
+// it is acquired, or an opponent-move-filtering passive, which the opponent
+// must know to keep the boards in sync) is summoned too, it just cannot stay
+// secret. The only thing the server still rejects is an UNIMPLEMENTED card, so
+// those alone render disabled. Nerfs are opening handicaps applied at game
+// construction, not hand cards, and cannot be attached mid-game without engine
+// surgery, so they stay browse-only reference here.
 
 type PanelCard = {
   id: string;
@@ -45,12 +48,11 @@ type PanelCard = {
 
 type PanelGroup = { label: string; cards: PanelCard[] };
 
-// Why a buff cannot be summoned hidden (mirrors worker.ts adminGrant).
+// Why a buff cannot be summoned (mirrors worker.ts adminGrant, which now only
+// rejects unimplemented cards — instants and opponent-move-filtering passives
+// ARE summonable, they simply reveal themselves).
 function blockedReason(b: (typeof ALL_BUFFS)[number]): string | null {
   if (!b.implemented) return "not implemented yet — cannot be summoned";
-  if (b.kind === "instant") return "instant: fires the moment it is acquired, so it cannot sit hidden in a hand";
-  if (b.kind === "passive" && b.filterOpponentMoves)
-    return "filters the opponent's moves, so summoning it would reveal it";
   return null;
 }
 

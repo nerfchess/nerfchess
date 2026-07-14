@@ -499,6 +499,73 @@
 }
 .pnp-sweepy { animation: pnp-sweepy 1.15s cubic-bezier(0.5, 0, 0.3, 1) both; transform-origin: 50% 50%; }
 
+/* --- I Love Chaewon (a feather drifts; three pieces glide into formation) ---- */
+
+/* Hero feather drifts down with a gentle sway. */
+@keyframes pnp-cw-feather {
+  0% { opacity: 0; transform: translateY(-70%) rotate(-14deg); }
+  20% { opacity: 1; }
+  40% { transform: translateY(30%) rotate(10deg); }
+  62% { transform: translateY(70%) rotate(-6deg); }
+  84% { opacity: 1; transform: translateY(96%) rotate(4deg); }
+  100% { opacity: 0; transform: translateY(120%) rotate(0deg); }
+}
+.pnp-cw-feather { animation: pnp-cw-feather 1.7s cubic-bezier(0.4, 0.1, 0.4, 1) both; transform-origin: 50% 0%; }
+
+/* A dancer glides from its old spot (--gx,--gy offset) into formation. */
+@keyframes pnp-cw-glide {
+  0% { opacity: 0; transform: translate(var(--gx), var(--gy)) scale(0.7); }
+  25% { opacity: 1; }
+  72% { opacity: 1; transform: translate(0, 0) scale(1.04); }
+  82% { transform: translate(0, 0) scale(1); }
+  92% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(0, 0) scale(1); }
+}
+.pnp-cw-glide { animation: pnp-cw-glide 1.6s cubic-bezier(0.25, 0.7, 0.2, 1) both; transform-origin: 50% 60%; }
+
+/* The light ribbon trailing each glide fades as the dancer lands. */
+@keyframes pnp-cw-ribbon {
+  0% { opacity: 0; transform: scaleX(1.6); }
+  30% { opacity: 0.9; transform: scaleX(1.2); }
+  70% { opacity: 0.3; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.9); }
+}
+.pnp-cw-ribbon { animation: pnp-cw-ribbon 1.4s ease-out both; transform-origin: 100% 50%; }
+
+/* Formation sparkles shimmer into place. */
+@keyframes pnp-cw-lock {
+  0% { opacity: 0; transform: scale(0.2) rotate(-40deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(0deg); }
+  70% { transform: scale(0.92); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.pnp-cw-lock { animation: pnp-cw-lock 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Drifting feather-down petals for grace. */
+@keyframes pnp-cw-petal {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) rotate(var(--pr)) scale(1); }
+}
+.pnp-cw-petal { animation: pnp-cw-petal 1.5s ease-out both; transform-origin: 50% 50%; }
+
+/* Square-local: a feather settles and a spark winks. */
+@keyframes pnp-cw-settle {
+  0% { opacity: 0; transform: translateY(-30%) rotate(-10deg) scale(0.8); }
+  36% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(8%) scale(1); }
+}
+.pnp-cw-settle { animation: pnp-cw-settle 1.4s cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 50% 50%; }
+
+@keyframes pnp-cw-spark {
+  0% { opacity: 0; transform: scale(0.2); }
+  50% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.pnp-cw-spark { animation: pnp-cw-spark 0.8s ease-out both; transform-origin: 50% 50%; }
+
 /* --- reduced motion ----------------------------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */

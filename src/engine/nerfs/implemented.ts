@@ -910,6 +910,83 @@ export const SCENT_OF_BLOOD: Nerf = db({
   },
 });
 
+export const NURTURER: Nerf = db({
+  id: "nurturer",
+  name: "Nurturer",
+  description: "Can't capture the enemy king until you've promoted a pawn.",
+  flavor: "Raise something of your own before you take a life.",
+  tier: 6,
+  icon: "sprout",
+  implemented: true,
+  progress: (_s, ctx) => {
+    const promoted = ctx.board.history.some((m) => m.color === ctx.me && m.promotion);
+    return { value: promoted ? 1 : 0, max: 1, label: promoted ? "pawn promoted" : "0/1 pawn promoted" };
+  },
+  filterMoves: (moves, _s, ctx) => {
+    const promoted = ctx.board.history.some((m) => m.color === ctx.me && m.promotion);
+    if (promoted) return moves;
+    const filtered = moves.filter((m) => m.captured !== "k");
+    // Fallback: never empty the move list. If capturing the king is the ONLY
+    // legal move, allow it rather than soft-lock the player.
+    return filtered.length ? filtered : moves;
+  },
+  hint: (_s, ctx, legal) => {
+    const promoted = ctx.board.history.some((m) => m.color === ctx.me && m.promotion);
+    if (promoted) return null;
+    const regicides = legal.filter((m) => m.captured === "k");
+    if (regicides.length === 0) return null;
+    return {
+      text: "Promote a pawn before you may take the enemy king.",
+      squares: regicides.map((m) => m.to),
+      tone: "warn",
+    };
+  },
+});
+
+export const SECRET_GARDEN: Nerf = db({
+  id: "secret_garden",
+  name: "Secret Garden",
+  description:
+    "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
+  flavor: "Some patches of earth are not yours to trample.",
+  tier: 6,
+  icon: "flower",
+  implemented: true,
+  init: (rng, color) => {
+    // Pick two distinct pawn files; each garden is the 3-file-wide, 3-rank-deep
+    // block directly in front of that pawn's starting square. Two 3-wide zones
+    // cover at most 6 of the 8 files, so pawn pushes on the other files stay
+    // legal from the opening, so the player can never be stranded.
+    const files: number[] = [];
+    while (files.length < 2) {
+      const f = rng.int(8);
+      if (!files.includes(f)) files.push(f);
+    }
+    const startR = color === "w" ? 1 : 6; // rank of this color's pawns (0-indexed)
+    const dir = color === "w" ? 1 : -1; // "forward" for this color
+    const gardens = new Set<number>();
+    for (const f of files) {
+      for (let df = -1; df <= 1; df++) {
+        for (let dr = 1; dr <= 3; dr++) {
+          const nf = f + df;
+          const nr = startR + dr * dir;
+          if (nf >= 0 && nf < 8 && nr >= 0 && nr < 8) gardens.add(SQ(nf, nr));
+        }
+      }
+    }
+    return { gardens: Array.from(gardens) };
+  },
+  filterMoves: (moves, state) => {
+    const set = new Set((state as { gardens: number[] }).gardens);
+    return moves.filter((m) => !set.has(m.to));
+  },
+  visual: (state) => ({ bannedSquares: (state as { gardens: number[] }).gardens }),
+  progress: (state) => {
+    const g = (state as { gardens: number[] }).gardens;
+    return { value: g.length, max: g.length, label: `${g.length} garden squares off limits` };
+  },
+});
+
 export const ALL_IMPLEMENTED: Nerf[] = [
   LUCKY,
   CESS,
@@ -957,6 +1034,8 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   RESPECTFUL,
   SIEGE,
   SCENT_OF_BLOOD,
+  NURTURER,
+  SECRET_GARDEN,
   ...MORE_NERFS,
   ...EXTRA_NERFS,
   ...EXPANDED_NERFS,

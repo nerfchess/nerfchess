@@ -53,6 +53,17 @@ export default function HomePage() {
             </Link>
           </h1>
 
+          {/* One quiet, obvious door for brand-new players: the built-in
+              guided tutorial (a real bot game with coach marks). */}
+          <Link
+            href="/tutorial"
+            className="mt-3 inline-flex items-center gap-2 border border-gold/40 bg-gold/10 px-3 py-1.5 text-[12px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
+          >
+            <span className="smallcaps">New here?</span>
+            Learn the game in 3 minutes
+            <span aria-hidden>→</span>
+          </Link>
+
           <LiveNowStrip />
 
           <ReturnToGameBanner />
@@ -68,7 +79,7 @@ export default function HomePage() {
               Play Online
             </Link>
             <Link
-              href="/friend"
+              href="/lobby?tab=friends"
               className="btn-glass flex items-center justify-center gap-2 px-4 py-3 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
@@ -87,9 +98,6 @@ export default function HomePage() {
             <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate block p-3.5 no-underline">
               <span className="font-display text-lg font-bold uppercase tracking-wide text-mode-buffGlow underline decoration-mode-buff/60 decoration-2 underline-offset-4">
                 Buff
-              </span>
-              <span className="ml-2 smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
-                Best for your first game
               </span>
               <p className="mt-2 text-[13px] leading-snug text-parchment-300">
                 Start with normal chess. Draft{" "}

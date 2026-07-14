@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Snowy mountain peak">
+  <defs>
+    <linearGradient id="sp-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a86c0"/><stop offset="1" stop-color="#bfe0f2"/></linearGradient>
+    <linearGradient id="sp-rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a8494"/><stop offset="1" stop-color="#4f5866"/></linearGradient>
+    <linearGradient id="sp-snow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#sp-sky)"/>
+  <circle cx="150" cy="44" r="18" fill="#fffbe8" opacity="0.9"/>
+  <g fill="#ffffff" opacity="0.9"><ellipse cx="44" cy="40" rx="28" ry="8"/><ellipse cx="70" cy="34" rx="16" ry="5"/><ellipse cx="170" cy="80" rx="20" ry="6"/></g>
+  <!-- back peaks -->
+  <path d="M0 130 L40 76 L80 130 Z" fill="#8a95a6" opacity="0.7"/>
+  <path d="M110 132 L150 82 L200 132 Z" fill="#7f8a9c" opacity="0.7"/>
+  <!-- main peak -->
+  <path d="M20 168 L100 40 L180 168 Z" fill="url(#sp-rock)"/>
+  <!-- snow cap -->
+  <path d="M100 40 L128 84 Q116 78 108 86 Q100 78 92 88 Q84 78 72 84 Z" fill="url(#sp-snow)"/>
+  <path d="M100 40 L120 72 Q112 70 106 78 L100 40 Z" fill="#f0f6fc"/>
+  <!-- snow gullies -->
+  <g fill="#e2edf6" opacity="0.8">
+    <path d="M100 88 L96 168 L104 168 Z"/>
+    <path d="M78 100 L64 168 L74 168 L88 104 Z"/>
+    <path d="M122 100 L136 168 L126 168 L112 104 Z"/>
+  </g>
+  <path d="M100 40 L180 168" stroke="#3a4250" stroke-width="1.5" opacity="0.4"/>
+  <!-- shadow face -->
+  <path d="M100 40 L180 168 L120 168 L100 60 Z" fill="#3f4854" opacity="0.25"/>
+  <!-- foreground snow -->
+  <path d="M0 168 Q100 158 200 168 V200 H0 Z" fill="url(#sp-snow)"/>
+  <g fill="#2f4a2c"><path d="M30 168 l6 -18 l6 18 z"/><path d="M170 168 l7 -20 l7 20 z"/><path d="M50 170 l4 -12 l4 12 z"/></g>
+  <g fill="#ffffff"><circle cx="60" cy="60" r="1.4"/><circle cx="140" cy="120" r="1.4"/><circle cx="30" cy="150" r="1.2"/><circle cx="180" cy="140" r="1.2"/></g>
+</svg>

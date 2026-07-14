@@ -13,6 +13,7 @@ import { FUNNY_CLOCK } from "./clock";
 import { FUNNY_TRADEOFFS } from "./tradeoffs";
 import { FUNNY_META } from "./meta";
 import { FUNNY_EXPANSION } from "./expansion";
+import { FUNNY_PRANKS } from "./pranks";
 
 export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_SLAPSTICK,
@@ -24,4 +25,5 @@ export const FUNNY_CARDS: Buff[] = [
   ...FUNNY_TRADEOFFS,
   ...FUNNY_META,
   ...FUNNY_EXPANSION,
+  ...FUNNY_PRANKS,
 ];

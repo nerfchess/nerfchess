@@ -122,29 +122,28 @@ export const PT_TIME_CARDS: Buff[] = [
 
   // #5 All In --------------------------------------------------------------
   // Engine order (game.ts): a blockedDrafts round is skipped WITHOUT consuming
-  // prepThree / bankBonus / takeBoth, so the single skip resolves first and the
-  // banked three-card, tier-up, take-all offer lands on the draft after it.
-  // rollOffer (draft.ts) guards the prepThree offer against the apex-bank
-  // collapse: a banked skip that would otherwise fold into a single top-tier
-  // apex card stays a three-card, one-tier-higher offer here, so All In always
-  // pays out three cards (not one) even when it banks into the top of the curve.
-  // takeBoth then auto-takes all three. Same net as pt.txt's "three from the
-  // next tier up", but the ante is now a single skipped draft.
+  // prepThree / takeBoth, so the single skip resolves first and the banked
+  // three-card, take-all offer lands on the draft after it. rollOffer (draft.ts)
+  // gives a prepThree offer three cards (never collapsing it into an apex slot),
+  // and takeBoth then auto-takes all three. The ante is a single skipped draft.
   card(
     {
       id: "all_in",
       icon: "Club",
       name: "All In",
       description:
-        "Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards one tier higher, and you take all three.",
+        "Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards, and you take all three.",
       tier: 6,
       category: "draft",
       flavor: "Three sevens or nothing.",
     },
+    // REBALANCE (~25% weaker): the payout was three cards ONE TIER HIGHER, all
+    // taken. The tier lift (bankBonus) is dropped, so All In now banks three
+    // cards at the normal tier and still takes all three. Same three-for-one
+    // card advantage off a single skipped draft, minus the tier boost on top.
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
       api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
@@ -231,14 +230,17 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "TimerOff",
       name: "Time Out",
       description:
-        "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 20 seconds.",
+        "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 15 seconds.",
       tier: 5,
       category: "draft",
       flavor: "Two-minute penalty, no draft for you.",
     },
+    // REBALANCE (~25% weaker): a full draft-skip stacked with clock damage read
+    // rich for tier 5, so the clock bite drops from 20 to 15 seconds. The
+    // draft-skip (the card's main effect) is untouched.
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.adjustClock({ subOppSec: 20 });
+      api.adjustClock({ subOppSec: 15 });
     }),
   ),
 
@@ -280,14 +282,17 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Gift",
       name: "Mystery Box",
       description:
-        "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 8.",
+        "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 7.",
       tier: 4,
       category: "draft",
       flavor: "Could be a diamond, could be a sock.",
     },
+    // REBALANCE (~25% weaker at the top): the random tier ceiling drops from 8
+    // to 7, so the box can no longer roll a near-apex tier-8 offer for a tier-4
+    // card. Floor unchanged at tier 2.
     instant((_inst, api) => {
       // The floor is tier 2: the sock at the bottom of the crate was thrown out.
-      api.mine.flags.forceTier = (2 + api.rng.int(7)) as Tier;
+      api.mine.flags.forceTier = (2 + api.rng.int(6)) as Tier;
     }),
   ),
 
@@ -335,33 +340,33 @@ export const PT_TIME_CARDS: Buff[] = [
   ),
 
   // #118 Gamble ------------------------------------------------------------
-  // Buffed (owner request: the gambling cards paid out too little): heads now
-  // also lifts the next offer a tier, and tails still trades a skipped draft
-  // evenly with the opponent but banks YOU the +1 for the offer after, so
-  // even the losing face leaves you ahead on tempo. The coin is now weighted:
-  // heads lands two times in three.
+  // REBALANCE (~25% weaker): the coin was weighted 2/3 to heads; it is now a
+  // fair 1/2. The prizes are unchanged (heads still takes both cards for two
+  // drafts, tails still trades a skipped draft with the opponent, and both
+  // faces still bank the +1 tier lift), so the trim is purely to the odds of
+  // hitting the strong heads face.
   card(
     {
       id: "gamble",
       icon: "Spade",
       name: "Gamble",
       description:
-        "Flip a lucky coin: heads lands two times in three. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
+        "Flip a fair coin, heads half the time. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
       tier: 4,
       category: "draft",
       flavor: "Heads you win, tails you win a little.",
     },
     instant((inst, api) => {
-      if (api.rng.int(3) !== 2) {
+      if (api.rng.int(2) === 0) {
         api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
         // outcome: a short human line shown on the board after the coin flip
         // resolves, so the player learns which face came up (see the cast
         // announcement banner). Synced with the card state.
-        inst.state.outcome = "Heads — take BOTH cards for your next 2 drafts (+1 tier)";
+        inst.state.outcome = "Heads: take BOTH cards for your next 2 drafts (+1 tier)";
       } else {
         api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
         api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-        inst.state.outcome = "Tails — you both skip a draft (+1 tier next)";
+        inst.state.outcome = "Tails: you both skip a draft (+1 tier next)";
       }
       // Both faces bank the tier lift (capped at 1 like every bank).
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
@@ -369,30 +374,29 @@ export const PT_TIME_CARDS: Buff[] = [
   ),
 
   // #119 Jackpot -----------------------------------------------------------
-  // The apex gateway from the gambling side, buffed past a coin flip (owner
-  // request): the lever now hits two times in three, landing a random apex
-  // card outright, and even the miss pays double: your next offer rolls a
-  // tier higher AND deals three cards instead of two, so a pull is never
-  // close to a dead loss.
+  // REBALANCE (~25% weaker): the apex hit rate drops from 2/3 to a fair 1/2
+  // coin flip. The miss consolation is unchanged and still rich (next offer is
+  // three cards, one tier higher), so a pull is never close to a dead loss, but
+  // landing the apex is no longer the odds-on outcome for a tier-7 card.
   card(
     {
       id: "jackpot",
       icon: "Dices",
       name: "Jackpot",
       description:
-        "Pull the lever for a two-in-three shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
+        "Pull the lever for a one-in-two shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
       tier: 7,
       category: "draft",
       flavor: "Cherry, cherry, and please, cherry.",
     },
     instant((inst, api) => {
-      if (api.rng.int(3) !== 2) {
+      if (api.rng.int(2) === 0) {
         grantRandomTier9(api);
-        inst.state.outcome = "JACKPOT — a random apex card is yours!";
+        inst.state.outcome = "JACKPOT: a random apex card is yours!";
       } else {
         api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
         api.mine.flags.prepThree = true;
-        inst.state.outcome = "So close — next draft: 3 cards, +1 tier";
+        inst.state.outcome = "So close: next draft is 3 cards, +1 tier";
       }
     }),
   ),

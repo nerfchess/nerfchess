@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Tent under the stars">
+  <defs>
+    <linearGradient id="ts-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101a3c"/><stop offset="0.6" stop-color="#26305e"/><stop offset="1" stop-color="#3f4a7a"/></linearGradient>
+    <radialGradient id="ts-moon" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff7d6"/><stop offset="0.6" stop-color="#f4e6a8"/><stop offset="1" stop-color="#f4e6a8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#ts-sky)"/>
+  <circle cx="48" cy="46" r="26" fill="url(#ts-moon)"/>
+  <circle cx="48" cy="46" r="13" fill="#fff6d0"/>
+  <circle cx="53" cy="43" r="11" fill="#26305e" opacity="0.5"/>
+  <g fill="#fffbe8">
+    <circle cx="100" cy="24" r="1.2"/><circle cx="130" cy="16" r="1"/><circle cx="160" cy="30" r="1.3"/><circle cx="180" cy="18" r="0.9"/><circle cx="120" cy="44" r="1"/><circle cx="150" cy="54" r="1.1"/><circle cx="176" cy="60" r="0.8"/><circle cx="90" cy="50" r="0.8"/><circle cx="30" cy="90" r="0.9"/><circle cx="70" cy="30" r="0.7"/>
+  </g>
+  <path d="M148 34 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5 z" fill="#fffbe8"/>
+  <!-- milky way wisp -->
+  <path d="M110 20 Q140 70 190 110" stroke="#c9d4ff" stroke-width="14" opacity="0.12" fill="none"/>
+  <!-- ground -->
+  <path d="M0 150 Q100 138 200 150 V200 H0 Z" fill="#1c2740"/>
+  <path d="M0 158 Q100 148 200 158 V200 H0 Z" fill="#141c30"/>
+  <!-- trees -->
+  <g fill="#0d1424"><path d="M20 150 l7 -26 l7 26 z"/><path d="M176 150 l8 -30 l8 30 z"/><path d="M160 152 l5 -18 l5 18 z"/></g>
+  <!-- tent -->
+  <path d="M76 158 L108 108 L140 158 Z" fill="#d9663f"/>
+  <path d="M108 108 L140 158 L128 158 L108 122 Z" fill="#b34e2c"/>
+  <path d="M108 116 L94 158 L122 158 Z" fill="#2a1a14"/>
+  <path d="M108 116 L100 158 L108 158 Z" fill="#ffd45e" opacity="0.85"/>
+  <path d="M108 108 L108 100" stroke="#8a3f22" stroke-width="2"/>
+  <!-- campfire -->
+  <g>
+    <path d="M150 172 q-4 -8 0 -14 q4 6 4 10 q3 -3 2 -7 q4 6 -1 12 z" fill="#ff9e3d"/>
+    <path d="M150 172 q-2 -5 0 -9 q2 4 0 9 z" fill="#ffe07a"/>
+    <path d="M144 174 l12 0" stroke="#6b3f22" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <circle cx="150" cy="168" r="14" fill="#ff9e3d" opacity="0.12"/>
+</svg>

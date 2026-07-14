@@ -196,13 +196,6 @@ export function HeroTv() {
           {live ? "Watch →" : "Replay →"}
         </Link>
       </div>
-      {/* One line for the first-time visitor: what this board is and why the
-          position can look nothing like normal chess. */}
-      <p className="mt-1.5 text-center text-[11px] leading-snug text-parchment-400">
-        {live && !over
-          ? "A real game, streaming live. Drafted cards bend the rules mid-game, so positions here can look impossible."
-          : "A recent real game. Drafted cards bend the rules mid-game, so positions here can look impossible."}
-      </p>
     </div>
   );
 }

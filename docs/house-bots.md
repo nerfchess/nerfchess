@@ -34,7 +34,7 @@ ripped out. Every cap below exists because of that.
 | The chess engine (search + evaluation) | `src/engine/ai.ts` |
 | Buff-draft choice + buff activation choice (shared with client bot) | `src/engine/game.ts` (`aiDraftChoice`, `aiChooseBuffActivation`) |
 | Orchestration: seeks, pairing, house-vs-house games, the alarm tick, on/off | `worker.ts` (the game-server Durable Object) |
-| Flowered avatars | `src/lib/avatars.ts` |
+| Avatars (flower presets + house-pfp scenic images) | `src/lib/avatars.ts`, `public/house-pfp/` |
 | Runtime on/off flag storage | `app_settings` table (D1), key `house_enabled` |
 
 ---
@@ -65,10 +65,17 @@ cold start, idempotent):
   (`houseSeedRating`), so the roster does not debut as blocks of identical
   numbers. RD/volatility start at normal values, so their ratings move like real
   players' once they play.
-- Its avatar is one of 16 **flower** presets (`FLOWER_AVATARS`): the normal
-  piece-on-plate look plus a small flower in the bottom-left corner. Real
-  accounts can never pick a flower avatar, so that flower is the reliable "this
-  is a house player" mark anywhere an avatar renders.
+- Its avatar is one of two house-only looks. **About half** the roster
+  (`HOUSE_PFP_ASSIGN` in `bots.ts`) gets a "real uploaded-looking" profile
+  picture: a hand-authored scenic/object SVG (a beach, a coffee mug, a
+  houseplant, a night skyline, ...) stored as `house_pfp:<name>` and served from
+  `public/house-pfp/<name>.svg`, so the crowd reads like real users who uploaded
+  a random photo. The rest keep a **flower** preset (`FLOWER_AVATARS`): the
+  normal piece-on-plate look plus a small flower mark. Real accounts can never
+  pick either kind (`isAvatarId` and the avatar upload route reject them, and
+  `isHousePfp` only matches house-held ids), so both stay house-only. The
+  `/mod/house` editor may move a persona between any look in `HOUSE_AVATAR_IDS`
+  (both catalogs) but never outside it.
 
 Because they hold real rows, rated games against them count, and they appear on
 the leaderboard exactly like humans (moderator views filter them out).

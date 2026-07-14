@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bowl of fruit">
+  <defs>
+    <linearGradient id="fb-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eae0d0"/><stop offset="1" stop-color="#d0c1a8"/></linearGradient>
+    <linearGradient id="fb-table" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9784a"/><stop offset="1" stop-color="#7a5230"/></linearGradient>
+    <linearGradient id="fb-bowl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe6ea"/><stop offset="1" stop-color="#a9b6bf"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#fb-wall)"/>
+  <rect x="0" y="140" width="200" height="60" fill="url(#fb-table)"/>
+  <path d="M0 140 H200" stroke="#5f3f24" stroke-width="2" opacity="0.5"/>
+  <ellipse cx="100" cy="150" rx="66" ry="14" fill="#000000" opacity="0.12"/>
+  <!-- fruit behind rim -->
+  <g stroke="#00000018" stroke-width="1">
+    <circle cx="72" cy="120" r="18" fill="#e0483a"/>
+    <ellipse cx="72" cy="120" rx="8" ry="14" fill="#f27a68" opacity="0.5"/>
+    <circle cx="128" cy="118" r="19" fill="#f2a83a"/>
+    <ellipse cx="128" cy="116" rx="8" ry="14" fill="#f6c470" opacity="0.5"/>
+    <circle cx="100" cy="110" r="20" fill="#8fbf3a"/>
+    <ellipse cx="100" cy="108" rx="8" ry="14" fill="#bfe07a" opacity="0.5"/>
+  </g>
+  <!-- grapes -->
+  <g fill="#7a4f9a"><circle cx="150" cy="128" r="6"/><circle cx="158" cy="132" r="6"/><circle cx="152" cy="138" r="6"/><circle cx="160" cy="140" r="6"/><circle cx="156" cy="146" r="6"/></g>
+  <g fill="#9a72b8" opacity="0.6"><circle cx="148" cy="126" r="2"/><circle cx="156" cy="130" r="2"/><circle cx="150" cy="136" r="2"/></g>
+  <!-- banana -->
+  <path d="M48 126 Q60 108 88 106 Q78 118 60 130 Q52 132 48 126 Z" fill="#f0cf3a"/>
+  <path d="M48 126 Q60 110 86 107" stroke="#c9a82a" stroke-width="1.4" fill="none"/>
+  <path d="M86 106 l4 -4" stroke="#5f4a22" stroke-width="3" stroke-linecap="round"/>
+  <!-- leaf/stems -->
+  <path d="M100 90 q2 -8 10 -10" stroke="#4f7a2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M110 80 q6 -4 4 -10 q-6 2 -4 10 z" fill="#5c8a34"/>
+  <!-- bowl -->
+  <path d="M40 138 Q100 172 160 138 Q152 176 100 178 Q48 176 40 138 Z" fill="url(#fb-bowl)"/>
+  <ellipse cx="100" cy="138" rx="60" ry="12" fill="#c7d0d6"/>
+  <ellipse cx="100" cy="138" rx="60" ry="12" fill="none" stroke="#8f9ba4" stroke-width="1.5"/>
+  <path d="M56 148 Q70 166 100 170" stroke="#ffffff" stroke-width="2.5" opacity="0.4" fill="none"/>
+</svg>

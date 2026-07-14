@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
+import { Podium } from "@/components/ratings/Podium";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
@@ -178,6 +179,12 @@ export default function LeaderboardPage() {
             </Link>{" "}
             to claim the top spot.
           </div>
+        )}
+
+        {/* Highlight dais for the active ladder's top three, above the full
+            table. Switching tabs re-renders it for that ladder. */}
+        {rows && rows.length > 0 && (
+          <Podium rows={rows.slice(0, 3)} category={category} isMe={isMeName} />
         )}
 
         {rows && rows.length > 0 && (

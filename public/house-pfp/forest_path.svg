@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Forest path">
+  <defs>
+    <linearGradient id="fp-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dfe9c8"/>
+      <stop offset="1" stop-color="#a9c58c"/>
+    </linearGradient>
+    <linearGradient id="fp-path" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9ab7e"/>
+      <stop offset="1" stop-color="#9c7c54"/>
+    </linearGradient>
+    <linearGradient id="fp-canopy" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#557a3e"/>
+      <stop offset="1" stop-color="#2f4d29"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#fp-sky)"/>
+  <!-- sun shafts -->
+  <g fill="#fbf4cf" opacity="0.4">
+    <path d="M80 0 L70 200 L92 200 L96 0 Z"/>
+    <path d="M120 0 L128 200 L110 200 L108 0 Z"/>
+  </g>
+  <!-- back trees -->
+  <g fill="#6b8b4c" opacity="0.85">
+    <ellipse cx="30" cy="70" rx="34" ry="52"/>
+    <ellipse cx="170" cy="66" rx="36" ry="56"/>
+    <ellipse cx="100" cy="50" rx="40" ry="46"/>
+  </g>
+  <!-- ground -->
+  <rect x="0" y="120" width="200" height="80" fill="#4d6b34"/>
+  <!-- path -->
+  <path d="M84 200 L96 118 L108 118 L120 200 Z" fill="url(#fp-path)"/>
+  <g stroke="#8a6c48" stroke-width="1.4" opacity="0.6"><path d="M90 180 h24 M92 160 h18 M95 140 h12"/></g>
+  <!-- foreground trunks -->
+  <g fill="#5a4227">
+    <rect x="24" y="86" width="16" height="114" rx="3"/>
+    <rect x="160" y="80" width="18" height="120" rx="3"/>
+    <rect x="66" y="104" width="9" height="96" rx="2"/>
+    <rect x="128" y="100" width="10" height="100" rx="2"/>
+  </g>
+  <g fill="#4a361f" opacity="0.7">
+    <rect x="30" y="96" width="3" height="90"/><rect x="167" y="92" width="3" height="96"/>
+  </g>
+  <!-- foreground canopy -->
+  <g fill="url(#fp-canopy)">
+    <ellipse cx="32" cy="70" rx="40" ry="48"/>
+    <ellipse cx="168" cy="60" rx="44" ry="52"/>
+    <ellipse cx="70" cy="96" rx="24" ry="30"/>
+    <ellipse cx="132" cy="90" rx="26" ry="32"/>
+  </g>
+  <g fill="#7ea456" opacity="0.7">
+    <circle cx="46" cy="58" r="8"/><circle cx="156" cy="52" r="9"/><circle cx="64" cy="88" r="6"/><circle cx="140" cy="82" r="7"/>
+  </g>
+  <!-- ferns -->
+  <g stroke="#3d5a2a" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M100 200 q-10 -14 -6 -30 M100 200 q10 -14 6 -30 M100 200 q0 -18 0 -34"/>
+  </g>
+  <g fill="#c7d68a"><circle cx="150" cy="176" r="2.4"/><circle cx="56" cy="182" r="2.4"/><circle cx="112" cy="190" r="2"/></g>
+</svg>

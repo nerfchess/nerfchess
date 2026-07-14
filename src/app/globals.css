@@ -2505,6 +2505,52 @@ html[data-theme="light"] .bg-black\/70 {
   }
 }
 
+/* === Post-draft "waiting for opponent" notice ==============================
+   Keeps the waiting card / collapsed banner reading as ALIVE (not soft-locked)
+   while the opponent finishes their simultaneous draft. A soft gold breath on
+   the box-shadow, a live "ping" ripple behind the status dot, and a gently
+   fading ellipsis — all compositor-cheap and all dropped under
+   prefers-reduced-motion so the notice stays legible without motion. */
+.waiting-banner {
+  animation: waiting-breathe 2.8s ease-in-out infinite;
+}
+@keyframes waiting-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgb(216 181 110 / 0.30),
+      0 0 18px -6px rgb(216 181 110 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgb(216 181 110 / 0.55),
+      0 0 26px -4px rgb(216 181 110 / 0.60);
+  }
+}
+.waiting-ping {
+  animation: waiting-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes waiting-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(2.4); opacity: 0; }
+}
+.waiting-ellipsis::after {
+  content: "\2026"; /* … */
+  animation: waiting-ellipsis 1.6s ease-in-out infinite;
+}
+@keyframes waiting-ellipsis {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .waiting-banner,
+  .waiting-ping,
+  .waiting-ellipsis::after {
+    animation: none;
+  }
+  .waiting-ping { opacity: 0; }
+  .waiting-ellipsis::after { opacity: 1; }
+}
+
 /* === Ambient gold-dust star field (home + lobby) =============================
    A fixed, pointer-events-none field of candlelight motes behind the page
    (shared via src/components/StarField.tsx): three parallax dust layers (each

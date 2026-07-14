@@ -64,13 +64,16 @@ export const MYSTIC_FATE: Buff[] = [
       id: "favorable_stars",
       name: "Favorable Stars",
       description:
-        "You cast your chart and the houses agree: your next draft is fated to offer tier 6 cards.",
+        "You cast your chart and the houses agree: your next draft is fated to offer tier 5 cards.",
       tier: 5,
       category: "draft",
       flavor: "Born under a good sign, drafting under a better one.",
     },
+    // Rebalance: a guaranteed tier-6 offer was the strongest forced roll in the
+    // pool; brought down a notch to tier 5. Still a reliable high roll, just no
+    // longer a lock on a top-tier card.
     instant((_inst, api) => {
-      api.mine.flags.forceTier = 6;
+      api.mine.flags.forceTier = 5;
     }),
   ),
   card(

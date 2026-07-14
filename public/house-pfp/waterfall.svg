@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Waterfall in the jungle">
+  <defs>
+    <linearGradient id="wf-cliff" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a5c3a"/><stop offset="1" stop-color="#2f3f26"/></linearGradient>
+    <linearGradient id="wf-fall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaf6f2"/><stop offset="1" stop-color="#a8cfd0"/></linearGradient>
+    <linearGradient id="wf-pool" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#69b7ab"/><stop offset="1" stop-color="#2f7d78"/></linearGradient>
+    <radialGradient id="wf-mist" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffffff" stop-opacity="0.8"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="#bcd9c0"/>
+  <!-- rock walls -->
+  <path d="M0 0 H74 Q86 60 78 140 L0 160 Z" fill="url(#wf-cliff)"/>
+  <path d="M200 0 H126 Q114 60 122 140 L200 160 Z" fill="url(#wf-cliff)"/>
+  <g fill="#3a4a2c" opacity="0.7"><path d="M20 20 l8 30 -6 24 M40 10 l6 40 M150 16 l-6 36 M172 24 l6 40"/></g>
+  <!-- foliage -->
+  <g fill="#3c6b34">
+    <ellipse cx="18" cy="30" rx="22" ry="18"/><ellipse cx="60" cy="20" rx="18" ry="14"/>
+    <ellipse cx="182" cy="28" rx="22" ry="18"/><ellipse cx="140" cy="18" rx="18" ry="14"/>
+  </g>
+  <g fill="#5a8a44" opacity="0.8"><ellipse cx="30" cy="24" rx="10" ry="8"/><ellipse cx="170" cy="22" rx="10" ry="8"/></g>
+  <!-- waterfall -->
+  <path d="M84 30 H116 L112 150 H88 Z" fill="url(#wf-fall)"/>
+  <g stroke="#ffffff" stroke-width="1.4" opacity="0.7"><path d="M92 34 V148 M100 32 V150 M108 34 V148 M96 40 V150 M104 40 V150"/></g>
+  <!-- pool -->
+  <ellipse cx="100" cy="168" rx="70" ry="26" fill="url(#wf-pool)"/>
+  <circle cx="100" cy="152" r="24" fill="url(#wf-mist)"/>
+  <g stroke="#dff4ee" stroke-width="1.6" opacity="0.6" fill="none"><path d="M60 172 q20 -6 40 0 q20 6 40 0 M70 184 q16 -4 30 0"/></g>
+  <g fill="#ffffff" opacity="0.8"><circle cx="88" cy="150" r="2"/><circle cx="110" cy="146" r="1.6"/><circle cx="100" cy="140" r="1.4"/></g>
+</svg>

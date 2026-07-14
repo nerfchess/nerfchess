@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bookshelf">
+  <defs>
+    <linearGradient id="bk-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5f3a"/><stop offset="1" stop-color="#5f3f24"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="#3a2c22"/>
+  <rect x="14" y="14" width="172" height="172" rx="4" fill="url(#bk-wood)"/>
+  <rect x="22" y="22" width="156" height="156" fill="#2f231a"/>
+  <!-- shelves -->
+  <g fill="#7a5232"><rect x="22" y="72" width="156" height="8"/><rect x="22" y="128" width="156" height="8"/><rect x="22" y="170" width="156" height="8"/></g>
+  <!-- top row books -->
+  <g>
+    <rect x="28" y="34" width="10" height="38" fill="#c94f4f"/>
+    <rect x="40" y="30" width="9" height="42" fill="#e0a83a"/>
+    <rect x="51" y="36" width="11" height="36" fill="#3f8a6a"/>
+    <rect x="64" y="32" width="8" height="40" fill="#5f7abf"/>
+    <rect x="74" y="38" width="12" height="34" fill="#b8743a" transform="rotate(-8 80 72)"/>
+    <rect x="98" y="34" width="9" height="38" fill="#8a5fa8"/>
+    <rect x="109" y="30" width="10" height="42" fill="#4f9ab0"/>
+    <rect x="121" y="36" width="8" height="36" fill="#d98a5c"/>
+    <rect x="131" y="32" width="11" height="40" fill="#5f7a3f"/>
+    <rect x="144" y="34" width="9" height="38" fill="#c94f7a"/>
+    <rect x="155" y="38" width="10" height="34" fill="#3a4a6b"/>
+  </g>
+  <g stroke="#00000030" stroke-width="1"><path d="M28 44 h10 M40 42 h9 M64 44 h8 M109 40 h10 M131 42 h11 M155 48 h10"/></g>
+  <!-- mid row books + plant -->
+  <g>
+    <rect x="28" y="88" width="11" height="40" fill="#4f8a6a"/>
+    <rect x="41" y="90" width="9" height="38" fill="#c9a83a"/>
+    <rect x="52" y="86" width="10" height="42" fill="#b8503a"/>
+    <rect x="64" y="90" width="8" height="38" fill="#6b5fa8"/>
+    <rect x="74" y="88" width="11" height="40" fill="#3f7ab0"/>
+    <path d="M100 100 h24 l-3 12 h-18 z" fill="#c9764a"/>
+    <g fill="#4f8a54"><ellipse cx="112" cy="90" rx="4" ry="10"/><ellipse cx="105" cy="94" rx="3.4" ry="8" transform="rotate(-30 105 94)"/><ellipse cx="119" cy="94" rx="3.4" ry="8" transform="rotate(30 119 94)"/></g>
+    <rect x="134" y="86" width="10" height="42" fill="#d98a5c"/>
+    <rect x="146" y="90" width="9" height="38" fill="#5f7a3f"/>
+    <rect x="157" y="88" width="10" height="40" fill="#8a4f6b"/>
+  </g>
+  <!-- bottom row -->
+  <g>
+    <rect x="28" y="140" width="9" height="30" fill="#6b7abf"/>
+    <rect x="39" y="136" width="11" height="34" fill="#c94f4f"/>
+    <rect x="52" y="140" width="8" height="30" fill="#e0a83a"/>
+    <rect x="62" y="136" width="10" height="34" fill="#3f8a6a"/>
+    <!-- lying stack -->
+    <rect x="90" y="158" width="40" height="6" fill="#b8743a"/>
+    <rect x="94" y="150" width="34" height="6" fill="#5f7abf"/>
+    <rect x="98" y="142" width="28" height="6" fill="#c94f7a"/>
+    <rect x="140" y="136" width="10" height="34" fill="#4f9ab0"/>
+    <rect x="152" y="140" width="9" height="30" fill="#5f7a3f"/>
+    <rect x="163" y="136" width="8" height="34" fill="#8a5fa8"/>
+  </g>
+  <rect x="14" y="14" width="172" height="172" rx="4" fill="none" stroke="#3a2414" stroke-width="3"/>
+</svg>

@@ -16,11 +16,15 @@ import { PLAYS as GREAT_PLAYS } from "./greatPlays";
 import { PLAYS as BASIC_PLAYS } from "./basicPlays";
 import { PLAYS as PERSONAL_PLAYS } from "./personalPlays";
 import { PLAYS as MEME_PLAYS } from "./memePlays";
+import { PLAYS as STUB_PLAYS } from "./stubPlays";
+import { PLAYS as PRANK_PLAYS } from "./prankPlays";
+import { PLAYS as CASINO_PLAYS } from "./casinoPlays";
 
 // Later spreads win within plugins; core SIGNATURES always beat plugins at
 // the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set,
-// personal set, meme (brainrot batch 2) set.
-const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS };
+// personal set, meme (brainrot batch 2) set, then the revived-stub, prank,
+// and casino sets.
+const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS };
 
 // Publish the full SignatureConfig per plugin card id into the eager
 // registry, visual keyed back to this module. Deterministic: same inputs,
@@ -33,18 +37,25 @@ for (const [id, p] of Object.entries(MERGED)) {
 // the real merged keys exactly. The list is what suppresses the generated
 // fallback before this chunk loads, so drift means either wrong art plays
 // pre-load (id missing from the list) or a card renders no art forever (id
-// listed but no longer covered). Warn loudly the moment either happens.
+// listed but no longer covered).
+//
+// The AUTHORITATIVE, ship-blocking guard is the build-time check in
+// `test:rules` (scripts/check-sig-plugins.cjs), which regenerates PLUGIN_IDS
+// from these same PLAYS keys and FAILS CI on any drift. This runtime check is
+// the fast local mirror of it: it THROWS in dev/test (not just warns, which
+// production stripped and shipped silently) so a drifted registry can never be
+// exercised without someone noticing immediately.
 if (process.env.NODE_ENV !== "production") {
   const listed = new Set(PLUGIN_IDS);
   const merged = new Set(Object.keys(MERGED));
   const missing = [...merged].filter((id) => !listed.has(id));
   const stale = [...listed].filter((id) => !merged.has(id));
   if (missing.length || stale.length) {
-    console.warn(
+    throw new Error(
       "[sigPlugins] PLUGIN_IDS drifted from the merged plugin registry." +
         (missing.length ? ` Missing from PLUGIN_IDS: ${missing.join(", ")}.` : "") +
         (stale.length ? ` Stale in PLUGIN_IDS: ${stale.join(", ")}.` : "") +
-        " Update PLUGIN_IDS in sigPlugins.tsx.",
+        " Regenerate: node scripts/check-sig-plugins.cjs --write",
     );
   }
 }

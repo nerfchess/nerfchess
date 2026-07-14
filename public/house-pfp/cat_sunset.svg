@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Cat silhouette at sunset">
+  <defs>
+    <linearGradient id="cs-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4b45a"/><stop offset="0.45" stop-color="#ef8a5a"/><stop offset="1" stop-color="#9a5a7a"/></linearGradient>
+    <radialGradient id="cs-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff2cc"/><stop offset="0.6" stop-color="#ffd98a"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#cs-sky)"/>
+  <circle cx="100" cy="96" r="48" fill="url(#cs-sun)"/>
+  <circle cx="100" cy="96" r="26" fill="#fff0c4"/>
+  <!-- horizontal light bands -->
+  <g fill="#e8895c" opacity="0.35"><rect x="0" y="70" width="200" height="6"/><rect x="0" y="90" width="200" height="5"/><rect x="0" y="112" width="200" height="6"/></g>
+  <!-- distant hills -->
+  <path d="M0 150 Q60 132 120 148 Q170 160 200 146 V166 H0 Z" fill="#7a4f6a" opacity="0.7"/>
+  <!-- windowsill / ledge -->
+  <rect x="0" y="164" width="200" height="36" fill="#3a2436"/>
+  <path d="M0 164 H200" stroke="#26161f" stroke-width="2"/>
+  <!-- cat silhouette sitting -->
+  <g fill="#241820">
+    <path d="M108 164 Q108 120 122 118 Q130 118 130 128 L128 108 Q128 100 133 100 Q138 100 138 110 L140 118 Q152 122 152 150 Q152 162 148 164 Z"/>
+    <!-- ears -->
+    <path d="M122 118 l-3 -12 l9 6 z"/>
+    <path d="M138 112 l3 -12 l6 9 z"/>
+    <!-- tail -->
+    <path d="M108 158 Q86 160 82 140 Q80 130 88 132 Q84 148 108 150 Z"/>
+  </g>
+  <!-- whisker glow + eye -->
+  <circle cx="132" cy="124" r="2" fill="#f6d24a"/>
+  <g fill="#c9d4ff"><circle cx="40" cy="40" r="1"/><circle cx="60" cy="30" r="0.8"/><circle cx="30" cy="60" r="0.8"/></g>
+</svg>

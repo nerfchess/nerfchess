@@ -1,7 +1,7 @@
 "use client";
 
 import { Piece } from "./Pieces";
-import { AVATARS, avatarIdFor, isCustomAvatar } from "@/lib/avatars";
+import { AVATARS, avatarIdFor, housePfpSrc, isCustomAvatar, isHousePfp } from "@/lib/avatars";
 import { isAllowedFlair } from "@/lib/flair";
 
 // A player's profile picture: an uploaded image (stored as a small data URL),
@@ -26,10 +26,15 @@ export function PlayerAvatar({
   size?: number;
   className?: string;
 }) {
-  const core = isCustomAvatar(avatar) ? (
+  // An uploaded image (data URL) or a house-persona pfp (a static scenic/object
+  // SVG) both render as a plain <img>; anything else falls back to the preset
+  // piece-on-plate. isHousePfp only matches ids held by house accounts, so a
+  // real player's avatar never reaches this branch.
+  const imgSrc = isCustomAvatar(avatar) ? avatar : isHousePfp(avatar) ? housePfpSrc(avatar) : null;
+  const core = imgSrc ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={avatar}
+      src={imgSrc}
       alt=""
       className={"shrink-0 overflow-hidden rounded-md border border-white/20 object-cover " + className}
       style={{ width: size, height: size }}

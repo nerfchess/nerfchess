@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Potted cactus at sunset">
+  <defs>
+    <linearGradient id="pc-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c07a"/><stop offset="0.6" stop-color="#e88f72"/><stop offset="1" stop-color="#b56a82"/></linearGradient>
+    <linearGradient id="pc-cac" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fa05a"/><stop offset="1" stop-color="#376b34"/></linearGradient>
+    <linearGradient id="pc-pot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6ddcb"/><stop offset="1" stop-color="#c2b498"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#pc-bg)"/>
+  <circle cx="100" cy="70" r="30" fill="#fff0cc" opacity="0.55"/>
+  <circle cx="100" cy="70" r="16" fill="#fff6dd"/>
+  <rect x="0" y="150" width="200" height="50" fill="#c98a5a"/>
+  <path d="M0 150 H200" stroke="#a06a3c" stroke-width="2" opacity="0.6"/>
+  <ellipse cx="100" cy="156" rx="40" ry="8" fill="#000000" opacity="0.12"/>
+  <!-- cactus -->
+  <g fill="url(#pc-cac)" stroke="#2f5e2c" stroke-width="1">
+    <rect x="90" y="72" width="20" height="82" rx="10"/>
+    <path d="M90 108 q-18 0 -18 -18 v-8 q0 -8 6 -8 q6 0 6 8 v6 q0 6 6 6 z"/>
+    <path d="M110 100 q18 0 18 -18 v-10 q0 -8 6 -8 q6 0 6 8 v8 q0 6 -6 6 z"/>
+  </g>
+  <!-- ribs -->
+  <g stroke="#2f6b2c" stroke-width="1" opacity="0.5" fill="none"><path d="M96 78 v72 M104 78 v72 M100 80 v72"/></g>
+  <!-- spines -->
+  <g stroke="#e8f0c0" stroke-width="0.8"><path d="M90 90 l-3 -2 M90 106 l-3 -2 M90 124 l-3 -2 M110 96 l3 -2 M110 116 l3 -2 M110 136 l3 -2 M96 84 l0 -3 M104 84 l0 -3"/></g>
+  <!-- flower -->
+  <g transform="translate(100,70)" fill="#f06a8a"><ellipse cx="0" cy="-6" rx="3" ry="6"/><ellipse cx="-5" cy="-2" rx="3" ry="5" transform="rotate(-40 -5 -2)"/><ellipse cx="5" cy="-2" rx="3" ry="5" transform="rotate(40 5 -2)"/><ellipse cx="-3" cy="4" rx="3" ry="5" transform="rotate(-70 -3 4)"/><ellipse cx="3" cy="4" rx="3" ry="5" transform="rotate(70 3 4)"/></g>
+  <circle cx="100" cy="70" r="3" fill="#f6d24a"/>
+  <!-- pot -->
+  <path d="M78 152 h44 l-6 40 h-32 z" fill="url(#pc-pot)"/>
+  <path d="M74 146 h52 v8 h-52 z" fill="#f2ede2"/>
+  <g stroke="#b8a888" stroke-width="2" opacity="0.6"><path d="M80 164 h40 M82 176 h36"/></g>
+  <path d="M84 156 q-2 18 4 34" stroke="#ffffff" stroke-width="2" opacity="0.3" fill="none"/>
+</svg>

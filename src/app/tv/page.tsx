@@ -95,6 +95,11 @@ function TvView() {
   const [moves, setMoves] = useState<string[]>([]);
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
+  // The stream id whose tune-in failed even after a retry, so the board area
+  // shows a brief notice instead of an eternal "Tuning in…" spinner. Keyed by
+  // id (not a boolean) so switching to another game clears it for free, with
+  // no synchronous reset needed inside the watch effect.
+  const [failedStreamId, setFailedStreamId] = useState<string | null>(null);
   const [recent, setRecent] = useState<RecentGame | null>(null);
   // null = fallback not answered yet; the empty state must not show before
   // BOTH the lobby snapshot and this lookup have resolved ("no games are
@@ -111,6 +116,7 @@ function TvView() {
     setMoves([]);
     setPlayers(null);
     setOver(false);
+    setFailedStreamId(null);
     setRecent(null);
     setRecentChecked(false);
   }
@@ -171,12 +177,23 @@ function TvView() {
         setOver(true);
       }
     });
-    session.watch(streamId).catch(() => {
-      if (!cancelled) {
-        setPlayers(null);
-        setStreamId(null);
-      }
-    });
+    // Tune in with a single retry: watch() now rejects on a ~10s timeout or a
+    // disconnect (rather than hanging forever), so one clean retry recovers from
+    // a transient miss — e.g. an arena replica that wasn't loaded on the first
+    // attempt but has streamed by the second. If it still fails, surface a brief
+    // non-blocking notice instead of spinning on "Tuning in…" indefinitely.
+    const tuneIn = (retriesLeft: number) => {
+      session.watch(streamId).catch(() => {
+        if (cancelled) return;
+        if (retriesLeft > 0) {
+          tuneIn(retriesLeft - 1);
+        } else {
+          setPlayers(null);
+          setFailedStreamId(streamId);
+        }
+      });
+    };
+    tuneIn(1);
     return () => {
       cancelled = true;
       off();
@@ -289,6 +306,16 @@ function TvView() {
                 lastMove={lastMove}
                 disabled
               />
+            ) : streamId && failedStreamId === streamId ? (
+              /* Tune-in failed after a retry: don't spin forever. The featured
+                 game stays selected (the lobby may recover it, or the viewer can
+                 pick another), but the board area shows a brief notice. */
+              <div className="grid aspect-square w-full place-items-center plate">
+                <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
+                  Couldn&apos;t tune in to that game. Pick another from the list, or it
+                  will retry when the featured game changes.
+                </p>
+              </div>
             ) : !lobby || !recentChecked ? (
               /* Tuning in: covers BOTH the first lobby snapshot AND the
                  recent-game fallback lookup. The empty state only ever shows

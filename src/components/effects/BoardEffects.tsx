@@ -1617,12 +1617,20 @@ export interface SignatureConfig {
  * Queen's Rampage / Queen's Wrath / Lightning Strike are activated; Cataclysm
  * and Extinction are draft instants (fired at pick time on both surfaces).
  *
- * DEFERRED (HOOK): atomic_captures / atomic_captures_small are passive
- * on-capture augments (captureExplosion in the engine): their octagon of
- * cleared squares IS derivable from the diff, but a plain capture move emits
- * NO card-play event to key the signature to, so they need a capture-trigger
- * hook and belong in a later batch. The "octagon" ordering, AtomicBurst
- * visual, and playAtomic voice below are left in place, ready for that hook.
+ * ON-CAPTURE HOOK (wired): atomic_captures / atomic_captures_small are passive
+ * on-capture augments (captureExplosion in the engine). A plain capture emits
+ * no card-play event, but the explosion clears enemy pieces via
+ * api.removePiece, which bumps the buff mutation counter INSIDE the move's
+ * held-buff hook loop (game.ts). playMove records that observable hook fire in
+ * buffs.lastHookMutations, and OnlineMatch.reportHookMutations then fires the
+ * card's signature — so the octagon of cleared squares (a removal diff) is
+ * dressed by the AtomicBurst visual with the playAtomic voice, exactly like a
+ * cast card. This is deterministic and part of synced state: playMove runs
+ * identically on both clients from the same move, so both animate the blast
+ * and neither double-fires (a single fired entry, guarded in
+ * reportHookMutations). The signature plays only when the blast actually
+ * cleared a piece (an empty-neighbourhood capture bumps nothing, so no stray
+ * atomic flash). Their plugin art lives in greatPlays/basicPlays.
  *
  * BATCH 2 (source !== "removal"): the entries below decorate pieces that STAY
  * on the board, so they carry NO detonation diff for orderSignature to key on.

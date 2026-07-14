@@ -108,6 +108,38 @@ const CAMEL_LEAPS = [
   [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
 ] as const;
 
+/** Standard opening home squares by piece type and color. Used by the rewind
+ * family (Full Rewind) to send pieces back where they started; a pure read of
+ * the fixed initial layout, so it is fully deterministic. */
+const HOME: Record<Color, Partial<Record<PieceType, Square[]>>> = {
+  w: { r: [0, 7], n: [1, 6], b: [2, 5], q: [3], k: [4], p: [8, 9, 10, 11, 12, 13, 14, 15] },
+  b: { r: [56, 63], n: [57, 62], b: [58, 61], q: [59], k: [60], p: [48, 49, 50, 51, 52, 53, 54, 55] },
+};
+
+/** Empty squares within Chebyshev (king-step) distance `maxDist` of `from`,
+ * reachable as a blink (ignores intervening pieces). */
+function nearbyEmpty(api: BuffApi, from: Square, maxDist: number): Square[] {
+  const out: Square[] = [];
+  for (let sq = 0; sq < 64; sq++) {
+    if (api.board.pieces[sq]) continue;
+    const d = Math.max(Math.abs(FILE(sq) - FILE(from)), Math.abs(RANK(sq) - RANK(from)));
+    if (d >= 1 && d <= maxDist) out.push(sq);
+  }
+  return out;
+}
+
+/** Empty squares a knight's leap away from `from`. */
+function knightEmpties(api: BuffApi, from: Square): Square[] {
+  const out: Square[] = [];
+  for (const [df, dr] of KNIGHT_LEAPS) {
+    const f = FILE(from) + df, r = RANK(from) + dr;
+    if (!inBoard(f, r)) continue;
+    const sq = SQ(f, r);
+    if (!api.board.pieces[sq]) out.push(sq);
+  }
+  return out;
+}
+
 function pawnMove(api: BuffApi, from: Square, to: Square, via: string): Move {
   const target = api.board.pieces[to];
   return {
@@ -573,7 +605,25 @@ const TIER1: Buff[] = [
     { id: "pawn_shield", requires: ["p"], name: "Pawn Shield", description: "One pawn cannot be captured for your opponent's next 4 turns.", tier: 1, category: "protection", boon: true },
     shieldTarget(3, ["p"]),
   ),
-  def({ id: "free_retreat", name: "Free Retreat", description: "Undo your last move once, before your opponent replies.", tier: 1, category: "tempo" }),
+  def(
+    { id: "free_retreat", name: "Free Retreat", description: "Return your last-moved piece to the square it came from, once.", tier: 1, category: "tempo" },
+    // No move-history replay: read board.history for my most recent move and
+    // slide that piece back to its origin if it is still there and the origin
+    // is empty. A faithful one-piece retreat without reconstructing the board.
+    activatedSimple((_inst, api) => {
+      const h = api.board.history;
+      for (let i = h.length - 1; i >= 0; i--) {
+        const m = h[i];
+        if (m.color !== api.me) continue;
+        const p = api.board.pieces[m.to];
+        if (p && p.color === api.me && !api.board.pieces[m.from] && m.to !== m.from) {
+          api.relocate(m.to, m.from);
+          api.bs.historyDiverged = true;
+        }
+        break;
+      }
+    }),
+  ),
   def(
     // Reworked for the full-transparency era (hands and offers are public, so
     // "see their next options" revealed nothing): a peek at the deck is now a
@@ -626,9 +676,12 @@ const TIER1: Buff[] = [
     // random reveal showed nothing new): the scout now raids the supply line.
     // Sole card granting exactly takeBoth+1 with no rider (Draft Seize and
     // Greed bundle it with a block / prepThree); priced against those peers.
-    { id: "scout", name: "Scout", description: "Take both cards in your next draft instead of one.", tier: 4, category: "draft", boon: true, flavor: "Sent ahead to look. Came back with the wagon." },
+    { id: "scout", name: "Scout", description: "Take both cards in your next draft instead of one, but spend one of your rerolls.", tier: 4, category: "draft", boon: true, flavor: "Sent ahead to look. Came back with the wagon." },
+    // Rebalance: the free takeBoth+1 now carries a real cost (a lost reroll),
+    // roughly a 20-30% trim on the tier's strongest no-rider draft grab.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
     }),
   ),
   def(
@@ -1118,7 +1171,25 @@ const TIER2: Buff[] = [
       status: () => "waiting for a lost minor piece",
     },
   ),
-  def({ id: "decoy", name: "Decoy", description: "A fake king must be checked before your real king can, for 3 turns.", tier: 2, category: "protection" }),
+  def(
+    { id: "decoy", name: "Decoy", description: "Summon a decoy on an empty square in your half, and your king cannot be captured for your opponent's next 3 turns.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
+    // The decoy is a real stand-in pawn that draws fire while the king sits
+    // untouchable (king_safe never petrifies, so it is soft-lock safe).
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Place your decoy",
+              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq)),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) api.place(picks[0].square, "p", api.me);
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+      },
+    ),
+  ),
   def(
     { id: "berolina_pawns", requires: ["p"], name: "Berolina Pawns", description: "Your pawns may also step diagonally forward to empty squares and capture straight ahead, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     permanentAugment((_m, inst, api) => {
@@ -1224,7 +1295,34 @@ const TIER2: Buff[] = [
     // The engine's relocate hook refuses enemy-buff pushes of the bound piece.
     bindPiece("Choose the piece to anchor", bindCandidates(), {}),
   ),
-  def({ id: "shadow_step", name: "Shadow Step", description: "One piece moves without revealing its destination until next turn.", tier: 2, category: "movement" }),
+  def(
+    { id: "shadow_step", name: "Shadow Step", description: "One of your pieces slips through shadow to a nearby empty square and cannot be captured on your opponent's next turn, once.", tier: 2, category: "movement", fx: { motif: "ward", self: true } },
+    // A short blink (ignores blockers) plus a one-turn cloak: the piece is
+    // "hidden" from capture on the reply, standing in for the un-revealed move.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the piece to shadow step",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && nearbyEmpty(api, sq, 2).length > 0,
+            ),
+          };
+        }
+        return { kind: "square", label: "Choose where it reappears", squares: nearbyEmpty(api, picks[0].square!, 2) };
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null) return;
+        if (api.board.pieces[from] && !api.board.pieces[to]) {
+          api.relocate(from, to);
+          addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 1 });
+        }
+      },
+    ),
+  ),
   def(
     { id: "vault", requires: ["r"], name: "Vault", description: "One rook jumps its own pawn to the far side, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     augment((_m, inst, api) => {
@@ -1302,7 +1400,26 @@ const TIER2: Buff[] = [
     }),
   ),
   // Nerf-modifiers (cross-cutting)
-  def({ id: "loosen_the_leash", name: "Loosen the Leash", description: "If your nerf caps you at a rank, raise the cap by one rank.", tier: 2, category: "nerf" }),
+  def(
+    { id: "loosen_the_leash", name: "Loosen the Leash", description: "Each of your next 3 captures loosens the leash: your nerf is suspended for your following turn.", tier: 2, category: "nerf" },
+    // Distinct from Small Mercies (which triggers when the OPPONENT captures
+    // you): this rewards YOUR captures, so pushing forward buys nerf relief.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || !move.captured || move.captured === "k") return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} loosenings left`,
+    },
+  ),
   def(
     { id: "slack_chain", name: "Slack in the Chain", description: "Suspend your nerf for your next 3 turns.", tier: 2, category: "nerf" },
     instant((_inst, api) => {
@@ -1481,7 +1598,31 @@ const TIER3: Buff[] = [
     { id: "dragon_pawn", requires: ["p"], name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
-  def({ id: "pin_breaker", name: "Pin Breaker", description: "One pinned piece moves freely this turn, ignoring the pin.", tier: 3, category: "movement" }),
+  def(
+    { id: "pin_breaker", name: "Pin Breaker", description: "One of your pieces breaks free with a knight's leap to an empty square, once.", tier: 3, category: "movement" },
+    // Nerf chess is won by king capture, so there are no true pins; the card
+    // instead lets any piece jump clear of whatever is holding it, knight-style.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the piece to break free",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && knightEmpties(api, sq).length > 0,
+            ),
+          };
+        }
+        return { kind: "square", label: "Choose where it lands", squares: knightEmpties(api, picks[0].square!) };
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null) return;
+        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+      },
+    ),
+  ),
   def(
     { id: "rank_runner", requires: ["p"], name: "Rank Runner", description: "One pawn advances to any empty square on its file up to your 5th rank, once.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) => {
@@ -1720,10 +1861,72 @@ const TIER3: Buff[] = [
     { id: "vanguard", requires: ["p"], name: "Vanguard", description: "One pawn on your 6th rank or beyond promotes to a knight, once.", tier: 3, category: "pieces" },
     promotePawns(1, 6, "n"),
   ),
-  def({ id: "rewind_one", name: "Rewind One", description: "Undo the last two half-moves of the game, once.", tier: 3, category: "tempo" }),
+  def(
+    { id: "rewind_one", name: "Rewind One", description: "Undo the last two half-moves: send the last piece each side moved back to the square it came from, once.", tier: 3, category: "tempo" },
+    // No history replay: walk board.history backwards two plies and slide each
+    // moved piece home if it still stands where it landed. Distinct from Free
+    // Retreat by rewinding BOTH sides' most recent moves, not just yours.
+    instant((_inst, api) => {
+      const h = api.board.history;
+      for (let i = h.length - 1, undone = 0; i >= 0 && undone < 2; i--, undone++) {
+        const m = h[i];
+        const p = api.board.pieces[m.to];
+        if (p && p.color === m.color && !api.board.pieces[m.from] && m.to !== m.from) {
+          api.relocate(m.to, m.from);
+          api.bs.historyDiverged = true;
+        }
+      }
+    }),
+  ),
   // Nerf-modifiers (cross-cutting)
-  def({ id: "piece_parole", name: "Piece Parole", description: "If your nerf disables a piece type, re-enable one piece of that type.", tier: 3, category: "nerf" }),
-  def({ id: "half_measure", name: "Half Measure", description: "Cut any \"every turn\" nerf penalty to \"every other turn\".", tier: 3, category: "nerf" }),
+  def(
+    { id: "piece_parole", name: "Piece Parole", description: "Release one of your pieces on parole: it gains a lasting shield, and your nerf is suspended for your next 2 turns.", tier: 3, category: "nerf", fx: { motif: "ward", self: true } },
+    // The only nerf-relief card that also frees ONE piece for good (a permanent
+    // square shield), on top of a short army-wide suspension.
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece to release",
+              squares: mySquares(api.board, api.me).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: null });
+        }
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      },
+    ),
+  ),
+  def(
+    { id: "half_measure", name: "Half Measure", description: "Cut your nerf to half strength: it is suspended on every other one of your next several turns.", tier: 3, category: "nerf" },
+    // Alternating suspension: the nerf bites one turn, sleeps the next. Distinct
+    // from the flat multi-turn suspends by only ever relieving every other turn.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.charges = 4; // alternating suspensions remaining
+        // The first relieved turn lands immediately.
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        const armed = (inst.state.armed as boolean) ?? false;
+        if (armed) {
+          const left = (inst.state.charges as number) ?? 0;
+          if (left > 0) {
+            addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+            inst.state.charges = left - 1;
+            if (left - 1 <= 0) inst.spent = true;
+          }
+        }
+        inst.state.armed = !armed;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 4} half-measures left`,
+    },
+  ),
   def(
     { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 4, category: "nerf" },
     instant((_inst, api) => {
@@ -2534,10 +2737,13 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and deny your opponent theirs.", tier: 6, category: "draft" },
+    { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and skip your opponent's next, though they gain a reroll in return.", tier: 6, category: "draft" },
+    // Rebalance: the opponent is no longer denied cleanly; they bank a reroll as
+    // compensation, softening the tempo swing by roughly a quarter.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
   def(
@@ -2588,7 +2794,15 @@ const TIER5: Buff[] = [
     ),
   ),
   // Nerf-modifiers (cross-cutting)
-  def({ id: "rehab", name: "Rehab", description: "Permanently downgrade your nerf to its weakest version.", tier: 5, category: "nerf" }),
+  def(
+    { id: "rehab", name: "Rehab", description: "Check into rehab: your nerf is suspended permanently for the rest of the game.", tier: 5, category: "nerf" },
+    // A permanent (null-turn) suspension, distinct from the flat-removal cards
+    // (Nerf Breaker and kin) which set nerfRemoved: this leaves a dispellable
+    // effect on the board rather than deleting the handicap outright.
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: null });
+    }),
+  ),
   def(
     { id: "long_leash", name: "Long Leash", description: "Suspend your nerf for your next 7 turns.", tier: 5, category: "nerf" },
     instant((_inst, api) => {
@@ -2707,7 +2921,20 @@ const TIER6: Buff[] = [
       mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
   ),
-  def({ id: "time_rewind", name: "Time Rewind", description: "Undo the last three full moves, resetting to that position, once.", tier: 6, category: "tempo" }),
+  def(
+    { id: "time_rewind", name: "Time Rewind", description: "Turn back time: restore some of your clock and free all of your own frozen or petrified pieces, once.", tier: 6, category: "tempo" },
+    // Rewind reimagined without history replay: give the caster clock time back
+    // and lift every freeze/walnut the caster is currently suffering.
+    instant((_inst, api) => {
+      api.adjustClock({ addSelfSec: 90 });
+      for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+        const e = api.bs.effects[i];
+        if ((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.me) {
+          api.bs.effects.splice(i, 1);
+        }
+      }
+    }),
+  ),
   def(
     { id: "mass_resurrect", name: "Mass Resurrect", description: "Revive any four captured pawns to empty squares on your 2nd rank.", tier: 5, category: "pieces", boon: true },
     revivePawnsToStart(4),
@@ -2803,10 +3030,12 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next two drafts are skipped, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_lock", name: "Time Lock", description: "Lock your opponent's clock and hand: they skip their next turn, and their next draft is skipped, once.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    // Rebalance: draft denial halved from two skipped drafts to one
+    // (blockedDrafts +2 -> +1), keeping the turn skip.
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   def(
@@ -2826,9 +3055,11 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "draft_domination", name: "Draft Domination", description: "Force your opponent's next draft down to tier 1, so both cards they are offered come from the weakest tier.", tier: 5, category: "draft" },
+    { id: "draft_domination", name: "Draft Domination", description: "Force your opponent's next draft down to tier 2, so both cards they are offered come from a weak tier.", tier: 5, category: "draft" },
+    // Rebalance: forced tier softened from 1 to 2, leaving the victim slightly
+    // less starved (and no longer a strict copy of Dead Letter's floor).
     instant((_inst, api) => {
-      api.theirs.flags.forceTier = 1;
+      api.theirs.flags.forceTier = 2;
     }),
   ),
   def(
@@ -3052,7 +3283,43 @@ const TIER7: Buff[] = [
       ]),
     ),
   ),
-  def({ id: "full_rewind", name: "Full Rewind", description: "Undo the last five full moves, once.", tier: 7, category: "tempo" }),
+  def(
+    { id: "full_rewind", name: "Full Rewind", description: "Send up to five of your pieces back to their original home squares, once.", tier: 7, category: "tempo" },
+    // No history replay: home squares are the fixed opening layout, so each
+    // piece can deterministically return to an empty starting square of its
+    // type. Finishable after the first, so it never soft-locks on sparse boards.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 5) return null;
+        const chosen = picks.map((k) => k.square);
+        const cand = mySquares(api.board, api.me).filter((sq) => {
+          const t = api.board.pieces[sq]!.type;
+          if (t === "k" || chosen.includes(sq)) return false;
+          const homes = HOME[api.me][t] ?? [];
+          return homes.some((h) => h !== sq && !api.board.pieces[h]);
+        });
+        if (!cand.length) return null;
+        return {
+          kind: "square",
+          label: `Send a piece home (${picks.length + 1}/5)`,
+          squares: cand,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          const from = k.square;
+          if (from == null) continue;
+          const piece = api.board.pieces[from];
+          if (!piece) continue;
+          const homes = HOME[api.me][piece.type] ?? [];
+          const dest = homes.find((h) => h !== from && !api.board.pieces[h]);
+          if (dest != null) api.relocate(from, dest);
+        }
+        api.bs.historyDiverged = true;
+      },
+    ),
+  ),
   def(
     { id: "kings_legion", name: "King's Legion", description: "Add a rook, a knight, and a pawn to your pocket, then drop them onto empty squares on later turns.", tier: 7, category: "pieces" },
     instant((_inst, api) => {
@@ -3084,10 +3351,11 @@ const TIER7: Buff[] = [
     },
   ),
   def(
-    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs, plus their next-drafted buff. Locked-in upgrades resist.", tier: 7, category: "draft" },
+    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in upgrades resist.", tier: 7, category: "draft" },
+    // Rebalance: dropped the forward-reaching rider (their NEXT-drafted buff no
+    // longer arrives nullified); it now only clears what they currently hold.
     instant((_inst, api) => {
       broadNullify(api);
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
   def(
@@ -3219,9 +3487,10 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "draft_tyranny", name: "Draft Tyranny", description: "Set both of your own next cards to tier 8, once.", tier: 7, category: "draft" },
+    { id: "draft_tyranny", name: "Draft Tyranny", description: "Set both of your own next cards to tier 7, once.", tier: 7, category: "draft" },
+    // Rebalance: forced tier lowered from 8 to 7, one band off the apex ceiling.
     instant((_inst, api) => {
-      api.mine.flags.forceTier = 8;
+      api.mine.flags.forceTier = 7;
     }),
   ),
   def(
@@ -3357,13 +3626,23 @@ const TIER7: Buff[] = [
     activatedSimple((_inst, api) => reformArmy(api)),
   ),
   def(
-    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next two drafts.", tier: 7, category: "draft" },
+    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft.", tier: 7, category: "draft" },
+    // Rebalance: takeBoth reduced from your next TWO drafts to just the next
+    // one (+2 -> +1), a ~30% trim on the raw card economy it prints.
     instant((_inst, api) => {
-      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
     }),
   ),
   // Nerf-modifiers (cross-cutting)
-  def({ id: "nerf_reversal", name: "Nerf Reversal", description: "Flip your nerf into its inverse benefit where one exists.", tier: 7, category: "nerf" }),
+  def(
+    { id: "nerf_reversal", name: "Nerf Reversal", description: "Turn your nerf against itself: remove it for good, and your whole army cannot be captured for your opponent's next 2 turns.", tier: 7, category: "nerf", fx: { motif: "ward", pieces: "all", self: true } },
+    // The only nerf-removal card that also flips into an offensive boon: a brief
+    // whole-army shield as the "inverse benefit" of shedding the handicap.
+    instant((_inst, api) => {
+      api.removeMyNerf();
+      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+    }),
+  ),
   def(
     { id: "sabbatical", name: "Sabbatical", description: "Suspend your nerf for your next 10 turns.", tier: 7, category: "nerf" },
     instant((_inst, api) => {
@@ -3441,10 +3720,13 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel your opponent's unused and temporary buffs and block their next draft. Locked-in upgrades resist.", tier: 8, category: "draft" },
+    { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel your opponent's unused and temporary buffs and block their next draft, but they gain a reroll in return. Locked-in upgrades resist.", tier: 8, category: "draft" },
+    // Rebalance: the victim now banks a reroll as compensation, softening the
+    // double hit of a wipe plus a blocked draft by roughly a quarter.
     instant((_inst, api) => {
       broadNullify(api);
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
   def(
@@ -3646,10 +3928,12 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "draft_supremacy", name: "Draft Supremacy", description: "Take both cards in each of your next two drafts while your opponent's next two drafts are skipped.", tier: 8, category: "draft" },
+    { id: "draft_supremacy", name: "Draft Supremacy", description: "Take both cards in each of your next two drafts while your opponent's next draft is skipped.", tier: 8, category: "draft" },
+    // Rebalance: the opponent-denial halved from two skipped drafts to one
+    // (blockedDrafts +2 -> +1); the self takeBoth+2 stays, trimming ~25%.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 2;
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   def(
@@ -3761,11 +4045,12 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "transcendence", name: "Transcendence", description: "Remove your nerf for good. Your next draft shows three cards and rolls a tier higher.", tier: 8, category: "nerf" },
+    { id: "transcendence", name: "Transcendence", description: "Remove your nerf for good. Your next draft shows three cards.", tier: 8, category: "nerf" },
+    // Rebalance: dropped the extra tier bump; you still shed the nerf and see a
+    // wider (three-card) offer, but no longer also roll a tier higher.
     instant((_inst, api) => {
       api.removeMyNerf();
       api.mine.flags.prepThree = true;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 ];
@@ -3913,9 +4198,12 @@ const HEXES: Buff[] = [
     },
   ),
   def(
-    { id: "dead_letter", name: "Dead Letter", description: "Your opponent's next draft never arrives: it is skipped outright.", tier: 4, category: "hex" },
+    { id: "dead_letter", name: "Dead Letter", description: "Your opponent's next draft is skipped, but they gain one reroll in return.", tier: 4, category: "hex" },
+    // Rebalance: the skip now comes with a consolation reroll for the victim,
+    // trimming the raw draft-denial by roughly a quarter.
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
   def(
@@ -4016,10 +4304,12 @@ const HEXES: Buff[] = [
   ),
   def(
     // fx covers the turn skip; the draft denial half shows no board motif.
-    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn, and the next two cards they draft arrive nullified and inert.", tier: 7, category: "hex", fx: { motif: "slow", pieces: "all" } },
+    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn, and the next card they draft arrives nullified and inert.", tier: 7, category: "hex", fx: { motif: "slow", pieces: "all" } },
+    // Rebalance: incoming-nullify halved from their next two drafted cards to
+    // one (nullifyIncoming +2 -> +1), keeping the turn skip.
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
 ];

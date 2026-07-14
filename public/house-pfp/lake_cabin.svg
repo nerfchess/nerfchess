@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Cabin by a lake">
+  <defs>
+    <linearGradient id="lc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe0e6"/><stop offset="1" stop-color="#f3d9b0"/></linearGradient>
+    <linearGradient id="lc-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb7b8"/><stop offset="1" stop-color="#4a6d6e"/></linearGradient>
+    <linearGradient id="lc-hill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f7a44"/><stop offset="1" stop-color="#345729"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#lc-sky)"/>
+  <circle cx="150" cy="48" r="14" fill="#fdeec6" opacity="0.9"/>
+  <g fill="#ffffff" opacity="0.7"><ellipse cx="50" cy="36" rx="24" ry="7"/><ellipse cx="90" cy="30" rx="16" ry="5"/></g>
+  <!-- hills -->
+  <path d="M0 108 Q50 78 100 100 Q150 120 200 92 V132 H0 Z" fill="url(#lc-hill)"/>
+  <path d="M0 112 Q60 92 120 108 Q170 120 200 106 V132 H0 Z" fill="#3d6631"/>
+  <!-- pines -->
+  <g fill="#2c4a24">
+    <path d="M40 100 l7 18 h-14 z"/><path d="M40 90 l6 14 h-12 z"/>
+    <path d="M60 106 l6 16 h-12 z"/>
+    <path d="M150 98 l8 20 h-16 z"/><path d="M150 88 l6 14 h-12 z"/>
+    <path d="M170 104 l6 16 h-12 z"/>
+  </g>
+  <!-- cabin -->
+  <rect x="82" y="98" width="40" height="30" fill="#8a5a34"/>
+  <path d="M78 98 L102 82 L126 98 Z" fill="#6b3f22"/>
+  <g stroke="#6e4525" stroke-width="1.4"><path d="M82 106 h40 M82 114 h40 M82 122 h40"/></g>
+  <rect x="94" y="110" width="10" height="18" fill="#3a2415"/>
+  <rect x="108" y="106" width="9" height="9" fill="#ffd45e"/>
+  <path d="M114 82 v-8 h5 v10" fill="#4a2c18"/>
+  <g stroke="#c9c0b4" stroke-width="2" opacity="0.6" fill="none" stroke-linecap="round"><path d="M116 74 q6 -6 2 -12 q-4 -5 2 -10"/></g>
+  <!-- water -->
+  <rect x="0" y="128" width="200" height="72" fill="url(#lc-water)"/>
+  <g opacity="0.45" fill="#6b3f22">
+    <rect x="82" y="128" width="40" height="22"/>
+    <path d="M78 128 L102 144 L126 128 Z"/>
+  </g>
+  <g stroke="#cfe6e2" stroke-width="1.3" opacity="0.55" stroke-linecap="round"><path d="M20 142 h34 M120 152 h44 M50 166 h30 M140 174 h40"/></g>
+  <ellipse cx="104" cy="140" rx="8" ry="2.4" fill="#ffd45e" opacity="0.5"/>
+</svg>
