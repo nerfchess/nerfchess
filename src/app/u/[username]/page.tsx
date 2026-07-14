@@ -22,6 +22,7 @@ import {
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
+import { isHouseEditor } from "@/lib/godPanel";
 
 interface ProfileUser {
   username: string;
@@ -82,6 +83,11 @@ export default function ProfilePage() {
   const [me, setMe] = useState<AccountUser | null>(null);
   const [missing, setMissing] = useState(false);
   const [reporting, setReporting] = useState(false);
+  // Set only when the viewer is the designated house editor (ilovenewjeans) AND
+  // this profile is a house bot: carries the bot's persona id and the pickable
+  // avatar catalog so the inline editor can rename it, swap its pfp, or set its
+  // bio. Null for everyone else, so house-bot status stays invisible to others.
+  const [houseEdit, setHouseEdit] = useState<{ userId: string; avatars: string[] } | null>(null);
   // "Add friend" (follow) control: one optimistic request per visit; the
   // FriendsPanel manages pending/accept state in full.
   const [friendState, setFriendState] = useState<"idle" | "sent" | "error">("idle");
@@ -110,6 +116,7 @@ export default function ProfilePage() {
     setProfile(null);
     setStats(null);
     setFriendState("idle");
+    setHouseEdit(null);
   }
 
   useEffect(() => {
@@ -130,7 +137,27 @@ export default function ProfilePage() {
         })
         .catch(() => {});
       const account = await fetchMe();
-      if (!cancelled) setMe(account);
+      if (cancelled) return;
+      setMe(account);
+      // House editor (ilovenewjeans only): learn whether this profile is a bot
+      // and, if so, load its persona id + the pickable avatar catalog. The
+      // personas endpoint is authorized for this account and 403s for everyone
+      // else, so a non-editor never even learns the roster — house-bot status
+      // stays hidden. Matched on the canonical (users-row) username.
+      if (account && isHouseEditor(account.username)) {
+        try {
+          const res2 = await fetch("/api/mod/house/personas");
+          if (!res2.ok || cancelled) return;
+          const payload = (await res2.json()) as {
+            personas: { userId: string; effective: { username: string } }[];
+            avatars: string[];
+          };
+          const match = payload.personas.find(
+            (p) => p.effective.username.toLowerCase() === data.user.username.toLowerCase(),
+          );
+          if (match && !cancelled) setHouseEdit({ userId: match.userId, avatars: payload.avatars });
+        } catch {}
+      }
     })();
     return () => {
       cancelled = true;
@@ -247,13 +274,33 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <BioSection
-              bio={profile.user.bio}
-              editable={isMe}
-              onSaved={(bio) =>
-                setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))
-              }
-            />
+            {houseEdit ? (
+              <HouseBotEditor
+                userId={houseEdit.userId}
+                avatars={houseEdit.avatars}
+                username={profile.user.username}
+                avatar={profile.user.avatar ?? null}
+                bio={profile.user.bio}
+                onIdentity={(nextName, nextAvatar) => {
+                  if (nextName.toLowerCase() !== profile.user.username.toLowerCase()) {
+                    // Rename changes the profile URL; navigate so everything
+                    // (URL, data, laurels) refetches under the new handle.
+                    router.push(`/u/${encodeURIComponent(nextName)}`);
+                  } else {
+                    setProfile((p) => (p ? { ...p, user: { ...p.user, avatar: nextAvatar } } : p));
+                  }
+                }}
+                onBio={(bio) => setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))}
+              />
+            ) : (
+              <BioSection
+                bio={profile.user.bio}
+                editable={isMe}
+                onSaved={(bio) =>
+                  setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))
+                }
+              />
+            )}
 
             {/* Exactly two ratings: the Nerf and Buff mode buckets. */}
             <div className="mt-6 grid grid-cols-2 gap-2">
@@ -505,10 +552,15 @@ function BioSection({
   bio,
   editable,
   onSaved,
+  saveBio,
 }: {
   bio: string | null;
   editable: boolean;
   onSaved: (bio: string | null) => void;
+  // Optional custom saver (returns the stored bio). Defaults to editing the
+  // signed-in account's own bio via /api/auth/bio; the house-bot editor passes
+  // one that writes the bot's row instead.
+  saveBio?: (bio: string | null) => Promise<string | null>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(bio ?? "");
@@ -518,18 +570,29 @@ function BioSection({
 
   const save = async () => {
     setSaving(true);
-    const res = await fetch("/api/auth/bio", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bio: draft.trim() || null }),
-    });
-    setSaving(false);
-    if (res.ok) {
-      const data = (await res.json()) as { bio: string | null };
-      onSaved(data.bio);
-      setDraft(data.bio ?? "");
+    try {
+      let next: string | null;
+      if (saveBio) {
+        next = await saveBio(draft.trim() || null);
+      } else {
+        const res = await fetch("/api/auth/bio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bio: draft.trim() || null }),
+        });
+        if (!res.ok) {
+          setSaving(false);
+          return;
+        }
+        next = ((await res.json()) as { bio: string | null }).bio;
+      }
+      onSaved(next);
+      setDraft(next ?? "");
       setEditing(false);
+    } catch {
+      // Leave the editor open so the text isn't lost.
     }
+    setSaving(false);
   };
 
   return (
@@ -574,6 +637,167 @@ function BioSection({
           )}
         </p>
       )}
+    </div>
+  );
+}
+
+// Inline editor for a house-bot account, shown on its profile ONLY to the
+// designated house editor (ilovenewjeans). Renames it, swaps its picture from
+// the house avatar catalog, or sets its bio — all through the house-persona
+// route, which writes the users row every surface reads. It looks and behaves
+// like editing your own profile, without pretending the account is yours.
+function HouseBotEditor({
+  userId,
+  avatars,
+  username,
+  avatar,
+  bio,
+  onIdentity,
+  onBio,
+}: {
+  userId: string;
+  avatars: string[];
+  username: string;
+  avatar: string | null;
+  bio: string | null;
+  onIdentity: (username: string, avatar: string | null) => void;
+  onBio: (bio: string | null) => void;
+}) {
+  const [name, setName] = useState(username);
+  const [picking, setPicking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+
+  const post = async (body: Record<string, unknown>): Promise<boolean> => {
+    setSaving(true);
+    setError(null);
+    setNote(null);
+    try {
+      const res = await fetch("/api/mod/house/personas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...body }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setSaving(false);
+      if (!res.ok) {
+        setError(data?.error ?? "Could not save. Try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      setSaving(false);
+      setError("Could not save. Try again.");
+      return false;
+    }
+  };
+
+  const dirty = name.trim() !== username;
+
+  const saveName = async () => {
+    const next = name.trim();
+    if (next === username) return;
+    if (await post({ username: next })) {
+      setNote("Saved");
+      onIdentity(next, avatar);
+    }
+  };
+
+  const pickAvatar = async (id: string) => {
+    if (await post({ avatar: id })) {
+      setNote("Saved");
+      setPicking(false);
+      onIdentity(username, id);
+    }
+  };
+
+  // Custom bio saver for BioSection: writes the bot's row and returns the
+  // stored (profanity-censored) value the server kept.
+  const saveBio = async (nextBio: string | null): Promise<string | null> => {
+    const res = await fetch("/api/mod/house/personas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, bio: nextBio }),
+    });
+    if (!res.ok) throw new Error("save failed");
+    const data = (await res.json()) as { bio?: string | null };
+    return data.bio ?? null;
+  };
+
+  return (
+    <div className="mt-5 plate p-4 border border-gold/25">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
+          House bot
+        </span>
+        <span className="text-xs text-parchment-400">
+          You can edit this account&rsquo;s name, picture, and bio.
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label htmlFor="house-name" className="w-16 text-xs text-parchment-400">
+          Username
+        </label>
+        <input
+          id="house-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && dirty) saveName();
+          }}
+          maxLength={20}
+          className="w-48 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
+        />
+        <button
+          type="button"
+          disabled={saving || !dirty}
+          onClick={saveName}
+          className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="w-16 text-xs text-parchment-400">Picture</span>
+        <button
+          type="button"
+          onClick={() => setPicking((v) => !v)}
+          title="Change picture"
+          className="press shrink-0"
+        >
+          <PlayerAvatar name={username} avatar={avatar} size={40} />
+        </button>
+        <span className="text-xs text-parchment-400">
+          {picking ? "Pick one below" : "Click to change"}
+        </span>
+      </div>
+      {picking && (
+        <div className="mt-2 flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
+          {avatars.map((id) => (
+            <button
+              key={id}
+              type="button"
+              disabled={saving}
+              onClick={() => pickAvatar(id)}
+              title={id}
+              className={
+                "press rounded-md border p-0.5 transition " +
+                (id === avatar ? "border-gold/60" : "border-transparent hover:border-white/25")
+              }
+            >
+              <PlayerAvatar name={username} avatar={id} size={28} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <BioSection bio={bio} editable onSaved={onBio} saveBio={saveBio} />
+
+      {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
+      {note && !error && <p className="mt-2 text-xs text-verdigris-glow">{note}</p>}
     </div>
   );
 }
