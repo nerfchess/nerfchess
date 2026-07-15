@@ -460,8 +460,41 @@ export class MPSession {
   persistFriendSession = true;
   // Optional server override (Tier 3): spectator sessions for arena-hosted
   // bot-vs-bot games point at the arena's socket (src/lib/arenaLobby.ts)
-  // instead of the game-server DO. Set before the first connect.
+  // instead of the game-server DO. Set before the first connect; to re-route
+  // an already-connected session use setServerUrl (a bare field write does
+  // nothing while a socket is open — connect() short-circuits on it).
   serverUrl: string | null = null;
+
+  /** Re-point this session at a different server (null = the default game
+   *  server). Any socket already open — or mid-connect — to the old server is
+   *  dropped silently (no `disconnected` event), so the next connect() dials
+   *  the new URL. Without this, a tune-in retry that "re-routes" by assigning
+   *  serverUrl kept talking to the same wrong socket: connect() resolves
+   *  immediately off the open socket, the watch frame goes to a server that
+   *  doesn't host the game, and the retry fails exactly like the first
+   *  attempt — the TV page's stranded "couldn't tune in" loop. */
+  setServerUrl(url: string | null) {
+    const next = url || null;
+    if ((this.serverUrl || null) === next) return;
+    this.serverUrl = next;
+    const socket = this.socket;
+    this.socket = null;
+    this.connecting = null;
+    if (this.heartbeat) {
+      window.clearInterval(this.heartbeat);
+      this.heartbeat = null;
+    }
+    if (socket) {
+      // Detach handlers first: this close is intentional, not a disconnect.
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      try {
+        socket.close();
+      } catch {}
+    }
+  }
 
   // --- automatic reconnection ---
   // Once this session holds a seat (or is watching a game), an unexpected

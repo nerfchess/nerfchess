@@ -39,13 +39,19 @@ if (process.env.NODE_ENV === "development") {
 // 'unsafe-eval' is only needed by webpack's dev-mode source maps, so it is
 // kept out of production builds.
 const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
+// Tier 3 direct-arena gate (see the env block below): the client fetches the
+// arena's /lobby over plain HTTPS, so its origin must be in connect-src or the
+// browser silently blocks every arena call — which broke the whole Tier 3
+// spectating path (lobby merge dead, TV stuck "Tuning in…" on arena games).
+// The wss:// spectator socket was already covered by the `wss:` scheme source.
+const arenaUrl = (process.env.NEXT_PUBLIC_ARENA_URL || "https://arena.nerfchess.com").trim().replace(/\/$/, "");
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${devEval}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' ws: wss: https://challenges.cloudflare.com",
+  `connect-src 'self' ws: wss: https://challenges.cloudflare.com${arenaUrl ? ` ${arenaUrl}` : ""}`,
   "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -79,8 +85,10 @@ const nextConfig = {
     // through to this default. Override with a non-empty NEXT_PUBLIC_ARENA_URL
     // for non-prod; to turn client Tier 3 off, change this default to "".
     // See src/lib/arenaLobby.ts.
-    NEXT_PUBLIC_ARENA_URL:
-      process.env.NEXT_PUBLIC_ARENA_URL || "https://arena.nerfchess.com",
+    // (Kept in lockstep with the CSP connect-src grant above — both read the
+    // same `arenaUrl` fallback so the origin the client calls is always the
+    // origin the CSP allows.)
+    NEXT_PUBLIC_ARENA_URL: arenaUrl,
   },
   async headers() {
     return [
