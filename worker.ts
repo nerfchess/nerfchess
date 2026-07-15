@@ -52,8 +52,12 @@ import {
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
+  pickHouseFillerSeek,
   pickHouseFillerPair,
+  houseFillerSpawnDelayMs,
   houseSocialDelayMs,
+  HOUSE_VS_HOUSE_FLOOR,
+  HOUSE_VS_HOUSE_CAP,
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
@@ -559,21 +563,27 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 //   worst-case bots = houseVsHouseCap + houseTotalGamesCap <= houseGameSeats.
 const houseSeekReserve = houseSeekMax + 2;
 const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
-// Hard ABSOLUTE ceilings, independent of roster size. PR #242 sized these purely
-// off the roster (30 personas -> up to 8 concurrent house-vs-house games = 16
-// bots each grinding an 80ms engine search roughly every second), which
-// oversubscribed the single-threaded DO: the per-tick CPU budget was spent on
-// filler, so a human's freshly accepted bot game could not get its move
-// processed in time. The bot never moved and, once the isolate was CPU-evicted
-// mid-tick, the socket upgrade stopped being answered and the client fell back to
-// "cant connect to game servers". A few live filler games are plenty to keep the
-// lobby and TV looking busy; correctness (humans' bot games always move) beats
-// lobby optics, so these stay small no matter how large the roster grows. Kept at
-// 3 so up to three bot-vs-bot games run at once; the spaced filler timer starts a
-// fresh one whenever one ends, so there is always a steady, ongoing set of live
-// bot games rather than a crowd.
-const houseVsHouseCapMax = 3;
-const houseTotalGamesCapMax = 8;
+// Hard ABSOLUTE ceilings, independent of roster size. History matters here:
+// PR #242's roster-derived caps (up to 8 concurrent bot-vs-bot games, each pair
+// grinding an 80ms search roughly EVERY SECOND) oversubscribed the
+// single-threaded DO and starved human games; the fix clamped filler to 3
+// games. The owner target is now 40-55 concurrent house games around the clock
+// (a busy Watch tab / 100+ online population), which is affordable ONLY because
+// the per-game engine rate is decimated rather than the per-tick bound raised:
+//   - filler moves pace ~8x slower than human-facing bots
+//     (houseFillerThinkMultiplier: one search per filler game every ~10-25s,
+//     so ~50 games demand ~2-4 searches/second total),
+//   - the per-tick action/CPU budgets below still bound every single alarm
+//     (a backlog drains across 300ms follow-up ticks, never in one batch),
+//   - human-facing actions retain absolute priority over all filler work, and
+//   - when the OCI engine service is on (HOUSE_ENGINE_REMOTE), the searches
+//     do not even run on the DO thread.
+// Spawns are staggered (houseFillerSpawnDelayMs: ~1.5-3s apart during ramp-up,
+// 8-15s at steady state), so a cold start climbs to the 40-game floor over a
+// couple of minutes instead of bursting 40 game creations at once.
+const houseVsHouseCapMax = HOUSE_VS_HOUSE_CAP;
+// Filler cap + headroom for human-vs-bot pickups and /play bot games.
+const houseTotalGamesCapMax = HOUSE_VS_HOUSE_CAP + 15;
 const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
 const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
@@ -596,12 +606,22 @@ const houseTickBudgetMs = 250;
 // spectated (TV) game indefinitely while its clocks run.
 const houseFillerMaxDeferMs = 10 * 1000;
 // Bot-vs-bot filler paces its moves this many times slower than a bot playing
-// a human. Filler is lobby/TV decoration: halving its action rate halves the
-// alarm wakes and engine searches it costs in steady state, while 2-6s per
-// blitz move still reads as a live game to a spectator. If the slower pace
-// runs a filler bot out of time it simply flags — a normal chess result for a
-// game that is never recorded anyway.
-const houseFillerThinkMultiplier = 2;
+// a human. Filler is lobby/TV decoration, and this multiplier is the lever that
+// makes the 40-55 concurrent-game target affordable: at 8x, a filler game takes
+// one engine action every ~10-25s, so ~50 live games cost the DO ~2-4 bounded
+// searches per second in total (and none at all when the remote engine is on)
+// while each board still visibly plays for a spectator. Filler draws from the
+// longer blitz pools (pickHouseFillerSeek) so the slow pace does not flag a
+// game within its first few moves; if a filler bot still runs out of time it
+// simply flags — a normal chess result for a game that is never recorded.
+const houseFillerThinkMultiplier = 8;
+// How many filler actions one tick may take AFTER every due human-facing
+// action has been served and only while the shared per-tick action/CPU budget
+// has room. With 40+ live filler games the old 1/tick throughput could not
+// keep up (boards visibly froze between alarms); 3/tick matched with the slower
+// per-game pacing above balances supply and demand while the wall-clock budget
+// still bounds the worst tick.
+const houseFillerMaxActionsPerTick = 3;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -3789,11 +3809,16 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    // Pass 2: at most ONE house-vs-house filler action, and only once every due
+    // Pass 2: house-vs-house filler actions, and only once every due
     // human-facing action this tick has been served (deferredDueWork is false)
     // and there is CPU budget left. A human never waits behind a filler search.
+    // Up to houseFillerMaxActionsPerTick land per tick, each individually
+    // re-checked against the shared action/wall-clock budget, so the 40+
+    // concurrent filler games (paced ~8x slower per game, see
+    // houseFillerThinkMultiplier) drain their due moves promptly without one
+    // alarm ever running a long search batch.
     //
-    // Starvation valve: sustained human load can make that yield defer filler
+    // Starvation valve: sustained human load can make the yield defer filler
     // on EVERY tick, so a spectated (TV) filler game never acts — the board
     // freezes while its clocks run down. Once the head filler action has been
     // due past houseFillerMaxDeferMs, it takes exactly one action this tick
@@ -3802,18 +3827,22 @@ export class GameServer extends DurableObject<Env> {
     // permanent stall.
     const fillerStarved =
       dueFiller.length > 0 && now - (dueFiller[0].botActAt ?? now) > houseFillerMaxDeferMs;
-    if (dueFiller.length && (fillerStarved || (!deferredDueWork && !budgetSpent()))) {
-      const match = dueFiller[0];
-      if (!this.houseRetireFailed.has(match.id)) {
-        try {
-          await this.playHouseAction(match, Date.now());
-          actionsActed++;
-          fillerActed++;
-        } catch (err) {
-          this.houseTickError = err instanceof Error ? err.message : String(err);
-          console.error("house filler action failed, retiring match", match.id, err);
-          await this.retireFailedHouseMatch(match);
-        }
+    for (const match of dueFiller) {
+      if (fillerActed >= houseFillerMaxActionsPerTick) break;
+      // The starvation valve admits exactly ONE action past the budget; every
+      // other filler action must fit the normal budget with no deferred
+      // human-facing work.
+      const forced = fillerActed === 0 && fillerStarved;
+      if (!forced && (deferredDueWork || budgetSpent())) break;
+      if (this.houseRetireFailed.has(match.id)) continue;
+      try {
+        await this.playHouseAction(match, Date.now());
+        actionsActed++;
+        fillerActed++;
+      } catch (err) {
+        this.houseTickError = err instanceof Error ? err.message : String(err);
+        console.error("house filler action failed, retiring match", match.id, err);
+        await this.retireFailedHouseMatch(match);
       }
     }
     // Deferred work (a human action past the budget, or filler we did not reach
@@ -4014,8 +4043,10 @@ export class GameServer extends DurableObject<Env> {
     }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
-    // Occasional house-vs-house filler so the lobby and TV look alive,
-    // capped and spaced out so games never start (or end) in lockstep.
+    // House-vs-house filler so the lobby and TV always look busy: maintain a
+    // steady 40-55 concurrent bot games (HOUSE_VS_HOUSE_FLOOR/CAP), spawned one
+    // per tick with staggered spacing so games never start (or end) in lockstep
+    // and a cold start ramps up over minutes rather than bursting.
     // Tier 2 / M4 cutover (reversible): when the arena owns bot-vs-bot, the DO
     // stops spawning its own filler and lets the arena supply it (streamed in
     // via /arena). Flip ARENA_OWNS_FILLER back off and the DO resumes filler on
@@ -4052,7 +4083,19 @@ export class GameServer extends DurableObject<Env> {
               this.houseFillerGames.set(p.userId, (this.houseFillerGames.get(p.userId) ?? 0) + 1);
             }
             await this.startHouseVsHouseGame(a, b, db);
-            await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
+            // Staggered pacing toward the 40-55 steady band: one spawn per tick,
+            // ~1.5-3s apart while below the floor (a cold start ramps to 40
+            // games over ~2 minutes, never a burst) and 8-15s once there.
+            const delay = houseFillerSpawnDelayMs(houseVsHouse + 1, randomInt);
+            await this.ctx.storage.put(houseNextFillerKey, now + delay);
+            // During ramp-up the games just spawned may not have due actions
+            // yet, so make sure an alarm fires for the NEXT spawn rather than
+            // waiting out the 20s heartbeat with the population under target.
+            if (houseVsHouse + 1 < HOUSE_VS_HOUSE_FLOOR) {
+              try {
+                await this.armAlarmBy(now + delay);
+              } catch {}
+            }
           }
         }
       } catch (err) {
@@ -4692,7 +4735,9 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async startHouseVsHouseGame(a: HousePersona, b: HousePersona, db: D1Database) {
-    const { pool, mode } = pickHouseSeek(randomInt);
+    // Filler pools skip 1+0/2+1: the slowed filler move pacing would flag an
+    // ultra-bullet game within a handful of moves (broken-looking on TV).
+    const { pool, mode } = pickHouseFillerSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
     const tc = QUEUE_POOLS[pool];

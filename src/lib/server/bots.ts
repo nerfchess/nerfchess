@@ -811,7 +811,12 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-export const HOUSE_COUNT_MIN = 60;
+// Floor raised 60 -> 110 (owner target: 40+ concurrent house games around the
+// clock). 40 bot-vs-bot games seat 80 personas; add the seek reserve, human
+// pickups, and headroom for the 40-55 steady band and the smallest daily window
+// must still supply ~100+ active personas. The window keeps breathing daily
+// (110-120), just above the new floor.
+export const HOUSE_COUNT_MIN = 110;
 export const HOUSE_COUNT_MAX = 120;
 // How many bots idle "online" for presence — never more than the roster holds.
 export const HOUSE_ONLINE_COUNT = Math.min(150, HOUSE_ROSTER.length);
@@ -1268,20 +1273,79 @@ const HOUSE_POOL_WEIGHTS: Array<[pool: string, weight: number]> = [
   ["5+3", 2],
 ];
 
+// Filler (bot-vs-bot) games pace their moves several times slower than a
+// human-facing bot (worker.ts houseFillerThinkMultiplier) to keep 40+ of them
+// affordable on the single-threaded DO, so the ultra-short pools (1+0, 2+1)
+// would flag after a handful of moves and read as broken on TV. Filler games
+// draw from the longer blitz pools instead.
+const HOUSE_FILLER_POOL_WEIGHTS: Array<[pool: string, weight: number]> = [
+  ["3+0", 1],
+  ["3+2", 2],
+  ["5+0", 3],
+  ["5+3", 3],
+];
+
+function weightedPoolRoll(
+  weights: Array<[pool: string, weight: number]>,
+  random: (max: number) => number,
+): string {
+  const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll = random(total);
+  for (const [name, weight] of weights) {
+    roll -= weight;
+    if (roll < 0) return name;
+  }
+  return "3+2";
+}
+
 /** Pool + mode for a new house seek: weighted blitz pools, an even 50/50
  * split of Buff and Nerf so neither queue is starved. */
 export function pickHouseSeek(random: (max: number) => number): { pool: string; mode: DraftMode } {
-  const total = HOUSE_POOL_WEIGHTS.reduce((sum, [, weight]) => sum + weight, 0);
-  let roll = random(total);
-  let pool = "3+2";
-  for (const [name, weight] of HOUSE_POOL_WEIGHTS) {
-    roll -= weight;
-    if (roll < 0) {
-      pool = name;
-      break;
-    }
-  }
-  return { pool, mode: random(2) === 0 ? "buff" : "nerf" };
+  return {
+    pool: weightedPoolRoll(HOUSE_POOL_WEIGHTS, random),
+    mode: random(2) === 0 ? "buff" : "nerf",
+  };
+}
+
+/** Pool + mode for a bot-vs-bot filler game: the longer blitz pools only (the
+ * slower filler move pacing would flag out a 1+0 game almost immediately). */
+export function pickHouseFillerSeek(random: (max: number) => number): { pool: string; mode: DraftMode } {
+  return {
+    pool: weightedPoolRoll(HOUSE_FILLER_POOL_WEIGHTS, random),
+    mode: random(2) === 0 ? "buff" : "nerf",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Filler concurrency targets (owner spec): the Watch tab / TV should always
+// show a busy site, so the steady state is 40-55 SIMULTANEOUS bot-vs-bot games
+// (80-110 seated bots), never dipping below the floor while the house is
+// enabled. Shared between worker.ts (the spawner) and the sim so the sim
+// asserts the exact production numbers.
+// ---------------------------------------------------------------------------
+
+/** Minimum concurrent bot-vs-bot games at steady state. */
+export const HOUSE_VS_HOUSE_FLOOR = 40;
+/** Hard cap on concurrent bot-vs-bot games (natural variance runs 40-55). */
+export const HOUSE_VS_HOUSE_CAP = 55;
+/** Spawn-ahead hysteresis: the spawner keeps ramping quickly until this many
+ * games ABOVE the floor are live, so a normal trickle of games ending never
+ * drops the count below the floor before the next spawn lands. */
+export const HOUSE_FILLER_SPAWN_BUFFER = 4;
+
+/** Delay until the NEXT filler spawn given how many bot-vs-bot games are live
+ * after this one. Below floor+buffer: a brisk 1.5-3s stagger, so a cold start
+ * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick,
+ * never a 40-game burst) and a dip recovers within seconds. At/above: a lazy
+ * 8-15s spacing that roughly matches the rate games end at, so the population
+ * hovers in the 40-55 band instead of pinning the cap. */
+export function houseFillerSpawnDelayMs(
+  liveFillerGames: number,
+  random: (max: number) => number,
+): number {
+  return liveFillerGames < HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER
+    ? 1500 + random(1501)
+    : 8000 + random(7001);
 }
 
 // ---------------------------------------------------------------------------

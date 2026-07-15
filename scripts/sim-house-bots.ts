@@ -15,6 +15,12 @@ import {
   HOUSE_SKILL_PROFILES,
   HOUSE_SKILLS,
   HOUSE_WINDOW_STEP,
+  HOUSE_COUNT_MIN,
+  HOUSE_VS_HOUSE_FLOOR,
+  HOUSE_VS_HOUSE_CAP,
+  HOUSE_FILLER_SPAWN_BUFFER,
+  houseFillerSpawnDelayMs,
+  pickHouseFillerSeek,
   HouseSkill,
   activeHouseRoster,
   houseDraftThinkMs,
@@ -373,7 +379,7 @@ console.log(
 // and a tight min/median/max) instead of a few bots hogging games. Compare
 // against a UNIFORM-random control on the same schedule to show the weighting
 // helps.
-const WINDOW_SIZE = 90; // a mid-range daily active window
+const WINDOW_SIZE = HOUSE_COUNT_MIN; // the smallest daily active window
 const PAIRS_PER_DAY = 40; // filler games spawned per simulated day
 const DAYS = 420; // two full roster rotations
 
@@ -428,7 +434,76 @@ check(wMax - wMin <= wMed, `weighted spread ${wMax - wMin} should be <= median $
 check(wMax - wMin <= uMax - uMin, "weighted spread no wider than uniform control");
 
 // ---------------------------------------------------------------------------
-// 7. Bot social-response delay (friend requests + direct challenges).
+// 7. Concurrent-game floor: staggered ramp-up and steady state.
+//
+// Owner target: 40+ house games live around the clock (Watch tab / TV always
+// busy), with natural variance in a 40-55 band and never a dip below the floor
+// while the house is enabled. The worker spawns at most ONE filler game per
+// tick, paced by houseFillerSpawnDelayMs (brisk ~1.5-3s stagger below the
+// floor+buffer, lazy 8-15s at steady state) — asserted here over a simulated
+// scheduling run using the production constants.
+// ---------------------------------------------------------------------------
+
+// Seat supply: the smallest daily active window must seat the whole steady band
+// (2 bots per game) plus the seek reserve (houseSeekMax + 2 = 6 in worker.ts).
+const SEEK_RESERVE = 6;
+check(
+  HOUSE_COUNT_MIN - SEEK_RESERVE >= 2 * (HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER),
+  `active window floor ${HOUSE_COUNT_MIN} seats the ${HOUSE_VS_HOUSE_FLOOR}-game floor (+buffer) with the seek reserve`,
+);
+check(HOUSE_VS_HOUSE_CAP >= HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER, "cap leaves room above the floor");
+// Filler pools skip the ultra-bullet controls (the slowed filler pacing would
+// flag a 1+0 game within a handful of moves).
+for (let i = 0; i < 5_000; i++) {
+  const { pool } = pickHouseFillerSeek(random);
+  check(["3+0", "3+2", "5+0", "5+3"].includes(pool), `filler pool ${pool}`);
+}
+
+// Scheduling run: 1s ticks (the alarm cadence), one spawn per tick when due and
+// under the caps; each game lasts 6-12 minutes (blitz pools at the slowed
+// filler pacing, most ending by flag or result inside that). Seat supply is the
+// smallest daily window minus the seek reserve.
+const RAMP_LIMIT_S = 5 * 60; // must hit the floor within 5 minutes of cold start
+const RUN_S = 6 * 60 * 60; // then hold it for six simulated hours
+const SETTLE_S = 60; // grace after first hitting the floor
+const seatCapGames = Math.floor((HOUSE_COUNT_MIN - SEEK_RESERVE) / 2);
+let liveEnds: number[] = [];
+let nextSpawnAt = 0;
+let reachedFloorAt = -1;
+let minAfterRamp = Infinity;
+let maxSeen = 0;
+let sumAfterRamp = 0;
+let samplesAfterRamp = 0;
+for (let t = 0; t < RUN_S; t++) {
+  liveEnds = liveEnds.filter((end) => end > t);
+  if (t >= nextSpawnAt && liveEnds.length < Math.min(HOUSE_VS_HOUSE_CAP, seatCapGames)) {
+    liveEnds.push(t + 360 + random(361)); // 6-12 min game
+    nextSpawnAt = t + houseFillerSpawnDelayMs(liveEnds.length, random) / 1000;
+  }
+  const n = liveEnds.length;
+  maxSeen = Math.max(maxSeen, n);
+  if (reachedFloorAt < 0 && n >= HOUSE_VS_HOUSE_FLOOR) reachedFloorAt = t;
+  if (reachedFloorAt >= 0 && t >= reachedFloorAt + SETTLE_S) {
+    minAfterRamp = Math.min(minAfterRamp, n);
+    sumAfterRamp += n;
+    samplesAfterRamp++;
+  }
+}
+check(
+  reachedFloorAt >= 0 && reachedFloorAt <= RAMP_LIMIT_S,
+  `ramp-up reached ${HOUSE_VS_HOUSE_FLOOR} games in ${reachedFloorAt}s (limit ${RAMP_LIMIT_S}s)`,
+);
+check(minAfterRamp >= HOUSE_VS_HOUSE_FLOOR, `steady-state min ${minAfterRamp} >= floor ${HOUSE_VS_HOUSE_FLOOR}`);
+check(maxSeen <= HOUSE_VS_HOUSE_CAP, `concurrency max ${maxSeen} <= cap ${HOUSE_VS_HOUSE_CAP}`);
+console.log(
+  `concurrency: ramp to ${HOUSE_VS_HOUSE_FLOOR} games in ${reachedFloorAt}s; ` +
+    `steady state over ${RUN_S / 3600}h -> min ${minAfterRamp}, ` +
+    `mean ${(sumAfterRamp / Math.max(1, samplesAfterRamp)).toFixed(1)}, max ${maxSeen} ` +
+    `(floor ${HOUSE_VS_HOUSE_FLOOR}, cap ${HOUSE_VS_HOUSE_CAP}, seat cap ${seatCapGames})`,
+);
+
+// ---------------------------------------------------------------------------
+// 8. Bot social-response delay (friend requests + direct challenges).
 // ---------------------------------------------------------------------------
 
 for (let i = 0; i < 20_000; i++) {
