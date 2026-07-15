@@ -152,6 +152,7 @@ export function TargetingBanner({
   targeting,
   onCancel,
   onFinish,
+  invalidKey,
 }: {
   game: NerfGame;
   myColor: Color;
@@ -160,14 +161,28 @@ export function TargetingBanner({
   /** Finishable steps (the picks so far are a complete effect) show a Done
    * button that fires the buff early instead of picking further targets. */
   onFinish?: () => void;
+  /** Bumped by the host whenever a tap lands on a NON-eligible square
+   * (Board.onInvalidPick). Each bump flashes a one-line hint naming what is
+   * targetable, then it fades on its own. */
+  invalidKey?: number;
 }) {
   const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
   const name = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   const empty = targeting.target.kind === "square" && targeting.target.squares.length === 0;
   const finishable = targeting.target.kind === "square" && !!targeting.target.finishable;
   const picked = targeting.picks.length;
+  // Transient invalid-tap hint: each bump of invalidKey shows the line
+  // immediately (derived during render), and a timer marks that bump as
+  // expired ~2.2s later so it fades on its own.
+  const [expiredInvalidKey, setExpiredInvalidKey] = useState(0);
+  useEffect(() => {
+    if (!invalidKey) return;
+    const t = window.setTimeout(() => setExpiredInvalidKey(invalidKey), 2200);
+    return () => window.clearTimeout(t);
+  }, [invalidKey]);
+  const showInvalid = !!invalidKey && expiredInvalidKey !== invalidKey;
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-full z-30 mt-1.5 flex justify-center px-2">
+    <div className="pointer-events-none absolute inset-x-0 top-full z-30 mt-1.5 flex flex-col items-center gap-1 px-2">
       {/* Your card is mid-use: a frosted glass chip with the card name, the
           current step, a picked-so-far counter, and clear Done / Cancel. Sits
           just BELOW the board's bottom edge so it never hides the squares the
@@ -204,6 +219,18 @@ export function TargetingBanner({
           Cancel <span className="text-coral-glow/60">Esc</span>
         </button>
       </div>
+      {/* Invalid-tap hint: one line naming what IS targetable, flashed after
+          a tap on a non-eligible square, self-fading. Oxblood alert accent. */}
+      {showInvalid && (
+        <div
+          role="status"
+          className="glass-chip max-w-full border border-oxblood-glow/50 px-3 py-1 text-xs font-display font-semibold text-oxblood-glow"
+        >
+          {empty
+            ? "No valid targets right now"
+            : `Not a valid target · ${targeting.target.label}`}
+        </div>
+      )}
     </div>
   );
 }

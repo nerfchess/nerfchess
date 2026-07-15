@@ -549,6 +549,10 @@ interface Props {
   // interaction (moves, selection, premoves) is suspended.
   pickSquares?: number[];
   onPickSquare?: (sq: Square) => void;
+  /** Targeting mode only: a tap landed on a NON-eligible square. Purely
+   * informational (the board already shows the refused-input feedback); hosts
+   * use it to surface a one-line "what is targetable" hint near the dock. */
+  onInvalidPick?: (sq: Square) => void;
   // A marquee attack card was just played: its id plus a monotonic key. When
   // the key advances, the board's next piece diff is dressed as that card's
   // signature choreography (derived entirely from which enemy squares cleared)
@@ -1839,6 +1843,13 @@ const BoardSquare = React.memo(function BoardSquare({
                 {isPickTarget && (
                   <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
                 )}
+                {/* Targeting mode: every NON-eligible square dims 35% (over
+                    its piece) so the breathing eligible rings read instantly.
+                    Static paint, presentation only: the tap handling above is
+                    untouched. */}
+                {pickingSquares && !isPickTarget && (
+                  <div className="sq-pick-dim absolute inset-0 z-20 pointer-events-none" />
+                )}
                 {fogHide ? (
                   // A near-opaque tint instead of backdrop-blur: fog-of-war can
                   // cover ~16 squares at once, and backdrop-filter is the costliest
@@ -1999,6 +2010,7 @@ export function Board({
   buffs,
   opponentMoves,
   nerfReveals,
+  onInvalidPick,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -2016,6 +2028,17 @@ export function Board({
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
+  // Refused input: the square whose move/target was just rejected. Drives a
+  // brief oxblood inner ring on that square (plus a 150ms transform-only shake
+  // applied imperatively, see flagInvalid) and unmounts right after. Purely
+  // presentational: it never changes what input is accepted.
+  const [invalidFx, setInvalidFx] = useState<{ sq: Square; key: number } | null>(null);
+  const invalidKeyRef = useRef(0);
+  useEffect(() => {
+    if (!invalidFx) return;
+    const t = window.setTimeout(() => setInvalidFx(null), 380);
+    return () => window.clearTimeout(t);
+  }, [invalidFx]);
   // The player's "hide effects/animations" switch (the small eye button in
   // the game rails). Decorative layers stand down; functional reads stay.
   const fxHiddenPref = useFxHidden();
@@ -3292,6 +3315,31 @@ export function Board({
     targetsRef.current = targets;
   });
 
+  // Refused-input feedback: an oxblood inner ring on the refused square plus
+  // a 150ms transform-only shake on the square(s) involved (the refused
+  // square and, when a move was attempted, the piece's square). The shake is
+  // applied imperatively to the grid cells (the same pattern as the marquee
+  // board thump) so the memoized square renders never churn; motionOff()
+  // (Settings anim-off / reduced motion) drops the shake while the ring stays
+  // as a brief static indicator (reduced motion never means zero feedback).
+  const flagInvalid = (ringSq: Square, shakeSq?: Square | null) => {
+    invalidKeyRef.current += 1;
+    setInvalidFx({ sq: ringSq, key: invalidKeyRef.current });
+    if (motionOff()) return;
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    if (!grid) return;
+    const shakeTargets = shakeSq != null && shakeSq !== ringSq ? [ringSq, shakeSq] : [ringSq];
+    for (const s of shakeTargets) {
+      const idx = orderedSquares.indexOf(s);
+      const el = grid.children[idx] as HTMLElement | undefined;
+      if (!el) continue;
+      el.classList.remove("sq-invalid-shake");
+      void el.offsetWidth;
+      el.classList.add("sq-invalid-shake");
+      window.setTimeout(() => el.classList.remove("sq-invalid-shake"), 200);
+    }
+  };
+
   // Everything happens on pointer *down*, lichess-style: pressing a legal
   // destination plays the move immediately (no waiting for the release —
   // that saves the whole press-to-release delay on every move, which adds up
@@ -3320,6 +3368,11 @@ export function Board({
         // effect actually lands. One shot per drop.
         if (legalMoves.some((m) => m.drop != null && m.to === sq)) playDrop();
         onPickSquare?.(sq);
+      } else {
+        // Tap on a non-eligible square while a card is aiming: refused target.
+        // The mode itself stays armed (Escape or the cancel chip exits).
+        flagInvalid(sq);
+        onInvalidPick?.(sq);
       }
       return;
     }
@@ -3340,6 +3393,11 @@ export function Board({
       onPointerDownPiece(e, sq);
       return;
     }
+    // Your own piece with no legal moves right now (pinned, frozen, hexed):
+    // a refused pickup. Feedback only, no return: the flow below still runs
+    // (a frozen piece's effect popover on touch, the shape-clearing dead tap),
+    // so nothing about what happens next changes.
+    if (piece && piece.color === myColor) flagInvalid(sq);
     // Inspect an enemy piece: slate dots preview every square it could reach
     // (turn-flipped legal moves from the host). A second tap on the same
     // piece toggles the preview off; a frozen piece has no moves and falls
@@ -3491,6 +3549,10 @@ export function Board({
         dropSkipRef.current = sq;
         tryPlayRef.current(sq);
       } else if (sq != null && sq !== drag.from) {
+        // Dropped on a square this piece cannot reach: refused move. The
+        // piece returns to its origin exactly as before; the ring + shake are
+        // feedback only.
+        flagInvalid(sq, drag.from);
         setSelected(null);
       } else if (sq === drag.from && pressRef.current?.sq === sq && pressRef.current.wasSelected) {
         // Releasing on an already-selected piece deselects it (click toggle).
@@ -4223,6 +4285,29 @@ export function Board({
             )}
           </svg>
         )}
+
+        {/* Refused-input ring: a brief oxblood inner ring on the square whose
+            move / card target was just rejected (see flagInvalid). One-shot,
+            keyed per refusal, unmounted ~380ms later; anim-off shows it as a
+            short static flash instead (never zero feedback). */}
+        {invalidFx &&
+          (() => {
+            const col = orientation === "w" ? FILE(invalidFx.sq) : 7 - FILE(invalidFx.sq);
+            const row = orientation === "w" ? 7 - RANK(invalidFx.sq) : RANK(invalidFx.sq);
+            return (
+              <div
+                key={`inv-${invalidFx.key}`}
+                aria-hidden
+                className="sq-invalid-ring pointer-events-none absolute z-[35]"
+                style={{
+                  left: `${col * 12.5}%`,
+                  top: `${row * 12.5}%`,
+                  width: "12.5%",
+                  height: "12.5%",
+                }}
+              />
+            );
+          })()}
       </div>
 
       {/* Expansion Permit construction ring: the ninth file / ninth rank

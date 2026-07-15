@@ -1432,6 +1432,11 @@ html[data-anim="off"] .sq-check::after {
 html[data-anim="off"] .sq-pickable {
   animation: none;
 }
+/* Targeting mode: non-eligible squares sit behind a flat 35% ink dim so the
+   eligible rings carry the eye. Static paint, no animation. */
+.sq-pick-dim {
+  background: rgba(9, 10, 14, 0.35);
+}
 
 /* --- Empowered shine + passive edge aura ------------------------------------
    "Stronger pieces shine": a piece carrying a live self-grant card fx
@@ -2396,6 +2401,36 @@ html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stam
 html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .clock-pulse-soft { animation: none !important; }
+}
+
+/* --- Refused-input feedback ---------------------------------------------------
+   A rejected move or card target flashes a brief oxblood inner ring on the
+   refused square while the involved square(s) shake 150ms (transform only,
+   applied imperatively by Board.flagInvalid). Under anim-off / reduced motion
+   the shake is never applied and the ring falls back to a short static flash
+   (the element unmounts ~380ms later), so feedback survives without motion. */
+@keyframes sq-invalid-ring {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.sq-invalid-ring {
+  box-shadow: inset 0 0 0 3px rgba(192, 65, 59, 0.85), inset 0 0 14px rgba(192, 65, 59, 0.35);
+  animation: sq-invalid-ring 360ms ease-out both;
+}
+@keyframes sq-invalid-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5%); }
+  55% { transform: translateX(4%); }
+  80% { transform: translateX(-2%); }
+}
+.sq-invalid-shake { animation: sq-invalid-shake 150ms ease-in-out; }
+html[data-anim="off"] .sq-invalid-ring { animation: none !important; opacity: 0.9; }
+html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .sq-invalid-ring { animation: none !important; opacity: 0.9; }
+  .sq-invalid-shake { animation: none !important; }
 }
 
 /* --- Left-rail luxe (additive) -----------------------------------------------

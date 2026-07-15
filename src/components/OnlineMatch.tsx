@@ -310,6 +310,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
   });
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number; provisional?: boolean } | null>(null);
+  // Post-game standing in the mode pool: the viewer's W/L/D and current rank,
+  // read once from the leaderboard API after a rated game. Null for guests and
+  // casual games (the API returns no `me` row for them).
+  const [poolStanding, setPoolStanding] = useState<{
+    record: { wins: number; losses: number; draws: number };
+    rank: number;
+  } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
   // Abandonment claims: opponentGone arrived and no sign of life since; after
@@ -1324,6 +1331,30 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     });
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
+  // One leaderboard read after a rated game supplies both the post-game W/L/D
+  // record and the current rank for the result screen (the API's `me` row).
+  // Fires once per finished game; guests/casual get no `me` row and are omitted.
+  useEffect(() => {
+    if (!start.rated || !game?.result) return;
+    if (start.mode !== "nerf" && start.mode !== "buff") return;
+    let cancelled = false;
+    fetch(`/api/leaderboard?category=${start.mode}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const me = (data as { me?: { rank?: number; wins?: number; losses?: number; draws?: number } } | null)?.me;
+        if (!cancelled && me && typeof me.rank === "number") {
+          setPoolStanding({
+            record: { wins: me.wins ?? 0, losses: me.losses ?? 0, draws: me.draws ?? 0 },
+            rank: me.rank,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [start.rated, start.mode, game?.result]);
+
   // The reviewed board is derived from the snapshot cache (a ref, so writing it
   // every ply never re-renders). Refs cannot be read during render, so the
   // review board is computed in an effect and held as state instead; review is
@@ -1517,6 +1548,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Activated buffs target on the real board: candidate squares highlight on
   // the live board and clicking one advances the pick chain. Enemy-buff-list
   // targets fall back to the modal below.
+  // Presentation only: bumped when a targeting tap lands on a non-eligible
+  // square, so the TargetingBanner flashes its "what is targetable" hint.
+  const [invalidPickKey, setInvalidPickKey] = useState(0);
+  // Purely visual reconnect treatment: mirror the same coarse connection
+  // state the ConnectionBanner subscribes to (multi-listener, read-only).
+  // While the socket is down the board dims 20% and input is disabled via the
+  // Board's existing disabled prop; nothing about the reconnect logic or the
+  // live game state is touched, and recovery restores silently.
+  const [connectionLost, setConnectionLost] = useState(false);
+  useEffect(() => {
+    return session.onConnectionState((state) => {
+      setConnectionLost(state === "lost" || state === "reconnecting");
+    });
+  }, [session]);
   const buffTargeting = useBuffTargeting({
     game,
     myColor,
@@ -2573,7 +2618,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
-              <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
+              <div
+                data-board-measure
+                className={
+                  `relative mx-auto sm:mx-0 transition-opacity duration-200 ${boardFitClass}` +
+                  // Reconnecting: dim the board 20% (it stays visible, never
+                  // unmounted) while input is disabled below.
+                  (connectionLost ? " opacity-80" : "")
+                }
+              >
                 <Board
                   board={boardForDisplay}
                   // Removal FX diff the committed position, never the premove /
@@ -2648,6 +2701,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     isReviewingHistory ||
                     !!confirmMovePending ||
                     !!myOffer ||
+                    connectionLost ||
                     (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
                   }
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -2674,6 +2728,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       ? submitDrop
                       : undefined
                   }
+                  onInvalidPick={() => setInvalidPickKey((k) => k + 1)}
                 />
                 {isDraft && bsTheirs && (
                   <DraftNotice
@@ -2691,10 +2746,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
                     onFinish={buffTargeting.finish}
+                    invalidKey={invalidPickKey}
                   />
                 )}
                 {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
               </div>
+              {/* Reconnecting status line: pairs with the top ConnectionBanner
+                  and the 20% board dim above. Disappears silently on recovery. */}
+              {connectionLost && (
+                <div role="status" aria-live="polite" className="mt-1 flex justify-center">
+                  <span className="plate plate-raised border-oxblood-glow/50 px-3 py-1.5 font-display text-xs font-semibold text-oxblood-glow">
+                    Reconnecting · moves are paused until the connection returns
+                  </span>
+                </div>
+              )}
               {/* Crazyhouse pocket: the viewer's banked pieces sit in a tray
                   directly under the board. Click one to arm a drop; the board
                   then highlights every legal drop square. Hidden while reviewing
@@ -3166,6 +3231,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           ratingMode={start.mode === "nerf" || start.mode === "buff" ? start.mode : null}
+          mode={start.mode === "nerf" || start.mode === "buff" ? start.mode : null}
+          record={poolStanding?.record ?? null}
+          rank={poolStanding?.rank ?? null}
+          serverGameId={start.id}
+          newOpponentHref={`/lobby?tab=quick${
+            start.mode === "nerf" || start.mode === "buff" ? `&mode=${start.mode}` : ""
+          }`}
+          profiles={[
+            ...(start.players?.[myColor]?.name
+              ? [
+                  {
+                    name: start.players[myColor]!.name,
+                    href: `/u/${encodeURIComponent(start.players[myColor]!.name)}`,
+                  },
+                ]
+              : []),
+            ...(start.players?.[oppColor]?.name
+              ? [
+                  {
+                    name: oppName,
+                    href: `/u/${encodeURIComponent(oppName)}`,
+                    isBot: !!start.players[oppColor]!.house,
+                  },
+                ]
+              : []),
+          ]}
           rematchStatus={rematchStatus}
           opponentLeft={opponentGone}
           onRematch={handleRematch}

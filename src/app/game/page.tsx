@@ -69,6 +69,7 @@ import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
+import { loadRatings } from "@/lib/ratings";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
@@ -253,6 +254,9 @@ function GamePage() {
   // your own rule to the opponent.
   const [oppPeek, setOppPeek] = useState(false);
   const [sharedMine, setSharedMine] = useState(false);
+  // Bumped when a targeting tap lands on a non-eligible square; the
+  // TargetingBanner flashes a one-line "what is targetable" hint per bump.
+  const [invalidPickKey, setInvalidPickKey] = useState(0);
   const aiThinking = useRef(false);
   const gameRef = useRef<NerfGame | null>(null);
   const aiWorkerRef = useRef<Worker | null>(null);
@@ -968,6 +972,12 @@ function GamePage() {
   // never double-records.
   const sawResult = useRef(false);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
+  // Post-game W/L/D in this time-control bucket, read back from the local
+  // rating store once a rated result has been saved. Null for casual games.
+  const [postRecord, setPostRecord] = useState<{ wins: number; losses: number; draws: number } | null>(null);
+  // Snapshot of the card-play-by-ply record (sigPlyRef), taken at game end, for
+  // the result screen's match timeline. A ref can't be read during render.
+  const [timelineEvents, setTimelineEvents] = useState<{ ply: number; cardId: string }[]>([]);
   useEffect(() => {
     if (!game?.result || sawResult.current) return;
     // Plain ref bookkeeping; flagged only as collateral of the mutable-replica
@@ -987,12 +997,20 @@ function GamePage() {
       saveRatingFor(ratingCategory, after, score === 1 ? "win" : score === 0 ? "loss" : "draw");
       change = { before: before.rating, after: after.rating };
       const applied = change;
+      // Read the updated bucket back for the W/L/D line on the result screen.
+      const stats = loadRatings()[ratingCategory];
+      const record = { wins: stats.wins, losses: stats.losses, draws: stats.draws };
       queueMicrotask(() => {
         setPlayerElo(after.rating);
         setRatingChange(applied);
+        setPostRecord(record);
       });
     }
-    queueMicrotask(() => setShowResult(true));
+    const events = Array.from(sigPlyRef.current, ([ply, id]) => ({ ply, cardId: id }));
+    queueMicrotask(() => {
+      setShowResult(true);
+      setTimelineEvents(events);
+    });
     recordCompletedGame({
       mode: "ai",
       opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
@@ -2050,6 +2068,7 @@ function GamePage() {
                       ? (sq) => buffTargeting.pick({ square: sq })
                       : undefined
                   }
+                  onInvalidPick={() => setInvalidPickKey((k) => k + 1)}
                 />
                 {bsTheirs && (
                   <DraftNotice
@@ -2065,6 +2084,7 @@ function GamePage() {
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
                     onFinish={buffTargeting.finish}
+                    invalidKey={invalidPickKey}
                   />
                 )}
                 {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
@@ -2287,11 +2307,15 @@ function GamePage() {
           opponentNerf={gameMode === "buff" || plainMode ? undefined : opponentNerf}
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
+          mode={gameMode}
+          record={postRecord}
+          newOpponentHref={`/lobby?tab=quick${gameMode ? `&mode=${gameMode}` : ""}`}
           onRematch={handleRematch}
           onNewGame={handleRematch}
           onReview={() => handleHistoryPlyChange(0)}
           onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}
+          cardEvents={timelineEvents}
           playerNames={{
             w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
             b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,

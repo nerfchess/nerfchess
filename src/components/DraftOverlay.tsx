@@ -800,7 +800,7 @@ export function DraftOverlay({
               setTucked(false);
             }}
             aria-label={`Resolve your ${noun} draft`}
-            className="plate flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            className="plate plate-raised flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
             <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
             <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
@@ -823,7 +823,7 @@ export function DraftOverlay({
           initial={dragging ? false : { opacity: 0, x: 80, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="plate border-gold/40 p-3 shadow-plate"
+          className="plate plate-raised border-gold/40 p-3 shadow-plate"
         >
           {/* Drag handle: grab the header (mouse or touch) to move the panel so
               it never covers the clock. touch-none stops the page scrolling
@@ -968,7 +968,7 @@ export function DraftOverlay({
             type="button"
             onClick={() => setHidden(false)}
             aria-label="Show the draft"
-            className="plate flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            className="plate plate-raised flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
             <EyeIcon className="text-gold-leaf" />
             <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
@@ -983,10 +983,11 @@ export function DraftOverlay({
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
         // eat the pick clicks. No backdrop blur: a full-screen blur repainted
-        // on every board animation frame chugged phones; a slightly deeper
-        // scrim reads the same.
+        // on every board animation frame chugged phones. The scrim is a light
+        // 20% dim: the board stays visible behind the draft, never hidden
+        // (the near-opaque panel itself carries the cards' readability).
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/80" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/20" +
           (hidden ? " invisible" : "")
         }
       >
@@ -1037,13 +1038,16 @@ export function DraftOverlay({
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
+          // Entrance inside the system's 320ms budget (dur-3); the card deal
+          // inside is a choreographed game effect with its own budget.
+          transition={{ duration: 0.28, ease: "easeOut" }}
           className={
             "draft-frame corner-cut min-w-0 w-full" +
             // A mythic-grade pull rattles the whole panel as the pack opens.
             (packStage === "open" && maxTier >= 9 && !reduceMotion ? " draft-shake" : "")
           }
         >
-          <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
+          <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
           <div className="flex items-center gap-2">
@@ -1411,7 +1415,9 @@ export function DraftOverlay({
             <button
               onClick={handleReroll}
               disabled={rerolling}
-              className="btn-glass flex w-full touch-manipulation items-center justify-center gap-1.5 px-6 py-3 font-display text-sm font-semibold tracking-wide disabled:opacity-40 sm:w-auto"
+              // Quiet secondary: btn-glass is reserved for the lock-in commits
+              // (Confirm pick / Bank this draft), one glass primary per region.
+              className="flex w-full touch-manipulation items-center justify-center gap-1.5 rounded-[1px] border border-white/15 bg-white/[0.03] px-6 py-3 font-display text-sm font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40 sm:w-auto"
               title="Discard this offer and roll fresh cards at the same tier"
             >
               <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} />
@@ -1450,7 +1456,9 @@ export function DraftOverlay({
               <button
                 onClick={() => setBankArmed(true)}
                 disabled={chosen != null || banking}
-                className="btn-glass w-full touch-manipulation px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
+                // Quiet secondary (arm step, not a commit): glass stays with
+                // the lock-in buttons only.
+                className="w-full touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-6 py-3 font-display text-sm font-semibold tracking-wide text-parchment-200 transition hover:border-white/30 hover:text-parchment-100 disabled:opacity-40 sm:w-auto"
                 title="Skip this draft; your next one pulls from a tier higher"
               >
                 Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
@@ -1640,7 +1648,7 @@ export function DraftRevealBanner({
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="plate pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
+        className="plate plate-raised pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
       >
         <span className="smallcaps block text-[9px] text-parchment-400">Draft resolved</span>
         <span className="mt-1.5 flex items-stretch gap-3">
