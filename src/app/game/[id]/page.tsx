@@ -9,7 +9,7 @@ import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
-import { GameOver } from "@/components/GameOver";
+import { GameOver, type TimelineCardEvent } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
 import { moveFromUCI, moveToUCI } from "@/engine/board";
@@ -38,6 +38,7 @@ import {
   loadOnlineSeat,
   loadSavedFriendSession,
   MPDraftAction,
+  MPDraftCard,
   MPPlayers,
   MPSession,
   MPSpectatorChatMessage,
@@ -834,8 +835,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         myColor="w"
         myNerf={whiteNerf}
         opponentNerf={blackNerf}
+        mode={setup.mode === "nerf" || setup.mode === "buff" ? setup.mode : null}
         playerNames={{ w: setup.players.w.name, b: setup.players.b.name }}
         moves={history}
+        cardEvents={cardEventsFromDtActions(dtActions)}
+        profiles={[
+          { name: setup.players.w.name, href: `/u/${encodeURIComponent(setup.players.w.name)}`, isBot: !!setup.players.w.house },
+          { name: setup.players.b.name, href: `/u/${encodeURIComponent(setup.players.b.name)}`, isBot: !!setup.players.b.house },
+        ]}
         myBuffs={draftGame?.buffs?.players.w.buffs}
         opponentBuffs={draftGame?.buffs?.players.b.buffs}
         onRematch={() => {}}
@@ -1270,8 +1277,16 @@ function ReplayView({ game }: { game: ReplayGame }) {
         myColor="w"
         myNerf={whiteNerf}
         opponentNerf={blackNerf}
+        mode={game.mode === "nerf" || game.mode === "buff" ? game.mode : null}
         playerNames={{ w: game.white_name, b: game.black_name }}
         moves={history}
+        cardEvents={dtActions ? cardEventsFromDtActions(dtActions) : undefined}
+        profiles={[
+          { name: game.white_name, href: `/u/${encodeURIComponent(game.white_name)}` },
+          { name: game.black_name, href: `/u/${encodeURIComponent(game.black_name)}` },
+        ]}
+        myBuffs={draftHead?.buffs?.players.w.buffs}
+        opponentBuffs={draftHead?.buffs?.players.b.buffs}
         startedAt={game.started_at}
         gameId={game.id}
         onRematch={() => {}}
@@ -1295,6 +1310,24 @@ function ReplayView({ game }: { game: ReplayGame }) {
 }
 
 // ---------------- shared read-only layout ----------------
+
+// Card markers for the result-screen timeline, drawn from the spectator-safe
+// public action stream: "use" activations and instant "pick"s are the moments a
+// card visibly landed on the board (masked/held picks never reach this stream).
+function cardEventsFromDtActions(actions: MPDraftAction[]): TimelineCardEvent[] {
+  const out: TimelineCardEvent[] = [];
+  for (const a of actions) {
+    if (a.a === "use" && a.card?.id) {
+      out.push({ ply: a.ply, color: a.color, cardId: a.card.id, tier: a.card.tier });
+    } else if (a.a === "pick") {
+      for (const c of a.cards) {
+        const card = c as MPDraftCard;
+        if (card.id) out.push({ ply: a.ply, color: a.color, cardId: card.id, tier: card.tier });
+      }
+    }
+  }
+  return out;
+}
 
 function describeResult(result: { winner: Color | "draw" | null; reason: string }): string {
   const head =

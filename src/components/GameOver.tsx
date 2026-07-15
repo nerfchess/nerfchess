@@ -6,14 +6,35 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { fetchMe } from "@/lib/authClient";
 import { GameResult } from "@/engine/game";
 import { Color, Move } from "@/engine/types";
+import { moveToUCI } from "@/engine/board";
 import { Nerf } from "@/engine/nerf";
-import { BuffInstance } from "@/engine/buff";
+import { BuffInstance, type DraftMode } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+
+// A single card marker on the match timeline. `ply` is the half-move the card
+// landed on; `cardId`/`tier` name it for the hover label and tier tint. Callers
+// derive this from whatever public action record they hold (dtActions in the
+// spectator/replay paths, the local signature record in the bot game); callers
+// with no action data pass nothing and the timeline renders moves-only.
+export interface TimelineCardEvent {
+  ply: number;
+  color?: Color;
+  cardId?: string;
+  tier?: number;
+}
+
+// A linked player profile shown in the actions area. `href` points at
+// /u/[username]; house bots carry `isBot` so the row can be dropped or labeled.
+export interface ProfileLink {
+  name: string;
+  href: string;
+  isBot?: boolean;
+}
 
 interface Props {
   result: GameResult;
@@ -26,8 +47,20 @@ interface Props {
   // Which rating pool the change applies to ("nerf" | "buff"), so the pill
   // reads "Buff rating" instead of an unlabeled number.
   ratingMode?: "nerf" | "buff" | null;
+  // The section this game belonged to, drawn as a mode chip in the header.
+  mode?: DraftMode | null;
+  // Post-game win/loss/draw record in the pool this game counted toward, shown
+  // as a "now 12W 4L 2D" line. Omitted honestly for guests and casual games.
+  record?: { wins: number; losses: number; draws: number } | null;
+  // Current standing in the rated pool (from the leaderboard API). Movement is
+  // never shown because the before-rank is not stored; current rank only.
+  rank?: number | null;
   onRematch: () => void;
+  // Accepted for caller compatibility; the result screen no longer renders a
+  // separate "New game" button (New opponent and Rematch cover the flows).
   onNewGame: () => void;
+  // Accepted for caller compatibility; move review now lives in the game view
+  // itself (dismiss the panel to scrub), not as a result-screen action.
   onReview?: () => void;
   // Online games negotiate rematches over the wire: "offered" = waiting for
   // the opponent, "incoming" = the opponent wants one.
@@ -42,9 +75,10 @@ interface Props {
   opponentHidden?: boolean;
   // When provided, a "Copy PGN" button exports the move list.
   moves?: Move[];
-  // When provided, a "Clip" button opens the clip-sharing modal (a stylized
-  // canvas replay of the final moves, recorded to webm client-side). Only the
-  // local game page wires it today; pages that don't pass it see no button.
+  // Card-use markers for the match timeline, one per played card (see above).
+  cardEvents?: TimelineCardEvent[];
+  // Accepted for caller compatibility; the clip entry point lives in the game
+  // view's actions ("Clip last moves"), not on the result screen.
   onClip?: () => void;
   playerNames?: Record<Color, string>;
   startedAt?: number;
@@ -53,6 +87,14 @@ interface Props {
   onDismiss?: () => void;
   // Server game id, attached to rule feedback votes.
   gameId?: string;
+  // Archived server game id: when present a "Watch replay" action links to the
+  // archived replay at /game/[id].
+  serverGameId?: string | null;
+  // Linked player profiles for the "View profile" actions (both players).
+  profiles?: ProfileLink[];
+  // "New opponent" target: /lobby with the same mode + time control preselected
+  // via the query params the lobby reads. Defaults to /lobby?tab=quick.
+  newOpponentHref?: string;
   // Draft games: the buffs I held during the game, offered for balance votes.
   myBuffs?: BuffInstance[];
   // Draft games: the cards my opponent drafted, revealed once the game is over
@@ -80,7 +122,7 @@ function VoteThumbs({ vote, onVote }: { vote: 1 | -1 | null; onVote: (value: 1 |
           "grid h-9 w-9 place-items-center border transition " +
           (vote === 1
             ? "border-verdigris/60 bg-verdigris/20 text-verdigris-glow"
-            : "border-white/15 text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
+            : "border-[color:var(--edge)] text-parchment-300 hover:border-verdigris/50 hover:text-verdigris-glow")
         }
       >
         <ThumbsUp size={13} />
@@ -93,7 +135,7 @@ function VoteThumbs({ vote, onVote }: { vote: 1 | -1 | null; onVote: (value: 1 |
           "grid h-9 w-9 place-items-center border transition " +
           (vote === -1
             ? "border-oxblood-glow/60 bg-oxblood/20 text-oxblood-glow"
-            : "border-white/15 text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
+            : "border-[color:var(--edge)] text-parchment-300 hover:border-oxblood-glow/50 hover:text-oxblood-glow")
         }
       >
         <ThumbsDown size={13} />
@@ -119,8 +161,8 @@ function RuleFeedback({ nerfId, gameId }: { nerfId: string; gameId?: string }) {
   };
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/10 pt-2">
-      <span className="text-[11px] text-parchment-400">
+    <div className="mt-2 flex items-center justify-between gap-2 border-t border-[color:var(--edge)] pt-2">
+      <span className="text-xs text-parchment-400">
         {vote ? "Thanks for the feedback" : "Like this rule?"}
       </span>
       <VoteThumbs vote={vote} onVote={cast} />
@@ -128,12 +170,35 @@ function RuleFeedback({ nerfId, gameId }: { nerfId: string; gameId?: string }) {
   );
 }
 
-// Same one-tap verdict for a buff drafted during the game; lands in the
-// moderators' buff feedback queue.
-function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string }) {
+// State tag for one drafted card at game end. Passives that were still live
+// read as "Active" (and sort to the top); one-shots that fired read "Spent";
+// a card an opponent cancelled reads "Nullified".
+function draftedCardState(buff: BuffInstance, kind: "passive" | "instant" | "activated") {
+  if (buff.nullified) return { tag: "Nullified", tone: "oxblood" as const, active: false };
+  const used = !!buff.spent || !!buff.usedActivation;
+  if (kind === "passive") {
+    return used
+      ? { tag: "Spent", tone: "muted" as const, active: false }
+      : { tag: "Active", tone: "pos" as const, active: true };
+  }
+  if (used) return { tag: "Spent", tone: "muted" as const, active: false };
+  return { tag: null, tone: "muted" as const, active: false };
+}
+
+// One compact tier-chip row in a drafted-cards group. Read-only by default;
+// when `votable` (the seated player's own cards) it carries the balance-vote
+// thumbs, posting to the buff feedback queue exactly as the old reveal row did.
+function DraftedCardRow({
+  buff,
+  votable,
+  gameId,
+}: {
+  buff: BuffInstance;
+  votable?: boolean;
+  gameId?: string;
+}) {
   const def = BUFF_BY_ID[buff.id];
   const [vote, setVote] = useState<1 | -1 | null>(null);
-
   const cast = async (value: 1 | -1) => {
     setVote(value);
     try {
@@ -144,53 +209,102 @@ function BuffFeedbackRow({ buff, gameId }: { buff: BuffInstance; gameId?: string
       });
     } catch {}
   };
-
   if (!def) return null;
+  const state = draftedCardState(buff, def.kind);
+  const tagClass =
+    state.tone === "pos"
+      ? "border-verdigris/50 text-verdigris-glow"
+      : state.tone === "oxblood"
+      ? "border-oxblood-glow/50 text-oxblood-glow"
+      : "border-[color:var(--edge)] text-parchment-400";
   return (
-    <li className="py-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-2">
-          <span
-            className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
-            title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
-            aria-hidden
-          >
-            {TIER_ROMAN[buff.tier]}
-          </span>
-          <span className="min-w-0 truncate text-xs text-parchment-200">{def.name}</span>
-        </span>
-        <VoteThumbs vote={vote} onVote={cast} />
-      </div>
-      {/* The rule text always shows — a card's effect should never hide
-          behind a hover tooltip. */}
-      <p className="mt-0.5 text-left text-[10px] leading-snug text-parchment-400">
-        {def.description}
-      </p>
-    </li>
-  );
-}
-
-// A read-only row for one of the opponent's drafted cards, shown post-game.
-// No vote thumbs (those are only for cards you drafted yourself).
-function BuffReveal({ buff }: { buff: BuffInstance }) {
-  const def = BUFF_BY_ID[buff.id];
-  if (!def) return null;
-  return (
-    <li className="py-1">
+    <li className={"py-1.5" + (buff.nullified ? " opacity-60" : "")}>
       <div className="flex items-center gap-2">
         <span
-          className={`shrink-0 border px-1 font-display text-[10px] font-bold tier-bg-${buff.tier} tier-${buff.tier}`}
+          className={`shrink-0 border px-1 font-display text-[11px] font-bold leading-none tier-bg-${buff.tier} tier-${buff.tier}`}
           title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
           aria-hidden
         >
           {TIER_ROMAN[buff.tier]}
         </span>
-        <span className="min-w-0 truncate text-xs text-parchment-200">{def.name}</span>
+        <span
+          className={
+            "min-w-0 flex-1 truncate text-[13px] text-parchment-100" +
+            (buff.nullified ? " line-through decoration-parchment-400/60" : "")
+          }
+          title={def.name}
+        >
+          {def.name}
+        </span>
+        {state.tag && (
+          <span className={`shrink-0 border px-1.5 py-px text-[11px] leading-none ${tagClass}`}>
+            {state.tag}
+          </span>
+        )}
       </div>
-      <p className="mt-0.5 text-left text-[10px] leading-snug text-parchment-400">
-        {def.description}
-      </p>
+      {/* The rule text always shows (clamped to two lines): a card's effect
+          should never hide behind a hover tooltip. The vote thumbs share this
+          row so the name line above keeps its full width in narrow columns. */}
+      <div className="mt-0.5 flex items-start gap-2">
+        <p
+          className="min-w-0 flex-1 line-clamp-2 text-left text-xs leading-snug text-parchment-400"
+          title={def.description}
+        >
+          {def.description}
+        </p>
+        {votable && (
+          <span className="shrink-0">
+            <VoteThumbs vote={vote} onVote={cast} />
+          </span>
+        )}
+      </div>
     </li>
+  );
+}
+
+// One side's drafted cards, grouped and labeled. Passives that were active at
+// game end sort first (they are the ones still shaping the final position),
+// then the rest in draft order.
+function DraftedGroup({
+  label,
+  hint,
+  buffs,
+  votable,
+  gameId,
+}: {
+  label: string;
+  hint?: string;
+  buffs: BuffInstance[];
+  votable?: boolean;
+  gameId?: string;
+}) {
+  const ordered = useMemo(() => {
+    return buffs
+      .map((b, i) => ({ b, i }))
+      .sort((a, z) => {
+        const da = BUFF_BY_ID[a.b.id];
+        const dz = BUFF_BY_ID[z.b.id];
+        const aa = da ? (draftedCardState(a.b, da.kind).active ? 0 : 1) : 1;
+        const za = dz ? (draftedCardState(z.b, dz.kind).active ? 0 : 1) : 1;
+        return aa - za || a.i - z.i;
+      })
+      .map((x) => x.b);
+  }, [buffs]);
+  if (ordered.length === 0) return null;
+  // No inner scroll/clip: the two side-by-side groups stretch to equal heights
+  // (grid default) and the panel itself scrolls, so no row is ever cut off.
+  return (
+    <div className="border border-[color:var(--edge)] bg-ink-900/40 p-3 text-left">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="eyebrow">{label}</span>
+        {hint && <span className="shrink-0 text-xs text-parchment-400">{hint}</span>}
+      </div>
+      <ul className="mt-1.5 divide-y divide-[color:var(--edge)]">
+        {ordered.map((buff, i) => (
+          <DraftedCardRow key={`${buff.id}-${i}`} buff={buff} votable={votable} gameId={gameId} />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -200,9 +314,9 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
   return (
     <div className={`border p-3 text-left tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="smallcaps text-[9px] text-parchment-400">{label}</span>
+        <span className="eyebrow">{label}</span>
         <span
-          className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-display text-[10px] font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
+          className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-display text-[11px] font-bold leading-none tier-bg-${nerf.tier} tier-${nerf.tier}`}
           title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
         >
           <span aria-hidden>{TIER_ROMAN[nerf.tier]}</span>
@@ -215,6 +329,94 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
       <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
       {children}
     </div>
+  );
+}
+
+// A compact horizontal strip of the game's shape: a tick every 10 plies and a
+// tier-tinted marker at every ply a card was played. Hovering (or tapping, on
+// touch) a marker names the card and the ply. With no card data it degrades to
+// the plain move ruler.
+function MatchTimeline({
+  moves,
+  cardEvents,
+}: {
+  moves?: Move[];
+  cardEvents?: TimelineCardEvent[];
+}) {
+  const [active, setActive] = useState<number | null>(null);
+  const total = moves?.length ?? 0;
+  const ticks = useMemo(() => {
+    const out: number[] = [];
+    for (let p = 10; p < total; p += 10) out.push(p);
+    return out;
+  }, [total]);
+  const events = useMemo(
+    () =>
+      (cardEvents ?? [])
+        .filter((e) => e.ply >= 0 && e.ply <= total)
+        .map((e) => ({ ...e, def: e.cardId ? BUFF_BY_ID[e.cardId] : undefined })),
+    [cardEvents, total],
+  );
+  if (total < 2) return null;
+  const activeEvent = active != null ? events[active] : null;
+  return (
+    <section className="mt-5 text-left" aria-label="Match timeline">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="eyebrow">Match timeline</span>
+        <span className="text-xs text-parchment-400 tabular">{total} plies</span>
+      </div>
+      <div className="relative mt-2 h-8">
+        {/* Base ruler. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[color:var(--edge-strong)]"
+        />
+        {/* Tick every 10 plies. */}
+        {ticks.map((p) => (
+          <span
+            key={`t${p}`}
+            aria-hidden
+            className="absolute top-1/2 h-2 w-px -translate-y-1/2 bg-[color:var(--edge-strong)]"
+            style={{ left: `${(p / total) * 100}%` }}
+          />
+        ))}
+        {/* Card markers. */}
+        {events.map((e, i) => (
+          <button
+            key={`e${i}`}
+            type="button"
+            title={`${e.def?.name ?? "Card"} · ply ${e.ply}`}
+            aria-label={`${e.def?.name ?? "Card"} played at ply ${e.ply}`}
+            onMouseEnter={() => setActive(i)}
+            onMouseLeave={() => setActive((cur) => (cur === i ? null : cur))}
+            onFocus={() => setActive(i)}
+            onBlur={() => setActive((cur) => (cur === i ? null : cur))}
+            onClick={() => setActive((cur) => (cur === i ? null : i))}
+            className={
+              "absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border transition " +
+              (e.tier
+                ? `tier-bg-${e.tier} tier-${e.tier} border-current`
+                : "border-gold/60 bg-gold/30 text-gold-leaf") +
+              (active === i ? " scale-125 shadow-leaf" : "")
+            }
+            style={{ left: `${(e.ply / total) * 100}%` }}
+          />
+        ))}
+      </div>
+      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-parchment-400">
+        <span>Opening</span>
+        <span>Endgame</span>
+      </div>
+      {/* Tap/hover readout: keeps the marker legible on touch, where title
+          tooltips never appear. */}
+      <p className="mt-1 min-h-[1.1rem] text-xs text-parchment-300" role="status">
+        {activeEvent
+          ? `${activeEvent.def?.name ?? "Card"} · ply ${activeEvent.ply}`
+          : events.length > 0
+          ? "Hover a marker to see the card played there."
+          : "Moves only: no card record for this game."}
+      </p>
+    </section>
   );
 }
 
@@ -257,6 +459,23 @@ function useCountUp(from: number, to: number, animate: boolean, durationMs = 700
   return value;
 }
 
+// Shared share/copy/replay glyphs, so the action buttons stay one-line.
+const shareIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </svg>
+);
+const pgnIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
 export function GameOver({
   result,
   myColor,
@@ -264,19 +483,23 @@ export function GameOver({
   opponentNerf,
   ratingChange,
   ratingMode,
+  mode,
+  record,
+  rank,
   onRematch,
-  onNewGame,
-  onReview,
   rematchStatus = "none",
   opponentLeft = false,
   onCancelRematch,
   opponentHidden = false,
   moves,
-  onClip,
+  cardEvents,
   playerNames,
   startedAt,
   onDismiss,
   gameId,
+  serverGameId,
+  profiles,
+  newOpponentHref,
   myBuffs,
   opponentBuffs,
   spectator = false,
@@ -340,12 +563,16 @@ export function GameOver({
   // The winner's side always reads celebratory (gold); the losing tone only
   // applies to a seated player who actually lost.
   const tone = draw ? "text-bruise-glow" : spectator || won ? "text-gold-leaf" : "text-oxblood-glow";
-  const accent = draw
-    ? "border-bruise-glow/40 bg-bruise/10 text-bruise-glow"
-    : spectator || won
-    ? "border-gold/50 bg-gold/10 text-gold-leaf"
-    : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
+  // One reason sentence, consistent by construction with the outcome above it:
+  // a rule-caused ending keeps the rule name inline ("Lucky: checkmate"), never
+  // as a floating chip and never with a viewer-relative "Lost:" prefix (which
+  // read as a contradiction under a Victory headline). The rules themselves
+  // live only in the reveals section below.
+  const reasonSentence = useMemo(() => {
+    const text = nerfName ? `${nerfName}: ${cause}` : cause;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }, [nerfName, cause]);
   const ratingDelta = ratingChange ? Math.round(ratingChange.after - ratingChange.before) : 0;
   const ratingNow = useCountUp(
     ratingChange ? Math.round(ratingChange.before) : 0,
@@ -372,16 +599,8 @@ export function GameOver({
       return true;
     });
   }, [opponentBuffs]);
-  // Spectators see both sides' cards read-only, so the reference side needs the
-  // same dedupe as the opponent's (players get the votable list instead).
-  const revealedMyBuffs = useMemo(() => {
-    const seen = new Set<string>();
-    return (myBuffs ?? []).filter((b) => {
-      if (seen.has(b.id) || !BUFF_BY_ID[b.id]) return false;
-      seen.add(b.id);
-      return true;
-    });
-  }, [myBuffs]);
+
+  const modeChip = mode === "nerf" || mode === "buff";
 
   // Share copies a short text summary of the game (result plus both rules) to
   // the clipboard. It works client side today; a hosted replay link can be
@@ -409,11 +628,6 @@ export function GameOver({
     }
   };
 
-  const handleReview = () => {
-    onReview?.();
-    dismiss();
-  };
-
   // Copy PGN honors the hidden-rule setting: the opponent's nerf appears in
   // the export only once it has been revealed on screen.
   const handleCopyPGN = async () => {
@@ -437,6 +651,16 @@ export function GameOver({
       // Clipboard blocked; ignore.
     }
   };
+
+  // Deep link into the analysis board with the whole game replayed, when the
+  // analysis route (which reads ?moves=<uci csv>) can take it.
+  const analysisHref = useMemo(() => {
+    if (!moves || moves.length === 0) return null;
+    return `/analysis?moves=${moves.map(moveToUCI).join(",")}`;
+  }, [moves]);
+
+  // Real profiles only (house bots have no profile page).
+  const linkedProfiles = useMemo(() => (profiles ?? []).filter((p) => !p.isBot && p.href), [profiles]);
 
   useEffect(() => {
     const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
@@ -464,6 +688,8 @@ export function GameOver({
 
   if (dismissed) return null;
 
+  const recordLine = record ? `now ${record.wins}W ${record.losses}L ${record.draws}D` : null;
+
   return (
     <motion.div
       role="dialog"
@@ -479,7 +705,7 @@ export function GameOver({
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="plate plate-raised gilt relative w-[min(92vw,28rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
+        className="plate plate-raised gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -505,46 +731,67 @@ export function GameOver({
           />
         )}
 
-        <p className="smallcaps text-[10px] text-parchment-400">Game over</p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="eyebrow">Game over</p>
+          {modeChip && (
+            <span
+              className={
+                "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] leading-none smallcaps " +
+                (mode === "nerf"
+                  ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
+                  : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow")
+              }
+            >
+              {mode === "nerf" ? "Nerf" : "Buff"}
+            </span>
+          )}
+        </div>
         <h2 id="game-over-title" className={`mt-1 font-display text-5xl font-bold leading-none ${tone}`}>
           {outcome}
         </h2>
         <p className="mt-2 text-sm text-parchment-300">{headline}</p>
 
-        <div id="game-over-reason" className="mt-5 flex flex-col items-center gap-2">
-          {nerfName && (
-            <span className={`max-w-full truncate rounded-sm border px-3 py-1 font-display text-xs font-semibold ${accent}`}>
-              {nerfName}
-            </span>
-          )}
-          <p className="max-w-sm text-balance text-base leading-relaxed text-parchment">
-            {spectator
-              ? nerfName
-                ? `${cause.charAt(0).toUpperCase() + cause.slice(1)}.`
-                : cause.charAt(0).toUpperCase() + cause.slice(1)
-              : nerfName
-              ? `Lost: ${cause}.`
-              : cause}
-          </p>
-        </div>
+        <p
+          id="game-over-reason"
+          className="mx-auto mt-4 max-w-sm text-balance text-base leading-relaxed text-parchment"
+        >
+          {reasonSentence}
+        </p>
 
-        {ratingChange && (
-          <div className="mt-5 inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-gold/5 px-3 py-2 font-mono text-sm">
-            <span className="smallcaps text-[10px] text-parchment-400">
-              {ratingMode === "nerf" ? "Nerf rating" : ratingMode === "buff" ? "Buff rating" : "Rating"}
-            </span>
-            <span className="text-parchment tabular">
-              {Math.round(ratingNow)}
-              {ratingChange.provisional ? "?" : ""}
-            </span>
-            <span
-              className={
-                "tabular " + (ratingDelta >= 0 ? "text-gold-leaf" : "text-oxblood-glow")
-              }
-            >
-              {ratingDelta >= 0 ? "+" : ""}
-              {ratingDelta}
-            </span>
+        {(ratingChange || recordLine || rank != null) && (
+          <div className="mt-5 flex flex-col items-center gap-1.5">
+            {ratingChange && (
+              <div className="inline-flex items-center gap-2 rounded-sm border border-gold/25 bg-gold/5 px-3 py-2 font-mono text-sm">
+                <span className="text-xs text-parchment-400">
+                  {ratingMode === "nerf" ? "Nerf rating" : ratingMode === "buff" ? "Buff rating" : "Rating"}
+                </span>
+                <span className="text-parchment tabular">
+                  {Math.round(ratingNow)}
+                  {ratingChange.provisional ? "?" : ""}
+                </span>
+                <span
+                  className={"tabular " + (ratingDelta >= 0 ? "text-gold-leaf" : "text-oxblood-glow")}
+                >
+                  {ratingDelta >= 0 ? "+" : ""}
+                  {ratingDelta}
+                </span>
+              </div>
+            )}
+            {(recordLine || rank != null) && (
+              <div className="flex items-center justify-center gap-x-3 gap-y-0.5 text-xs text-parchment-300">
+                {recordLine && <span className="tabular">{recordLine}</span>}
+                {recordLine && rank != null && (
+                  <span aria-hidden className="text-parchment-500">
+                    ·
+                  </span>
+                )}
+                {rank != null && (
+                  <span className="tabular">
+                    Rank <span className="text-gold-leaf">#{rank}</span>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -568,7 +815,7 @@ export function GameOver({
                 <button
                   type="button"
                   onClick={() => setOppRevealed(true)}
-                  className="flex min-h-[6.5rem] flex-col items-center justify-center gap-2 border border-white/15 bg-white/[0.03] p-3 text-parchment-200 transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-leaf"
+                  className="flex min-h-[6.5rem] flex-col items-center justify-center gap-2 border border-[color:var(--edge)] bg-ink-900/40 p-3 text-parchment-200 transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold-leaf"
                 >
                   <span
                     aria-hidden
@@ -584,60 +831,43 @@ export function GameOver({
           </div>
         )}
 
-        {/* Spectators: both sides' cards, read-only and labeled by player. */}
-        {spectator && (revealedMyBuffs.length > 0 || revealedOppBuffs.length > 0) && (
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
-            {revealedMyBuffs.length > 0 && (
-              <div className="border border-white/10 bg-white/[0.02] p-3 text-left">
-                <span className="smallcaps text-[9px] text-parchment-400">
-                  {names[myColor]} ({sideLabel(myColor)})
-                </span>
-                <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
-                  {revealedMyBuffs.map((buff, i) => (
-                    <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
-                  ))}
-                </ul>
-              </div>
-            )}
-            {revealedOppBuffs.length > 0 && (
-              <div className="border border-white/10 bg-white/[0.02] p-3 text-left">
-                <span className="smallcaps text-[9px] text-parchment-400">
-                  {names[oppColor]} ({sideLabel(oppColor)})
-                </span>
-                <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
-                  {revealedOppBuffs.map((buff, i) => (
-                    <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
-        {!spectator && revealedOppBuffs.length > 0 && (
-          <div className="mt-5 border border-white/10 bg-white/[0.02] p-3 text-left">
-            <span className="smallcaps text-[9px] text-parchment-400">Opponent&apos;s cards</span>
-            <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
-              {revealedOppBuffs.map((buff, i) => (
-                <BuffReveal key={`${buff.id}-${i}`} buff={buff} />
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {!spectator && ratableBuffs.length > 0 && (
-          <div className="mt-2 border border-white/10 bg-white/[0.02] p-3 text-left">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="smallcaps text-[9px] text-parchment-400">Was it balanced?</span>
-              <span className="text-[11px] text-parchment-400">Rate the buffs you drafted</span>
+        {/* Cards drafted: a distinct grouped summary (compact tier chips with
+            spent/nullified/active state, passives-active-first). Spectators see
+            both sides read-only; a seated player sees the opponent's cards and
+            their own with the balance-vote thumbs. */}
+        {spectator ? (
+          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <DraftedGroup
+                label={`${names[myColor]} (${sideLabel(myColor)})`}
+                buffs={ratableBuffs}
+              />
+              <DraftedGroup
+                label={`${names[oppColor]} (${sideLabel(oppColor)})`}
+                buffs={revealedOppBuffs}
+              />
             </div>
-            <ul className="mt-1 max-h-40 divide-y divide-white/5 overflow-y-auto">
-              {ratableBuffs.map((buff) => (
-                <BuffFeedbackRow key={buff.id} buff={buff} gameId={gameId} />
-              ))}
-            </ul>
-          </div>
+          )
+        ) : (
+          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {ratableBuffs.length > 0 && (
+                <DraftedGroup
+                  label="Cards you drafted"
+                  hint="Rate the balance"
+                  buffs={ratableBuffs}
+                  votable
+                  gameId={gameId}
+                />
+              )}
+              {revealedOppBuffs.length > 0 && (
+                <DraftedGroup label="Opponent's cards" buffs={revealedOppBuffs} />
+              )}
+            </div>
+          )
         )}
+
+        <MatchTimeline moves={moves} cardEvents={cardEvents} />
 
         {opponentLeft && (
           <p
@@ -651,178 +881,184 @@ export function GameOver({
         )}
 
         {spectator ? (
-          // No seat, so no rematch or "new game": just let the watcher dismiss
-          // the panel (the board stays behind it) or copy/share the game.
-          <div className={`mt-6 grid gap-2 ${moves ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-            <button
-              ref={primaryRef}
-              type="button"
-              onClick={dismiss}
-              className="rounded-sm px-5 py-2.5 btn-leaf font-display"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={handleShare}
-              className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-              {shared ? "Copied" : "Share game"}
-            </button>
-            {moves && (
+          // No seat, so no rematch or new opponent: both players' profiles
+          // prominent, then Close/Share, then the quiet way out.
+          <div className="mt-6 flex flex-col gap-2">
+            {linkedProfiles.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {linkedProfiles.map((p) => (
+                  <Link
+                    key={p.href}
+                    href={p.href}
+                    className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                  >
+                    {p.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                ref={primaryRef}
+                type="button"
+                onClick={dismiss}
+                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-leaf font-display"
+              >
+                Close
+              </button>
               <button
                 type="button"
-                onClick={handleCopyPGN}
-                className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                onClick={handleShare}
+                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                {pgnCopied ? "Copied" : "Copy PGN"}
+                {shareIcon}
+                {shared ? "Copied" : "Share game"}
               </button>
-            )}
+              {analysisHref && (
+                <Link
+                  href={analysisHref}
+                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  Analyze
+                </Link>
+              )}
+              {moves && (
+                <button
+                  type="button"
+                  onClick={handleCopyPGN}
+                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  {pgnIcon}
+                  {pgnCopied ? "Copied" : "Copy PGN"}
+                </button>
+              )}
+            </div>
             <Link
               href="/tv"
-              className="rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2 sm:col-span-full"
+              className="mx-auto mt-1 inline-flex min-h-[44px] items-center px-2 text-[13px] text-parchment-300 hover:text-gold-leaf hover:underline"
             >
               Watch another game
             </Link>
           </div>
         ) : (
-        <>
-        <div className="mt-6 grid gap-2 sm:grid-cols-2">
-          {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
-            // The opponent is gone, so "waiting" is a dead end: offer the way
-            // out instead.
-            <button
-              ref={primaryRef}
-              type="button"
-              onClick={onCancelRematch}
-              className="rounded-sm px-5 py-2.5 btn-ghost font-display"
-            >
-              Cancel rematch offer
-            </button>
-          ) : (
-            <button
-              ref={primaryRef}
-              type="button"
-              onClick={onRematch}
-              disabled={rematchStatus === "offered"}
-              className={
-                "rounded-sm px-5 py-2.5 font-display " +
-                (rematchStatus === "offered"
-                  ? "btn-ghost opacity-70 cursor-default"
-                  : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
-              }
-            >
-              {rematchStatus === "offered"
-                ? "Rematch offered…"
-                : rematchStatus === "incoming"
-                ? "Accept rematch"
-                : "Rematch"}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onNewGame}
-            className="rounded-sm px-5 py-2.5 btn-ghost font-display"
-          >
-            New game
-          </button>
-        </div>
-        <div
-          className={`mt-2 grid gap-2 ${
-            moves && onClip
-              ? "sm:grid-cols-4"
-              : moves || onClip
-              ? "sm:grid-cols-3"
-              : "sm:grid-cols-2"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={handleShare}
-            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            {shared ? "Copied" : "Share game"}
-          </button>
-          {moves && (
-            <button
-              type="button"
-              onClick={handleCopyPGN}
-              className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              {pgnCopied ? "Copied" : "Copy PGN"}
-            </button>
-          )}
-          {onClip && (
-            <button
-              type="button"
-              onClick={onClip}
-              data-gameover-clip
-              className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <polygon points="23 7 16 12 23 17 23 7" />
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-              </svg>
-              Clip
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleReview}
-            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-            Replay
-          </button>
-        </div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <Link
-            href="/lobby"
-            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-          >
-            Back to lobby
-          </Link>
-          <Link
-            href="/tv"
-            className="rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-          >
-            Watch another game
-          </Link>
-        </div>
-        {isGuest && (
-          <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
-            <Link href="/login?upgrade=1" className="text-gold-leaf hover:underline">
-              Create an account
-            </Link>{" "}
-            to save your rating and game history.
-          </p>
-        )}
-        </>
+          <>
+            <div className="mt-6 grid grid-cols-2 gap-2">
+              {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
+                // The opponent is gone, so "waiting" is a dead end: offer the way
+                // out instead.
+                <button
+                  ref={primaryRef}
+                  type="button"
+                  onClick={onCancelRematch}
+                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display"
+                >
+                  Cancel rematch offer
+                </button>
+              ) : (
+                <button
+                  ref={primaryRef}
+                  type="button"
+                  onClick={onRematch}
+                  disabled={rematchStatus === "offered"}
+                  className={
+                    "min-h-[44px] rounded-sm px-5 py-2.5 font-display " +
+                    (rematchStatus === "offered"
+                      ? "btn-ghost opacity-70 cursor-default"
+                      : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
+                  }
+                >
+                  {rematchStatus === "offered"
+                    ? "Rematch offered…"
+                    : rematchStatus === "incoming"
+                    ? "Accept rematch"
+                    : "Rematch"}
+                </button>
+              )}
+              <Link
+                href={newOpponentHref ?? "/lobby?tab=quick"}
+                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display inline-flex items-center justify-center"
+              >
+                New opponent
+              </Link>
+            </div>
+
+            {/* Secondary actions: Share, Analyze, the archived replay, PGN,
+                and both players' profiles (real usernames). One entry each;
+                the clip and move-review entry points live in the game view. */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+              >
+                {shareIcon}
+                {shared ? "Copied" : "Share game"}
+              </button>
+              {analysisHref && (
+                <Link
+                  href={analysisHref}
+                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  Analyze
+                </Link>
+              )}
+              {serverGameId && (
+                <Link
+                  href={`/game/${serverGameId}`}
+                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  Watch replay
+                </Link>
+              )}
+              {moves && (
+                <button
+                  type="button"
+                  onClick={handleCopyPGN}
+                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  {pgnIcon}
+                  {pgnCopied ? "Copied" : "Copy PGN"}
+                </button>
+              )}
+              {linkedProfiles.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
+                >
+                  {p.name}
+                </Link>
+              ))}
+            </div>
+
+            {/* Quiet ways out: plain text links, not more boxes. */}
+            <div className="mt-3 flex items-center justify-center gap-4">
+              <Link
+                href="/lobby"
+                className="inline-flex min-h-[44px] items-center px-2 text-[13px] text-parchment-300 hover:text-gold-leaf hover:underline"
+              >
+                Back to lobby
+              </Link>
+              <span aria-hidden className="text-parchment-500">
+                ·
+              </span>
+              <Link
+                href="/tv"
+                className="inline-flex min-h-[44px] items-center px-2 text-[13px] text-parchment-300 hover:text-gold-leaf hover:underline"
+              >
+                Watch another game
+              </Link>
+            </div>
+
+            {isGuest && (
+              <p className="mt-4 border-t border-[color:var(--edge)] pt-3 text-xs text-parchment-400">
+                <Link href="/login?upgrade=1" className="text-gold-leaf hover:underline">
+                  Create an account
+                </Link>{" "}
+                to save your rating and game history.
+              </p>
+            )}
+          </>
         )}
       </motion.div>
     </motion.div>
