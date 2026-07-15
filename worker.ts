@@ -2015,6 +2015,8 @@ export class GameServer extends DurableObject<Env> {
             // Provisional (RD still wide) so clients can render "1500?".
             // Omitted when the seat snapshot predates rd tracking.
             ...(typeof user.rd === "number" ? { provisional: isProvisional({ rd: user.rd }) } : {}),
+            // House-bot seat: lets every consumer render the HOUSE BOT chip.
+            ...(match.bots?.[color] ? { house: true } : {}),
           }
         : { name: "Anonymous", rating: null, avatar: null };
     };

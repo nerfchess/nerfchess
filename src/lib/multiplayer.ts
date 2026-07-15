@@ -51,7 +51,14 @@ export type SpectatorEnvelope = {
 // rating renders as "1500?". Optional so frames from older servers still parse.
 export type MPPlayers = Record<
   Color,
-  { name: string; rating: number | null; avatar?: string | null; provisional?: boolean }
+  {
+    name: string;
+    rating: number | null;
+    avatar?: string | null;
+    provisional?: boolean;
+    /** House-bot seat (server-stamped); consumers render the HOUSE BOT chip. */
+    house?: boolean;
+  }
 >;
 
 // ---------------- draft mode (buff drafts) ----------------

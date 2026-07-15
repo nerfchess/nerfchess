@@ -34,6 +34,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
 import { MPPlayers, MPSession, type MPEvent, type SpectatorEnvelope } from "@/lib/multiplayer";
+import type { Color } from "@/engine/types";
 import {
   appendFeaturedDraftAction,
   featuredDraftFromWatchStart,
@@ -87,6 +88,8 @@ export interface FeaturedTune {
   players: MPPlayers | null;
   over: boolean;
   draft: FeaturedDraft;
+  /** Live clocks in ms, or null before the first authoritative value. */
+  clocks: Record<Color, number> | null;
   /** Candidates currently marked temporarily unhealthy. */
   failedIds: ReadonlySet<string>;
   /** Give a candidate (e.g. a user's manual pick) a fresh set of retries. */
@@ -119,6 +122,10 @@ export function useFeaturedTune(
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
   const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
+  // Live clocks (ms), from the wstart baseline, move frames, and out-of-band
+  // clock frames. Null until the first authoritative value arrives, so
+  // consumers can hide clock pills rather than render a fake 0:00.
+  const [clocks, setClocks] = useState<Record<Color, number> | null>(null);
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   const [slowTune, setSlowTune] = useState(false);
   // Bumped to re-run the watch effect for a backoff retry of the same id.
@@ -180,6 +187,7 @@ export function useFeaturedTune(
     setPlayers(null);
     setOver(false);
     setDraft(NOT_A_DRAFT);
+    setClocks(null);
     setFailedIds(new Set());
     setSlowTune(false);
     setAttempt(0);
@@ -289,7 +297,10 @@ export function useFeaturedTune(
         );
       } else if (e.type === "end") {
         setOver(true);
+        setClocks({ w: e.end.wc, b: e.end.bc });
       }
+      // Sequenced move frames also carry the authoritative clocks.
+      if (e.type === "move") setClocks({ w: e.move.wc, b: e.move.bc });
     };
 
     // A gap/overflow/version-drift signal: re-issue the watch (a fresh session
@@ -319,6 +330,7 @@ export function useFeaturedTune(
         setPlayers(e.setup.players);
         setOver(!!e.setup.result);
         setDraft(featuredDraftFromWatchStart(e.setup));
+        setClocks({ w: e.setup.wc, b: e.setup.bc });
         // Adopt the wstart as the ordered-sync baseline when it carries the
         // ordered-protocol fields; later envelopes then route through the
         // reducer. A legacy wstart leaves the sync unbaselined so every frame
@@ -329,6 +341,13 @@ export function useFeaturedTune(
           const drained = routeSpectatorBaseline(syncRef.current, baseEnv);
           for (const p of drained.apply) applyFeaturedEvent(p as MPEvent);
         }
+        return;
+      }
+      // Clock frames apply out of band: they are excluded from the sequenced
+      // parity stream (see spectatorSync SEQUENCED_TYPES) and must never be
+      // dropped by seq dedupe.
+      if (e.type === "clocks") {
+        setClocks({ w: e.wc, b: e.bc });
         return;
       }
       // Sequenced live frames route through the reducer (dedupe / order / gap ->
@@ -456,6 +475,7 @@ export function useFeaturedTune(
     players,
     over,
     draft,
+    clocks,
     failedIds,
     clearFailed,
   };

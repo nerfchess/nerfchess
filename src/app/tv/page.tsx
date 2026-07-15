@@ -409,7 +409,7 @@ function TvView() {
     <main className="min-h-screen">
       <SiteHeader active="/tv" />
       <section className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,592px)_320px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,592px)_320px] lg:justify-center">
           {/* Featured game */}
           <div className="min-w-0">
             <div className="plate p-3 sm:p-4">
