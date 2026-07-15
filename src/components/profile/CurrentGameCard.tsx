@@ -192,7 +192,7 @@ export function CurrentGameCard({
       />
 
       <div className="relative z-10 flex items-center justify-between gap-2 pointer-events-none">
-        <span className="flex items-center gap-2 smallcaps text-[10px]">
+        <span className="flex items-center gap-2 smallcaps text-[12px]">
           {over ? (
             <span className="text-parchment-300">Final</span>
           ) : (
@@ -208,7 +208,7 @@ export function CurrentGameCard({
           ) : null}
         </span>
         {game && (
-          <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
+          <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
             <span>{game.rated ? "Rated" : "Casual"}</span>
             {timed && (
               <>
@@ -232,7 +232,7 @@ export function CurrentGameCard({
           </div>
 
           <div className="relative z-10 mt-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="smallcaps text-[10px] text-parchment-400">
+            <span className="smallcaps text-[12px] text-parchment-400">
               {over ? (
                 <span className="text-parchment-300">Game over</span>
               ) : (

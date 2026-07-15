@@ -2,13 +2,13 @@
 
 // The profile's Friends module, in two skins driven by `isOwner`:
 //
-//   Owner  — the signed-in player looking at their OWN profile. Full social
+//   Owner  - the signed-in player looking at their OWN profile. Full social
 //            surface off /api/friends: incoming requests to answer, the accepted
 //            list sorted by who is reachable RIGHT NOW (presence-first), a
 //            per-row Challenge / Watch, a kebab with Remove friend (inline
 //            confirm), a filter box past eight friends, and a collapsed
 //            outgoing-requests section you can cancel from.
-//   Public — anyone else's profile. Read-only off /api/users/<name>/friends:
+//   Public - anyone else's profile. Read-only off /api/users/<name>/friends:
 //            just the count and the roster (mutual friends surfaced first with a
 //            "Mutual" tag), Watch beside anyone currently playing. Never any
 //            requests, never the owner's pending state. A private list collapses
@@ -37,6 +37,7 @@ import { PlayerAvatar } from "../PlayerAvatar";
 import { PlayerLink } from "../PlayerLink";
 import { PresenceBadge } from "../PresenceBadge";
 import { EmptyState } from "../EmptyState";
+import { HouseBotBadge, isHouseBotAvatar } from "./HouseBotBadge";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 
@@ -139,7 +140,10 @@ function OwnerFriends() {
     [load],
   );
 
-  const friends = data?.friends ?? [];
+  // Memoized against the payload so the derived arrays keep a stable identity
+  // between renders (a bare `data?.friends ?? []` would be a fresh array every
+  // render and defeat the sort memo below).
+  const friends = useMemo(() => data?.friends ?? [], [data]);
   const incoming = data?.incoming ?? [];
   const outgoing = data?.outgoing ?? [];
 
@@ -185,7 +189,7 @@ function OwnerFriends() {
         {/* Incoming requests answer first: they are the only time-sensitive item. */}
         {incoming.length > 0 && (
           <div className="space-y-2">
-            <div className="smallcaps text-[10px] text-gold-leaf">
+            <div className="smallcaps text-[12px] text-gold-leaf">
               Requests ({incoming.length})
             </div>
             {incoming.map((f) => (
@@ -259,7 +263,7 @@ function OwnerFriends() {
               type="button"
               onClick={() => setShowOutgoing((v) => !v)}
               aria-expanded={showOutgoing}
-              className="flex min-h-[44px] w-full items-center gap-2 text-left smallcaps text-[10px] text-parchment-500 transition hover:text-parchment-300"
+              className="flex min-h-[44px] w-full items-center gap-2 text-left smallcaps text-[12px] text-parchment-500 transition hover:text-parchment-300"
             >
               <ChevronDown
                 size={14}
@@ -274,7 +278,7 @@ function OwnerFriends() {
                   <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
                     <PlayerAvatar name={f.username} avatar={f.avatar} size={22} />
                     <PlayerLink name={f.username} className="min-w-0 flex-1 text-parchment-300" />
-                    <span className="shrink-0 text-[11px] text-parchment-400">Requested</span>
+                    <span className="shrink-0 text-[12px] text-parchment-400">Requested</span>
                     <button
                       type="button"
                       onClick={() => void act("decline", f.username)}
@@ -553,10 +557,11 @@ function Identity({
         <div className="flex min-w-0 items-baseline gap-1.5">
           <PlayerLink name={f.username} className="min-w-0 font-display text-[15px] text-parchment hover:text-gold-leaf" />
           {f.rating != null && (
-            <span className="shrink-0 font-mono text-[11px] tabular-nums text-parchment-400">{f.rating}</span>
+            <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
+          {isHouseBotAvatar(f.avatar) && <HouseBotBadge />}
           {tag && (
-            <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[10px] text-verdigris-glow">
+            <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
               {tag}
             </span>
           )}
