@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Eye } from "lucide-react";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { ModeBadge } from "@/components/ModeBadge";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
@@ -783,23 +785,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       whiteMs={whiteMs}
       blackMs={blackMs}
       activeColor={result ? null : board.turn}
+      mode={setup.mode}
+      headerState={result ? "final" : setup.started ? "live" : "waiting"}
+      watchers={watchers}
       statusLabel={
         <>
           {reconnecting ? "Reconnecting… · " : ""}
-          {isDraft && (
-            <>
-              {setup.mode === "buff" ? (
-                <span className="text-mode-buffGlow">Buff mode</span>
-              ) : setup.mode === "nerf" ? (
-                <span className="text-mode-nerfGlow">Nerf mode</span>
-              ) : (
-                "Draft"
-              )}
-              {" · "}
-            </>
-          )}
           {result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
-          {watchers > 0 ? ` · ${watchers} watching` : ""}
         </>
       }
       nerfs={nerfs}
@@ -887,10 +879,10 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
         onClick={() => setTab(color)}
         aria-pressed={active}
         className={
-          "flex min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[11px] font-semibold transition-colors " +
+          "flex min-h-[36px] min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[13px] font-semibold transition-colors " +
           (active
-            ? "border-gold/60 bg-gold/10 text-gold-leaf"
-            : "border-white/10 bg-white/[0.02] text-parchment-300 hover:bg-white/5")
+            ? "border-gold/60 bg-[rgb(var(--accent-rgb)/0.12)] text-gold-leaf"
+            : "border-[color:var(--edge)] text-parchment-300 hover:bg-[var(--surface-hover)]")
         }
       >
         <span
@@ -901,7 +893,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
           }
         />
         <span className="min-w-0 truncate">{players[color].name}</span>
-        <span className="shrink-0 font-mono text-[9px] tabular-nums text-parchment-400">
+        <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
           {held.length}
         </span>
       </button>
@@ -913,7 +905,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
     return (
       <div>
         {held.length === 0 ? (
-          <p className="text-[11px] text-parchment-400">No buffs drafted yet.</p>
+          <p className="text-[12px] text-parchment-400">No buffs drafted yet.</p>
         ) : (
           <div className="mt-1 space-y-1">
             {hiddenOnes.length > 0 && (
@@ -928,7 +920,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       (inst.spent || inst.nullified ? "opacity-40" : "")
                     }
                   >
-                    <span className={`font-display text-[10px] font-bold tier-${inst.tier}`}>
+                    <span className={`font-display text-[11px] font-bold tier-${inst.tier}`}>
                       {TIER_ROMAN[inst.tier]}
                     </span>
                   </span>
@@ -944,16 +936,16 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
               const open = !!expandedRows[key];
               const dead = inst.spent || inst.nullified;
               return (
-                <div key={i} className="rounded-[1px] border border-white/10 bg-white/[0.02]">
+                <div key={i} className="rounded-[1px] border border-[color:var(--edge)]">
                   <button
                     type="button"
                     onClick={() => setExpandedRows((prev) => ({ ...prev, [key]: !open }))}
                     aria-expanded={open}
-                    className="flex w-full items-center gap-1.5 px-2 py-1 text-left"
+                    className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left"
                   >
                     <span
                       className={
-                        "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
+                        "min-w-0 flex-1 truncate font-display text-[13px] font-semibold " +
                         (dead
                           ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                           : `tier-${inst.tier}`)
@@ -962,13 +954,13 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       {def.name}
                     </span>
                     <span
-                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[11px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
                     >
                       {TIER_ROMAN[inst.tier]}
                     </span>
                   </button>
                   {open && (
-                    <p className="px-2 pb-1 text-[10px] leading-snug text-parchment-300">
+                    <p className="px-2 pb-1.5 text-[12px] leading-snug text-parchment-300">
                       {def.description}
                     </p>
                   )}
@@ -981,8 +973,8 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
     );
   };
   return (
-    <div className="plate max-h-72 space-y-2 overflow-y-auto p-2 px-3">
-      <div className="smallcaps text-[9px] text-parchment-400">Drafted buffs</div>
+    <div className="plate max-h-72 space-y-2 overflow-y-auto p-3">
+      <div className="eyebrow text-parchment-400">Drafted buffs</div>
       <div className="flex gap-1">
         {tabButton("w")}
         {tabButton("b")}
@@ -996,13 +988,13 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
 function WatchersPanel({ count, names }: { count: number; names: string[] }) {
   const anonymous = Math.max(0, count - names.length);
   return (
-    <div className="plate p-2 px-3">
+    <div className="plate p-3">
       <div className="flex items-center justify-between">
-        <span className="smallcaps text-[9px] text-parchment-400">Spectators</span>
-        <span className="font-mono text-[11px] tabular-nums text-parchment-200">{count}</span>
+        <span className="eyebrow text-parchment-400">Spectators</span>
+        <span className="font-mono text-[13px] tabular-nums text-parchment-100">{count}</span>
       </div>
       {(names.length > 0 || anonymous > 0) && (
-        <p className="mt-1 text-[11px] leading-snug text-parchment-300 break-words">
+        <p className="mt-1 text-[12px] leading-snug text-parchment-300 break-words">
           {names.join(", ")}
           {anonymous > 0 && (
             <span className="text-parchment-400">
@@ -1074,23 +1066,23 @@ function SpectatorChat({
 
   return (
     <div className="plate flex h-56 flex-col p-2">
-      <div className="flex shrink-0 items-center justify-between px-1 pb-1">
-        <span className="smallcaps text-[9px] text-parchment-400">Spectator chat</span>
+      <div className="flex shrink-0 items-center justify-between px-1 pb-1.5">
+        <span className="eyebrow text-parchment-400">Spectator chat</span>
         <button
           type="button"
           onClick={() => setHidden((v) => !v)}
-          className="smallcaps text-[9px] text-parchment-400 transition-colors hover:text-parchment-100"
+          className="text-[12px] text-parchment-400 transition-colors hover:text-parchment-100"
           title={hidden ? "Show chat messages" : "Hide chat messages"}
         >
           {hidden ? "Show chat" : "Hide chat"}
         </button>
       </div>
       {hidden ? (
-        <div className="min-h-0 flex-1 px-1 text-[12px] text-parchment-400/60">Chat is hidden.</div>
+        <div className="min-h-0 flex-1 px-1 text-[13px] text-parchment-400">Chat is hidden.</div>
       ) : (
-      <div ref={listRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1 text-[12px] leading-snug">
+      <div ref={listRef} className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-1 text-[13px] leading-snug">
         {shownMessages.length === 0 && (
-          <div className="text-parchment-400/60">
+          <div className="text-parchment-400">
             Chat with the other spectators. The players can&apos;t see this.
           </div>
         )}
@@ -1110,10 +1102,10 @@ function SpectatorChat({
               </button>
               <span className="text-parchment-200"> {m.text}</span>
               {report === "sent" && (
-                <span className="ml-1 smallcaps text-[9px] text-parchment-400">reported</span>
+                <span className="ml-1 text-[12px] text-parchment-400">reported</span>
               )}
               {actionsFor === key && (
-                <span className="ml-2 inline-flex gap-2 smallcaps text-[9px]">
+                <span className="ml-2 inline-flex gap-2 text-[12px]">
                   <button
                     type="button"
                     onClick={() => muteName(m.name)}
@@ -1142,7 +1134,7 @@ function SpectatorChat({
         <button
           type="button"
           onClick={() => setMutedNames(new Set())}
-          className="shrink-0 px-1 pt-1 text-left smallcaps text-[9px] text-parchment-400 hover:text-parchment-100"
+          className="shrink-0 px-1 pt-1 text-left text-[12px] text-parchment-400 hover:text-parchment-100"
         >
           {mutedNames.size} muted · unmute all
         </button>
@@ -1154,12 +1146,12 @@ function SpectatorChat({
           maxLength={200}
           placeholder="Message…"
           aria-label="Spectator chat message"
-          className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-base sm:text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+          className="min-w-0 flex-1 rounded-sm border border-[color:var(--edge)] bg-ink-900/60 px-2 py-1.5 text-base text-parchment placeholder:text-parchment-400/60 focus-visible:border-gold/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--accent-rgb))] sm:text-[13px]"
         />
         <button
           type="submit"
           disabled={!draft.trim()}
-          className="btn-ghost shrink-0 rounded-sm px-2.5 py-1.5 font-display text-[11px] disabled:opacity-40"
+          className="btn-ghost min-h-[36px] shrink-0 rounded-sm px-3 py-1.5 font-display text-[13px] disabled:opacity-40"
         >
           Send
         </button>
@@ -1248,12 +1240,13 @@ function ReplayView({ game }: { game: ReplayGame }) {
       whiteMs={0}
       blackMs={0}
       activeColor={null}
-      statusLabel={
-        <>
-          {describeResult({ winner: game.winner, reason: game.reason })}
-          {truncated &&
-            ` · replay shows the first ${history.length} of ${uciMoves.length} half-moves (a card rewrote the board mid-game)`}
-        </>
+      mode={game.mode}
+      headerState="final"
+      statusLabel={describeResult({ winner: game.winner, reason: game.reason })}
+      moveListNote={
+        truncated
+          ? `This replay shows the first ${history.length} of ${uciMoves.length} half-moves; a card rewrote the board mid-game.`
+          : undefined
       }
       nerfs={{ w: game.white_nerf_id, b: game.black_nerf_id }}
       rail={
@@ -1314,7 +1307,7 @@ function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
   if (!nerf) return null;
   return (
     <div className="plate p-2 px-3">
-      <span className="smallcaps text-[10px] text-parchment-400">{label} </span>
+      <span className="text-[12px] text-parchment-400">{label} </span>
       <span className={`font-display text-sm font-semibold tier-${nerf.tier}`}>{nerf.name}</span>
       <span className="text-xs leading-snug text-parchment-300">: {nerf.description}</span>
     </div>
@@ -1325,6 +1318,9 @@ function GameShell({
   players,
   rated,
   timeControl,
+  mode,
+  headerState,
+  watchers,
   board,
   lastMove,
   history,
@@ -1336,6 +1332,7 @@ function GameShell({
   blackMs,
   activeColor,
   statusLabel,
+  moveListNote,
   nerfs,
   visual,
   signatureCard,
@@ -1344,6 +1341,12 @@ function GameShell({
   players: MPPlayers;
   rated: boolean;
   timeControl?: string;
+  // Structured header identity fields, shared with the TV featured header:
+  // the mode chip, the LIVE/FINAL/waiting badge, and the watcher count. The
+  // descriptive detail (result text, reconnecting note) still rides statusLabel.
+  mode?: DraftMode;
+  headerState: "live" | "final" | "waiting";
+  watchers?: number;
   board: ReturnType<typeof replayUci>["board"];
   lastMove: ReturnType<typeof replayUci>["history"][number] | null;
   history: ReturnType<typeof replayUci>["history"];
@@ -1356,6 +1359,9 @@ function GameShell({
   blackMs: number;
   activeColor: Color | null;
   statusLabel: React.ReactNode;
+  // A quiet inline note pinned under the move list (e.g. the legacy replay
+  // truncation notice), kept out of the header status line.
+  moveListNote?: React.ReactNode;
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
@@ -1364,15 +1370,38 @@ function GameShell({
   signatureCard?: React.ComponentProps<typeof Board>["signatureCard"];
   rail?: React.ReactNode;
 }) {
+  const stateBadge =
+    headerState === "live" ? (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
+        Live
+      </span>
+    ) : headerState === "final" ? (
+      <span className="inline-flex items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+        Final
+      </span>
+    ) : (
+      <span className="inline-flex items-center rounded-full border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
+        Waiting
+      </span>
+    );
   return (
     <main className="min-h-screen">
       <SiteNav />
       <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="smallcaps text-[11px] text-parchment-400">
-            {rated ? `Rated ${timeControl ? `${timeControl} · ` : ""}` : ""}
-            {statusLabel}
-          </div>
+        {/* Featured-game header pattern, shared with TV: state badge, mode chip,
+            time control, watcher count, then the descriptive status detail. */}
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
+          {stateBadge}
+          <ModeBadge mode={mode} />
+          {timeControl && <span className="tabular-nums">{timeControl}</span>}
+          <span>{rated ? "Rated" : "Casual"}</span>
+          {watchers != null && watchers > 0 && (
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <Eye size={13} aria-hidden /> {watchers}
+            </span>
+          )}
+          {statusLabel && <span className="text-parchment-300">{statusLabel}</span>}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           <div className="min-w-0 flex-1">
@@ -1437,6 +1466,9 @@ function GameShell({
                 compact
               />
             </div>
+            {moveListNote && (
+              <p className="mt-1.5 text-[12px] leading-snug text-parchment-400">{moveListNote}</p>
+            )}
             {rail}
           </div>
         </div>
