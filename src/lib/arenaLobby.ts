@@ -1,13 +1,18 @@
 "use client";
 
 // Tier 3 client glue (docs/bot-offload-tier3-direct-arena.md): fetch the OCI
-// arena's own lobby snapshot and merge it into the DO lobby, entirely
-// client-side and fail-soft — the arena being down just means the lobby shows
-// DO games only. Gated by NEXT_PUBLIC_ARENA_URL; empty means Tier 3 is off and
-// every helper here is a no-op passthrough.
+// arena's own lobby snapshot purely to route spectator sockets to the arena for
+// its live game ids (isArenaGameId / isArenaGameLive / arenaSocketUrl), entirely
+// client-side and fail-soft. It does NOT merge arena games/players into the
+// lobby COUNTS — the DO already unions arena games server-side into its single
+// authoritative /api/lobby snapshot (worker.ts externalLiveGames, gated
+// ARENA_LOBBY_ENABLED), so every client shows the same numbers. Doing a second
+// per-browser union here would double-count and diverge across tabs.
+// Gated by NEXT_PUBLIC_ARENA_URL; empty means Tier 3 routing is off and every
+// helper here is a no-op passthrough.
 
 import type { Color } from "@/engine/types";
-import type { MPLobby, MPLobbyGame, MPLobbyPlayer } from "./multiplayer";
+import type { MPLobby } from "./multiplayer";
 
 export const ARENA_URL = (process.env.NEXT_PUBLIC_ARENA_URL ?? "").trim().replace(/\/$/, "");
 
@@ -73,53 +78,24 @@ function staleOrEmpty(): ArenaLobbyGame[] {
   return lastGames;
 }
 
-function toLobbyGame(g: ArenaLobbyGame): MPLobbyGame {
-  return {
-    id: g.id,
-    origin: "arena",
-    players: {
-      w: { name: g.seats.w.name, rating: Math.round(g.seats.w.rating), avatar: g.seats.w.avatar ?? null },
-      b: { name: g.seats.b.name, rating: Math.round(g.seats.b.rating), avatar: g.seats.b.avatar ?? null },
-    },
-    rated: true,
-    draft: true,
-    mode: g.mode,
-    timeSec: g.timeSec,
-    incrementSec: g.incrementSec,
-    moves: g.moves,
-    watchers: g.watchers ?? 0,
-  };
-}
-
-/** Merge the arena's live games into a DO lobby snapshot: games union (by id —
- *  during the migration window the DO may still list the same arena games via
- *  ARENA_LOBBY_ENABLED) and every arena seat shown as a playing player, the
- *  same treatment the DO gives its own house seats. */
+/** Warm the arena-game id cache so spectator sockets still route to the arena
+ *  (isArenaGameId / arenaSocketUrl), then return the DO lobby UNCHANGED.
+ *
+ *  Counts are single-source: the DO now unions arena games into its own
+ *  liveGames and arena seats into its online players server-side (worker.ts
+ *  externalLiveGames, gated ARENA_LOBBY_ENABLED), so its /api/lobby snapshot is
+ *  already the one authoritative merged number. This helper used to ALSO union
+ *  arena games/players on top, per browser, uncapped, from its own 4s-fresh/
+ *  15s-stale fail-soft cache — so two tabs open at the same instant could show
+ *  different live-game counts (one arena-fresh, one arena-empty). That second,
+ *  per-client source is the desync; it is removed here. We keep fetching the
+ *  arena snapshot only to keep `lastGames` warm for id-based spectator routing,
+ *  and never let it touch the displayed counts. Fail-soft: a fetch error is
+ *  swallowed and the DO snapshot is returned as-is. */
 export async function withArenaLobby(lobby: MPLobby): Promise<MPLobby> {
   if (!ARENA_URL) return lobby;
-  const arenaGames = await fetchArenaGames();
-  if (arenaGames.length === 0) return lobby;
-  const knownGames = new Set(lobby.games.map((g) => g.id));
-  const games = [...lobby.games, ...arenaGames.filter((g) => !knownGames.has(g.id)).map(toLobbyGame)];
-  // Every arena seat reads as a playing player, the same rule the DO applies
-  // to its own house seats: an idle-roster "online" entry upgrades, a missing
-  // one is added, so the online panel always agrees with the games panel.
-  const seated = new Map<string, ArenaLobbySeat>();
-  for (const g of arenaGames) {
-    for (const color of ["w", "b"] as Color[]) {
-      const seat = g.seats[color];
-      if (seat?.name) seated.set(seat.name, seat);
-    }
-  }
-  const players: MPLobbyPlayer[] = lobby.players.map((p) =>
-    seated.has(p.name) && p.status !== "playing" ? { ...p, status: "playing" } : p,
-  );
-  const listed = new Set(players.map((p) => p.name));
-  for (const [name, seat] of seated) {
-    if (listed.has(name)) continue;
-    players.push({ name, rating: Math.round(seat.rating), status: "playing", avatar: seat.avatar ?? null });
-  }
-  return { ...lobby, games, players };
+  await fetchArenaGames().catch(() => []);
+  return lobby;
 }
 
 /** Is this game id one the arena is hosting (per the latest snapshot)? Used to

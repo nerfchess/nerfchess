@@ -5514,6 +5514,7 @@ export class GameServer extends DurableObject<Env> {
   // Fresh (non-expired) arena games as lobby liveGames entries (Tier 2 / M2).
   private externalLiveGames(now: number): Array<{
     id: string;
+    origin: "arena";
     players: ReturnType<GameServer["playersPayload"]>;
     rated: boolean;
     draft: boolean;
@@ -5534,6 +5535,11 @@ export class GameServer extends DurableObject<Env> {
       });
       games.push({
         id: meta.id,
+        // Self-describe arena origin in the shared snapshot so the lobby watch
+        // link tags ?src=arena (routing spectators to the arena socket) without
+        // depending on any per-client arena cache — the count merge is now
+        // server-side and single-source.
+        origin: "arena" as const,
         players: { w: seat("w"), b: seat("b") },
         rated: true,
         draft: true,
@@ -6721,6 +6727,7 @@ export class GameServer extends DurableObject<Env> {
 
     const liveGames: Array<{
       id: string;
+      origin?: "arena";
       players: ReturnType<GameServer["playersPayload"]>;
       rated: boolean;
       draft: boolean;
@@ -7074,7 +7081,18 @@ export class GameServer extends DurableObject<Env> {
     const payload = {
       players,
       anonymous,
-      games: liveGames.slice(0, 25),
+      // Cap high enough to surface the full house-vs-house filler set (up to
+      // houseTotalGamesCap ~70) PLUS any server-merged arena games without
+      // clipping. This is the ONE authoritative merged games number every client
+      // sees: arena games are unioned server-side above (externalLiveGames,
+      // gated ARENA_LOBBY_ENABLED), so the count must not be truncated below the
+      // target here or the shared snapshot would under-report while a per-browser
+      // arena merge (removed on the client) used to paper over the gap. A lower
+      // cap (was 25) made the DO snapshot top out mid-ramp and forced each tab to
+      // reach 40+ via its own uncapped arena union — the source of the cross-tab
+      // desync. Keep it >= the filler ceiling so a true 40+ situation reads 40+
+      // from the DO alone, identically for every viewer.
+      games: liveGames.slice(0, Math.max(60, houseTotalGamesCap)),
       challenges: challenges.slice(0, 25),
       seeks: seeks.slice(0, 25),
     };
@@ -7345,12 +7363,22 @@ async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promi
   // s-maxage=3 caps DO lobby load at ~1 hit / 3s TOTAL (shared across every
   // viewer, independent of viewer count) while keeping a freshly-posted or
   // just-answered challenge no more than ~3s + the client poll interval stale.
+  //
+  // Tradeoff: the edge cache is what protects the single global lobby DO, so we
+  // keep it (dropping s-maxage would expose the DO to every poll from every
+  // client and risk overload). But two clients in different colos can be served
+  // snapshots up to (s-maxage + stale-while-revalidate) apart, so we keep SWR
+  // small: s-maxage=3 + swr=1 caps cross-colo snapshot-age skew at ~4s instead
+  // of the ~9s a larger SWR window would allow. The lobby count is intentionally
+  // eventually-consistent (all colos converge within ~4s) rather than
+  // per-request random — the payload is deterministic, so every colo that hits
+  // the DO in a given window serves the identical snapshot.
   const body = await doResp.arrayBuffer();
   const resp = new Response(body, {
     status: 200,
     headers: {
       "content-type": "application/json",
-      "cache-control": "public, s-maxage=3, stale-while-revalidate=6",
+      "cache-control": "public, s-maxage=3, stale-while-revalidate=1",
     },
   });
   ctx.waitUntil(cache.put(cacheKey, resp.clone()));
