@@ -170,7 +170,7 @@ function LoginPage() {
             />
             {tab === "register" && (
               <p className="mt-1 text-[11px] text-parchment-400">
-                3–20 characters: letters, digits, underscores.
+                3-20 characters: letters, digits, underscores.
               </p>
             )}
           </div>

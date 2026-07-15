@@ -4,7 +4,7 @@ import {
   Moon, Mountain, Rabbit, Rocket, Shield, Skull, Star, Sun, Swords, Trees,
   Trophy, Turtle, Zap, type LucideIcon,
 } from "lucide-react";
-import { parseClubIcon } from "@/lib/clubIcons";
+import { isUploadedClubIcon, parseClubIcon } from "@/lib/clubIcons";
 
 // The club's identity tile: its curated lucide icon on an accent-tinted
 // plate, or a warm monogram of the club name when no icon has been chosen
@@ -37,6 +37,19 @@ export function ClubIcon({
   size?: number;
   className?: string;
 }) {
+  // A custom uploaded icon (data-URL image) renders as a plain square <img>.
+  if (isUploadedClubIcon(icon)) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={icon}
+        alt=""
+        aria-hidden
+        className={`shrink-0 select-none border border-white/10 object-cover ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   const parsed = parseClubIcon(icon);
   const Icon = parsed ? ICON_COMPONENTS[parsed.name] : undefined;
   const style: CSSProperties = parsed

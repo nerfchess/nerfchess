@@ -10,6 +10,7 @@ import {
   userForSession,
   validUsername,
 } from "@/lib/server/auth";
+import { RD_START, VOL_START } from "@/lib/glicko";
 import { containsProfanity } from "@/lib/profanity";
 import { cryptoRand, randomGuestNameNumbered } from "@/lib/guestNames";
 
@@ -147,10 +148,12 @@ export async function GET(request: Request) {
         const unknowable = crypto.randomUUID() + crypto.randomUUID();
         await db
           .prepare(
-            `INSERT INTO users (id, username, username_lower, password_hash, email, google_sub, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            // rd/vol written explicitly: pre-existing databases carry the old
+            // 350/0.06 column defaults; new accounts must start wide (RD_START).
+            `INSERT INTO users (id, username, username_lower, password_hash, email, google_sub, created_at, rd, vol)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
-          .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), email, sub, Date.now())
+          .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), email, sub, Date.now(), RD_START, VOL_START)
           .run();
         account = { id, username, banned_until: null };
       }

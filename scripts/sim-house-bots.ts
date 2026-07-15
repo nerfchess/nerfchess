@@ -14,17 +14,30 @@ import {
   HOUSE_ROSTER,
   HOUSE_SKILL_PROFILES,
   HOUSE_SKILLS,
+  HOUSE_WINDOW_STEP,
+  HOUSE_COUNT_MIN,
+  HOUSE_VS_HOUSE_FLOOR,
+  HOUSE_VS_HOUSE_CAP,
+  HOUSE_FILLER_SPAWN_BUFFER,
+  houseFillerSpawnDelayMs,
+  pickHouseFillerSeek,
   HouseSkill,
+  activeHouseRoster,
   houseDraftThinkMs,
   houseNerfPickIndex,
   houseSeedRating,
+  houseSocialDelayMs,
   houseThinkMs,
+  houseWindowStart,
+  pickHouseFillerPair,
   pickHouseMove,
   pickHouseSeek,
   resolveSkillProfile,
   bakedResolvedProfile,
   sanitizeResolvedProfile,
   parseSkillOverrides,
+  HOUSE_SOCIAL_MIN_DELAY_MS,
+  HOUSE_SOCIAL_MAX_DELAY_MS,
   WEAKENED_PRESET,
   type ResolvedSkillProfile,
 } from "../src/lib/server/bots";
@@ -331,6 +344,185 @@ if (process.argv.includes("--roundrobin")) {
   }
   console.log("  (indicative — small sample; raise RR_GAMES to tighten)");
 }
+
+// ---------------------------------------------------------------------------
+// 6. Fair bot-vs-bot pairing + roster rotation coverage.
+//
+// The lobby/TV filler pairs bots to play each other. Weighting selection toward
+// the fewest games played must (a) spread games across the roster so no bot
+// lingers at zero, and (b) reach EVERY persona over time — including ones
+// outside any single day's active window — which relies on the daily window
+// rotation visiting every start offset. Both are asserted here.
+// ---------------------------------------------------------------------------
+
+// (a) Rotation coverage: the window step is coprime with the roster, so over a
+// full rotation every start offset — and therefore every persona — is visited.
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+check(gcd(HOUSE_WINDOW_STEP, HOUSE_ROSTER.length) === 1, "window step coprime with roster (all offsets reachable)");
+const starts = new Set<number>();
+for (let d = 0; d < HOUSE_ROSTER.length; d++) starts.add(houseWindowStart(d));
+check(starts.size === HOUSE_ROSTER.length, "rotation visits every window start over a full cycle");
+const everSeen = new Set<string>();
+for (let d = 0; d < HOUSE_ROSTER.length; d++) {
+  for (const p of activeHouseRoster(60, d)) everSeen.add(p.userId);
+}
+check(everSeen.size === HOUSE_ROSTER.length, "every persona rotates into the active window within one cycle");
+console.log(
+  `rotation: step ${HOUSE_WINDOW_STEP} covers all ${starts.size}/${HOUSE_ROSTER.length} offsets; ` +
+    `every persona reachable in the active window`,
+);
+
+// (b) Fair spread: simulate many filler pairings, advancing the daily active
+// window like production, and confirm the per-bot game counts converge (min > 0,
+// and a tight min/median/max) instead of a few bots hogging games. Compare
+// against a UNIFORM-random control on the same schedule to show the weighting
+// helps.
+const WINDOW_SIZE = HOUSE_COUNT_MIN; // the smallest daily active window
+const PAIRS_PER_DAY = 40; // filler games spawned per simulated day
+const DAYS = 420; // two full roster rotations
+
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function simulateSchedule(weighted: boolean): Map<string, number> {
+  const games = new Map<string, number>();
+  for (const p of HOUSE_ROSTER) games.set(p.userId, 0);
+  const gamesOf = (id: string) => games.get(id) ?? 0;
+  for (let day = 0; day < DAYS; day++) {
+    const window = activeHouseRoster(WINDOW_SIZE, day);
+    for (let k = 0; k < PAIRS_PER_DAY; k++) {
+      let pair: readonly [(typeof HOUSE_ROSTER)[number], (typeof HOUSE_ROSTER)[number]] | null;
+      if (weighted) {
+        pair = pickHouseFillerPair(window, gamesOf, random);
+      } else {
+        // Uniform control: two distinct random personas from the same window.
+        const i = random(window.length);
+        let j = random(window.length);
+        if (j === i) j = (j + 1) % window.length;
+        pair = [window[i], window[j]];
+      }
+      if (!pair) continue;
+      for (const p of pair) games.set(p.userId, (games.get(p.userId) ?? 0) + 1);
+    }
+  }
+  return games;
+}
+
+const weighted = [...simulateSchedule(true).values()];
+const uniform = [...simulateSchedule(false).values()];
+const wMin = Math.min(...weighted);
+const wMax = Math.max(...weighted);
+const wMed = median(weighted);
+const uMin = Math.min(...uniform);
+const uMax = Math.max(...uniform);
+const uMed = median(uniform);
+console.log(
+  `fair pairing (weighted 1/(1+games), ${DAYS} days x ${PAIRS_PER_DAY} pairs, window ${WINDOW_SIZE}):`,
+);
+console.log(`  weighted -> min ${wMin}, median ${wMed}, max ${wMax}  (spread ${wMax - wMin})`);
+console.log(`  uniform  -> min ${uMin}, median ${uMed}, max ${uMax}  (spread ${uMax - uMin})`);
+// Every persona must have played (no leaderboard zeros)...
+check(wMin > 0, "weighted pairing: every bot played at least one game");
+// ...counts stay in a tight band around the median (no runaway hogging)...
+check(wMax - wMin <= wMed, `weighted spread ${wMax - wMin} should be <= median ${wMed}`);
+// ...and the weighting is at least as even as uniform random on the same schedule.
+check(wMax - wMin <= uMax - uMin, "weighted spread no wider than uniform control");
+
+// ---------------------------------------------------------------------------
+// 7. Concurrent-game floor: staggered ramp-up and steady state.
+//
+// Owner target: 40+ house games live around the clock (Watch tab / TV always
+// busy), with natural variance in a 40-55 band and never a dip below the floor
+// while the house is enabled. The worker spawns at most ONE filler game per
+// tick, paced by houseFillerSpawnDelayMs (brisk ~1.5-3s stagger below the
+// floor+buffer, lazy 8-15s at steady state) — asserted here over a simulated
+// scheduling run using the production constants.
+// ---------------------------------------------------------------------------
+
+// Seat supply: the smallest daily active window must seat the whole steady band
+// (2 bots per game) plus the seek reserve (houseSeekMax + 2 = 6 in worker.ts).
+const SEEK_RESERVE = 6;
+check(
+  HOUSE_COUNT_MIN - SEEK_RESERVE >= 2 * (HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER),
+  `active window floor ${HOUSE_COUNT_MIN} seats the ${HOUSE_VS_HOUSE_FLOOR}-game floor (+buffer) with the seek reserve`,
+);
+check(HOUSE_VS_HOUSE_CAP >= HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER, "cap leaves room above the floor");
+// Filler pools skip the ultra-bullet controls (the slowed filler pacing would
+// flag a 1+0 game within a handful of moves).
+for (let i = 0; i < 5_000; i++) {
+  const { pool } = pickHouseFillerSeek(random);
+  check(["3+0", "3+2", "5+0", "5+3"].includes(pool), `filler pool ${pool}`);
+}
+
+// Scheduling run: 1s ticks (the alarm cadence), one spawn per tick when due and
+// under the caps; each game lasts 6-12 minutes (blitz pools at the slowed
+// filler pacing, most ending by flag or result inside that). Seat supply is the
+// smallest daily window minus the seek reserve.
+const RAMP_LIMIT_S = 5 * 60; // must hit the floor within 5 minutes of cold start
+const RUN_S = 6 * 60 * 60; // then hold it for six simulated hours
+const SETTLE_S = 60; // grace after first hitting the floor
+const seatCapGames = Math.floor((HOUSE_COUNT_MIN - SEEK_RESERVE) / 2);
+let liveEnds: number[] = [];
+let nextSpawnAt = 0;
+let reachedFloorAt = -1;
+let minAfterRamp = Infinity;
+let maxSeen = 0;
+let sumAfterRamp = 0;
+let samplesAfterRamp = 0;
+for (let t = 0; t < RUN_S; t++) {
+  liveEnds = liveEnds.filter((end) => end > t);
+  if (t >= nextSpawnAt && liveEnds.length < Math.min(HOUSE_VS_HOUSE_CAP, seatCapGames)) {
+    liveEnds.push(t + 360 + random(361)); // 6-12 min game
+    nextSpawnAt = t + houseFillerSpawnDelayMs(liveEnds.length, random) / 1000;
+  }
+  const n = liveEnds.length;
+  maxSeen = Math.max(maxSeen, n);
+  if (reachedFloorAt < 0 && n >= HOUSE_VS_HOUSE_FLOOR) reachedFloorAt = t;
+  if (reachedFloorAt >= 0 && t >= reachedFloorAt + SETTLE_S) {
+    minAfterRamp = Math.min(minAfterRamp, n);
+    sumAfterRamp += n;
+    samplesAfterRamp++;
+  }
+}
+check(
+  reachedFloorAt >= 0 && reachedFloorAt <= RAMP_LIMIT_S,
+  `ramp-up reached ${HOUSE_VS_HOUSE_FLOOR} games in ${reachedFloorAt}s (limit ${RAMP_LIMIT_S}s)`,
+);
+check(minAfterRamp >= HOUSE_VS_HOUSE_FLOOR, `steady-state min ${minAfterRamp} >= floor ${HOUSE_VS_HOUSE_FLOOR}`);
+check(maxSeen <= HOUSE_VS_HOUSE_CAP, `concurrency max ${maxSeen} <= cap ${HOUSE_VS_HOUSE_CAP}`);
+console.log(
+  `concurrency: ramp to ${HOUSE_VS_HOUSE_FLOOR} games in ${reachedFloorAt}s; ` +
+    `steady state over ${RUN_S / 3600}h -> min ${minAfterRamp}, ` +
+    `mean ${(sumAfterRamp / Math.max(1, samplesAfterRamp)).toFixed(1)}, max ${maxSeen} ` +
+    `(floor ${HOUSE_VS_HOUSE_FLOOR}, cap ${HOUSE_VS_HOUSE_CAP}, seat cap ${seatCapGames})`,
+);
+
+// ---------------------------------------------------------------------------
+// 8. Bot social-response delay (friend requests + direct challenges).
+// ---------------------------------------------------------------------------
+
+for (let i = 0; i < 20_000; i++) {
+  const d = houseSocialDelayMs(`challenge:${i}:${random(1_000_000_000)}`);
+  check(
+    d >= HOUSE_SOCIAL_MIN_DELAY_MS && d <= HOUSE_SOCIAL_MAX_DELAY_MS,
+    `social delay ${d}ms out of range`,
+  );
+}
+// Deterministic per seed (the poll must compute the same deadline every tick).
+check(houseSocialDelayMs("friend:a:b:123") === houseSocialDelayMs("friend:a:b:123"), "social delay deterministic");
+check(
+  houseSocialDelayMs("friend:a:b:123") !== houseSocialDelayMs("friend:a:b:124") ||
+    houseSocialDelayMs("friend:a:b:125") !== houseSocialDelayMs("friend:a:b:126"),
+  "social delay varies by seed (jittered)",
+);
+console.log(
+  `social delay: ${HOUSE_SOCIAL_MIN_DELAY_MS / 1000}-${HOUSE_SOCIAL_MAX_DELAY_MS / 1000}s, deterministic per request, jittered across requests`,
+);
 
 if (failures) {
   console.error(`\n${failures} check(s) FAILED`);

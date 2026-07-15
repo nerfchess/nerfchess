@@ -332,18 +332,6 @@ function LobbyInner() {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="space-y-5 min-w-0 stagger-in">
-            {tab === "quick" && (
-              <div role="tabpanel" id="lobby-panel-quick" aria-labelledby="lobby-tab-quick" className="space-y-5">
-                {/* The main action: get matched with a real opponent. */}
-                <QueueButton />
-                <div className="text-sm">
-                  <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
-                    Prefer practice? Play a bot instead
-                  </Link>
-                </div>
-              </div>
-            )}
-
             {tab === "friends" && (
             /* Set up a private game with a specific person: pick a clock and
                 mode, create + share the code (or challenge a named friend), or
@@ -455,6 +443,33 @@ function LobbyInner() {
               )}
             </div>
             )}
+
+            {/* Quick Play stays MOUNTED across tab switches — hidden with the
+                `hidden` attribute, never unmounted. QueueButton owns the live
+                matchmaking socket (MPSession) and its "searching" state;
+                unmounting it on a tab switch ran its effect cleanup, which
+                destroyed the session and silently cancelled an in-flight seek.
+                Keeping it mounted preserves the search (and its Cancel button)
+                when the player returns, and a pairing that lands while they're
+                on another tab still resolves and navigates into the game. Only
+                an explicit Cancel or leaving /lobby (unmounting the page) ends
+                the seek. Rendered last so the wrapper's space-y never gives the
+                visible panel a stray top margin while this one is hidden. */}
+            <div
+              role="tabpanel"
+              id="lobby-panel-quick"
+              aria-labelledby="lobby-tab-quick"
+              hidden={tab !== "quick"}
+              className="space-y-5"
+            >
+              {/* The main action: get matched with a real opponent. */}
+              <QueueButton />
+              <div className="text-sm">
+                <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
+                  Prefer practice? Play a bot instead
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Who's here right now — rides along on desktop scroll. */}

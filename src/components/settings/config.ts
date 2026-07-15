@@ -250,7 +250,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "siteTheme",
         label: "Theme",
-        hint: "Full site palettes — pick a mood",
+        hint: "Full site palettes: pick a mood",
         control: { kind: "siteTheme" },
       },
       {

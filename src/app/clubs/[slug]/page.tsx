@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { CalendarDays, Crown, LogIn, LogOut, Paintbrush, Trash2, Trophy, Users } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { CalendarDays, Crown, LogIn, LogOut, Paintbrush, Trash2, Trophy, Upload, Users } from "lucide-react";
 import { ClubIcon, renderClubIconGlyph } from "@/components/ClubIcon";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, parseClubIcon } from "@/lib/clubIcons";
+import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, isUploadedClubIcon, parseClubIcon } from "@/lib/clubIcons";
+import { fileToDataUrl } from "@/lib/imageUpload";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
 
 // Club home, lichess-teams-style: description and members on one side, the
@@ -52,6 +53,8 @@ function ClubIconPicker({
   const [colorId, setColorId] = useState(parsed?.color.id ?? CLUB_ICON_COLORS[1].id);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<string | null>(isUploadedClubIcon(current) ? current : null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const save = async (value: string) => {
     setSaving(true);
@@ -73,10 +76,25 @@ function ClubIconPicker({
     }
   };
 
+  // Read a chosen file, downscale to a small square data URL on the client,
+  // then upload it (the server re-validates MIME/size/dimensions). The client
+  // budget stays well under the 1 MB server cap so club lists stay light.
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    setSaveError(null);
+    try {
+      const dataUrl = await fileToDataUrl(file, { maxDim: 256, maxChars: 300_000, cover: true });
+      setUploaded(dataUrl);
+      await save(dataUrl);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Could not read that image.");
+    }
+  };
+
   return (
     <div className="plate mt-5 p-5">
       <div className="flex items-center gap-4">
-        <ClubIcon icon={encodeClubIcon(iconName, colorId)} name={clubName} size={56} />
+        <ClubIcon icon={uploaded ?? encodeClubIcon(iconName, colorId)} name={clubName} size={56} />
         <div>
           <div className="font-display text-xl text-parchment">Club icon</div>
           <p className="mt-0.5 text-sm text-parchment-400">Pick an emblem and a color for {clubName}.</p>
@@ -119,6 +137,28 @@ function ClubIconPicker({
         ))}
       </div>
 
+      {/* Custom image upload: an alternative to the curated emblem grid. */}
+      <div className="mt-4 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={saving}
+            className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm disabled:opacity-50"
+          >
+            <Upload size={14} /> Upload image
+          </button>
+          <span className="text-xs text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
+        </div>
+      </div>
+
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -126,9 +166,9 @@ function ClubIconPicker({
           disabled={saving}
           className="btn-leaf px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save icon"}
+          {saving ? "Saving..." : "Save emblem"}
         </button>
-        {parsed && (
+        {(parsed || uploaded) && (
           <button
             type="button"
             onClick={() => save("")}
@@ -292,7 +332,8 @@ export default function ClubPage() {
                     onClick={() => setPickingIcon((v) => !v)}
                     className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm"
                   >
-                    <Paintbrush size={14} /> {parseClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
+                    <Paintbrush size={14} />{" "}
+                    {parseClubIcon(club.icon) || isUploadedClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
                   </button>
                 )}
                 {me && !isMember && (

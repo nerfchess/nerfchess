@@ -135,8 +135,8 @@ export function MoveList({
       {floorPly > 0 && moves.length > 0 && (
         <p className="shrink-0 mb-2 text-[10px] leading-snug text-parchment-400">
           {floorPly >= maxPly
-            ? "Earlier positions can't be replayed — a card rewrote the board mid-game."
-            : "Positions before this point can't be replayed — a card rewrote the board."}
+            ? "Earlier positions can't be replayed: a card rewrote the board mid-game."
+            : "Positions before this point can't be replayed: a card rewrote the board."}
         </p>
       )}
       {rows.length === 0 && (

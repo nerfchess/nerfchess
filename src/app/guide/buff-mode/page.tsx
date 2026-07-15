@@ -32,13 +32,13 @@ export default function BuffModePage() {
           <GlossaryText text="buffs wait until you choose to use them, and using one costs your turn (the extra-move family are free actions and resolve within your turn)." />
         </p>
         <p>
-          <GlossaryText text="Instead of picking, you can skip a draft to bank it: your next offer rolls one tier higher. Banking never stacks beyond one tier, so the decision is a real gamble on timing rather than a snowball — with one jackpot case: bank an offer that contained a tier-8 card and your next offer becomes a guaranteed two-card apex (tier 9) offer, each slot with about a 10% chance to upgrade into a tier-10 mythic. You also start with one reroll, which swaps the offer for a fresh, guaranteed-different pair at the same tiers." />
+          <GlossaryText text="Instead of picking, you can skip a draft to bank it: your next offer rolls one tier higher. Banking never stacks beyond one tier, so the decision is a real gamble on timing rather than a snowball, with one jackpot case: bank an offer that contained a tier-8 card and your next offer becomes a guaranteed two-card apex (tier 9) offer, each slot with about a 10% chance to upgrade into a tier-10 mythic. You also start with one reroll, which swaps the offer for a fresh, guaranteed-different pair at the same tiers." />
         </p>
       </InfoSection>
 
       <InfoSection title="Tiers: from Trivial to Unhinged">
         <p>
-          <GlossaryText text="Every card carries a tier from I to VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Early drafts offer low tiers and the curve climbs round by round — roughly tiers I, II, III, V, then VII, with a small random wobble each round. The very top is gated: above tier VI every level has a 45% chance to slip back down one, so board-clearing, near-invincibility cards stay rare blowout moments instead of the default endgame." />{" "}
+          <GlossaryText text="Every card carries a tier from I to VIII: Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Early drafts offer low tiers and the curve climbs round by round, roughly tiers I, II, III, V, then VII, with a small random wobble each round. The very top is gated: above tier VI every level has a 45% chance to slip back down one, so board-clearing, near-invincibility cards stay rare blowout moments instead of the default endgame." />{" "}
           Browse the whole library, tier by tier, in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>

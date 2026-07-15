@@ -19,6 +19,7 @@ import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby
 import {
   applyDraftAction,
   buildSpectatorDraftGame,
+  buildSpectatorDraftGameAtPly,
   draftZones,
   mergeDraftState,
   playReplicaMove,
@@ -33,6 +34,7 @@ import {
   clearOnlineSeat,
   loadOnlineSeat,
   loadSavedFriendSession,
+  MPDraftAction,
   MPPlayers,
   MPSession,
   MPSpectatorChatMessage,
@@ -455,6 +457,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // Mirrors draftGame as the mutable replica the event handlers advance in
   // place; seeded from the same initial object (useRef init, not a render write).
   const draftGameRef = useRef<NerfGame | null>(draftGame);
+  // The public draft-action record, seeded from the wstart and appended as
+  // events arrive. Kept so history review can reconstruct any PAST ply through
+  // the engine (moves + actions interleaved), which reproduces board rewrites a
+  // plain move-replay cannot — so review works past a divergence instead of
+  // locking. State (not a ref) so the reviewed-board memo below recomputes.
+  const [dtActions, setDtActions] = useState<MPDraftAction[]>(() =>
+    setup.dtActions ? [...setup.dtActions] : [],
+  );
   // Card-use animation for watchers: a monotonic key fires the Board's
   // board-wide flourish whenever a card is used (an activation, or a
   // held/passive card whose move-hook changed the board), so spectators see
@@ -503,8 +513,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       } else if (e.type === "draft-resolved" || e.type === "draft-used") {
         const g = draftGameRef.current;
         if (g?.buffs) {
-          applyDraftAction(
-            g,
+          const action: MPDraftAction =
             e.type === "draft-used"
               ? {
                   ply: g.board.history.length,
@@ -521,8 +530,11 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
                     a: "pick",
                     cards: e.resolved.cards ?? [],
                   }
-                : { ply: g.board.history.length, color: e.resolved.color, a: "bank" },
-          );
+                : { ply: g.board.history.length, color: e.resolved.color, a: "bank" };
+          applyDraftAction(g, action);
+          // Keep the record in step with the live replica so history review can
+          // rebuild any past ply (see reviewDraftBoard below).
+          setDtActions((prev) => [...prev, action]);
           // An activation (draft-used) is a card play the watcher must see.
           if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
           fireHookSignatures(g);
@@ -551,6 +563,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         setBlackMs(e.bc);
       } else if (e.type === "takeback") {
         setUciMoves(e.moves);
+        // Drop actions recorded past the rewound head so the review record stays
+        // aligned with the shortened move list.
+        setDtActions((prev) => prev.filter((a) => a.ply <= e.moves.length));
         setWhiteMs(e.wc);
         setBlackMs(e.bc);
         setHistoryPly(null);
@@ -588,16 +603,38 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // FX (below) reads those server-frame values, which refresh often enough
   // that a low clock still calms the effects.
 
-  // Draft games can scrub history while the move list still reproduces the
-  // board. Once a card rewrites it outside move history (summons, removals,
-  // teleports set buffs.historyDiverged) earlier positions cannot be rebuilt
-  // from the moves alone, so review locks — the MoveList disables its
-  // controls and says why, instead of leaving live-looking buttons and arrow
-  // keys that silently do nothing.
-  const scrubbing = !isDraft || !draftGame?.buffs?.historyDiverged;
-  const currentPly = scrubbing ? historyPly ?? history.length : history.length;
+  // History review. A reviewed PAST ply of a draft game is rebuilt from the
+  // move + action record through the engine (buildSpectatorDraftGameAtPly),
+  // which reproduces board rewrites — summons, removals, teleports, drops — so
+  // review works PAST a divergence instead of locking. Returns null only when
+  // the record cannot replay that far (an older stream with an unknown card):
+  // we then fall back to the live board rather than showing a wrong one.
+  const reviewDraftBoard = useMemo(() => {
+    if (!isDraft || historyPly == null || historyPly >= history.length) return undefined;
+    const g = buildSpectatorDraftGameAtPly(uciMoves, dtActions, historyPly, setup.mode);
+    return g.board.history.length === historyPly ? g.board : null;
+  }, [isDraft, historyPly, history.length, uciMoves, dtActions, setup.mode]);
+
+  // A reviewed ply the record can't reconstruct: snap back to the live board so
+  // the viewer never sees a wrong position (graceful degrade, not a wrong
+  // board). Clamped during render (converges next frame: historyPly === null
+  // makes the memo above return undefined), matching the head-clamp pattern the
+  // player game page uses — not an effect, which would cascade renders.
+  if (reviewDraftBoard === null && historyPly != null) {
+    setHistoryPly(null);
+  }
+
+  // Both draft and plain games are now fully reviewable: draft games via the
+  // engine reconstruction above (past any divergence), plain games via
+  // move-replay. An unreconstructable draft ply is handled by the snap-back
+  // clamp above, not a lock.
+  const currentPly = historyPly ?? history.length;
   const displayBoard =
-    !scrubbing || historyPly == null ? board : boardAtPly(history, historyPly);
+    historyPly == null || historyPly >= history.length
+      ? board
+      : isDraft
+        ? reviewDraftBoard ?? board
+        : boardAtPly(history, historyPly);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
   const zones = isDraft && draftGame ? draftZones(draftGame, "w") : null;
 
@@ -617,12 +654,9 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       history={history}
       currentPly={currentPly}
       onPlyChange={(ply) => {
-        if (!scrubbing) return;
         setHistoryPly(ply >= history.length ? null : Math.max(0, ply));
       }}
-      // Review locked (a card rewrote the board): disable the nav controls
-      // and show the notice instead of swallowing clicks and arrow keys.
-      minPly={scrubbing ? 0 : history.length}
+      minPly={0}
       clockEnabled={clockEnabled}
       whiteMs={whiteMs}
       blackMs={blackMs}

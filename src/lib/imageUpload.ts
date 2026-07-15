@@ -63,7 +63,7 @@ export async function fileToDataUrl(
       const url = canvas.toDataURL("image/jpeg", quality);
       if (url.length <= maxChars) return url;
     }
-    throw new Error("That image is too detailed to store — try a smaller one.");
+    throw new Error("That image is too detailed to store. Try a smaller one.");
   } finally {
     URL.revokeObjectURL(objectUrl);
   }

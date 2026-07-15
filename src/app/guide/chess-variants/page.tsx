@@ -61,7 +61,7 @@ export default function ChessVariantsPage() {
           uncertainty about what your opponent is allowed to do.
         </p>
         <p>
-          <GlossaryText text="It also borrows from card games: every 5 moves both players draft from a tiered pool of over 1,000 cards — hexes, boons, and buffs — which puts" />{" "}
+          <GlossaryText text="It also borrows from card games: every 5 moves both players draft from a tiered pool of over 1,000 cards (hexes, boons, and buffs) which puts" />{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> closer to a
           deck-drafting game played with chess pieces.{" "}
           <GlossaryText text="It even borrows Crazyhouse's signature move: some cards grant pieces into a pocket, ready to drop onto an empty square on a later turn." />{" "}

@@ -44,7 +44,7 @@ export default function CaptureTheKingPage() {
 
       <InfoSection title="The king becomes a real piece">
         <p>
-          <GlossaryText text="Because only capture ends the game, the king stops being a protected abstraction and becomes a piece like any other. It can move into attacked squares. It can castle through, into, or out of check. Both kings can be in check at the same time, and you are never forced to answer a threat to yours. All of that is legal, and all of it is usually fatal: leaving your king where it can be taken loses on the spot, so vigilance replaces the check rule entirely. The first king captured decides it — even if the capturer's own king was hanging when the axe fell." />
+          <GlossaryText text="Because only capture ends the game, the king stops being a protected abstraction and becomes a piece like any other. It can move into attacked squares. It can castle through, into, or out of check. Both kings can be in check at the same time, and you are never forced to answer a threat to yours. All of that is legal, and all of it is usually fatal: leaving your king where it can be taken loses on the spot, so vigilance replaces the check rule entirely. The first king captured decides it, even if the capturer's own king was hanging when the axe fell." />
         </p>
       </InfoSection>
 

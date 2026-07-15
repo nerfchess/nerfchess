@@ -33,7 +33,7 @@ export default function ChessRoguelikePage() {
 
       <InfoSection title="Chess with a card draft">
         <p>
-          <GlossaryText text="Every 5 of your own moves, Nerf Chess deals you a draft: two cards, pick one — or skip it to bank a stronger offer, or spend your reroll for a fresh pair." />{" "}
+          <GlossaryText text="Every 5 of your own moves, Nerf Chess deals you a draft: two cards, pick one, or skip it to bank a stronger offer, or spend your reroll for a fresh pair." />{" "}
           In{" "}
           <Link href="/guide/buff-mode" className="underline">Buff mode</Link> those cards are
           power-ups you keep for yourself; in{" "}
@@ -48,7 +48,7 @@ export default function ChessRoguelikePage() {
         <p>
           What gives Nerf Chess its roguelike feel is the escalation. Cards are graded into eight
           difficulty <Link href="/guide/glossary#tier" className="underline">tiers</Link>
-          <GlossaryText text=", from I (Trivial) to VIII (Unhinged), and the draft climbs that curve as the game goes on — round by round the offers roll around tiers I, II, III, V, then VII. Early offers are mild; late-game offers can be board-warping. You can skip a draft to bank it and roll your next offer one tier higher, a timing gamble that rewards patience. The top tiers are deliberately rare (every level above VI can slip back down), and the legendary bands — apex at tier 9 and mythic at tier 10 — never roll in the normal draft at all: they must be earned, by banking a tier-8 offer, winning a Chess Diff, or gambling on a Jackpot." />
+          <GlossaryText text=", from I (Trivial) to VIII (Unhinged), and the draft climbs that curve as the game goes on, round by round the offers roll around tiers I, II, III, V, then VII. Early offers are mild; late-game offers can be board-warping. You can skip a draft to bank it and roll your next offer one tier higher, a timing gamble that rewards patience. The top tiers are deliberately rare (every level above VI can slip back down), and the legendary bands (apex at tier 9 and mythic at tier 10) never roll in the normal draft at all: they must be earned, by banking a tier-8 offer, winning a Chess Diff, or gambling on a Jackpot." />
         </p>
       </InfoSection>
 

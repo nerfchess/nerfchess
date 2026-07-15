@@ -1294,7 +1294,7 @@ function HouseStrengthEditor({
         </table>
       </div>
       <p className="mt-2 text-[10px] leading-snug text-parchment-500">
-        Move-quality weakening (topK / temp / noise), not just time — changes reach live games within
+        Move-quality weakening (topK / temp / noise), not just time. Changes reach live games within
         ~15s. Ratings drift is expected after a strength change. Gold = overridden.
       </p>
     </div>

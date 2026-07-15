@@ -12,6 +12,7 @@ import {
 } from "@/lib/server/auth";
 import { censorText, containsProfanity, findProfanity } from "@/lib/profanity";
 import { isHouseEditor } from "@/lib/godPanel";
+import { validateImageDataUrl } from "@/lib/imageValidate";
 import {
   HOUSE_AVATAR_IDS,
   HOUSE_ROSTER,
@@ -100,7 +101,8 @@ export async function GET(request: Request) {
 // - username: new display handle; must pass the SAME validation a player
 //   registration does (3-20 [A-Za-z0-9_], not reserved, no profanity) and be
 //   unused by any other account.
-// - avatar: a preset id from the house avatar catalog (HOUSE_AVATAR_IDS).
+// - avatar: a preset id from the house avatar catalog (HOUSE_AVATAR_IDS) OR a
+//   custom uploaded image as a data URL (re-validated by imageValidate).
 // - bio: a profile bio (<= 300 chars, profanity censored like /api/auth/bio);
 //   an empty string clears it.
 // - reset: clear the override entirely and restore the baked identity.
@@ -164,8 +166,17 @@ export async function POST(request: Request) {
       .first<{ id: string }>();
     if (taken) return NextResponse.json({ error: "That username is taken." }, { status: 409 });
   }
+  // avatar may be a preset from the house catalog OR a custom uploaded image
+  // (a data URL). The upload is re-validated server-side (MIME, byte-size, and
+  // pixel dimensions via imageValidate) — client checks are never trusted.
   if (avatar !== null && !HOUSE_AVATAR_IDS.includes(avatar)) {
-    return NextResponse.json({ error: "Unknown avatar id." }, { status: 400 });
+    const img = validateImageDataUrl(avatar);
+    if (!img.ok) {
+      return NextResponse.json(
+        { error: `Unknown avatar id. ${img.error}` },
+        { status: 400 },
+      );
+    }
   }
 
   // Merge onto the stored override (a save of only one field keeps the others),
@@ -207,7 +218,7 @@ export async function POST(request: Request) {
       .run();
   } catch {
     return NextResponse.json(
-      { error: "Could not save — that username may already be in use." },
+      { error: "Could not save. That username may already be in use." },
       { status: 409 },
     );
   }

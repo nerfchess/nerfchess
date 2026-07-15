@@ -36,6 +36,7 @@ import {
   ensureHouseUsers,
   countSeededHouseUsers,
   HOUSE_ROSTER_SIZE,
+  ensureOgClub,
   houseDraftThinkMs,
   houseNerfPickIndex,
   housePersona,
@@ -51,6 +52,12 @@ import {
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
+  pickHouseFillerSeek,
+  pickHouseFillerPair,
+  houseFillerSpawnDelayMs,
+  houseSocialDelayMs,
+  HOUSE_VS_HOUSE_FLOOR,
+  HOUSE_VS_HOUSE_CAP,
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
@@ -477,8 +484,35 @@ const houseSeededKey = "hp:seeded:v5";
 // rewrites every existing account's users.rating, both per-mode buckets, and its
 // bio on the next cold start (ensureHouseUsers only INSERTs, so without this the
 // re-spread never reaches accounts that already exist).
-const houseRatingsSyncedKey = "hp:ratings-synced:rating-v5";
+// rating-v6: lichess-parity Glicko-2 (new-account RD 500, RD floor 45, no more
+// 150-point delta cap). House accounts must read as SETTLED regulars under the
+// new curve, so syncHouseRatings now clamps every bot's rd to
+// HOUSE_SEED_RD (60) — older deployments seeded RD 150, which is provisional
+// (>110) and let a bot's first games swing its seeded number wildly. Bump so
+// the settle reaches every existing account on the next cold start.
+const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
+// One-time seed of the "OG NERFCHESS USERS" club (a big veteran club whose
+// membership is ~65% of the house roster). Runs once after ensureHouseUsers has
+// created every persona's users row (the club FKs need it). Bump the suffix to
+// re-seed after a roster change (INSERT OR IGNORE, so a bump only adds any new
+// members, never disturbing rows a real user joined). See ensureOgClub.
+const houseOgClubSeededKey = "hp:og-club:v1";
 const houseNextFillerKey = "hp:nextFillerAt";
+// Bots answer social actions (friend requests, direct challenges) on a poll off
+// the alarm tick rather than an in-DO timer, throttled to this cadence so the
+// pending-row scan is bounded (a few small indexed reads at most every few
+// seconds, never per tick). Comfortably tighter than the ~8-20s accept delay, so
+// a request still resolves within its humanlike window.
+const houseNextSocialKey = "hp:nextSocialAt";
+const houseSocialIntervalMs = 3_000;
+// Hard bound on how many friend/challenge actions one social poll commits, so a
+// backlog can never turn a single tick into a long batch of writes on the
+// single-threaded DO; the rest drain on the next poll.
+const houseSocialMaxAcceptsPerTick = 4;
+// A direct challenge older than this is stale (mirrors CHALLENGE_TTL_MS in
+// src/lib/server/social.ts; kept as a local constant so the DO bundle never
+// imports the next/server-based social module).
+const houseChallengeTtlMs = 30 * 60 * 1000;
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
 // Master switch for the house players (bots). Set to false to temporarily pause
@@ -529,21 +563,27 @@ const houseSeekTtlMs = 8 * 60 * 1000;
 //   worst-case bots = houseVsHouseCap + houseTotalGamesCap <= houseGameSeats.
 const houseSeekReserve = houseSeekMax + 2;
 const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
-// Hard ABSOLUTE ceilings, independent of roster size. PR #242 sized these purely
-// off the roster (30 personas -> up to 8 concurrent house-vs-house games = 16
-// bots each grinding an 80ms engine search roughly every second), which
-// oversubscribed the single-threaded DO: the per-tick CPU budget was spent on
-// filler, so a human's freshly accepted bot game could not get its move
-// processed in time. The bot never moved and, once the isolate was CPU-evicted
-// mid-tick, the socket upgrade stopped being answered and the client fell back to
-// "cant connect to game servers". A few live filler games are plenty to keep the
-// lobby and TV looking busy; correctness (humans' bot games always move) beats
-// lobby optics, so these stay small no matter how large the roster grows. Kept at
-// 3 so up to three bot-vs-bot games run at once; the spaced filler timer starts a
-// fresh one whenever one ends, so there is always a steady, ongoing set of live
-// bot games rather than a crowd.
-const houseVsHouseCapMax = 3;
-const houseTotalGamesCapMax = 8;
+// Hard ABSOLUTE ceilings, independent of roster size. History matters here:
+// PR #242's roster-derived caps (up to 8 concurrent bot-vs-bot games, each pair
+// grinding an 80ms search roughly EVERY SECOND) oversubscribed the
+// single-threaded DO and starved human games; the fix clamped filler to 3
+// games. The owner target is now 40-55 concurrent house games around the clock
+// (a busy Watch tab / 100+ online population), which is affordable ONLY because
+// the per-game engine rate is decimated rather than the per-tick bound raised:
+//   - filler moves pace ~8x slower than human-facing bots
+//     (houseFillerThinkMultiplier: one search per filler game every ~10-25s,
+//     so ~50 games demand ~2-4 searches/second total),
+//   - the per-tick action/CPU budgets below still bound every single alarm
+//     (a backlog drains across 300ms follow-up ticks, never in one batch),
+//   - human-facing actions retain absolute priority over all filler work, and
+//   - when the OCI engine service is on (HOUSE_ENGINE_REMOTE), the searches
+//     do not even run on the DO thread.
+// Spawns are staggered (houseFillerSpawnDelayMs: ~1.5-3s apart during ramp-up,
+// 8-15s at steady state), so a cold start climbs to the 40-game floor over a
+// couple of minutes instead of bursting 40 game creations at once.
+const houseVsHouseCapMax = HOUSE_VS_HOUSE_CAP;
+// Filler cap + headroom for human-vs-bot pickups and /play bot games.
+const houseTotalGamesCapMax = HOUSE_VS_HOUSE_CAP + 15;
 const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
 const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
@@ -566,12 +606,22 @@ const houseTickBudgetMs = 250;
 // spectated (TV) game indefinitely while its clocks run.
 const houseFillerMaxDeferMs = 10 * 1000;
 // Bot-vs-bot filler paces its moves this many times slower than a bot playing
-// a human. Filler is lobby/TV decoration: halving its action rate halves the
-// alarm wakes and engine searches it costs in steady state, while 2-6s per
-// blitz move still reads as a live game to a spectator. If the slower pace
-// runs a filler bot out of time it simply flags — a normal chess result for a
-// game that is never recorded anyway.
-const houseFillerThinkMultiplier = 2;
+// a human. Filler is lobby/TV decoration, and this multiplier is the lever that
+// makes the 40-55 concurrent-game target affordable: at 8x, a filler game takes
+// one engine action every ~10-25s, so ~50 live games cost the DO ~2-4 bounded
+// searches per second in total (and none at all when the remote engine is on)
+// while each board still visibly plays for a spectator. Filler draws from the
+// longer blitz pools (pickHouseFillerSeek) so the slow pace does not flag a
+// game within its first few moves; if a filler bot still runs out of time it
+// simply flags — a normal chess result for a game that is never recorded.
+const houseFillerThinkMultiplier = 8;
+// How many filler actions one tick may take AFTER every due human-facing
+// action has been served and only while the shared per-tick action/CPU budget
+// has room. With 40+ live filler games the old 1/tick throughput could not
+// keep up (boards visibly froze between alarms); 3/tick matched with the slower
+// per-game pacing above balances supply and demand while the wall-clock budget
+// still bounds the worst tick.
+const houseFillerMaxActionsPerTick = 3;
 // How long a queued human waits for a human opponent before a house player
 // picks them up.
 const houseHumanPickupMs = 4500;
@@ -881,8 +931,18 @@ export class GameServer extends DurableObject<Env> {
     at: number;
     byId: Map<string, Partial<Record<DraftMode, number>>>;
     identity: Map<string, { username: string; avatar: string | null }>;
+    // Total recorded games per persona (summed across the nerf+buff buckets):
+    // the leaderboard "games" figure, used to bias filler pairing toward the
+    // bots with the fewest games so no persona lingers at zero.
+    gamesById: Map<string, number>;
   } | null = null;
   private static readonly HOUSE_RATINGS_TTL_MS = 60_000;
+  // In-memory tally of filler (bot-vs-bot) games each persona has been seated in
+  // this isolate. Bot-vs-bot games are never recorded to the leaderboard, so this
+  // is what lets the fair-pairing bias spread TV/lobby appearances evenly within
+  // a session (folded onto the recorded-games figure). Resets on eviction, which
+  // is fine: it only steers selection, never correctness.
+  private houseFillerGames = new Map<string, number>();
   // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
   // memory only. Refreshed by /arena/games; entries older than the TTL are
   // ignored (self-heals if the arena crashes or the DO loses this on eviction).
@@ -3749,11 +3809,16 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    // Pass 2: at most ONE house-vs-house filler action, and only once every due
+    // Pass 2: house-vs-house filler actions, and only once every due
     // human-facing action this tick has been served (deferredDueWork is false)
     // and there is CPU budget left. A human never waits behind a filler search.
+    // Up to houseFillerMaxActionsPerTick land per tick, each individually
+    // re-checked against the shared action/wall-clock budget, so the 40+
+    // concurrent filler games (paced ~8x slower per game, see
+    // houseFillerThinkMultiplier) drain their due moves promptly without one
+    // alarm ever running a long search batch.
     //
-    // Starvation valve: sustained human load can make that yield defer filler
+    // Starvation valve: sustained human load can make the yield defer filler
     // on EVERY tick, so a spectated (TV) filler game never acts — the board
     // freezes while its clocks run down. Once the head filler action has been
     // due past houseFillerMaxDeferMs, it takes exactly one action this tick
@@ -3762,18 +3827,22 @@ export class GameServer extends DurableObject<Env> {
     // permanent stall.
     const fillerStarved =
       dueFiller.length > 0 && now - (dueFiller[0].botActAt ?? now) > houseFillerMaxDeferMs;
-    if (dueFiller.length && (fillerStarved || (!deferredDueWork && !budgetSpent()))) {
-      const match = dueFiller[0];
-      if (!this.houseRetireFailed.has(match.id)) {
-        try {
-          await this.playHouseAction(match, Date.now());
-          actionsActed++;
-          fillerActed++;
-        } catch (err) {
-          this.houseTickError = err instanceof Error ? err.message : String(err);
-          console.error("house filler action failed, retiring match", match.id, err);
-          await this.retireFailedHouseMatch(match);
-        }
+    for (const match of dueFiller) {
+      if (fillerActed >= houseFillerMaxActionsPerTick) break;
+      // The starvation valve admits exactly ONE action past the budget; every
+      // other filler action must fit the normal budget with no deferred
+      // human-facing work.
+      const forced = fillerActed === 0 && fillerStarved;
+      if (!forced && (deferredDueWork || budgetSpent())) break;
+      if (this.houseRetireFailed.has(match.id)) continue;
+      try {
+        await this.playHouseAction(match, Date.now());
+        actionsActed++;
+        fillerActed++;
+      } catch (err) {
+        this.houseTickError = err instanceof Error ? err.message : String(err);
+        console.error("house filler action failed, retiring match", match.id, err);
+        await this.retireFailedHouseMatch(match);
       }
     }
     // Deferred work (a human action past the budget, or filler we did not reach
@@ -3876,11 +3945,24 @@ export class GameServer extends DurableObject<Env> {
           await syncHouseRatings(db);
           await this.ctx.storage.put(houseRatingsSyncedKey, now);
         }
+        // Seed the OG club once, after the users rows exist (its FKs need them).
+        if (!(await this.ctx.storage.get<number>(houseOgClubSeededKey))) {
+          await ensureOgClub(db);
+          await this.ctx.storage.put(houseOgClubSeededKey, now);
+        }
         this.houseSeeded = true;
       } catch (err) {
         console.error("house seeding failed", err);
         return;
       }
+    }
+
+    // Answer any pending friend requests / direct challenges addressed to a bot.
+    // Isolated so a social-table hiccup never touches queue/filler orchestration.
+    try {
+      await this.houseSocialTick(db, busy, now);
+    } catch (err) {
+      console.error("house social tick failed", err);
     }
 
     const free = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter(
@@ -3961,8 +4043,10 @@ export class GameServer extends DurableObject<Env> {
     }
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
-    // Occasional house-vs-house filler so the lobby and TV look alive,
-    // capped and spaced out so games never start (or end) in lockstep.
+    // House-vs-house filler so the lobby and TV always look busy: maintain a
+    // steady 40-55 concurrent bot games (HOUSE_VS_HOUSE_FLOOR/CAP), spawned one
+    // per tick with staggered spacing so games never start (or end) in lockstep
+    // and a cold start ramps up over minutes rather than bursting.
     // Tier 2 / M4 cutover (reversible): when the arena owns bot-vs-bot, the DO
     // stops spawning its own filler and lets the arena supply it (streamed in
     // via /arena). Flip ARENA_OWNS_FILLER back off and the DO resumes filler on
@@ -3983,10 +4067,36 @@ export class GameServer extends DurableObject<Env> {
       try {
         const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;
         if (now >= nextAt) {
-          const a = free.splice(randomInt(free.length), 1)[0];
-          const b = free.splice(randomInt(free.length), 1)[0];
-          await this.startHouseVsHouseGame(a, b, db);
-          await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
+          // Weight the pairing toward the personas with the fewest games played
+          // (recorded leaderboard games + this session's filler appearances), so
+          // filler spreads evenly across the roster and no bot lingers at zero
+          // rather than the same faces churning. The daily active-window rotation
+          // (activeHouseRoster) is what eventually feeds every persona into `free`.
+          const gamesOf = (id: string) =>
+            (liveInfo.gamesById.get(id) ?? 0) + (this.houseFillerGames.get(id) ?? 0);
+          const pair = pickHouseFillerPair(free, gamesOf, randomInt);
+          if (pair) {
+            const [a, b] = pair;
+            for (const p of pair) {
+              const idx = free.findIndex((f) => f.userId === p.userId);
+              if (idx >= 0) free.splice(idx, 1);
+              this.houseFillerGames.set(p.userId, (this.houseFillerGames.get(p.userId) ?? 0) + 1);
+            }
+            await this.startHouseVsHouseGame(a, b, db);
+            // Staggered pacing toward the 40-55 steady band: one spawn per tick,
+            // ~1.5-3s apart while below the floor (a cold start ramps to 40
+            // games over ~2 minutes, never a burst) and 8-15s once there.
+            const delay = houseFillerSpawnDelayMs(houseVsHouse + 1, randomInt);
+            await this.ctx.storage.put(houseNextFillerKey, now + delay);
+            // During ramp-up the games just spawned may not have due actions
+            // yet, so make sure an alarm fires for the NEXT spawn rather than
+            // waiting out the 20s heartbeat with the population under target.
+            if (houseVsHouse + 1 < HOUSE_VS_HOUSE_FLOOR) {
+              try {
+                await this.armAlarmBy(now + delay);
+              } catch {}
+            }
+          }
         }
       } catch (err) {
         console.error("house filler start failed", err);
@@ -4373,6 +4483,7 @@ export class GameServer extends DurableObject<Env> {
   private async houseLiveInfo(db: D1Database | null): Promise<{
     byId: Map<string, Partial<Record<DraftMode, number>>>;
     identity: Map<string, { username: string; avatar: string | null }>;
+    gamesById: Map<string, number>;
   }> {
     const now = Date.now();
     if (this.houseRatingsCache && now - this.houseRatingsCache.at < GameServer.HOUSE_RATINGS_TTL_MS) {
@@ -4380,6 +4491,7 @@ export class GameServer extends DurableObject<Env> {
     }
     const byId = new Map<string, Partial<Record<DraftMode, number>>>();
     const identity = new Map<string, { username: string; avatar: string | null }>();
+    const gamesById = new Map<string, number>();
     if (db) {
       try {
         const ids = HOUSE_ROSTER.map((p) => p.userId);
@@ -4387,11 +4499,11 @@ export class GameServer extends DurableObject<Env> {
         const [rows, users] = await Promise.all([
           db
             .prepare(
-              `SELECT user_id, category, rating FROM user_ratings
+              `SELECT user_id, category, rating, games FROM user_ratings
                WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
             )
             .bind(...ids)
-            .all<{ user_id: string; category: string; rating: number }>(),
+            .all<{ user_id: string; category: string; rating: number; games: number }>(),
           db
             .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
             .bind(...ids)
@@ -4402,6 +4514,7 @@ export class GameServer extends DurableObject<Env> {
           const entry = byId.get(row.user_id) ?? {};
           entry[row.category as DraftMode] = Math.round(row.rating);
           byId.set(row.user_id, entry);
+          gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
         }
         for (const row of users.results) {
           identity.set(row.id, { username: row.username, avatar: row.avatar });
@@ -4410,7 +4523,7 @@ export class GameServer extends DurableObject<Env> {
         // Fall back to seed ratings / baked identity; retry after the TTL.
       }
     }
-    this.houseRatingsCache = { at: now, byId, identity };
+    this.houseRatingsCache = { at: now, byId, identity, gamesById };
     return this.houseRatingsCache;
   }
 
@@ -4622,7 +4735,9 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async startHouseVsHouseGame(a: HousePersona, b: HousePersona, db: D1Database) {
-    const { pool, mode } = pickHouseSeek(randomInt);
+    // Filler pools skip 1+0/2+1: the slowed filler move pacing would flag an
+    // ultra-bullet game within a handful of moves (broken-looking on TV).
+    const { pool, mode } = pickHouseFillerSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
     const tc = QUEUE_POOLS[pool];
@@ -4661,6 +4776,217 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = now;
     this.armBotAction(match, null, now);
     await this.saveMatch(match);
+  }
+
+  // ---- Bot social responses: friend requests + direct challenges ----
+  //
+  // Bots have no client, so a friend request or a direct challenge addressed to
+  // one would otherwise sit unanswered forever. This poll (throttled off the
+  // alarm tick, never per tick) does what a real player's tap would: friend
+  // requests flip to 'accepted' after a short humanlike beat; direct challenges
+  // seat the bot in the waiting game and start it — unless the bot is already in
+  // a live game, in which case the challenge is declined (the one-game-per-bot
+  // rule). Every step is isolated so one bad row never blocks the rest, and both
+  // the row scan and the number of accepts per poll are bounded.
+  private async houseSocialTick(db: D1Database, busy: Set<string>, now: number): Promise<void> {
+    const nextAt = (await this.ctx.storage.get<number>(houseNextSocialKey)) ?? 0;
+    if (now < nextAt) return;
+    await this.ctx.storage.put(houseNextSocialKey, now + houseSocialIntervalMs);
+    let budget = houseSocialMaxAcceptsPerTick;
+    budget = await this.houseAcceptFriendRequests(db, now, budget);
+    if (budget > 0) await this.houseAnswerChallenges(db, busy, now, budget);
+  }
+
+  // The persona's current display name (an admin rename from /mod/house lands in
+  // the cached identity map), falling back to the baked constant.
+  private houseDisplayName(userId: string): string {
+    return this.houseRatingsCache?.identity.get(userId)?.username ?? housePersona(userId)?.name ?? "A player";
+  }
+
+  // Insert a bell notification. A local mirror of social.ts's createNotification
+  // so the DO never imports the next/server-based social module.
+  private async houseNotify(
+    db: D1Database,
+    userId: string,
+    actorName: string,
+    text: string,
+    href: string,
+  ): Promise<void> {
+    try {
+      await db
+        .prepare(
+          `INSERT INTO notifications (id, user_id, type, actor_name, text, href, created_at, read)
+           VALUES (?, ?, 'message', ?, ?, ?, ?, 0)`,
+        )
+        .bind(crypto.randomUUID(), userId, actorName, text, href, Date.now())
+        .run();
+    } catch {
+      // A missed notification must never fail the social write it accompanies.
+    }
+  }
+
+  // Accept pending friend requests addressed to a house persona once the request
+  // has aged past its (deterministic, per-request) humanlike delay. Returns the
+  // remaining accept budget.
+  private async houseAcceptFriendRequests(db: D1Database, now: number, budget: number): Promise<number> {
+    let rows: D1Result<{ user_lo: string; user_hi: string; requested_by: string; created_at: number }>;
+    try {
+      rows = await db
+        .prepare(
+          `SELECT user_lo, user_hi, requested_by, created_at FROM friendships
+           WHERE status = 'pending' ORDER BY created_at ASC LIMIT 50`,
+        )
+        .all<{ user_lo: string; user_hi: string; requested_by: string; created_at: number }>();
+    } catch {
+      return budget;
+    }
+    for (const r of rows.results) {
+      if (budget <= 0) break;
+      // The bot is whichever side is a house id; the requester must be the human.
+      // (Bots never send requests, so a house `requested_by` is not ours to
+      // answer — skip it rather than "accept" a request nobody made.)
+      const botId = isHouseUserId(r.user_lo) ? r.user_lo : isHouseUserId(r.user_hi) ? r.user_hi : null;
+      if (!botId || r.requested_by === botId || isHouseUserId(r.requested_by)) continue;
+      const seed = `friend:${r.user_lo}:${r.user_hi}:${r.created_at}`;
+      if (now - r.created_at < houseSocialDelayMs(seed)) continue;
+      try {
+        await db
+          .prepare(
+            `UPDATE friendships SET status = 'accepted'
+             WHERE user_lo = ? AND user_hi = ? AND status = 'pending'`,
+          )
+          .bind(r.user_lo, r.user_hi)
+          .run();
+        const name = this.houseDisplayName(botId);
+        await this.houseNotify(db, r.requested_by, name, `${name} accepted your friend request`, "/friend");
+        budget--;
+      } catch (err) {
+        console.error("house friend accept failed", botId, err);
+      }
+    }
+    return budget;
+  }
+
+  // Accept or decline pending direct challenges addressed to a house persona,
+  // once aged past the humanlike delay. Accept = seat the bot in the waiting
+  // game and start it; decline = the bot is busy (one game per bot) or the
+  // waiting game is gone/host left, so the challenge stops hanging to its TTL.
+  private async houseAnswerChallenges(
+    db: D1Database,
+    busy: Set<string>,
+    now: number,
+    budget: number,
+  ): Promise<number> {
+    let rows: D1Result<{ id: string; from_user_id: string; to_user_id: string; created_at: number }>;
+    try {
+      rows = await db
+        .prepare(
+          `SELECT id, from_user_id, to_user_id, created_at FROM challenges
+           WHERE status = 'pending' AND created_at > ? ORDER BY created_at ASC LIMIT 50`,
+        )
+        .bind(now - houseChallengeTtlMs)
+        .all<{ id: string; from_user_id: string; to_user_id: string; created_at: number }>();
+    } catch {
+      return budget;
+    }
+    for (const r of rows.results) {
+      if (budget <= 0) break;
+      // Only challenges FROM a human TO a bot are ours to answer.
+      if (!isHouseUserId(r.to_user_id) || isHouseUserId(r.from_user_id)) continue;
+      const persona = housePersona(r.to_user_id);
+      if (!persona) continue;
+      const seed = `challenge:${r.id}:${r.created_at}`;
+      if (now - r.created_at < houseSocialDelayMs(seed)) continue;
+
+      // One game per bot: a persona already in a live game declines gracefully
+      // instead of double-booking. `busy` is this tick's live-seat set, updated
+      // as we seat so two challenges in one poll can't both grab the same bot.
+      let outcome: "seated" | "gone" | "retry" | "busy" = busy.has(persona.userId) ? "busy" : "gone";
+      if (outcome !== "busy") {
+        try {
+          outcome = await this.houseSeatChallenge(db, r.id, persona);
+        } catch (err) {
+          console.error("house challenge seat failed", r.id, err);
+          outcome = "retry";
+        }
+      }
+      // A transient failure leaves the row pending for the next poll; a real
+      // outcome commits.
+      if (outcome === "retry") continue;
+      try {
+        if (outcome === "seated") {
+          busy.add(persona.userId);
+          await db
+            .prepare(`UPDATE challenges SET status = 'accepted' WHERE id = ? AND status = 'pending'`)
+            .bind(r.id)
+            .run();
+        } else {
+          await db
+            .prepare(`UPDATE challenges SET status = 'declined' WHERE id = ? AND status = 'pending'`)
+            .bind(r.id)
+            .run();
+        }
+        budget--;
+      } catch (err) {
+        console.error("house challenge resolve failed", r.id, err);
+      }
+    }
+    return budget;
+  }
+
+  // Seat a persona as black in the waiting challenge game `code` and start it,
+  // mirroring joinMatch's start path (a house seat has no socket but counts as
+  // arrived). Returns "seated" on success, "gone" when the waiting game is no
+  // longer joinable (missing/started/host left/black taken), or "retry" on a
+  // transient failure that should be re-attempted next poll.
+  private async houseSeatChallenge(
+    db: D1Database,
+    code: string,
+    persona: HousePersona,
+  ): Promise<"seated" | "gone" | "retry"> {
+    const match = await this.loadMatch(code);
+    if (!match || match.result) return "gone";
+    // Must still be an open, unstarted challenge with a present host and a free
+    // black seat.
+    if (match.startedAt || match.nerfOptions) return "gone";
+    if (!this.connectedSession(code, "w")) return "gone"; // host navigated away
+    if (match.bots?.b || this.connectedSession(code, "b")) return "gone"; // already taken
+    const cat = this.matchRatingCategory(match);
+    let seat: SeatUser;
+    try {
+      const row = await this.seatCategoryRating(db, persona.userId, cat);
+      seat = row
+        ? {
+            id: persona.userId,
+            name: row.username ?? persona.name,
+            rating: row.rating,
+            rd: row.rd,
+            vol: row.vol,
+            avatar: row.avatar ?? persona.avatar,
+          }
+        : { id: persona.userId, name: persona.name, rating: houseSeedRating(persona), rd: 150, vol: 0.06, avatar: persona.avatar };
+    } catch {
+      return "retry";
+    }
+    match.bots = { ...(match.bots ?? {}), b: persona.userId };
+    match.users = { ...(match.users ?? {}), b: seat };
+    // Bring the host's seat rating (snapshotted at challenge creation) current,
+    // exactly like joinMatch does before the start frames go out.
+    await this.refreshSeatRatings(match, ["w"]);
+    // Draft games open with the opening nerf draft (buff mode skips it); a plain
+    // game starts outright.
+    if (match.draft && match.mode !== "buff") {
+      await this.beginNerfDraft(match);
+      return "seated";
+    }
+    const now = Date.now();
+    match.startedAt = now;
+    match.runningSince = now;
+    this.armBotAction(match, null, now);
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
+    return "seated";
   }
 
   // ---- Arena ingestion (Tier 2 / M2) ----

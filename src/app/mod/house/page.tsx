@@ -9,9 +9,10 @@
 // admin, matching the server-side authorization in /api/mod/house/personas.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { fileToDataUrl } from "@/lib/imageUpload";
 
 type PersonaView = {
   userId: string;
@@ -111,6 +112,7 @@ function PersonaRow({
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const post = async (body: Record<string, unknown>) => {
     if (saving) return;
@@ -133,6 +135,20 @@ function PersonaRow({
       setError("Could not save. Try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Upload a custom image as this bot's pfp: downscale to a small square data
+  // URL on the client, then POST it as the avatar (the server re-validates
+  // MIME/size/dimensions via imageValidate before storing).
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    try {
+      const dataUrl = await fileToDataUrl(file, { maxDim: 160, maxChars: 200_000, cover: true });
+      await post({ avatar: dataUrl });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not read that image.");
     }
   };
 
@@ -226,7 +242,26 @@ function PersonaRow({
       )}
       {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
       {picking && canEdit && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3">
+          <div className="mb-2 flex items-center gap-3">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(e) => onFile(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => fileRef.current?.click()}
+              className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
+            >
+              Upload image…
+            </button>
+            <span className="text-[11px] text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
           {avatars.map((id) => (
             <button
               key={id}
@@ -244,6 +279,7 @@ function PersonaRow({
               <PlayerAvatar name={persona.effective.username} avatar={id} size={28} />
             </button>
           ))}
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SiteFooter } from "@/components/SiteFooter";
 
 type InfoPageLayoutProps = {
   eyebrow: string;
@@ -36,6 +37,8 @@ export function InfoPageLayout({
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">{intro}</p>
         <div className="mt-9 space-y-4">{children}</div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }

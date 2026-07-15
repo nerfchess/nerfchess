@@ -11,14 +11,7 @@ import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { PlayerStats } from "@/lib/playerStats";
 import { RatingChart, RatingPoint } from "@/components/RatingChart";
-import { CategoryTabs } from "@/components/ratings/CategoryTabs";
-import {
-  ACTIVE_RATING_CATEGORIES,
-  DEFAULT_CATEGORY,
-  isRatingCategoryId,
-  RETIRED_CATEGORY_IDS,
-  type RatingCategoryId,
-} from "@/lib/ratingCategories";
+import { ACTIVE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
@@ -508,42 +501,32 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
   );
 }
 
-// The rating graph, one mode bucket (Nerf or Buff) at a time (mixing
-// categories made the line jump between unrelated ratings). Defaults to the
-// most-played active bucket.
+// The rating graph, Lichess-style: one colored line per active mode bucket
+// (Nerf and Buff), overlaid on a single time axis. Each line's legend chip
+// toggles it, so "one bucket at a time" is still a click away. Points from
+// retired speed buckets are simply not drawn (their ratings live on in the
+// stats, but a retired line has no tab anywhere else either).
 function RatingHistorySection({ points }: { points: ProfileRatingPoint[] }) {
-  const mostPlayed = useMemo(() => {
-    const counts = new Map<RatingCategoryId, number>();
-    for (const p of points) {
-      // Retired categories no longer have a tab, so never pick one as the
-      // default view (the points still exist for players who select nothing).
-      if (isRatingCategoryId(p.category) && !RETIRED_CATEGORY_IDS.includes(p.category)) {
-        counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-      }
-    }
-    let best: RatingCategoryId = DEFAULT_CATEGORY;
-    let bestCount = 0;
-    for (const [id, count] of counts) {
-      if (count > bestCount) {
-        best = id;
-        bestCount = count;
-      }
-    }
-    return best;
-  }, [points]);
-  const [category, setCategory] = useState<RatingCategoryId>(mostPlayed);
-  const filtered = useMemo(() => points.filter((p) => p.category === category), [points, category]);
+  const series = useMemo(
+    () =>
+      ACTIVE_RATING_CATEGORIES.map((c) => ({
+        id: c.id,
+        label: c.label,
+        color: c.accent,
+        points: points
+          .filter((p) => p.category === c.id)
+          .map((p) => ({ at: p.at, rating: p.rating })),
+      })).filter((s) => s.points.length >= 2),
+    [points],
+  );
 
   return (
     <div className="mt-6">
-      <CategoryTabs value={category} onChange={setCategory} />
-      <div className="mt-2">
-        {filtered.length >= 2 ? (
-          <RatingChart points={filtered} />
-        ) : (
-          <div className="plate p-4 text-sm text-parchment-400">Not enough rated games yet</div>
-        )}
-      </div>
+      {series.length > 0 ? (
+        <RatingChart series={series} />
+      ) : (
+        <div className="plate p-4 text-sm text-parchment-400">Not enough rated games yet</div>
+      )}
     </div>
   );
 }

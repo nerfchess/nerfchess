@@ -53,7 +53,7 @@ type PanelGroup = { label: string; cards: PanelCard[] };
 // rejects unimplemented cards — instants and opponent-move-filtering passives
 // ARE summonable, they simply reveal themselves).
 function blockedReason(b: (typeof ALL_BUFFS)[number]): string | null {
-  if (!b.implemented) return "not implemented yet — cannot be summoned";
+  if (!b.implemented) return "not implemented yet: cannot be summoned";
   return null;
 }
 
@@ -86,7 +86,7 @@ const GROUPS: PanelGroup[] = (() => {
     name: n.name,
     tier: n.tier as number,
     description: n.description,
-    blocked: "nerfs are opening handicaps, not hand cards — reference only",
+    blocked: "nerfs are opening handicaps, not hand cards: reference only",
     searchText: `${n.name} ${n.id} nerf`.toLowerCase(),
   }));
   const groups: PanelGroup[] = [
@@ -194,7 +194,7 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
           "fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-1.5 rounded-l-[1px] border bg-ink-950 px-1.5 py-3 text-[10px] font-semibold [writing-mode:vertical-rl] xl:flex " +
           (recording ? "border-coral/70 text-coral-glow" : "border-coral/40 text-coral-glow")
         }
-        title={recording ? "Recording — open god panel to stop" : "Open god panel"}
+        title={recording ? "Recording. Open god panel to stop" : "Open god panel"}
       >
         {recording && (
           <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-coral-glow animate-pulse" />

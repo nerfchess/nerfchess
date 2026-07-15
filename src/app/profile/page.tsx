@@ -346,7 +346,7 @@ export default function ProfilePage() {
                   {LAUREL_FLAIR}
                 </button>
                 <p className="text-xs text-parchment-400">
-                  <span className="font-display text-gold-leaf">Laurelled</span> — reserved for
+                  <span className="font-display text-gold-leaf">Laurelled</span>, reserved for
                   players currently in the top 10 of a{" "}
                   <Link href="/leaderboard" className="text-gold-leaf hover:underline">
                     leaderboard

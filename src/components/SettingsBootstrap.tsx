@@ -130,7 +130,7 @@ function LagWatch() {
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
         This device looks like it&apos;s struggling to keep up. Performance mode keeps every
-        animation but trims the heaviest effects — you can change it any time in Settings.
+        animation but trims the heaviest effects, and you can change it any time in Settings.
       </p>
       <div className="mt-2 flex justify-end gap-2">
         <button

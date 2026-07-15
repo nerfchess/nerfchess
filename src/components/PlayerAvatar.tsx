@@ -2,6 +2,7 @@
 
 import { Piece } from "./Pieces";
 import { AVATARS, avatarIdFor, housePfpSrc, isCustomAvatar, isHousePfp } from "@/lib/avatars";
+import { isUploadedImage } from "@/lib/imageValidate";
 import { isAllowedFlair } from "@/lib/flair";
 
 // A player's profile picture: an uploaded image (stored as a small data URL),
@@ -30,7 +31,16 @@ export function PlayerAvatar({
   // SVG) both render as a plain <img>; anything else falls back to the preset
   // piece-on-plate. isHousePfp only matches ids held by house accounts, so a
   // real player's avatar never reaches this branch.
-  const imgSrc = isCustomAvatar(avatar) ? avatar : isHousePfp(avatar) ? housePfpSrc(avatar) : null;
+  // A regular player's uploaded avatar (isCustomAvatar, ~24KB cap) OR a
+  // house-bot's custom uploaded pfp (a larger data-URL image a mod set via the
+  // /mod editor) both render as a plain <img>; a house-pfp id resolves to its
+  // static scenic SVG; anything else falls back to the preset piece-on-plate.
+  const imgSrc =
+    isCustomAvatar(avatar) || isUploadedImage(avatar)
+      ? (avatar as string)
+      : isHousePfp(avatar)
+        ? housePfpSrc(avatar)
+        : null;
   const core = imgSrc ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img

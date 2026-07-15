@@ -23,10 +23,10 @@ export default function NerfModePage() {
 
       <InfoSection title="How a Nerf mode game starts">
         <p>
-          <GlossaryText text="Before the first move, each player is shown two nerf cards and picks one in secret, inside a 20-second lock-in window while the clocks wait (stall past it and the first card is picked for you). A nerf is a handicap: it restricts how you are allowed to play (&quot;you can't capture queens&quot;), or creates a brand-new way for you to lose. You carry your chosen rule for the whole game. Both players' two options are public — it is the pick that stays secret. Only when the game ends are both rules revealed." />
+          <GlossaryText text="Before the first move, each player is shown two nerf cards and picks one in secret, inside a 20-second lock-in window while the clocks wait (stall past it and the first card is picked for you). A nerf is a handicap: it restricts how you are allowed to play (&quot;you can't capture queens&quot;), or creates a brand-new way for you to lose. You carry your chosen rule for the whole game. Both players' two options are public: it is the pick that stays secret. Only when the game ends are both rules revealed." />
         </p>
         <p>
-          <GlossaryText text="The board enforces your rule for you: moves your nerf forbids are simply never offered, so you cannot break it by accident. What you can do is leak it. Every capture you decline and every square you avoid tells a story, and a sharp opponent reads that story fast — knowing which two cards you chose between, they only have to tell the two apart." />
+          <GlossaryText text="The board enforces your rule for you: moves your nerf forbids are simply never offered, so you cannot break it by accident. What you can do is leak it. Every capture you decline and every square you avoid tells a story, and a sharp opponent reads that story fast, knowing which two cards you chose between, they only have to tell the two apart." />
         </p>
       </InfoSection>
 

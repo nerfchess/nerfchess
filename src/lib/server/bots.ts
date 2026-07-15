@@ -592,18 +592,53 @@ const HOUSE_PFP_ASSIGN: Record<string, string> = {
   crushingpawns: "autumn_leaves",
 };
 
-// The baked avatar a persona debuts with: its curated house pfp when it has
-// one, otherwise a name-hashed house pfp from the full catalog. Owner ask: WAY
-// more of the roster should read like real users with an uploaded photo, so
-// every persona now debuts with an image pfp instead of a flower preset. The
-// pick is deterministic (name-hashed) and spread across the 30-image catalog,
-// so the crowd looks varied and stays stable across deploys. Flower presets
-// remain a valid house look (still offered in the /mod editor and held by any
-// persona an admin switches back to one), just no longer the default.
+// UNIQUE per-persona pfp assignment. Owner ask: no two bots may share a pfp.
+// The catalog (HOUSE_PFP_NAMES: ~60 curated + 200 generated = 260) is larger
+// than the ~210-deep roster, so a distinct pfp exists for every persona. The
+// assignment is deterministic and stable across deploys:
+//   1. Curated thematic picks (HOUSE_PFP_ASSIGN) are claimed first, in roster
+//      order, each taken by at most one persona.
+//   2. Every remaining persona hashes its name into the catalog and linear-
+//      probes to the first still-unclaimed slot.
+// Because the catalog outnumbers the roster, step 2 always finds a free slot,
+// so the result is a true injection (no duplicates). Flower presets remain a
+// valid house look (still in the /mod editor and held by any persona an admin
+// switches back to one), just never the default.
+const HOUSE_PFP_CATALOG_SET = new Set<string>(HOUSE_PFP_NAMES);
+
+function assignHousePfps(names: readonly string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const used = new Set<string>();
+  // 1. Curated thematic picks, claimed once each.
+  for (const name of names) {
+    const pfp = HOUSE_PFP_ASSIGN[name];
+    if (pfp && HOUSE_PFP_CATALOG_SET.has(pfp) && !used.has(pfp)) {
+      out.set(name, HOUSE_PFP_PREFIX + pfp);
+      used.add(pfp);
+    }
+  }
+  // 2. Everyone else: hash into the catalog, probe to the first free slot.
+  const len = HOUSE_PFP_NAMES.length;
+  for (const name of names) {
+    if (out.has(name)) continue;
+    let idx = nameHash(name) % len;
+    while (used.has(HOUSE_PFP_NAMES[idx])) idx = (idx + 1) % len;
+    out.set(name, HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[idx]);
+    used.add(HOUSE_PFP_NAMES[idx]);
+  }
+  return out;
+}
+
+const HOUSE_PFP_ASSIGNMENTS = assignHousePfps(PERSONA_DEFS.map(([name]) => name));
+
+/** A persona's baked, UNIQUE pfp id (see assignHousePfps). */
 function personaAvatar(name: string): string {
-  const pfp = HOUSE_PFP_ASSIGN[name];
-  if (pfp) return HOUSE_PFP_PREFIX + pfp;
-  return HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length];
+  // Falls back to a name-hashed catalog pick for any name not in the roster
+  // (defensive; every roster name is in the map).
+  return (
+    HOUSE_PFP_ASSIGNMENTS.get(name) ??
+    HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length]
+  );
 }
 
 // Short, generic, SFW blurbs — the kind a real player might jot on their profile.
@@ -776,7 +811,12 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-export const HOUSE_COUNT_MIN = 60;
+// Floor raised 60 -> 110 (owner target: 40+ concurrent house games around the
+// clock). 40 bot-vs-bot games seat 80 personas; add the seek reserve, human
+// pickups, and headroom for the 40-55 steady band and the smallest daily window
+// must still supply ~100+ active personas. The window keeps breathing daily
+// (110-120), just above the new floor.
+export const HOUSE_COUNT_MIN = 110;
 export const HOUSE_COUNT_MAX = 120;
 // How many bots idle "online" for presence — never more than the roster holds.
 export const HOUSE_ONLINE_COUNT = Math.min(150, HOUSE_ROSTER.length);
@@ -797,10 +837,13 @@ export function dailyHouseCount(dayIndex: number): number {
 }
 
 // The rotating window start for a day. Shared by the active and online windows so
-// the active set is always a prefix of the online set. Step 31 is coprime with a
-// 210-deep roster, so all offsets are visited over time.
-function houseWindowStart(dayIndex: number): number {
-  return (Math.floor(dayIndex) * 31) % HOUSE_ROSTER.length;
+// the active set is always a prefix of the online set. The step is coprime with a
+// 210-deep roster (see HOUSE_WINDOW_STEP), so all offsets are visited over time —
+// which is what guarantees EVERY persona rotates into the active window (and so
+// becomes eligible for filler games) rather than a fixed subset always playing.
+export const HOUSE_WINDOW_STEP = 31;
+export function houseWindowStart(dayIndex: number): number {
+  return (Math.floor(dayIndex) * HOUSE_WINDOW_STEP) % HOUSE_ROSTER.length;
 }
 
 /** A `size`-persona window starting at the day's rotating offset, wrapping the
@@ -924,6 +967,66 @@ export function pickHouseBotByDifficulty(
   return pool[rand(pool.length)];
 }
 
+// ---------------------------------------------------------------------------
+// Fair bot-vs-bot pairing.
+//
+// Filler (house-vs-house) games are what keep TV and the lobby full, and every
+// persona holds a real leaderboard row, so a roster where the same handful of
+// bots play constantly while others sit at zero games reads as fake. Pairing is
+// therefore biased toward the personas with the FEWEST games played
+// (weight ~ 1/(1+games)): a bot that is behind is picked more often, so counts
+// converge over time and no bot lingers at zero. Rotation of the daily active
+// window (houseWindowStart) is what eventually brings EVERY persona — including
+// ones outside today's window — into the free pool this picks from.
+// ---------------------------------------------------------------------------
+
+// The second seat is kept within this many skill points of the first so a
+// filler game is never a wild rating mismatch on the leaderboard/TV. Falls back
+// to the whole pool when nobody sits in band.
+export const HOUSE_FILLER_SKILL_WINDOW = 300;
+
+/** Weighted pick of ONE index from `pool`, biased toward the lowest game count
+ * (weight = 1/(1+games)). Pure: the caller supplies the RNG (an integer draw in
+ * [0, n), matching randomInt / the sim's random). Returns -1 for an empty pool. */
+function weightedFewestGamesIndex(
+  pool: readonly HousePersona[],
+  gamesOf: (userId: string) => number,
+  rand: (max: number) => number,
+): number {
+  if (!pool.length) return -1;
+  const weights = pool.map((p) => 1 / (1 + Math.max(0, gamesOf(p.userId))));
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  if (!(total > 0)) return rand(pool.length);
+  // Scale a uniform draw in [0,1) up to [0,total). rand only yields integers, so
+  // draw against a large modulus for enough resolution.
+  let roll = (rand(1_000_000) / 1_000_000) * total;
+  for (let i = 0; i < pool.length; i++) {
+    roll -= weights[i];
+    if (roll < 0) return i;
+  }
+  return pool.length - 1;
+}
+
+/** Pick two DISTINCT personas for a bot-vs-bot filler game, both weighted toward
+ * the fewest games played so games spread evenly across the roster over time,
+ * with the second seat kept within a plausible skill band (HOUSE_FILLER_SKILL_
+ * WINDOW) of the first. Pure — the caller supplies the free pool, a games lookup,
+ * and the RNG. Returns null when fewer than two personas are free. */
+export function pickHouseFillerPair(
+  free: readonly HousePersona[],
+  gamesOf: (userId: string) => number,
+  rand: (max: number) => number,
+): [HousePersona, HousePersona] | null {
+  if (free.length < 2) return null;
+  const i = weightedFewestGamesIndex(free, gamesOf, rand);
+  const a = free[i];
+  const rest = free.filter((_, idx) => idx !== i);
+  const inBand = rest.filter((p) => Math.abs(p.skill - a.skill) <= HOUSE_FILLER_SKILL_WINDOW);
+  const pool = inBand.length ? inBand : rest;
+  const b = pool[weightedFewestGamesIndex(pool, gamesOf, rand)];
+  return [a, b];
+}
+
 // The rating a persona ADVERTISES is decoupled from its engine `skill`. The skill
 // still drives how hard it actually plays (HOUSE_SKILL_PROFILES, capped by the DO
 // ceiling), but the displayed/rated number is shifted here so the field can be
@@ -971,6 +1074,16 @@ async function batchInChunks(
   }
 }
 
+// House accounts seed as SETTLED ratings: RD 60 (a lichess-like floor for an
+// active regular; the human floor is RD_MIN 45) and volatility 0.06. They are
+// established residents of the ladder, not provisional accounts — a settled RD
+// keeps their seeded numbers (and the roster's spread) stable instead of
+// letting the first few games fling them hundreds of points, and keeps a
+// provisional "?" off every bot profile. Never seed at or above
+// PROVISIONAL_RD (110).
+export const HOUSE_SEED_RD = 60;
+export const HOUSE_SEED_VOL = 0.06;
+
 // Create any missing house accounts, with both per-mode rating buckets seeded
 // at the persona's skill. The password hash is unparseable on purpose
 // (verifyPassword requires a "pbkdf2:" prefix), so nobody can sign in as one.
@@ -989,7 +1102,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
       db
         .prepare(
           `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
-           VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ${HOUSE_SEED_RD}, ${HOUSE_SEED_VOL}, ?, ?)`,
         )
         .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, base, identity.avatar, identity.bio),
       // Nerf and Buff seed at DIFFERENT numbers (houseSeedRatingForMode), so a bot
@@ -999,7 +1112,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
         return db
           .prepare(
             `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
-             VALUES (?, ?, ?, 150, 0.06, ?)`,
+             VALUES (?, ?, ?, ${HOUSE_SEED_RD}, ${HOUSE_SEED_VOL}, ?)`,
           )
           .bind(persona.userId, mode, r, r);
       }),
@@ -1055,13 +1168,18 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
     return [
       // With a bio (staff override or the baked blurb), write it; otherwise clear
       // any leftover location-as-bio (older seed) and leave a real bio alone.
+      // rd = MIN(rd, seed) settles any bot still carrying a wide seeded/legacy
+      // deviation (older deployments seeded RD 150 — provisional!) without
+      // undoing a LOWER rd a bot earned by actually playing.
       identity.bio !== null
         ? db
-            .prepare(`UPDATE users SET rating = ?, avatar = ?, bio = ? WHERE id = ?`)
+            .prepare(
+              `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = ? WHERE id = ?`,
+            )
             .bind(base, identity.avatar, identity.bio, persona.userId)
         : db
             .prepare(
-              `UPDATE users SET rating = ?, avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
+              `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
             )
             .bind(base, identity.avatar, persona.location, persona.userId),
       // Re-point each mode bucket at its own per-mode number (peak only ratchets up).
@@ -1069,12 +1187,74 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
         const r = houseSeedRatingForMode(persona, mode);
         return db
           .prepare(
-            `UPDATE user_ratings SET rating = ?, peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
+            `UPDATE user_ratings SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
           )
           .bind(r, r, persona.userId, mode);
       }),
     ];
   });
+  await batchInChunks(db, statements);
+}
+
+// ---------------------------------------------------------------------------
+// The "OG NERFCHESS USERS" club — a big veteran club whose membership is a
+// large share of the house roster, so the clubs directory has one obviously
+// large, established club. Seeded idempotently (INSERT OR IGNORE) into the same
+// clubs/club_members tables a real club uses (migrations/0005), so it renders,
+// counts members, and shows a leaderboard exactly like a user-made club. Gated
+// behind a versioned cold-start key in worker.ts so it runs once, after
+// ensureHouseUsers has guaranteed every persona's users row exists (the FKs on
+// clubs.owner_user_id and club_members.user_id require it).
+// ---------------------------------------------------------------------------
+
+export const OG_CLUB_ID = "club_og_nerfchess";
+export const OG_CLUB_SLUG = "og-nerfchess-users";
+export const OG_CLUB_NAME = "OG NERFCHESS USERS";
+const OG_CLUB_DESCRIPTION =
+  "The veterans who were here from the start. Grizzled blitzers, endgame grinders, and gambit diehards who have seen every nerf come and go.";
+// Curated club icon (see lib/clubIcons.ts): a gold crown for the founding crew.
+const OG_CLUB_ICON = "Crown|gold";
+
+/** The house personas that belong to the OG club: a deterministic ~65% slice of
+ * the roster (plus the owner), so it reads as a large, long-established club.
+ * Stable across deploys (name-hashed), and always includes the owner. */
+export function ogClubMembers(): { owner: HousePersona; members: HousePersona[] } {
+  // Owner: the highest advertised-rating persona (ties broken by name) — a
+  // fitting "founder" for the veterans' club, and always present in the roster.
+  const owner = [...HOUSE_ROSTER].sort(
+    (a, b) => houseSeedRating(b) - houseSeedRating(a) || (a.name < b.name ? -1 : 1),
+  )[0];
+  const members = HOUSE_ROSTER.filter(
+    (p) => p.userId === owner.userId || nameHash(p.name + "|ogclub") % 100 < 65,
+  );
+  return { owner, members };
+}
+
+/** Create the OG club and enroll its (large) house-bot membership. Idempotent:
+ * INSERT OR IGNORE throughout, so re-running never duplicates rows or disturbs
+ * a membership a user later joined. Skips membership seeding if the fixed slug
+ * is already held by a different (user-made) club, so it never hijacks one. */
+export async function ensureOgClub(db: D1Database): Promise<void> {
+  const now = Date.now();
+  const { owner, members } = ogClubMembers();
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now)
+    .run();
+  // Confirm our row actually exists (a pre-existing club could hold the slug);
+  // only seed membership against our own club id.
+  const row = await db.prepare("SELECT id FROM clubs WHERE id = ?").bind(OG_CLUB_ID).first<{ id: string }>();
+  if (!row) return;
+  const statements = members.map((p) =>
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+      )
+      .bind(OG_CLUB_ID, p.userId, p.userId === owner.userId ? "owner" : "member", now),
+  );
   await batchInChunks(db, statements);
 }
 
@@ -1093,20 +1273,79 @@ const HOUSE_POOL_WEIGHTS: Array<[pool: string, weight: number]> = [
   ["5+3", 2],
 ];
 
+// Filler (bot-vs-bot) games pace their moves several times slower than a
+// human-facing bot (worker.ts houseFillerThinkMultiplier) to keep 40+ of them
+// affordable on the single-threaded DO, so the ultra-short pools (1+0, 2+1)
+// would flag after a handful of moves and read as broken on TV. Filler games
+// draw from the longer blitz pools instead.
+const HOUSE_FILLER_POOL_WEIGHTS: Array<[pool: string, weight: number]> = [
+  ["3+0", 1],
+  ["3+2", 2],
+  ["5+0", 3],
+  ["5+3", 3],
+];
+
+function weightedPoolRoll(
+  weights: Array<[pool: string, weight: number]>,
+  random: (max: number) => number,
+): string {
+  const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll = random(total);
+  for (const [name, weight] of weights) {
+    roll -= weight;
+    if (roll < 0) return name;
+  }
+  return "3+2";
+}
+
 /** Pool + mode for a new house seek: weighted blitz pools, an even 50/50
  * split of Buff and Nerf so neither queue is starved. */
 export function pickHouseSeek(random: (max: number) => number): { pool: string; mode: DraftMode } {
-  const total = HOUSE_POOL_WEIGHTS.reduce((sum, [, weight]) => sum + weight, 0);
-  let roll = random(total);
-  let pool = "3+2";
-  for (const [name, weight] of HOUSE_POOL_WEIGHTS) {
-    roll -= weight;
-    if (roll < 0) {
-      pool = name;
-      break;
-    }
-  }
-  return { pool, mode: random(2) === 0 ? "buff" : "nerf" };
+  return {
+    pool: weightedPoolRoll(HOUSE_POOL_WEIGHTS, random),
+    mode: random(2) === 0 ? "buff" : "nerf",
+  };
+}
+
+/** Pool + mode for a bot-vs-bot filler game: the longer blitz pools only (the
+ * slower filler move pacing would flag out a 1+0 game almost immediately). */
+export function pickHouseFillerSeek(random: (max: number) => number): { pool: string; mode: DraftMode } {
+  return {
+    pool: weightedPoolRoll(HOUSE_FILLER_POOL_WEIGHTS, random),
+    mode: random(2) === 0 ? "buff" : "nerf",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Filler concurrency targets (owner spec): the Watch tab / TV should always
+// show a busy site, so the steady state is 40-55 SIMULTANEOUS bot-vs-bot games
+// (80-110 seated bots), never dipping below the floor while the house is
+// enabled. Shared between worker.ts (the spawner) and the sim so the sim
+// asserts the exact production numbers.
+// ---------------------------------------------------------------------------
+
+/** Minimum concurrent bot-vs-bot games at steady state. */
+export const HOUSE_VS_HOUSE_FLOOR = 40;
+/** Hard cap on concurrent bot-vs-bot games (natural variance runs 40-55). */
+export const HOUSE_VS_HOUSE_CAP = 55;
+/** Spawn-ahead hysteresis: the spawner keeps ramping quickly until this many
+ * games ABOVE the floor are live, so a normal trickle of games ending never
+ * drops the count below the floor before the next spawn lands. */
+export const HOUSE_FILLER_SPAWN_BUFFER = 4;
+
+/** Delay until the NEXT filler spawn given how many bot-vs-bot games are live
+ * after this one. Below floor+buffer: a brisk 1.5-3s stagger, so a cold start
+ * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick,
+ * never a 40-game burst) and a dip recovers within seconds. At/above: a lazy
+ * 8-15s spacing that roughly matches the rate games end at, so the population
+ * hovers in the 40-55 band instead of pinning the cap. */
+export function houseFillerSpawnDelayMs(
+  liveFillerGames: number,
+  random: (max: number) => number,
+): number {
+  return liveFillerGames < HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER
+    ? 1500 + random(1501)
+    : 8000 + random(7001);
 }
 
 // ---------------------------------------------------------------------------
@@ -1140,6 +1379,24 @@ export function houseThinkMs(random: (max: number) => number, myClockMs: number,
  * lock-in window (the server's deadline auto-resolve is the backstop). */
 export function houseDraftThinkMs(random: (max: number) => number): number {
   return 2000 + random(6001);
+}
+
+// House social responses — accepting a friend request or a direct challenge —
+// land after a short, humanlike beat rather than instantly: a bot that friended
+// or accepted you the millisecond you asked would read as a machine. ~8-20s
+// (centered near ~14s), jittered so a burst of requests never resolves in
+// lockstep.
+export const HOUSE_SOCIAL_MIN_DELAY_MS = 8_000;
+export const HOUSE_SOCIAL_MAX_DELAY_MS = 20_000;
+
+/** The accept delay for one bot social action, ~8-20s, derived DETERMINISTICALLY
+ * from a stable per-request seed (e.g. the request's ids + created_at). The
+ * server polls pending requests rather than holding a timer, so the delay must
+ * be the same on every tick — a fresh random each poll would keep moving the
+ * finish line. Compare `now - requestedAt >= houseSocialDelayMs(seed)`. */
+export function houseSocialDelayMs(seed: string): number {
+  const span = HOUSE_SOCIAL_MAX_DELAY_MS - HOUSE_SOCIAL_MIN_DELAY_MS + 1;
+  return HOUSE_SOCIAL_MIN_DELAY_MS + (nameHash(seed) % span);
 }
 
 // ---------------------------------------------------------------------------
