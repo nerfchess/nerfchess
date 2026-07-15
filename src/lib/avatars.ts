@@ -80,7 +80,10 @@ export function isCustomAvatar(value: unknown): value is string {
 // player can never claim one. The /mod/house editor's picker is the one place
 // they're selectable (see HOUSE_AVATAR_IDS in lib/server/bots.ts).
 export const HOUSE_PFP_PREFIX = "house_pfp:";
-export const HOUSE_PFP_NAMES = [
+// The hand-authored scenic/object catalog (each has a matching
+// /public/house-pfp/<name>.svg). Kept curated + thematic (teatimechess ->
+// tea_set, night0wl -> city_night, ...); assigned first in bots.ts.
+const CURATED_PFP_NAMES = [
   "mountain_lake",
   "beach_sunset",
   "city_night",
@@ -144,6 +147,26 @@ export const HOUSE_PFP_NAMES = [
   "desert_cactus",
   "moonlit_bay",
 ] as const;
+
+// Deterministically generated scenic pfps (scripts/gen-house-pfps.mjs). With
+// ~210 personas the ~60 hand-authored scenes couldn't give every bot a UNIQUE
+// pfp, so a generator emits a large pool of distinct dawn/dusk landscapes
+// (palette x scene x celestial x accents) in the same art style. Each name maps
+// to /public/house-pfp/gen_NNN.svg. KEEP GENERATED_PFP_COUNT + generatedPfpName
+// in lockstep with the generator script (same count + naming); the audit script
+// asserts every roster pfp resolves to an on-disk file.
+export const GENERATED_PFP_COUNT = 200;
+export function generatedPfpName(i: number): string {
+  return `gen_${String(i).padStart(3, "0")}`;
+}
+const GENERATED_PFP_NAMES: string[] = Array.from({ length: GENERATED_PFP_COUNT }, (_, i) =>
+  generatedPfpName(i),
+);
+
+// The full house-pfp catalog: curated scenes first, then the generated pool.
+// Large enough (260) that every persona in the ~210-deep roster gets a unique
+// pfp with room to spare (see assignHousePfps in lib/server/bots.ts).
+export const HOUSE_PFP_NAMES: readonly string[] = [...CURATED_PFP_NAMES, ...GENERATED_PFP_NAMES];
 
 const HOUSE_PFP_SET = new Set<string>(HOUSE_PFP_NAMES);
 

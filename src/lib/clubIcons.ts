@@ -5,6 +5,8 @@
 // everywhere and nothing unpleasant can be smuggled into a club's identity.
 // Legacy emoji values no longer parse; they fall back to the monogram.
 
+import { isUploadedImage, validateImageDataUrl } from "@/lib/imageValidate";
+
 export const CLUB_ICON_NAMES: readonly string[] = [
   "Swords", "Crown", "Castle", "Shield", "Rocket", "Flame",
   "Anchor", "Star", "Zap", "Trophy", "Gem", "Skull",
@@ -50,8 +52,19 @@ export function parseClubIcon(
   return { name, color };
 }
 
-/** Server-side validation: "" clears the icon, anything else must be a
- *  curated "iconName|colorId" pair. */
+/** Server-side validation: "" clears the icon, a "iconName|colorId" pair
+ *  chooses a curated emblem, and a data-URL image is a custom uploaded icon
+ *  (fully re-validated — MIME, byte-size, and pixel dimensions — server-side by
+ *  imageValidate, so a client can never smuggle an oversized or non-image
+ *  value through). */
 export function isValidClubIcon(value: unknown): value is string {
-  return typeof value === "string" && (value === "" || parseClubIcon(value) !== null);
+  if (typeof value !== "string") return false;
+  if (value === "" || parseClubIcon(value) !== null) return true;
+  return validateImageDataUrl(value).ok;
+}
+
+/** True when the stored icon is an uploaded image (rendered as <img>) rather
+ *  than a curated emblem or the empty monogram fallback. */
+export function isUploadedClubIcon(value: string | null | undefined): value is string {
+  return isUploadedImage(value);
 }

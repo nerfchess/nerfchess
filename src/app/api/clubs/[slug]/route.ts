@@ -140,8 +140,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ slug: s
     return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
   }
   if (body.icon === undefined) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
+  // "" clears · "name|colorId" is a curated emblem · a data-URL image is a
+  // custom upload (re-validated server-side: MIME, byte-size, and pixel
+  // dimensions — client checks are never trusted).
   if (!isValidClubIcon(body.icon)) {
-    return NextResponse.json({ error: "Pick an icon and color from the set." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Pick an emblem from the set, or upload a PNG/JPEG/WebP image (max 1 MB, 1024px)." },
+      { status: 400 },
+    );
   }
 
   await db.prepare("UPDATE clubs SET icon = ? WHERE id = ?").bind(body.icon, club.id).run();

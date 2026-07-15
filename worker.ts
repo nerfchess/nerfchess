@@ -36,6 +36,7 @@ import {
   ensureHouseUsers,
   countSeededHouseUsers,
   HOUSE_ROSTER_SIZE,
+  ensureOgClub,
   houseDraftThinkMs,
   houseNerfPickIndex,
   housePersona,
@@ -484,6 +485,12 @@ const houseSeededKey = "hp:seeded:v5";
 // (>110) and let a bot's first games swing its seeded number wildly. Bump so
 // the settle reaches every existing account on the next cold start.
 const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
+// One-time seed of the "OG NERFCHESS USERS" club (a big veteran club whose
+// membership is ~65% of the house roster). Runs once after ensureHouseUsers has
+// created every persona's users row (the club FKs need it). Bump the suffix to
+// re-seed after a roster change (INSERT OR IGNORE, so a bump only adds any new
+// members, never disturbing rows a real user joined). See ensureOgClub.
+const houseOgClubSeededKey = "hp:og-club:v1";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
@@ -3881,6 +3888,11 @@ export class GameServer extends DurableObject<Env> {
         if (!(await this.ctx.storage.get<number>(houseRatingsSyncedKey))) {
           await syncHouseRatings(db);
           await this.ctx.storage.put(houseRatingsSyncedKey, now);
+        }
+        // Seed the OG club once, after the users rows exist (its FKs need them).
+        if (!(await this.ctx.storage.get<number>(houseOgClubSeededKey))) {
+          await ensureOgClub(db);
+          await this.ctx.storage.put(houseOgClubSeededKey, now);
         }
         this.houseSeeded = true;
       } catch (err) {

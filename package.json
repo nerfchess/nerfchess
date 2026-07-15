@@ -12,6 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "gen:icons": "npm run server:build && node scripts/gen-card-icons.mjs",
+    "gen:house-pfps": "node scripts/gen-house-pfps.mjs",
+    "audit:house-bots": "node scripts/gen-house-pfps.mjs --check && npx -y tsx scripts/audit-house-bots.ts",
     "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs && node scripts/check-sig-plugins.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",

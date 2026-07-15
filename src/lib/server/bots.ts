@@ -592,18 +592,53 @@ const HOUSE_PFP_ASSIGN: Record<string, string> = {
   crushingpawns: "autumn_leaves",
 };
 
-// The baked avatar a persona debuts with: its curated house pfp when it has
-// one, otherwise a name-hashed house pfp from the full catalog. Owner ask: WAY
-// more of the roster should read like real users with an uploaded photo, so
-// every persona now debuts with an image pfp instead of a flower preset. The
-// pick is deterministic (name-hashed) and spread across the 30-image catalog,
-// so the crowd looks varied and stays stable across deploys. Flower presets
-// remain a valid house look (still offered in the /mod editor and held by any
-// persona an admin switches back to one), just no longer the default.
+// UNIQUE per-persona pfp assignment. Owner ask: no two bots may share a pfp.
+// The catalog (HOUSE_PFP_NAMES: ~60 curated + 200 generated = 260) is larger
+// than the ~210-deep roster, so a distinct pfp exists for every persona. The
+// assignment is deterministic and stable across deploys:
+//   1. Curated thematic picks (HOUSE_PFP_ASSIGN) are claimed first, in roster
+//      order, each taken by at most one persona.
+//   2. Every remaining persona hashes its name into the catalog and linear-
+//      probes to the first still-unclaimed slot.
+// Because the catalog outnumbers the roster, step 2 always finds a free slot,
+// so the result is a true injection (no duplicates). Flower presets remain a
+// valid house look (still in the /mod editor and held by any persona an admin
+// switches back to one), just never the default.
+const HOUSE_PFP_CATALOG_SET = new Set<string>(HOUSE_PFP_NAMES);
+
+function assignHousePfps(names: readonly string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const used = new Set<string>();
+  // 1. Curated thematic picks, claimed once each.
+  for (const name of names) {
+    const pfp = HOUSE_PFP_ASSIGN[name];
+    if (pfp && HOUSE_PFP_CATALOG_SET.has(pfp) && !used.has(pfp)) {
+      out.set(name, HOUSE_PFP_PREFIX + pfp);
+      used.add(pfp);
+    }
+  }
+  // 2. Everyone else: hash into the catalog, probe to the first free slot.
+  const len = HOUSE_PFP_NAMES.length;
+  for (const name of names) {
+    if (out.has(name)) continue;
+    let idx = nameHash(name) % len;
+    while (used.has(HOUSE_PFP_NAMES[idx])) idx = (idx + 1) % len;
+    out.set(name, HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[idx]);
+    used.add(HOUSE_PFP_NAMES[idx]);
+  }
+  return out;
+}
+
+const HOUSE_PFP_ASSIGNMENTS = assignHousePfps(PERSONA_DEFS.map(([name]) => name));
+
+/** A persona's baked, UNIQUE pfp id (see assignHousePfps). */
 function personaAvatar(name: string): string {
-  const pfp = HOUSE_PFP_ASSIGN[name];
-  if (pfp) return HOUSE_PFP_PREFIX + pfp;
-  return HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length];
+  // Falls back to a name-hashed catalog pick for any name not in the roster
+  // (defensive; every roster name is in the map).
+  return (
+    HOUSE_PFP_ASSIGNMENTS.get(name) ??
+    HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length]
+  );
 }
 
 // Short, generic, SFW blurbs — the kind a real player might jot on their profile.
@@ -1090,6 +1125,68 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
       }),
     ];
   });
+  await batchInChunks(db, statements);
+}
+
+// ---------------------------------------------------------------------------
+// The "OG NERFCHESS USERS" club — a big veteran club whose membership is a
+// large share of the house roster, so the clubs directory has one obviously
+// large, established club. Seeded idempotently (INSERT OR IGNORE) into the same
+// clubs/club_members tables a real club uses (migrations/0005), so it renders,
+// counts members, and shows a leaderboard exactly like a user-made club. Gated
+// behind a versioned cold-start key in worker.ts so it runs once, after
+// ensureHouseUsers has guaranteed every persona's users row exists (the FKs on
+// clubs.owner_user_id and club_members.user_id require it).
+// ---------------------------------------------------------------------------
+
+export const OG_CLUB_ID = "club_og_nerfchess";
+export const OG_CLUB_SLUG = "og-nerfchess-users";
+export const OG_CLUB_NAME = "OG NERFCHESS USERS";
+const OG_CLUB_DESCRIPTION =
+  "The veterans who were here from the start. Grizzled blitzers, endgame grinders, and gambit diehards who have seen every nerf come and go.";
+// Curated club icon (see lib/clubIcons.ts): a gold crown for the founding crew.
+const OG_CLUB_ICON = "Crown|gold";
+
+/** The house personas that belong to the OG club: a deterministic ~65% slice of
+ * the roster (plus the owner), so it reads as a large, long-established club.
+ * Stable across deploys (name-hashed), and always includes the owner. */
+export function ogClubMembers(): { owner: HousePersona; members: HousePersona[] } {
+  // Owner: the highest advertised-rating persona (ties broken by name) — a
+  // fitting "founder" for the veterans' club, and always present in the roster.
+  const owner = [...HOUSE_ROSTER].sort(
+    (a, b) => houseSeedRating(b) - houseSeedRating(a) || (a.name < b.name ? -1 : 1),
+  )[0];
+  const members = HOUSE_ROSTER.filter(
+    (p) => p.userId === owner.userId || nameHash(p.name + "|ogclub") % 100 < 65,
+  );
+  return { owner, members };
+}
+
+/** Create the OG club and enroll its (large) house-bot membership. Idempotent:
+ * INSERT OR IGNORE throughout, so re-running never duplicates rows or disturbs
+ * a membership a user later joined. Skips membership seeding if the fixed slug
+ * is already held by a different (user-made) club, so it never hijacks one. */
+export async function ensureOgClub(db: D1Database): Promise<void> {
+  const now = Date.now();
+  const { owner, members } = ogClubMembers();
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now)
+    .run();
+  // Confirm our row actually exists (a pre-existing club could hold the slug);
+  // only seed membership against our own club id.
+  const row = await db.prepare("SELECT id FROM clubs WHERE id = ?").bind(OG_CLUB_ID).first<{ id: string }>();
+  if (!row) return;
+  const statements = members.map((p) =>
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+      )
+      .bind(OG_CLUB_ID, p.userId, p.userId === owner.userId ? "owner" : "member", now),
+  );
   await batchInChunks(db, statements);
 }
 
