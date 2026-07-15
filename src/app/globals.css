@@ -1244,10 +1244,10 @@ html[data-theme="nebula"] .mode-def-card {
    position without blacking out the board. */
 .board-splash {
   background: radial-gradient(62% 48% at 50% 50%, rgba(10, 8, 6, 0.62), transparent 76%);
-  animation: splash-veil 2.3s ease-out both;
+  animation: splash-veil 2s ease-out both;
 }
 .board-splash-card {
-  animation: splash-pop 2.3s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  animation: splash-pop 2s cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 .board-splash-title {
   font-size: clamp(1.5rem, 5.2vw, 2.6rem);
@@ -2356,7 +2356,7 @@ html[data-anim="off"] .extra-turns-banner {
   background:
     radial-gradient(ellipse at 50% 32%, rgb(var(--tier-rgb, 181 70 65) / 0.18), transparent 72%),
     linear-gradient(180deg, rgba(9, 10, 14, 0.55), rgba(9, 10, 14, 0.32) 45%, rgba(9, 10, 14, 0.55));
-  animation: nerf-reveal-wash 2.5s ease-out both;
+  animation: nerf-reveal-wash 2s ease-out both;
 }
 @keyframes nerf-reveal-stamp {
   0% { opacity: 0; transform: scale(1.5) rotate(-1.2deg); }
@@ -2368,7 +2368,7 @@ html[data-anim="off"] .extra-turns-banner {
 }
 .nerf-reveal-stamp {
   border-radius: 1px;
-  animation: nerf-reveal-stamp 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: nerf-reveal-stamp 2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 @keyframes nerf-reveal-cell {
   0% { opacity: 0; }
@@ -2378,10 +2378,24 @@ html[data-anim="off"] .extra-turns-banner {
   78% { opacity: 0.55; }
   100% { opacity: 0; }
 }
-.nerf-reveal-cell { animation: nerf-reveal-cell 2.5s ease-in-out both; }
+.nerf-reveal-cell { animation: nerf-reveal-cell 2s ease-in-out both; }
 html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stamp, html[data-anim="off"] .nerf-reveal-cell {
   animation: none !important;
   opacity: 0 !important;
+}
+
+/* Subtle running-clock pulse (under 30s). Clock urgency is one of the few
+   effects allowed to loop (see design-system.md motion rules). Opacity-only so
+   it never shifts layout, and dropped entirely under reduced motion / anim-off
+   where the oxblood tint and the countdown itself carry the urgency instead. */
+@keyframes clock-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
+}
+.clock-pulse-soft { animation: clock-pulse-soft 1.8s ease-in-out infinite; }
+html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .clock-pulse-soft { animation: none !important; }
 }
 
 /* --- Left-rail luxe (additive) -----------------------------------------------

@@ -77,10 +77,11 @@ export function BoardSplashHost({ rows }: { rows: AgainstRow[] }) {
 }
 
 export function BoardSplash({ event, onDone }: { event: SplashEvent; onDone: () => void }) {
-  // Self-expiring: the pop animation runs ~2.2s; unmount right after so the
-  // next queued event (if any) replays the animation from zero.
+  // Self-expiring: enters, holds ~1.6s, exits, then unmounts (the pop runs
+  // ~2.0s) so the next queued event (if any) replays the animation from zero
+  // and nothing lingers over the board.
   useEffect(() => {
-    const t = window.setTimeout(onDone, 2300);
+    const t = window.setTimeout(onDone, 2000);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event.key]);

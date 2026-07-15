@@ -715,6 +715,16 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           >
             {def.name}
           </span>
+          {/* Placeholder passive marker: a small persistent dot flags an
+              always-on card until the effects task gives passives their real
+              treatment. Hidden once the card is spent/nullified. */}
+          {def.kind === "passive" && !dead && (
+            <span
+              aria-hidden
+              title="Passive: always in effect"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-leaf/70"
+            />
+          )}
           <TurnCostBadge cost={turnCost(def)} short />
           {usable && (
             <span className="smallcaps shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
@@ -830,6 +840,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           >
             {def.name}
           </span>
+          {def.kind === "passive" && !dead && (
+            <span
+              aria-hidden
+              title="Passive: always in effect"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-leaf/70"
+            />
+          )}
           <TurnCostBadge cost={turnCost(def)} short />
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span

@@ -2251,6 +2251,17 @@ export function Board({
       squares: fresh.highlightSquares ?? [],
     });
   }, [nerfReveals, myColor]);
+  // Strict lifecycle: the splash enters, holds, exits, and then UNMOUNTS. It
+  // used to stay mounted forever resting at opacity 0 (the one-shot
+  // convention), which left it hanging over the board and, in reduced-motion,
+  // pinned it visible. Clearing the state once the CSS one-shot has played (its
+  // ~2s budget matches the nerf-reveal keyframes) guarantees it never lingers
+  // over the pieces mid-game. The seen-ref above still stops it re-playing.
+  useEffect(() => {
+    if (!nerfReveal) return;
+    const t = window.setTimeout(() => setNerfReveal(null), 2100);
+    return () => window.clearTimeout(t);
+  }, [nerfReveal]);
   useEffect(() => {
     if (!signatureCard || signatureCard.key <= castSeenKeyRef.current) return;
     castSeenKeyRef.current = signatureCard.key;
@@ -4012,7 +4023,7 @@ export function Board({
 
 
   return (
-    <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
+    <div ref={boardRef} className="relative w-full max-w-full aspect-square mx-auto">
       <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
         {/* Canvas VFX layer: particles, projectiles, beams and cinematics for
             card plays, drawn over the squares but under floating UI. The

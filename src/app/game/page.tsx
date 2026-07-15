@@ -1567,9 +1567,16 @@ function GamePage() {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
+  // The board is square and must fit BOTH the available height (an h-dvh
+  // layout) and the width left over after the side rails, at every breakpoint,
+  // so it never pushes a rail off-screen. Each min() term reserves the rails
+  // present at that breakpoint: none below sm, the right move rail (~288px +
+  // gaps + page padding) at sm, the left command rail (440px) added at lg, and
+  // its wider 500px form at xl. Below sm the board runs nearly edge to edge
+  // (full width minus 8px). Literal strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -1828,7 +1835,7 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
