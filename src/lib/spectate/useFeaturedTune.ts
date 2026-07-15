@@ -41,7 +41,13 @@ import {
   NOT_A_DRAFT,
   withFeaturedDraftState,
 } from "@/lib/spectate/featuredBoard";
-import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/game";
+import {
+  isWatchStartHealthy,
+  nextFailoverCandidate,
+  pruneFailedIds,
+  selectFeaturedTarget,
+  watchStartHealth,
+} from "@/lib/spectate/featuredSelection";
 import { emitTv, type TvSurface, type TvTelemetryFields } from "@/lib/telemetry/tv";
 
 /** The featured tune-in lifecycle a consumer renders from.
@@ -174,11 +180,9 @@ export function useFeaturedTune(
 
   // Selection: an eligible + healthy pinned pick wins; otherwise the first
   // healthy candidate. A failed pinned id falls over like any other (manual
-  // selection is not a special unbounded path).
-  const pinnedEligible =
-    pinnedId != null && candidates.includes(pinnedId) && !failedIds.has(pinnedId);
-  const firstHealthyId = candidates.find((id) => !failedIds.has(id)) ?? null;
-  const target = pinnedEligible ? pinnedId : firstHealthyId;
+  // selection is not a special unbounded path). The rule lives in the pure
+  // selectFeaturedTarget so it can be unit tested without the renderer.
+  const target = selectFeaturedTarget(candidates, failedIds, pinnedId);
 
   // Keep a just-finished game on screen until a replacement is available;
   // otherwise follow the target. Derived during render (no cascading render).
@@ -193,11 +197,7 @@ export function useFeaturedTune(
     // so it cannot cascade. This is the sanctioned "derive from an external list"
     // sync, not a render-driven state loop.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFailedIds((prev) => {
-      if (prev.size === 0) return prev;
-      const next = new Set([...prev].filter((id) => candidates.includes(id)));
-      return next.size === prev.size ? prev : next;
-    });
+    setFailedIds((prev) => pruneFailedIds(prev, candidates));
     // candidateKey captures the membership; candidates is the same set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidateKey]);
@@ -235,13 +235,10 @@ export function useFeaturedTune(
         // A structured "unavailable" or an unsupported snapshot schema is a
         // failed health check, not a board: leave the board state untouched so
         // no false position renders, and let the watch() resolve path fail over.
-        if (
-          e.setup.unavailable ||
-          (e.setup.schemaVersion != null && e.setup.schemaVersion !== PUBLIC_SNAPSHOT_VERSION)
-        ) {
+        if (!isWatchStartHealthy(e.setup)) {
           // An unsupported snapshot schema is a validation failure the watcher
           // must be able to see, distinct from a plain not_found/timeout.
-          if (!e.setup.unavailable && e.setup.schemaVersion != null) {
+          if (watchStartHealth(e.setup) === "incompatible_version") {
             emitTune("tv_snapshot_invalid", streamId, {
               reason: "incompatible_version",
             });
@@ -305,7 +302,7 @@ export function useFeaturedTune(
         // so a failover is traceable end to end.
         emitTune("tv_tune_failed", streamId, { reason, retryCount: n });
         hadFailureRef.current = true;
-        const nextCandidate = candidates.find((id) => id !== streamId && !failedIds.has(id));
+        const nextCandidate = nextFailoverCandidate(candidates, failedIds, streamId);
         emitTune("tv_candidate_skipped", streamId, {
           reason,
           retryCount: n,
@@ -324,11 +321,8 @@ export function useFeaturedTune(
       .watch(streamId)
       .then((setup) => {
         if (cancelled) return;
-        if (
-          setup.unavailable ||
-          (setup.schemaVersion != null && setup.schemaVersion !== PUBLIC_SNAPSHOT_VERSION)
-        ) {
-          failHealthCheck(setup.unavailable ? "unavailable" : "incompatible_version");
+        if (!isWatchStartHealthy(setup)) {
+          failHealthCheck(watchStartHealth(setup));
           return;
         }
         retryCountRef.current = 0;

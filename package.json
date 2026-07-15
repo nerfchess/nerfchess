@@ -21,7 +21,9 @@
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
     "test:glicko": "npx -y tsx scripts/test-glicko.ts",
     "test:spectator-sync": "npx -y tsx scripts/test-spectator-sync.ts",
+    "test:tv-spectator": "npx -y tsx scripts/test-tv-spectator.ts",
     "test:replay-spectate": "npm run server:build && node scripts/test-replay-spectate.cjs",
+    "validate:tv-snapshots": "npm run server:build && node scripts/validate-tv-snapshots.cjs --selftest",
     "test:e2e": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"

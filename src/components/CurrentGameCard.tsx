@@ -116,7 +116,7 @@ export function CurrentGameCard({
   };
 
   return (
-    <div className="mt-6 plate p-4">
+    <div className="mt-6 plate p-4" data-testid="current-game-card">
       <div className="flex items-center justify-between gap-2 pb-2">
         <span className="flex items-center gap-2 smallcaps text-[10px] text-oxblood-glow">
           <span className="h-2 w-2 rounded-full bg-oxblood-glow animate-flicker" />
