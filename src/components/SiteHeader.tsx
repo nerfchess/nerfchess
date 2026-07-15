@@ -372,20 +372,20 @@ export function SiteHeader({ active }: { active?: string }) {
                             name={challenge.from}
                             className="text-sm text-parchment-100 hover:text-gold-leaf"
                           />
-                          <div className="smallcaps text-[9px] text-parchment-400">
+                          <div className="smallcaps text-[10px] text-parchment-400">
                             {challenge.rated ? "Rated" : "Casual"} · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
                           </div>
                         </div>
                         <div className="flex shrink-0 gap-1.5">
                           <button
                             onClick={() => respondChallenge(challenge, "accepted")}
-                            className="btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
+                            className="btn-leaf inline-flex min-h-[44px] items-center px-3 font-display text-xs font-semibold"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => respondChallenge(challenge, "declined")}
-                            className="btn-ghost px-3 py-1.5 font-display text-xs"
+                            className="btn-ghost inline-flex min-h-[44px] items-center px-3 font-display text-xs"
                           >
                             Decline
                           </button>
@@ -407,7 +407,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                   <span className="smallcaps text-[10px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
-                    <button onClick={markAllRead} className="text-[11px] text-parchment-400 hover:text-parchment-100">
+                    <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
                       Mark all read
                     </button>
                   )}
@@ -441,7 +441,7 @@ export function SiteHeader({ active }: { active?: string }) {
                           <div className="text-sm leading-snug text-parchment-100">
                             <NotificationText text={n.text} actorName={n.actorName} />
                           </div>
-                          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">{timeAgo(n.at)}</div>
+                          <div className="mt-0.5 smallcaps text-[10px] text-parchment-400">{timeAgo(n.at)}</div>
                         </div>
                       </li>
                     ))}
@@ -663,7 +663,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+      className="flex min-h-[44px] w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
     >
       <span className="text-parchment-400">{icon}</span>
       {label}

@@ -127,7 +127,9 @@ export function MobileNavMenu({
               and z-index:2 later in the cascade, so plain utilities lose.
               `dropdown` lifts the panel onto the opaque raised surface so the
               page content underneath can never bleed through the menu. */}
-          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 w-60 max-w-[calc(100vw-1.5rem)] plate dropdown border border-white/10 py-1.5 shadow-xl"}>
+          {/* max-h + internal scroll so a short landscape viewport (height <
+              480px) never traps the lower destinations off-screen. */}
+          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown border border-white/10 py-1.5 shadow-xl"}>
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
               onClick={() => setOpen(false)}

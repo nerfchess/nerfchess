@@ -433,12 +433,12 @@ function ModeCard({
           {title}
         </div>
         {recommended && (
-          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] text-gold-leaf">
             Recommended
           </span>
         )}
       </div>
-      <div className={"mt-0.5 smallcaps text-[9px] " + identity.title}>{tagline}</div>
+      <div className={"mt-0.5 smallcaps text-[10px] " + identity.title}>{tagline}</div>
       <p className="mt-1.5 text-[12px] leading-snug text-parchment-300">{body}</p>
     </button>
   );
@@ -463,7 +463,7 @@ function Pill({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "px-4 py-2 rounded-full border font-display transition " +
+        "inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 py-2 font-display transition " +
         (selected
           ? "bg-gold/20 border-gold text-gold-leaf shadow-leaf"
           : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")

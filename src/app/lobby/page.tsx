@@ -504,7 +504,7 @@ function LobbyInner() {
             {!lobby ? (
               <>
                 <SkeletonPlayerRows count={5} />
-                <p className="mt-3 text-sm text-parchment-500">Seeing who&apos;s online…</p>
+                <p className="mt-3 text-sm text-parchment-400">Seeing who&apos;s online…</p>
               </>
             ) : (
               <>
@@ -766,7 +766,7 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
     playing: "In game",
   };
   return (
-    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
+    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[10px] ${styles[status]}`}>
       {labels[status]}
     </span>
   );
@@ -825,14 +825,14 @@ function SeekRow({
           <PlayerNameLink name={seek.name} />
           <RatingChip rating={seek.rating} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
           <TimeControlGlyph timeSec={seek.timeSec} incrementSec={seek.incrementSec} clock={clock} />
           <span>{seek.mode ? "Rated" : "Draft"}</span>
         </div>
       </div>
       {isMine ? (
-        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[9px] text-gold-leaf">
+        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[10px] text-gold-leaf">
           Your seek
         </span>
       ) : (
@@ -862,7 +862,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           <PlayerNameLink name={challenge.host.name} />
           <RatingChip rating={challenge.host.rating} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={challenge.mode} compact />
           {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft</span>}
           {challenge.timeSec > 0 ? (
@@ -903,7 +903,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           <span className="shrink-0 text-parchment-400">vs</span>
           <PlayerNameLink name={game.players.b.name} rating={game.players.b.rating} className="max-w-[45%]" />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={game.mode} compact />
           {!game.mode && game.draft && <span className="text-gold-leaf">Draft</span>}
           {game.timeSec > 0 ? (

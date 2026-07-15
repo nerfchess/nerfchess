@@ -274,7 +274,7 @@ function OwnerFriends() {
                   <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
                     <PlayerAvatar name={f.username} avatar={f.avatar} size={22} />
                     <PlayerLink name={f.username} className="min-w-0 flex-1 text-parchment-300" />
-                    <span className="shrink-0 text-[11px] text-parchment-500">Requested</span>
+                    <span className="shrink-0 text-[11px] text-parchment-400">Requested</span>
                     <button
                       type="button"
                       onClick={() => void act("decline", f.username)}
@@ -556,7 +556,7 @@ function Identity({
             <span className="shrink-0 font-mono text-[11px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
           {tag && (
-            <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[8px] text-verdigris-glow">
+            <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[10px] text-verdigris-glow">
               {tag}
             </span>
           )}

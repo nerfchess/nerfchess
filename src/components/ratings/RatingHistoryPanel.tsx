@@ -161,7 +161,7 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
                 onClick={() => setRangeKey(r.key)}
                 aria-pressed={on}
                 className={
-                  "min-h-[44px] px-2.5 py-1 text-[11px] font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 sm:min-h-0 " +
+                  "min-h-[44px] px-2.5 py-1 text-[12px] font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 sm:min-h-0 " +
                   (on
                     ? "bg-gold/15 text-gold-leaf"
                     : "text-parchment-400 hover:bg-white/[0.04] hover:text-parchment-200")

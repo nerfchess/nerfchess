@@ -288,7 +288,7 @@ export function CurrentGameCard({
             <span>
               {sideToMove === "w" ? "White" : "Black"} to move · move {moveNumber}
               {watchers != null && watchers > 0 ? (
-                <span className="text-parchment-500"> · {watchers} watching</span>
+                <span className="text-parchment-400"> · {watchers} watching</span>
               ) : null}
             </span>
           )}

@@ -448,7 +448,7 @@ function StatStrip() {
                 {s.value}
               </div>
               <span aria-hidden className={`mx-auto mt-2.5 block h-1 w-8 ${s.tick}`} />
-              <div className={`mt-2 smallcaps text-[9px] sm:text-[10px] ${s.labelTone}`}>
+              <div className={`mt-2 smallcaps text-[10px] ${s.labelTone}`}>
                 {s.label}
               </div>
             </div>

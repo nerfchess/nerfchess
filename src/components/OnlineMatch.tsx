@@ -12,6 +12,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
+import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { DraftNotice } from "@/components/DraftNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
 import {
@@ -315,6 +316,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
   const [opponentGone, setOpponentGone] = useState(false);
   const [claimReady, setClaimReady] = useState(false);
+  // When the opponent-gone frame arrived (local receipt). The server sends no
+  // disconnect timestamp on that frame, so the "claim in Ns" countdown below is
+  // measured from this local receipt plus the fixed CLAIM_DELAY_AFTER_GONE_MS,
+  // not from an authoritative server time. It is honest about one thing only:
+  // when this client will surface the claim buttons (and the server re-checks
+  // the abandonment when the claim is actually sent).
+  const [opponentGoneAt, setOpponentGoneAt] = useState<number | null>(null);
+  const [claimInSeconds, setClaimInSeconds] = useState(0);
   // Who is spectating this game right now, pushed by the server's `watchers`
   // frame (seeded on connect, refreshed on every watch/leave). Names are the
   // signed-in watchers only; `n` includes anonymous viewers.
@@ -785,11 +794,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           resyncFromServer(`server rejected our move: ${e.code}`);
         }
       } else if (e.type === "disconnected") {
-        setError("Connection lost, reconnecting…");
+        // The ConnectionBanner (session.onConnectionState) owns the visible
+        // "Connection lost / Reconnecting" notice; keep the action-rail error
+        // free for move/action failures rather than duplicating it here.
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "reconnecting") {
-        setError("Connection lost, reconnecting…");
+        // Handled by the ConnectionBanner; nothing to surface in the rail.
       } else if (e.type === "start") {
         // Reconnected: the server replayed the full game (moves, clocks,
         // chat, and a trailing `end` frame if it finished while we were away).
@@ -838,8 +849,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           setNerfDraft((nd) => (nd ? { ...nd, oppPicked: true } : nd));
         }
       } else if (e.type === "opponent-gone") {
-        setError("Opponent disconnected.");
+        // The dedicated claim panel below surfaces "Opponent disconnected" plus
+        // the countdown, so the rail error is left for real action failures.
         setOpponentGone(true);
+        setOpponentGoneAt(Date.now());
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
       } else if (e.type === "clocks") {
@@ -1713,6 +1726,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     };
   }, [opponentGone, game?.result]);
 
+  // Tick the "You can claim the win in Ns" countdown while the opponent is gone
+  // but the claim window has not opened yet. Derived purely from the local
+  // opponent-gone receipt (see opponentGoneAt) since the server frame carries
+  // no timestamp; it counts down exactly to when claimReady flips.
+  useEffect(() => {
+    if (!opponentGone || claimReady || game?.result) return;
+    const start = opponentGoneAt ?? Date.now();
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((CLAIM_DELAY_AFTER_GONE_MS - (Date.now() - start)) / 1000),
+      );
+      setClaimInSeconds(remaining);
+    };
+    tick();
+    const id = window.setInterval(tick, 500);
+    return () => window.clearInterval(id);
+  }, [opponentGone, claimReady, opponentGoneAt, game?.result]);
+
   const onClaimWin = () => {
     if (!game || game.result) return;
     setError(null);
@@ -1842,6 +1874,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     };
     return (
       <main className="min-h-dvh flex items-center justify-center px-4 py-8">
+        <ConnectionBanner session={session} />
         <div className="w-full max-w-2xl">
           <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
@@ -2242,6 +2275,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </button>
       </div>
     </div>
+  ) : opponentGone && !game?.result ? (
+    <div className="space-y-2" role="status" aria-live="polite">
+      <div className="smallcaps text-[10px] text-parchment-300">
+        Opponent disconnected.{" "}
+        {claimInSeconds > 0
+          ? `You can claim the win in ${claimInSeconds}s.`
+          : "Checking with the server…"}
+      </div>
+      {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
+    </div>
   ) : takebackOfferBy && takebackOfferBy !== myColor ? (
     <div className="space-y-2">
       <div className="smallcaps text-[10px] text-parchment-300">Opponent asks for a takeback.</div>
@@ -2330,6 +2373,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         (recordingLayout ? " recording-mode" : "")
       }
     >
+      <ConnectionBanner session={session} />
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>

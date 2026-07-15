@@ -111,6 +111,11 @@ function ProfileContent() {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [me, setMe] = useState<AccountUser | null>(null);
   const [missing, setMissing] = useState(false);
+  // A network / server failure on the primary profile fetch (distinct from a
+  // 404, which is `missing`): without this a dropped request left the page
+  // stuck on the skeleton forever. Surfaces a visible error + Retry instead.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
   const [reporting, setReporting] = useState(false);
   // Set only when the viewer is the designated house editor (ilovenewjeans) AND
   // this profile is a house bot: carries the bot's persona id and the pickable
@@ -134,6 +139,7 @@ function ProfileContent() {
   if (seenUser !== username) {
     setSeenUser(username);
     setMissing(false);
+    setLoadError(false);
     setProfile(null);
     setStats(null);
     setHouseEdit(null);
@@ -147,13 +153,22 @@ function ProfileContent() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
-      if (cancelled) return;
-      if (!res.ok) {
-        setMissing(true);
+      let data: ProfileData;
+      try {
+        const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+        if (cancelled) return;
+        if (res.status === 404) {
+          setMissing(true);
+          return;
+        }
+        if (!res.ok) throw new Error(String(res.status));
+        data = (await res.json()) as ProfileData;
+      } catch {
+        // Network drop or 5xx: show a retryable error instead of an endless
+        // skeleton. A 404 is handled above as "not found".
+        if (!cancelled) setLoadError(true);
         return;
       }
-      const data = (await res.json()) as ProfileData;
       if (cancelled) return;
       setProfile(data);
       setRel(data.relationship);
@@ -190,7 +205,10 @@ function ProfileContent() {
     return () => {
       cancelled = true;
     };
-  }, [username]);
+    // reloadTick re-runs the primary fetch when the user taps Retry after a
+    // load error.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, reloadTick]);
 
   // Newest finished game (limit 1, no filters) for the recent-game module. Kept
   // separate from the Games tab feed so a finished live game can refetch it.
@@ -236,6 +254,29 @@ function ProfileContent() {
         <Link href="/lobby" className="mt-6 inline-flex btn-leaf px-4 py-2 font-display text-sm font-semibold">
           Back to the lobby
         </Link>
+      </section>
+    );
+  }
+
+  if (loadError && !profile) {
+    return (
+      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+        <div className="plate flex flex-col items-center gap-3 p-8 text-center">
+          <h1 className="font-display text-2xl">Could not load this profile</h1>
+          <p className="text-sm text-parchment-300">
+            Something went wrong reaching the server. Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoadError(false);
+              setReloadTick((t) => t + 1);
+            }}
+            className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
+          >
+            Retry
+          </button>
+        </div>
       </section>
     );
   }
@@ -555,7 +596,7 @@ function ProfileHeader({
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5">
                 <best.c.icon className="h-3 w-3" style={{ color: best.c.accent }} strokeWidth={2.2} aria-hidden />
                 <span className="font-mono text-xs tabular-nums text-parchment-100">{Math.round(best.r.rating)}</span>
-                <span className="smallcaps text-[9px] text-parchment-400">{best.c.label}</span>
+                <span className="smallcaps text-[10px] text-parchment-400">{best.c.label}</span>
               </span>
             )}
           </div>
@@ -885,7 +926,7 @@ function MovementSummary({ points }: { points: HistoryPoint[] }) {
             <c.icon className="h-3.5 w-3.5" style={{ color: c.accent }} strokeWidth={2.2} aria-hidden />
             <span className="smallcaps text-[10px] text-parchment-400">{c.label}</span>
             {delta == null ? (
-              <span className="font-mono text-sm text-parchment-500">no games</span>
+              <span className="font-mono text-sm text-parchment-300">no games</span>
             ) : delta > 0 ? (
               <span className="font-mono text-sm tabular-nums text-gold-leaf">up {delta}</span>
             ) : delta < 0 ? (
@@ -924,6 +965,8 @@ function GamesTab({
   const [hasMore, setHasMore] = useState(false);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [loadingMore, setLoadingMore] = useState(false);
+  // Bumped by Retry so a failed load can be re-attempted without changing filters.
+  const [reloadTick, setReloadTick] = useState(0);
 
   const query = (extra?: Record<string, string>) => {
     const qs = new URLSearchParams();
@@ -957,9 +1000,9 @@ function GamesTab({
     return () => {
       cancelled = true;
     };
-    // query() reads mode/result/rated/username; re-run when any change.
+    // query() reads mode/result/rated/username; re-run when any change (or on Retry).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, mode, result, rated, username]);
+  }, [active, mode, result, rated, username, reloadTick]);
 
   const loadMore = async () => {
     const last = games[games.length - 1];
@@ -1048,8 +1091,18 @@ function GamesTab({
             </div>
           </div>
         ) : phase === "error" ? (
-          <div className="plate p-6 text-center text-sm text-parchment-300">
-            Could not load games. Try again in a moment.
+          <div className="plate flex flex-col items-center gap-3 p-6 text-center">
+            <p className="text-sm text-parchment-300">Could not load games.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setPhase("loading");
+                setReloadTick((t) => t + 1);
+              }}
+              className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
+            >
+              Retry
+            </button>
           </div>
         ) : games.length === 0 ? (
           <div className="plate p-6 text-center text-sm text-parchment-400">
@@ -1171,7 +1224,7 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
         </span>
 
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
-          <span className="smallcaps text-[10px] text-parchment-500">{game.rated ? "Rated" : "Casual"}</span>
+          <span className="smallcaps text-[10px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
           <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
           {/* Rating change as its own bordered chip, with a " · " separator, so
               the delta can never run together with the date. Sign in text. */}
@@ -1191,9 +1244,9 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
             </span>
           )}
           <span aria-hidden className="text-parchment-600">·</span>
-          <span className="text-parchment-500">{game.reason}</span>
+          <span className="text-parchment-400">{game.reason}</span>
           <span aria-hidden className="text-parchment-600">·</span>
-          <span className="text-parchment-500">{relativeTime(game.completed_at)}</span>
+          <span className="text-parchment-400">{relativeTime(game.completed_at)}</span>
         </span>
       </div>
     </div>

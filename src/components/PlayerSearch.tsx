@@ -278,7 +278,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
               )}
               {top && <LaurelBadge rank={top.rank} title={placementTitle(top)} size={12} className="shrink-0" />}
               {isFriend && (
-                <span className="smallcaps shrink-0 rounded-sm border border-gold/40 px-1 py-0.5 text-[9px] leading-none text-gold-leaf">
+                <span className="smallcaps shrink-0 rounded-sm border border-gold/40 px-1 py-0.5 text-[10px] leading-none text-gold-leaf">
                   Friend
                 </span>
               )}
