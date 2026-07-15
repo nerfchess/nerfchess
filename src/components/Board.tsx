@@ -1205,6 +1205,774 @@ function nowMs(): number {
   return Date.now();
 }
 
+interface SquareEnv {
+  board: BoardState;
+  targets: Record<Square, Move[]>;
+  moveRisks: Map<string, MoveRisk> | undefined;
+  castleHintSquares: Set<Square>;
+  bannedSquares: Set<Square>;
+  visual: Visual | undefined;
+  lastMove: Move | null | undefined;
+  highlightLastMove: boolean;
+  highlightSquares: Set<Square>;
+  pickingSquares: boolean;
+  pickSquareSet: Set<Square>;
+  premoveSquares: Set<Square>;
+  orientation: Color;
+  jailSquares: Set<Square>;
+  jailDelays: Map<Square, number>;
+  motifBySquare: Map<Square, MotifMark>;
+  boundMarks: Map<Square, BoundMark>;
+  shieldedSquares: Set<Square>;
+  kingSafeSquares: Set<Square>;
+  doomMarks: Map<Square, number>;
+  effectTurns: Record<number, number | null>;
+  frozenSquares: Set<Square>;
+  frozenSkins: Record<string, string>;
+  fxHiddenPref: boolean;
+  myColor: Color;
+  checkSquares: Square[] | undefined;
+  fxCalmClock: boolean;
+  wardSquares: Set<Square>;
+  barredSquares: Set<Square>;
+  walnutSquares: Set<Square>;
+  bananaSquares: Set<Square>;
+  trapMarks: Map<Square, { kind: string; name: string }>;
+  lockedSquares: Set<Square>;
+  pawnClampSquares: Set<Square>;
+  quietPassiveAuras: Map<Square, { tone: "buff" | "hex"; tier: number; id: string }>;
+  strikeSquares: Set<Square>;
+  stunBySquare: Map<Square, number>;
+  companionSquares: Map<Square, { art: string }>;
+  amazonSquares: Set<Square>;
+  moveAsSquares: Map<Square, PieceType>;
+  showLegalMoves: boolean;
+  showCoordinates: boolean;
+  inspectTargets: Map<Square, boolean>;
+  disabled: boolean | undefined;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onPointerDown: (e: React.PointerEvent, sq: Square) => void;
+  onOpenPopover: (sq: Square) => void;
+  onClosePopover: (sq: Square) => void;
+  onPickSquare: ((sq: Square) => void) | undefined;
+  setEffectPopoverSq: React.Dispatch<React.SetStateAction<Square | null>>;
+}
+
+interface BoardSquareProps {
+  sq: Square;
+  isSelected: boolean;
+  isHover: boolean;
+  isDragging: boolean;
+  isInspect: boolean;
+  isAnimPiece: boolean;
+  motifShown: boolean;
+  hasEffectInfo: boolean;
+  rightClickMark: RightClickMark | undefined;
+  boardFx: BoardFx | undefined;
+  zoneSig: { sig: string; order: number; role: "lead" | "target"; key: number } | undefined;
+  env: SquareEnv;
+}
+
+// Per-square render, memoized so a hover / popover / cast state change in the
+// parent only re-renders the square(s) whose primitive props actually changed
+// instead of rebuilding all 64 cells and their effect overlays. Every input is
+// either a per-square primitive (isSelected, boardFx, ...) or lives on the
+// memoized `env` object (stable across interaction renders, rebuilt only when
+// the underlying game state changes). See the memo-correctness note in Board.
+const BoardSquare = React.memo(function BoardSquare({
+  sq,
+  isSelected,
+  isHover,
+  isDragging,
+  isInspect,
+  isAnimPiece,
+  motifShown,
+  hasEffectInfo,
+  rightClickMark,
+  boardFx,
+  zoneSig,
+  env,
+}: BoardSquareProps) {
+  const {
+    board,
+    targets,
+    moveRisks,
+    castleHintSquares,
+    bannedSquares,
+    visual,
+    lastMove,
+    highlightLastMove,
+    highlightSquares,
+    pickingSquares,
+    pickSquareSet,
+    premoveSquares,
+    orientation,
+    jailSquares,
+    jailDelays,
+    motifBySquare,
+    boundMarks,
+    shieldedSquares,
+    kingSafeSquares,
+    doomMarks,
+    effectTurns,
+    frozenSquares,
+    frozenSkins,
+    fxHiddenPref,
+    myColor,
+    checkSquares,
+    fxCalmClock,
+    wardSquares,
+    barredSquares,
+    walnutSquares,
+    bananaSquares,
+    trapMarks,
+    lockedSquares,
+    pawnClampSquares,
+    quietPassiveAuras,
+    strikeSquares,
+    stunBySquare,
+    companionSquares,
+    amazonSquares,
+    moveAsSquares,
+    showLegalMoves,
+    showCoordinates,
+    inspectTargets,
+    disabled,
+    onContextMenu,
+    onPointerDown,
+    onOpenPopover,
+    onClosePopover,
+    onPickSquare,
+    setEffectPopoverSq,
+  } = env;
+            const f = FILE(sq), r = RANK(sq);
+            const isLight = (f + r) % 2 === 1;
+            const piece = board.pieces[sq];
+            const isCastleHint = castleHintSquares.has(sq);
+            const isTarget = !!targets[sq] && !isCastleHint;
+            const isCapture = isTarget && targets[sq].some((m) => !!m.captured);
+            const targetRisk = isTarget ? riskOf(targets[sq], moveRisks) : null;
+            const banned = bannedSquares.has(sq);
+            const isDuck = visual?.duckSquare === sq;
+            const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
+            const lastFrom = lastMove?.from === sq;
+            const lastTo = lastMove?.to === sq;
+            const isForced = highlightSquares.has(sq);
+            const isPickTarget = pickingSquares && pickSquareSet.has(sq);
+            const isPremoveSquare = premoveSquares.has(sq);
+            // A zone-sourced signature staged for this square (empower / freeze
+            // / walnut / shield / stun / summon...), one-shot per play. It plays
+            // over the piece that stays, unlike a removal detonation.
+            // Chain jail: link into the visually-right / visually-below
+            // neighbour when it is jailed too, so adjacent shackled pieces
+            // read as one interlinked lockdown (each pair drawn once).
+            const jailed = jailSquares.has(sq);
+            let jailLinkRight = false;
+            let jailLinkDown = false;
+            if (jailed) {
+              const visRight = orientation === "w" ? (f < 7 ? sq + 1 : null) : f > 0 ? sq - 1 : null;
+              const visDown = orientation === "w" ? (r > 0 ? sq - 8 : null) : r < 7 ? sq + 8 : null;
+              jailLinkRight = visRight != null && jailSquares.has(visRight);
+              jailLinkDown = visDown != null && jailSquares.has(visDown);
+            }
+            // The pawn-clamp fence sits on the pawn's forward edge: visually
+            // the top edge when the pawn advances up the screen.
+            const fenceEdge: "top" | "bottom" =
+              piece && (piece.color === "w") === (orientation === "w") ? "top" : "bottom";
+
+            // Card-fx motif for this square. Same-concept dedupe: a square
+            // that already carries the full-square treatment of the same
+            // idea keeps it and skips the badge. Chain jail and pawn fence
+            // outrank constraint badges, freeze and walnut silence every
+            // motif (the piece is out of action), and the buckler/heater
+            // shield covers what a ward ring would say.
+            const motifMark = motifBySquare.get(sq);
+            // Duelist-style bound-buff marker for this square (skipped where a
+            // motif badge already stamps the piece, so the two never stack).
+            const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
+            // Whether this square explains anything on hover / focus (drives
+            // the popover triggers below): a bound buff or any zone effect.
+
+            // Corner claims for this square (see CORNER_FALLBACK above).
+            // Fixed priority: countdown chip > freeze flake > bound sigil >
+            // motif badge. The shield disc keeps its fixed bottom-left art, so
+            // its corner is seeded as taken; the walnut root-claws are thin
+            // decorative corner slivers badges may sit over, so they claim
+            // nothing.
+            const shieldShown = !!piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq));
+            const claimedCorners = new Set<BadgeCorner>();
+            if (shieldShown) claimedCorners.add("bl");
+            const claimCorner = (pref: BadgeCorner): BadgeCorner => {
+              for (const c of CORNER_FALLBACK[pref]) {
+                if (!claimedCorners.has(c)) {
+                  claimedCorners.add(c);
+                  return c;
+                }
+              }
+              return pref; // all four taken: overlap is unavoidable, keep preference
+            };
+            const countdownShown = !!piece && (doomMarks.has(sq) || effectTurns[sq] != null);
+            const countdownCorner = countdownShown ? claimCorner("br") : "br";
+            const flakeCorner = frozenSquares.has(sq) ? claimCorner("tr") : "tr";
+            const boundCorner = boundMark ? claimCorner("tl") : "tl";
+            const motifCorner =
+              !fxHiddenPref && motifShown && motifMark && CORNER_MOTIFS.has(motifMark.motif)
+                ? claimCorner("tr")
+                : "tr";
+
+            const fogHide =
+              !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
+
+            const classes = [
+              "relative flex items-center justify-center",
+              isLight ? "sq-light" : "sq-dark",
+              isSelected ? "sq-sel" : "",
+              highlightLastMove && (lastFrom || lastTo) ? "sq-last" : "",
+              checkSquares?.includes(sq) ? "sq-check" : "",
+              isHover && (isTarget || isCastleHint) ? "sq-hover" : "",
+            ].join(" ");
+
+            return (
+              <div
+                key={sq}
+                onContextMenu={onContextMenu}
+                onPointerDown={(e) => onPointerDown(e, sq)}
+                // Additive drag-to-pick path: a card chip dragged from the dock
+                // (marked with the custom dataTransfer type) can be dropped on a
+                // highlighted candidate square. Only pick targets react, and
+                // only to card drags, so normal play and other drags are
+                // unaffected. The click flow (onPointerDown) is
+                // untouched.
+                onDragOver={
+                  isPickTarget
+                    ? (e) => {
+                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }
+                      }
+                    : undefined
+                }
+                onDrop={
+                  isPickTarget
+                    ? (e) => {
+                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
+                          e.preventDefault();
+                          onPickSquare?.(sq);
+                        }
+                      }
+                    : undefined
+                }
+                className={classes}
+                style={{
+                  cursor: pickingSquares
+                    ? isPickTarget
+                      ? "pointer"
+                      : "default"
+                    : piece && piece.color === myColor && !disabled
+                    ? "grab"
+                    : "default",
+                }}
+                role="gridcell"
+                aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
+                // Desktop hover raises the styled effect popover in place of the
+                // old browser title (only when the square explains something and
+                // no drag is in flight). Pointer-leave dismisses it; pointerdown
+                // move handling is untouched.
+                onPointerEnter={hasEffectInfo ? () => onOpenPopover(sq) : undefined}
+                onPointerLeave={hasEffectInfo ? () => onClosePopover(sq) : undefined}
+              >
+                {underwater && (
+                  <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
+                )}
+                {banned && (
+                  <>
+                    <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                    {/* Glowing aura: the nerf is ACTING here, not just tinting.
+                        Decorative, so it stands down when effects are hidden or
+                        the clock is calming FX (the red tint is the functional
+                        read and always stays). */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
+                  </>
+                )}
+                {wardSquares.has(sq) && (
+                  <>
+                    <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
+                    <BarrierStakes tone="ward" />
+                  </>
+                )}
+                {barredSquares.has(sq) && <BarrierStakes tone="hostile" />}
+                {frozenSquares.has(sq) && (
+                  /* Immobilized: the MECHANIC is always the same (the piece
+                     cannot move), but the skin picks the tint + corner marker so
+                     glue, stun, sleep, web... never look like plain ice. */
+                  <>
+                    <div
+                      className={`absolute inset-0 pointer-events-none sq-freeze ${freezeSkinOf(frozenSkins[sq]).tint}`}
+                    />
+                    {frozenSkins[sq] === "beartrap" && (
+                      /* Bear Trap: the whole steel-jaw marker clamps around
+                         the held piece (which renders above it). */
+                      <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                        <div style={{ width: "84%", height: "84%" }}>
+                          <BearTrapMark />
+                        </div>
+                      </div>
+                    )}
+                    <span
+                      className={`absolute ${CORNER_INSET_POS[flakeCorner]} z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake`}
+                    >
+                      <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
+                    </span>
+                  </>
+                )}
+                {walnutSquares.has(sq) && (
+                  /* Hexed into a walnut: the piece is entombed in the kintsugi
+                     shell (WalnutPiece) while carved root-claws clamp in from
+                     the square's corners and hold it fast for the duration. */
+                  <>
+                    <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
+                    <RootClaws />
+                  </>
+                )}
+                {bananaSquares.has(sq) && (
+                  /* A banana peel the viewer tossed here (owner-only trap). The
+                     peel sits on the empty square with a jaunty spin until an
+                     enemy piece slips on it. */
+                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                    <div className="banana-peel" style={{ width: "60%", height: "60%" }}>
+                      <BananaPeel />
+                    </div>
+                  </div>
+                )}
+                {doomMarks.has(sq) && piece && (
+                  /* Doomed piece (Death Arcana style): the countdown to its
+                     death rides the square, skull-tagged. */
+                  <CountdownChip n={doomMarks.get(sq)!} doom corner={countdownCorner} />
+                )}
+                {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
+                  /* Any other timed piece effect (freeze, walnut, shield,
+                     ward...): the remaining turns ride the corner. */
+                  <CountdownChip n={effectTurns[sq]!} corner={countdownCorner} />
+                )}
+                {trapMarks.has(sq) && (
+                  /* Any other placed trap: a realistic animated marker per
+                     kind (SMIL idle loops inside the SVGs; reduced-motion
+                     aware). Same publicity rule as the peel. */
+                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                    <div style={{ width: "68%", height: "68%" }}>
+                      {(() => {
+                        switch (trapMarks.get(sq)!.kind) {
+                          case "mine": return <MineMark />;
+                          case "sinkhole": return <SinkholeMark />;
+                          case "trapdoor": return <TrapdoorMark />;
+                          case "whoopee": return <WhoopeeCushionMark />;
+                          case "landlord": return <LandlordClaimMark />;
+                          case "beartrap": return <BearTrapMark />;
+                          default: return null;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+                {lockedSquares.has(sq) && (
+                  /* Shackled by a king-only or no-pawn-advance hex: a grey
+                     pall (one soft pulse on mount), then either the chain
+                     jail (piece lockdowns) or the pawn fence below. */
+                  <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
+                )}
+                {jailed && (
+                  /* Chain jail: links clamp down across the piece and hook
+                     into adjacent jailed squares, staggered square by square. */
+                  <ChainJail
+                    linkRight={jailLinkRight}
+                    linkDown={jailLinkDown}
+                    delayMs={jailDelays.get(sq) ?? 0}
+                  />
+                )}
+                {pawnClampSquares.has(sq) && piece && (
+                  /* Pawn clamp: a low fence hairline boards up the forward
+                     edge; the path ahead is closed. */
+                  <PawnFence edge={fenceEdge} />
+                )}
+                {!fxHiddenPref && motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
+                  /* Empowered-piece shine: a soft breathing halo under a piece
+                     carrying a self-grant (empower/ward/rally), in the CARD's
+                     own tint and hash-picked shape (EmpowerAura aura identity),
+                     so two different grants never wear the same aura. Rides
+                     the same motifShown gate as the badge, so frozen / walnut
+                     constraints silence it and it never paints where the motif
+                     itself is suppressed. Rendered before the piece div, so
+                     the piece always stays on top. */
+                  <EmpowerShine tier={motifMark.tier} cardId={motifMark.id} />
+                )}
+                {!fxHiddenPref &&
+                  motifShown &&
+                  motifMark &&
+                  !isEmpowerMotif(motifMark.motif) &&
+                  !banned &&
+                  !isForced && (
+                    /* Hostile twin for constraint cards (jail / muzzle / anchor
+                       / blindfold / slow): the same per-card aura identity on
+                       the ember base, so every curse also reads as ITS card.
+                       Skipped where the square already smolders (banned /
+                       forced mounts an id-less NerfAura below) so the glow
+                       never doubles up. */
+                    <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
+                  )}
+                {!fxHiddenPref && !motionOff() && !motifShown && quietPassiveAuras.has(sq) && (
+                  /* Quiet-passive king presence: a color holding a live passive
+                     that declares no motif and no piece scope paints nothing
+                     else while it is held, so its king wears ONE faint standing
+                     aura — the tinted EmpowerShine for a grant, the NerfAura
+                     ember for a hex — in the representative card's own tier + id
+                     (per-card aura identity). Just one per king however many
+                     quiet passives are held, and skipped where the king already
+                     shows a card-fx motif aura (motifShown) so the two never
+                     double up. Mounted before the piece div, so the king always
+                     paints on top. */
+                  (() => {
+                    const aura = quietPassiveAuras.get(sq)!;
+                    return aura.tone === "hex" ? (
+                      <NerfAura cardId={aura.id} tier={aura.tier} />
+                    ) : (
+                      <EmpowerShine tier={aura.tier} cardId={aura.id} />
+                    );
+                  })()
+                )}
+                {!fxHiddenPref && motifShown && motifMark && (
+                  /* Card-fx motif badge, tinted by the card's tier and
+                     stamped with its category glyph, parked in the corner the
+                     allocator assigned. Keyed by motif + card name so
+                     re-renders never replay the entrance; only a genuinely
+                     different card (or motif) remounts it. */
+                  <MotifBadge
+                    key={`motif-${motifMark.motif}-${motifMark.name}`}
+                    motif={motifMark.motif}
+                    tier={motifMark.tier}
+                    category={motifMark.category}
+                    moveAs={motifMark.moveAs}
+                    name={motifMark.name}
+                    cardId={motifMark.id}
+                    cardIcon={motifMark.icon}
+                    corner={motifCorner}
+                  />
+                )}
+                {boundMark && (
+                  /* Duelist-style bound-buff sigil: a small tinted corner glyph
+                     on a piece carrying an active piece-bound buff, visible to
+                     both players. A real focusable button so hover, keyboard
+                     focus, and tap all raise the card popover; its pointerdown
+                     is swallowed (data-effect-keep + stopPropagation) so tapping
+                     the glyph never grabs the piece or triggers a move. Keyed by
+                     name so a genuinely different card replays the entrance. */
+                  <button
+                    key={`bound-${boundMark.name}`}
+                    type="button"
+                    data-effect-keep
+                    aria-label={`${boundMark.name}: ${boundMark.description}`}
+                    className={`absolute ${BOUND_POS[boundCorner]} z-30 h-[26%] w-[26%] rounded-full p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70`}
+                    onPointerEnter={() => onOpenPopover(sq)}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onOpenPopover(sq);
+                    }}
+                    onFocus={() => setEffectPopoverSq(sq)}
+                    onBlur={() => onClosePopover(sq)}
+                  >
+                    <BoundBuffMark tier={boundMark.tier} category={boundMark.category} />
+                  </button>
+                )}
+                {piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
+                  <>
+                    <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
+                    {/* Shield bearer: a heater shield leans against the
+                        king's square-front; other pieces get a buckler. */}
+                    <ShieldMark
+                      variant={piece?.type === "k" || kingSafeSquares.has(sq) ? "heater" : "buckler"}
+                    />
+                  </>
+                )}
+                {strikeSquares.has(sq) && !boardFx?.sig && !zoneSig && (
+                  /* The plain lightning bolt is suppressed on any square already
+                     showing a signature this tick (bombardiro_croc's strike
+                     effect otherwise double-draws under the croc-bomber
+                     signature; the same guard de-dupes lightning_strike). */
+                  <div className="absolute inset-0 pointer-events-none z-10 sq-strike">
+                    <span className="absolute inset-0 flex items-center justify-center drop-shadow">
+                      <BoltGlyph />
+                    </span>
+                  </div>
+                )}
+                {rightClickMark && (
+                  <div className={`absolute inset-0 pointer-events-none sq-rmb-mark sq-rmb-mark-${rightClickMark}`} />
+                )}
+                {isDuck && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <DuckGlyph />
+                  </div>
+                )}
+                {stunBySquare.has(sq) && (
+                  /* One-shot stun: a dazed swirl + Zs rise over the skipped
+                     player's king, then fade. Keyed by the remaining skip
+                     count so every application/consumption replays it. */
+                  <StunSwirl key={`stun-${sq}-${stunBySquare.get(sq)}`} />
+                )}
+                {boardFx?.kind === "morph" && (
+                  <TransformFlourish key={`fx-${boardFx.key}`} crown={boardFx.crown} />
+                )}
+                {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
+                {boardFx?.kind === "detonate" &&
+                  !fxHiddenPref &&
+                  (() => {
+                    const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
+                    // Every branch mounts inside the fx-one-shot guard: art
+                    // that fails to fade itself out (see effects.css) is
+                    // taken off the board by the wrapper instead of sitting
+                    // there until the next play.
+                    if (!sigCfg)
+                      return (
+                        <span
+                          key={`fx-${boardFx.key}`}
+                          className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
+                        >
+                          <DetonationBurst />
+                        </span>
+                      );
+                    const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
+                    const sigRole = fxCalmClock ? "target" : boardFx.sigRole ?? "target";
+                    // A board-wide LEAD flourish is painted in an oversized
+                    // canvas centred on THIS square. When the lead square sits
+                    // off-centre (an edge or corner cast) that canvas clips to a
+                    // fraction, which is the "only 1/4 of the animation shows"
+                    // report. Slide the lead so its canvas re-centres on the
+                    // board: sqToFrac gives the square centre as a 0..1 board
+                    // fraction (orientation-resolved), and 800% is one board
+                    // width (8 cells) of this one-cell wrapper, so the shift
+                    // lands the canvas centre on the board centre wherever it
+                    // was cast. Per-square target pops carry no shift and stay
+                    // on their own squares. Covers bespoke (SignatureOverlay ->
+                    // BoardWideStage) and generated (GenBurst -> GenLead) leads
+                    // alike, so neither renderer needs to know about centring.
+                    const leadShift =
+                      sigRole === "lead"
+                        ? (() => {
+                            const f = sqToFrac(sq, orientation);
+                            return {
+                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
+                            };
+                          })()
+                        : undefined;
+                    // Generated configs carry their own renderer; bespoke ones
+                    // go through the classic SignatureOverlay switch.
+                    // The z-30 on BOTH wrappers below is LOAD-BEARING: the
+                    // fx-one-shot guard animates opacity and the lead shift
+                    // applies a transform, and each of those makes its span a
+                    // STACKING CONTEXT that traps the art's own z-30 inside.
+                    // Without z-indexes of their own the wrappers paint in DOM
+                    // order, so every LATER square's opaque background covers
+                    // the overflowing board-wide scene — the "animation cut
+                    // off by an invisible wall" bug. Lifting the wrappers
+                    // keeps the whole stage above sibling squares.
+                    return (
+                      <span
+                        key={`fx-${boardFx.key}`}
+                        className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
+                        style={{ animationDelay: `${delay}ms` }}
+                      >
+                        <span className="absolute inset-0 z-30 block" style={leadShift}>
+                          {isGenConfig(sigCfg) ? (
+                            <GenBurst config={sigCfg} role={sigRole} delayMs={delay} />
+                          ) : (
+                            <SignatureOverlay visual={sigCfg.visual} role={sigRole} delayMs={delay} />
+                          )}
+                        </span>
+                      </span>
+                    );
+                  })()}
+                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) &&
+                  (() => {
+                    /* Zone-sourced signature (source !== "removal"): the same
+                       SignatureOverlay art, but staged over a piece that STAYS
+                       on the board and sourced from the fx-effect zone the card
+                       names, not the removal diff. Its board-wide lead clips the
+                       same way an off-centre removal lead does, so re-centre it
+                       on the board with the identical shift. */
+                    const zRole = fxCalmClock ? "target" : zoneSig.role;
+                    const zShift =
+                      zRole === "lead"
+                        ? (() => {
+                            const f = sqToFrac(sq, orientation);
+                            return {
+                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
+                            };
+                          })()
+                        : undefined;
+                    // Same load-bearing z-30 as the removal path above: the
+                    // shift transform creates a stacking context, so without
+                    // its own z-index the lead scene is painted over by every
+                    // later square's opaque background.
+                    return (
+                      <span
+                        key={`zsig-${zoneSig.key}`}
+                        className="absolute inset-0 z-30 block"
+                        style={zShift}
+                      >
+                        <SignatureOverlay
+                          visual={sigOf(zoneSig.sig)!.visual}
+                          role={zRole}
+                          delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
+                        />
+                      </span>
+                    );
+                  })()}
+                {isForced && !isDragging && (
+                  <>
+                    <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
+                    {/* The nerf's grip on this piece glows, matching the
+                        banned-square aura. Decorative: hidden when FX are off,
+                        while the gold ring stays as the read. */}
+                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
+                  </>
+                )}
+                {isPickTarget && (
+                  <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
+                )}
+                {fogHide ? (
+                  // A near-opaque tint instead of backdrop-blur: fog-of-war can
+                  // cover ~16 squares at once, and backdrop-filter is the costliest
+                  // paint property — each blurred square re-samples the board behind
+                  // it every frame anything animates. A solid tint hides the square
+                  // just as well and composites for free.
+                  <div className="absolute inset-0 bg-gradient-to-br from-stone-700/95 to-stone-900/98 pointer-events-none" />
+                ) : piece ? (
+                  <div
+                    // The fx key remounts the piece when a morph/summon fires so
+                    // the pop/drop entrance replays even on back-to-back
+                    // transforms of the same square. Detonations (including a
+                    // signature lead painted over a surviving capturer) never
+                    // touch the piece, so they must not remount it.
+                    key={
+                      boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
+                        ? `piece-fx-${boardFx.key}`
+                        : undefined
+                    }
+                    className={
+                      "pointer-events-none " +
+                      (isDragging ? "opacity-30 " : "") +
+                      // The piece itself wears its live effect (owner: "a mark
+                      // should actually change the piece"): frostbitten when
+                      // frozen, gilded when shielded, deathly when doomed.
+                      (frozenSquares.has(sq)
+                        ? "piece-frozen "
+                        : doomMarks.has(sq)
+                        ? "piece-doomed "
+                        : shieldedSquares.has(sq)
+                        ? "piece-shielded "
+                        : "") +
+                      (boardFx?.kind === "morph"
+                        ? "fx-piece-pop"
+                        : boardFx?.kind === "summon"
+                        ? "fx-piece-drop"
+                        : "")
+                    }
+                    data-anim-piece={isAnimPiece ? sq : undefined}
+                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
+                  >
+                    {walnutSquares.has(sq) ? (
+                      <WalnutPiece type={piece.type} color={piece.color} size="100%" />
+                    ) : companionSquares.has(sq) ? (
+                      // Companion piece: bespoke portrait art in place of the
+                      // standard sprite (mechanics stay the underlying piece).
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={companionSquares.get(sq)!.art}
+                        alt=""
+                        draggable={false}
+                        className="h-full w-full select-none object-contain drop-shadow"
+                      />
+                    ) : (
+                      <Piece
+                        type={piece.type}
+                        color={piece.color}
+                        size="100%"
+                        amazon={amazonSquares.has(sq)}
+                        moveAs={moveAsSquares.get(sq)}
+                      />
+                    )}
+                  </div>
+                ) : null}
+
+                {showLegalMoves && isTarget && (
+                  isCapture ? (
+                    <div
+                      className={
+                        "dot-capture pointer-events-none " +
+                        (targetRisk === "check" ? "dot-capture-red" : targetRisk === "nerf" ? "dot-capture-yellow" : "")
+                      }
+                    />
+                  ) : (
+                    <div
+                      className={
+                        "dot-target pointer-events-none " +
+                        (targetRisk === "check" ? "dot-target-red" : targetRisk === "nerf" ? "dot-target-yellow" : "")
+                      }
+                    />
+                  )
+                )}
+                {isCastleHint && (
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-gold/70 rounded-sm" />
+                )}
+                {/* Opponent inspection preview: slate dots on every square the
+                    inspected enemy piece could reach, plus a ring on the piece
+                    itself. Distinct styling so it never reads as YOUR hints. */}
+                {isInspect && (
+                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[rgba(120,160,190,0.65)] rounded-sm" />
+                )}
+                {inspectTargets.has(sq) &&
+                  (inspectTargets.get(sq) ? (
+                    <div className="dot-inspect-capture pointer-events-none" />
+                  ) : (
+                    <div className="dot-inspect-target pointer-events-none" />
+                  ))}
+                {isPremoveSquare && (
+                  <div className="absolute inset-0 pointer-events-none bg-oxblood/45" />
+                )}
+
+                {/* Coordinate labels: when a mark claimed the label's home
+                    corner, the label slides along its edge past the mark's
+                    footprint and gains a subtle ink backing so it stays
+                    legible over whatever art now owns the corner. */}
+                {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
+                  <span
+                    className={
+                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      (claimedCorners.has("tl")
+                        ? "top-0.5 left-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
+                        : "top-0.5 left-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
+                    }
+                  >
+                    {r + 1}
+                  </span>
+                )}
+                {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
+                  <span
+                    className={
+                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      (claimedCorners.has("br")
+                        ? "bottom-0.5 right-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
+                        : "bottom-0.5 right-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
+                    }
+                  >
+                    {"abcdefgh"[f]}
+                  </span>
+                )}
+              </div>
+            );
+});
+
+
 export function Board({
   board,
   legalMoves,
@@ -3100,6 +3868,149 @@ export function Board({
     return () => window.removeEventListener("pointerdown", onDown);
   }, [effectPopoverSq]);
 
+  // Latest-ref wrappers so BoardSquare receives STABLE callback identities
+  // (the underlying handlers are recreated each render but always current at
+  // call time), keeping memoized squares from re-rendering on every parent
+  // render just because a handler closure changed.
+  const sqCbRef = useRef({
+    contextMenu: handleSquareContextMenu,
+    pointerDown: handleSquarePointerDown,
+    openPopover: openEffectPopover,
+    closePopover: closeEffectPopover,
+    pickSquare: onPickSquare,
+  });
+  useEffect(() => {
+    sqCbRef.current = {
+      contextMenu: handleSquareContextMenu,
+      pointerDown: handleSquarePointerDown,
+      openPopover: openEffectPopover,
+      closePopover: closeEffectPopover,
+      pickSquare: onPickSquare,
+    };
+  });
+  const sqContextMenu = useCallback((e: React.MouseEvent) => sqCbRef.current.contextMenu(e), []);
+  const sqPointerDown = useCallback(
+    (e: React.PointerEvent, s: Square) => sqCbRef.current.pointerDown(e, s),
+    [],
+  );
+  const sqOpenPopover = useCallback((s: Square) => sqCbRef.current.openPopover(s), []);
+  const sqClosePopover = useCallback((s: Square) => sqCbRef.current.closePopover(s), []);
+  const sqPickSquare = useCallback((s: Square) => sqCbRef.current.pickSquare?.(s), []);
+
+  // All the per-render-stable inputs BoardSquare needs, bundled into one object
+  // memoized on exactly those inputs. During a pure interaction render (hover,
+  // selection, popover, cast) none of these change, so `squareEnv` keeps its
+  // identity and React.memo skips every unaffected square. It rebuilds only
+  // when the underlying game/visual state changes, which is when squares must
+  // re-render anyway.
+  const squareEnv = useMemo<SquareEnv>(
+    () => ({
+      board,
+      targets,
+      moveRisks,
+      castleHintSquares,
+      bannedSquares,
+      visual,
+      lastMove,
+      highlightLastMove,
+      highlightSquares,
+      pickingSquares,
+      pickSquareSet,
+      premoveSquares,
+      orientation,
+      jailSquares,
+      jailDelays,
+      motifBySquare,
+      boundMarks,
+      shieldedSquares,
+      kingSafeSquares,
+      doomMarks,
+      effectTurns,
+      frozenSquares,
+      frozenSkins,
+      fxHiddenPref,
+      myColor,
+      checkSquares,
+      fxCalmClock,
+      wardSquares,
+      barredSquares,
+      walnutSquares,
+      bananaSquares,
+      trapMarks,
+      lockedSquares,
+      pawnClampSquares,
+      quietPassiveAuras,
+      strikeSquares,
+      stunBySquare,
+      companionSquares,
+      amazonSquares,
+      moveAsSquares,
+      showLegalMoves,
+      showCoordinates,
+      inspectTargets,
+      disabled,
+      onContextMenu: sqContextMenu,
+      onPointerDown: sqPointerDown,
+      onOpenPopover: sqOpenPopover,
+      onClosePopover: sqClosePopover,
+      onPickSquare: sqPickSquare,
+      setEffectPopoverSq,
+    }),
+    [
+      board,
+      targets,
+      moveRisks,
+      castleHintSquares,
+      bannedSquares,
+      visual,
+      lastMove,
+      highlightLastMove,
+      highlightSquares,
+      pickingSquares,
+      pickSquareSet,
+      premoveSquares,
+      orientation,
+      jailSquares,
+      jailDelays,
+      motifBySquare,
+      boundMarks,
+      shieldedSquares,
+      kingSafeSquares,
+      doomMarks,
+      effectTurns,
+      frozenSquares,
+      frozenSkins,
+      fxHiddenPref,
+      myColor,
+      checkSquares,
+      fxCalmClock,
+      wardSquares,
+      barredSquares,
+      walnutSquares,
+      bananaSquares,
+      trapMarks,
+      lockedSquares,
+      pawnClampSquares,
+      quietPassiveAuras,
+      strikeSquares,
+      stunBySquare,
+      companionSquares,
+      amazonSquares,
+      moveAsSquares,
+      showLegalMoves,
+      showCoordinates,
+      inspectTargets,
+      disabled,
+      sqContextMenu,
+      sqPointerDown,
+      sqOpenPopover,
+      sqClosePopover,
+      sqPickSquare,
+      setEffectPopoverSq,
+    ],
+  );
+
+
   return (
     <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
       <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
@@ -3118,642 +4029,41 @@ export function Board({
           {/* Per-square render reads the staged animation refs (fx, zone
               signature, piece anims) — the same deliberate imperative pipeline
               documented above, so react-hooks/refs is suppressed here too. */}
-          {/* eslint-disable-next-line react-hooks/refs */}
+          {/* Per-square render reads the staged animation refs (fx, zone
+              signature, piece anims) in the parent loop below — the same
+              deliberate imperative pipeline documented above, so
+              react-hooks/refs is suppressed for the ref reads. */}
+          {/* eslint-disable react-hooks/refs */}
           {orderedSquares.map((sq) => {
-            const f = FILE(sq), r = RANK(sq);
-            const isLight = (f + r) % 2 === 1;
-            const piece = board.pieces[sq];
             const isSelected = selected === sq;
-            const isCastleHint = castleHintSquares.has(sq);
-            const isTarget = !!targets[sq] && !isCastleHint;
-            const isCapture = isTarget && targets[sq].some((m) => !!m.captured);
-            const targetRisk = isTarget ? riskOf(targets[sq], moveRisks) : null;
-            const banned = bannedSquares.has(sq);
-            const isDuck = visual?.duckSquare === sq;
-            const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
-            const lastFrom = lastMove?.from === sq;
-            const lastTo = lastMove?.to === sq;
             const isHover = hoverSq === sq && drag != null;
             const isDragging = drag?.from === sq;
-            const isForced = highlightSquares.has(sq);
-            const isPickTarget = pickingSquares && pickSquareSet.has(sq);
-            const isPremoveSquare = premoveSquares.has(sq);
+            const isInspect = inspectSq === sq;
             const rightClickMark = rightClickMarks[sq];
             const boardFx = fxRef.current.get(sq);
-            // A zone-sourced signature staged for this square (empower / freeze
-            // / walnut / shield / stun / summon...), one-shot per play. It plays
-            // over the piece that stays, unlike a removal detonation.
             const zoneSig = zoneSigRef.current.get(sq);
-            // Chain jail: link into the visually-right / visually-below
-            // neighbour when it is jailed too, so adjacent shackled pieces
-            // read as one interlinked lockdown (each pair drawn once).
-            const jailed = jailSquares.has(sq);
-            let jailLinkRight = false;
-            let jailLinkDown = false;
-            if (jailed) {
-              const visRight = orientation === "w" ? (f < 7 ? sq + 1 : null) : f > 0 ? sq - 1 : null;
-              const visDown = orientation === "w" ? (r > 0 ? sq - 8 : null) : r < 7 ? sq + 8 : null;
-              jailLinkRight = visRight != null && jailSquares.has(visRight);
-              jailLinkDown = visDown != null && jailSquares.has(visDown);
-            }
-            // The pawn-clamp fence sits on the pawn's forward edge: visually
-            // the top edge when the pawn advances up the screen.
-            const fenceEdge: "top" | "bottom" =
-              piece && (piece.color === "w") === (orientation === "w") ? "top" : "bottom";
-
-            // Card-fx motif for this square. Same-concept dedupe: a square
-            // that already carries the full-square treatment of the same
-            // idea keeps it and skips the badge. Chain jail and pawn fence
-            // outrank constraint badges, freeze and walnut silence every
-            // motif (the piece is out of action), and the buckler/heater
-            // shield covers what a ward ring would say.
-            const motifMark = motifBySquare.get(sq);
+            const isAnimPiece = animsRef.current.has(sq);
             const motifShown = motifShownFor(sq);
-            // Duelist-style bound-buff marker for this square (skipped where a
-            // motif badge already stamps the piece, so the two never stack).
-            const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
-            // Whether this square explains anything on hover / focus (drives
-            // the popover triggers below): a bound buff or any zone effect.
             const hasEffectInfo = !!effectInfoFor(sq);
-
-            // Corner claims for this square (see CORNER_FALLBACK above).
-            // Fixed priority: countdown chip > freeze flake > bound sigil >
-            // motif badge. The shield disc keeps its fixed bottom-left art, so
-            // its corner is seeded as taken; the walnut root-claws are thin
-            // decorative corner slivers badges may sit over, so they claim
-            // nothing.
-            const shieldShown = !!piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq));
-            const claimedCorners = new Set<BadgeCorner>();
-            if (shieldShown) claimedCorners.add("bl");
-            const claimCorner = (pref: BadgeCorner): BadgeCorner => {
-              for (const c of CORNER_FALLBACK[pref]) {
-                if (!claimedCorners.has(c)) {
-                  claimedCorners.add(c);
-                  return c;
-                }
-              }
-              return pref; // all four taken: overlap is unavoidable, keep preference
-            };
-            const countdownShown = !!piece && (doomMarks.has(sq) || effectTurns[sq] != null);
-            const countdownCorner = countdownShown ? claimCorner("br") : "br";
-            const flakeCorner = frozenSquares.has(sq) ? claimCorner("tr") : "tr";
-            const boundCorner = boundMark ? claimCorner("tl") : "tl";
-            const motifCorner =
-              !fxHiddenPref && motifShown && motifMark && CORNER_MOTIFS.has(motifMark.motif)
-                ? claimCorner("tr")
-                : "tr";
-
-            const fogHide =
-              !!visual?.fogged && piece && piece.color !== myColor && !lastTo;
-
-            const classes = [
-              "relative flex items-center justify-center",
-              isLight ? "sq-light" : "sq-dark",
-              isSelected ? "sq-sel" : "",
-              highlightLastMove && (lastFrom || lastTo) ? "sq-last" : "",
-              checkSquares?.includes(sq) ? "sq-check" : "",
-              isHover && (isTarget || isCastleHint) ? "sq-hover" : "",
-            ].join(" ");
-
             return (
-              <div
+              <BoardSquare
                 key={sq}
-                onContextMenu={handleSquareContextMenu}
-                onPointerDown={(e) => handleSquarePointerDown(e, sq)}
-                // Additive drag-to-pick path: a card chip dragged from the dock
-                // (marked with the custom dataTransfer type) can be dropped on a
-                // highlighted candidate square. Only pick targets react, and
-                // only to card drags, so normal play and other drags are
-                // unaffected. The click flow (handleSquarePointerDown) is
-                // untouched.
-                onDragOver={
-                  isPickTarget
-                    ? (e) => {
-                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                        }
-                      }
-                    : undefined
-                }
-                onDrop={
-                  isPickTarget
-                    ? (e) => {
-                        if (e.dataTransfer.types.includes("application/x-nerf-card")) {
-                          e.preventDefault();
-                          onPickSquare?.(sq);
-                        }
-                      }
-                    : undefined
-                }
-                className={classes}
-                style={{
-                  cursor: pickingSquares
-                    ? isPickTarget
-                      ? "pointer"
-                      : "default"
-                    : piece && piece.color === myColor && !disabled
-                    ? "grab"
-                    : "default",
-                }}
-                role="gridcell"
-                aria-label={`square ${"abcdefgh"[f]}${r + 1}`}
-                // Desktop hover raises the styled effect popover in place of the
-                // old browser title (only when the square explains something and
-                // no drag is in flight). Pointer-leave dismisses it; pointerdown
-                // move handling is untouched.
-                onPointerEnter={hasEffectInfo ? () => openEffectPopover(sq) : undefined}
-                onPointerLeave={hasEffectInfo ? () => closeEffectPopover(sq) : undefined}
-              >
-                {underwater && (
-                  <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
-                )}
-                {banned && (
-                  <>
-                    <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
-                    {/* Glowing aura: the nerf is ACTING here, not just tinting.
-                        Decorative, so it stands down when effects are hidden or
-                        the clock is calming FX (the red tint is the functional
-                        read and always stays). */}
-                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
-                  </>
-                )}
-                {wardSquares.has(sq) && (
-                  <>
-                    <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
-                    <BarrierStakes tone="ward" />
-                  </>
-                )}
-                {barredSquares.has(sq) && <BarrierStakes tone="hostile" />}
-                {frozenSquares.has(sq) && (
-                  /* Immobilized: the MECHANIC is always the same (the piece
-                     cannot move), but the skin picks the tint + corner marker so
-                     glue, stun, sleep, web... never look like plain ice. */
-                  <>
-                    <div
-                      className={`absolute inset-0 pointer-events-none sq-freeze ${freezeSkinOf(frozenSkins[sq]).tint}`}
-                    />
-                    {frozenSkins[sq] === "beartrap" && (
-                      /* Bear Trap: the whole steel-jaw marker clamps around
-                         the held piece (which renders above it). */
-                      <div className="absolute inset-0 grid place-items-center pointer-events-none">
-                        <div style={{ width: "84%", height: "84%" }}>
-                          <BearTrapMark />
-                        </div>
-                      </div>
-                    )}
-                    <span
-                      className={`absolute ${CORNER_INSET_POS[flakeCorner]} z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake`}
-                    >
-                      <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
-                    </span>
-                  </>
-                )}
-                {walnutSquares.has(sq) && (
-                  /* Hexed into a walnut: the piece is entombed in the kintsugi
-                     shell (WalnutPiece) while carved root-claws clamp in from
-                     the square's corners and hold it fast for the duration. */
-                  <>
-                    <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
-                    <RootClaws />
-                  </>
-                )}
-                {bananaSquares.has(sq) && (
-                  /* A banana peel the viewer tossed here (owner-only trap). The
-                     peel sits on the empty square with a jaunty spin until an
-                     enemy piece slips on it. */
-                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
-                    <div className="banana-peel" style={{ width: "60%", height: "60%" }}>
-                      <BananaPeel />
-                    </div>
-                  </div>
-                )}
-                {doomMarks.has(sq) && piece && (
-                  /* Doomed piece (Death Arcana style): the countdown to its
-                     death rides the square, skull-tagged. */
-                  <CountdownChip n={doomMarks.get(sq)!} doom corner={countdownCorner} />
-                )}
-                {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
-                  /* Any other timed piece effect (freeze, walnut, shield,
-                     ward...): the remaining turns ride the corner. */
-                  <CountdownChip n={effectTurns[sq]!} corner={countdownCorner} />
-                )}
-                {trapMarks.has(sq) && (
-                  /* Any other placed trap: a realistic animated marker per
-                     kind (SMIL idle loops inside the SVGs; reduced-motion
-                     aware). Same publicity rule as the peel. */
-                  <div className="absolute inset-0 z-10 grid place-items-center pointer-events-none">
-                    <div style={{ width: "68%", height: "68%" }}>
-                      {(() => {
-                        switch (trapMarks.get(sq)!.kind) {
-                          case "mine": return <MineMark />;
-                          case "sinkhole": return <SinkholeMark />;
-                          case "trapdoor": return <TrapdoorMark />;
-                          case "whoopee": return <WhoopeeCushionMark />;
-                          case "landlord": return <LandlordClaimMark />;
-                          case "beartrap": return <BearTrapMark />;
-                          default: return null;
-                        }
-                      })()}
-                    </div>
-                  </div>
-                )}
-                {lockedSquares.has(sq) && (
-                  /* Shackled by a king-only or no-pawn-advance hex: a grey
-                     pall (one soft pulse on mount), then either the chain
-                     jail (piece lockdowns) or the pawn fence below. */
-                  <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
-                )}
-                {jailed && (
-                  /* Chain jail: links clamp down across the piece and hook
-                     into adjacent jailed squares, staggered square by square. */
-                  <ChainJail
-                    linkRight={jailLinkRight}
-                    linkDown={jailLinkDown}
-                    delayMs={jailDelays.get(sq) ?? 0}
-                  />
-                )}
-                {pawnClampSquares.has(sq) && piece && (
-                  /* Pawn clamp: a low fence hairline boards up the forward
-                     edge; the path ahead is closed. */
-                  <PawnFence edge={fenceEdge} />
-                )}
-                {!fxHiddenPref && motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
-                  /* Empowered-piece shine: a soft breathing halo under a piece
-                     carrying a self-grant (empower/ward/rally), in the CARD's
-                     own tint and hash-picked shape (EmpowerAura aura identity),
-                     so two different grants never wear the same aura. Rides
-                     the same motifShown gate as the badge, so frozen / walnut
-                     constraints silence it and it never paints where the motif
-                     itself is suppressed. Rendered before the piece div, so
-                     the piece always stays on top. */
-                  <EmpowerShine tier={motifMark.tier} cardId={motifMark.id} />
-                )}
-                {!fxHiddenPref &&
-                  motifShown &&
-                  motifMark &&
-                  !isEmpowerMotif(motifMark.motif) &&
-                  !banned &&
-                  !isForced && (
-                    /* Hostile twin for constraint cards (jail / muzzle / anchor
-                       / blindfold / slow): the same per-card aura identity on
-                       the ember base, so every curse also reads as ITS card.
-                       Skipped where the square already smolders (banned /
-                       forced mounts an id-less NerfAura below) so the glow
-                       never doubles up. */
-                    <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
-                  )}
-                {!fxHiddenPref && !motionOff() && !motifShown && quietPassiveAuras.has(sq) && (
-                  /* Quiet-passive king presence: a color holding a live passive
-                     that declares no motif and no piece scope paints nothing
-                     else while it is held, so its king wears ONE faint standing
-                     aura — the tinted EmpowerShine for a grant, the NerfAura
-                     ember for a hex — in the representative card's own tier + id
-                     (per-card aura identity). Just one per king however many
-                     quiet passives are held, and skipped where the king already
-                     shows a card-fx motif aura (motifShown) so the two never
-                     double up. Mounted before the piece div, so the king always
-                     paints on top. */
-                  (() => {
-                    const aura = quietPassiveAuras.get(sq)!;
-                    return aura.tone === "hex" ? (
-                      <NerfAura cardId={aura.id} tier={aura.tier} />
-                    ) : (
-                      <EmpowerShine tier={aura.tier} cardId={aura.id} />
-                    );
-                  })()
-                )}
-                {!fxHiddenPref && motifShown && motifMark && (
-                  /* Card-fx motif badge, tinted by the card's tier and
-                     stamped with its category glyph, parked in the corner the
-                     allocator assigned. Keyed by motif + card name so
-                     re-renders never replay the entrance; only a genuinely
-                     different card (or motif) remounts it. */
-                  <MotifBadge
-                    key={`motif-${motifMark.motif}-${motifMark.name}`}
-                    motif={motifMark.motif}
-                    tier={motifMark.tier}
-                    category={motifMark.category}
-                    moveAs={motifMark.moveAs}
-                    name={motifMark.name}
-                    cardId={motifMark.id}
-                    cardIcon={motifMark.icon}
-                    corner={motifCorner}
-                  />
-                )}
-                {boundMark && (
-                  /* Duelist-style bound-buff sigil: a small tinted corner glyph
-                     on a piece carrying an active piece-bound buff, visible to
-                     both players. A real focusable button so hover, keyboard
-                     focus, and tap all raise the card popover; its pointerdown
-                     is swallowed (data-effect-keep + stopPropagation) so tapping
-                     the glyph never grabs the piece or triggers a move. Keyed by
-                     name so a genuinely different card replays the entrance. */
-                  <button
-                    key={`bound-${boundMark.name}`}
-                    type="button"
-                    data-effect-keep
-                    aria-label={`${boundMark.name}: ${boundMark.description}`}
-                    className={`absolute ${BOUND_POS[boundCorner]} z-30 h-[26%] w-[26%] rounded-full p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/70`}
-                    onPointerEnter={() => openEffectPopover(sq)}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      openEffectPopover(sq);
-                    }}
-                    onFocus={() => setEffectPopoverSq(sq)}
-                    onBlur={() => closeEffectPopover(sq)}
-                  >
-                    <BoundBuffMark tier={boundMark.tier} category={boundMark.category} />
-                  </button>
-                )}
-                {piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
-                  <>
-                    <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
-                    {/* Shield bearer: a heater shield leans against the
-                        king's square-front; other pieces get a buckler. */}
-                    <ShieldMark
-                      variant={piece?.type === "k" || kingSafeSquares.has(sq) ? "heater" : "buckler"}
-                    />
-                  </>
-                )}
-                {strikeSquares.has(sq) && !boardFx?.sig && !zoneSig && (
-                  /* The plain lightning bolt is suppressed on any square already
-                     showing a signature this tick (bombardiro_croc's strike
-                     effect otherwise double-draws under the croc-bomber
-                     signature; the same guard de-dupes lightning_strike). */
-                  <div className="absolute inset-0 pointer-events-none z-10 sq-strike">
-                    <span className="absolute inset-0 flex items-center justify-center drop-shadow">
-                      <BoltGlyph />
-                    </span>
-                  </div>
-                )}
-                {rightClickMark && (
-                  <div className={`absolute inset-0 pointer-events-none sq-rmb-mark sq-rmb-mark-${rightClickMark}`} />
-                )}
-                {isDuck && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <DuckGlyph />
-                  </div>
-                )}
-                {stunBySquare.has(sq) && (
-                  /* One-shot stun: a dazed swirl + Zs rise over the skipped
-                     player's king, then fade. Keyed by the remaining skip
-                     count so every application/consumption replays it. */
-                  <StunSwirl key={`stun-${sq}-${stunBySquare.get(sq)}`} />
-                )}
-                {boardFx?.kind === "morph" && (
-                  <TransformFlourish key={`fx-${boardFx.key}`} crown={boardFx.crown} />
-                )}
-                {boardFx?.kind === "summon" && <SummonPoof key={`fx-${boardFx.key}`} />}
-                {boardFx?.kind === "detonate" &&
-                  !fxHiddenPref &&
-                  (() => {
-                    const sigCfg = boardFx.sig ? resolveSignature(boardFx.sig) : undefined;
-                    // Every branch mounts inside the fx-one-shot guard: art
-                    // that fails to fade itself out (see effects.css) is
-                    // taken off the board by the wrapper instead of sitting
-                    // there until the next play.
-                    if (!sigCfg)
-                      return (
-                        <span
-                          key={`fx-${boardFx.key}`}
-                          className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
-                        >
-                          <DetonationBurst />
-                        </span>
-                      );
-                    const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
-                    const sigRole = fxCalmClock ? "target" : boardFx.sigRole ?? "target";
-                    // A board-wide LEAD flourish is painted in an oversized
-                    // canvas centred on THIS square. When the lead square sits
-                    // off-centre (an edge or corner cast) that canvas clips to a
-                    // fraction, which is the "only 1/4 of the animation shows"
-                    // report. Slide the lead so its canvas re-centres on the
-                    // board: sqToFrac gives the square centre as a 0..1 board
-                    // fraction (orientation-resolved), and 800% is one board
-                    // width (8 cells) of this one-cell wrapper, so the shift
-                    // lands the canvas centre on the board centre wherever it
-                    // was cast. Per-square target pops carry no shift and stay
-                    // on their own squares. Covers bespoke (SignatureOverlay ->
-                    // BoardWideStage) and generated (GenBurst -> GenLead) leads
-                    // alike, so neither renderer needs to know about centring.
-                    const leadShift =
-                      sigRole === "lead"
-                        ? (() => {
-                            const f = sqToFrac(sq, orientation);
-                            return {
-                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
-                            };
-                          })()
-                        : undefined;
-                    // Generated configs carry their own renderer; bespoke ones
-                    // go through the classic SignatureOverlay switch.
-                    // The z-30 on BOTH wrappers below is LOAD-BEARING: the
-                    // fx-one-shot guard animates opacity and the lead shift
-                    // applies a transform, and each of those makes its span a
-                    // STACKING CONTEXT that traps the art's own z-30 inside.
-                    // Without z-indexes of their own the wrappers paint in DOM
-                    // order, so every LATER square's opaque background covers
-                    // the overflowing board-wide scene — the "animation cut
-                    // off by an invisible wall" bug. Lifting the wrappers
-                    // keeps the whole stage above sibling squares.
-                    return (
-                      <span
-                        key={`fx-${boardFx.key}`}
-                        className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
-                        style={{ animationDelay: `${delay}ms` }}
-                      >
-                        <span className="absolute inset-0 z-30 block" style={leadShift}>
-                          {isGenConfig(sigCfg) ? (
-                            <GenBurst config={sigCfg} role={sigRole} delayMs={delay} />
-                          ) : (
-                            <SignatureOverlay visual={sigCfg.visual} role={sigRole} delayMs={delay} />
-                          )}
-                        </span>
-                      </span>
-                    );
-                  })()}
-                {!fxHiddenPref && zoneSig && sigOf(zoneSig.sig) &&
-                  (() => {
-                    /* Zone-sourced signature (source !== "removal"): the same
-                       SignatureOverlay art, but staged over a piece that STAYS
-                       on the board and sourced from the fx-effect zone the card
-                       names, not the removal diff. Its board-wide lead clips the
-                       same way an off-centre removal lead does, so re-centre it
-                       on the board with the identical shift. */
-                    const zRole = fxCalmClock ? "target" : zoneSig.role;
-                    const zShift =
-                      zRole === "lead"
-                        ? (() => {
-                            const f = sqToFrac(sq, orientation);
-                            return {
-                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
-                            };
-                          })()
-                        : undefined;
-                    // Same load-bearing z-30 as the removal path above: the
-                    // shift transform creates a stacking context, so without
-                    // its own z-index the lead scene is painted over by every
-                    // later square's opaque background.
-                    return (
-                      <span
-                        key={`zsig-${zoneSig.key}`}
-                        className="absolute inset-0 z-30 block"
-                        style={zShift}
-                      >
-                        <SignatureOverlay
-                          visual={sigOf(zoneSig.sig)!.visual}
-                          role={zRole}
-                          delayMs={zoneSig.order * sigOf(zoneSig.sig)!.staggerMs}
-                        />
-                      </span>
-                    );
-                  })()}
-                {isForced && !isDragging && (
-                  <>
-                    <div className="absolute inset-0 pointer-events-none rounded-sm ring-2 ring-inset ring-gold-leaf/80 shadow-[inset_0_0_24px_-4px_rgba(230,191,106,0.55)] animate-flicker" />
-                    {/* The nerf's grip on this piece glows, matching the
-                        banned-square aura. Decorative: hidden when FX are off,
-                        while the gold ring stays as the read. */}
-                    {!fxHiddenPref && !fxCalmClock && <NerfAura />}
-                  </>
-                )}
-                {isPickTarget && (
-                  <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
-                )}
-                {fogHide ? (
-                  // A near-opaque tint instead of backdrop-blur: fog-of-war can
-                  // cover ~16 squares at once, and backdrop-filter is the costliest
-                  // paint property — each blurred square re-samples the board behind
-                  // it every frame anything animates. A solid tint hides the square
-                  // just as well and composites for free.
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-700/95 to-stone-900/98 pointer-events-none" />
-                ) : piece ? (
-                  <div
-                    // The fx key remounts the piece when a morph/summon fires so
-                    // the pop/drop entrance replays even on back-to-back
-                    // transforms of the same square. Detonations (including a
-                    // signature lead painted over a surviving capturer) never
-                    // touch the piece, so they must not remount it.
-                    key={
-                      boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
-                        ? `piece-fx-${boardFx.key}`
-                        : undefined
-                    }
-                    className={
-                      "pointer-events-none " +
-                      (isDragging ? "opacity-30 " : "") +
-                      // The piece itself wears its live effect (owner: "a mark
-                      // should actually change the piece"): frostbitten when
-                      // frozen, gilded when shielded, deathly when doomed.
-                      (frozenSquares.has(sq)
-                        ? "piece-frozen "
-                        : doomMarks.has(sq)
-                        ? "piece-doomed "
-                        : shieldedSquares.has(sq)
-                        ? "piece-shielded "
-                        : "") +
-                      (boardFx?.kind === "morph"
-                        ? "fx-piece-pop"
-                        : boardFx?.kind === "summon"
-                        ? "fx-piece-drop"
-                        : "")
-                    }
-                    data-anim-piece={animsRef.current.has(sq) ? sq : undefined}
-                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
-                  >
-                    {walnutSquares.has(sq) ? (
-                      <WalnutPiece type={piece.type} color={piece.color} size="100%" />
-                    ) : companionSquares.has(sq) ? (
-                      // Companion piece: bespoke portrait art in place of the
-                      // standard sprite (mechanics stay the underlying piece).
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={companionSquares.get(sq)!.art}
-                        alt=""
-                        draggable={false}
-                        className="h-full w-full select-none object-contain drop-shadow"
-                      />
-                    ) : (
-                      <Piece
-                        type={piece.type}
-                        color={piece.color}
-                        size="100%"
-                        amazon={amazonSquares.has(sq)}
-                        moveAs={moveAsSquares.get(sq)}
-                      />
-                    )}
-                  </div>
-                ) : null}
-
-                {showLegalMoves && isTarget && (
-                  isCapture ? (
-                    <div
-                      className={
-                        "dot-capture pointer-events-none " +
-                        (targetRisk === "check" ? "dot-capture-red" : targetRisk === "nerf" ? "dot-capture-yellow" : "")
-                      }
-                    />
-                  ) : (
-                    <div
-                      className={
-                        "dot-target pointer-events-none " +
-                        (targetRisk === "check" ? "dot-target-red" : targetRisk === "nerf" ? "dot-target-yellow" : "")
-                      }
-                    />
-                  )
-                )}
-                {isCastleHint && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-gold/70 rounded-sm" />
-                )}
-                {/* Opponent inspection preview: slate dots on every square the
-                    inspected enemy piece could reach, plus a ring on the piece
-                    itself. Distinct styling so it never reads as YOUR hints. */}
-                {inspectSq === sq && (
-                  <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-[rgba(120,160,190,0.65)] rounded-sm" />
-                )}
-                {inspectTargets.has(sq) &&
-                  (inspectTargets.get(sq) ? (
-                    <div className="dot-inspect-capture pointer-events-none" />
-                  ) : (
-                    <div className="dot-inspect-target pointer-events-none" />
-                  ))}
-                {isPremoveSquare && (
-                  <div className="absolute inset-0 pointer-events-none bg-oxblood/45" />
-                )}
-
-                {/* Coordinate labels: when a mark claimed the label's home
-                    corner, the label slides along its edge past the mark's
-                    footprint and gains a subtle ink backing so it stays
-                    legible over whatever art now owns the corner. */}
-                {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
-                  <span
-                    className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
-                      (claimedCorners.has("tl")
-                        ? "top-0.5 left-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
-                        : "top-0.5 left-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
-                    }
-                  >
-                    {r + 1}
-                  </span>
-                )}
-                {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
-                  <span
-                    className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
-                      (claimedCorners.has("br")
-                        ? "bottom-0.5 right-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
-                        : "bottom-0.5 right-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
-                    }
-                  >
-                    {"abcdefgh"[f]}
-                  </span>
-                )}
-              </div>
+                sq={sq}
+                isSelected={isSelected}
+                isHover={isHover}
+                isDragging={isDragging}
+                isInspect={isInspect}
+                isAnimPiece={isAnimPiece}
+                motifShown={motifShown}
+                hasEffectInfo={hasEffectInfo}
+                rightClickMark={rightClickMark}
+                boardFx={boardFx}
+                zoneSig={zoneSig}
+                env={squareEnv}
+              />
             );
           })}
+          {/* eslint-enable react-hooks/refs */}
         </div>
 
         {/* Passive-grant edge aura: while any of the VIEWER's own pieces
