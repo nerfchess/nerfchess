@@ -37,7 +37,6 @@ import { PlayerAvatar } from "../PlayerAvatar";
 import { PlayerLink } from "../PlayerLink";
 import { PresenceBadge } from "../PresenceBadge";
 import { EmptyState } from "../EmptyState";
-import { HouseBotBadge, isHouseBotAvatar } from "./HouseBotBadge";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 
@@ -559,7 +558,6 @@ function Identity({
           {f.rating != null && (
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
-          {isHouseBotAvatar(f.avatar) && <HouseBotBadge />}
           {tag && (
             <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
               {tag}

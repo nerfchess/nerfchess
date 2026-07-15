@@ -80,26 +80,13 @@ function sortLiveGames(games: MPLobbyGame[], sort: TvSort): MPLobbyGame[] {
   return arr;
 }
 
-// The HOUSE BOT badge, per the design system: a parchment outline chip,
-// allcaps (a sanctioned exception). Rendered wherever a seat carries the
-// server-stamped house flag.
-function HouseBotChip() {
-  return (
-    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-[12px] font-medium uppercase tracking-[0.08em] text-parchment-300">
-      House bot
-    </span>
-  );
-}
-
 // The shared player-identity unit (design system 7): avatar + linked name +
-// rating (+ provisional "?") + HOUSE BOT chip when the seat is flagged. Every
-// name on this surface links to the profile.
+// rating (+ provisional "?"). Every name on this surface links to the profile.
 function PlayerIdentity({
   name,
   rating,
   avatar,
   provisional,
-  house,
   size = 28,
   strong = false,
 }: {
@@ -107,7 +94,6 @@ function PlayerIdentity({
   rating: number | null;
   avatar?: string | null;
   provisional?: boolean;
-  house?: boolean;
   size?: number;
   strong?: boolean;
 }) {
@@ -134,7 +120,6 @@ function PlayerIdentity({
           </span>
         )}
       </span>
-      {house && <HouseBotChip />}
     </Link>
   );
 }
@@ -471,7 +456,6 @@ function TvView() {
                           rating={shownPlayers.w.rating}
                           avatar={shownPlayers.w.avatar}
                           provisional={shownPlayers.w.provisional}
-                          house={shownPlayers.w.house}
                           strong
                         />
                         {headerClocks && (
@@ -489,7 +473,6 @@ function TvView() {
                           rating={shownPlayers.b.rating}
                           avatar={shownPlayers.b.avatar}
                           provisional={shownPlayers.b.provisional}
-                          house={shownPlayers.b.house}
                           strong
                         />
                         {headerClocks && (
@@ -675,7 +658,6 @@ function TvView() {
                               rating={g.players.w.rating}
                               avatar={g.players.w.avatar}
                               provisional={g.players.w.provisional}
-                              house={g.players.w.house}
                               size={22}
                             />
                             <span className="shrink-0 text-[12px] text-parchment-500">vs</span>
@@ -684,7 +666,6 @@ function TvView() {
                               rating={g.players.b.rating}
                               avatar={g.players.b.avatar}
                               provisional={g.players.b.provisional}
-                              house={g.players.b.house}
                               size={22}
                             />
                           </div>
@@ -727,7 +708,6 @@ function TvView() {
                   rating={shownPlayers.w.rating}
                   avatar={shownPlayers.w.avatar}
                   provisional={shownPlayers.w.provisional}
-                  house={shownPlayers.w.house}
                   strong
                 />
                 {headerClocks && <ClockPill ms={headerClocks.w} active={clockTurn === "w"} compact />}
@@ -737,7 +717,6 @@ function TvView() {
                   rating={shownPlayers.b.rating}
                   avatar={shownPlayers.b.avatar}
                   provisional={shownPlayers.b.provisional}
-                  house={shownPlayers.b.house}
                   strong
                 />
                 {headerClocks && <ClockPill ms={headerClocks.b} active={clockTurn === "b"} compact />}

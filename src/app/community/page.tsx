@@ -328,7 +328,6 @@ export default function CommunityPage() {
                           >
                             <PlayerAvatar name={friend.username} avatar={friend.avatar} size={26} />
                             <span className="truncate font-medium">{friend.username}</span>
-                            {isBot(friend.username) && <HouseBotChip />}
                             {friend.rating != null && (
                               <span className="font-mono text-xs tabular-nums text-parchment-400">{friend.rating}</span>
                             )}
@@ -365,7 +364,6 @@ export default function CommunityPage() {
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5 truncate font-medium text-parchment-100 group-hover:text-gold-leaf">
                             {opp.username}
-                            {isBot(opp.username) && <HouseBotChip />}
                           </span>
                           <span className="mt-0.5 block text-xs text-parchment-400">Last played {timeAgo(opp.at)}</span>
                         </span>
@@ -432,7 +430,6 @@ export default function CommunityPage() {
                         <span className="w-4 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{i + 1}</span>
                         <PlayerAvatar name={player.username} avatar={player.avatar} size={22} />
                         <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">{player.username}</span>
-                        {player.bot && <HouseBotChip />}
                         <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-200">
                           {Math.round(player.rating)}
                           {isProvisionalRd(player.rd) && <span className="text-parchment-400">?</span>}
@@ -505,7 +502,6 @@ export default function CommunityPage() {
                         <span className="w-4 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{i + 1}</span>
                         <PlayerAvatar name={player.username} avatar={player.avatar} size={22} />
                         <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">{player.username}</span>
-                        {isBot(player.username) && <HouseBotChip />}
                         <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
                           {player.games} {player.games === 1 ? "game" : "games"}
                         </span>
@@ -690,19 +686,11 @@ function PlayerNameInline({ name, isBot }: { name: string; isBot: (name: string)
       <Link href={`/u/${encodeURIComponent(name)}`} className="truncate hover:text-gold-leaf">
         {name}
       </Link>
-      {isBot(name) && <HouseBotChip />}
     </span>
   );
 }
 
 // House engine accounts wear the outline chip everywhere their name renders.
-function HouseBotChip() {
-  return (
-    <span className="shrink-0 whitespace-nowrap border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-parchment-400">
-      House bot
-    </span>
-  );
-}
 
 function PresenceDot({ status }: { status?: "online" | "searching" | "playing" }) {
   const cls =
