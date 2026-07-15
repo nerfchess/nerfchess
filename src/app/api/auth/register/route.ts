@@ -11,6 +11,7 @@ import {
   validPassword,
   validUsername,
 } from "@/lib/server/auth";
+import { RD_START, VOL_START } from "@/lib/glicko";
 import { containsProfanity } from "@/lib/profanity";
 import { verifyTurnstile } from "@/lib/server/turnstile";
 
@@ -99,9 +100,13 @@ export async function POST(request: Request) {
   try {
     await db
       .prepare(
-        "INSERT INTO users (id, username, username_lower, password_hash, email, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        // rd/vol written explicitly (not via column DEFAULT): databases created
+        // before the lichess-parity Glicko params still carry the old 350/0.06
+        // defaults, and a new account must start wide (RD_START) so its first
+        // games can swing hundreds of points. See src/lib/glicko.ts.
+        "INSERT INTO users (id, username, username_lower, password_hash, email, created_at, rd, vol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       )
-      .bind(id, username, username.toLowerCase(), await hashPassword(password), email, Date.now())
+      .bind(id, username, username.toLowerCase(), await hashPassword(password), email, Date.now(), RD_START, VOL_START)
       .run();
   } catch {
     return conflict();

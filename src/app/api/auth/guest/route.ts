@@ -9,6 +9,7 @@ import {
   sessionTokenFromCookieHeader,
   userForSession,
 } from "@/lib/server/auth";
+import { RD_START, VOL_START } from "@/lib/glicko";
 import { randomGuestName, randomGuestNameNumbered } from "@/lib/guestNames";
 
 export const dynamic = "force-dynamic";
@@ -60,9 +61,11 @@ export async function POST(request: Request) {
   const unknowable = crypto.randomUUID() + crypto.randomUUID();
   await db
     .prepare(
-      "INSERT INTO users (id, username, username_lower, password_hash, created_at, is_guest) VALUES (?, ?, ?, ?, ?, 1)",
+      // rd/vol written explicitly: pre-existing databases carry the old
+      // 350/0.06 column defaults; new accounts must start wide (RD_START).
+      "INSERT INTO users (id, username, username_lower, password_hash, created_at, is_guest, rd, vol) VALUES (?, ?, ?, ?, ?, 1, ?, ?)",
     )
-    .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), Date.now())
+    .bind(id, username, username.toLowerCase(), await hashPassword(unknowable), Date.now(), RD_START, VOL_START)
     .run();
 
   const token = await createSession(db, id);

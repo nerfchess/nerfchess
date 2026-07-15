@@ -477,7 +477,13 @@ const houseSeededKey = "hp:seeded:v5";
 // rewrites every existing account's users.rating, both per-mode buckets, and its
 // bio on the next cold start (ensureHouseUsers only INSERTs, so without this the
 // re-spread never reaches accounts that already exist).
-const houseRatingsSyncedKey = "hp:ratings-synced:rating-v5";
+// rating-v6: lichess-parity Glicko-2 (new-account RD 500, RD floor 45, no more
+// 150-point delta cap). House accounts must read as SETTLED regulars under the
+// new curve, so syncHouseRatings now clamps every bot's rd to
+// HOUSE_SEED_RD (60) — older deployments seeded RD 150, which is provisional
+// (>110) and let a bot's first games swing its seeded number wildly. Bump so
+// the settle reaches every existing account on the next cold start.
+const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
 const houseNextFillerKey = "hp:nextFillerAt";
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.

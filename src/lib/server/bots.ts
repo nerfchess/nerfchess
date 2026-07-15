@@ -971,6 +971,16 @@ async function batchInChunks(
   }
 }
 
+// House accounts seed as SETTLED ratings: RD 60 (a lichess-like floor for an
+// active regular; the human floor is RD_MIN 45) and volatility 0.06. They are
+// established residents of the ladder, not provisional accounts — a settled RD
+// keeps their seeded numbers (and the roster's spread) stable instead of
+// letting the first few games fling them hundreds of points, and keeps a
+// provisional "?" off every bot profile. Never seed at or above
+// PROVISIONAL_RD (110).
+export const HOUSE_SEED_RD = 60;
+export const HOUSE_SEED_VOL = 0.06;
+
 // Create any missing house accounts, with both per-mode rating buckets seeded
 // at the persona's skill. The password hash is unparseable on purpose
 // (verifyPassword requires a "pbkdf2:" prefix), so nobody can sign in as one.
@@ -989,7 +999,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
       db
         .prepare(
           `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
-           VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ${HOUSE_SEED_RD}, ${HOUSE_SEED_VOL}, ?, ?)`,
         )
         .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, base, identity.avatar, identity.bio),
       // Nerf and Buff seed at DIFFERENT numbers (houseSeedRatingForMode), so a bot
@@ -999,7 +1009,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
         return db
           .prepare(
             `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
-             VALUES (?, ?, ?, 150, 0.06, ?)`,
+             VALUES (?, ?, ?, ${HOUSE_SEED_RD}, ${HOUSE_SEED_VOL}, ?)`,
           )
           .bind(persona.userId, mode, r, r);
       }),
@@ -1055,13 +1065,18 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
     return [
       // With a bio (staff override or the baked blurb), write it; otherwise clear
       // any leftover location-as-bio (older seed) and leave a real bio alone.
+      // rd = MIN(rd, seed) settles any bot still carrying a wide seeded/legacy
+      // deviation (older deployments seeded RD 150 — provisional!) without
+      // undoing a LOWER rd a bot earned by actually playing.
       identity.bio !== null
         ? db
-            .prepare(`UPDATE users SET rating = ?, avatar = ?, bio = ? WHERE id = ?`)
+            .prepare(
+              `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = ? WHERE id = ?`,
+            )
             .bind(base, identity.avatar, identity.bio, persona.userId)
         : db
             .prepare(
-              `UPDATE users SET rating = ?, avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
+              `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
             )
             .bind(base, identity.avatar, persona.location, persona.userId),
       // Re-point each mode bucket at its own per-mode number (peak only ratchets up).
@@ -1069,7 +1084,7 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
         const r = houseSeedRatingForMode(persona, mode);
         return db
           .prepare(
-            `UPDATE user_ratings SET rating = ?, peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
+            `UPDATE user_ratings SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
           )
           .bind(r, r, persona.userId, mode);
       }),

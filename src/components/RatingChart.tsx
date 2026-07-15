@@ -1,17 +1,27 @@
 "use client";
 
-// Rating-over-time line for profile pages, styled after Lichess's rating
-// history graph: a thin accent line over a soft translucent area, a muted
-// horizontal grid, y labels mirrored inside the right edge, dated x-axis ticks
-// along the bottom, a small translucent ink tooltip, and Lichess's hallmark
-// time-range buttons (2W / 1M / 3M / All). Data in stays a flat point list;
-// the range filter is applied client-side, anchored to the most recent point.
+// Rating-over-time chart for profile pages, styled after Lichess's rating
+// history graph: smooth per-mode lines (one colored series per rating bucket,
+// like Lichess's per-perf lines) over a soft translucent area, a muted
+// horizontal grid with rating labels mirrored inside the right edge, dated
+// x-axis ticks, Lichess's hallmark time-range buttons (2W / 1M / 3M / All),
+// and a hover crosshair with a date + per-series rating tooltip. Pure SVG —
+// no chart library — with the site's dark purple/gold plate styling; series
+// colors come from the mode identity accents, not Lichess's palette.
 
 import { useId, useMemo, useRef, useState } from "react";
 
 export interface RatingPoint {
   at: number;
   rating: number;
+}
+
+export interface RatingSeries {
+  id: string;
+  label: string;
+  /** Line/area accent (hex). Distinct per mode: Nerf red, Buff blue. */
+  color: string;
+  points: RatingPoint[];
 }
 
 const W = 600;
@@ -30,13 +40,11 @@ const RANGES: { key: RangeKey; label: string; ms: number }[] = [
   { key: "all", label: "All", ms: Infinity },
 ];
 
-/** Points within `ms` of the most recent point (Lichess anchors ranges to the
- * latest game, so a dormant account still shows a full window). */
-function windowPoints(points: RatingPoint[], ms: number): RatingPoint[] {
-  if (!Number.isFinite(ms) || points.length === 0) return points;
-  const cutoff = points[points.length - 1].at - ms;
-  const win = points.filter((p) => p.at >= cutoff);
-  return win.length >= 2 ? win : points;
+/** Points within `ms` of the newest point across ALL series (Lichess anchors
+ * ranges to the latest game, so a dormant account still shows a full window). */
+function windowPoints(points: RatingPoint[], newest: number, ms: number): RatingPoint[] {
+  if (!Number.isFinite(ms)) return points;
+  return points.filter((p) => p.at >= newest - ms);
 }
 
 /** Date label whose precision follows the visible span: day+month for short
@@ -47,30 +55,94 @@ function axisDate(t: number, spanMs: number): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function RatingChart({ points }: { points: RatingPoint[] }) {
+/** Smooth open path through the points (Catmull-Rom rendered as cubic
+ * beziers, the classic dependency-free "lichess-smooth" line). Falls back to
+ * a straight segment for 2 points. */
+function smoothPath(xs: number[], ys: number[]): string {
+  const n = xs.length;
+  if (n === 0) return "";
+  if (n === 1) return `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+  let d = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const x0 = xs[Math.max(0, i - 1)];
+    const y0 = ys[Math.max(0, i - 1)];
+    const x1 = xs[i];
+    const y1 = ys[i];
+    const x2 = xs[i + 1];
+    const y2 = ys[i + 1];
+    const x3 = xs[Math.min(n - 1, i + 2)];
+    const y3 = ys[Math.min(n - 1, i + 2)];
+    const c1x = x1 + (x2 - x0) / 6;
+    const c1y = y1 + (y2 - y0) / 6;
+    const c2x = x2 - (x3 - x1) / 6;
+    const c2y = y2 - (y3 - y1) / 6;
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  }
+  return d;
+}
+
+interface DrawnSeries {
+  id: string;
+  label: string;
+  color: string;
+  points: RatingPoint[];
+  xs: number[];
+  ys: number[];
+  line: string;
+  area: string;
+}
+
+export function RatingChart({ series }: { series: RatingSeries[] }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hover, setHover] = useState<number | null>(null);
+  const [hoverT, setHoverT] = useState<number | null>(null);
   const [range, setRange] = useState<RangeKey>("all");
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
   const gid = useId();
-  const fillId = `rc-fill-${gid}`;
 
-  // Only offer range buttons whose window actually holds 2+ points, so a young
-  // account is not littered with dead tabs. "All" is always available.
-  const available = useMemo(() => {
-    const span = points.length ? points[points.length - 1].at - points[0].at : 0;
-    return RANGES.filter((r) => r.key === "all" || (r.ms < span && windowPoints(points, r.ms).length >= 2));
-  }, [points]);
-
-  const effectiveRange = available.some((r) => r.key === range) ? range : "all";
-  const view = useMemo(
-    () => windowPoints(points, RANGES.find((r) => r.key === effectiveRange)!.ms),
-    [points, effectiveRange],
+  const withData = useMemo(() => series.filter((s) => s.points.length > 0), [series]);
+  const visible = useMemo(
+    () => withData.filter((s) => !hidden.has(s.id) || withData.every((x) => hidden.has(x.id))),
+    [withData, hidden],
   );
 
-  const { path, area, xs, ys, yTicks, xTicks, min, max } = useMemo(() => {
-    const ratings = view.map((p) => p.rating);
-    let lo = Math.min(...ratings);
-    let hi = Math.max(...ratings);
+  const newest = useMemo(
+    () => Math.max(...withData.map((s) => s.points[s.points.length - 1].at)),
+    [withData],
+  );
+  const oldest = useMemo(() => Math.min(...withData.map((s) => s.points[0].at)), [withData]);
+
+  // Only offer range buttons whose window actually holds 2+ points on some
+  // series, so a young account is not littered with dead tabs.
+  const available = useMemo(() => {
+    const span = newest - oldest;
+    return RANGES.filter(
+      (r) =>
+        r.key === "all" ||
+        (r.ms < span && withData.some((s) => windowPoints(s.points, newest, r.ms).length >= 2)),
+    );
+  }, [withData, newest, oldest]);
+
+  const effectiveRange = available.some((r) => r.key === range) ? range : "all";
+  const rangeMs = RANGES.find((r) => r.key === effectiveRange)!.ms;
+
+  const drawn = useMemo<{
+    list: DrawnSeries[];
+    yTicks: { y: number; label: number }[];
+    xTicks: { x: number; label: string }[];
+    xOf: (t: number) => number;
+    t0: number;
+    t1: number;
+    min: number;
+    max: number;
+  } | null>(() => {
+    const windowed = visible
+      .map((s) => ({ ...s, points: windowPoints(s.points, newest, rangeMs) }))
+      .filter((s) => s.points.length >= 1);
+    if (windowed.length === 0 || windowed.every((s) => s.points.length < 2)) return null;
+
+    const all = windowed.flatMap((s) => s.points);
+    let lo = Math.min(...all.map((p) => p.rating));
+    let hi = Math.max(...all.map((p) => p.rating));
     if (hi - lo < 40) {
       const mid = (hi + lo) / 2;
       lo = mid - 20;
@@ -80,18 +152,24 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
     lo -= spanR * 0.08;
     hi += spanR * 0.08;
 
-    const t0 = view[0].at;
-    const t1 = view[view.length - 1].at;
+    const t0 = Math.min(...all.map((p) => p.at));
+    const t1 = Math.max(...all.map((p) => p.at));
     const spanT = t1 - t0;
     const xOf = (t: number) =>
       PAD.left + (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0)) * (W - PAD.left - PAD.right);
     const yOf = (r: number) => PAD.top + (1 - (r - lo) / (hi - lo)) * (H - PAD.top - PAD.bottom);
-
-    const xs = view.map((p) => xOf(p.at));
-    const ys = view.map((p) => yOf(p.rating));
-    const path = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
     const baseline = H - PAD.bottom;
-    const area = `${path} L${xs[xs.length - 1].toFixed(1)},${baseline} L${xs[0].toFixed(1)},${baseline} Z`;
+
+    const list: DrawnSeries[] = windowed.map((s) => {
+      const xs = s.points.map((p) => xOf(p.at));
+      const ys = s.points.map((p) => yOf(p.rating));
+      const line = smoothPath(xs, ys);
+      const area =
+        xs.length >= 2
+          ? `${line} L${xs[xs.length - 1].toFixed(1)},${baseline} L${xs[0].toFixed(1)},${baseline} Z`
+          : "";
+      return { id: s.id, label: s.label, color: s.color, points: s.points, xs, ys, line, area };
+    });
 
     // Round-numbered horizontal gridlines inside the range (Lichess caps ~7).
     const step = Math.max(25, Math.ceil((hi - lo) / 4 / 25) * 25);
@@ -117,28 +195,95 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
       xTicks.push({ x: xOf(t0), label: axisDate(t0, 0) });
     }
 
-    return { path, area, xs, ys, yTicks, xTicks, min: Math.min(...ratings), max: Math.max(...ratings) };
-  }, [view]);
+    return {
+      list,
+      yTicks,
+      xTicks,
+      xOf,
+      t0,
+      t1,
+      min: Math.min(...all.map((p) => p.rating)),
+      max: Math.max(...all.map((p) => p.rating)),
+    };
+  }, [visible, newest, rangeMs]);
 
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    if (!rect || !drawn) return;
     const x = ((e.clientX - rect.left) / rect.width) * W;
-    let best = 0;
-    for (let i = 1; i < xs.length; i++) if (Math.abs(xs[i] - x) < Math.abs(xs[best] - x)) best = i;
-    setHover(best);
+    const frac = Math.min(1, Math.max(0, (x - PAD.left) / (W - PAD.left - PAD.right)));
+    setHoverT(drawn.t0 + frac * (drawn.t1 - drawn.t0));
   };
 
-  const h = hover != null ? view[hover] : null;
+  // Per-series nearest point to the hovered time (series have independent
+  // game timestamps, so the crosshair snaps per line, like Lichess).
+  const hover = useMemo(() => {
+    if (hoverT == null || !drawn) return null;
+    const rows = drawn.list
+      .map((s) => {
+        let best = 0;
+        for (let i = 1; i < s.points.length; i++) {
+          if (Math.abs(s.points[i].at - hoverT) < Math.abs(s.points[best].at - hoverT)) best = i;
+        }
+        return { series: s, i: best, at: s.points[best].at };
+      })
+      // Keep the crosshair honest: only series with a game near the hovered
+      // time (within a tenth of the window) get a dot + tooltip row.
+      .filter((r) => Math.abs(r.at - hoverT) <= Math.max(DAY, (drawn.t1 - drawn.t0) / 10));
+    if (rows.length === 0) return null;
+    const at = rows.reduce((a, r) => (Math.abs(r.at - hoverT) < Math.abs(a - hoverT) ? r.at : a), rows[0].at);
+    return { rows, x: drawn.xOf(at), at };
+  }, [hoverT, drawn]);
+
+  const toggle = (id: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else if (withData.filter((s) => !next.has(s.id)).length > 1) next.add(id); // never hide the last line
+      return next;
+    });
+
+  if (withData.length === 0) return null;
 
   return (
     <div className="plate p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="smallcaps text-[10px] text-parchment-400">Rating history</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="smallcaps text-[10px] text-parchment-400">Rating history</h3>
+          {/* Per-mode legend chips double as series toggles. */}
+          {withData.length > 1 &&
+            withData.map((s) => {
+              const off = hidden.has(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => toggle(s.id)}
+                  aria-pressed={!off}
+                  className={
+                    "flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-[11px] font-medium transition " +
+                    (off ? "opacity-40 hover:opacity-70" : "hover:bg-white/[0.04]")
+                  }
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: s.color }}
+                    aria-hidden
+                  />
+                  <span className="text-parchment-200">{s.label}</span>
+                  <span className="font-mono tabular-nums text-parchment-400">
+                    {Math.round(s.points[s.points.length - 1].rating)}
+                  </span>
+                </button>
+              );
+            })}
+        </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-parchment-400">
-            low {Math.round(min)} · high {Math.round(max)}
-          </span>
+          {drawn && (
+            <span className="text-xs text-parchment-400">
+              low {Math.round(drawn.min)} · high {Math.round(drawn.max)}
+            </span>
+          )}
           {available.length > 1 && (
             <div className="flex overflow-hidden rounded-sm border border-white/10" role="group" aria-label="Time range">
               {available.map((r) => {
@@ -165,126 +310,133 @@ export function RatingChart({ points }: { points: RatingPoint[] }) {
         </div>
       </div>
       <div className="relative mt-2">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${W} ${H}`}
-          className="block h-auto w-full touch-none"
-          onPointerMove={onMove}
-          onPointerLeave={() => setHover(null)}
-          role="img"
-          aria-label={`Rating history from ${Math.round(view[0].rating)} to ${Math.round(view[view.length - 1].rating)}`}
-        >
-          <defs>
-            {/* Soft accent wash that fades to nothing before the baseline. */}
-            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgb(var(--accent-hi-rgb))" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="rgb(var(--accent-hi-rgb))" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-
-          {/* Dated vertical gridlines + bottom x labels (Lichess time axis). */}
-          {xTicks.map((t, i) => (
-            <g key={`x-${i}`}>
-              <line
-                x1={t.x}
-                x2={t.x}
-                y1={PAD.top}
-                y2={H - PAD.bottom}
-                stroke="var(--paper-dim)"
-                strokeOpacity={0.1}
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              <text
-                x={t.x}
-                y={H - 8}
-                textAnchor={i === 0 ? "start" : i === xTicks.length - 1 ? "end" : "middle"}
-                fontSize={10}
-                fill="var(--paper-dim)"
-              >
-                {t.label}
-              </text>
-            </g>
-          ))}
-
-          {/* Muted horizontal grid + mirrored y labels (Lichess right-axis). */}
-          {yTicks.map((t) => (
-            <g key={t.label}>
-              <line
-                x1={PAD.left}
-                x2={W - PAD.right}
-                y1={t.y}
-                y2={t.y}
-                stroke="var(--paper-dim)"
-                strokeOpacity={0.16}
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              <text
-                x={W - PAD.right}
-                y={t.y - 4}
-                textAnchor="end"
-                fontSize={10}
-                fill="var(--paper-dim)"
-              >
-                {t.label}
-              </text>
-            </g>
-          ))}
-
-          <path d={area} fill={`url(#${fillId})`} />
-          <path
-            d={path}
-            fill="none"
-            stroke="rgb(var(--accent-hi-rgb))"
-            strokeWidth={2}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-
-          {hover != null && (
-            <g>
-              <line
-                x1={xs[hover]}
-                x2={xs[hover]}
-                y1={PAD.top}
-                y2={H - PAD.bottom}
-                stroke="var(--paper-dim)"
-                strokeOpacity={0.45}
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
-              {/* Accent node with a soft halo + surface-toned ring, echoing
-                  Lichess's pale hover dot. */}
-              <circle
-                cx={xs[hover]}
-                cy={ys[hover]}
-                r={7}
-                fill="rgb(var(--accent-hi-rgb))"
-                fillOpacity={0.18}
-              />
-              <circle
-                cx={xs[hover]}
-                cy={ys[hover]}
-                r={4}
-                fill="rgb(var(--accent-hi-rgb))"
-                stroke="var(--paper)"
-                strokeOpacity={0.85}
-                strokeWidth={1.5}
-              />
-            </g>
-          )}
-        </svg>
-        {/* not .plate: it forces position:relative, which would knock out `absolute` */}
-        {h && (
-          <div
-            className="pointer-events-none absolute -top-1 flex -translate-x-1/2 items-center gap-1.5 border border-ink-500 bg-ink-900/90 px-2 py-1 text-xs whitespace-nowrap shadow-plate backdrop-blur-sm motion-safe:transition-opacity"
-            style={{ left: `${(xs[hover!] / W) * 100}%` }}
+        {!drawn ? (
+          <div className="p-4 text-sm text-parchment-400">Not enough rated games yet</div>
+        ) : (
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${W} ${H}`}
+            className="block h-auto w-full touch-none"
+            onPointerMove={onMove}
+            onPointerLeave={() => setHoverT(null)}
+            role="img"
+            aria-label={`Rating history: ${drawn.list.map((s) => `${s.label} ${Math.round(s.points[s.points.length - 1].rating)}`).join(", ")}`}
           >
-            <span className="h-2 w-2 shrink-0 rounded-full bg-gold-leaf" aria-hidden />
-            <span className="font-semibold text-parchment-100">{Math.round(h.rating)}</span>
-            <span className="text-parchment-400">{new Date(h.at).toLocaleDateString()}</span>
+            <defs>
+              {/* Soft per-series wash that fades to nothing before the baseline. */}
+              {drawn.list.map((s) => (
+                <linearGradient key={s.id} id={`rc-fill-${gid}-${s.id}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={s.color} stopOpacity={0.16} />
+                  <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+                </linearGradient>
+              ))}
+            </defs>
+
+            {/* Dated vertical gridlines + bottom x labels (Lichess time axis). */}
+            {drawn.xTicks.map((t, i) => (
+              <g key={`x-${i}`}>
+                <line
+                  x1={t.x}
+                  x2={t.x}
+                  y1={PAD.top}
+                  y2={H - PAD.bottom}
+                  stroke="var(--paper-dim)"
+                  strokeOpacity={0.1}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <text
+                  x={t.x}
+                  y={H - 8}
+                  textAnchor={i === 0 ? "start" : i === drawn.xTicks.length - 1 ? "end" : "middle"}
+                  fontSize={10}
+                  fill="var(--paper-dim)"
+                >
+                  {t.label}
+                </text>
+              </g>
+            ))}
+
+            {/* Muted horizontal grid + mirrored y labels (Lichess right-axis). */}
+            {drawn.yTicks.map((t) => (
+              <g key={t.label}>
+                <line
+                  x1={PAD.left}
+                  x2={W - PAD.right}
+                  y1={t.y}
+                  y2={t.y}
+                  stroke="var(--paper-dim)"
+                  strokeOpacity={0.16}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+                <text x={W - PAD.right} y={t.y - 4} textAnchor="end" fontSize={10} fill="var(--paper-dim)">
+                  {t.label}
+                </text>
+              </g>
+            ))}
+
+            {/* Areas first, then every line above them, so overlapping washes
+                never dull another mode's stroke. */}
+            {drawn.list.map((s) => s.area && <path key={`a-${s.id}`} d={s.area} fill={`url(#rc-fill-${gid}-${s.id})`} />)}
+            {drawn.list.map((s) => (
+              <path
+                key={`l-${s.id}`}
+                d={s.line}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+
+            {hover && (
+              <g>
+                <line
+                  x1={hover.x}
+                  x2={hover.x}
+                  y1={PAD.top}
+                  y2={H - PAD.bottom}
+                  stroke="var(--paper-dim)"
+                  strokeOpacity={0.45}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+                {/* One accent node per series with a soft halo + surface-toned
+                    ring, echoing Lichess's pale hover dot. */}
+                {hover.rows.map(({ series: s, i }) => (
+                  <g key={`h-${s.id}`}>
+                    <circle cx={s.xs[i]} cy={s.ys[i]} r={7} fill={s.color} fillOpacity={0.18} />
+                    <circle
+                      cx={s.xs[i]}
+                      cy={s.ys[i]}
+                      r={4}
+                      fill={s.color}
+                      stroke="var(--paper)"
+                      strokeOpacity={0.85}
+                      strokeWidth={1.5}
+                    />
+                  </g>
+                ))}
+              </g>
+            )}
+          </svg>
+        )}
+        {/* not .plate: it forces position:relative, which would knock out `absolute` */}
+        {hover && drawn && (
+          <div
+            className="pointer-events-none absolute -top-1 flex -translate-x-1/2 items-center gap-2 border border-ink-500 bg-ink-900/90 px-2 py-1 text-xs whitespace-nowrap shadow-plate backdrop-blur-sm motion-safe:transition-opacity"
+            style={{ left: `${(hover.x / W) * 100}%` }}
+          >
+            {hover.rows.map(({ series: s, i }) => (
+              <span key={s.id} className="flex items-center gap-1.5">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} aria-hidden />
+                <span className="font-semibold text-parchment-100">{Math.round(s.points[i].rating)}</span>
+              </span>
+            ))}
+            <span className="text-parchment-400">{new Date(hover.at).toLocaleDateString()}</span>
           </div>
         )}
       </div>

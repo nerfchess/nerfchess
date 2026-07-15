@@ -4,11 +4,23 @@
 // and for rated online games (server side, src/lib/server/games.ts), so it
 // must stay dependency-free and environment-agnostic.
 //
-// System constants (lichess-style):
-//   tau = 0.75, start = 1500 / RD 350 / volatility 0.09.
+// System constants (lichess parity — sourced from lichess-org/lila
+// modules/rating Glicko.scala and lichess-org/scalachess rating/glicko):
+//   tau = 0.75, start = 1500 / RD 500 / volatility 0.09,
+//   RD floor 45 (lichess minDeviation), RD cap 500 (lichess maxDeviation),
+//   provisional while RD > 110 (lichess provisionalDeviation).
 // Sanity clamps applied to every update's OUTPUT (never to the math's inputs,
 // so the algorithm itself stays the paper's):
-//   RD in [45, 350], volatility in [0.01, 0.1], |rating delta| <= 150.
+//   RD in [45, 500], volatility in [0.01, 0.1], |rating delta| <= 700
+//   (lichess maxRatingDelta — a brand-new account CAN and SHOULD swing
+//   hundreds of points in its first games; only pathological inputs hit 700).
+//
+// Rating periods: lichess ties the paper's per-period deviation increase to
+// wall-clock inactivity (ratingPeriodsPerDay = 0.21436), NOT to games played,
+// so for active players the sigma^2 inflation per game is ~0 and RD decays
+// monotonically to the 45 floor. We model the same behavior with
+// `elapsedPeriods` (default 0 = active play, lichess-style); pass 1 to
+// reproduce the paper's full-period example.
 
 export interface GlickoRating {
   rating: number;
@@ -24,17 +36,22 @@ const CONVERGENCE_EPS = 1e-6; // step 5.1 epsilon from the paper
 const MAX_VOL_ITERATIONS = 100;
 
 export const RATING_START = 1500;
-export const RD_START = 350;
+/** Lichess default deviation (= maxDeviation 500 in lila's Glicko.scala). A
+ *  new account is maximally uncertain, so its first games swing hundreds of
+ *  points and converge on true strength within a handful of games. */
+export const RD_START = 500;
 export const VOL_START = 0.09;
 
-// Output clamps.
+// Output clamps (lichess minDeviation / maxDeviation / maxVolatility).
 export const RD_MIN = 45;
-export const RD_MAX = 350;
+export const RD_MAX = 500;
 export const VOL_MIN = 0.01;
 export const VOL_MAX = 0.1;
 /** Sanity cap on how far one game can move a rating, against pathological
- *  inputs (corrupt rows, absurd RD combinations). Normal games never hit it. */
-export const MAX_RATING_DELTA = 150;
+ *  inputs (corrupt rows, absurd RD combinations). Lichess's maxRatingDelta is
+ *  700; normal games — including a brand-new account's first win, worth
+ *  200-300 points — never come close. */
+export const MAX_RATING_DELTA = 700;
 
 /** A rating is provisional (rendered "1500?") while its RD is above this. */
 export const PROVISIONAL_RD = 110;
@@ -124,14 +141,21 @@ function newVolatility(phi: number, v: number, delta: number, vol: number, tau: 
 }
 
 /** Full Glicko-2 rating-period update: one player against any number of
- *  results. In lichess-style operation a period is exactly one game, but the
- *  general form is kept so the algorithm is verifiable against the multi-game
- *  test vector in Glickman's paper. `tau` is parameterized for the same reason
- *  (the paper's example uses 0.5); production callers use the default. */
+ *  results. `tau` and `elapsedPeriods` are parameterized so the algorithm is
+ *  verifiable against the multi-game test vector in Glickman's paper (which
+ *  uses tau 0.5 and one full period); production callers use the defaults.
+ *
+ *  `elapsedPeriods` scales the paper's step-6 deviation increase
+ *  (phi* = sqrt(phi^2 + elapsed * sigma'^2)). Lichess ties it to wall-clock
+ *  inactivity (0.21436 periods/day), so between back-to-back games it is ~0 —
+ *  that is what lets an active player's RD settle to the 45 floor instead of
+ *  plateauing near ~75 the way a full period per game would force. We don't
+ *  track per-bucket timestamps, so production uses 0 (the active-play case). */
 export function glickoUpdateMany(
   player: GlickoRating,
   results: readonly GlickoResult[],
   tau: number = GLICKO_TAU,
+  elapsedPeriods = 0,
 ): GlickoRating {
   const p = sane(player);
   if (!results.length) return p;
@@ -158,8 +182,9 @@ export function glickoUpdateMany(
   // Step 5: new volatility (clamped to sane bounds).
   const vol = clamp(newVolatility(phi, v, delta, p.vol, tau), VOL_MIN, VOL_MAX);
 
-  // Steps 6-7: new RD and rating.
-  const phiStar = Math.sqrt(phi * phi + vol * vol);
+  // Steps 6-7: new RD and rating. The deviation increase is scaled by elapsed
+  // rating periods, lichess-style (0 for active play — see the module header).
+  const phiStar = Math.sqrt(phi * phi + elapsedPeriods * vol * vol);
   const newPhi = 1 / Math.sqrt(1 / (phiStar * phiStar) + 1 / v);
   const newMu = mu + newPhi * newPhi * deltaSum;
 

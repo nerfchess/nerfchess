@@ -13,8 +13,8 @@ export const SCHEMA_STATEMENTS: string[] = [
     password_hash TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     rating REAL NOT NULL DEFAULT 1500,
-    rd REAL NOT NULL DEFAULT 350,
-    vol REAL NOT NULL DEFAULT 0.06,
+    rd REAL NOT NULL DEFAULT 500,
+    vol REAL NOT NULL DEFAULT 0.09,
     games INTEGER NOT NULL DEFAULT 0,
     wins INTEGER NOT NULL DEFAULT 0,
     losses INTEGER NOT NULL DEFAULT 0,
@@ -31,8 +31,8 @@ export const SCHEMA_STATEMENTS: string[] = [
     user_id TEXT NOT NULL REFERENCES users(id),
     category TEXT NOT NULL,
     rating REAL NOT NULL DEFAULT 1500,
-    rd REAL NOT NULL DEFAULT 350,
-    vol REAL NOT NULL DEFAULT 0.06,
+    rd REAL NOT NULL DEFAULT 500,
+    vol REAL NOT NULL DEFAULT 0.09,
     games INTEGER NOT NULL DEFAULT 0,
     wins INTEGER NOT NULL DEFAULT 0,
     losses INTEGER NOT NULL DEFAULT 0,
@@ -584,6 +584,22 @@ const ADDITIVE_COLUMNS: string[] = [
   `INSERT OR IGNORE INTO schema_meta (key, value)
      SELECT 'grant_ilovenewjeans_2437', '1'
      WHERE EXISTS (SELECT 1 FROM users WHERE username_lower = 'ilovenewjeans')`,
+  // One-time lichess-parity Glicko resettle for accounts that have NEVER
+  // played: widen the old default deviation (350) to the new start (500) so
+  // their first games swing like a fresh lichess account, and set the 0.09
+  // start volatility. Only never-played rows still at the old wide default are
+  // touched (games = 0 AND rd >= 300): anyone mid-convergence keeps their
+  // earned rd, and house bots (seeded settled, rd <= 150) are never widened.
+  // Gated on a marker like the grants above. New databases get 500/0.09 from
+  // the column defaults; new signups write the values explicitly. Mirrors
+  // migrations/0032_glicko_lichess_params.sql.
+  `UPDATE users SET rd = 500, vol = 0.09
+     WHERE games = 0 AND rd >= 300
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'glicko_lichess_params_v1')`,
+  `UPDATE user_ratings SET rd = 500, vol = 0.09
+     WHERE games = 0 AND rd >= 300
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'glicko_lichess_params_v1')`,
+  `INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('glicko_lichess_params_v1', '1')`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and
