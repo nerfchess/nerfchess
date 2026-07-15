@@ -1,6 +1,5 @@
 "use client";
 
-import { History } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -104,7 +103,7 @@ export default function HistoryPage() {
           games.length === 0 ? (
             <EmptyState
               className="mt-8"
-              icon={History}
+              glyph={"♜"}
               title="No games yet"
               body="Play a game to start the record."
               action={{ href: "/friend", label: "Play a Friend" }}

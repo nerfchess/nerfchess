@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gamepad2, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { AccountUser, ensureAccount } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { EmptyState } from "@/components/EmptyState";
@@ -161,7 +161,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
       {(stats?.totalGames ?? 0) === 0 && (
         <div className="mt-4">
           <EmptyState
-            icon={Gamepad2}
+            glyph={"♟"}
             title="You have not played online yet"
             body="Play a game to start a rating and fill in this profile."
             action={{ href: "/lobby", label: "Find a match" }}

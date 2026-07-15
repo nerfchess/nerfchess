@@ -607,7 +607,7 @@ function ModeChoice({
       aria-label={mode === "nerf" ? "Nerf" : "Buff"}
       onClick={onClick}
       className={
-        "flex items-center justify-center gap-2 px-3 py-3 border transition font-display text-sm font-bold uppercase tracking-wide " +
+        "flex items-center justify-center gap-2 px-3 py-3 border transition font-display text-sm font-bold " +
         identity
       }
     >
