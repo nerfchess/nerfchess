@@ -1335,6 +1335,124 @@ export async function countOgClubMembers(db: D1Database): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
+// Populate EVERY OTHER club with a plausible house-bot membership.
+//
+// The OG club (ensureOgClub above) is the one big, hand-owned veterans' club.
+// Every OTHER club in the table -- user-made ones, or any seeded elsewhere --
+// otherwise reads as dead in the clubs directory: an owner and nobody else.
+// This seeds each such club with a DETERMINISTIC 10-20 house-bot slice enrolled
+// as plain 'member' rows, so the directory looks alive without touching a
+// club's owner row, its identity (name/description/icon), or any real user's
+// membership. INSERT OR IGNORE throughout, and the slice is a stable function
+// of the club's slug, so re-running never duplicates rows or shifts who is in a
+// club -- it only fills gaps (self-healing, like ensureHouseUsers/ensureOgClub).
+// Runs after ensureHouseUsers so every persona's users row exists (the
+// club_members.user_id FK needs it). A bot may belong to several clubs; that is
+// fine and reads like a real regular who joined a few.
+// ---------------------------------------------------------------------------
+
+/** Inclusive per-club bot-membership target band. Every non-OG club is filled
+ * to a deterministic count in [CLUB_FILL_MIN, CLUB_FILL_MAX]. */
+export const CLUB_FILL_MIN = 10;
+export const CLUB_FILL_MAX = 20;
+
+/** A club's deterministic bot-membership target in [CLUB_FILL_MIN,
+ * CLUB_FILL_MAX], hashed from its slug so it is stable across cold starts and
+ * varies club to club (so the directory shows a range of club sizes). */
+export function clubBotTargetCount(slug: string): number {
+  const span = CLUB_FILL_MAX - CLUB_FILL_MIN + 1;
+  return CLUB_FILL_MIN + (nameHash(slug + "|clubfill") % span);
+}
+
+/** The DETERMINISTIC house-bot slice for a club: `count` personas chosen by
+ * hashing each persona's name against the club slug and taking the lowest-hash
+ * `count`. Stable across deploys (name/slug hash, no RNG) and well spread across
+ * the roster (a different club draws a different slice). Never exceeds the
+ * roster. Bots may recur across clubs -- there is no cross-club exclusivity. */
+export function clubBotMembers(slug: string, count: number): HousePersona[] {
+  const n = Math.max(0, Math.min(Math.floor(count), HOUSE_ROSTER.length));
+  return [...HOUSE_ROSTER]
+    .sort((a, b) => {
+      const ha = nameHash(a.name + "|" + slug);
+      const hb = nameHash(b.name + "|" + slug);
+      return ha - hb || (a.name < b.name ? -1 : 1);
+    })
+    .slice(0, n);
+}
+
+/** Enroll a deterministic 10-20 house-bot membership into EVERY club except the
+ * OG club (which ensureOgClub owns, with its own larger membership). For each
+ * club, the slice from clubBotMembers is inserted as plain 'member' rows with
+ * INSERT OR IGNORE, skipping the club's own owner row so an owner is never
+ * duplicated or downgraded (real or bot). Real members' rows are never touched
+ * (we only ever INSERT house-bot ids, and OR IGNORE leaves any existing row as
+ * is). Idempotent and self-healing: safe to run on every cold start. */
+export async function ensureClubsPopulated(db: D1Database): Promise<void> {
+  const clubs = await db
+    .prepare("SELECT id, slug, owner_user_id FROM clubs")
+    .all<{ id: string; slug: string; owner_user_id: string }>();
+  const now = Date.now();
+  const statements: D1PreparedStatement[] = [];
+  for (const club of clubs.results) {
+    // The OG club keeps its own (larger) seed via ensureOgClub; never shrink or
+    // re-seed it here.
+    if (club.slug === OG_CLUB_SLUG) continue;
+    const members = clubBotMembers(club.slug, clubBotTargetCount(club.slug));
+    for (const p of members) {
+      // Never write a membership row for the club's existing owner (bot or real):
+      // its owner row stays exactly as-is.
+      if (p.userId === club.owner_user_id) continue;
+      statements.push(
+        db
+          .prepare(
+            `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, 'member', ?)`,
+          )
+          .bind(club.id, p.userId, now),
+      );
+    }
+  }
+  if (statements.length) await batchInChunks(db, statements);
+}
+
+/** How many non-OG clubs currently have FEWER live house-bot members than their
+ * target -- the self-healing gate for ensureClubsPopulated (mirrors
+ * countOgClubMembers). Counts only club_members whose user_id is a house bot AND
+ * resolves to a live users row (the same INNER JOIN the detail route renders),
+ * so a club short of its target -- freshly created, or a partial prior seed --
+ * is detected and re-seeded. A read failure reads as "assume short" (returns a
+ * positive number) so seeding runs rather than skips. Returns 0 when every club
+ * is already at or above its target (the steady state), so the seed becomes a
+ * no-op without touching D1. */
+export async function countUnderpopulatedClubs(db: D1Database): Promise<number> {
+  try {
+    const clubs = await db
+      .prepare("SELECT id, slug FROM clubs")
+      .all<{ id: string; slug: string }>();
+    const targets = clubs.results.filter((c) => c.slug !== OG_CLUB_SLUG);
+    if (!targets.length) return 0;
+    const ids = HOUSE_ROSTER.map((p) => p.userId);
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = await db
+      .prepare(
+        `SELECT cm.club_id AS club_id, COUNT(*) AS n
+         FROM club_members cm JOIN users u ON u.id = cm.user_id
+         WHERE cm.user_id IN (${placeholders})
+         GROUP BY cm.club_id`,
+      )
+      .bind(...ids)
+      .all<{ club_id: string; n: number }>();
+    const byClub = new Map(rows.results.map((r) => [r.club_id, r.n]));
+    let short = 0;
+    for (const club of targets) {
+      if ((byClub.get(club.id) ?? 0) < clubBotTargetCount(club.slug)) short++;
+    }
+    return short;
+  } catch {
+    return 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Seek selection: which pool and mode a house player advertises.
 // ---------------------------------------------------------------------------
 
@@ -1392,6 +1510,19 @@ export function pickHouseFillerSeek(random: (max: number) => number): { pool: st
   };
 }
 
+/** Card ids that must NEVER be drafted or played in a bot-vs-bot FILLER game.
+ * Chess Diff (id "chess_diff") pauses the running game and spawns a whole fresh
+ * game of chess on top of it (see its def in engine/buffs/library.ts and
+ * ChessDiffState in buff.ts): a board-rewriting mechanic that has caused
+ * spectator (TV) reconstruction problems. Filler games are pure lobby/TV
+ * decoration, so it is simply removed from their draft pool -- worker.ts folds
+ * these into the filler match's draft-pool override `off` set, exactly like a
+ * moderator-disabled card, so they are never OFFERED (hence never picked or
+ * cast) in a filler game. Human-vs-bot and human games are unaffected: this set
+ * is applied ONLY to bot-only filler matches, never to a human's match. The card
+ * itself is not touched globally -- it stays draftable everywhere else. */
+export const FILLER_EXCLUDED_CARD_IDS: readonly string[] = ["chess_diff"];
+
 // ---------------------------------------------------------------------------
 // Filler concurrency targets (owner spec): the Watch tab / TV should always
 // show a busy site, so the steady state is 40-55 SIMULTANEOUS bot-vs-bot games
@@ -1405,23 +1536,37 @@ export const HOUSE_VS_HOUSE_FLOOR = 40;
 /** Hard cap on concurrent bot-vs-bot games (natural variance runs 40-55). */
 export const HOUSE_VS_HOUSE_CAP = 55;
 /** Spawn-ahead hysteresis: the spawner keeps ramping quickly until this many
- * games ABOVE the floor are live, so a normal trickle of games ending never
- * drops the count below the floor before the next spawn lands. */
-export const HOUSE_FILLER_SPAWN_BUFFER = 4;
+ * games ABOVE the floor are live, so the count settles comfortably above the
+ * floor and a normal trickle of games ending never drops it below the floor
+ * before the next spawn lands. Sized well above the floor (not just +4): filler
+ * games end in short bursts (a wave spawned during ramp-up flags out around the
+ * same time), so the steady band must sit high enough that a whole burst ending
+ * still leaves the count above 40. */
+export const HOUSE_FILLER_SPAWN_BUFFER = 10;
+
+/** How many times slower a bot-vs-bot filler game paces its moves than a bot
+ * facing a human (passed to houseThinkMs as thinkMultiplier). Filler is
+ * lobby/TV decoration; slowing it keeps 40+ concurrent games affordable on the
+ * single-threaded DO. Exported so worker.ts (the spawner) and the sim (which
+ * derives realistic filler game lifetimes from it) share one source of truth. */
+export const HOUSE_FILLER_THINK_MULTIPLIER = 8;
 
 /** Delay until the NEXT filler spawn given how many bot-vs-bot games are live
  * after this one. Below floor+buffer: a brisk 1.5-3s stagger, so a cold start
- * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick,
- * never a 40-game burst) and a dip recovers within seconds. At/above: a lazy
- * 8-15s spacing that roughly matches the rate games end at, so the population
- * hovers in the 40-55 band instead of pinning the cap. */
+ * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick, never
+ * a 40-game burst) and a dip recovers within seconds. At/above: a moderate
+ * 4-8s spacing -- fast enough to outpace the rate blitz filler games end at
+ * (they flag or finish in a few minutes, so turnover across ~50 live games is
+ * brisk), keeping the population pressed up into the high-40s/low-50s band
+ * rather than bleeding below the floor between spawns. The seek reserve and the
+ * seat/game caps in worker.ts bound the top of the band. */
 export function houseFillerSpawnDelayMs(
   liveFillerGames: number,
   random: (max: number) => number,
 ): number {
   return liveFillerGames < HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER
     ? 1500 + random(1501)
-    : 8000 + random(7001);
+    : 4000 + random(4001);
 }
 
 // ---------------------------------------------------------------------------
@@ -1430,8 +1575,23 @@ export function houseFillerSpawnDelayMs(
 
 /** Move pacing: uniform 1-4s, with roughly 1 move in 10 tanking 6-10s. The
  * delay is clamped hard once the bot's own clock runs low so pacing can never
- * flag a bot that still has bank left. */
-export function houseThinkMs(random: (max: number) => number, myClockMs: number, timeSec: number): number {
+ * flag a bot that still has bank left.
+ *
+ * `thinkMultiplier` (default 1) slows the BASE think for bot-vs-bot filler games
+ * (worker.ts houseFillerThinkMultiplier), keeping 40+ of them affordable on the
+ * single-threaded DO. It is applied to the base delay HERE, BEFORE the low-clock
+ * clamps below, so a slowed filler bot is still bounded by its own remaining
+ * clock and cannot overthink itself into a premature flag. (The multiply used to
+ * live at the call site, AFTER the clamp, so it multiplied the clamp too -- a
+ * filler bot's "safe" move could reach ~1.6x its remaining clock and it flagged
+ * out within a handful of moves, collapsing steady-state concurrency far below
+ * the floor.) */
+export function houseThinkMs(
+  random: (max: number) => number,
+  myClockMs: number,
+  timeSec: number,
+  thinkMultiplier = 1,
+): number {
   const hasClock = timeSec > 0;
   // Fast time controls (1+0, 2+1, 3+0 and the like, base <= 3 min): the bot
   // answers snappily in 1-3s so a bullet/blitz game against a bot feels live and
@@ -1442,6 +1602,10 @@ export function houseThinkMs(random: (max: number) => number, myClockMs: number,
   if (fast) delay = 1000 + random(2001); // 1-3s
   else if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
   else delay = 6000 + random(4001); // 6-10s
+
+  // Filler pacing slows the base think, but is still bounded by the clock clamps
+  // below, so it never causes a premature flag.
+  if (thinkMultiplier > 1) delay = Math.round(delay * thinkMultiplier);
 
   if (hasClock) {
     if (myClockMs < 10_000) delay = Math.min(delay, 300 + random(501));

@@ -19,6 +19,7 @@ import {
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
   HOUSE_FILLER_SPAWN_BUFFER,
+  HOUSE_FILLER_THINK_MULTIPLIER,
   houseFillerSpawnDelayMs,
   pickHouseFillerSeek,
   HouseSkill,
@@ -39,8 +40,10 @@ import {
   HOUSE_SOCIAL_MIN_DELAY_MS,
   HOUSE_SOCIAL_MAX_DELAY_MS,
   WEAKENED_PRESET,
+  FILLER_EXCLUDED_CARD_IDS,
   type ResolvedSkillProfile,
 } from "../src/lib/server/bots";
+import { rollOffer, setDraftPoolOverrides } from "../src/engine/draft";
 import {
   UNRESTRICTED_NERF,
   aiChooseBuffActivation,
@@ -459,10 +462,78 @@ for (let i = 0; i < 5_000; i++) {
   check(["3+0", "3+2", "5+0", "5+3"].includes(pool), `filler pool ${pool}`);
 }
 
+// Flag-safety regression guard for the real bug: the filler multiplier must
+// NEVER inflate a think past the clock-based clamp. houseThinkMs applies the
+// multiplier to the base think BEFORE the low-clock clamps, so the final value
+// is always bounded by the same ceiling a non-filler bot obeys: at most 800ms
+// under 10s left, and at most clock/5 with more time. The old code multiplied
+// AFTER the clamp, so a filler move could reach ~1.6x the remaining clock (8 x
+// clock/5) and flag the bot within a handful of moves — the root cause of
+// steady-state concurrency collapsing far below the floor. Under that bug this
+// bound is violated for any healthy clock; the fix satisfies it everywhere.
+for (let i = 0; i < 50_000; i++) {
+  const clock = 200 + random(300_000); // 0.2s .. 5min left (spans every clamp branch)
+  const timeSec = [180, 300][random(2)]; // filler base controls (3+0 / 5+0)
+  const t = houseThinkMs(random, clock, timeSec, HOUSE_FILLER_THINK_MULTIPLIER);
+  const ceiling = Math.max(800, Math.floor(clock / 5)) + 1;
+  check(t <= ceiling, `filler think ${t}ms exceeds clock-clamp ceiling ${ceiling}ms at clock ${clock}ms`);
+}
+console.log(
+  `flag safety: filler think (x${HOUSE_FILLER_THINK_MULTIPLIER}) stays within the clock clamp (<=max(800, clock/5)), never a premature flag`,
+);
+
+// Realistic filler game lifetime, derived from the REAL pacing constants rather
+// than a hand-picked number: simulate a bot-vs-bot game's clocks move by move
+// using houseThinkMs at the filler multiplier, deduct each think from the mover's
+// clock (adding the increment), and end the game at a flag OR a natural result
+// (a plausible ply cap — real games end by mate/resignation, not only on time).
+// The wall-clock lifetime is the sum of both sides' thinks. Deliberately
+// conservative (shorter lifetime => higher turnover => a stricter concurrency
+// test): if the pacing ever regressed to flag games early, lifetimes would
+// collapse and the steady-state assertion below would fail.
+function parseTc(pool: string): { timeSec: number; incrementSec: number } {
+  const [min, inc] = pool.split("+").map(Number);
+  return { timeSec: min * 60, incrementSec: inc };
+}
+function simulateFillerGameSeconds(): number {
+  const { pool } = pickHouseFillerSeek(random);
+  const { timeSec, incrementSec } = parseTc(pool);
+  const clock = { w: timeSec * 1000, b: timeSec * 1000 };
+  // Natural finish: most blitz games end well before 100+ moves. 60-120 ply
+  // (30-60 moves each) models a result before either side necessarily flags.
+  const resultPly = 60 + random(61);
+  let wallMs = 0;
+  let side: "w" | "b" = "w";
+  for (let ply = 0; ply < resultPly; ply++) {
+    const think = houseThinkMs(random, clock[side], timeSec, HOUSE_FILLER_THINK_MULTIPLIER);
+    wallMs += think;
+    clock[side] -= think;
+    if (clock[side] <= 0) break; // flag
+    clock[side] += incrementSec * 1000;
+    side = side === "w" ? "b" : "w";
+  }
+  return wallMs / 1000;
+}
+let lifeSum = 0;
+let lifeMin = Infinity;
+let lifeMax = 0;
+const LIFE_SAMPLES = 4_000;
+for (let i = 0; i < LIFE_SAMPLES; i++) {
+  const s = simulateFillerGameSeconds();
+  lifeSum += s;
+  lifeMin = Math.min(lifeMin, s);
+  lifeMax = Math.max(lifeMax, s);
+}
+const meanLifeS = lifeSum / LIFE_SAMPLES;
+console.log(
+  `filler lifetime (x${HOUSE_FILLER_THINK_MULTIPLIER} pacing, derived): ` +
+    `mean ${meanLifeS.toFixed(0)}s, min ${lifeMin.toFixed(0)}s, max ${lifeMax.toFixed(0)}s`,
+);
+
 // Scheduling run: 1s ticks (the alarm cadence), one spawn per tick when due and
-// under the caps; each game lasts 6-12 minutes (blitz pools at the slowed
-// filler pacing, most ending by flag or result inside that). Seat supply is the
-// smallest daily window minus the seek reserve.
+// under the caps; each game's lifetime is drawn from the realistic derived model
+// above (not a fixed constant). Seat supply is the smallest daily window minus
+// the seek reserve.
 const RAMP_LIMIT_S = 5 * 60; // must hit the floor within 5 minutes of cold start
 const RUN_S = 6 * 60 * 60; // then hold it for six simulated hours
 const SETTLE_S = 60; // grace after first hitting the floor
@@ -477,7 +548,7 @@ let samplesAfterRamp = 0;
 for (let t = 0; t < RUN_S; t++) {
   liveEnds = liveEnds.filter((end) => end > t);
   if (t >= nextSpawnAt && liveEnds.length < Math.min(HOUSE_VS_HOUSE_CAP, seatCapGames)) {
-    liveEnds.push(t + 360 + random(361)); // 6-12 min game
+    liveEnds.push(t + simulateFillerGameSeconds());
     nextSpawnAt = t + houseFillerSpawnDelayMs(liveEnds.length, random) / 1000;
   }
   const n = liveEnds.length;
@@ -522,6 +593,57 @@ check(
 );
 console.log(
   `social delay: ${HOUSE_SOCIAL_MIN_DELAY_MS / 1000}-${HOUSE_SOCIAL_MAX_DELAY_MS / 1000}s, deterministic per request, jittered across requests`,
+);
+
+// ---------------------------------------------------------------------------
+// 9. Chess Diff is never drafted in a bot-vs-bot filler game.
+//
+// Chess Diff (id "chess_diff", tier 6) is a board-rewriting card that breaks
+// spectator reconstruction, so worker.ts folds FILLER_EXCLUDED_CARD_IDS into a
+// filler match's draft-pool `off` set (the same mechanism a moderator-disabled
+// card uses). Roll real offers through the engine's draft path at tier 6 (where
+// Chess Diff lives, and where it is 2x-weighted), across many seeds and BOTH
+// modes, with that override installed, and assert it is never offered. A control
+// run WITHOUT the override proves the roll path can and does produce it, so the
+// exclusion is doing real work. Human games install no such override and keep
+// the card.
+// ---------------------------------------------------------------------------
+
+const CHESS_DIFF_ID = "chess_diff";
+check(FILLER_EXCLUDED_CARD_IDS.includes(CHESS_DIFF_ID), "filler exclusion set contains chess_diff");
+
+/** Count how many of `samples` offers (per mode) contain Chess Diff when rolled
+ * at tier 6, with the given draft-pool override installed. Each sample builds a
+ * fresh draft state seeded distinctly, so draws are deterministic and
+ * independent. */
+function countChessDiffOffers(off: string[] | null, samples: number): number {
+  setDraftPoolOverrides(off ? { off } : null);
+  let seen = 0;
+  try {
+    for (const mode of ["buff", "nerf"] as const) {
+      for (let s = 0; s < samples; s++) {
+        const game = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+        enableDraftMode(game, 0x51d1ff + s * 2654435761, { mode });
+        // Vary the draft RNG per sample so each roll is an independent draw.
+        game.buffs!.rngState = ((0x9e3779b9 ^ (s * 2246822519)) >>> 0) || 1;
+        const offer = rollOffer(game.buffs!, "w", [6, 6], game.board);
+        if (offer?.cards.some((c) => c.id === CHESS_DIFF_ID)) seen++;
+      }
+    }
+  } finally {
+    setDraftPoolOverrides(null);
+  }
+  return seen;
+}
+
+const SAMPLES = 4_000;
+const withoutOverride = countChessDiffOffers(null, SAMPLES);
+const withOverride = countChessDiffOffers([...FILLER_EXCLUDED_CARD_IDS], SAMPLES);
+check(withoutOverride > 0, `control: chess_diff should appear without the filler override (saw ${withoutOverride})`);
+check(withOverride === 0, `filler override: chess_diff must NEVER be offered (saw ${withOverride})`);
+console.log(
+  `chess diff exclusion: tier-6 offers over ${SAMPLES} seeds x 2 modes -> ` +
+    `${withoutOverride} with the card in pool, ${withOverride} with the filler override (must be 0)`,
 );
 
 if (failures) {
