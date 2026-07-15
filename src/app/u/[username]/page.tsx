@@ -15,6 +15,7 @@ import { ACTIVE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
+import { CurrentGameCard } from "@/components/CurrentGameCard";
 import { isHouseEditor } from "@/lib/godPanel";
 
 interface ProfileUser {
@@ -62,6 +63,9 @@ type ProfileRatingPoint = RatingPoint & { category?: string | null };
 
 interface ProfileData {
   user: ProfileUser;
+  // The player's current live game, resolved server-side from the authoritative
+  // live-seat index. Null (or absent, on an older API) when not playing.
+  currentGame?: { gameId: string; mode?: "nerf" | "buff" } | null;
   games: ProfileGame[];
   ratings?: Record<string, CategoryRatingRow>;
   ratingHistory: ProfileRatingPoint[];
@@ -294,6 +298,15 @@ export default function ProfilePage() {
                 }
               />
             )}
+
+            {/* "Playing Right Now": a live mini-board when the player is in a
+                game, reusing the same spectator snapshot + event pipeline as TV.
+                Renders nothing when they are idle. */}
+            <CurrentGameCard
+              username={profile.user.username}
+              gameId={profile.currentGame?.gameId ?? null}
+              mode={profile.currentGame?.mode ?? null}
+            />
 
             {/* Exactly two ratings: the Nerf and Buff mode buckets. */}
             <div className="mt-6 grid grid-cols-2 gap-2">

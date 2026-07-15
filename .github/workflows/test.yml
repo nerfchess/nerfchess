@@ -49,3 +49,21 @@ jobs:
 
       - name: Snapshot tests
         run: node scripts/test-snapshot.cjs
+
+      # Spectator / TV public-projection tests: the reducer ordering unit checks,
+      # plus the full pipeline (snapshot sanitization, every board-mutating card's
+      # spectator-parity, and join / reconnect / resync / failover integration).
+      - name: Spectator sync reducer tests
+        run: npm run test:spectator-sync
+
+      - name: Replay / spectate reconstruction tests
+        run: node scripts/test-replay-spectate.cjs
+
+      - name: TV / spectator public-projection tests
+        run: npm run test:tv-spectator
+
+      # Production-safe snapshot validator self-test: reconstruct, build the
+      # public snapshot, recompute the parity hash, and assert no secret field
+      # leaks and versions are compatible (one-shot, logs ids + hashes only).
+      - name: TV snapshot validator (self-test)
+        run: node scripts/validate-tv-snapshots.cjs --selftest

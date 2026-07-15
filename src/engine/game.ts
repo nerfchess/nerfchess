@@ -18,7 +18,7 @@ import { PLAYABLE_NERFS } from "./nerfs/library";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
-import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "./types";
+import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "./types";
 
 export interface PlayerSlot {
   nerf: Nerf;
@@ -203,6 +203,453 @@ export function deserializeGame(snap: GameSnapshot): NerfGame | null {
     startedAt: copy.startedAt,
     captured: copy.captured,
     ...(copy.buffs ? { buffs: copy.buffs } : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Public spectator snapshot.
+//
+// A PublicSpectatorSnapshot is a read-only PROJECTION of the authoritative game
+// (server: gameFromMatch; a player's own game.ts) into exactly the state a
+// spectator, the TV, or a profile preview is allowed to see. It is deliberately
+// SEPARATE from the secret GameSnapshot (which carries slot RNG state, the
+// nerf identities, and every hidden field): this snapshot never contains a
+// secret nerf id, a draft seed, an rng state, an unrevealed card, a private
+// offer, or any future delayed-event target identity. What a viewer cannot
+// legitimately know is simply not projected, so the snapshot and its hash can
+// be shipped to anyone.
+//
+// PUBLIC_SNAPSHOT_VERSION is independent of GAME_SNAPSHOT_VERSION and of the
+// worker's REPLAY_VERSION. A client that sees an unrecognized schemaVersion
+// rejects the frame (a later stage) rather than rendering a wrong board.
+export const PUBLIC_SNAPSHOT_VERSION = 1;
+
+export type SpectatorPhase = "active" | "draftPaused" | "chessDiff" | "over";
+
+export type PublicTimerState = "running-w" | "running-b" | "paused" | "flagged";
+
+export interface PublicPiece {
+  /** Stable-per-snapshot id: the piece's square name (a1..h8). The engine has
+   * no persistent piece identity, so the square is the only public, stable key
+   * for a point-in-time projection; it is deterministic and leaks nothing. */
+  id: string;
+  color: Color;
+  type: PieceType;
+  /** 0..63, file = square % 8, rank = square >> 3. */
+  square: number;
+  /** Piece is frozen / walnut-locked in place by a public board effect. */
+  frozen?: boolean;
+  /** Piece stands on a shielded square. */
+  shielded?: boolean;
+}
+
+export interface PublicSquareEffect {
+  kind: ActiveEffect["kind"];
+  /** Squares the effect covers, sorted ascending. A side-wide effect (king
+   * safety, a movement lock) covers no specific squares and lists none. */
+  squares: number[];
+  owner?: Color;
+  against?: Color;
+  /** Remaining public turns; null = untimed. Never a hidden target identity. */
+  turns: number | null;
+}
+
+export interface PublicWall {
+  axis: "file" | "rank";
+  /** 0..7 index of the barred file/rank. */
+  line: number;
+  against: Color;
+}
+
+export interface PublicHeldBuff {
+  buffId: string;
+  category: string;
+  tier: number;
+  kind: "passive" | "instant" | "activated";
+  spent?: boolean;
+  nullified?: boolean;
+  /** Always true: only publicly-revealed cards are ever projected here. */
+  revealed: true;
+}
+
+export interface PublicPlayerInfo {
+  name: string;
+  rating: number | null;
+  ratingCategory?: string | null;
+  title?: string | null;
+  provisional?: boolean;
+}
+
+export interface PublicCaptureCounts {
+  p: number;
+  n: number;
+  b: number;
+  r: number;
+  q: number;
+  k: number;
+}
+
+/**
+ * The match-level PUBLIC bits the projector needs but that live on the match
+ * record, not on the engine game (ids, ratings, clocks, revealed rules, the
+ * server's monotonic revision). Every field here is already public: the caller
+ * (worker.ts publicSnapshot) is responsible for passing only revealed nerf ids
+ * and masked card history, never raw slot state.
+ */
+export interface PublicSnapshotBits {
+  gameId: string;
+  replayVersion: number;
+  /** Monotonic per-game revision, ++ on every committed event. */
+  stateRevision: number;
+  /** Seq of the last applied event at capture (== stateRevision). */
+  lastSeq: number;
+  /** draftActions index folded into the projected game. */
+  cursor: number;
+  capturedAtMs: number;
+  mode: DraftMode | null;
+  rated: boolean;
+  players: { w: PublicPlayerInfo; b: PublicPlayerInfo };
+  /** Public clock values, ms remaining. Excluded from the parity hash. */
+  clocks: { w: number; b: number };
+  timeSec: number;
+  incrementSec: number;
+  timerState: PublicTimerState;
+  /** Revealed nerf ids only (match result set, or slot revealed); else null. */
+  revealedNerfs: { w: string | null; b: string | null };
+  /** Masked draft-action record (rerolls/hidden grants already dropped). */
+  publicCardHistory?: unknown[];
+  /** Public offer seats (a seat currently holding an unresolved offer). */
+  offerSeats?: { w: boolean; b: boolean };
+  nextDraftAtPly?: number | null;
+  spectatorDelaySec?: number;
+  /** Advisory flourish hint (last card play id). Never gates state. */
+  lastCardPlayId?: string | null;
+}
+
+export interface PublicSpectatorSnapshot {
+  gameId: string;
+  schemaVersion: number;
+  replayVersion: number;
+  stateRevision: number;
+  lastSeq: number;
+  capturedAtPly: number;
+  capturedAtCursor: number;
+  capturedAtMs: number;
+
+  mode: DraftMode | null;
+  rated: boolean;
+  players: { w: PublicPlayerInfo; b: PublicPlayerInfo };
+
+  board: {
+    dims: { files: number; ranks: number };
+    sideToMove: Color;
+    moveNumber: number;
+    fullmove: number;
+    halfmoveClock: number;
+    castling: { wK: boolean; wQ: boolean; bK: boolean; bQ: boolean };
+    enPassant: number | null;
+    pieces: PublicPiece[];
+  };
+
+  clocks: {
+    w: number;
+    b: number;
+    incrementSec: number;
+    timeSec: number;
+    timerState: PublicTimerState;
+  };
+
+  status: {
+    phase: SpectatorPhase;
+    result: GameResult | null;
+    reason: string | null;
+  };
+
+  /** Cumulative PUBLIC piece counters. Captured is authoritative from the
+   * engine; the spawned/removed/transformed/duplicated lists are reserved for
+   * the event-log stage and start empty (never fabricated). */
+  pieceEvents: {
+    captured: { w: PublicCaptureCounts; b: PublicCaptureCounts };
+    spawned: unknown[];
+    removed: unknown[];
+    transformed: unknown[];
+    duplicated: unknown[];
+  };
+
+  terrain: {
+    blockedSquares: number[];
+    portals: number[];
+    walls: PublicWall[];
+    squareEffects: PublicSquareEffect[];
+  };
+
+  activeBuffs: { w: PublicHeldBuff[]; b: PublicHeldBuff[] };
+  revealedNerfs: { w: string | null; b: string | null };
+  publicCardHistory: unknown[];
+
+  draftTiming: {
+    nextDraftAtPly: number | null;
+    cadence: number | null;
+    offerSeats: { w: boolean; b: boolean };
+    diffActive: boolean;
+  };
+
+  publicRuleModifiers: {
+    activeNerfIds: string[];
+    extraMoves: { w: number; b: number };
+    skips: { w: number; b: number };
+    ruleIds: string[];
+  };
+
+  customVictory: {
+    timedLoss: { owner: Color; square: number; turns: number }[];
+    shortLeash: { owner: Color; turns: number }[];
+  };
+
+  animationState: { lastCardPlayId: string | null };
+
+  spectatorDelaySec: number;
+
+  /** The public-state parity hash (see desync.ts publicStateHash). Computed by
+   * the caller after projection and assigned here; the projector leaves it "". */
+  publicHash: string;
+}
+
+/** The squares an effect visibly covers, for the public projection. A side or
+ * army wide effect (king safety, a movement lock, a whole-army shield) covers
+ * no single square list: it lists the owner's current piece squares for a
+ * whole-army shield (all public) and nothing for the purely side-scoped kinds. */
+function effectPublicSquares(e: ActiveEffect, board: BoardState): number[] {
+  switch (e.kind) {
+    case "freeze":
+    case "walnut":
+    case "timed_loss":
+      return [e.sq];
+    case "barred":
+    case "strike":
+    case "bonk":
+      return [...e.squares].sort((a, b) => a - b);
+    case "shield": {
+      if (e.squares) return [...e.squares].sort((a, b) => a - b);
+      // Whole-army shield: project the owner's current piece squares (public).
+      const sqs: number[] = [];
+      for (let sq = 0; sq < 64; sq++) {
+        const p = board.pieces[sq];
+        if (p && p.color === e.owner) sqs.push(sq);
+      }
+      return sqs;
+    }
+    default:
+      return [];
+  }
+}
+
+/** Owner/against attribution for the public effect projection. */
+function effectPublicSides(e: ActiveEffect): { owner?: Color; against?: Color } {
+  switch (e.kind) {
+    case "freeze":
+    case "walnut":
+    case "timed_loss":
+    case "shield":
+    case "king_safe":
+    case "nerf_suspended":
+    case "strike":
+    case "bonk":
+    case "short_leash":
+      return { owner: e.owner };
+    case "barred":
+    case "no_pawn_advance":
+    case "king_only":
+      return { against: e.against };
+  }
+}
+
+/**
+ * Project the authoritative game plus its public match bits into a
+ * PublicSpectatorSnapshot. PURE and read-only: it never mutates the game and
+ * never re-implements card logic; it only reads already-resolved state. All
+ * hidden info (secret nerf ids, slot rng, unrevealed cards, private offers,
+ * delayed-event target identities) is left out by construction. The caller
+ * fills `publicHash` via publicStateHash(snap).
+ */
+export function toPublicSnapshot(game: NerfGame, bits: PublicSnapshotBits): PublicSpectatorSnapshot {
+  const board = game.board;
+  const bs = game.buffs;
+
+  // Board effects that pin a piece in place (freeze/walnut) or shield it.
+  const frozen = new Set<number>();
+  const shielded = new Set<number>();
+  const squareEffects: PublicSquareEffect[] = [];
+  const blockedSquares = new Set<number>();
+  const walls: PublicWall[] = [];
+  const timedLoss: { owner: Color; square: number; turns: number }[] = [];
+  const shortLeash: { owner: Color; turns: number }[] = [];
+
+  if (bs) {
+    for (const e of bs.effects) {
+      const squares = effectPublicSquares(e, board);
+      const sides = effectPublicSides(e);
+      squareEffects.push({
+        kind: e.kind,
+        squares,
+        ...(sides.owner ? { owner: sides.owner } : {}),
+        ...(sides.against ? { against: sides.against } : {}),
+        turns: e.turns == null ? null : e.turns,
+      });
+      if (e.kind === "freeze" || e.kind === "walnut") frozen.add(e.sq);
+      if (e.kind === "shield") for (const sq of squares) shielded.add(sq);
+      if (e.kind === "barred") {
+        for (const sq of e.squares) blockedSquares.add(sq);
+        const wall = wallLine(e.squares);
+        if (wall) walls.push({ axis: wall.axis, line: wall.line, against: e.against });
+      }
+      // Public marker for a trade-off timer: owner + square + remaining turns.
+      // The delayed OUTCOME (remove vs demote-into) is a hidden future event and
+      // is deliberately not projected.
+      if (e.kind === "timed_loss") timedLoss.push({ owner: e.owner, square: e.sq, turns: e.turns });
+      if (e.kind === "short_leash") shortLeash.push({ owner: e.owner, turns: e.turns });
+    }
+  }
+
+  const pieces: PublicPiece[] = [];
+  for (let sq = 0; sq < 64; sq++) {
+    const p = board.pieces[sq];
+    if (!p) continue;
+    pieces.push({
+      id: squareName(sq),
+      color: p.color,
+      type: p.type,
+      square: sq,
+      ...(frozen.has(sq) ? { frozen: true } : {}),
+      ...(shielded.has(sq) ? { shielded: true } : {}),
+    });
+  }
+
+  const heldOf = (color: Color): PublicHeldBuff[] => {
+    if (!bs) return [];
+    const out: PublicHeldBuff[] = [];
+    for (const inst of bs.players[color].buffs) {
+      const def = BUFF_BY_ID[inst.id];
+      if (!def) continue;
+      out.push({
+        buffId: inst.id,
+        category: String(def.category),
+        tier: inst.tier as number,
+        kind: def.kind,
+        ...(inst.spent ? { spent: true } : {}),
+        ...(inst.nullified ? { nullified: true } : {}),
+        revealed: true,
+      });
+    }
+    return out;
+  };
+
+  // Public rule ids: revealed nerf ids only (never a secret nerf) plus each
+  // active board effect kind. Distinct from desync.activeRuleIds, which folds
+  // in the raw nerf identities and so cannot be shown to a spectator.
+  const ruleIds: string[] = [];
+  if (bits.revealedNerfs.w) ruleIds.push(`w:${bits.revealedNerfs.w}`);
+  if (bits.revealedNerfs.b) ruleIds.push(`b:${bits.revealedNerfs.b}`);
+  if (bs) for (const e of bs.effects) ruleIds.push(`fx:${e.kind}`);
+  ruleIds.sort();
+
+  const activeNerfIds: string[] = [];
+  if (bits.revealedNerfs.w) activeNerfIds.push(bits.revealedNerfs.w);
+  if (bits.revealedNerfs.b) activeNerfIds.push(bits.revealedNerfs.b);
+
+  const offerSeats = bits.offerSeats ?? { w: false, b: false };
+  const phase: SpectatorPhase = game.result
+    ? "over"
+    : bs?.diff
+      ? "chessDiff"
+      : offerSeats.w || offerSeats.b
+        ? "draftPaused"
+        : "active";
+
+  return {
+    gameId: bits.gameId,
+    schemaVersion: PUBLIC_SNAPSHOT_VERSION,
+    replayVersion: bits.replayVersion,
+    stateRevision: bits.stateRevision,
+    lastSeq: bits.lastSeq,
+    capturedAtPly: board.history.length,
+    capturedAtCursor: bits.cursor,
+    capturedAtMs: bits.capturedAtMs,
+
+    mode: bits.mode,
+    rated: bits.rated,
+    players: bits.players,
+
+    board: {
+      dims: { files: 8, ranks: 8 },
+      sideToMove: board.turn,
+      moveNumber: board.history.length,
+      fullmove: board.fullmove,
+      halfmoveClock: board.halfmove,
+      castling: {
+        wK: board.castling.wk,
+        wQ: board.castling.wq,
+        bK: board.castling.bk,
+        bQ: board.castling.bq,
+      },
+      enPassant: board.epTarget,
+      pieces,
+    },
+
+    clocks: {
+      w: bits.clocks.w,
+      b: bits.clocks.b,
+      incrementSec: bits.incrementSec,
+      timeSec: bits.timeSec,
+      timerState: bits.timerState,
+    },
+
+    status: {
+      phase,
+      result: game.result,
+      reason: game.result?.reason ?? null,
+    },
+
+    pieceEvents: {
+      captured: { w: { ...game.captured.w }, b: { ...game.captured.b } },
+      spawned: [],
+      removed: [],
+      transformed: [],
+      duplicated: [],
+    },
+
+    terrain: {
+      blockedSquares: [...blockedSquares].sort((a, b) => a - b),
+      portals: [],
+      walls,
+      squareEffects,
+    },
+
+    activeBuffs: { w: heldOf("w"), b: heldOf("b") },
+    revealedNerfs: bits.revealedNerfs,
+    publicCardHistory: bits.publicCardHistory ?? [],
+
+    draftTiming: {
+      nextDraftAtPly: bits.nextDraftAtPly ?? bs?.nextDraftAtPly ?? null,
+      cadence: bs?.cadence ?? null,
+      offerSeats,
+      diffActive: !!bs?.diff,
+    },
+
+    publicRuleModifiers: {
+      activeNerfIds,
+      extraMoves: bs ? { ...bs.extraMoves } : { w: 0, b: 0 },
+      skips: bs ? { ...bs.skips } : { w: 0, b: 0 },
+      ruleIds,
+    },
+
+    customVictory: { timedLoss, shortLeash },
+
+    animationState: { lastCardPlayId: bits.lastCardPlayId ?? null },
+
+    spectatorDelaySec: bits.spectatorDelaySec ?? 0,
+
+    publicHash: "",
   };
 }
 

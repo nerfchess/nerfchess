@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Eye, Radio } from "lucide-react";
 // TV is a read-only browsing/preview surface (the full interactive + card-VFX
 // experience lives on the spectate page /game/[id]). Rendering the lightweight
@@ -13,17 +13,10 @@ import { HeroBoard } from "@/components/HeroBoard";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
-import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { MPLobbyGame, MPPlayers, MPSession } from "@/lib/multiplayer";
-import {
-  appendFeaturedDraftAction,
-  featuredBoard,
-  featuredDraftFromWatchStart,
-  FeaturedDraft,
-  NOT_A_DRAFT,
-  withFeaturedDraftState,
-} from "@/lib/spectate/featuredBoard";
+import { MPLobbyGame, MPPlayers } from "@/lib/multiplayer";
+import { featuredBoard } from "@/lib/spectate/featuredBoard";
+import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import type { DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
@@ -103,43 +96,21 @@ function TvView() {
 
   const lobby = useLobbySnapshot(5000);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
-  const [streamId, setStreamId] = useState<string | null>(null);
-  const [moves, setMoves] = useState<string[]>([]);
-  const [players, setPlayers] = useState<MPPlayers | null>(null);
-  const [over, setOver] = useState(false);
-  // Public draft-action record for draft (buff) games, so the featured board is
-  // rebuilt through the engine — reproducing board rewrites move-replay can't.
-  const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
-  // Synchronous mirror of the accepted-move count, so a draft action is tagged
-  // with the ply it fired at (the engine interleaves it there on reconstruction).
-  const movesLenRef = useRef(0);
-  // The stream id whose tune-in failed even after a retry, so the board area
-  // shows a brief notice instead of an eternal "Tuning in…" spinner. Keyed by
-  // id (not a boolean) so switching to another game clears it for free, with
-  // no synchronous reset needed inside the watch effect.
-  const [failedStreamId, setFailedStreamId] = useState<string | null>(null);
-  // Bumped on a timer after a tune-in failure so the watch effect re-runs and
-  // tries again on its own — the viewer never has to wait for the featured
-  // game to change.
-  const [retryTick, setRetryTick] = useState(0);
   const [recent, setRecent] = useState<RecentGame | null>(null);
-  // null = fallback not answered yet; the empty state must not show before
-  // BOTH the lobby snapshot and this lookup have resolved ("no games are
-  // being played" used to flash while the replay was still loading).
+  // null = fallback not answered yet; the empty state must not show before this
+  // lookup has resolved ("no games are being played" used to flash while the
+  // replay was still loading). Deliberately NOT gated on the lobby snapshot, so
+  // Buff TV never sits on a spinner while the directory is already available.
   const [recentChecked, setRecentChecked] = useState(false);
 
-  // Switching channels (All / Nerf / Buff) drops everything shown so nothing
-  // from the other pool lingers on screen. Reset on the change during render.
+  // Switching channels (All / Nerf / Buff) drops the recent fallback so nothing
+  // from the other pool lingers. The featured-tune hook resets its own selection
+  // + retry state off the same `resetKey`. Done on the change during render.
+  const channelKey = modeFilter ?? "all";
   const [prevMode, setPrevMode] = useState(modeFilter);
   if (prevMode !== modeFilter) {
     setPrevMode(modeFilter);
     setPinnedId(null);
-    setStreamId(null);
-    setMoves([]);
-    setPlayers(null);
-    setOver(false);
-    setDraft(NOT_A_DRAFT);
-    setFailedStreamId(null);
     setRecent(null);
     setRecentChecked(false);
   }
@@ -150,18 +121,29 @@ function TvView() {
     const filtered = modeFilter ? games.filter((g) => g.mode === modeFilter) : games;
     return sortLiveGames(filtered, sort);
   }, [lobby, modeFilter, sort]);
-  const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
-  // A featured game whose tune-in failed is skipped in favor of the next live
-  // board (a pinned pick is honored — the viewer chose it on purpose).
-  const firstWatchableId =
-    liveGames.find((g) => g.id !== failedStreamId)?.id ?? liveGames[0]?.id ?? null;
-  const targetId = pinnedStillLive ? pinnedId : firstWatchableId;
+  // Eligible candidate ids in ranked order. A lobby game is listed only once it
+  // is a watchable started game with both seats, so mode + rank is all the
+  // directory-level filtering needed; the deeper "snapshot available + supported
+  // version + subscribable" check happens as a real health check inside the tune.
+  const candidateIds = useMemo(() => liveGames.map((g) => g.id), [liveGames]);
   const activeSort = TV_SORTS.find((s) => s.id === sort) ?? TV_SORTS[0];
 
-  // With nothing live, pull the latest finished game (of this channel's mode,
-  // if one is set) once for a replay.
+  // Featured selection + health-checked failover (shared with HeroTv). A pinned
+  // pick is honored while eligible + healthy; anything that fails its health
+  // check is retried with bounded backoff and then skipped in favor of the next
+  // healthy game. `channelKey` fully resets it on a channel switch.
+  const tune = useFeaturedTune(candidateIds, pinnedId, channelKey, {
+    surface: "tv",
+    filter: channelKey,
+  });
+  const { streamId, live, tuneState, slowTune } = tune;
+  const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
+
+  // Pull the latest finished game (of this channel's mode, if one is set) once
+  // for the no-live-games fallback. Runs regardless of the lobby snapshot so the
+  // fallback board is ready fast and the empty state never blocks on the lobby.
   useEffect(() => {
-    if (!lobby || liveGames.length > 0 || recent) return;
+    if (recent) return;
     let cancelled = false;
     fetch(`/api/games/recent${modeFilter ? `?mode=${modeFilter}` : ""}`)
       .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
@@ -176,96 +158,8 @@ function TvView() {
     return () => {
       cancelled = true;
     };
-  }, [lobby, liveGames.length, recent, modeFilter]);
+  }, [recent, modeFilter]);
 
-  // Keep a just-finished game on screen until the lobby offers a replacement.
-  // Derived during render so no extra cascading render is scheduled.
-  const nextStream = targetId ? targetId : over || !streamId ? targetId : streamId;
-  if (nextStream !== streamId) setStreamId(nextStream);
-
-  useEffect(() => {
-    if (!streamId) return;
-    let cancelled = false;
-    const session = new MPSession();
-    session.persistFriendSession = false;
-    // Arena-hosted (OCI bot-vs-bot) games stream from the arena's own socket
-    // (Tier 3). The lobby snapshot that produced streamId keeps the arena id
-    // cache warm, so this check is synchronous.
-    if (isArenaGameId(streamId) && arenaSocketUrl()) session.serverUrl = arenaSocketUrl();
-    const off = session.on((e) => {
-      if (cancelled) return;
-      if (e.type === "watch-start") {
-        movesLenRef.current = e.setup.moves.length;
-        setMoves(e.setup.moves);
-        setPlayers(e.setup.players);
-        setOver(!!e.setup.result);
-        setDraft(featuredDraftFromWatchStart(e.setup));
-      } else if (e.type === "move") {
-        movesLenRef.current = e.move.ply;
-        setMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
-      } else if (e.type === "draft-used") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "used",
-            color: e.used.color,
-            buffIndex: e.used.buffIndex,
-            picks: e.used.picks,
-            card: e.used.card,
-          }),
-        );
-      } else if (e.type === "draft-resolved") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "resolved",
-            color: e.resolved.color,
-            picked: e.resolved.kind === "picked",
-            cards: e.resolved.cards,
-          }),
-        );
-      } else if (e.type === "draft-state") {
-        setDraft((d) => withFeaturedDraftState(d, e.state));
-      } else if (e.type === "end") {
-        setOver(true);
-      }
-    });
-    // Tune in with a single retry: watch() now rejects on a ~10s timeout or a
-    // disconnect (rather than hanging forever), so one clean retry recovers
-    // from a transient miss. Before the retry, re-check where the game lives
-    // with a fresh arena snapshot — a cold or stale arena cache can point the
-    // first attempt at the wrong socket (main DO vs arena), which used to fail
-    // both attempts and strand the page on the "couldn't tune in" notice. If
-    // it still fails, show the notice briefly and re-try on a timer instead of
-    // waiting for the featured game to change.
-    let retryTimer: number | undefined;
-    const tuneIn = (retriesLeft: number) => {
-      session.watch(streamId).catch(async () => {
-        if (cancelled) return;
-        if (retriesLeft > 0) {
-          const arenaHosted = await isArenaGameLive(streamId).catch(() => false);
-          if (cancelled) return;
-          // setServerUrl (not a bare field write): it drops the socket to the
-          // wrong server, so the retry actually dials the right one.
-          session.setServerUrl(arenaHosted && arenaSocketUrl() ? arenaSocketUrl() : null);
-          tuneIn(retriesLeft - 1);
-        } else {
-          setPlayers(null);
-          setFailedStreamId(streamId);
-          retryTimer = window.setTimeout(() => {
-            if (!cancelled) setRetryTick((t) => t + 1);
-          }, 8000);
-        }
-      });
-    };
-    tuneIn(1);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(retryTimer);
-      off();
-      session.destroy();
-    };
-  }, [streamId, retryTick]);
-
-  const live = !!streamId && !!players;
   const recentPlayers = useMemo<MPPlayers | null>(() => {
     if (!recent) return null;
     return {
@@ -282,19 +176,28 @@ function TvView() {
     };
   }, [recent]);
 
+  // Fall back to the recent replay once a live tune has genuinely failed OR is
+  // taking too long (past the short slow-tune threshold) -- not during the first
+  // healthy second of connecting, so a good tune-in doesn't flash the archive.
+  const showRecentFallback = !live && !!recent && (tuneState !== "tuning" || slowTune);
+
   const shownMoves = useMemo(
-    () => (live ? moves : recent?.moves ? recent.moves.split(" ").filter(Boolean) : []),
-    [live, moves, recent],
+    () => (live ? tune.moves : showRecentFallback && recent ? recent.moves.split(" ").filter(Boolean) : []),
+    [live, tune.moves, showRecentFallback, recent],
   );
   const { board, history } = useMemo(
-    () => featuredBoard(live, shownMoves, draft),
-    [live, shownMoves, draft],
+    () => featuredBoard(live, shownMoves, tune.draft),
+    [live, shownMoves, tune.draft],
   );
   const lastMove = history[history.length - 1] ?? null;
 
-  const shownId = live ? streamId : recent?.id ?? null;
-  const shownPlayers = live ? players : recentPlayers;
+  const shownId = live ? streamId : showRecentFallback ? recent?.id ?? null : null;
+  const shownPlayers = live ? tune.players : showRecentFallback ? recentPlayers : null;
   const shownLobbyGame = liveGames.find((g) => g.id === shownId);
+  const over = tune.over;
+  // Show a small, nonblocking failover notice: the current candidate failed its
+  // health check but the directory is still updating and we are moving on.
+  const failoverNotice = tuneState === "failed" || (tuneState === "tuning" && slowTune && !shownPlayers);
 
   const title = modeFilter === "nerf" ? "Nerf TV" : modeFilter === "buff" ? "Buff TV" : "Nerf Chess TV";
   const titleColor =
@@ -364,22 +267,38 @@ function TvView() {
               </span>
             </div>
             {shownId && shownPlayers ? (
-              <HeroBoard board={board} lastMove={lastMove} />
-            ) : streamId && failedStreamId === streamId ? (
-              /* Tune-in failed after a retry: don't spin forever. The featured
-                 game stays selected (the lobby may recover it, or the viewer can
-                 pick another), but the board area shows a brief notice. */
+              <div className="relative">
+                <HeroBoard board={board} lastMove={lastMove} />
+                {failoverNotice && (
+                  /* Nonblocking: the live candidate failed its health check, so
+                     we fell back / are moving on. The board stays visible and the
+                     directory keeps updating. */
+                  <p className="absolute inset-x-0 top-0 bg-black/60 px-3 py-1 text-center smallcaps text-[10px] text-parchment-200">
+                    Couldn&apos;t tune in to a live game. Showing another; the list keeps updating.
+                  </p>
+                )}
+              </div>
+            ) : tuneState === "empty" && recentChecked && !recent ? (
               <div className="grid aspect-square w-full place-items-center plate">
                 <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
-                  Couldn&apos;t tune in to that game. Retrying automatically. You can
-                  also pick another game from the list.
+                  No {modeFilter ? (modeFilter === "nerf" ? "Nerf " : "Buff ") : ""}games are being
+                  played right now. Start one from the lobby and it will show up here.
                 </p>
               </div>
-            ) : !lobby || !recentChecked ? (
-              /* Tuning in: covers BOTH the first lobby snapshot AND the
-                 recent-game fallback lookup. The empty state only ever shows
-                 once both have answered and there is genuinely nothing to
-                 screen — no more "no games" flashing before a replay loads. */
+            ) : failoverNotice || (tuneState === "tuning" && slowTune) ? (
+              /* Health check failed (or is taking too long) with no fallback to
+                 show: a brief notice instead of an eternal "Tuning in…" spinner.
+                 Selection auto-advances to the next healthy game on its own. */
+              <div className="grid aspect-square w-full place-items-center plate">
+                <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
+                  Couldn&apos;t tune in to a live game right now. Trying the next one
+                  automatically. You can also pick a game from the list.
+                </p>
+              </div>
+            ) : (
+              /* Genuine initial load, before the first snapshot / recent lookup
+                 has answered. Bounded by the short slow-tune threshold above so
+                 it can never spin forever. */
               <div className="grid aspect-square w-full place-items-center plate">
                 <div className="relative flex flex-col items-center gap-3">
                   <span className="tv-tuning-ring" aria-hidden />
@@ -388,13 +307,6 @@ function TvView() {
                   <div className="skeleton h-2 w-20" />
                   <p className="smallcaps text-[10px] text-parchment-400">Tuning in…</p>
                 </div>
-              </div>
-            ) : (
-              <div className="grid aspect-square w-full place-items-center plate">
-                <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
-                  No {modeFilter ? (modeFilter === "nerf" ? "Nerf " : "Buff ") : ""}games are being
-                  played right now. Start one from the lobby and it will show up here.
-                </p>
               </div>
             )}
             <div className="flex items-center justify-between">
@@ -480,7 +392,14 @@ function TvView() {
                   {liveGames.map((g: MPLobbyGame) => (
                     <li key={g.id}>
                       <button
-                        onClick={() => setPinnedId(g.id)}
+                        onClick={() => {
+                          // Manual selection uses the identical validation +
+                          // recovery path: give a re-picked game a fresh set of
+                          // health-check retries rather than honoring a stale
+                          // "unhealthy" mark.
+                          tune.clearFailed(g.id);
+                          setPinnedId(g.id);
+                        }}
                         className={
                           "block w-full px-4 py-2.5 text-left transition-colors hover:bg-white/5 " +
                           (g.id === shownId ? "bg-white/5" : "")
