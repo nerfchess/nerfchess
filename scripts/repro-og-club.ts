@@ -85,22 +85,43 @@ function seedHouseUsers(db: DatabaseSync, skip: Set<string> = new Set()): void {
   }
 }
 
-/** Ported verbatim from ensureOgClub (src/lib/server/bots.ts). */
+/** The id of whichever club holds OG_CLUB_SLUG (the detail route resolves the
+ * club by slug, so every read below does too). undefined if none exists yet. */
+function ogClubIdBySlug(db: DatabaseSync): string | undefined {
+  const row = db.prepare("SELECT id FROM clubs WHERE slug = ?").get(OG_CLUB_SLUG) as { id: string } | undefined;
+  return row?.id;
+}
+
+/** Ported verbatim from ensureOgClub (src/lib/server/bots.ts): resolve the club
+ * by slug and ADOPT a pre-existing one (a user-made club with the same slug),
+ * enrolling the bots as plain members without touching its owner/identity. */
 function ensureOgClub(db: DatabaseSync): void {
   const now = Date.now();
   const { owner, members } = ogClubMembers();
-  db.prepare(
-    `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now);
-  const row = db.prepare("SELECT id FROM clubs WHERE id = ?").get(OG_CLUB_ID) as { id: string } | undefined;
-  if (!row) return;
+  let target = db
+    .prepare("SELECT id, owner_user_id FROM clubs WHERE slug = ?")
+    .get(OG_CLUB_SLUG) as { id: string; owner_user_id: string } | undefined;
+  if (!target) {
+    db.prepare(
+      `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now);
+    target = db
+      .prepare("SELECT id, owner_user_id FROM clubs WHERE slug = ?")
+      .get(OG_CLUB_SLUG) as { id: string; owner_user_id: string } | undefined;
+    if (!target) return;
+  }
+  const isOurClub = target.id === OG_CLUB_ID && target.owner_user_id === owner.userId;
+  const clubId = target.id;
+  const clubOwnerId = target.owner_user_id;
   const insM = db.prepare(
     `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
   );
   for (const p of members) {
+    // Never write a membership row for the adopted club's existing owner.
+    if (!isOurClub && p.userId === clubOwnerId) continue;
     try {
-      insM.run(OG_CLUB_ID, p.userId, p.userId === owner.userId ? "owner" : "member", now);
+      insM.run(clubId, p.userId, isOurClub && p.userId === owner.userId ? "owner" : "member", now);
     } catch {
       // FK violation when the persona has no users row yet — silently skipped,
       // exactly what INSERT OR IGNORE + a failed batch does in production.
@@ -108,19 +129,25 @@ function ensureOgClub(db: DatabaseSync): void {
   }
 }
 
-/** Ported self-healing counter proposed by the fix: club_members rows for the OG
- * club whose user_id resolves to a live users row. */
+/** Ported self-healing counter proposed by the fix: club_members rows for the
+ * club that HOLDS THE SLUG whose user_id resolves to a live users row. 0 when no
+ * club holds the slug yet (so the seed runs and creates it). */
 function countOgClubMembers(db: DatabaseSync): number {
+  const clubId = ogClubIdBySlug(db);
+  if (!clubId) return 0;
   const row = db
     .prepare(
       `SELECT COUNT(*) AS n FROM club_members cm JOIN users u ON u.id = cm.user_id WHERE cm.club_id = ?`,
     )
-    .get(OG_CLUB_ID) as { n: number };
+    .get(clubId) as { n: number };
   return row.n;
 }
 
-/** The EXACT members SELECT from the club detail route (route.ts GET). */
+/** The EXACT members SELECT from the club detail route (route.ts GET): resolve
+ * the club by slug, then select its members. */
 function detailRouteMembers(db: DatabaseSync): unknown[] {
+  const clubId = ogClubIdBySlug(db);
+  if (!clubId) return [];
   return db
     .prepare(
       `SELECT cm.user_id, u.username, u.avatar, ${bestLiveRatingSql("u")} AS rating,
@@ -130,12 +157,14 @@ function detailRouteMembers(db: DatabaseSync): unknown[] {
        ORDER BY rating DESC
        LIMIT 200`,
     )
-    .all(OG_CLUB_ID);
+    .all(clubId);
 }
 
 // Raw club_members count (ignoring whether the user exists) for contrast.
 function rawMemberRows(db: DatabaseSync): number {
-  const row = db.prepare(`SELECT COUNT(*) AS n FROM club_members WHERE club_id = ?`).get(OG_CLUB_ID) as {
+  const clubId = ogClubIdBySlug(db);
+  if (!clubId) return 0;
+  const row = db.prepare(`SELECT COUNT(*) AS n FROM club_members WHERE club_id = ?`).get(clubId) as {
     n: number;
   };
   return row.n;
@@ -221,6 +250,77 @@ console.log("=".repeat(70));
   // Idempotency: a further cold start must not duplicate or grow the set.
   if (countOgClubMembers(db) < expected) ensureOgClub(db);
   console.log(`  after extra cold start:       ${detailRouteMembers(db).length} (idempotent)`);
+}
+
+// ---------------------------------------------------------------------------
+// ADOPT A USER-MADE CLUB — the real live bug.
+// A REAL USER created a club named "OG NERFCHESS USERS" with slug
+// "og-nerfchess-users" but a DIFFERENT id and their own (non-bot) owner, BEFORE
+// the seed ever ran. Because clubs.slug is NOT NULL UNIQUE, the old seed's
+// INSERT OR IGNORE by OG_CLUB_ID conflicted on the slug and was ignored, its
+// own id never got a row, and no bots were ever enrolled. The fix ADOPTS the
+// club that holds the slug: bots join IT as plain members, its owner row is
+// preserved (not duplicated, not downgraded), and the whole thing is idempotent.
+// ---------------------------------------------------------------------------
+{
+  console.log("\nADOPT USER-MADE CLUB  (different id + real owner, same slug)");
+  const db = freshDb(true);
+  seedHouseUsers(db);
+  const now = Date.now();
+
+  // The real user and their club, created exactly as the POST /api/clubs route
+  // does: a random id, a non-bot owner, and an 'owner' club_members row.
+  const realOwnerId = "u_ilovenewjeans";
+  db.prepare(
+    `INSERT INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
+     VALUES (?, ?, ?, ?, ?, ?, ${HOUSE_SEED_RD}, ${HOUSE_SEED_VOL}, NULL, NULL)`,
+  ).run(realOwnerId, "ilovenewjeans", "ilovenewjeans", "unusable", now, 1500);
+  const userClubId = "club_user_made_abc123"; // different from OG_CLUB_ID
+  db.prepare(
+    `INSERT INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(userClubId, OG_CLUB_SLUG, OG_CLUB_NAME, ":) before the game goes viral", "", realOwnerId, "ilovenewjeans", now);
+  db.prepare(
+    `INSERT INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)`,
+  ).run(userClubId, realOwnerId, now);
+
+  const ownerPersonaId = ogClubMembers().owner.userId; // apexpawn
+
+  const before = detailRouteMembers(db).length;
+  // Self-healing gate, run every cold start.
+  for (let coldStart = 0; coldStart < 3; coldStart++) {
+    if (countOgClubMembers(db) < expected) ensureOgClub(db);
+  }
+  const rows = detailRouteMembers(db) as Array<{ user_id: string; role: string }>;
+  const adoptedId = ogClubIdBySlug(db);
+  const ownerRows = rows.filter((m) => m.role === "owner");
+  const realOwnerRows = rows.filter((m) => m.user_id === realOwnerId);
+  const apexRows = rows.filter((m) => m.user_id === ownerPersonaId);
+
+  console.log(`  club holding the slug:        ${adoptedId}  (user-made, id preserved)`);
+  console.log(`  members before heal:          ${before}   (just the real owner)`);
+  console.log(`  detail-route SELECT members:  ${rows.length}   <-- live site shows this`);
+  console.log(`  owner rows (must stay 1):     ${ownerRows.length}  -> ${ownerRows.map((m) => m.user_id).join(", ")}`);
+  console.log(`  apexpawn joined as:           ${apexRows.map((m) => m.role).join(", ") || "(absent)"}`);
+  // Idempotency: another cold start must not grow or duplicate.
+  if (countOgClubMembers(db) < expected) ensureOgClub(db);
+  const afterExtra = detailRouteMembers(db).length;
+  console.log(`  after extra cold start:       ${afterExtra} (idempotent)`);
+
+  const fails: string[] = [];
+  if (adoptedId !== userClubId) fails.push(`bots enrolled into the wrong club (${adoptedId}), not the user's (${userClubId})`);
+  if (before !== 1) fails.push(`expected 1 member (the real owner) before heal, got ${before}`);
+  if (rows.length !== expected + 1) fails.push(`expected ${expected + 1} members (real owner + ${expected} bots) after heal, got ${rows.length}`);
+  if (ownerRows.length !== 1) fails.push(`expected exactly 1 owner, got ${ownerRows.length}`);
+  if (realOwnerRows.length !== 1) fails.push(`real owner row missing or duplicated (${realOwnerRows.length})`);
+  if (ownerRows[0]?.user_id !== realOwnerId) fails.push(`owner is not the real owner (${ownerRows[0]?.user_id})`);
+  if (apexRows.length !== 1 || apexRows[0]?.role !== "member") fails.push(`apexpawn must be a plain member, got ${apexRows.map((m) => m.role).join(",") || "(absent)"}`);
+  if (afterExtra !== expected + 1) fails.push(`re-run was not idempotent (${afterExtra})`);
+  if (fails.length) {
+    console.error(`FAIL (adopt user club):\n  - ${fails.join("\n  - ")}`);
+    process.exit(1);
+  }
+  console.log(`  PASS: bots adopted the user-made club (1 -> ${expected + 1}), owner preserved, idempotent.`);
 }
 
 // ---------------------------------------------------------------------------
