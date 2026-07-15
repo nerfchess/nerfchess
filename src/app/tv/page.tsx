@@ -386,6 +386,30 @@ function TvView() {
         )}
       </div>
     );
+  } else if (lobbyFailed) {
+    // The lobby poller is in its failed state: the featured panel shows the
+    // SAME unreachable-error framing as the rail (never a false "no games are
+    // live" claim), with a Retry that reuses the rail's reload. The empty state
+    // below is reserved for a HEALTHY poller that returned zero games.
+    boardRegion = (
+      <div role="alert" className="grid aspect-square w-full place-items-center plate p-6">
+        <div className="flex max-w-sm flex-col items-center text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.03]">
+            <Radio size={40} className="text-parchment-400" aria-hidden />
+          </div>
+          <p className="mt-4 text-[15px] font-display font-semibold text-parchment-100">
+            Can&apos;t reach the game server, so the live game can&apos;t load.
+          </p>
+          <button
+            type="button"
+            onClick={reloadLobby}
+            className="press mt-5 inline-flex min-h-[44px] items-center rounded-sm border border-[color:var(--edge)] bg-white/[0.03] px-4 py-2 font-display text-[13px] font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100 sm:min-h-[36px]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   } else if (tuneState === "empty" && recentChecked && !recent) {
     boardRegion = (
       <div className="grid aspect-square w-full place-items-center plate p-6">
@@ -505,26 +529,29 @@ function TvView() {
               {/* Board */}
               <div className="mx-auto mt-3 w-full max-w-[560px]">{boardRegion}</div>
 
-              {/* Below-board bar */}
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <span className="min-w-0 truncate text-[12px] text-parchment-400">
-                  {hasBoard
-                    ? pinnedStillLive && streamId === pinnedId
+              {/* Below-board bar: only rendered when a board is actually
+                  showing. The "Featuring the most-watched live game" caption
+                  must never sit under an empty or error state (it would make a
+                  false "there is a game" claim). */}
+              {hasBoard && (
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-[12px] text-parchment-400">
+                    {pinnedStillLive && streamId === pinnedId
                       ? "You pinned this game."
                       : live
                         ? `Featuring ${activeSort.reason}.`
-                        : "Latest finished game."
-                    : `Featuring ${activeSort.reason}${modeFilter ? ` in the ${modeFilter === "nerf" ? "Nerf" : "Buff"} pool` : ""}.`}
-                </span>
-                {shownId && (
-                  <Link
-                    href={`/game/${shownId}`}
-                    className="shrink-0 font-display text-[13px] text-gold-leaf transition hover:underline"
-                  >
-                    {live && !over ? "Open with chat →" : "Open replay →"}
-                  </Link>
-                )}
-              </div>
+                        : "Latest finished game."}
+                  </span>
+                  {shownId && (
+                    <Link
+                      href={`/game/${shownId}`}
+                      className="shrink-0 font-display text-[13px] text-gold-leaf transition hover:underline"
+                    >
+                      {live && !over ? "Open with chat →" : "Open replay →"}
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

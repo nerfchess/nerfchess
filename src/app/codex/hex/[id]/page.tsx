@@ -40,8 +40,7 @@ export default function HexCardPage({ params }: { params: { id: string } }) {
   if (!buff || buffType(buff) !== "Hex") notFound();
   return (
     <>
-      <BuffDetail buff={buff} />
-      <AffectedPieces kind="buff" card={buff} />
+      <BuffDetail buff={buff} extra={<AffectedPieces kind="buff" card={buff} />} />
     </>
   );
 }

@@ -40,8 +40,7 @@ export default async function NerfCardPage(props: { params: Promise<{ id: string
   if (!nerf) notFound();
   return (
     <>
-      <NerfDetail nerf={nerf} />
-      <AffectedPieces kind="nerf" card={nerf} />
+      <NerfDetail nerf={nerf} extra={<AffectedPieces kind="nerf" card={nerf} />} />
     </>
   );
 }

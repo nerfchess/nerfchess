@@ -63,8 +63,7 @@ export default async function BuffCardPage(props: { params: Promise<{ id: string
           </div>
         </div>
       )}
-      <BuffDetail buff={buff} />
-      <AffectedPieces kind="buff" card={buff} />
+      <BuffDetail buff={buff} extra={<AffectedPieces kind="buff" card={buff} />} />
       {/* The one card that literally links out: Check Out Our Socials shows the
           real accounts right on its codex page. */}
       {buff.id === "check_out_our_socials" && (

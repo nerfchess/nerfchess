@@ -27,6 +27,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
   ssr: false,
 });
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { FxToggleButton } from "@/components/FxToggleButton";
@@ -2430,9 +2431,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     >
       <ConnectionBanner session={session} />
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
+        {/* Wordmark + collapsed nav menu: design system §9 keeps every global
+            destination reachable from the in-game bar (the menu shows on desktop
+            too via hideAt="none"), compacted rather than dropped. Plain links,
+            no confirm traps -- the live game keeps running server-side. */}
+        <div className="flex items-center gap-2">
+          <MobileNavMenu align="left" hideAt="none" />
+          <Link href="/" className="font-display text-2xl tracking-tight">
+            nerf<span className="text-gold-leaf">chess</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
           <div className="smallcaps hidden text-[12px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}

@@ -579,6 +579,26 @@ export function SiteHeader({ active }: { active?: string }) {
   );
 }
 
+// Compact top-bar variant for game surfaces (design system §9: game pages may
+// COMPACT the top nav, never replace it). The wordmark, the collapsed nav menu
+// (the MobileNavMenu trigger, kept visible on desktop too via hideAt="none", so
+// every global destination stays one tap away), and an optional game status
+// line. Plain links only, no confirm traps: nothing here can drop a live game
+// by accident, and everything the full header reaches is still reachable.
+export function CompactSiteHeader({ status }: { status?: React.ReactNode }) {
+  return (
+    <nav className="site-nav seam-edge-b flex items-center gap-3 px-4 sm:px-6 py-3">
+      <MobileNavMenu align="left" hideAt="none" />
+      <Logo />
+      {status && (
+        <div className="ml-auto flex min-w-0 items-center gap-x-3 text-[12px] text-parchment-400">
+          {status}
+        </div>
+      )}
+    </nav>
+  );
+}
+
 // Shown when a moderator flagged this account's username: the account (and
 // its ratings, games, achievements) is intact, but a new name is required.
 // Inline so the fix is one field away instead of a support ticket.

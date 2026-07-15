@@ -13,6 +13,7 @@ import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { GameOver, type TimelineCardEvent } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
+import { CompactSiteHeader } from "@/components/SiteHeader";
 import { moveFromUCI, moveToUCI } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, legalMoves } from "@/engine/game";
@@ -374,10 +375,10 @@ export default function OnlineGamePage() {
         <SiteNav />
         <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="smallcaps text-[11px] text-parchment-400">
+            <div className="smallcaps text-[12px] text-parchment-400">
               {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
             </div>
-            <div className="font-mono text-[11px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
+            <div className="font-mono text-[12px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
           </div>
           {slowConnect && (
             <div
@@ -976,7 +977,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       (inst.spent || inst.nullified ? "opacity-40" : "")
                     }
                   >
-                    <span className={`font-display text-[11px] font-bold tier-${inst.tier}`}>
+                    <span className={`font-display text-[12px] font-bold tier-${inst.tier}`}>
                       {TIER_ROMAN[inst.tier]}
                     </span>
                   </span>
@@ -1010,7 +1011,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       {def.name}
                     </span>
                     <span
-                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[11px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
                     >
                       {TIER_ROMAN[inst.tier]}
                     </span>
@@ -1520,7 +1521,14 @@ function GameShell({
     );
   return (
     <main className="min-h-screen">
-      <SiteNav />
+      <SiteNav
+        status={
+          <>
+            {stateBadge}
+            {statusLabel && <span className="truncate text-parchment-300">{statusLabel}</span>}
+          </>
+        }
+      />
       <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
         {/* Featured-game header pattern, shared with TV: identity units, state
             badge, mode chip, time control, watcher count, then the descriptive
@@ -1620,26 +1628,10 @@ function GameShell({
   );
 }
 
-// Reduced navigation for watch/replay views: the wordmark home, a way back
-// to TV (the page most watchers came from), and the lobby. Kept slim so the
-// board stays the star, but never a dead end.
-function SiteNav() {
-  return (
-    <nav className="flex items-center justify-between gap-2 px-4 sm:px-10 py-5">
-      <Link href="/" className="shrink-0 font-display text-xl sm:text-2xl tracking-tight">
-        nerf<span className="text-gold-leaf">chess</span>
-      </Link>
-      <div className="flex items-center gap-0.5 sm:gap-1">
-        <Link href="/tv" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-gold-leaf whitespace-nowrap">
-          Back to TV
-        </Link>
-        <Link href="/lobby" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
-          Lobby
-        </Link>
-        <Link href="/play" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
-          Play
-        </Link>
-      </div>
-    </nav>
-  );
+// Compact game top bar (design system §9): the standard nav, compacted rather
+// than replaced. Every global destination stays reachable behind the collapsed
+// menu (kept visible on desktop too), so a watcher/replayer never dead-ends on
+// a three-link stub. `status` carries the game state line into the bar.
+function SiteNav({ status }: { status?: React.ReactNode } = {}) {
+  return <CompactSiteHeader status={status} />;
 }

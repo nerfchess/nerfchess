@@ -197,7 +197,7 @@ export function TargetingBanner({
         </span>
         {picked > 0 && (
           <span
-            className="shrink-0 rounded-full border border-white/20 bg-white/[0.08] px-2 py-0.5 font-mono text-[10px] tabular-nums text-parchment-200"
+            className="shrink-0 rounded-full border border-[color:var(--edge-strong)] bg-white/[0.08] px-2 py-0.5 font-mono text-[12px] tabular-nums text-parchment-200"
             title={`${picked} target${picked === 1 ? "" : "s"} picked so far`}
           >
             {picked} picked
@@ -206,7 +206,7 @@ export function TargetingBanner({
         {finishable && onFinish && (
           <button
             onClick={onFinish}
-            className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[10px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
+            className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[14px] sm:text-[13px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
             title="Fire now with the targets picked so far (the rest are forfeited)"
           >
             Done
@@ -214,7 +214,7 @@ export function TargetingBanner({
         )}
         <button
           onClick={onCancel}
-          className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[10px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
+          className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-coral/40 bg-coral/10 px-3 py-1 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
           Cancel <span className="text-coral-glow/60">Esc</span>
         </button>
@@ -257,7 +257,7 @@ export function EnemyBuffModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm px-4 py-6">
       <div className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto">
-        <div className="smallcaps text-[11px] text-parchment-400">{buffName}</div>
+        <div className="smallcaps text-[12px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>
 
         {target.options.length === 0 ? (
@@ -275,7 +275,7 @@ export function EnemyBuffModal({
                   {def ? (
                     <BuffCard buff={def} tier={opt.tier as 1} compact />
                   ) : (
-                    <span className="flex items-center justify-between border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-parchment">
+                    <span className="flex items-center justify-between border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-sm text-parchment">
                       Hidden buff
                       <span className="font-display text-xs text-parchment-400">
                         Tier {TIER_ROMAN[opt.tier as Tier]}
@@ -290,7 +290,7 @@ export function EnemyBuffModal({
 
         <button
           onClick={onCancel}
-          className="mt-4 w-full rounded-[1px] border border-coral/40 bg-coral/10 px-3 py-2 font-display text-xs font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
+          className="mt-4 w-full rounded-[1px] border border-coral/40 bg-coral/10 px-3 py-2 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide text-coral-glow transition hover:bg-coral/20"
         >
           Cancel
         </button>
@@ -334,15 +334,15 @@ function DockSectionHeader({
         aria-hidden
         className={
           "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[1px] border " +
-          (a ? a.chip : "border-white/15 bg-white/[0.05] text-parchment-400")
+          (a ? a.chip : "border-[color:var(--edge)] bg-white/[0.05] text-parchment-400")
         }
       >
         <Icon size={11} strokeWidth={2.4} />
       </span>
-      <span className={"smallcaps min-w-0 truncate text-[10px] " + (a ? a.label : "text-parchment-400")}>
+      <span className={"smallcaps min-w-0 truncate text-[12px] " + (a ? a.label : "text-parchment-400")}>
         {label}
       </span>
-      <span className="ml-auto shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
+      <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
         {count}
       </span>
     </div>
@@ -392,7 +392,7 @@ function LatestHoverName({
             {name}
             <span className="ml-1.5 text-parchment-400">{TIER_ROMAN[tier]}</span>
           </span>
-          <span className="mt-1 block text-[10px] font-normal normal-case leading-snug tracking-normal text-parchment-300">
+          <span className="mt-1 block text-[12px] font-normal normal-case leading-snug tracking-normal text-parchment-300">
             {description}
           </span>
         </span>
@@ -407,11 +407,11 @@ function LatestHoverName({
  * copy instead) so the mark always beats the dimming. */
 function UsedBadge({ nullified }: { nullified: boolean }) {
   return nullified ? (
-    <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-1 py-px text-[8px] font-semibold text-oxblood-glow">
+    <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow">
       Nullified
     </span>
   ) : (
-    <span className="smallcaps shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[8px] font-semibold text-parchment-200">
+    <span className="smallcaps shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[12px] font-semibold text-parchment-200">
       Used
     </span>
   );
@@ -424,7 +424,7 @@ function UsedBadge({ nullified }: { nullified: boolean }) {
 function UsedDivider() {
   return (
     <div className="flex items-center gap-2 pt-1">
-      <span className="smallcaps text-[8px] font-semibold text-parchment-500">Used</span>
+      <span className="smallcaps text-[12px] font-semibold text-parchment-500">Used</span>
       <span aria-hidden className="divider-gilt" />
     </div>
   );
@@ -696,10 +696,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         className={
           "dock-card relative overflow-hidden rounded-[1px] border transition-transform duration-100 " +
           (dead
-            ? "border-white/10 bg-white/[0.012] "
+            ? "border-[color:var(--edge)] bg-white/[0.012] "
             : usable
             ? "border-verdigris-glow/40 bg-verdigris/[0.06] "
-            : "border-white/10 bg-white/[0.02] ")
+            : "border-[color:var(--edge)] bg-white/[0.02] ")
         }
       >
         {/* Usable accent: a solid left edge marks the rows you can act on
@@ -754,13 +754,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           )}
           <TurnCostBadge cost={turnCost(def)} short />
           {usable && (
-            <span className="smallcaps shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[8px] font-semibold text-verdigris-glow">
+            <span className="smallcaps shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[12px] font-semibold text-verdigris-glow">
               Usable
             </span>
           )}
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
-            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
             {TIER_ROMAN[inst.tier]}
           </span>
@@ -768,13 +768,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {open && (
           <div className="px-2 pb-1.5">
             {status && (
-              <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[8px] text-gold/80">
+              <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[12px] text-gold/80">
                 {status}
               </div>
             )}
             {/* Full description, always readable without hovering; spent cards
                 fade their copy so the live rows carry the eye. */}
-            <p className={"text-[10px] leading-snug text-parchment-300"}>
+            <p className={"text-[12px] leading-snug text-parchment-300"}>
               {def.description}
             </p>
             {activatable &&
@@ -797,8 +797,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   }}
                   onClick={() => onStartUse(i)}
                   // Thumb-sized below sm (44px is the touch floor); compact on
-                  // desktop where the pointer is precise.
-                  className="btn-glass btn-glass--primary mt-1.5 touch-manipulation px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs sm:cursor-grab sm:active:cursor-grabbing"
+                  // desktop where the pointer is precise. btn-leaf, not the
+                  // frosted btn-glass: this Use control rests in the dock for the
+                  // whole game, and resting glass is reserved for the draft
+                  // lock-in peak only (design system §5).
+                  className="btn-leaf mt-1.5 touch-manipulation px-2.5 py-1 font-display text-[13px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px] sm:cursor-grab sm:active:cursor-grabbing"
                 >
                   Use
                 </button>
@@ -807,7 +810,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   type="button"
                   disabled
                   title="Your turn only"
-                  className="mt-1.5 cursor-not-allowed rounded-[1px] border border-white/10 bg-white/[0.03] px-2.5 py-1 font-display text-[10px] tracking-wide text-parchment-400 max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-xs"
+                  className="mt-1.5 cursor-not-allowed rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 font-display text-[13px] tracking-wide text-parchment-400 max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px]"
                 >
                   Use
                 </button>
@@ -834,7 +837,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
         className={
-          "dock-card relative w-full overflow-hidden rounded-[1px] border border-white/10 " +
+          "dock-card relative w-full overflow-hidden rounded-[1px] border border-[color:var(--edge)] " +
           (dead ? "bg-white/[0.012]" : "bg-white/[0.02]")
         }
       >
@@ -877,14 +880,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           <TurnCostBadge cost={turnCost(def)} short />
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
-            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[10px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
           >
             {TIER_ROMAN[inst.tier]}
           </span>
         </button>
         {open && (
           /* Rule text on demand: what a revealed card does is one click away. */
-          <p className={"px-2 pb-1.5 text-[11px] leading-snug text-parchment-300"}>
+          <p className={"px-2 pb-1.5 text-[12px] leading-snug text-parchment-300"}>
             {def.description}
           </p>
         )}
@@ -908,7 +911,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 ? "border-oxblood-glow/40 bg-oxblood/10"
                 : draftMovesLeft === 0
                 ? "border-gold/50 bg-gold/10"
-                : "border-white/10 bg-white/[0.03]")
+                : "border-[color:var(--edge)] bg-white/[0.03]")
             }
           >
             <Hourglass
@@ -919,7 +922,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             />
             <span
               className={
-                "smallcaps min-w-0 truncate text-[9px] " +
+                "smallcaps min-w-0 truncate text-[12px] " +
                 (myDraftBlocked
                   ? "text-oxblood-glow"
                   : draftMovesLeft === 0
@@ -940,16 +943,16 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {/* Latest pick slot: your newest card stays visible here; the
             opponent's side shows a face-down card while hidden. */}
         {(lastMine || lastTheirs) && (
-          <div className="sticky top-0 z-10 -mx-3 border-b border-white/10 bg-inherit px-3 pb-2 pt-2">
+          <div className="sticky top-0 z-10 -mx-3 border-b border-[color:var(--edge)] bg-inherit px-3 pb-2 pt-2">
             {/* The pocket: a rounded slot that flashes a brief mint/sun glow
                 whenever a fresh card lands (keying by the card counts remounts
                 it, replaying the one-shot CSS animation). */}
             <div
               key={`pocket-${mine.length}-${theirs.length}`}
-              className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-white/10 bg-white/[0.03] px-2 py-1.5"
+              className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1.5"
             >
               <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
-              <span className="smallcaps shrink-0 text-[9px] text-sun/90">Latest</span>
+              <span className="smallcaps shrink-0 text-[12px] text-sun/90">Latest</span>
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
@@ -962,7 +965,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   name={lastMineDef?.name ?? "Banked"}
                   tier={lastMine.tier}
                   description={lastMineDef?.description}
-                  className={`truncate font-display text-[11px] font-semibold tier-${lastMine.tier}`}
+                  className={`truncate font-display text-[12px] font-semibold tier-${lastMine.tier}`}
                 />
               </motion.span>
             )}
@@ -979,7 +982,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   name={BUFF_BY_ID[lastTheirs.id]?.name ?? "Hidden"}
                   tier={lastTheirs.tier}
                   description={BUFF_BY_ID[lastTheirs.id]?.description}
-                  className={`truncate font-display text-[11px] tier-${lastTheirs.tier}`}
+                  className={`truncate font-display text-[12px] tier-${lastTheirs.tier}`}
                 />
               </motion.span>
             )}
@@ -1000,7 +1003,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             className="flex items-center gap-2 rounded-[1px] border border-gold/50 bg-gold/10 px-2 py-1.5"
           >
             <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
-            <span className="font-display text-[11px] font-semibold text-gold-leaf">
+            <span className="font-display text-[12px] font-semibold text-gold-leaf">
               Next draft: you take BOTH cards
             </span>
           </div>
@@ -1055,27 +1058,27 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                       {t ? (
                         <span
                           title={pliesTitle(row.left)}
-                          className="smallcaps shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px text-[8px] font-semibold text-parchment-300"
+                          className="smallcaps shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px text-[12px] font-semibold text-parchment-300"
                         >
                           {row.left}
                         </span>
                       ) : (
                         <span
                           title={pliesTitle(row.left)}
-                          className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[8px] font-semibold text-oxblood-glow"
+                          className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1.5 py-px text-[12px] font-semibold text-oxblood-glow"
                         >
                           {row.left}
                         </span>
                       )}
                       {t && (
                         <span
-                          className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${t} tier-${t}`}
+                          className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${t} tier-${t}`}
                         >
                           {TIER_ROMAN[t]}
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[10px] leading-snug text-parchment-300">{row.detail}</p>
+                    <p className="mt-0.5 text-[12px] leading-snug text-parchment-300">{row.detail}</p>
                   </motion.div>
                 );
               })}
@@ -1091,7 +1094,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         />
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
-        {mine.length === 0 && <p className="text-[11px] text-parchment-400">None yet.</p>}
+        {mine.length === 0 && <p className="text-[12px] text-parchment-400">None yet.</p>}
         {/* A thin mint spine brackets your arsenal so "these are mine" is
             unmistakable next to the opponent's coral rows. Live cards sit up
             top; your spent ones gather under a "Used" rule at the foot of the
@@ -1110,7 +1113,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
 
         {theirsShown.length > 0 && (
           <>
-            <div className="border-t border-white/10 pt-2">
+            <div className="border-t border-[color:var(--edge)] pt-2">
               <DockSectionHeader
                 icon={Swords}
                 label={`Opponent's ${nounPlural}`}
@@ -1150,7 +1153,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             className="flex items-center gap-2 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/10 px-2 py-1.5"
           >
             <Ban aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-oxblood-glow" />
-            <span className="smallcaps min-w-0 flex-1 truncate text-[9px] text-oxblood-glow">
+            <span className="smallcaps min-w-0 flex-1 truncate text-[12px] text-oxblood-glow">
               {oppDraftBlocked === 1
                 ? "Opponent's next draft blocked"
                 : `Opponent's next ${oppDraftBlocked} drafts blocked`}
@@ -1162,7 +1165,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   aria-hidden
                   className="relative flex h-6 w-[18px] items-center justify-center rounded-[1px] border border-oxblood-glow/40 bg-ink-950"
                 >
-                  <span className="absolute inset-[2px] rounded-[1px] border border-white/10" />
+                  <span className="absolute inset-[2px] rounded-[1px] border border-[color:var(--edge)]" />
                   <span className="absolute inset-x-[2px] top-1/2 h-px bg-oxblood-glow/80" />
                 </span>
               ))}

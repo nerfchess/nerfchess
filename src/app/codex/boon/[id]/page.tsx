@@ -40,8 +40,7 @@ export default function BoonCardPage({ params }: { params: { id: string } }) {
   if (!buff || buffType(buff) !== "Boon") notFound();
   return (
     <>
-      <BuffDetail buff={buff} />
-      <AffectedPieces kind="buff" card={buff} />
+      <BuffDetail buff={buff} extra={<AffectedPieces kind="buff" card={buff} />} />
     </>
   );
 }

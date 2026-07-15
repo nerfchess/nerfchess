@@ -5,6 +5,7 @@ import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { login, register } from "@/lib/authClient";
+import { SiteHeader } from "@/components/SiteHeader";
 
 // Public sitekey; when unset the widget is skipped and signup works as before.
 const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
@@ -116,11 +117,9 @@ function LoginPage() {
           onLoad={() => setTurnstileReady(true)}
         />
       )}
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-      </nav>
+      {/* The standard site nav (design system §9: identical on every page),
+          not a logo-only stub. */}
+      <SiteHeader />
       <section className="max-w-md mx-auto px-6 py-8">
         <h1 className="font-display text-3xl sm:text-4xl">
           {tab === "login" ? "Welcome back" : "Create your account"}

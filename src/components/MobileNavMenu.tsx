@@ -82,7 +82,10 @@ export function MobileNavMenu({
   align?: "left" | "right";
   // Hide the hamburger at and above this breakpoint. Match it to the sibling
   // desktop nav's breakpoint so there is never a width with neither visible.
-  hideAt?: "sm" | "md";
+  // "none" keeps the trigger visible at every width -- used by the compact
+  // game top bar, where the collapsed menu is the ONLY nav (no inline links),
+  // so it must stay reachable on desktop too.
+  hideAt?: "sm" | "md" | "none";
 } = {}) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -99,7 +102,7 @@ export function MobileNavMenu({
   }, []);
 
   // Static class strings (Tailwind cannot see interpolated class names).
-  const hideClass = hideAt === "md" ? "md:hidden" : "sm:hidden";
+  const hideClass = hideAt === "none" ? "" : hideAt === "md" ? "md:hidden" : "sm:hidden";
   const anchorClass = align === "left" ? "left-0" : "right-0";
 
   const groups = buildGroups(user);

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 
 type InfoPageLayoutProps = {
   eyebrow: string;
@@ -9,6 +9,10 @@ type InfoPageLayoutProps = {
   // plain strings, which every other caller passes, remain valid.
   intro: ReactNode;
   children: ReactNode;
+  // Optional trailing slot rendered inside the reading column, after the card
+  // body. The codex detail pages pass the AffectedPieces strip here so it sits
+  // in the same column as the detail instead of below the site footer.
+  extra?: ReactNode;
 };
 
 export function InfoPageLayout({
@@ -16,20 +20,13 @@ export function InfoPageLayout({
   title,
   intro,
   children,
+  extra,
 }: InfoPageLayoutProps) {
   return (
     <main className="min-h-screen pb-20">
-      <nav className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-7 sm:px-8">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <Link
-          href="/play"
-          className="btn-ghost press px-4 py-2 font-display text-[13px]"
-        >
-          Play
-        </Link>
-      </nav>
+      {/* The standard site nav on every reading page (design system §9: the top
+          nav is identical on every page), not a logo-only stub. */}
+      <SiteHeader />
 
       <section className="mx-auto max-w-[1100px] px-6 pt-4 sm:px-8">
         <div className="eyebrow">{eyebrow}</div>
@@ -37,7 +34,10 @@ export function InfoPageLayout({
             stays narrower than the card grid so long lines remain readable. */}
         <h1 className="display-1 mt-2">{title}</h1>
         <p className="mt-5 max-w-3xl text-[16px] leading-[1.7] text-parchment-200">{intro}</p>
-        <div className="mt-9 space-y-4">{children}</div>
+        <div className="mt-9 space-y-4">
+          {children}
+          {extra}
+        </div>
       </section>
 
       <SiteFooter />

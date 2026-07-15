@@ -72,7 +72,7 @@ export function MobileMoveDrawer({
         />
       )}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 plate border-t border-white/10"
+        className="fixed inset-x-0 bottom-0 z-40 plate border-t border-[color:var(--edge)]"
         style={keyboardInset > 0 ? { bottom: keyboardInset } : undefined}
       >
         <button
@@ -81,10 +81,10 @@ export function MobileMoveDrawer({
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
-          <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
+          <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
             Moves &amp; chat
             {unreadChat > 0 && (
-              <span className="grid h-4 min-w-[1rem] place-items-center rounded-full bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
+              <span className="grid h-4 min-w-[1rem] place-items-center rounded-full bg-gold px-1 font-mono text-[12px] font-bold text-ink-950">
                 {unreadChat}
               </span>
             )}

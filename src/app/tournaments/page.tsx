@@ -406,6 +406,12 @@ export default function TournamentsPage() {
                 ))}
               </ul>
             </div>
+          ) : error ? (
+            // A load error owns the screen: the alert above is the single
+            // state. The section bodies must NOT also render their "0 events"
+            // empty states, which would falsely claim an empty (but healthy)
+            // directory next to a "could not load" banner.
+            null
           ) : (
             <>
               <Section title="In progress" accent tournaments={sections.ongoing} now={now} emptyText="No tournaments running right now." />
