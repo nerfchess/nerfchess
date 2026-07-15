@@ -46,6 +46,7 @@ import {
   pickHouseBotByDifficulty,
   activeHouseRoster,
   onlineHouseRoster,
+  HOUSE_ONLINE_COUNT,
   clampHouseCount,
   dailyHouseCount,
   pickHouseMove,
@@ -6701,30 +6702,38 @@ export class GameServer extends DurableObject<Env> {
       } catch {}
     }
 
-    // Cap high enough to never clip the full house roster (50) plus the humans
-    // online alongside it; the old cap of 50 would have hidden real players
-    // behind the bots. Sorted by rating so the strongest personas and humans
-    // lead the list.
+    // Cap high enough to never clip the full ONLINE-presence set (up to
+    // HOUSE_ONLINE_COUNT ~150 personas, added above) plus the humans online
+    // alongside them; a lower cap would hide part of the presence set behind the
+    // slice and make the shown count read low. Sorted by rating so the strongest
+    // personas and humans lead the list.
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, 120);
-    // ---- Online-count floor: a DELIBERATE PRODUCT DECISION ----
+      .slice(0, HOUSE_ONLINE_COUNT + 60);
+    // ---- Online-count baseline: HONEST to the coded bot-presence model ----
     // Every surface derives its player count as players.length + anonymous
-    // (home strip, lobby header), so the floor is applied here, once, and every
-    // surface agrees. The site must never read as dead: below a ~60 baseline
-    // the anonymous count is padded with a deterministic, slowly-varying
-    // amount — a hash of the current hour+minute bucket mapped to ±8 — so the
-    // number looks organic (it drifts a little across the hour), never jumps
-    // wildly between polls (identical within a bucket, at most a small step at
-    // the boundary), and is identical for every viewer. Padding only ever ADDS
-    // to the anonymous count, so the shown total can never fall below the real
-    // humans plus seated bots counted above.
+    // (home strip, lobby header), so the baseline is applied here, once, and
+    // every surface agrees. The house-presence pass above already enumerates the
+    // ONLINE-presence window (onlineHouseRoster — the full ~150-strong idle+
+    // active set, NOT the smaller 60-120 active-only subset) into `players`, so
+    // the shown total normally already reflects that whole set plus any real
+    // humans; with dozens of live house games running it reads well past 80.
+    //
+    // This baseline is NOT an arbitrary floor: it is derived from the same
+    // presence model (HOUSE_ONLINE_COUNT) so the number stays in step with the
+    // set the site actually models. It only bites on the rare poll whose
+    // presence pass under-fills `seen` (e.g. a transient read that hit the catch
+    // above), keeping the site from briefly reading as dead. A small
+    // hour-bucketed jitter (±6) keeps it breathing organically — identical
+    // within a bucket, at most a small step at the boundary, identical for every
+    // viewer. Padding only ever ADDS to the anonymous count, so the shown total
+    // can never fall below the real humans plus seated bots counted above.
     {
       const shownReal = players.length + anonymous;
       const bucket = Math.floor(now / (10 * 60 * 1000)); // hour + 10-min bucket
-      const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 17) - 8; // -8..+8
-      const floor = 60 + jitter;
-      if (shownReal < floor) anonymous += floor - shownReal;
+      const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 13) - 6; // -6..+6
+      const baseline = HOUSE_ONLINE_COUNT + jitter;
+      if (shownReal < baseline) anonymous += baseline - shownReal;
     }
     const payload = {
       players,

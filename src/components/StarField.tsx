@@ -41,8 +41,13 @@ export function StarField() {
           } as React.CSSProperties}
         />
       ))}
-      <span className="star-shoot" style={{ left: "12%", top: "6%", "--shoot-delay": "5s" } as React.CSSProperties} />
-      <span className="star-shoot" style={{ left: "58%", top: "14%", "--shoot-delay": "19s" } as React.CSSProperties} />
+      {/* Kept out of the top heading band: each streak travels down-right, so a
+          start high in the viewport draws a diagonal line straight across a page
+          masthead / tab row (the lobby's "stray diagonal near the heading").
+          Starting them in the lower-middle keeps the ambient pass without ever
+          crossing a header. */}
+      <span className="star-shoot" style={{ left: "10%", top: "44%", "--shoot-delay": "5s" } as React.CSSProperties} />
+      <span className="star-shoot" style={{ left: "64%", top: "36%", "--shoot-delay": "19s" } as React.CSSProperties} />
     </div>
   );
 }

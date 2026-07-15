@@ -277,12 +277,17 @@ function LobbyInner() {
           </div>
         )}
 
-        {/* The lobby's four sections as tabs, so the page never stacks them
-            all into one long scroll. Quick Play is the default. */}
+        {/* The lobby's four sections as an underline tab row, so the page never
+            stacks them all into one long scroll. Quick Play is the default. One
+            flat brass rail runs under the whole row; the active tab is marked by
+            a gold underline that sits on that rail (no boxed "folder" borders,
+            no double edges against the panel below). The row scrolls sideways on
+            a phone too narrow to fit all four rather than breaking into stacked
+            boxes, keeping every tab the same height and baseline. */}
         <div
           role="tablist"
           aria-label="Lobby sections"
-          className="mt-6 grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:border-b sm:border-white/10 sm:pb-px"
+          className="mt-6 flex items-stretch gap-5 sm:gap-7 overflow-x-auto border-b border-white/10"
         >
           {LOBBY_TABS.map((t) => {
             const count =
@@ -301,15 +306,22 @@ function LobbyInner() {
                 aria-controls={`lobby-panel-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={
-                  "flex items-center justify-center gap-2 border-2 px-4 py-3 font-display text-sm font-semibold transition-colors sm:justify-start sm:border-b-0 sm:text-base " +
+                  "-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
                   (selected
-                    ? "border-gold/70 bg-gold/15 text-gold-leaf"
-                    : "border-white/15 bg-white/[0.05] text-parchment-200 hover:border-white/30 hover:bg-white/[0.09] hover:text-parchment-50")
+                    ? "border-gold text-gold-leaf"
+                    : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-50")
                 }
               >
                 {t.label}
                 {count != null && count > 0 && (
-                  <span className="border border-white/15 bg-ink-900/60 px-1.5 py-px font-mono text-[10px] tabular-nums text-parchment-300">
+                  <span
+                    className={
+                      "border px-1.5 py-px font-mono text-[10px] tabular-nums transition-colors " +
+                      (selected
+                        ? "border-gold/40 bg-gold/15 text-gold-leaf"
+                        : "border-white/10 bg-white/[0.06] text-parchment-300")
+                    }
+                  >
                     {count}
                   </span>
                 )}
