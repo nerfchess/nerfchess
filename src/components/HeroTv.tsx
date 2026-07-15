@@ -2,20 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
-import { arenaSocketUrl, isArenaGameId } from "@/lib/arenaLobby";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { MPPlayers, MPSession } from "@/lib/multiplayer";
-import {
-  appendFeaturedDraftAction,
-  featuredBoard,
-  featuredDraftFromWatchStart,
-  FeaturedDraft,
-  NOT_A_DRAFT,
-  withFeaturedDraftState,
-} from "@/lib/spectate/featuredBoard";
+import { MPPlayers } from "@/lib/multiplayer";
+import { featuredBoard } from "@/lib/spectate/featuredBoard";
+import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import type { Color } from "@/engine/types";
 
 // The last archived game, fetched once for the no-live-games fallback.
@@ -38,18 +31,16 @@ type RecentGame = {
 export function HeroTv() {
   const router = useRouter();
   const lobby = useLobbySnapshot(10000);
-  const topGameId = lobby?.games[0]?.id ?? null;
-  const [streamId, setStreamId] = useState<string | null>(null);
-  const [moves, setMoves] = useState<string[]>([]);
-  const [players, setPlayers] = useState<MPPlayers | null>(null);
-  const [over, setOver] = useState(false);
   const [recent, setRecent] = useState<RecentGame | null>(null);
-  // Public draft-action record for draft (buff) games, so the featured board is
-  // rebuilt through the engine — reproducing board rewrites move-replay can't.
-  const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
-  // Synchronous mirror of the accepted-move count, so a draft action is tagged
-  // with the ply it fired at (the engine interleaves it there on reconstruction).
-  const movesLenRef = useRef(0);
+
+  // Featured selection + health-checked failover, shared with /tv. The hero has
+  // no channel filter and no manual pin, so it simply follows the first HEALTHY
+  // live game: a broken candidate is retried with bounded backoff and then
+  // skipped in favor of the next one, instead of the old silent infinite
+  // re-watch of games[0].
+  const candidateIds = useMemo(() => lobby?.games.map((g) => g.id) ?? [], [lobby]);
+  const tune = useFeaturedTune(candidateIds, null, "hero", { surface: "hero", filter: "hero" });
+  const { streamId, moves, players, over, draft } = tune;
 
   // Pull the latest finished game IMMEDIATELY on mount, in parallel with the
   // lobby poll, so the hero board shows real play right away instead of waiting
@@ -69,71 +60,7 @@ export function HeroTv() {
     };
   }, []);
 
-  // Keep watching a finished game briefly rather than cutting away mid-frame;
-  // the next lobby poll supplies the replacement. Derived during render so no
-  // extra cascading render is scheduled.
-  const nextStream = topGameId ? topGameId : over || !streamId ? topGameId : streamId;
-  if (nextStream !== streamId) setStreamId(nextStream);
-
-  useEffect(() => {
-    if (!streamId) return;
-    let cancelled = false;
-    const session = new MPSession();
-    session.persistFriendSession = false;
-    // Arena-hosted (OCI bot-vs-bot) games stream from the arena's own socket
-    // (Tier 3). The lobby snapshot that produced streamId keeps the arena id
-    // cache warm, so this check is synchronous.
-    if (isArenaGameId(streamId) && arenaSocketUrl()) session.serverUrl = arenaSocketUrl();
-    const off = session.on((e) => {
-      if (cancelled) return;
-      if (e.type === "watch-start") {
-        movesLenRef.current = e.setup.moves.length;
-        setMoves(e.setup.moves);
-        setPlayers(e.setup.players);
-        setOver(!!e.setup.result);
-        setDraft(featuredDraftFromWatchStart(e.setup));
-      } else if (e.type === "move") {
-        movesLenRef.current = e.move.ply;
-        setMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
-      } else if (e.type === "draft-used") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "used",
-            color: e.used.color,
-            buffIndex: e.used.buffIndex,
-            picks: e.used.picks,
-            card: e.used.card,
-          }),
-        );
-      } else if (e.type === "draft-resolved") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "resolved",
-            color: e.resolved.color,
-            picked: e.resolved.kind === "picked",
-            cards: e.resolved.cards,
-          }),
-        );
-      } else if (e.type === "draft-state") {
-        setDraft((d) => withFeaturedDraftState(d, e.state));
-      } else if (e.type === "end") {
-        setOver(true);
-      }
-    });
-    session.watch(streamId).catch(() => {
-      if (!cancelled) {
-        setPlayers(null);
-        setStreamId(null);
-      }
-    });
-    return () => {
-      cancelled = true;
-      off();
-      session.destroy();
-    };
-  }, [streamId]);
-
-  const live = !!streamId && !!players;
+  const live = tune.live;
   const recentPlayers = useMemo<MPPlayers | null>(() => {
     if (!recent) return null;
     return {

@@ -1,5 +1,51 @@
 import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags, DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
+import type { PublicSpectatorSnapshot } from "@/engine/game";
+
+// ---------------- spectator event envelope ----------------
+
+// Every outbound LIVE spectator frame (move / draft resolution / draft state /
+// end / clock / takeback / a fresh snapshot) carries this uniform header so a
+// watcher can order, dedupe, and version-check the stream without inspecting
+// the payload. It is stamped by the server on the fanned frame (worker.ts
+// sendWatchers) as a sibling `e` field next to the existing `{t, d}` body, and
+// is purely additive: an older client that ignores `e` behaves exactly as
+// before. See src/lib/spectate/spectatorSync.ts for the client reducer that
+// consumes it. The header carries ONLY public metadata (ids, versions, a
+// monotonic seq, the public-state parity hash) and never any private state.
+export type SpectatorEnvelopeType =
+  | "move"
+  | "draftUsed"
+  | "draftResolved"
+  | "draftState"
+  | "draftDiff"
+  | "end"
+  | "clock"
+  | "takeback"
+  | "snapshot";
+
+export type SpectatorEnvelope = {
+  /** The game this frame belongs to; a frame for another game is dropped. */
+  gameId: string;
+  /** PUBLIC_SNAPSHOT_VERSION the event assumes. A client that supports a
+   *  different schema rejects the frame rather than rendering a wrong board. */
+  schemaVersion: number;
+  /** Engine REPLAY_VERSION the state was reconstructed under. A drift here
+   *  (server redeployed mid-watch) forces a fresh snapshot. */
+  replayVersion: number;
+  /** Monotonic per-game public revision AFTER this event. Equal to `seq`. */
+  stateRevision: number;
+  /** Monotonic per-game sequence number (== stateRevision). Duplicates are
+   *  dropped and gaps trigger a resync. */
+  seq: number;
+  type: SpectatorEnvelopeType;
+  /** Public-state parity hash AFTER this event (see desync.publicStateHash).
+   *  Clock frames carry the last state hash unchanged (clocks are excluded from
+   *  the hash), so a clock frame never trips a parity mismatch. */
+  publicHash: string;
+  /** Server timestamp (ms) when the frame was stamped. Advisory only. */
+  ts: number;
+};
 
 // `provisional` = the seat's rating deviation is still wide (RD > 110), so the
 // rating renders as "1500?". Optional so frames from older servers still parse.
@@ -164,6 +210,22 @@ export type MPWatchStart = {
   mode?: DraftMode;
   dtActions?: MPDraftAction[];
   dtState?: MPDraftState;
+  // Authoritative PUBLIC snapshot for an ordered join: a spectator adopts this
+  // as its baseline and then applies only later-seq envelopes, so a join at
+  // move 300 never replays from move 1. Absent on legacy servers (the watcher
+  // then falls back to the moves-only bootstrap, unchanged). `seq` is the
+  // revision the snapshot captured; `publicHash` is its parity token. All
+  // additive: an older client ignores these fields.
+  pub?: PublicSpectatorSnapshot;
+  seq?: number;
+  schemaVersion?: number;
+  replayVersion?: number;
+  publicHash?: string;
+  // Structured "this game cannot be reconstructed on the current version"
+  // signal (a later migration stage surfaces it). Present instead of a board
+  // when the server could not build an authoritative snapshot; a client shows
+  // an explicit notice rather than a false starting position.
+  unavailable?: { code: string; replayVersion?: number };
 };
 
 // One lobby snapshot: who is online and which games can be watched.
@@ -264,13 +326,13 @@ export type MPEvent =
   | { type: "queued"; pool: string }
   | { type: "paired"; id: string; color: Color; token: string }
   | { type: "queue-cancelled" }
-  | { type: "move"; move: MPAcceptedMove }
-  | { type: "end"; end: MPEnd }
+  | { type: "move"; move: MPAcceptedMove; env?: SpectatorEnvelope }
+  | { type: "end"; end: MPEnd; env?: SpectatorEnvelope }
   | { type: "draw-offer"; color: Color }
   | { type: "draw-declined"; color: Color }
   | { type: "takeback-offer"; color: Color }
   | { type: "takeback-declined"; color: Color }
-  | { type: "takeback"; by: Color; moves: string[]; ply: number; wc: number; bc: number }
+  | { type: "takeback"; by: Color; moves: string[]; ply: number; wc: number; bc: number; env?: SpectatorEnvelope }
   | { type: "rematch-offer"; color: Color }
   | { type: "rematch-cancelled"; color: Color }
   | { type: "rematched"; id: string; color: Color; token: string }
@@ -278,13 +340,13 @@ export type MPEvent =
   | { type: "spectator-chat"; message: MPSpectatorChatMessage }
   | { type: "rule-revealed"; color: Color; nerfId: string }
   | { type: "draft-offer"; offer: MPDraftOffer }
-  | { type: "draft-resolved"; resolved: MPDraftResolved }
-  | { type: "draft-used"; used: MPDraftUsed }
-  | { type: "draft-diff-flag"; color: Color }
-  | { type: "draft-state"; state: MPDraftState }
+  | { type: "draft-resolved"; resolved: MPDraftResolved; env?: SpectatorEnvelope }
+  | { type: "draft-used"; used: MPDraftUsed; env?: SpectatorEnvelope }
+  | { type: "draft-diff-flag"; color: Color; env?: SpectatorEnvelope }
+  | { type: "draft-state"; state: MPDraftState; env?: SpectatorEnvelope }
   | { type: "draft-target"; buffIndex: number; target: BuffTarget | null }
   | { type: "nerf-picked"; color: Color }
-  | { type: "clocks"; wc: number; bc: number }
+  | { type: "clocks"; wc: number; bc: number; env?: SpectatorEnvelope }
   | { type: "watchers"; n: number; names?: string[] }
   | { type: "lobby"; data: MPLobby }
   | { type: "opponent-gone" }
@@ -764,13 +826,16 @@ export class MPSession {
   }
 
   private handleFrame(data: unknown) {
-    let frame: ServerFrame;
+    // The optional `e` sibling is the spectator envelope stamped by the server
+    // on watcher frames (additive; absent on player frames and older servers).
+    let frame: ServerFrame & { e?: SpectatorEnvelope };
     try {
-      frame = JSON.parse(String(data)) as ServerFrame;
+      frame = JSON.parse(String(data)) as ServerFrame & { e?: SpectatorEnvelope };
     } catch {
       this.emit({ type: "error", message: "Game server sent an invalid message." });
       return;
     }
+    const env = frame.e;
 
     switch (frame.t) {
       case "created":
@@ -822,7 +887,7 @@ export class MPSession {
         this.emit({ type: "queue-cancelled" });
         break;
       case "move":
-        this.emit({ type: "move", move: frame.d });
+        this.emit({ type: "move", move: frame.d, env });
         break;
       case "end":
         // A finished friend game must not auto-resume on the next /friend
@@ -830,7 +895,7 @@ export class MPSession {
         if (this.persistFriendSession && this.seat && loadSavedFriendSession()?.id === this.seat.id) {
           clearSavedFriendSession();
         }
-        this.emit({ type: "end", end: frame.d });
+        this.emit({ type: "end", end: frame.d, env });
         break;
       case "drawOffer":
         this.emit({ type: "draw-offer", color: frame.d.color });
@@ -845,7 +910,7 @@ export class MPSession {
         this.emit({ type: "takeback-declined", color: frame.d.color });
         break;
       case "takeback":
-        this.emit({ type: "takeback", ...frame.d });
+        this.emit({ type: "takeback", ...frame.d, env });
         break;
       case "rematchOffer":
         this.emit({ type: "rematch-offer", color: frame.d.color });
@@ -869,16 +934,16 @@ export class MPSession {
         this.emit({ type: "draft-offer", offer: frame.d });
         break;
       case "dtResolved":
-        this.emit({ type: "draft-resolved", resolved: frame.d });
+        this.emit({ type: "draft-resolved", resolved: frame.d, env });
         break;
       case "dtUsed":
-        this.emit({ type: "draft-used", used: frame.d });
+        this.emit({ type: "draft-used", used: frame.d, env });
         break;
       case "dtDiffFlag":
-        this.emit({ type: "draft-diff-flag", color: frame.d.color });
+        this.emit({ type: "draft-diff-flag", color: frame.d.color, env });
         break;
       case "dtState":
-        this.emit({ type: "draft-state", state: frame.d.state });
+        this.emit({ type: "draft-state", state: frame.d.state, env });
         break;
       case "dtTargetReq":
         this.emit({ type: "draft-target", buffIndex: frame.d.buffIndex, target: frame.d.target });
@@ -907,7 +972,7 @@ export class MPSession {
         break;
       case "n":
         if (typeof frame.d?.wc === "number" && typeof frame.d?.bc === "number") {
-          this.emit({ type: "clocks", wc: frame.d.wc, bc: frame.d.bc });
+          this.emit({ type: "clocks", wc: frame.d.wc, bc: frame.d.bc, env });
         }
         break;
     }
@@ -1114,16 +1179,25 @@ export class MPSession {
     await this.connect();
     return new Promise((resolve, reject) => {
       let timer = 0;
+      // Absolute ceiling on how long watch() may wait, regardless of how many
+      // `watch-pending` acks arrive. A replica that only ever emits `wpending`
+      // (a cold or wedged arena that never streams a `wstart`) used to re-arm the
+      // deadline forever and never reject, stranding the TV tune-in on an eternal
+      // spinner. Once this deadline passes we reject with a timeout so the caller
+      // can fail over to another game.
+      const hardDeadline = Date.now() + 20000;
       // (Re)arm the timeout. A `watch-pending` ack (the DO registered the watch
       // but the arena replica isn't loaded yet) counts as progress and extends
       // the deadline, so a slow-to-stream arena game gets more time while a
-      // genuinely stuck watch still fails.
+      // genuinely stuck watch still fails. The extension is clamped to the
+      // absolute ceiling so re-arming can never postpone the reject indefinitely.
       const arm = (ms: number) => {
         if (timer) window.clearTimeout(timer);
+        const capped = Math.min(ms, Math.max(0, hardDeadline - Date.now()));
         timer = window.setTimeout(() => {
           off();
           reject(new Error("The game server did not respond in time."));
-        }, ms);
+        }, capped);
       };
       const off = this.on((event) => {
         if (event.type === "watch-start") {

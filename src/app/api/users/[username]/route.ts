@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
+import { currentLiveGameForUser } from "@/lib/server/gameServer";
 import { categoryForTimeControl } from "@/lib/speed";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 
@@ -160,6 +161,12 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     [user.id, user.id, user.id],
   );
 
+  // Authoritative "is this player in a live game right now" lookup, resolved
+  // from the game-server DO's live-seat index rather than the stale lobby cache.
+  // Best-effort: a null (not playing, binding absent, or DO error) simply means
+  // the profile shows no live preview. Never blocks the rest of the payload.
+  const live = await currentLiveGameForUser(user.id);
+
   return NextResponse.json({
     user: {
       username: user.username,
@@ -182,6 +189,9 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     },
     relationship,
     mutualFriends,
+    // The player's current live game, or null when not playing. Public: a game
+    // id and its section only.
+    currentGame: live,
     games: recentGames,
     ratings,
     ratingHistory: ratingHistory

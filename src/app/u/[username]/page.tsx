@@ -81,6 +81,9 @@ type ProfileRatingPoint = RatingPoint & { category?: string | null };
 
 interface ProfileData {
   user: ProfileUser;
+  // The player's current live game, resolved server-side from the authoritative
+  // live-seat index. Null (or absent, on an older API) when not playing.
+  currentGame?: { gameId: string; mode?: "nerf" | "buff" } | null;
   games: unknown[];
   ratings?: Record<string, CategoryRatingRow>;
   ratingHistory: ProfileRatingPoint[];
@@ -233,6 +236,11 @@ function ProfileContent() {
   // Live presence for the game module and the header badge.
   const presence = usePresence(username);
 
+  // The game id a finished live game reported, so the module can swap to the
+  // recent-game card without a reload even though the profile payload still
+  // carries the (now stale) currentGame id.
+  const [endedLiveId, setEndedLiveId] = useState<string | null>(null);
+
   const isOwner = profile?.relationship === "self";
 
   // Current top-10 leaderboard honors, derived from the cached standings the
@@ -300,6 +308,21 @@ function ProfileContent() {
   // the raw feed state.
   const headerPresenceState =
     isOwner && presence.state === "offline" ? "online" : presence.state;
+
+  // Live game id for the "Playing right now" module. The profile payload's
+  // currentGame (resolved server-side from the DO's authoritative live-seat
+  // index) is the primary signal; the lobby-feed presence is the fallback for
+  // an older API payload. A game the card already reported ended is retired so
+  // the recent-game module can take over without a reload.
+  const apiLiveId = profile.currentGame?.gameId ?? null;
+  const presenceLiveId =
+    presence.state === "in-game" ? (presence.gameId ?? presence.game?.id ?? null) : null;
+  const liveGameIdRaw = apiLiveId ?? presenceLiveId;
+  const liveGameId = liveGameIdRaw && liveGameIdRaw !== endedLiveId ? liveGameIdRaw : null;
+  const liveGameMode = profile.currentGame?.mode ?? presence.game?.mode ?? null;
+  // The lobby entry adds metadata (time control, rated, watchers) but only when
+  // it describes the SAME game; a mismatched entry means one side is stale.
+  const liveLobbyEntry = presence.game && presence.game.id === liveGameId ? presence.game : null;
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
@@ -406,14 +429,20 @@ function ProfileContent() {
 
       {/* ---- Game module (spec 2.3) --------------------------------------- */}
       <div className="mt-4">
-        {presence.state === "in-game" && presence.game ? (
+        {liveGameId ? (
           <CurrentGameCard
             username={user.username}
-            game={presence.game}
+            gameId={liveGameId}
+            mode={liveGameMode}
+            game={liveLobbyEntry}
             // Refetch the newest game a beat after it ends so the finished game
-            // (with rating deltas) is ready to take over as the recent module.
+            // (with rating deltas) is ready to take over as the recent module,
+            // then retire the live card without a reload.
             onEnded={() => {
-              window.setTimeout(() => void loadNewestGame(), 2000);
+              const ended = liveGameId;
+              window.setTimeout(() => {
+                void loadNewestGame().then(() => setEndedLiveId(ended));
+              }, 2000);
             }}
           />
         ) : newestGame === undefined ? (

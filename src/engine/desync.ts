@@ -16,7 +16,7 @@
 // culprit rule instead of us hunting blind.
 
 import { moveToUCI, positionKey } from "./board";
-import { legalMoves, NerfGame } from "./game";
+import { legalMoves, NerfGame, PublicSpectatorSnapshot } from "./game";
 import { Move } from "./types";
 
 /** Deterministic 32-bit FNV-1a hash as an 8-char hex string. Same input gives
@@ -107,4 +107,75 @@ export function compareFingerprints(
   const ok = client.hash === server.hash;
   const rules = Array.from(new Set([...client.rules, ...server.rules])).sort();
   return { ok, clientHash: client.hash, serverHash: server.hash, diverged, rules };
+}
+
+// ---------------------------------------------------------------------------
+// Public-state parity hash.
+//
+// A single FNV-1a token over a canonical, order-independent serialization of
+// the PUBLIC snapshot fields ONLY: pieces (sorted by square), effects (sorted
+// by kind then squares), side to move, castling, en passant, revealed held
+// buffs, revealed nerfs, and the draft cursor. Clocks (they drift by ms), the
+// server's revision counters, the capture timestamp, and every secret field are
+// deliberately EXCLUDED, so the server, the white client, the black client, and
+// a spectator all compute the identical hash from the state each legitimately
+// holds. Because secret nerfs and hidden cards are not in the input, a
+// spectator (who lacks them) and a player (who has them) still agree.
+
+/** Canonical, order-independent serialization of a public snapshot's hashable
+ * state. Kept separate from publicStateHash so a test can inspect exactly which
+ * field diverged. */
+export function publicStateSignature(snap: PublicSpectatorSnapshot): string {
+  const pieces = snap.board.pieces
+    .map((p) => `${p.square}:${p.color}${p.type}`)
+    .sort()
+    .join(",");
+  const effects = snap.terrain.squareEffects
+    .map(
+      (e) =>
+        `${e.kind}:${e.owner ?? ""}:${e.against ?? ""}:${e.squares.join(".")}:${e.turns ?? "-"}`,
+    )
+    .sort()
+    .join(";");
+  const walls = snap.terrain.walls
+    .map((w) => `${w.axis}${w.line}:${w.against}`)
+    .sort()
+    .join(",");
+  const buffs = (["w", "b"] as const)
+    .map(
+      (c) =>
+        c +
+        "=" +
+        snap.activeBuffs[c]
+          .map((b) => `${b.buffId}#${b.tier}${b.spent ? "s" : ""}${b.nullified ? "x" : ""}`)
+          .sort()
+          .join("|"),
+    )
+    .join("/");
+  const castling = snap.board.castling;
+  const cast =
+    (castling.wK ? "K" : "") +
+    (castling.wQ ? "Q" : "") +
+    (castling.bK ? "k" : "") +
+    (castling.bQ ? "q" : "");
+  const nerfs = `${snap.revealedNerfs.w ?? "-"}/${snap.revealedNerfs.b ?? "-"}`;
+  return [
+    pieces,
+    effects,
+    walls,
+    snap.board.sideToMove,
+    cast || "-",
+    snap.board.enPassant ?? "-",
+    buffs,
+    nerfs,
+    `cur${snap.capturedAtCursor}`,
+  ].join("|");
+}
+
+/** Deterministic public-state hash: FNV-1a of publicStateSignature. Server and
+ * every client compute the same token from state each of them can see, so a
+ * mismatch flags a real divergence without leaking any private info (the input
+ * is exactly the public projection). Excludes the snapshot's own publicHash. */
+export function publicStateHash(snap: PublicSpectatorSnapshot): string {
+  return fnv1a(publicStateSignature(snap));
 }
