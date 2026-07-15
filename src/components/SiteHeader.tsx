@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, LogIn, LogOut, Mail, Search, Settings, Shield, Swords, User, UserPlus } from "lucide-react";
+import { Bell, History, LogIn, LogOut, Mail, Search, Settings, Shield, Swords, Trophy, User, UserPlus } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { PlayerLink, isLinkablePlayerName } from "@/components/PlayerLink";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
@@ -40,9 +41,10 @@ type NavMenuItem = { href: string; label: string; className?: string };
 type NavLink = { href: string; label: string; menu?: NavMenuItem[] };
 
 const PLAY_MENU_LINKS: NavMenuItem[] = [
-  { href: "/lobby", label: "Create lobby game" },
-  { href: "/friend", label: "Challenge a friend" },
-  { href: "/tournaments", label: "Arena tournaments" },
+  { href: "/lobby", label: "Lobby" },
+  { href: "/lobby?tab=friends", label: "Challenge a friend" },
+  { href: "/play", label: "Practice vs computer" },
+  { href: "/tournaments", label: "Tournaments" },
 ];
 
 // Watch splits by mode: each TV entry wears its mode color and opens the TV
@@ -64,12 +66,41 @@ const COMMUNITY_MENU_LINKS: NavMenuItem[] = [
 const NAV_LINKS: NavLink[] = [
   { href: "/lobby", label: "Play", menu: PLAY_MENU_LINKS },
   { href: "/tv", label: "Watch", menu: WATCH_MENU_LINKS },
-  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/community", label: "Community", menu: COMMUNITY_MENU_LINKS },
-  { href: "/history", label: "History" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/codex", label: "Rules" },
-  { href: "/achievements", label: "Achievements" },
 ];
+
+// Map any pathname to the top-level nav section it belongs to, so highlighting
+// survives on subpaths (e.g. /tv/live, /clubs/x, /tournaments/y). Returns the
+// section's nav href, or null when the page has no section in the top bar.
+function sectionForPath(pathname: string | null): string | null {
+  if (!pathname) return null;
+  if (pathname === "/tv" || pathname.startsWith("/tv/") || pathname.startsWith("/tv?")) return "/tv";
+  if (
+    pathname === "/community" ||
+    pathname.startsWith("/community/") ||
+    pathname === "/clubs" ||
+    pathname.startsWith("/clubs/") ||
+    pathname === "/tournaments" ||
+    pathname.startsWith("/tournaments/") ||
+    pathname === "/guidelines" ||
+    pathname.startsWith("/guidelines/")
+  )
+    return "/community";
+  if (pathname === "/codex" || pathname.startsWith("/codex/")) return "/codex";
+  if (
+    pathname === "/lobby" ||
+    pathname.startsWith("/lobby/") ||
+    pathname === "/play" ||
+    pathname.startsWith("/play/") ||
+    pathname === "/friend" ||
+    pathname.startsWith("/friend/")
+  )
+    return "/lobby";
+  if (pathname === "/leaderboard" || pathname.startsWith("/leaderboard/")) return "/leaderboard";
+  return null;
+}
 
 function clockLabel(timeSec: number, incrementSec: number): string {
   if (timeSec <= 0) return "No clock";
@@ -98,6 +129,10 @@ function Badge({ n }: { n: number }) {
 
 export function SiteHeader({ active }: { active?: string }) {
   const router = useRouter();
+  const pathname = usePathname();
+  // Explicit `active` prop wins (existing callers); otherwise derive the
+  // highlighted section from the current path so subpaths light up too.
+  const activeSection = active ?? sectionForPath(pathname);
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [menu, setMenu] = useState<Menu>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -234,12 +269,12 @@ export function SiteHeader({ active }: { active?: string }) {
                   href={link.href}
                   className={
                     "nav-item block px-3 py-1.5 group-hover:bg-white/5 " +
-                    (active === link.href ? "text-gold-leaf" : "text-parchment-100")
+                    (activeSection === link.href ? "text-gold-leaf" : "text-parchment-100")
                   }
                 >
                   {link.label}
                   {/* Active page underline: a flat accent bar. */}
-                  {active === link.href && (
+                  {activeSection === link.href && (
                     <span
                       aria-hidden
                       className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
@@ -271,11 +306,11 @@ export function SiteHeader({ active }: { active?: string }) {
                 href={link.href}
                 className={
                   "nav-item px-3 py-1.5 hover:bg-white/5 " +
-                  (active === link.href ? "text-gold-leaf" : "text-parchment-100")
+                  (activeSection === link.href ? "text-gold-leaf" : "text-parchment-100")
                 }
               >
                 {link.label}
-                {active === link.href && (
+                {activeSection === link.href && (
                   <span
                     aria-hidden
                     className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
@@ -333,21 +368,24 @@ export function SiteHeader({ active }: { active?: string }) {
                     {challenges.map((challenge) => (
                       <li key={challenge.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                         <div className="min-w-0">
-                          <div className="truncate text-sm text-parchment-100">{challenge.from}</div>
-                          <div className="smallcaps text-[9px] text-parchment-400">
+                          <PlayerLink
+                            name={challenge.from}
+                            className="text-sm text-parchment-100 hover:text-gold-leaf"
+                          />
+                          <div className="smallcaps text-[10px] text-parchment-400">
                             {challenge.rated ? "Rated" : "Casual"} · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
                           </div>
                         </div>
                         <div className="flex shrink-0 gap-1.5">
                           <button
                             onClick={() => respondChallenge(challenge, "accepted")}
-                            className="btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
+                            className="btn-leaf inline-flex min-h-[44px] items-center px-3 font-display text-xs font-semibold"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => respondChallenge(challenge, "declined")}
-                            className="btn-ghost px-3 py-1.5 font-display text-xs"
+                            className="btn-ghost inline-flex min-h-[44px] items-center px-3 font-display text-xs"
                           >
                             Decline
                           </button>
@@ -369,7 +407,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                   <span className="smallcaps text-[10px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
-                    <button onClick={markAllRead} className="text-[11px] text-parchment-400 hover:text-parchment-100">
+                    <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
                       Mark all read
                     </button>
                   )}
@@ -380,16 +418,31 @@ export function SiteHeader({ active }: { active?: string }) {
                   <ul className="max-h-96 divide-y divide-white/5 overflow-y-auto">
                     {notifications.map((n) => (
                       <li key={n.id}>
-                        <button
+                        {/* A div (not a button) so the actor's profile link
+                            inside the copy is valid: an <a> may not nest in a
+                            <button>. role/tabIndex/onKeyDown keep it a
+                            keyboard-operable row; the inner link's
+                            stopPropagation keeps it from opening the row. */}
+                        <div
+                          role="button"
+                          tabIndex={0}
                           onClick={() => openNotification(n)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              openNotification(n);
+                            }
+                          }}
                           className={
-                            "block w-full px-4 py-2.5 text-left transition-colors hover:bg-white/5 " +
+                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
                             (n.read ? "opacity-60" : "")
                           }
                         >
-                          <div className="text-sm leading-snug text-parchment-100">{n.text}</div>
-                          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">{timeAgo(n.at)}</div>
-                        </button>
+                          <div className="text-sm leading-snug text-parchment-100">
+                            <NotificationText text={n.text} actorName={n.actorName} />
+                          </div>
+                          <div className="mt-0.5 smallcaps text-[10px] text-parchment-400">{timeAgo(n.at)}</div>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -461,6 +514,22 @@ export function SiteHeader({ active }: { active?: string }) {
                   onClick={() => {
                     setMenu(null);
                     router.push(`/u/${encodeURIComponent(user.username)}`);
+                  }}
+                />
+                <MenuItem
+                  icon={<History size={14} />}
+                  label="Game history"
+                  onClick={() => {
+                    setMenu(null);
+                    router.push("/history");
+                  }}
+                />
+                <MenuItem
+                  icon={<Trophy size={14} />}
+                  label="Achievements"
+                  onClick={() => {
+                    setMenu(null);
+                    router.push("/achievements");
                   }}
                 />
                 <MenuItem
@@ -571,12 +640,30 @@ function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
   );
 }
 
+// A notification line with the actor's name turned into a profile link, while
+// the rest of the line stays plain text inside the row's own button (the link's
+// stopPropagation keeps the row's open-notification behavior working). Falls
+// back to plain text when there is no linkable actor name in the copy.
+function NotificationText({ text, actorName }: { text: string; actorName: string | null }) {
+  const idx = actorName ? text.indexOf(actorName) : -1;
+  if (!actorName || idx < 0 || !isLinkablePlayerName(actorName)) {
+    return <>{text}</>;
+  }
+  return (
+    <>
+      {text.slice(0, idx)}
+      <PlayerLink name={actorName} className="align-baseline text-parchment-50 hover:text-gold-leaf" />
+      {text.slice(idx + actorName.length)}
+    </>
+  );
+}
+
 function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+      className="flex min-h-[44px] w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
     >
       <span className="text-parchment-400">{icon}</span>
       {label}

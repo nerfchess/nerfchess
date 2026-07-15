@@ -61,42 +61,33 @@ test("switching mode updates the matchmaking button and is remembered", async ({
   expect(saved).toBe("nerf");
 });
 
-test("/play shares one mode across the top selector, queue, bot setup, and friend link", async ({
-  page,
-}) => {
+test("/play is bot practice only: one shared mode, no online queue", async ({ page }) => {
   await page.goto("/play");
-  // Default state: Buff everywhere, no duplicate mode cards inside the
-  // online section (exactly one Buff-mode selector card on the page).
-  await expect(findButton(page)).toHaveText("Find a 3+2 Buff Game", { timeout: 30_000 });
+  // Bot practice only: Buff is preselected on the top mode cards, and there is
+  // NO online matchmaking button anywhere on this page.
   const topBuff = page.getByRole("button", { name: /buff mode/i });
-  await expect(topBuff).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("link", { name: /play a friend/i })).toHaveAttribute(
-    "href",
-    "/friend?mode=buff",
-  );
+  await expect(topBuff).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+  await expect(findButton(page)).toHaveCount(0);
+  // A prominent door back to online play points at the lobby, so nobody who
+  // wanted a real opponent gets stuck here.
+  await expect(page.getByRole("link", { name: /play online/i })).toHaveAttribute("href", "/lobby");
 
-  // Switching at the top drives the queue button, the bot pills, and the
-  // friend link together: no section can disagree.
+  // Switching the top mode drives the bot game-type pills: the two selectors
+  // share one mode and can't disagree.
   await page.getByRole("button", { name: /nerf mode/i }).click();
-  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf Game");
   await expect(page.getByRole("button", { name: /^nerf$/i })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(page.getByRole("link", { name: /play a friend/i })).toHaveAttribute(
-    "href",
-    "/friend?mode=nerf",
-  );
+  await expect(page.getByText("A secret nerf, revealed when the game ends.")).toBeVisible();
 
-  // Plain chess is a deliberate bot-only override; the shared mode (and the
-  // online queue) stays Nerf.
+  // Plain chess is a deliberate bot-only override.
   await page.getByRole("button", { name: /plain chess/i }).click();
   await expect(page.getByText("Ordinary chess. No cards.")).toBeVisible();
-  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf Game");
 
-  // Picking Buff at the top clears the Plain override.
+  // Picking Buff at the top clears the Plain override and restores Buff.
   await page.getByRole("button", { name: /buff mode/i }).click();
-  await expect(findButton(page)).toHaveText("Find a 3+2 Buff Game");
+  await expect(topBuff).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Draft buffs to outbuild the bot.")).toBeVisible();
 });
 

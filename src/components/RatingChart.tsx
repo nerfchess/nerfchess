@@ -92,14 +92,47 @@ interface DrawnSeries {
   area: string;
 }
 
-export function RatingChart({ series }: { series: RatingSeries[] }) {
+export function RatingChart({
+  series,
+  rangeDays,
+  hideLegend = false,
+  bare = false,
+}: {
+  series: RatingSeries[];
+  /** When set, points are pre-filtered to the trailing `rangeDays` window
+   *  (now - rangeDays) before anything is drawn, and the chart's own range
+   *  buttons are suppressed because the caller owns the range control
+   *  (RatingHistoryPanel). `null` or omitted keeps the full history and the
+   *  built-in range buttons, so existing callers are unaffected. */
+  rangeDays?: number | null;
+  /** Hide the built-in per-series legend/toggle chips when the caller renders
+   *  its own mode chips. Defaults false (existing behavior). */
+  hideLegend?: boolean;
+  /** Drop the outer `.plate` wrapper and the built-in header row entirely,
+   *  rendering only the graph body. Lets a parent panel own the card chrome and
+   *  its own controls without nesting plates. Defaults false. */
+  bare?: boolean;
+}) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverT, setHoverT] = useState<number | null>(null);
   const [range, setRange] = useState<RangeKey>("all");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const gid = useId();
 
-  const withData = useMemo(() => series.filter((s) => s.points.length > 0), [series]);
+  // The caller-driven trailing window: when `rangeDays` is a finite number we
+  // drop points older than now - rangeDays up front, so the built-in ranges
+  // (below) operate on an already-scoped set and the parent's chips are the
+  // single source of truth for the time span.
+  const controlledRange = typeof rangeDays === "number";
+  const scoped = useMemo(() => {
+    if (!controlledRange) return series;
+    // Trailing window is anchored to the current time by design (display-only).
+    // eslint-disable-next-line react-hooks/purity
+    const cutoff = Date.now() - rangeDays! * DAY;
+    return series.map((s) => ({ ...s, points: s.points.filter((p) => p.at >= cutoff) }));
+  }, [series, controlledRange, rangeDays]);
+
+  const withData = useMemo(() => scoped.filter((s) => s.points.length > 0), [scoped]);
   const visible = useMemo(
     () => withData.filter((s) => !hidden.has(s.id) || withData.every((x) => hidden.has(x.id))),
     [withData, hidden],
@@ -246,12 +279,15 @@ export function RatingChart({ series }: { series: RatingSeries[] }) {
   if (withData.length === 0) return null;
 
   return (
-    <div className="plate p-4">
+    <div className={bare ? "" : "plate p-4"}>
+      {!bare && (
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <h3 className="smallcaps text-[10px] text-parchment-400">Rating history</h3>
-          {/* Per-mode legend chips double as series toggles. */}
-          {withData.length > 1 &&
+          {/* Per-mode legend chips double as series toggles. Suppressed when
+              the caller supplies its own mode chips (hideLegend). */}
+          {!hideLegend &&
+            withData.length > 1 &&
             withData.map((s) => {
               const off = hidden.has(s.id);
               return (
@@ -284,7 +320,7 @@ export function RatingChart({ series }: { series: RatingSeries[] }) {
               low {Math.round(drawn.min)} · high {Math.round(drawn.max)}
             </span>
           )}
-          {available.length > 1 && (
+          {!controlledRange && available.length > 1 && (
             <div className="flex overflow-hidden rounded-sm border border-white/10" role="group" aria-label="Time range">
               {available.map((r) => {
                 const on = r.key === effectiveRange;
@@ -309,7 +345,8 @@ export function RatingChart({ series }: { series: RatingSeries[] }) {
           )}
         </div>
       </div>
-      <div className="relative mt-2">
+      )}
+      <div className={bare ? "relative" : "relative mt-2"}>
         {!drawn ? (
           <div className="p-4 text-sm text-parchment-400">Not enough rated games yet</div>
         ) : (

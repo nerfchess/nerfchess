@@ -53,7 +53,25 @@ export function QueueButton({
   const mode = controlledMode ?? sharedMode;
   const [pool, setPool] = useState("3+2");
   const [error, setError] = useState<string | null>(null);
+  // Seconds elapsed in the current search, so a waiting player sees the queue
+  // is live and how long they have been in it (reset the moment searching ends).
+  const [elapsed, setElapsed] = useState(0);
   const sessionRef = useRef<MPSession | null>(null);
+
+  useEffect(() => {
+    if (state !== "searching") {
+      // Reset the counter the instant a search ends so a fresh queue starts at 0.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setElapsed(0);
+      return;
+    }
+    const startedAt = Date.now();
+    setElapsed(0);
+    const id = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,18 +199,36 @@ export function QueueButton({
       </div>
 
       {state === "searching" ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-sm text-parchment-200">
-            <span className="w-2 h-2 bg-verdigris animate-flicker" />
-            Finding a{" "}
-            <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
-              {mode === "nerf" ? "Nerf" : "Buff"}
-            </span>{" "}
-            opponent… ({selected.label})
-          </span>
-          <button onClick={cancelSearch} className="px-4 py-2 btn-ghost text-sm font-display">
-            Cancel
-          </button>
+        <div className="mt-4 border border-verdigris/30 bg-verdigris/[0.06] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="flex items-center gap-2.5 text-sm text-parchment-100">
+              <span aria-hidden className="w-2.5 h-2.5 shrink-0 bg-verdigris animate-flicker" />
+              <span>
+                Finding a{" "}
+                <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+                  {mode === "nerf" ? "Nerf" : "Buff"}
+                </span>{" "}
+                opponent… ({selected.label})
+              </span>
+            </span>
+            <button
+              onClick={cancelSearch}
+              className="min-h-[44px] px-4 py-2 btn-ghost text-sm font-display"
+            >
+              Cancel
+            </button>
+          </div>
+          {/* Elapsed time so the queue never reads as a dead "Connecting…":
+              the counter ticking is proof the search is live. */}
+          <div
+            className="mt-2.5 flex items-center gap-2 smallcaps text-[10px] text-parchment-400"
+            aria-live="polite"
+          >
+            <span>Searching</span>
+            <span className="font-mono text-xs tabular-nums text-parchment-200">
+              {formatElapsed(elapsed)}
+            </span>
+          </div>
         </div>
       ) : state === "paired" ? (
         <div className="mt-4 text-sm text-gold-leaf">Opponent found. Starting…</div>
@@ -204,7 +240,7 @@ export function QueueButton({
               easiest first game. Nothing queues until the button below.
               Hidden when the page already owns a shared mode selector. */}
           {showModeCards && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
               <ModeCard
                 mode="buff"
                 rating={ratingFor("buff")}
@@ -224,7 +260,7 @@ export function QueueButton({
 
           <div className="mt-4">
             <div className="smallcaps text-[10px] text-parchment-400">Time control</div>
-            <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[400px]:grid-cols-5">
+            <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-5">
               {QUEUE_POOL_OPTIONS.map((option) => {
                 const category = getCategory(option.speed);
                 const Icon = category.icon;
@@ -237,7 +273,7 @@ export function QueueButton({
                     title={`${category.label} · ${option.label}`}
                     aria-pressed={isSelected}
                     className={
-                      "flex flex-col items-center gap-0.5 border px-1 py-2 transition " +
+                      "flex flex-col items-center gap-0.5 border px-1 py-1.5 transition " +
                       (isSelected
                         ? "border-gold bg-gold/15 text-gold-leaf"
                         : "border-white/10 text-parchment-200 hover:border-white/30 hover:bg-white/5")
@@ -291,6 +327,13 @@ export function QueueButton({
   );
 }
 
+// mm:ss for the search-elapsed counter.
+function formatElapsed(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 // One of the two mode selection cards. Each wears its color identity at all
 // times (Nerf rose, Buff blue), deepens when selected, and shows the
 // caller's rating in that pool. Selecting a card does not queue; the Play
@@ -333,7 +376,7 @@ function ModeCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "plate corner-cut relative p-4 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
+        "plate corner-cut relative p-3.5 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
         identity.card +
         (dimmed ? " opacity-55 saturate-[0.85]" : "")
       }
@@ -352,7 +395,7 @@ function ModeCard({
         </span>
       )}
       <div className="flex items-center gap-2">
-        <div className={"font-display text-2xl sm:text-3xl font-semibold " + identity.title}>
+        <div className={"font-display text-xl sm:text-3xl font-semibold " + identity.title}>
           {mode === "nerf" ? "Nerf" : "Buff"}
         </div>
         {mode === "buff" && (
@@ -366,7 +409,7 @@ function ModeCard({
           ? "Start with a secret handicap. Draft curses for your opponent."
           : "Start with normal chess. Draft powers for your own army."}
       </p>
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <span className="smallcaps text-[9px] text-parchment-400">
           Your {mode === "nerf" ? "Nerf" : "Buff"} rating
         </span>

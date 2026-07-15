@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Eye, Swords, Users } from "lucide-react";
+import { Cpu, Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
@@ -464,9 +464,33 @@ function LobbyInner() {
             >
               {/* The main action: get matched with a real opponent. */}
               <QueueButton />
-              <div className="text-sm">
-                <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
-                  Prefer practice? Play a bot instead
+              {/* The other ways to start a game, one tap from the queue: an open
+                  custom challenge, a private game with a friend, or a bot to
+                  practice against. Kept quiet beneath the dominant Find match
+                  button so matchmaking stays the headline. */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setTab("challenges")}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Swords size={14} aria-hidden />
+                  Create custom game
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("friends")}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Users size={14} aria-hidden />
+                  Challenge a friend
+                </button>
+                <Link
+                  href="/play"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Cpu size={14} aria-hidden />
+                  Practice against computer
                 </Link>
               </div>
             </div>
@@ -480,7 +504,7 @@ function LobbyInner() {
             {!lobby ? (
               <>
                 <SkeletonPlayerRows count={5} />
-                <p className="mt-3 text-sm text-parchment-500">Seeing who&apos;s online…</p>
+                <p className="mt-3 text-sm text-parchment-400">Seeing who&apos;s online…</p>
               </>
             ) : (
               <>
@@ -742,7 +766,7 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
     playing: "In game",
   };
   return (
-    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
+    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[10px] ${styles[status]}`}>
       {labels[status]}
     </span>
   );
@@ -801,14 +825,14 @@ function SeekRow({
           <PlayerNameLink name={seek.name} />
           <RatingChip rating={seek.rating} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
           <TimeControlGlyph timeSec={seek.timeSec} incrementSec={seek.incrementSec} clock={clock} />
           <span>{seek.mode ? "Rated" : "Draft"}</span>
         </div>
       </div>
       {isMine ? (
-        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[9px] text-gold-leaf">
+        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[10px] text-gold-leaf">
           Your seek
         </span>
       ) : (
@@ -838,7 +862,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           <PlayerNameLink name={challenge.host.name} />
           <RatingChip rating={challenge.host.rating} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={challenge.mode} compact />
           {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft</span>}
           {challenge.timeSec > 0 ? (
@@ -879,7 +903,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           <span className="shrink-0 text-parchment-400">vs</span>
           <PlayerNameLink name={game.players.b.name} rating={game.players.b.rating} className="max-w-[45%]" />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[9px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
           <ModeBadge mode={game.mode} compact />
           {!game.mode && game.draft && <span className="text-gold-leaf">Draft</span>}
           {game.timeSec > 0 ? (

@@ -10,6 +10,23 @@ export async function GET(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, token);
   if (!user) return NextResponse.json({ user: null });
+
+  // Presence heartbeat: stamp last_seen_at at most once every 5 minutes per
+  // user (the guarded UPDATE only writes when the column is null or older than
+  // the window, so a chatty client polling /me does not hammer D1). Best
+  // effort — a failed write must never break the account chip.
+  try {
+    const now = Date.now();
+    await db
+      .prepare(
+        `UPDATE users SET last_seen_at = ?
+         WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)`,
+      )
+      .bind(now, user.id, now - 5 * 60 * 1000)
+      .run();
+  } catch {
+    // Presence is non-essential; the response below is unaffected.
+  }
   // The rating the header account chip DISPLAYS. `rating` (below) stays the
   // legacy shared column — some callers use it as the seed-fallback value —
   // but it is never written after games anymore, so displaying it drifts from

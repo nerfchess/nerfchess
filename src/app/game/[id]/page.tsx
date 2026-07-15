@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Board } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { GameOver } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
@@ -287,6 +288,19 @@ export default function OnlineGamePage() {
     if (isMissing) setRedirectIn(REDIRECT_SECONDS);
   }
 
+  // A connect/seat handshake that never resolves must not leave the viewer on
+  // an endless "Connecting…" / "Waiting for your opponent…" skeleton. After
+  // ~10s, surface a retry + back-to-lobby affordance so the wait is escapable.
+  const [slowConnect, setSlowConnect] = useState(false);
+  useEffect(() => {
+    // queueMicrotask keeps the reset off the synchronous effect body (the same
+    // pattern the redirect/countdown effects here use to avoid cascading renders).
+    queueMicrotask(() => setSlowConnect(false));
+    if (mode.kind !== "loading" && mode.kind !== "waiting") return;
+    const id = window.setTimeout(() => setSlowConnect(true), 10000);
+    return () => window.clearTimeout(id);
+  }, [mode.kind]);
+
   useEffect(() => {
     if (mode.kind !== "missing") return;
     const tick = window.setInterval(() => {
@@ -344,6 +358,34 @@ export default function OnlineGamePage() {
             </div>
             <div className="font-mono text-[11px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
           </div>
+          {slowConnect && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-3 plate flex flex-wrap items-center justify-between gap-3 border-gold/40 bg-gold/10 p-2 px-3"
+            >
+              <span className="text-xs text-parchment-200">
+                {mode.kind === "waiting"
+                  ? "Still waiting for your opponent to arrive."
+                  : "This is taking longer than usual to connect."}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="min-h-[36px] rounded-sm btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
+                >
+                  Retry
+                </button>
+                <Link
+                  href="/lobby"
+                  className="min-h-[36px] inline-flex items-center rounded-sm border border-parchment-700 px-3 py-1.5 font-display text-xs text-parchment-200 hover:text-parchment-50"
+                >
+                  Back to lobby
+                </Link>
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2 py-1">
@@ -645,6 +687,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
 
   return (
     <>
+    <ConnectionBanner session={session} />
     <GameShell
       players={setup.players}
       rated={setup.rated}

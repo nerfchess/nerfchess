@@ -390,6 +390,11 @@ type ServerFrame =
   | { t: "error"; d: { code?: string; message?: string } }
   | { t: "n"; d?: { wc?: number; bc?: number } };
 
+// Coarse socket connection state, surfaced separately from the game frame
+// stream so a shared ConnectionBanner can show a reconnect notice without
+// coupling to any game/watch payload. Reports socket lifecycle only.
+export type MPConnectionState = "connected" | "reconnecting" | "lost";
+
 export type MPSavedSession = {
   id: string;
   color: Color;
@@ -515,6 +520,11 @@ export class MPSession {
   // dropped) and stall on the response timeout.
   private connecting: Promise<void> | null = null;
   private listeners: Array<(e: MPEvent) => void> = [];
+  private connectionListeners: Array<(s: MPConnectionState) => void> = [];
+  // Monotonic socket generation. Bumped on every new socket so a stale socket's
+  // late-arriving frames (a mobile "zombie" that revives after we already
+  // reconnected on a fresh one) are dropped instead of double-applied.
+  private socketGen = 0;
   private heartbeat: number | null = null;
   code = "";
   // Friend games save a resumable session under a well-known key; matchmade
@@ -625,6 +635,7 @@ export class MPSession {
     if (this.reconnectTimer !== null) return;
     this.reconnectAttempt++;
     this.addWakeListeners();
+    this.emitConnectionState("reconnecting");
     this.emit({ type: "reconnecting", attempt: this.reconnectAttempt });
     const delay = Math.min(15000, 500 * 2 ** Math.min(this.reconnectAttempt, 5));
     this.reconnectTimer = window.setTimeout(() => {
@@ -664,6 +675,22 @@ export class MPSession {
     for (const fn of [...this.listeners]) fn(e);
   }
 
+  /** Subscribe to coarse socket connection state ("connected" | "reconnecting"
+   *  | "lost"), independent of the game frame stream. Used by ConnectionBanner
+   *  to show a non-blocking reconnect notice. Returns an unsubscribe function.
+   *  Reports socket lifecycle only; it does not drive or alter the reconnect
+   *  logic (scheduleReconnect / tryReconnect own that). */
+  onConnectionState(fn: (s: MPConnectionState) => void) {
+    this.connectionListeners.push(fn);
+    return () => {
+      this.connectionListeners = this.connectionListeners.filter((f) => f !== fn);
+    };
+  }
+
+  private emitConnectionState(s: MPConnectionState) {
+    for (const fn of [...this.connectionListeners]) fn(s);
+  }
+
   private sendFrame(t: string, d?: unknown): boolean {
     if (this.socket?.readyState !== WebSocket.OPEN) return false;
     this.socket.send(JSON.stringify(d === undefined ? { t } : { t, d }));
@@ -691,6 +718,9 @@ export class MPSession {
       };
 
       const socket = new WebSocket(this.serverUrl || gameServerUrl());
+      // Claim a fresh generation for this socket; frames from any older socket
+      // are dropped (see onmessage below).
+      const gen = ++this.socketGen;
       this.socket = socket;
       let opened = false;
 
@@ -731,10 +761,17 @@ export class MPSession {
         // socket can die during a freeze without ever firing onclose, so the
         // foreground-return handlers must already be armed to detect the zombie.
         this.addWakeListeners();
+        // Socket is back: tell any connection-state listener (the banner). Only
+        // for the current generation, so a stale socket opening late is ignored.
+        if (gen === this.socketGen) this.emitConnectionState("connected");
         settleResolve();
       };
 
-      socket.onmessage = (event) => this.handleFrame(event.data);
+      socket.onmessage = (event) => {
+        // Duplicate-event protection: ignore frames from a superseded socket.
+        if (gen !== this.socketGen) return;
+        this.handleFrame(event.data);
+      };
 
       socket.onerror = () => {
         const message = "Game server connection failed.";
@@ -754,6 +791,9 @@ export class MPSession {
         // isn't blocked behind a promise the failTimer will reject.
         if (!opened) this.connecting = null;
         if (opened) {
+          // Only the current socket's close is a real drop; a superseded
+          // socket closing must not report "lost" over a healthy connection.
+          if (gen === this.socketGen) this.emitConnectionState("lost");
           this.emit({ type: "disconnected" });
           this.scheduleReconnect();
         }
@@ -1369,6 +1409,7 @@ export class MPSession {
     const socket = this.socket;
     this.socket = null;
     this.listeners = [];
+    this.connectionListeners = [];
     try {
       socket?.close();
     } catch {}

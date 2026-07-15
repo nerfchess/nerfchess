@@ -13,9 +13,13 @@ interface Props {
   elo?: number | null;
   avatar?: string | null;
   className?: string;
+  // Whether the name links to the player's profile. True for spectator/replay
+  // rows (watching or reviewing a finished game); false in the viewer's OWN
+  // active game, where a click must not leave the board mid-play.
+  linkProfile?: boolean;
 }
 
-export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "" }: Props) {
+export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "", linkProfile = true }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
@@ -24,12 +28,14 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
   const delta = playerValue - otherValue;
   const isMe = playerColor === myColor;
   const initial = name.trim().charAt(0).toUpperCase() || "?";
+  const isNamed = name !== "Anonymous" && name !== "You";
+  const showLink = linkProfile && isNamed;
 
   return (
     <div className={`flex min-h-[3.25rem] items-center gap-3 px-2 py-2 sm:px-6 ${className}`}>
       <div className="flex min-w-0 items-center gap-2">
         <div className="flex min-w-[8.5rem] items-center gap-2 px-0 py-2">
-          {name !== "Anonymous" && name !== "You" ? (
+          {isNamed ? (
             <PlayerAvatar name={name} avatar={avatar} size={32} />
           ) : (
             <div
@@ -46,9 +52,9 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
           )}
           <div className="min-w-0">
             <div className="truncate font-display text-sm font-semibold text-parchment">
-              {name !== "Anonymous" && name !== "You" ? (
-                // Opens in a new tab so following a player never abandons a
-                // live board (relevant for both players and spectators).
+              {showLink ? (
+                // Opens in a new tab so following a player never abandons the
+                // board being watched (spectator / replay rows only).
                 <a
                   href={`/u/${encodeURIComponent(name)}`}
                   target="_blank"

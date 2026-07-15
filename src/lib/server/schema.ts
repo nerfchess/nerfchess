@@ -607,6 +607,14 @@ const ADDITIVE_COLUMNS: string[] = [
   // name). Nullable and additive; legacy rows stay frozen. Mirrors
   // migrations/0033_notification_actor_id.sql.
   `ALTER TABLE notifications ADD COLUMN actor_user_id TEXT`,
+  // Profile privacy + presence. friends_visibility ('public'|'private') gates
+  // who may read a player's friends list (owner and moderators always may);
+  // show_online = 0 hides the player's last-seen/online presence from the
+  // profile payload; last_seen_at is refreshed at most once per 5 minutes from
+  // /api/auth/me. Mirrors migrations/0034_profile_privacy.sql.
+  `ALTER TABLE users ADD COLUMN friends_visibility TEXT NOT NULL DEFAULT 'public'`,
+  `ALTER TABLE users ADD COLUMN show_online INTEGER NOT NULL DEFAULT 1`,
+  `ALTER TABLE users ADD COLUMN last_seen_at INTEGER`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

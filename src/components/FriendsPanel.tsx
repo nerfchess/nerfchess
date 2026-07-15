@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "./PlayerAvatar";
+import { PlayerLink } from "./PlayerLink";
 import { Check, Swords, UserPlus, X } from "lucide-react";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
@@ -215,7 +216,7 @@ export function FriendsPanel() {
           {outgoing.map((f) => (
             <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
               <PlayerAvatar name={f.username} avatar={f.avatar} size={22} />
-              <span className="min-w-0 truncate">{f.username}</span>
+              <PlayerLink name={f.username} className="min-w-0 hover:text-parchment-100" />
               <span className="ml-auto shrink-0 text-[11px] text-parchment-500">requested</span>
               <button
                 onClick={() => void act("decline", f.username)}
