@@ -1407,7 +1407,7 @@ function GamePage() {
       return (
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
-            <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+            <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
             <h1 className="font-display text-4xl text-parchment text-center mt-1">
               Choose your handicap
             </h1>
@@ -1459,18 +1459,18 @@ function GamePage() {
             {/* Nerf mode: the opponent's rule is completely hidden until the
                 game ends, so their options never show either. */}
             {gameMode === "nerf" ? (
-              <p className="mt-5 text-center text-[11px] text-parchment-400">
+              <p className="mt-5 text-center text-[12px] text-parchment-400">
                 Your opponent picks a nerf too. You will see their rule when the game ends.
               </p>
             ) : (
               <div className="mt-5 plate p-3 text-center">
-                <span className="smallcaps text-[10px] text-parchment-400">
+                <span className="smallcaps text-[12px] text-parchment-400">
                   Your opponent is choosing between
                 </span>
                 <div className="mt-1 text-sm text-parchment-200 font-display">
                   {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
                 </div>
-                <div className="mt-0.5 text-[11px] text-parchment-400">
+                <div className="mt-0.5 text-[12px] text-parchment-400">
                   Which one they take stays hidden, unless you draft a reveal.
                 </div>
               </div>
@@ -1695,7 +1695,7 @@ function GamePage() {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -1713,7 +1713,7 @@ function GamePage() {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -1731,7 +1731,7 @@ function GamePage() {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => { onResign(); setConfirmingResign(false); }}
@@ -1750,7 +1750,7 @@ function GamePage() {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -1814,7 +1814,7 @@ function GamePage() {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
-          <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
+          <div className="smallcaps text-[12px] text-parchment-400 hidden sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {gameMode && (
               <>
@@ -1905,7 +1905,7 @@ function GamePage() {
                 />
                 {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
               </span>
-              <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">
+              <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
                 Casual · vs bot
               </span>
             </div>
@@ -2129,7 +2129,7 @@ function GamePage() {
                       {myNerf.name}
                     </span>
                     <span
-                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
                       title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
                     >
                       {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}

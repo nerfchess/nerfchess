@@ -1,9 +1,11 @@
 "use client";
 
 // /stats no longer hosts the site-wide numbers (those moved to the moderation
-// area at /mod/stats). It now sends players to their own numbers: signed-in
-// visitors land on their profile (ratings, record, statistics, achievements),
-// signed-out visitors land on the achievements wall.
+// area at /mod/stats). It now sends players to their own numbers: the profile's
+// Statistics section. Signed-in visitors land straight on their profile;
+// signed-out visitors have no personal statistics, so they are routed through
+// sign-in with `next=/stats`, which lands them on their own numbers the moment
+// they authenticate rather than dead-ending on an unrelated wall.
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -16,7 +18,7 @@ export default function StatsRedirect() {
     let cancelled = false;
     fetchMe().then((me) => {
       if (cancelled) return;
-      router.replace(me ? `/u/${encodeURIComponent(me.username)}` : "/achievements");
+      router.replace(me ? `/u/${encodeURIComponent(me.username)}` : "/login?next=/stats");
     });
     return () => {
       cancelled = true;

@@ -15,7 +15,7 @@ import { ModeBadge } from "@/components/ModeBadge";
 import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
-import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { useLobbySnapshotStatus } from "@/lib/lobbyClient";
 import { MPLobbyGame, MPPlayers } from "@/lib/multiplayer";
 import { featuredBoard } from "@/lib/spectate/featuredBoard";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
@@ -177,7 +177,7 @@ function TvView() {
   const modeFilter: DraftMode | null =
     rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
 
-  const lobby = useLobbySnapshot(5000);
+  const { lobby, failed: lobbyFailed, reload: reloadLobby } = useLobbySnapshotStatus(5000);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [recent, setRecent] = useState<RecentGame | null>(null);
   // null = fallback not answered yet; the empty state must not show before this
@@ -592,13 +592,30 @@ function TvView() {
                 </div>
               </div>
               {!lobby ? (
-                /* First snapshot still loading: shimmer instead of a premature
-                   "nothing live" that flashes and then fills in. */
-                <div className="space-y-2 p-3" aria-label="Loading live games">
-                  <div className="skeleton h-12 w-full" />
-                  <div className="skeleton h-12 w-full" />
-                  <div className="skeleton h-12 w-3/4" />
-                </div>
+                lobbyFailed ? (
+                  /* Server unreachable and nothing cached: a plain error with a
+                     Retry, never a skeleton that spins forever. */
+                  <div role="alert" className="space-y-2 p-3">
+                    <p className="text-[13px] text-parchment-300">
+                      Can&apos;t reach the game server, so the live list isn&apos;t available.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={reloadLobby}
+                      className="rounded-sm border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : (
+                  /* First snapshot still loading: shimmer instead of a premature
+                     "nothing live" that flashes and then fills in. */
+                  <div className="space-y-2 p-3" aria-label="Loading live games">
+                    <div className="skeleton h-12 w-full" />
+                    <div className="skeleton h-12 w-full" />
+                    <div className="skeleton h-12 w-3/4" />
+                  </div>
+                )
               ) : liveGames.length === 0 ? (
                 <p className="px-3 py-4 text-[13px] text-parchment-400">
                   Nothing live in this channel right now.

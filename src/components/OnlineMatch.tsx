@@ -211,8 +211,8 @@ function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: n
   const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
   return (
     <div className="plate flex items-center justify-between gap-2 p-2 px-3">
-      <span className="smallcaps text-[9px] text-parchment-400">Rating at stake</span>
-      <span className="font-mono text-[11px] tabular-nums">
+      <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
+      <span className="font-mono text-[12px] tabular-nums">
         <span className="text-verdigris">W {fmt(stakes.win)}</span>
         <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
         <span className="text-oxblood-glow">L {fmt(stakes.loss)}</span>
@@ -1921,7 +1921,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       <main className="min-h-dvh flex items-center justify-center px-4 py-8">
         <ConnectionBanner session={session} />
         <div className="w-full max-w-2xl">
-          <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+          <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
             Choose your handicap
           </h1>
@@ -2006,13 +2006,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               reveals when the game ends, so their options never show. */}
           {!isNerfMode && (
             <div className="mt-5 plate p-3 text-center">
-              <span className="smallcaps text-[10px] text-parchment-400">
+              <span className="smallcaps text-[12px] text-parchment-400">
                 Your opponent is choosing between
               </span>
               <div className="mt-1 text-sm text-parchment-200 font-display">
                 {oppOptions.map((n) => n.name).join("  ·  ")}
               </div>
-              <div className="mt-0.5 text-[11px] text-parchment-400">
+              <div className="mt-0.5 text-[12px] text-parchment-400">
                 {picksVisible
                   ? "Their choice will be visible when the game starts."
                   : "Which one they take stays hidden, unless you draft a reveal."}
@@ -2020,7 +2020,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
           )}
           {isNerfMode && (
-            <p className="mt-5 text-center text-[11px] text-parchment-400">
+            <p className="mt-5 text-center text-[12px] text-parchment-400">
               Your opponent picks a nerf too. You will see their rule when the game ends.
             </p>
           )}
@@ -2223,7 +2223,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : myRevealState === "confirm" ? (
     <div className="plate space-y-2 p-2 px-3">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Show your secret rule to your opponent? This can&apos;t be undone.
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -2254,7 +2254,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -2272,7 +2272,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -2290,7 +2290,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => {
@@ -2311,7 +2311,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : claimReady ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Your opponent seems to have abandoned the game.
       </div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
@@ -2332,7 +2332,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : opponentGone && !game?.result ? (
     <div className="space-y-2" role="status" aria-live="polite">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Opponent disconnected.{" "}
         {claimInSeconds > 0
           ? `You can claim the win in ${claimInSeconds}s.`
@@ -2342,7 +2342,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : takebackOfferBy && takebackOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Opponent asks for a takeback.</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2361,7 +2361,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : drawOfferBy && drawOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Opponent offered a draw.</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Opponent offered a draw.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2387,10 +2387,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
       )}
       {takebackStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Takeback declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Takeback declined.</div>
       )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
@@ -2434,7 +2434,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
-          <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
+          <div className="smallcaps hidden text-[12px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {isDraft && (
               <>
@@ -2529,7 +2529,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {isBuffMode ? "Buff mode" : "Nerf mode"}
               </span>
               {subtitle && (
-                <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">{subtitle}</span>
+                <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">{subtitle}</span>
               )}
               {/* A gold gleam that occasionally travels the header hairline. */}
               <span aria-hidden className="rail-header-sheen" />
@@ -2832,7 +2832,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       {myNerf.name}
                     </span>
                     <span
-                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
                       title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
                     >
                       {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
@@ -2913,7 +2913,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                         onClick={() => session.adjustOppClock(false)}
                         disabled={!!game.result}
                         title="Give your opponent 15 seconds"
-                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[10px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
+                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[12px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
                       >
                         +15s
                       </button>
@@ -2923,7 +2923,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                           onClick={() => session.adjustOppClock(true)}
                           disabled={!!game.result}
                           title="Take 15 seconds from your opponent"
-                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
+                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[12px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
                         >
                           -15s
                         </button>
@@ -3077,7 +3077,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
                 {/* Only claim "on their clock" once the free window has truly
                     expired; before then both clocks are still paused. */}
-                <span className="smallcaps ml-2 text-[10px] text-parchment-400">
+                <span className="smallcaps ml-2 text-[12px] text-parchment-400">
                   {draftGraceOver ? "on their clock now" : "clocks paused"}
                 </span>
               </span>
@@ -3100,7 +3100,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               title="Dismiss"
               className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
-              <div className="smallcaps text-[10px] text-parchment-400">
+              <div className="smallcaps text-[12px] text-parchment-400">
                 {genuinelySkipped
                   ? "Draft skipped"
                   : draftCardNoun(start.mode) === "hex"
@@ -3111,7 +3111,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {genuinelySkipped ? "Your draft was skipped" : `Waiting for ${oppName}`}
               </h2>
               {genuinelySkipped && (
-                <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+                <p className="mt-1 text-[12px] leading-snug text-parchment-300">
                   A card your opponent played skipped your draft this round.
                 </p>
               )}
@@ -3128,7 +3128,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {draftDeadline != null && (
                 <LockInCountdown deadline={draftDeadline} className="mt-3" />
               )}
-              <p className="mt-2 text-[10px] leading-snug text-parchment-400">
+              <p className="mt-2 text-[12px] leading-snug text-parchment-400">
                 Both clocks stay paused until the pick window runs out. Tap to minimize (a banner stays up).
               </p>
             </motion.div>

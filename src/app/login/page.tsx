@@ -156,7 +156,7 @@ function LoginPage() {
             </div>
           )}
           <div>
-            <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="username">
+            <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="username">
               {tab === "login" ? "Username or email" : "Username"}
             </label>
             <input
@@ -169,14 +169,14 @@ function LoginPage() {
               placeholder="knight_rider"
             />
             {tab === "register" && (
-              <p className="mt-1 text-[11px] text-parchment-400">
+              <p className="mt-1 text-[12px] text-parchment-400">
                 3-20 characters: letters, digits, underscores.
               </p>
             )}
           </div>
           {tab === "register" && (
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="email">
+              <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="email">
                 Email <span className="normal-case text-parchment-400/60">(optional)</span>
               </label>
               <input
@@ -189,13 +189,13 @@ function LoginPage() {
                 className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
                 placeholder="you@example.com"
               />
-              <p className="mt-1 text-[11px] text-parchment-400">
+              <p className="mt-1 text-[12px] text-parchment-400">
                 Lets you sign in with your email instead of your username.
               </p>
             </div>
           )}
           <div>
-            <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="password">
+            <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="password">
               Password
             </label>
             <input
@@ -226,7 +226,7 @@ function LoginPage() {
 
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[11px] smallcaps text-parchment-400">or</span>
+            <span className="text-[12px] smallcaps text-parchment-400">or</span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
           <a

@@ -15,11 +15,15 @@ export function CategoryTabs({
   onChange: (id: RatingCategoryId) => void;
   className?: string;
 }) {
+  // Underline tabs, the single tab treatment across the site (design system 7):
+  // active = parchment-50 with an accent underline, inactive = parchment-300.
+  // The per-category hue survives only on the icon so Nerf/Buff keep their
+  // identity without reintroducing a boxed segmented control.
   return (
     <div
       role="tablist"
       aria-label="Rating category"
-      className={"inline-flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1 " + className}
+      className={"flex items-stretch gap-5 overflow-x-auto border-b border-[color:var(--edge)] " + className}
     >
       {ACTIVE_RATING_CATEGORIES.map((c) => {
         const Icon = c.icon;
@@ -31,14 +35,17 @@ export function CategoryTabs({
             aria-selected={selected}
             onClick={() => onChange(c.id)}
             className={
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 " +
+              "-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-150 " +
               (selected
-                ? "text-parchment"
-                : "text-parchment-400 hover:text-parchment-200 hover:bg-white/[0.04]")
+                ? "border-[color:var(--accent)] text-parchment-50"
+                : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-100")
             }
-            style={selected ? { background: c.accent + "22", boxShadow: `inset 0 0 0 1px ${c.accent}66` } : undefined}
           >
-            <Icon className="h-3.5 w-3.5" style={{ color: selected ? c.accent : undefined }} strokeWidth={2.2} />
+            <Icon
+              className="h-3.5 w-3.5"
+              style={{ color: selected ? c.accent : undefined }}
+              strokeWidth={2.2}
+            />
             {c.label}
           </button>
         );

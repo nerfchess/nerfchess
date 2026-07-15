@@ -4,7 +4,7 @@
 // Used by the homepage "live now" strip; the lobby page runs its own loop so
 // it can surface connection errors.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { withArenaLobby } from "./arenaLobby";
 import { MPLobby } from "./multiplayer";
 
@@ -31,17 +31,38 @@ export async function fetchLobbySnapshot(): Promise<MPLobby> {
 // below refreshes it and any dead game self-corrects on watch failure.
 let lastLobby: MPLobby | null = null;
 
-export function useLobbySnapshot(pollMs = 10000): MPLobby | null {
+// The polling hook with connection status. `failed` flips true only after two
+// misses in a row AND with no cached snapshot to fall back on, so a surface can
+// swap its skeleton for a designed error state instead of spinning forever when
+// the game server is unreachable; stale-but-present data always wins over an
+// error. `reload` forces an immediate re-poll (wired to Retry buttons).
+export function useLobbySnapshotStatus(pollMs = 10000): {
+  lobby: MPLobby | null;
+  failed: boolean;
+  reload: () => void;
+} {
   const [lobby, setLobby] = useState<MPLobby | null>(lastLobby);
+  const [failed, setFailed] = useState(false);
+  const [nonce, setNonce] = useState(0);
   useEffect(() => {
     let cancelled = false;
+    let failures = 0;
     const poll = async () => {
       try {
         const data = await fetchLobbySnapshot();
         lastLobby = data;
-        if (!cancelled) setLobby(data);
+        if (!cancelled) {
+          failures = 0;
+          setLobby(data);
+          setFailed(false);
+        }
       } catch {
-        // Leave the last snapshot up; the strip degrades gracefully.
+        // Leave the last snapshot up; the strip degrades gracefully. Only after
+        // a second consecutive miss with nothing cached do we report failure.
+        if (!cancelled) {
+          failures += 1;
+          if (failures >= 2 && !lastLobby) setFailed(true);
+        }
       }
     };
     poll();
@@ -61,6 +82,11 @@ export function useLobbySnapshot(pollMs = 10000): MPLobby | null {
       document.removeEventListener("visibilitychange", onForeground);
       window.removeEventListener("focus", onForeground);
     };
-  }, [pollMs]);
-  return lobby;
+  }, [pollMs, nonce]);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+  return { lobby, failed, reload };
+}
+
+export function useLobbySnapshot(pollMs = 10000): MPLobby | null {
+  return useLobbySnapshotStatus(pollMs).lobby;
 }

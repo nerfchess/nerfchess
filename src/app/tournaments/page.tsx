@@ -37,12 +37,12 @@ const DURATION_PRESETS = [20, 30, 45, 60, 90, 120];
 
 const INPUT_CLASS =
   "mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment";
-const LABEL_CLASS = "block smallcaps text-[11px] text-parchment-400";
+const LABEL_CLASS = "block text-[12px] font-medium text-parchment-400";
 
 function ModeTag({ mode }: { mode: string }) {
   const cls = mode === "buff" ? "border-mode-buff/40 text-mode-buffGlow" : "border-mode-nerf/40 text-mode-nerfGlow";
   return (
-    <span className={"border px-1.5 py-0.5 smallcaps text-[11px] " + cls}>{modeLabel(mode)}</span>
+    <span className={"border px-1.5 py-0.5 text-[12px] font-medium " + cls}>{modeLabel(mode)}</span>
   );
 }
 
@@ -78,6 +78,23 @@ export default function TournamentsPage() {
       const clubData = (await clubRes.json()) as { clubs: Club[] };
       setClubs(clubData.clubs);
     }
+  };
+
+  // Retry from the error state: clear the message, drop back to the loading
+  // skeleton, and refetch. Wired to the Retry button so a recovered network
+  // fills the directory in place instead of dead-ending on the banner.
+  const reload = () => {
+    setError(null);
+    setLoading(true);
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not load tournaments.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   useEffect(() => {
@@ -188,8 +205,23 @@ export default function TournamentsPage() {
         </div>
 
         {error && !showCreate && (
-          <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-[13px] text-parchment">
-            {error}
+          <div
+            role="alert"
+            className="mt-5 plate flex flex-col gap-3 border-oxblood-glow/60 bg-oxblood/15 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="text-[13px] text-parchment">{error}</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={reload}
+                className="btn-leaf press px-4 py-2 font-display text-[13px] font-semibold"
+              >
+                Retry
+              </button>
+              <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+                Back to lobby
+              </Link>
+            </div>
           </div>
         )}
 
@@ -213,7 +245,7 @@ export default function TournamentsPage() {
               </p>
             ) : (
               <>
-                <label className="mt-4 block smallcaps text-[11px] text-parchment-400" htmlFor="t-name">
+                <label className="mt-4 block text-[12px] font-medium text-parchment-400" htmlFor="t-name">
                   Name
                 </label>
                 <input id="t-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={70} className={INPUT_CLASS} />
@@ -242,7 +274,7 @@ export default function TournamentsPage() {
                   </div>
                 </div>
 
-                <label className="mt-3 block smallcaps text-[11px] text-parchment-400">Time control</label>
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400">Time control</label>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {CLOCK_PRESETS.map((preset, i) => (
                     <button
@@ -296,7 +328,7 @@ export default function TournamentsPage() {
                   </div>
                 </div>
 
-                <label className="mt-3 block smallcaps text-[11px] text-parchment-400" htmlFor="t-start">
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-start">
                   Starts (optional)
                 </label>
                 <input
@@ -309,7 +341,7 @@ export default function TournamentsPage() {
 
                 {clubs.length > 0 && (
                   <>
-                    <label className="mt-3 block smallcaps text-[11px] text-parchment-400" htmlFor="t-club">
+                    <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-club">
                       Club
                     </label>
                     <select id="t-club" value={clubId} onChange={(e) => setClubId(e.target.value)} className={INPUT_CLASS}>
@@ -321,7 +353,7 @@ export default function TournamentsPage() {
                       ))}
                     </select>
                     {selectedClubName && (
-                      <p className="mt-1 text-[11px] text-parchment-500">Members of {selectedClubName} only.</p>
+                      <p className="mt-1 text-[12px] text-parchment-400">Members of {selectedClubName} only.</p>
                     )}
                   </>
                 )}
@@ -331,7 +363,7 @@ export default function TournamentsPage() {
                   Rated
                 </label>
 
-                <label className="mt-3 block smallcaps text-[11px] text-parchment-400" htmlFor="t-desc">
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-desc">
                   Description
                 </label>
                 <textarea
@@ -359,7 +391,7 @@ export default function TournamentsPage() {
         <div className="mt-6 min-w-0 space-y-4">
           {loading ? (
             <div className="plate overflow-hidden">
-              <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+              <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Loading events
               </div>
               <ul className="divide-y divide-white/5" aria-hidden>
@@ -407,11 +439,16 @@ function Section({
   return (
     <div className="plate overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-        <span className="flex items-center gap-2 smallcaps text-[11px] text-parchment-400">
-          {accent && <span className="inline-block h-2 w-2 shrink-0 animate-pulse bg-verdigris-glow" aria-hidden />}
+        <span className="flex items-center gap-2 text-[12px] font-medium text-parchment-300">
+          {accent && (
+            <span
+              className="inline-block h-2 w-2 shrink-0 rounded-full bg-[rgb(var(--pos-rgb))] motion-safe:animate-pulse"
+              aria-hidden
+            />
+          )}
           {title}
         </span>
-        <span className="smallcaps text-[11px] text-parchment-500 tabular-nums">
+        <span className="font-mono text-[12px] text-parchment-400 tabular-nums">
           {tournaments.length} event{tournaments.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -465,10 +502,10 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
             <span className="truncate font-display text-lg text-parchment-50">{t.name}</span>
             <ModeTag mode={t.mode} />
             {t.rated ? (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[11px] text-gold-leaf">Rated</span>
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">Rated</span>
             ) : null}
           </div>
-          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">
+          <div className="mt-0.5 text-[12px] font-medium text-parchment-400">
             {formatLabel(t.format)} · {durationLabel(t.duration_min)}
             {t.club_name ? ` · ${t.club_name}` : ""} · by {t.creator_name}
           </div>

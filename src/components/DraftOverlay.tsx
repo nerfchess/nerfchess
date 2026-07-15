@@ -1650,7 +1650,7 @@ export function DraftRevealBanner({
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="plate plate-raised pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
       >
-        <span className="smallcaps block text-[9px] text-parchment-400">Draft resolved</span>
+        <span className="smallcaps block text-[12px] text-parchment-400">Draft resolved</span>
         <span className="mt-1.5 flex items-stretch gap-3">
           {/* My card slides in from the left, theirs from the right, meeting
               in the middle (a single container fade under reduced motion). */}

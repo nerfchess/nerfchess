@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronRight, Eye, Swords, Trophy, Tv, Users } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -119,30 +119,85 @@ export default function CommunityPage() {
   const [tournaments, setTournaments] = useState<Tournament[] | null>(null);
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
+  // Per-panel error flags. A settled fetch clears its flag; a failed one raises
+  // it so the panel renders the section 8.3 error state (plain sentence + Retry)
+  // instead of sitting on its skeleton forever.
+  const [err, setErr] = useState<Record<string, boolean>>({});
   const lobby = useLobbySnapshot();
+
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // One loader per data source. Clears any prior error, drops the panel back to
+  // its skeleton, then resolves to data (or raises the panel's error flag).
+  // Retry buttons call the same loader, so a recovered network fills the panel.
+  const runLoad = useCallback(
+    <T,>(key: string, url: string, set: (v: T | null) => void, pick: (raw: unknown) => T) => {
+      setErr((e) => (e[key] ? { ...e, [key]: false } : e));
+      set(null);
+      fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`${key} ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          if (mountedRef.current) set(pick(data));
+        })
+        .catch(() => {
+          if (mountedRef.current) setErr((e) => ({ ...e, [key]: true }));
+        });
+    },
+    [],
+  );
+
+  const loadTop = useCallback(
+    () => runLoad<TopPlayer[]>("top", `/api/leaderboard?category=${DEFAULT_CATEGORY}`, setTop, (d) => (d as { players: TopPlayer[] }).players),
+    [runLoad],
+  );
+  const loadActive = useCallback(
+    () => runLoad<ActivePlayer[]>("active", "/api/community/active", setActive, (d) => (d as { players: ActivePlayer[] }).players),
+    [runLoad],
+  );
+  const loadRecent = useCallback(
+    () => runLoad<RecentGame[]>("recent", "/api/community/recent", setRecent, (d) => (d as { games: RecentGame[] }).games),
+    [runLoad],
+  );
+  const loadClubs = useCallback(
+    () => runLoad<Club[]>("clubs", "/api/clubs", setClubs, (d) => (d as { clubs: Club[] }).clubs),
+    [runLoad],
+  );
+  const loadTournaments = useCallback(
+    () => runLoad<Tournament[]>("tournaments", "/api/tournaments", setTournaments, (d) => (d as { tournaments: Tournament[] }).tournaments),
+    [runLoad],
+  );
+  const loadFriends = useCallback(
+    () => runLoad<Friend[]>("friends", "/api/friends", setFriends, (d) => (d as { friends: Friend[] }).friends),
+    [runLoad],
+  );
 
   useEffect(() => {
     let cancelled = false;
-    const load = <T,>(url: string, set: (v: T) => void, pick: (raw: unknown) => T) => {
-      fetch(url)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (!cancelled && data) set(pick(data));
-        })
-        .catch(() => {});
-    };
-
-    load<TopPlayer[]>(`/api/leaderboard?category=${DEFAULT_CATEGORY}`, setTop, (d) => (d as { players: TopPlayer[] }).players);
-    load<ActivePlayer[]>("/api/community/active", setActive, (d) => (d as { players: ActivePlayer[] }).players);
-    load<RecentGame[]>("/api/community/recent", setRecent, (d) => (d as { games: RecentGame[] }).games);
-    load<Club[]>("/api/clubs", setClubs, (d) => (d as { clubs: Club[] }).clubs);
-    load<Tournament[]>("/api/tournaments", setTournaments, (d) => (d as { tournaments: Tournament[] }).tournaments);
+    // Deferred a microtask so each loader's synchronous reset (clear error, drop
+    // to skeleton) runs after mount rather than cascading during the effect.
+    queueMicrotask(() => {
+      if (cancelled) return;
+      loadTop();
+      loadActive();
+      loadRecent();
+      loadClubs();
+      loadTournaments();
+    });
 
     fetchMe().then((user) => {
       if (cancelled) return;
       setMe(user);
       if (user && !user.isGuest) {
-        load<Friend[]>("/api/friends", setFriends, (d) => (d as { friends: Friend[] }).friends);
+        loadFriends();
         fetch(`/api/users/${encodeURIComponent(user.username)}/games?limit=20`)
           .then((res) => (res.ok ? res.json() : null))
           .then((data) => {
@@ -174,7 +229,7 @@ export default function CommunityPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadTop, loadActive, loadRecent, loadClubs, loadTournaments, loadFriends]);
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
   const topBoard = getCategory(DEFAULT_CATEGORY);
@@ -249,7 +304,9 @@ export default function CommunityPage() {
           <div className="min-w-0 space-y-4">
             {signedIn && (
               <SectionCard title="Friends" icon={<Users size={16} />} tint="mint">
-                {!sortedFriends ? (
+                {err.friends ? (
+                  <SectionError onRetry={loadFriends} />
+                ) : !sortedFriends ? (
                   <RailSkeleton rows={3} />
                 ) : sortedFriends.length === 0 ? (
                   <InlineEmpty
@@ -325,7 +382,9 @@ export default function CommunityPage() {
 
             {/* Recent games: the latest finished games, each opening its replay. */}
             <SectionCard title="Recent games" icon={<Tv size={16} />} tint="coral">
-              {!recent ? (
+              {err.recent ? (
+                <SectionError onRetry={loadRecent} />
+              ) : !recent ? (
                 <RailSkeleton rows={5} />
               ) : recent.length === 0 ? (
                 <InlineEmpty
@@ -350,7 +409,9 @@ export default function CommunityPage() {
               icon={<Trophy size={15} />}
               action={{ href: "/leaderboard", label: "Full board" }}
             >
-              {!top ? (
+              {err.top ? (
+                <RailError onRetry={loadTop} />
+              ) : !top ? (
                 <RailSkeleton rows={5} />
               ) : top.length === 0 ? (
                 <EmptyRail>
@@ -384,7 +445,9 @@ export default function CommunityPage() {
             </RailCard>
 
             <RailCard title="Clubs" icon={<Users size={15} />} action={{ href: "/clubs", label: "All clubs" }}>
-              {!clubs ? (
+              {err.clubs ? (
+                <RailError onRetry={loadClubs} />
+              ) : !clubs ? (
                 <RailSkeleton rows={3} />
               ) : clubs.length === 0 ? (
                 <EmptyRail>
@@ -421,11 +484,13 @@ export default function CommunityPage() {
               icon={<Trophy size={15} />}
               action={{ href: "/tournaments", label: "All events" }}
             >
-              <TournamentRail tournaments={tournaments} />
+              <TournamentRail tournaments={tournaments} error={!!err.tournaments} onRetry={loadTournaments} />
             </RailCard>
 
             <RailCard title="Active this week" icon={<Swords size={15} />}>
-              {!active ? (
+              {err.active ? (
+                <RailError onRetry={loadActive} />
+              ) : !active ? (
                 <RailSkeleton rows={4} />
               ) : active.length === 0 ? (
                 <EmptyRail>No games in the last 7 days. Be the first.</EmptyRail>
@@ -522,7 +587,16 @@ function RailCard({
   );
 }
 
-function TournamentRail({ tournaments }: { tournaments: Tournament[] | null }) {
+function TournamentRail({
+  tournaments,
+  error,
+  onRetry,
+}: {
+  tournaments: Tournament[] | null;
+  error: boolean;
+  onRetry: () => void;
+}) {
+  if (error) return <RailError onRetry={onRetry} />;
   if (!tournaments) return <RailSkeleton rows={3} />;
   const live = tournaments
     .filter((t) => t.phase !== "finished")
@@ -673,6 +747,40 @@ function InlineEmpty({
 
 function EmptyRail({ children }: { children: React.ReactNode }) {
   return <p className="mt-2 text-sm text-parchment-400">{children}</p>;
+}
+
+// Section-level error (design system 8.3): what failed in plain words, a Retry,
+// and a way out. The page's nav and its other panels remain the way out, and a
+// Back to lobby link makes it explicit for this larger region.
+function SectionError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="mt-2 flex flex-col items-start gap-2.5 py-4">
+      <p className="text-sm leading-relaxed text-parchment-300">
+        This section could not load right now.
+      </p>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1.5 text-sm">
+          Retry
+        </button>
+        <Link href="/lobby" className="text-sm text-parchment-400 transition-colors hover:text-gold-leaf">
+          Back to lobby
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Compact error for a rail panel: one line plus a Retry. The surrounding page
+// keeps its own way out (nav and the other panels), so the rail stays tight.
+function RailError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="mt-2 space-y-2">
+      <p className="text-sm text-parchment-400">Could not load this list.</p>
+      <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1 text-xs">
+        Retry
+      </button>
+    </div>
+  );
 }
 
 function RailSkeleton({ rows }: { rows: number }) {

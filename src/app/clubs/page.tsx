@@ -159,7 +159,7 @@ export default function ClubsPage() {
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block smallcaps text-[11px] text-parchment-400" htmlFor="club-name">
+                  <label className="block text-[12px] font-medium text-parchment-400" htmlFor="club-name">
                     Name
                   </label>
                   <input
@@ -171,7 +171,7 @@ export default function ClubsPage() {
                   />
                 </div>
                 <div className="sm:row-span-2">
-                  <label className="block smallcaps text-[11px] text-parchment-400" htmlFor="club-description">
+                  <label className="block text-[12px] font-medium text-parchment-400" htmlFor="club-description">
                     Description
                   </label>
                   <textarea
@@ -211,7 +211,7 @@ export default function ClubsPage() {
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="shrink-0 smallcaps text-[11px] text-parchment-400 hover:text-parchment-100"
+                className="shrink-0 text-[12px] font-medium text-parchment-400 hover:text-parchment-100"
               >
                 Clear
               </button>
@@ -222,7 +222,7 @@ export default function ClubsPage() {
               to the top the way lichess surfaces "Your teams". */}
           {yourClubs.length > 0 && (
             <div className="plate overflow-hidden">
-              <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+              <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Your clubs
               </div>
               <ul className="divide-y divide-white/5">
@@ -234,7 +234,7 @@ export default function ClubsPage() {
           )}
 
           <div className="plate overflow-hidden">
-            <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+            <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
               {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
             </div>
             {loading ? (
@@ -250,15 +250,20 @@ export default function ClubsPage() {
                 ))}
               </ul>
             ) : loadError ? (
-              <div className="px-5 py-8 text-center">
+              <div role="alert" className="px-5 py-8 text-center">
                 <p className="text-[13px] text-parchment-200">{loadError}</p>
-                <button
-                  type="button"
-                  onClick={reload}
-                  className="btn-ghost press mt-3 px-4 py-2 font-display text-[13px]"
-                >
-                  Try again
-                </button>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={reload}
+                    className="btn-leaf press px-4 py-2 font-display text-[13px] font-semibold"
+                  >
+                    Retry
+                  </button>
+                  <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+                    Back to lobby
+                  </Link>
+                </div>
               </div>
             ) : filtered.length === 0 ? (
               <div className="px-5 py-10 text-center">
@@ -307,7 +312,7 @@ function ClubRow({ club }: { club: Club }) {
               {club.name}
             </span>
             {!!club.joined && (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[11px] text-gold-leaf">
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">
                 Joined
               </span>
             )}
@@ -317,7 +322,7 @@ function ClubRow({ club }: { club: Club }) {
           ) : (
             <p className="mt-0.5 truncate text-[13px] italic text-parchment-500">No description.</p>
           )}
-          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">owner {club.owner_name}</div>
+          <div className="mt-0.5 text-[12px] font-medium text-parchment-400">owner {club.owner_name}</div>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] text-parchment-400 tabular-nums">
           <Users size={13} />

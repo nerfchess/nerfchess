@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -507,32 +507,50 @@ type RecentGame = {
 // section disappears when the archive has nothing to show, so no dead air.
 function LiveActivity() {
   const [games, setGames] = useState<RecentGame[] | null>(null);
+  const [failed, setFailed] = useState(false);
   const [botNames, setBotNames] = useState<Set<string>>(new Set());
+  const mountedRef = useRef(true);
+
+  const loadGames = useCallback(() => {
+    setFailed(false);
+    setGames(null);
+    fetch("/api/community/recent")
+      .then((res) => {
+        if (!res.ok) throw new Error(`recent ${res.status}`);
+        return res.json() as Promise<{ games: RecentGame[] }>;
+      })
+      .then((data) => {
+        if (mountedRef.current) setGames(data.games.slice(0, 6));
+      })
+      .catch(() => {
+        if (mountedRef.current) setFailed(true);
+      });
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/community/recent")
-      .then((res) => (res.ok ? (res.json() as Promise<{ games: RecentGame[] }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setGames(data.games.slice(0, 6));
-      })
-      .catch(() => {});
+    mountedRef.current = true;
+    // Deferred a microtask so loadGames' synchronous reset does not cascade
+    // renders during the effect body.
+    queueMicrotask(() => {
+      if (mountedRef.current) loadGames();
+    });
     // House-bot names come from the leaderboard's own bot flag, so a bot is
     // labeled here exactly as it is on the community hub.
     fetch("/api/leaderboard?category=nerf")
       .then((res) => (res.ok ? (res.json() as Promise<{ players: { username: string; bot?: number }[] }>) : null))
       .then((data) => {
-        if (cancelled || !data) return;
-        setBotNames(new Set(data.players.filter((p) => p.bot).map((p) => p.username.toLowerCase())));
+        if (mountedRef.current && data)
+          setBotNames(new Set(data.players.filter((p) => p.bot).map((p) => p.username.toLowerCase())));
       })
       .catch(() => {});
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
-  }, []);
+  }, [loadGames]);
 
-  // Empty-safe: nothing archived yet -> render nothing at all.
-  if (games !== null && games.length === 0) return null;
+  // Empty-safe: nothing archived yet -> render nothing at all. The fetch has
+  // settled to an empty list here, never a still-pending or failed load.
+  if (!failed && games !== null && games.length === 0) return null;
 
   const isBot = (name: string) => botNames.has(name.toLowerCase());
   const modeOf = (category: string) => (category === "nerf" || category === "buff" ? category : undefined);
@@ -546,7 +564,19 @@ function LiveActivity() {
         </Link>
       </header>
       <div className="plate divide-y divide-[color:var(--edge)] p-1">
-        {games
+        {failed ? (
+          <div role="alert" className="flex flex-col items-start gap-2.5 px-3 py-5">
+            <p className="text-[14px] text-parchment-300">Live activity could not load right now.</p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={loadGames} className="btn-ghost press px-3 py-1.5 text-[13px]">
+                Retry
+              </button>
+              <Link href="/lobby" className="text-[13px] text-parchment-400 no-underline transition-colors hover:text-parchment-100">
+                Back to lobby
+              </Link>
+            </div>
+          </div>
+        ) : games
           ? games.map((g) => (
               <Link
                 key={g.id}

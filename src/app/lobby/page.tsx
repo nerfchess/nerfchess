@@ -57,6 +57,8 @@ function LobbyInner() {
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
   const [tab, setTab] = useState<LobbyTab>("quick");
+  // Bumped by a Retry to force an immediate re-poll of the lobby snapshot.
+  const [reloadKey, setReloadKey] = useState(0);
   // Mode filters for the Challenges and Watch tabs.
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
@@ -105,8 +107,10 @@ function LobbyInner() {
     // The snapshot is served from an edge cache in front of the single-threaded
     // Durable Object, so a poll can occasionally arrive late. Keep showing the
     // last good snapshot (the catch below never clears `lobby`) and only surface
-    // the error banner after three misses in a row, so a one-off blip doesn't
-    // flap "can't reach the game server" at the player.
+    // the error state after two misses in a row, so a one-off blip doesn't flap
+    // "can't reach the game server" at the player while still resolving the
+    // rails out of their skeleton quickly (well under the six-second budget) when
+    // the server is genuinely unreachable.
     let failures = 0;
     const poll = async () => {
       try {
@@ -120,7 +124,7 @@ function LobbyInner() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 3) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
         }
       }
     };
@@ -133,7 +137,7 @@ function LobbyInner() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, []);
+  }, [reloadKey]);
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
   const seeks = lobby?.seeks ?? [];
@@ -376,7 +380,14 @@ function LobbyInner() {
               </div>
               <ModeFilter value={challengeFilter} onChange={setChallengeFilter} label="Filter challenges by mode" />
               {!lobby ? (
-                <SkeletonRows count={3} />
+                lobbyError ? (
+                  <LobbyRailError
+                    message="Can't reach the game server, so open challenges aren't available."
+                    onRetry={() => setReloadKey((k) => k + 1)}
+                  />
+                ) : (
+                  <SkeletonRows count={3} />
+                )
               ) : waitingCount === 0 ? (
                 <HallEmpty
                   title="No one is waiting right now."
@@ -428,7 +439,14 @@ function LobbyInner() {
               </div>
               <ModeFilter value={watchFilter} onChange={setWatchFilter} label="Filter live games by mode" />
               {!lobby ? (
-                <SkeletonRows count={3} />
+                lobbyError ? (
+                  <LobbyRailError
+                    message="Can't reach the game server, so live games aren't available."
+                    onRetry={() => setReloadKey((k) => k + 1)}
+                  />
+                ) : (
+                  <SkeletonRows count={3} />
+                )
               ) : lobby.games.length === 0 ? (
                 <HallEmpty
                   title="No games in play right now."
@@ -511,10 +529,17 @@ function LobbyInner() {
               )}
             </div>
             {!lobby ? (
-              <>
-                <SkeletonPlayerRows count={5} />
-                <p className="mt-3 text-sm text-parchment-400">Seeing who&apos;s online…</p>
-              </>
+              lobbyError ? (
+                <LobbyRailError
+                  message="Can't reach the game server, so we can't show who's online."
+                  onRetry={() => setReloadKey((k) => k + 1)}
+                />
+              ) : (
+                <>
+                  <SkeletonPlayerRows count={5} />
+                  <p className="mt-3 text-sm text-parchment-400">Seeing who&apos;s online…</p>
+                </>
+              )
             ) : (
               <>
                 {lobby.players.length === 0 && (
@@ -590,11 +615,18 @@ function LobbyInner() {
                 )}
               </div>
               {!lobby ? (
-                <ul className="mt-3 space-y-2" aria-hidden>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <li key={i} className="skeleton h-12" />
-                  ))}
-                </ul>
+                lobbyError ? (
+                  <LobbyRailError
+                    message="Can't reach the game server, so live games aren't available."
+                    onRetry={() => setReloadKey((k) => k + 1)}
+                  />
+                ) : (
+                  <ul className="mt-3 space-y-2" aria-hidden>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <li key={i} className="skeleton h-12" />
+                    ))}
+                  </ul>
+                )
               ) : lobby.games.length === 0 ? (
                 <p className="mt-3 text-sm text-parchment-400">
                   No live games right now. Answer a challenge and the boards light up here.
@@ -858,6 +890,24 @@ function SkeletonPlayerRows({ count }: { count: number }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+// Rail-level error (design system 8.3): plain words plus a Retry. The lobby
+// header keeps the connection banner and the page its own way out, so the rail
+// stays compact rather than dead-ending on a skeleton.
+function LobbyRailError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="mt-3 space-y-2">
+      <p className="text-sm text-parchment-300">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="min-h-[44px] sm:min-h-0 border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+      >
+        Retry
+      </button>
+    </div>
   );
 }
 

@@ -1964,7 +1964,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      "absolute text-[12px] font-mono font-semibold pointer-events-none " +
                       (claimedCorners.has("tl")
                         ? "top-0.5 left-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
                         : "top-0.5 left-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
@@ -1976,7 +1976,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      "absolute text-[12px] font-mono font-semibold pointer-events-none " +
                       (claimedCorners.has("br")
                         ? "bottom-0.5 right-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
                         : "bottom-0.5 right-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
