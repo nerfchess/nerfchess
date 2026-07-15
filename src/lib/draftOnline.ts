@@ -191,6 +191,41 @@ export function replayDraftGame(game: NerfGame, moves: string[], actions: MPDraf
   return game;
 }
 
+/** Replay server moves + the public draft record but STOP after `ply`
+ * half-moves, so a spectator (or the TV board) can reconstruct any past
+ * position — including one a board-rewriting card diverged from move history.
+ * Because it replays the draft actions through the engine (not plain
+ * move-replay), summons, removals, teleports, drops, and timed losses are
+ * reproduced exactly, so history review works PAST a divergence instead of
+ * locking. Draft actions carry the accepted-move count at which they fired, so
+ * only those recorded at ply <= `ply` are applied — the same interleaving the
+ * live game had after that many moves. */
+export function replayDraftGameToPly(
+  game: NerfGame,
+  moves: string[],
+  actions: MPDraftAction[],
+  ply: number,
+): NerfGame {
+  const end = Math.max(0, Math.min(ply, moves.length));
+  let cursor = 0;
+  const applyUpTo = (upto: number) => {
+    while (cursor < actions.length && actions[cursor].ply <= upto) {
+      applyDraftAction(game, actions[cursor]);
+      cursor += 1;
+    }
+  };
+  for (let i = 0; i < end; i++) {
+    applyUpTo(i);
+    const move =
+      legalMoves(game).find((candidate) => moveToUCI(candidate) === moves[i]) ??
+      moveFromUCI(game.board, moves[i]);
+    if (!move) return game;
+    game = playReplicaMove(game, move);
+  }
+  applyUpTo(end);
+  return game;
+}
+
 // Spectators never learn either rule, so both sides replay with a no-op
 // nerf. Server-validated moves are always found: nerfs only restrict moves,
 // and buff-granted ones come back through the replayed public record.
@@ -214,6 +249,25 @@ export function buildSpectatorDraftGame(
   const replayed = replayDraftGame(game, moves, actions);
   if (state && replayed.buffs) mergeDraftState(replayed.buffs, state, null);
   return replayed;
+}
+
+/** Build a spectator replica of a draft game AT a past ply, for history review
+ * that must jump PAST a board rewrite. Reconstructs from the move + action
+ * record through the engine so the position is faithful even when
+ * historyDiverged is set (plain move-replay would show a wrong board). No
+ * dtState is merged: it carries the CURRENT effect/buff state, which does not
+ * belong on a past position. Callers verify the replica reached the requested
+ * ply (board.history.length === ply) and fall back to the live board / a locked
+ * notice when it did not, rather than trusting a short reconstruction. */
+export function buildSpectatorDraftGameAtPly(
+  moves: string[],
+  actions: MPDraftAction[],
+  ply: number,
+  mode?: DraftMode,
+): NerfGame {
+  const game = newGame(SPECTATOR_NERF, SPECTATOR_NERF, 1);
+  enableDraftMode(game, 1, { mode });
+  return replayDraftGameToPly(game, moves, actions, ply);
 }
 
 export type DraftZones = {

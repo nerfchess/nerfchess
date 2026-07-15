@@ -127,3 +127,24 @@ export function replayToPosition(m: EngineMatch): NerfGame | null {
   applyActionsUpTo(m.moves.length);
   return game;
 }
+
+/** Rebuild the position after exactly `ply` half-moves — the reconstruction
+ *  history review needs to jump to an arbitrary past position, INCLUDING one a
+ *  board-rewriting card diverged from move history. Because it replays the moves
+ *  interleaved with the draft-action record through the engine (not plain
+ *  move-replay through makeMove), it reproduces summons, removals, teleports,
+ *  drops, and timed losses exactly as they happened live — the very mutations
+ *  `historyDiverged` marks as unreplayable from moves alone.
+ *
+ *  Returns null when the record cannot replay that far (an unknown nerf id, or a
+ *  stored move that no longer resolves — a version desync). The caller treats
+ *  null as "unreconstructable" and keeps review locked rather than showing a
+ *  wrong board, so this degrades gracefully for records the engine can't span. */
+export function boardAtPlyFromRecord(m: EngineMatch, ply: number): NerfGame | null {
+  const end = Math.max(0, Math.min(ply, m.moves.length));
+  // Slicing the move list bounds the replay: replayToPosition applies every
+  // action recorded at ply <= end (an action's `ply` is the accepted-move count
+  // when it fired), which is exactly the set of mutations in effect after `end`
+  // half-moves — the same interleaving the live game had at that point.
+  return replayToPosition({ ...m, moves: m.moves.slice(0, end) });
+}

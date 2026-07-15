@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { arenaSocketUrl, isArenaGameId } from "@/lib/arenaLobby";
-import { replayUci } from "@/lib/gameReview";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPPlayers, MPSession } from "@/lib/multiplayer";
+import {
+  appendFeaturedDraftAction,
+  featuredBoard,
+  featuredDraftFromWatchStart,
+  FeaturedDraft,
+  NOT_A_DRAFT,
+  withFeaturedDraftState,
+} from "@/lib/spectate/featuredBoard";
 import type { Color } from "@/engine/types";
 
 // The last archived game, fetched once for the no-live-games fallback.
@@ -37,6 +44,12 @@ export function HeroTv() {
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
   const [recent, setRecent] = useState<RecentGame | null>(null);
+  // Public draft-action record for draft (buff) games, so the featured board is
+  // rebuilt through the engine — reproducing board rewrites move-replay can't.
+  const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
+  // Synchronous mirror of the accepted-move count, so a draft action is tagged
+  // with the ply it fired at (the engine interleaves it there on reconstruction).
+  const movesLenRef = useRef(0);
 
   // Pull the latest finished game IMMEDIATELY on mount, in parallel with the
   // lobby poll, so the hero board shows real play right away instead of waiting
@@ -74,11 +87,35 @@ export function HeroTv() {
     const off = session.on((e) => {
       if (cancelled) return;
       if (e.type === "watch-start") {
+        movesLenRef.current = e.setup.moves.length;
         setMoves(e.setup.moves);
         setPlayers(e.setup.players);
         setOver(!!e.setup.result);
+        setDraft(featuredDraftFromWatchStart(e.setup));
       } else if (e.type === "move") {
+        movesLenRef.current = e.move.ply;
         setMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
+      } else if (e.type === "draft-used") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "used",
+            color: e.used.color,
+            buffIndex: e.used.buffIndex,
+            picks: e.used.picks,
+            card: e.used.card,
+          }),
+        );
+      } else if (e.type === "draft-resolved") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "resolved",
+            color: e.resolved.color,
+            picked: e.resolved.kind === "picked",
+            cards: e.resolved.cards,
+          }),
+        );
+      } else if (e.type === "draft-state") {
+        setDraft((d) => withFeaturedDraftState(d, e.state));
       } else if (e.type === "end") {
         setOver(true);
       }
@@ -116,7 +153,10 @@ export function HeroTv() {
     () => (live ? moves : recent?.moves ? recent.moves.split(" ").filter(Boolean) : []),
     [live, moves, recent],
   );
-  const { board, history } = useMemo(() => replayUci(shownMoves), [shownMoves]);
+  const { board, history } = useMemo(
+    () => featuredBoard(live, shownMoves, draft),
+    [live, shownMoves, draft],
+  );
   const lastMove = history[history.length - 1] ?? null;
 
   const shownId = live ? streamId : recent?.id ?? null;

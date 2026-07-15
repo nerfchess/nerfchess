@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Radio } from "lucide-react";
 // TV is a read-only browsing/preview surface (the full interactive + card-VFX
 // experience lives on the spectate page /game/[id]). Rendering the lightweight
@@ -14,9 +14,16 @@ import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
-import { replayUci } from "@/lib/gameReview";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPLobbyGame, MPPlayers, MPSession } from "@/lib/multiplayer";
+import {
+  appendFeaturedDraftAction,
+  featuredBoard,
+  featuredDraftFromWatchStart,
+  FeaturedDraft,
+  NOT_A_DRAFT,
+  withFeaturedDraftState,
+} from "@/lib/spectate/featuredBoard";
 import type { DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
@@ -100,6 +107,12 @@ function TvView() {
   const [moves, setMoves] = useState<string[]>([]);
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
+  // Public draft-action record for draft (buff) games, so the featured board is
+  // rebuilt through the engine — reproducing board rewrites move-replay can't.
+  const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
+  // Synchronous mirror of the accepted-move count, so a draft action is tagged
+  // with the ply it fired at (the engine interleaves it there on reconstruction).
+  const movesLenRef = useRef(0);
   // The stream id whose tune-in failed even after a retry, so the board area
   // shows a brief notice instead of an eternal "Tuning in…" spinner. Keyed by
   // id (not a boolean) so switching to another game clears it for free, with
@@ -125,6 +138,7 @@ function TvView() {
     setMoves([]);
     setPlayers(null);
     setOver(false);
+    setDraft(NOT_A_DRAFT);
     setFailedStreamId(null);
     setRecent(null);
     setRecentChecked(false);
@@ -181,11 +195,35 @@ function TvView() {
     const off = session.on((e) => {
       if (cancelled) return;
       if (e.type === "watch-start") {
+        movesLenRef.current = e.setup.moves.length;
         setMoves(e.setup.moves);
         setPlayers(e.setup.players);
         setOver(!!e.setup.result);
+        setDraft(featuredDraftFromWatchStart(e.setup));
       } else if (e.type === "move") {
+        movesLenRef.current = e.move.ply;
         setMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
+      } else if (e.type === "draft-used") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "used",
+            color: e.used.color,
+            buffIndex: e.used.buffIndex,
+            picks: e.used.picks,
+            card: e.used.card,
+          }),
+        );
+      } else if (e.type === "draft-resolved") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "resolved",
+            color: e.resolved.color,
+            picked: e.resolved.kind === "picked",
+            cards: e.resolved.cards,
+          }),
+        );
+      } else if (e.type === "draft-state") {
+        setDraft((d) => withFeaturedDraftState(d, e.state));
       } else if (e.type === "end") {
         setOver(true);
       }
@@ -248,7 +286,10 @@ function TvView() {
     () => (live ? moves : recent?.moves ? recent.moves.split(" ").filter(Boolean) : []),
     [live, moves, recent],
   );
-  const { board, history } = useMemo(() => replayUci(shownMoves), [shownMoves]);
+  const { board, history } = useMemo(
+    () => featuredBoard(live, shownMoves, draft),
+    [live, shownMoves, draft],
+  );
   const lastMove = history[history.length - 1] ?? null;
 
   const shownId = live ? streamId : recent?.id ?? null;
