@@ -1361,6 +1361,19 @@ export class GameServer extends DurableObject<Env> {
       return Response.json(await this.buildLobbyPayload());
     }
 
+    if (url.pathname === "/live-game" && request.method === "GET") {
+      // Authoritative live-seat lookup for the profile "Playing Right Now" card
+      // (see src/components/CurrentGameCard.tsx). Given a user id, return the id
+      // (and public mode) of the started, unfinished game that user currently
+      // occupies, or null. This reads the SAME bounded live index the lobby
+      // snapshot uses, so it never scans a stale lobby cache or guesses a seat.
+      // The response is public: a game id and its section only, no seat state.
+      const userId = url.searchParams.get("userId");
+      if (!userId) return Response.json({ gameId: null });
+      const found = await this.liveGameIdForUser(userId);
+      return Response.json(found ?? { gameId: null });
+    }
+
     if (url.pathname.startsWith("/arena/")) return this.handleArena(request, url);
 
     if (url.pathname !== socketPath) return new Response("Not found", { status: 404 });
@@ -1774,6 +1787,25 @@ export class GameServer extends DurableObject<Env> {
       }
     }
     return matches;
+  }
+
+  // The started, unfinished game a user currently occupies, if any. Reads the
+  // bounded live index (the same set the lobby snapshot walks), so it is an
+  // authoritative live-seat lookup, not a stale-lobby-cache scan. Returns the
+  // public game id plus its section (mode) only; never seat/board state. A user
+  // is only ever in one live game at a time, so the first match wins.
+  private async liveGameIdForUser(
+    userId: string,
+  ): Promise<{ gameId: string; mode?: DraftMode } | null> {
+    for (const match of await this.loadLiveMatches()) {
+      if (!match.startedAt || match.result) continue;
+      for (const color of ["w", "b"] as Color[]) {
+        if (match.users?.[color]?.id === userId) {
+          return { gameId: match.id, ...(match.mode ? { mode: match.mode } : {}) };
+        }
+      }
+    }
+    return null;
   }
 
   private connectedSession(matchId: string, color: Color): WebSocket | undefined {

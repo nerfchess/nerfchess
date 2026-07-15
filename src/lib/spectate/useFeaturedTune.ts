@@ -42,6 +42,7 @@ import {
   withFeaturedDraftState,
 } from "@/lib/spectate/featuredBoard";
 import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/game";
+import { emitTv, type TvSurface, type TvTelemetryFields } from "@/lib/telemetry/tv";
 
 /** The featured tune-in lifecycle a consumer renders from.
  *  idle   - nothing selected yet (initial, before candidates resolve).
@@ -87,11 +88,16 @@ export interface FeaturedTune {
  *   a pinned game that exhausts its retries fails over like any other.
  * @param resetKey   Changes (e.g. the mode channel) fully reset selection/retry
  *   state so no cross-pool leakage survives a channel switch.
+ * @param telemetry  Surface + filter labels for the structured tune-in
+ *   instrumentation (tv_tune_started / _succeeded / _failed, tv_candidate_skipped,
+ *   tv_failover_succeeded, tv_game_switched). Optional so a caller that does not
+ *   report stays silent.
  */
 export function useFeaturedTune(
   candidates: string[],
   pinnedId: string | null,
   resetKey: string,
+  telemetry?: { surface: TvSurface; filter: string },
 ): FeaturedTune {
   const [streamId, setStreamId] = useState<string | null>(null);
   const [liveId, setLiveId] = useState<string | null>(null);
@@ -109,6 +115,32 @@ export function useFeaturedTune(
   // effect (never during render) so a NEW candidate starts with a fresh retry
   // budget while a backoff re-run of the SAME candidate keeps counting.
   const retryForRef = useRef<string | null>(null);
+  // Telemetry bookkeeping. Kept in refs so emitting never re-runs an effect and
+  // the surface/filter labels stay current without being effect dependencies.
+  // The refs are written only in effects (never during render) so the reconciler
+  // stays the sole owner of render output.
+  const teleRef = useRef(telemetry);
+  // The last candidate we began tuning, so a change is reported as a switch.
+  const lastTunedRef = useRef<string | null>(null);
+  // True once any candidate has failed its health check: the next candidate that
+  // goes live is then a successful failover, not a first tune.
+  const hadFailureRef = useRef(false);
+  // Keep the surface/filter labels current for the async emits below. Declared
+  // before the watch effect so it commits first on the same render, making the
+  // labels available to a synchronous tv_tune_started.
+  useEffect(() => {
+    teleRef.current = telemetry;
+  });
+
+  const emitTune = (
+    event: Parameters<typeof emitTv>[0],
+    gameId: string,
+    extra: Omit<TvTelemetryFields, "gameId" | "filter"> = {},
+  ) => {
+    const t = teleRef.current;
+    if (!t) return;
+    emitTv(event, t.surface, { gameId, filter: t.filter, ...extra });
+  };
 
   // A stable key for the candidate set, so effects that only care WHICH ids are
   // eligible do not re-run on every lobby poll that returns the same ids.
@@ -130,6 +162,15 @@ export function useFeaturedTune(
     setSlowTune(false);
     setAttempt(0);
   }
+
+  // Reset the telemetry bookkeeping on a channel switch, in an effect so no ref
+  // is written during render. A fresh channel starts with no prior tuned game
+  // (so the first candidate reports a plain start, not a switch) and no
+  // outstanding failure.
+  useEffect(() => {
+    lastTunedRef.current = null;
+    hadFailureRef.current = false;
+  }, [resetKey]);
 
   // Selection: an eligible + healthy pinned pick wins; otherwise the first
   // healthy candidate. A failed pinned id falls over like any other (manual
@@ -169,6 +210,13 @@ export function useFeaturedTune(
     if (retryForRef.current !== streamId) {
       retryForRef.current = streamId;
       retryCountRef.current = 0;
+      // A change of featured game (not the first one) is a switch; either way
+      // the fresh candidate begins a new tune.
+      if (lastTunedRef.current && lastTunedRef.current !== streamId) {
+        emitTune("tv_game_switched", streamId, { candidate: lastTunedRef.current });
+      }
+      lastTunedRef.current = streamId;
+      emitTune("tv_tune_started", streamId);
     }
     // Reset the slow-tune flag for this fresh tune; the timer below re-raises it
     // only if this candidate stays un-live past the threshold.
@@ -191,6 +239,13 @@ export function useFeaturedTune(
           e.setup.unavailable ||
           (e.setup.schemaVersion != null && e.setup.schemaVersion !== PUBLIC_SNAPSHOT_VERSION)
         ) {
+          // An unsupported snapshot schema is a validation failure the watcher
+          // must be able to see, distinct from a plain not_found/timeout.
+          if (!e.setup.unavailable && e.setup.schemaVersion != null) {
+            emitTune("tv_snapshot_invalid", streamId, {
+              reason: "incompatible_version",
+            });
+          }
           return;
         }
         movesLenRef.current = e.setup.moves.length;
@@ -234,7 +289,7 @@ export function useFeaturedTune(
 
     // A failed health check: retry with bounded backoff, then mark the candidate
     // unhealthy so selection fails over to the next healthy one.
-    const failHealthCheck = () => {
+    const failHealthCheck = (reason: string) => {
       if (cancelled) return;
       const n = retryCountRef.current;
       if (n < RETRY_DELAYS_MS.length) {
@@ -245,6 +300,17 @@ export function useFeaturedTune(
       } else {
         setPlayers(null);
         if (liveId === streamId) setLiveId(null);
+        // The candidate exhausted its bounded backoff: it failed, and selection
+        // will skip it. Report both, naming the next healthy candidate (if any)
+        // so a failover is traceable end to end.
+        emitTune("tv_tune_failed", streamId, { reason, retryCount: n });
+        hadFailureRef.current = true;
+        const nextCandidate = candidates.find((id) => id !== streamId && !failedIds.has(id));
+        emitTune("tv_candidate_skipped", streamId, {
+          reason,
+          retryCount: n,
+          ...(nextCandidate ? { candidate: nextCandidate } : {}),
+        });
         setFailedIds((prev) => {
           if (prev.has(streamId)) return prev;
           const next = new Set(prev);
@@ -262,20 +328,30 @@ export function useFeaturedTune(
           setup.unavailable ||
           (setup.schemaVersion != null && setup.schemaVersion !== PUBLIC_SNAPSHOT_VERSION)
         ) {
-          failHealthCheck();
+          failHealthCheck(setup.unavailable ? "unavailable" : "incompatible_version");
           return;
         }
         retryCountRef.current = 0;
         setLiveId(streamId);
+        emitTune("tv_tune_succeeded", streamId);
+        // A candidate that goes live after an earlier one failed is a recovered
+        // failover, not a first tune.
+        if (hadFailureRef.current) {
+          hadFailureRef.current = false;
+          emitTune("tv_failover_succeeded", streamId);
+        }
       })
-      .catch(async () => {
+      .catch(async (err: unknown) => {
         if (cancelled) return;
         // A cold/stale arena cache can point the first attempt at the wrong
         // socket; warm it so the backoff retry (a fresh session) dials the right
         // server. The refresh result feeds isArenaGameId on the next attempt.
         await isArenaGameLive(streamId).catch(() => false);
         if (cancelled) return;
-        failHealthCheck();
+        // The watch() reject carries a typed-ish reason (not_found / timeout /
+        // disconnect); pass it through for the failure/skip beacon.
+        const reason = err instanceof Error ? err.message : "watch_failed";
+        failHealthCheck(reason);
       });
 
     return () => {

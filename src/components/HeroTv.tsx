@@ -39,7 +39,7 @@ export function HeroTv() {
   // skipped in favor of the next one, instead of the old silent infinite
   // re-watch of games[0].
   const candidateIds = useMemo(() => lobby?.games.map((g) => g.id) ?? [], [lobby]);
-  const tune = useFeaturedTune(candidateIds, null, "hero");
+  const tune = useFeaturedTune(candidateIds, null, "hero", { surface: "hero", filter: "hero" });
   const { streamId, moves, players, over, draft } = tune;
 
   // Pull the latest finished game IMMEDIATELY on mount, in parallel with the

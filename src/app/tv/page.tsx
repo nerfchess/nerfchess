@@ -132,7 +132,10 @@ function TvView() {
   // pick is honored while eligible + healthy; anything that fails its health
   // check is retried with bounded backoff and then skipped in favor of the next
   // healthy game. `channelKey` fully resets it on a channel switch.
-  const tune = useFeaturedTune(candidateIds, pinnedId, channelKey);
+  const tune = useFeaturedTune(candidateIds, pinnedId, channelKey, {
+    surface: "tv",
+    filter: channelKey,
+  });
   const { streamId, live, tuneState, slowTune } = tune;
   const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
 
