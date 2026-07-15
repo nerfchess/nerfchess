@@ -51,9 +51,9 @@ export default function HomePage() {
           <h1 className="mt-2">
             <Link
               href="/lobby"
-              className="btn-sky btn-cta cta-shine w-full flex items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+              className="btn-sky btn-cta w-full flex items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold uppercase tracking-[0.05em] no-underline motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
-              Play Nerf Chess
+              Open Lobby
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M5 12h14" />
                 <path d="m13 6 6 6-6 6" />
@@ -68,7 +68,7 @@ export default function HomePage() {
           {/* Two quieter ways in, one step below the big button. No mode
               decision here: Buff is the site-wide default, and every setup
               page lets you switch. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border border-white/10 bg-white/[0.04] p-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
               className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
@@ -80,12 +80,6 @@ export default function HomePage() {
               className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
-            </Link>
-            <Link
-              href="/play"
-              className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
-            >
-              Play a bot
             </Link>
           </div>
 

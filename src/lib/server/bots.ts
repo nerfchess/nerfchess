@@ -1008,6 +1008,31 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
   await batchInChunks(db, statements);
 }
 
+/** The number of personas in the current roster — the target account count. */
+export const HOUSE_ROSTER_SIZE = HOUSE_ROSTER.length;
+
+/** How many of the CURRENT roster's accounts already exist in the users table.
+ * Counts only the live roster's ids (not orphaned ids from retired rosters), so
+ * it is an exact "how many personas are still missing an account" signal. One
+ * cheap COUNT; the id list is the bounded roster size. Used to make seeding
+ * self-healing: if this is below HOUSE_ROSTER_SIZE, personas are missing accounts
+ * (a freshly grown roster, or a partial/failed prior seed) and ensureHouseUsers
+ * must run to create them — the fix for "house bots with no account (ghosts)". */
+export async function countSeededHouseUsers(db: D1Database): Promise<number> {
+  const ids = HOUSE_ROSTER.map((p) => p.userId);
+  const placeholders = ids.map(() => "?").join(",");
+  try {
+    const row = await db
+      .prepare(`SELECT COUNT(*) AS n FROM users WHERE id IN (${placeholders})`)
+      .bind(...ids)
+      .first<{ n: number }>();
+    return row?.n ?? 0;
+  } catch {
+    // A read failure reads as "assume missing" so seeding runs rather than skips.
+    return 0;
+  }
+}
+
 // Re-point every EXISTING house account's rating (and its per-mode buckets) at
 // the current houseSeedRating, and circulate identity revisions (avatar, bio).
 // ensureHouseUsers only ever INSERTs (OR IGNORE), so once an account exists a
