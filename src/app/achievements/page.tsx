@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createElement, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChevronDown, Lock, Pin, Trophy } from "lucide-react";
+import { ChevronDown, Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
@@ -17,7 +17,6 @@ import {
   type AchievementCategory,
   type AchievementRarity,
 } from "@/lib/achievements";
-import { usePinnedAchievements, type PinnedApi } from "./usePinnedAchievements";
 
 interface AchievementView {
   id: string;
@@ -84,35 +83,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-function PinButton({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
-  const pinned = pins.isPinned(a.id);
-  const blocked = !pinned && !pins.canPin;
-  return (
-    <button
-      type="button"
-      onClick={() => pins.togglePin(a.id)}
-      disabled={blocked}
-      aria-pressed={pinned}
-      aria-label={pinned ? `Unpin ${a.name}` : `Pin ${a.name}`}
-      title={
-        pinned ? "Unpin" : blocked ? "Unpin one first (3 max)" : "Pin to the top"
-      }
-      className={
-        "press grid h-8 w-8 shrink-0 place-items-center rounded-[1px] border transition-colors " +
-        (pinned
-          ? "border-sun/50 text-sun-glow"
-          : blocked
-            ? "border-[color:var(--edge)] text-parchment-500 opacity-40"
-            : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
-      }
-      style={pinned ? { background: SUN_SOFT_BG } : undefined}
-    >
-      <Pin className="h-4 w-4" strokeWidth={2} fill={pinned ? SUN : "none"} />
-    </button>
-  );
-}
-
-function AchievementCard({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
+function AchievementCard({ a }: { a: AchievementView }) {
   const icon = achievementIcon(a.icon);
   const showProgress = !a.unlocked && a.goal > 1;
   return (
@@ -151,7 +122,6 @@ function AchievementCard({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
             {RARITY_LABEL[a.rarity]}
           </span>
         </div>
-        <PinButton a={a} pins={pins} />
       </div>
 
       <p
@@ -192,41 +162,12 @@ function AchievementCard({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
   );
 }
 
-// A tight horizontal tile for the Recently earned strip. Compact by design: it
-// is a glance, not a full card.
-function RecentTile({ a }: { a: AchievementView }) {
-  const icon = achievementIcon(a.icon);
-  return (
-    <div
-      className="plate flex w-[190px] shrink-0 items-center gap-2.5 p-2.5"
-      style={{ borderColor: SUN_BORDER }}
-    >
-      <div
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-[1px] border"
-        style={{ borderColor: SUN_BORDER, background: SUN_SOFT_BG }}
-      >
-        {createElement(icon, { className: "h-5 w-5", style: { color: SUN }, strokeWidth: 2 })}
-      </div>
-      <div className="min-w-0">
-        <div className="truncate font-display text-[13px]" style={{ color: "#f0e6cf" }}>
-          {a.name}
-        </div>
-        {a.unlockedAt != null && (
-          <div className="text-[12px] tabular-nums text-parchment-400">{fmtDate(a.unlockedAt)}</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function CategorySection({
   category,
   items,
-  pins,
 }: {
   category: AchievementCategory;
   items: AchievementView[];
-  pins: PinnedApi;
 }) {
   const [open, setOpen] = useState(true);
   const earned = items.filter((a) => a.unlocked).length;
@@ -272,7 +213,7 @@ function CategorySection({
           className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4"
         >
           {sorted.map((a) => (
-            <AchievementCard key={a.id} a={a} pins={pins} />
+            <AchievementCard key={a.id} a={a} />
           ))}
         </div>
       )}
@@ -306,7 +247,6 @@ function AchievementsContent() {
   const requested = searchParams.get("u");
   const [data, setData] = useState<AchievementsResponse | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "signin" | "error">("loading");
-  const pins = usePinnedAchievements();
 
   useEffect(() => {
     let cancelled = false;
@@ -369,19 +309,7 @@ function AchievementsContent() {
   const total = ACHIEVEMENTS.length;
   const earnedCount = wall.filter((a) => a.unlocked).length;
 
-  const pinnedItems = useMemo(
-    () => pins.pinned.map((id) => byId.get(id)).filter((a): a is AchievementView => !!a),
-    [pins.pinned, byId],
-  );
 
-  const recentItems = useMemo(
-    () =>
-      wall
-        .filter((a) => a.unlocked && a.unlockedAt != null)
-        .sort((x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0))
-        .slice(0, 6),
-    [wall],
-  );
 
   const viewingOther = state === "ready" && !!requested && !!data;
 
@@ -466,45 +394,12 @@ function AchievementsContent() {
           </div>
         ) : (
           <div className="mt-8 space-y-9">
-            {/* Pinned row. */}
-            {pins.ready && pinnedItems.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 border-b py-2" style={{ borderColor: "var(--edge)" }}>
-                  <Pin className="h-4 w-4 text-sun-glow" strokeWidth={2} fill={SUN} />
-                  <h2 className="font-display text-[19px] leading-none text-parchment-50">Pinned</h2>
-                  <span className="text-[12px] text-parchment-400">Kept up top, on this device</span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
-                  {pinnedItems.map((a) => (
-                    <AchievementCard key={a.id} a={a} pins={pins} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Recently earned strip. */}
-            {recentItems.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 border-b py-2" style={{ borderColor: "var(--edge)" }}>
-                  <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} />
-                  <h2 className="font-display text-[19px] leading-none text-parchment-50">
-                    Recently earned
-                  </h2>
-                </div>
-                <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
-                  {recentItems.map((a) => (
-                    <RecentTile key={a.id} a={a} />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Category sections. */}
             {CATEGORY_ORDER.map((category) => {
               const items = wall.filter((a) => a.category === category);
               if (!items.length) return null;
               return (
-                <CategorySection key={category} category={category} items={items} pins={pins} />
+                <CategorySection key={category} category={category} items={items} />
               );
             })}
 

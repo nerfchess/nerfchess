@@ -31,6 +31,11 @@ export default function HomePage() {
       <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
         <div className="order-1 animate-rise">
           <HeroTv />
+          {/* Socials live right under the hero board (owner request: back to
+              its original spot). */}
+          <div className="mt-4">
+            <SocialsRow />
+          </div>
         </div>
 
         {/* The action column is kept short on purpose: it should never run
@@ -45,11 +50,8 @@ export default function HomePage() {
             <NewHereChip />
           </div>
 
-          {/* The one-breath pitch: what the game is, and what the two words on
-              the tin actually change. Concrete, not marketing air. */}
-          <h1 className="mt-2 font-display text-3xl sm:text-4xl font-bold leading-[1.05] text-parchment-50">
-            Chess, with a twist of chaos.
-          </h1>
+          {/* The one-breath pitch: what the two words on the tin actually
+              change. Concrete, not marketing air. */}
           <p className="mt-3 text-[15px] leading-snug text-parchment-300">
             Every five moves you draft a card. In{" "}
             <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
@@ -86,7 +88,7 @@ export default function HomePage() {
               href="/play"
               className="btn-glass press flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-medium"
             >
-              Practice against the computer
+              Play a bot
             </Link>
           </div>
 
@@ -676,7 +678,6 @@ function CommunityProof() {
             </Link>
           ))}
         </div>
-        <SocialsRow />
       </div>
     </section>
   );

@@ -38,7 +38,6 @@ import { RecentGameCard, type RecentGameRow } from "@/components/profile/RecentG
 import { FriendsModule } from "@/components/profile/FriendsModule";
 import { HouseBotBadge, isHouseBotAvatar } from "@/components/profile/HouseBotBadge";
 import { relativeTime } from "@/components/profile/relativeTime";
-import { usePinnedAchievements } from "@/app/achievements/usePinnedAchievements";
 import { usePresence } from "@/lib/presence";
 import { ACTIVE_RATING_CATEGORIES, MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { clockLabel } from "@/lib/tournaments";
@@ -491,7 +490,6 @@ function ProfileContent() {
             hidden={tab !== "activity"}
             className="pt-4"
           >
-            <MovementSummary points={ratingHistory} />
             <AchievementsStrip username={user.username} />
             {placements.length > 0 && <CurrentStandings placements={placements} />}
             {stats && (
@@ -665,7 +663,6 @@ function ProfileHeader({
             <p className="mt-3 max-w-prose whitespace-pre-wrap text-sm text-parchment-200">{user.bio}</p>
           )}
 
-          <PinnedAchievements username={user.username} isOwner={isOwner} />
         </div>
       </div>
 
@@ -960,37 +957,6 @@ function TabButton({
     >
       {label}
     </button>
-  );
-}
-
-// 30-day rating movement per mode (spec 2.6 Activity).
-function MovementSummary({ points }: { points: HistoryPoint[] }) {
-  const rows = MODE_RATING_CATEGORIES.map((c) => ({
-    c,
-    delta: recentRatingDelta(points, c.id, 30),
-  }));
-  if (rows.every((r) => r.delta == null)) return null;
-  return (
-    <div className="plate p-3">
-      <div className="smallcaps mb-2 text-[12px] text-parchment-400">Last 30 days</div>
-      <div className="flex flex-wrap gap-4">
-        {rows.map(({ c, delta }) => (
-          <div key={c.id} className="flex items-center gap-2">
-            <c.icon className="h-3.5 w-3.5" style={{ color: c.accent }} strokeWidth={2.2} aria-hidden />
-            <span className="smallcaps text-[12px] text-parchment-400">{c.label}</span>
-            {delta == null ? (
-              <span className="font-mono text-sm text-parchment-300">no games</span>
-            ) : delta > 0 ? (
-              <span className="font-mono text-sm tabular-nums text-gold-leaf">up {delta}</span>
-            ) : delta < 0 ? (
-              <span className="font-mono text-sm tabular-nums text-oxblood-glow">down {Math.abs(delta)}</span>
-            ) : (
-              <span className="font-mono text-sm text-parchment-400">flat</span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -1394,75 +1360,6 @@ function AchievementsStrip({ username }: { username: string }) {
         <span className="smallcaps text-[12px] text-gold-leaf">View all</span>
       </span>
     </Link>
-  );
-}
-
-// Header achievement chips: up to three. On the OWN profile these are the
-// player's pinned picks (localStorage, via usePinnedAchievements); on anyone
-// else's profile (and for an owner who has pinned nothing) they fall back to the
-// most recently earned. Each chip links into the full wall. Renders nothing
-// until there is at least one unlocked achievement to show.
-function PinnedAchievements({ username, isOwner }: { username: string; isOwner: boolean }) {
-  const pins = usePinnedAchievements();
-  const [items, setItems] = useState<StripAchievement[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/users/${encodeURIComponent(username)}/achievements`)
-      .then((res) =>
-        res.ok ? (res.json() as Promise<{ achievements: StripAchievement[] }>) : null,
-      )
-      .then((body) => {
-        if (!cancelled && body) setItems(body.achievements);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [username]);
-
-  const usingPins = isOwner && pins.ready && pins.pinned.length > 0;
-
-  const chips = useMemo(() => {
-    if (!items) return [];
-    const unlocked = items.filter((a) => a.unlocked);
-    if (usingPins) {
-      const byId = new Map(unlocked.map((a) => [a.id, a]));
-      const picked = pins.pinned
-        .map((id) => byId.get(id))
-        .filter((a): a is StripAchievement => !!a);
-      if (picked.length > 0) return picked.slice(0, 3);
-    }
-    const rarityRank = { legendary: 3, epic: 2, rare: 1, common: 0 } as const;
-    return [...unlocked]
-      .sort(
-        (x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rarityRank[y.rarity] - rarityRank[x.rarity],
-      )
-      .slice(0, 3);
-  }, [items, usingPins, pins.pinned]);
-
-  if (chips.length === 0) return null;
-
-  return (
-    <div className="mt-3 flex flex-wrap items-center gap-2">
-      <span className="eyebrow">{usingPins ? "Pinned" : "Recently earned"}</span>
-      {chips.map((a) => {
-        const Icon = achievementIcon(a.icon);
-        const accent = STRIP_ACCENT[a.rarity];
-        return (
-          <Link
-            key={a.id}
-            href={`/achievements?u=${encodeURIComponent(username)}`}
-            title={a.name}
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] text-parchment-200 transition hover:text-parchment-50"
-            style={{ border: `1px solid ${accent}55`, background: `${accent}14` }}
-          >
-            <Icon className="h-3.5 w-3.5" style={{ color: accent }} strokeWidth={2} aria-hidden />
-            <span className="max-w-[10rem] truncate">{a.name}</span>
-          </Link>
-        );
-      })}
-    </div>
   );
 }
 
