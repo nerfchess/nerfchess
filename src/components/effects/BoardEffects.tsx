@@ -2380,14 +2380,62 @@ type SignatureVisualProps = { visual: SigVisual; role: "lead" | "target"; delayM
 let LoadedSignatureVisual: React.ComponentType<SignatureVisualProps> | null = null;
 const LazySignatureVisual = React.lazy(() => import("./sigVisuals"));
 
+// --- Chunk readiness (docs/passive-effect-audit.md X1) ----------------------
+// The sigVisuals chunk also populates PLUGIN_SIGNATURES (it imports
+// sigPluginsMerged), so until it lands the resolver falls through to the
+// generated GenBurst. These signals let the first cast wait a bounded moment
+// for the bespoke art instead of racing straight to the fallback, and turn the
+// previously-silent import failure into a single logged warning.
+let signaturesReady = false;
+let importFailureLogged = false;
+const readyWaiters: Array<() => void> = [];
+function flushReadyWaiters(): void {
+  while (readyWaiters.length) readyWaiters.shift()!();
+}
+
+/** True once the signature-visuals chunk (and PLUGIN_SIGNATURES) is live. */
+export function signatureVisualsReady(): boolean {
+  return signaturesReady;
+}
+
+/** Resolve when the chunk is ready, or after `timeoutMs` (whichever first), so
+ * a caller can gate the first cast without hanging if the chunk never loads. */
+export function whenSignatureVisualsReady(timeoutMs = 500): Promise<void> {
+  if (signaturesReady || typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    readyWaiters.push(finish);
+    window.setTimeout(finish, Math.max(0, timeoutMs));
+  });
+}
+
 /** Warm the signature-visuals chunk (Board fires this on mount). Safe to call
- * repeatedly; failures are swallowed (the Suspense net covers rendering). */
+ * repeatedly. On success it flips the readiness flag; on failure it logs ONCE
+ * (no longer swallowed silently) and releases any waiters so they fall back to
+ * the generated burst rather than hanging. */
 export function prefetchSignatureVisuals(): void {
+  if (signaturesReady) return;
   void import("./sigVisuals")
     .then((m) => {
       LoadedSignatureVisual = m.default;
+      signaturesReady = true;
+      flushReadyWaiters();
     })
-    .catch(() => {});
+    .catch((err) => {
+      if (!importFailureLogged) {
+        importFailureLogged = true;
+        console.warn(
+          "[nerfchess] signature-visuals chunk failed to load; card plays fall back to generated bursts",
+          err,
+        );
+      }
+      flushReadyWaiters();
+    });
 }
 
 /** One square's slice of a signature sequence. `role` is "lead" for the single

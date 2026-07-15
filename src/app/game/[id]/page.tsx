@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
-import { Board } from "@/components/Board";
+import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
@@ -547,8 +548,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const fireHookSignatures = (g: NerfGame | null) => {
     const fired = g?.buffs?.lastHookMutations;
     if (!fired?.length) return;
-    const first = g?.buffs?.players[fired[0].color].buffs[fired[0].index];
-    if (first?.id) fireSignature(first.id);
+    // Fire every hook-mutated card, not just fired[0] (docs/passive-effect-
+    // audit.md R9/R10). The passive layer reads the full mutation list too, so
+    // simultaneous hook activations each surface a visual for the watcher.
+    for (const { color, index } of fired) {
+      const inst = g?.buffs?.players[color].buffs[index];
+      if (inst?.id) fireSignature(inst.id);
+    }
   };
 
   useEffect(() => {
@@ -629,6 +635,16 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           setDtActions((prev) => [...prev, action]);
           // An activation (draft-used) is a card play the watcher must see.
           if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
+          // An instant PICK also plays at pick time for the watcher (R10): the
+          // player surfaces cast instant picks, so spectators must too.
+          if (e.type === "draft-resolved" && e.resolved.kind === "picked") {
+            for (const c of e.resolved.cards ?? []) {
+              if ("id" in c && BUFF_BY_ID[c.id]?.kind === "instant") {
+                fireSignature(c.id);
+                break;
+              }
+            }
+          }
           fireHookSignatures(g);
           setDraftGame({ ...g });
         }
@@ -767,6 +783,27 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const whiteNerf = nerfs?.w ? IMPLEMENTED_BY_ID[nerfs.w] : undefined;
   const blackNerf = nerfs?.b ? IMPLEMENTED_BY_ID[nerfs.b] : undefined;
 
+  // Passive parity for spectators (docs/passive-effect-audit.md R5/R6):
+  //  - R5: merge computeFxVisual so the persistent per-card fx layer paints
+  //    (king_safe / pawn-clamp / stun / motifs), mirroring game/page.tsx.
+  //  - R6: feed nerfReveals so a rule becoming KNOWN plays the reveal splash;
+  //    `nerfs` is the reveal channel (public rules only, populated at end-of-
+  //    game reveals), so this honours section-9 "hidden until revealed".
+  const fxZone = isDraft && draftGame ? computeFxVisual(draftGame) : null;
+  const nerfReveals: NerfRevealInfo[] = [];
+  for (const [color, nerf] of [["w", whiteNerf], ["b", blackNerf]] as const) {
+    if (nerf && !NERF_REVEAL_SKIP.has(nerf.id)) {
+      nerfReveals.push({
+        id: nerf.id,
+        name: nerf.name,
+        tier: nerf.tier as number,
+        color,
+        highlightSquares: [],
+      });
+    }
+  }
+  const passiveNerfs = nerfReveals.map((r) => ({ cardId: r.id, color: r.color, squares: [] }));
+
   return (
     <>
     <ConnectionBanner session={session} />
@@ -811,12 +848,24 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               trapSquares: zones.traps,
               doomSquares: zones.doom,
               lockedSquares: zones.locked,
+              ...(fxZone
+                ? {
+                    kingSafeSquares: fxZone.kingSafeSquares,
+                    pawnClampSquares: fxZone.pawnClampSquares,
+                    stunSquares: fxZone.stunSquares,
+                    motifSquares: fxZone.motifs,
+                  }
+                : {}),
             }
           : undefined
       }
       // No flourish while scrubbing history (a past position isn't a live
       // play), matching the players' own board.
       signatureCard={historyPly == null ? signatureCard : null}
+      nerfReveals={historyPly == null ? nerfReveals : undefined}
+      passiveNerfs={passiveNerfs}
+      passiveBuffs={historyPly == null ? draftGame?.buffs ?? null : null}
+      reviewingHistory={historyPly != null}
       rail={
         <div className="mt-3 space-y-3">
           {isDraft && draftGame && <SpectatorBuffsPanel game={draftGame} players={setup.players} />}
@@ -1410,6 +1459,10 @@ function GameShell({
   nerfs,
   visual,
   signatureCard,
+  nerfReveals,
+  passiveNerfs,
+  passiveBuffs,
+  reviewingHistory,
   rail,
 }: {
   players: MPPlayers;
@@ -1442,6 +1495,12 @@ function GameShell({
   // Card-use animation: a played card's board-wide flourish fires for
   // spectators too, so watching a game shows the same effects the players see.
   signatureCard?: React.ComponentProps<typeof Board>["signatureCard"];
+  // Passive visual parity (docs/passive-effect-audit.md R5/R6): the reveal
+  // splash + persistent registry auras + buff state the player surfaces feed.
+  nerfReveals?: React.ComponentProps<typeof Board>["nerfReveals"];
+  passiveNerfs?: React.ComponentProps<typeof Board>["passiveNerfs"];
+  passiveBuffs?: React.ComponentProps<typeof Board>["passiveBuffs"];
+  reviewingHistory?: boolean;
   rail?: React.ReactNode;
 }) {
   const stateBadge =
@@ -1507,6 +1566,10 @@ function GameShell({
                 fxTimePressure={clockEnabled && activeColor != null && (whiteMs < 15_000 || blackMs < 15_000)}
                 visual={visual}
                 signatureCard={signatureCard}
+                nerfReveals={nerfReveals}
+                passiveNerfs={passiveNerfs}
+                passiveBuffs={passiveBuffs}
+                reviewingHistory={reviewingHistory}
                 lastMove={lastMove}
                 disabled
               />

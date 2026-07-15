@@ -37,6 +37,8 @@ import {
   MotifBadge,
   PawnFence,
   prefetchSignatureVisuals,
+  signatureVisualsReady,
+  whenSignatureVisualsReady,
   ShieldMark,
   SIGNATURES,
   type SignatureConfig,
@@ -113,6 +115,9 @@ import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
 import { resolveCardVfx } from "./effects/vfxSpecs";
 import { findKing } from "@/engine/board";
+import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
+import type { PassiveAuraEntry, NerfAuraInput } from "./effects/passive/derive";
 
 // Rendered board-fraction center of a square (orientation-resolved), the
 // coordinate space the canvas VFX layer draws in.
@@ -331,12 +336,14 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
  * gates it behind the fx-hidden switch and the CSS drops every animation
  * when animations are off in Settings (the elements then hold at opacity 0). */
 function NerfRevealSplash({
+  id,
   name,
   tier,
   mine,
   squares,
   orientation,
 }: {
+  id: string;
   name: string;
   tier: number;
   mine: boolean;
@@ -362,7 +369,9 @@ function NerfRevealSplash({
             className="nerf-reveal-cell absolute"
             style={{ left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%" }}
           >
-            <NerfAura tier={tier} />
+            {/* R2: the tier tint becomes the card hue — pass the nerf's id so
+                two different rules read as different colors. */}
+            <NerfAura cardId={id} tier={tier} />
           </div>
         );
       })}
@@ -585,6 +594,20 @@ interface Props {
    * the squares the nerf's visual() marks. Reduced-motion and the fx-hidden
    * switch stand the whole splash down. */
   nerfReveals?: NerfRevealInfo[];
+  /** Every nerf rule whose PERSISTENT passive aura should paint on the board,
+   * already visibility-filtered by the surface (own rule always, opponent's
+   * once revealed; spectators get public rules only). The PassiveLayer renders
+   * each at its registry target; the reveal spawn still rides `nerfReveals`. */
+  passiveNerfs?: NerfAuraInput[];
+  /** Public buff state used ONLY by the PassiveLayer (per-card buff auras +
+   * alteration pulses). Kept separate from `buffs` so a surface can feed the
+   * passive layer without switching the legacy buff-vs-visual memo paths.
+   * Falls back to `buffs` when omitted. */
+  passiveBuffs?: BuffMatchState | null;
+  /** History review is active on the surface (scrubbing past plies). The
+   * PassiveLayer keeps auras but suppresses live spawn/pulse/exit so scrubbing
+   * never fires spurious intros. */
+  reviewingHistory?: boolean;
 }
 
 /** Placeholder rules that must never play the reveal splash: buff mode's
@@ -1244,7 +1267,6 @@ interface SquareEnv {
   trapMarks: Map<Square, { kind: string; name: string }>;
   lockedSquares: Set<Square>;
   pawnClampSquares: Set<Square>;
-  quietPassiveAuras: Map<Square, { tone: "buff" | "hex"; tier: number; id: string }>;
   strikeSquares: Set<Square>;
   stunBySquare: Map<Square, number>;
   companionSquares: Map<Square, { art: string }>;
@@ -1332,7 +1354,6 @@ const BoardSquare = React.memo(function BoardSquare({
     trapMarks,
     lockedSquares,
     pawnClampSquares,
-    quietPassiveAuras,
     strikeSquares,
     stunBySquare,
     companionSquares,
@@ -1624,26 +1645,11 @@ const BoardSquare = React.memo(function BoardSquare({
                        never doubles up. */
                     <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
                   )}
-                {!fxHiddenPref && !motionOff() && !motifShown && quietPassiveAuras.has(sq) && (
-                  /* Quiet-passive king presence: a color holding a live passive
-                     that declares no motif and no piece scope paints nothing
-                     else while it is held, so its king wears ONE faint standing
-                     aura — the tinted EmpowerShine for a grant, the NerfAura
-                     ember for a hex — in the representative card's own tier + id
-                     (per-card aura identity). Just one per king however many
-                     quiet passives are held, and skipped where the king already
-                     shows a card-fx motif aura (motifShown) so the two never
-                     double up. Mounted before the piece div, so the king always
-                     paints on top. */
-                  (() => {
-                    const aura = quietPassiveAuras.get(sq)!;
-                    return aura.tone === "hex" ? (
-                      <NerfAura cardId={aura.id} tier={aura.tier} />
-                    ) : (
-                      <EmpowerShine tier={aura.tier} cardId={aura.id} />
-                    );
-                  })()
-                )}
+                {/* Quiet-passive standing presence now renders through the
+                    registry-driven PassiveLayer (per card, at its registry
+                    target), mounted on the crop below. The old one-per-king
+                    stopgap and its asymmetric reduced-motion unmount are gone
+                    (docs/passive-effect-audit.md R7, R8). */}
                 {!fxHiddenPref && motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph, parked in the corner the
@@ -2010,6 +2016,9 @@ export function Board({
   buffs,
   opponentMoves,
   nerfReveals,
+  passiveNerfs,
+  passiveBuffs,
+  reviewingHistory,
   onInvalidPick,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
@@ -2178,6 +2187,9 @@ export function Board({
     buffsRef.current = buffs;
   });
   const castSeenKeyRef = useRef(0);
+  // X1: gate ONLY the first cast on the lazy signature chunk, so an early play
+  // waits a bounded moment for its bespoke art rather than racing to GenBurst.
+  const firstCastGatedRef = useRef(false);
   // Play keys whose lead art already rendered through the piece-diff path;
   // the cast-level generated lead only fires for diff-less plays (clock,
   // draft, info cards...) so a card never leads twice.
@@ -2247,6 +2259,7 @@ export function Board({
   const nerfRevealKeyRef = useRef(0);
   const [nerfReveal, setNerfReveal] = useState<{
     key: number;
+    id: string;
     name: string;
     tier: number;
     mine: boolean;
@@ -2268,6 +2281,7 @@ export function Board({
     nerfRevealKeyRef.current += 1;
     setNerfReveal({
       key: nerfRevealKeyRef.current,
+      id: fresh.id,
       name: fresh.name,
       tier: fresh.tier,
       mine: fresh.color === myColor,
@@ -2303,9 +2317,23 @@ export function Board({
         }
       }
     }
-    queueMicrotask(() =>
-      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome }),
-    );
+    const doSetCast = () =>
+      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome });
+    // X1: a plugin card whose bespoke art lives in the not-yet-loaded chunk
+    // (no core sig, PLUGIN_ID) waits up to 500ms for readiness on the FIRST
+    // cast so it lands bespoke instead of GenBurst; later casts resolve per
+    // play and pick up the art once the chunk is warm.
+    const needGate =
+      !firstCastGatedRef.current &&
+      !sigOf(signatureCard.id) &&
+      PLUGIN_ID_SET.has(signatureCard.id) &&
+      !signatureVisualsReady();
+    firstCastGatedRef.current = true;
+    if (needGate) {
+      void whenSignatureVisualsReady(500).then(doSetCast);
+    } else {
+      queueMicrotask(doSetCast);
+    }
     const intensity = castIntensity(def.tier);
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -2939,32 +2967,18 @@ export function Board({
   // (category !== "hex") reuses EmpowerShine; a hex uses NerfAura. When a color
   // holds both, the grant wins — a side's own standing presence reads over an
   // inflicted curse. Nerfs are never touched.
-  const quietPassiveAuras = useMemo(() => {
-    const m = new Map<number, { tone: "buff" | "hex"; tier: number; id: string }>();
-    if (!buffs) return m;
-    for (const color of ["w", "b"] as Color[]) {
-      let grant: { tier: number; id: string } | null = null;
-      let hex: { tier: number; id: string } | null = null;
-      for (const inst of buffs.players[color].buffs) {
-        if (!inst.id || inst.spent || inst.nullified) continue;
-        const def = BUFF_BY_ID[inst.id];
-        if (!def) continue;
-        if (def.kind !== "passive") continue;
-        if (def.fx?.motif || def.fx?.pieces) continue; // already paints its own motif
-        if (def.category === "hex") {
-          if (!hex) hex = { tier: inst.tier, id: inst.id };
-        } else if (!grant) {
-          grant = { tier: inst.tier, id: inst.id };
-        }
-      }
-      const pick = grant ?? hex;
-      if (!pick) continue;
-      const king = findKing(board, color);
-      if (king == null || king < 0) continue;
-      m.set(king, { tone: grant ? "buff" : "hex", tier: pick.tier, id: pick.id });
-    }
-    return m;
-  }, [buffs, board]);
+  // Registry-driven per-card passive auras (docs/passive-effect-language.md
+  // section 4; replaces the R8 one-per-king stopgap). Every quiet buff passive
+  // (no motif, no piece scope) and every surface-supplied nerf rule gets its
+  // OWN aura at its registry target, rendered by the PassiveLayer inside the
+  // crop. Motif'd passives keep their EmpowerShine / NerfAura on the affected
+  // pieces, so the layer never doubles them.
+  const passiveBuffState = passiveBuffs ?? buffs ?? null;
+  const passiveAuras: PassiveAuraEntry[] = useMemo(() => {
+    const buffAuras = buffPassiveAuras(passiveBuffState, board);
+    const nerfAuras = nerfPassiveAuras(passiveNerfs ?? [], board);
+    return [...buffAuras, ...nerfAuras];
+  }, [passiveBuffState, board, passiveNerfs]);
   // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
   // get the fence instead). Sorted order drives the clamp-in stagger so the
   // links read as dropping in one after another.
@@ -4012,7 +4026,6 @@ export function Board({
       trapMarks,
       lockedSquares,
       pawnClampSquares,
-      quietPassiveAuras,
       strikeSquares,
       stunBySquare,
       companionSquares,
@@ -4064,7 +4077,6 @@ export function Board({
       trapMarks,
       lockedSquares,
       pawnClampSquares,
-      quietPassiveAuras,
       strikeSquares,
       stunBySquare,
       companionSquares,
@@ -4139,6 +4151,26 @@ export function Board({
           {/* eslint-enable react-hooks/refs */}
         </div>
 
+        {/* Passive visual lifecycle: per-card auras (both families) at their
+            registry targets, spawn intros once per activation (buff
+            acquisitions + nerf reveals, FIFO 250ms apart), alteration/rejection
+            pulses, and exits. Inside the crop, above the squares, below the
+            drag layer and HUD. Auras are information and stay under reduced
+            motion; the fx-hidden switch stands the layer down. */}
+        {!fxHiddenPref && (
+          <PassiveLayer
+            auras={passiveAuras}
+            orientation={orientation}
+            reviewing={!!reviewingHistory}
+            nerfReveals={nerfReveals}
+            hookMutations={passiveBuffState?.lastHookMutations ?? null}
+            hookPlyKey={(fxBoard ?? board).history.length}
+            buffs={passiveBuffState}
+            invalid={invalidFx}
+            fxHidden={fxHiddenPref}
+          />
+        )}
+
         {/* Passive-grant edge aura: while any of the VIEWER's own pieces
             carries a live self-grant motif (empower / ward / rally), a very
             faint tinted glow breathes along the viewer's edge of the crop —
@@ -4210,6 +4242,7 @@ export function Board({
         {!fxHiddenPref && nerfReveal && (
           <NerfRevealSplash
             key={`nerfrev-${nerfReveal.key}`}
+            id={nerfReveal.id}
             name={nerfReveal.name}
             tier={nerfReveal.tier}
             mine={nerfReveal.mine}

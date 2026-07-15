@@ -411,7 +411,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const reportHookMutations = (next: NerfGame) => {
     const fired = next.buffs?.lastHookMutations;
     if (!fired) return;
-    let firedSignature = false;
+    // Fire every hook-mutated card's signature, not just the first (docs/
+    // passive-effect-audit.md R9). The passive layer reads the full mutation
+    // list, so simultaneous hook activations each surface their own visual
+    // rather than being coalesced to one.
     for (const { color, index } of fired) {
       const inst = next.buffs?.players[color].buffs[index];
       if (!inst?.id) continue;
@@ -421,10 +424,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           `Opponent's ${draftCardNoun(start.mode)} triggered`,
         );
       }
-      if (!firedSignature) {
-        fireSignature(inst.id);
-        firedSignature = true;
-      }
+      fireSignature(inst.id);
     }
   };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
@@ -2135,6 +2135,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       ],
     });
   }
+  // Persistent nerf auras for the PassiveLayer: the same visibility-filtered
+  // known-nerf set the reveal splash uses (own rule always, opponent's once
+  // revealed), so every known rule wears its registry aura while it holds.
+  const passiveNerfs = nerfReveals.map((r) => ({
+    cardId: r.id,
+    color: r.color,
+    squares: r.highlightSquares ?? [],
+  }));
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
   // is unknown their card shows only the player header, and the rule appears
   // there once revealed (end of game or a voluntary reveal). Buff mode never
@@ -2695,6 +2703,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   }
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
+                  passiveNerfs={passiveNerfs}
+                  reviewingHistory={isReviewingHistory}
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }

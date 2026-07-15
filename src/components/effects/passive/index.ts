@@ -19,3 +19,11 @@ export { PassivePulse } from "./PassivePulse";
 export type { PassivePulseProps } from "./PassivePulse";
 export { PassiveExit } from "./PassiveExit";
 export type { PassiveExitProps } from "./PassiveExit";
+export { PassiveLayer } from "./PassiveLayer";
+export type { PassiveLayerProps, RevealSignal } from "./PassiveLayer";
+export {
+  buffPassiveAuras,
+  nerfPassiveAuras,
+  toSide,
+} from "./derive";
+export type { PassiveAuraEntry, NerfAuraInput } from "./derive";

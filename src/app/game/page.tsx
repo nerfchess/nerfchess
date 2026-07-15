@@ -1536,6 +1536,14 @@ function GamePage() {
       ],
     });
   }
+  // Persistent nerf auras for the PassiveLayer: the same visibility-filtered
+  // known-nerf set the reveal splash uses, minus the reveal-only concerns, so
+  // every known rule wears its registry aura for as long as it holds.
+  const passiveNerfs = nerfReveals.map((r) => ({
+    cardId: r.id,
+    color: r.color,
+    squares: r.highlightSquares ?? [],
+  }));
   // Nerf mode: held boons ride in the same corner card as the nerf, so the
   // handicap and its reliefs read together at a glance.
   const myHeldBoons =
@@ -2047,6 +2055,9 @@ function GamePage() {
                   }
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
+                  passiveNerfs={passiveNerfs}
+                  passiveBuffs={isReviewingHistory ? null : game.buffs}
+                  reviewingHistory={isReviewingHistory}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
