@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowRight, ChevronRight, Trophy, Tv, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronRight, Eye, Swords, Trophy, Tv, Users } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { ClubIcon } from "@/components/ClubIcon";
+import { ModeBadge } from "@/components/ModeBadge";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
+import { AccountUser, fetchMe } from "@/lib/authClient";
 import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
+import { countdownLabel, modeLabel } from "@/lib/tournaments";
+import type { MPLobbyGame } from "@/lib/multiplayer";
 
-// The community hub: who is on top, who is playing the most, who is online
-// right now, and what was just played, plus doors to the social spaces.
+// The community hub: friends who are around, who you have just played, the
+// latest games, and the doors to clubs, tournaments, and the ladder. Every
+// section is drawn only when its data source exists, so nothing is faked.
 
 interface TopPlayer {
   username: string;
@@ -19,6 +25,7 @@ interface TopPlayer {
   rd: number;
   games: number;
   guest?: boolean;
+  bot?: boolean;
 }
 
 interface ActivePlayer {
@@ -38,35 +45,47 @@ interface RecentGame {
   completedAt: number;
 }
 
-// Doors to the social spaces. Each carries its own accent (coral / sun /
-// mint) for the icon chip and the card-juicy hover ring, so the cards read
-// as big friendly buttons instead of quiet text blocks.
-const HUB_LINKS = [
-  {
-    href: "/clubs",
-    title: "Clubs",
-    blurb: "Join a club or start your own.",
-    icon: Users,
-    hex: "#ef8a5f",
-    rgb: "239 138 95",
-  },
-  {
-    href: "/tournaments",
-    title: "Tournaments",
-    blurb: "Arena events, open to everyone.",
-    icon: Trophy,
-    hex: "#eec25e",
-    rgb: "238 194 94",
-  },
-  {
-    href: "/tv",
-    title: "Nerf TV",
-    blurb: "Watch the best live game right now.",
-    icon: Tv,
-    hex: "#58c39a",
-    rgb: "88 195 154",
-  },
-];
+interface Club {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string | null;
+  owner_name: string;
+  members: number;
+  joined: number;
+}
+
+interface Tournament {
+  id: string;
+  name: string;
+  mode: string;
+  players: number;
+  starts_at: number | null;
+  phase: "upcoming" | "ongoing" | "finished";
+}
+
+interface Friend {
+  id: string;
+  username: string;
+  rating: number | null;
+  avatar: string | null;
+}
+
+interface OpponentGame {
+  id: string;
+  white_name: string;
+  black_name: string;
+  white_user_id: string | null;
+  black_user_id: string | null;
+  completed_at: number;
+}
+
+interface Opponent {
+  username: string;
+  gameId: string;
+  at: number;
+}
 
 function timeAgo(at: number): string {
   const s = Math.max(1, Math.floor((Date.now() - at) / 1000));
@@ -85,32 +104,73 @@ function resultLabel(winner: "w" | "b" | "draw" | null): string {
   return "-";
 }
 
+// Module-level so the clock read is not an impure call inside a component's
+// render (matches timeAgo above).
+function startsInLabel(startsAt: number): string {
+  return countdownLabel(startsAt - Date.now());
+}
+
 export default function CommunityPage() {
+  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
   const [top, setTop] = useState<TopPlayer[] | null>(null);
   const [active, setActive] = useState<ActivePlayer[] | null>(null);
   const [recent, setRecent] = useState<RecentGame[] | null>(null);
+  const [clubs, setClubs] = useState<Club[] | null>(null);
+  const [tournaments, setTournaments] = useState<Tournament[] | null>(null);
+  const [friends, setFriends] = useState<Friend[] | null>(null);
+  const [opponents, setOpponents] = useState<Opponent[] | null>(null);
   const lobby = useLobbySnapshot();
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/leaderboard?category=${DEFAULT_CATEGORY}`)
-      .then((res) => (res.ok ? (res.json() as Promise<{ players: TopPlayer[] }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setTop(data.players.slice(0, 10));
-      })
-      .catch(() => {});
-    fetch("/api/community/active")
-      .then((res) => (res.ok ? (res.json() as Promise<{ players: ActivePlayer[] }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setActive(data.players);
-      })
-      .catch(() => {});
-    fetch("/api/community/recent")
-      .then((res) => (res.ok ? (res.json() as Promise<{ games: RecentGame[] }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setRecent(data.games);
-      })
-      .catch(() => {});
+    const load = <T,>(url: string, set: (v: T) => void, pick: (raw: unknown) => T) => {
+      fetch(url)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!cancelled && data) set(pick(data));
+        })
+        .catch(() => {});
+    };
+
+    load<TopPlayer[]>(`/api/leaderboard?category=${DEFAULT_CATEGORY}`, setTop, (d) => (d as { players: TopPlayer[] }).players);
+    load<ActivePlayer[]>("/api/community/active", setActive, (d) => (d as { players: ActivePlayer[] }).players);
+    load<RecentGame[]>("/api/community/recent", setRecent, (d) => (d as { games: RecentGame[] }).games);
+    load<Club[]>("/api/clubs", setClubs, (d) => (d as { clubs: Club[] }).clubs);
+    load<Tournament[]>("/api/tournaments", setTournaments, (d) => (d as { tournaments: Tournament[] }).tournaments);
+
+    fetchMe().then((user) => {
+      if (cancelled) return;
+      setMe(user);
+      if (user && !user.isGuest) {
+        load<Friend[]>("/api/friends", setFriends, (d) => (d as { friends: Friend[] }).friends);
+        fetch(`/api/users/${encodeURIComponent(user.username)}/games?limit=20`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (cancelled || !data) return;
+            const games = (data as { games: OpponentGame[] }).games ?? [];
+            const seen = new Set<string>();
+            const list: Opponent[] = [];
+            for (const g of games) {
+              const iAmWhite = g.white_user_id === user.id;
+              const oppName = iAmWhite ? g.black_name : g.white_name;
+              const oppId = iAmWhite ? g.black_user_id : g.white_user_id;
+              const key = oppName.toLowerCase();
+              // Only real accounts (they have a profile to challenge); skip
+              // anonymous seats and any accidental self-match.
+              if (!oppId || oppId === user.id || seen.has(key)) continue;
+              seen.add(key);
+              list.push({ username: oppName, gameId: g.id, at: g.completed_at });
+              if (list.length >= 6) break;
+            }
+            setOpponents(list);
+          })
+          .catch(() => {});
+      } else {
+        setFriends([]);
+        setOpponents([]);
+      }
+    });
+
     return () => {
       cancelled = true;
     };
@@ -118,186 +178,278 @@ export default function CommunityPage() {
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
   const topBoard = getCategory(DEFAULT_CATEGORY);
+  const signedIn = !!me && !me.isGuest;
+
+  // House-bot names, resolved from the leaderboard's own bot flag, so a bot is
+  // labeled everywhere its name appears (recent games, friends, active list).
+  const botNames = new Set((top ?? []).filter((p) => p.bot).map((p) => p.username.toLowerCase()));
+  const isBot = (name: string) => botNames.has(name.toLowerCase());
+
+  // Cross-reference friends with the live lobby snapshot for presence and a
+  // Watch link when they are in a game right now.
+  const lobbyStatus = new Map(lobby?.players.map((p) => [p.name.toLowerCase(), p.status]) ?? []);
+  const lobbyGame = new Map<string, MPLobbyGame>();
+  for (const g of lobby?.games ?? []) {
+    lobbyGame.set(g.players.w.name.toLowerCase(), g);
+    lobbyGame.set(g.players.b.name.toLowerCase(), g);
+  }
+  const rankPresence = (name: string): number => {
+    const s = lobbyStatus.get(name.toLowerCase());
+    return s === "playing" ? 0 : s === "searching" ? 1 : s === "online" ? 2 : 3;
+  };
+  const sortedFriends = friends
+    ? [...friends].sort((a, b) => rankPresence(a.username) - rankPresence(b.username))
+    : null;
 
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader active="/community" />
 
-      <section className="max-w-5xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
+      <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-4xl sm:text-5xl">Community</h1>
+            <span className="eyebrow">The hall</span>
+            <h1 className="mt-1 font-display text-4xl sm:text-5xl">Community</h1>
           </div>
-          <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-300">
-            <span className="w-2 h-2 bg-verdigris animate-flicker" />
-            {onlineCount === null ? "Connecting…" : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
-          </div>
+          {/* One status pill, same border-chip treatment the lobby uses. */}
+          <span
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5 text-xs text-parchment-300"
+          >
+            <span
+              aria-hidden
+              className={
+                "h-1.5 w-1.5 shrink-0 rounded-full " +
+                (onlineCount === null ? "bg-parchment-500" : "bg-verdigris motion-safe:animate-flicker")
+              }
+            />
+            <span className="tabular-nums">
+              {onlineCount === null
+                ? "Connecting to the lobby…"
+                : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
+            </span>
+          </span>
         </div>
 
-        {/* Doors to the social spaces: unmistakably clickable cards. */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {HUB_LINKS.map((card) => {
-            const CardIcon = card.icon;
-            return (
-              <Link
-                key={card.href}
-                href={card.href}
-                className="plate corner-cut plate-hover card-juicy group flex cursor-pointer items-center gap-3.5 p-4 no-underline"
-                style={{ "--tier-rgb": card.rgb } as CSSProperties}
-              >
-                <span
-                  aria-hidden
-                  className="grid h-11 w-11 shrink-0 place-items-center border"
-                  style={{ background: `${card.hex}24`, borderColor: `${card.hex}59`, color: card.hex }}
-                >
-                  <CardIcon size={20} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-xl text-parchment transition-colors group-hover:text-parchment-50">
-                    {card.title}
-                  </span>
-                  <span className="mt-0.5 block text-sm text-parchment-300">{card.blurb}</span>
-                </span>
-                <ArrowRight
-                  size={18}
-                  className="shrink-0 text-parchment-400 transition-all group-hover:translate-x-1 group-hover:text-parchment-100"
-                  aria-hidden
-                />
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="space-y-4 min-w-0">
-            {/* The Nerf top ten; both mode ladders live on /leaderboard. */}
-            <div className="plate p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div className="font-display text-2xl text-parchment">Top players</div>
-                <Link href="/leaderboard" className="btn-ghost flex items-center gap-1 px-3 py-1.5 text-xs">
-                  Full leaderboard <ChevronRight size={13} aria-hidden />
-                </Link>
-              </div>
-              {!top ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
-              ) : top.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">
-                  Nobody has a {topBoard.label} rating yet. Play a rated game to claim the top spot.
-                </p>
-              ) : (
-                <ul className="mt-3 divide-y divide-white/5">
-                  {top.map((player, i) => (
-                    <li key={player.guest ? `guest:${player.username}` : player.username}>
-                      <PlayerLine
-                        rank={i + 1}
-                        username={player.username}
-                        avatar={player.avatar}
-                        guest={player.guest}
-                        right={
-                          <span className="font-mono text-sm tabular-nums text-parchment-100">
-                            {Math.round(player.rating)}
-                            {isProvisionalRd(player.rd) && <span className="text-parchment-400">?</span>}
-                          </span>
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Who played the most this week. */}
-            <div className="plate p-5 sm:p-6">
-              <div className="font-display text-2xl text-parchment">Most active this week</div>
-              {!active ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
-              ) : active.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">No games in the last 7 days. Be the first.</p>
-              ) : (
-                <ul className="mt-3 divide-y divide-white/5">
-                  {active.map((player, i) => (
-                    <li key={player.username}>
-                      <PlayerLine
-                        rank={i + 1}
-                        username={player.username}
-                        avatar={player.avatar}
-                        right={
-                          <span className="font-mono text-sm tabular-nums text-parchment-100">
-                            {player.games}
-                            <span className="ml-1 text-xs text-parchment-400">
-                              game{player.games === 1 ? "" : "s"}
-                            </span>
-                          </span>
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* The latest finished games, each opening its replay. */}
-            <div className="plate p-5 sm:p-6">
-              <div className="font-display text-2xl text-parchment">Recent games</div>
-              {!recent ? (
-                <p className="mt-3 text-sm text-parchment-400">Loading…</p>
-              ) : recent.length === 0 ? (
-                <p className="mt-3 text-sm text-parchment-400">No finished games yet.</p>
-              ) : (
-                <ul className="mt-3 divide-y divide-white/5">
-                  {recent.map((game) => (
-                    <RecentGameRow key={game.id} game={game} />
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          {/* Who's here right now, same source as the lobby. */}
-          <aside className="plate p-5 h-fit">
-            <div className="font-display text-xl text-parchment">Online now</div>
-            {!lobby ? (
-              <p className="mt-3 text-sm text-parchment-400">Loading…</p>
-            ) : lobby.players.length === 0 ? (
-              <p className="mt-3 text-sm text-parchment-400">
-                No signed-in players right now
-                {lobby.anonymous > 0
-                  ? `, but ${lobby.anonymous} anonymous player${lobby.anonymous === 1 ? " is" : "s are"} around.`
-                  : "."}
-              </p>
-            ) : (
-              <>
-                <ul className="mt-3 space-y-2">
-                  {lobby.players.map((player) => (
-                    <li key={player.name} className="flex items-center justify-between gap-2 text-sm">
-                      <Link
-                        href={`/u/${encodeURIComponent(player.name)}`}
-                        className="flex min-h-[44px] min-w-0 items-center gap-2 truncate sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
-                      >
-                        <PlayerAvatar name={player.name} avatar={player.avatar} size={22} />
-                        {player.name}
-                        {player.rating != null && (
-                          <span className="ml-1.5 font-mono text-xs text-parchment-400">{player.rating}</span>
-                        )}
-                      </Link>
-                      <OnlineStatusBadge status={player.status} />
-                    </li>
-                  ))}
-                </ul>
-                {lobby.anonymous > 0 && (
-                  <p className="mt-3 text-xs text-parchment-400">
-                    + {lobby.anonymous} anonymous player{lobby.anonymous === 1 ? "" : "s"}
-                  </p>
-                )}
-              </>
-            )}
-            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
-              Looking for a game?{" "}
-              <Link href="/lobby" className="text-gold-leaf hover:underline">
-                Head to the lobby
-              </Link>
-              .
+        {/* Guests: a compact sign-in nudge, then straight to the live content. */}
+        {me !== undefined && !signedIn && (
+          <div className="mt-5 plate flex flex-col gap-3 border-gold/25 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-parchment-200">
+              Sign in to add friends, join clubs, and track who you have played.
             </p>
+            <Link href="/login" className="btn-leaf press shrink-0 px-4 py-2 text-sm font-semibold">
+              Sign in
+            </Link>
+          </div>
+        )}
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {/* Main column: your people and the latest games. */}
+          <div className="min-w-0 space-y-4">
+            {signedIn && (
+              <SectionCard title="Friends" icon={<Users size={16} />} tint="mint">
+                {!sortedFriends ? (
+                  <RailSkeleton rows={3} />
+                ) : sortedFriends.length === 0 ? (
+                  <InlineEmpty
+                    title="No friends yet"
+                    body="Add players from their profile to see when they are online and watch their live games."
+                    action={{ href: "/leaderboard", label: "Find players" }}
+                  />
+                ) : (
+                  <ul className="mt-1 divide-y divide-[color:var(--edge)]">
+                    {sortedFriends.map((friend) => {
+                      const status = lobbyStatus.get(friend.username.toLowerCase());
+                      const game = status === "playing" ? lobbyGame.get(friend.username.toLowerCase()) : undefined;
+                      return (
+                        <li key={friend.id} className="flex min-h-[44px] items-center gap-2 py-2">
+                          <PresenceDot status={status} />
+                          <Link
+                            href={`/u/${encodeURIComponent(friend.username)}`}
+                            className="flex min-w-0 flex-1 items-center gap-2 text-parchment-100 transition-colors hover:text-gold-leaf"
+                          >
+                            <PlayerAvatar name={friend.username} avatar={friend.avatar} size={26} />
+                            <span className="truncate font-medium">{friend.username}</span>
+                            {isBot(friend.username) && <HouseBotChip />}
+                            {friend.rating != null && (
+                              <span className="font-mono text-xs tabular-nums text-parchment-400">{friend.rating}</span>
+                            )}
+                          </Link>
+                          {game ? (
+                            <Link
+                              href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
+                              className="btn-ghost press inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs"
+                            >
+                              <Eye size={13} aria-hidden />
+                              Watch
+                            </Link>
+                          ) : (
+                            <span className="shrink-0 text-xs text-parchment-500">{presenceLabel(status)}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </SectionCard>
+            )}
+
+            {signedIn && opponents && opponents.length > 0 && (
+              <SectionCard title="Recent opponents" icon={<Swords size={16} />} tint="coral">
+                <ul className="mt-1 divide-y divide-[color:var(--edge)]">
+                  {opponents.map((opp) => (
+                    <li key={opp.username}>
+                      <Link
+                        href={`/u/${encodeURIComponent(opp.username)}`}
+                        className="group flex min-h-[44px] items-center gap-2 py-2 transition-colors hover:text-gold-leaf"
+                      >
+                        <PlayerAvatar name={opp.username} avatar={null} size={26} />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5 truncate font-medium text-parchment-100 group-hover:text-gold-leaf">
+                            {opp.username}
+                            {isBot(opp.username) && <HouseBotChip />}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-parchment-400">Last played {timeAgo(opp.at)}</span>
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-parchment-300 group-hover:text-gold-leaf">
+                          <Swords size={13} aria-hidden />
+                          Challenge
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </SectionCard>
+            )}
+
+            {/* Recent games: the latest finished games, each opening its replay. */}
+            <SectionCard title="Recent games" icon={<Tv size={16} />} tint="coral">
+              {!recent ? (
+                <RailSkeleton rows={5} />
+              ) : recent.length === 0 ? (
+                <InlineEmpty
+                  title="No finished games yet"
+                  body="Completed games land here the moment they end. Play one to break the ice."
+                  action={{ href: "/lobby", label: "Find a match" }}
+                />
+              ) : (
+                <ul className="mt-1 divide-y divide-[color:var(--edge)]">
+                  {recent.map((game) => (
+                    <RecentGameRow key={game.id} game={game} isBot={isBot} />
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+          </div>
+
+          {/* Rail: doors to the wider community. */}
+          <aside className="space-y-4">
+            <RailCard
+              title="Top players"
+              icon={<Trophy size={15} />}
+              action={{ href: "/leaderboard", label: "Full board" }}
+            >
+              {!top ? (
+                <RailSkeleton rows={5} />
+              ) : top.length === 0 ? (
+                <EmptyRail>
+                  No {topBoard.label} ratings yet.{" "}
+                  <Link href="/lobby" className="text-gold-leaf hover:underline">
+                    Play a rated game
+                  </Link>
+                  .
+                </EmptyRail>
+              ) : (
+                <ol className="mt-1 space-y-0.5">
+                  {top.slice(0, 5).map((player, i) => (
+                    <li key={player.guest ? `guest:${player.username}` : player.username}>
+                      <Link
+                        href={`/u/${encodeURIComponent(player.username)}`}
+                        className="flex min-h-[40px] items-center gap-2 px-2 -mx-2 transition hover:bg-[var(--surface-hover)]"
+                      >
+                        <span className="w-4 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{i + 1}</span>
+                        <PlayerAvatar name={player.username} avatar={player.avatar} size={22} />
+                        <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">{player.username}</span>
+                        {player.bot && <HouseBotChip />}
+                        <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-200">
+                          {Math.round(player.rating)}
+                          {isProvisionalRd(player.rd) && <span className="text-parchment-400">?</span>}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </RailCard>
+
+            <RailCard title="Clubs" icon={<Users size={15} />} action={{ href: "/clubs", label: "All clubs" }}>
+              {!clubs ? (
+                <RailSkeleton rows={3} />
+              ) : clubs.length === 0 ? (
+                <EmptyRail>
+                  No clubs yet.{" "}
+                  <Link href="/clubs" className="text-gold-leaf hover:underline">
+                    Start one
+                  </Link>
+                  .
+                </EmptyRail>
+              ) : (
+                <ul className="mt-1 space-y-0.5">
+                  {clubs.slice(0, 5).map((club) => (
+                    <li key={club.id}>
+                      <Link
+                        href={`/clubs/${club.slug}`}
+                        className="flex min-h-[44px] items-center gap-2.5 px-2 -mx-2 transition hover:bg-[var(--surface-hover)]"
+                      >
+                        <ClubIcon icon={club.icon} name={club.name} size={30} />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-parchment-100">
+                          {club.name}
+                        </span>
+                        <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
+                          {club.members} {club.members === 1 ? "member" : "members"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </RailCard>
+
+            <RailCard
+              title="Tournaments"
+              icon={<Trophy size={15} />}
+              action={{ href: "/tournaments", label: "All events" }}
+            >
+              <TournamentRail tournaments={tournaments} />
+            </RailCard>
+
+            <RailCard title="Active this week" icon={<Swords size={15} />}>
+              {!active ? (
+                <RailSkeleton rows={4} />
+              ) : active.length === 0 ? (
+                <EmptyRail>No games in the last 7 days. Be the first.</EmptyRail>
+              ) : (
+                <ol className="mt-1 space-y-0.5">
+                  {active.slice(0, 5).map((player, i) => (
+                    <li key={player.username}>
+                      <Link
+                        href={`/u/${encodeURIComponent(player.username)}`}
+                        className="flex min-h-[40px] items-center gap-2 px-2 -mx-2 transition hover:bg-[var(--surface-hover)]"
+                      >
+                        <span className="w-4 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{i + 1}</span>
+                        <PlayerAvatar name={player.username} avatar={player.avatar} size={22} />
+                        <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">{player.username}</span>
+                        {isBot(player.username) && <HouseBotChip />}
+                        <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
+                          {player.games} {player.games === 1 ? "game" : "games"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </RailCard>
           </aside>
         </div>
       </section>
@@ -305,96 +457,230 @@ export default function CommunityPage() {
   );
 }
 
-function PlayerLine({
-  rank,
-  username,
-  avatar,
-  guest,
-  right,
+const SECTION_TINTS = {
+  mint: "border-mint/30 bg-mint/10 text-mint-glow",
+  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  coral: "border-coral/30 bg-coral/10 text-coral-glow",
+} as const;
+
+function SectionCard({
+  title,
+  icon,
+  tint,
+  children,
 }: {
-  rank: number;
-  username: string;
-  avatar?: string | null;
-  guest?: boolean;
-  right: React.ReactNode;
+  title: string;
+  icon: React.ReactNode;
+  tint: keyof typeof SECTION_TINTS;
+  children: React.ReactNode;
 }) {
-  const body = (
-    <>
-      <span className="w-6 shrink-0 font-mono text-xs tabular-nums text-parchment-400">{rank}</span>
-      <span className="flex min-w-0 flex-1 items-center gap-2">
-        <PlayerAvatar name={username} avatar={avatar} size={24} />
-        <span className="truncate font-medium text-parchment-100">{username}</span>
-        {guest && (
-          <span className="shrink-0 border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-400">
-            guest
-          </span>
-        )}
-      </span>
-      {right}
-    </>
-  );
-  const rowClass = "flex items-center gap-2 py-2";
-  if (guest) return <div className={`${rowClass} px-2 -mx-2`}>{body}</div>;
   return (
-    <Link
-      href={`/u/${encodeURIComponent(username)}`}
-      className={`${rowClass} group min-h-[44px] cursor-pointer px-2 -mx-2 transition hover:bg-white/[0.05]`}
-    >
-      {body}
-      <ChevronRight
-        size={14}
-        className="shrink-0 text-parchment-500 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
-        aria-hidden
-      />
-    </Link>
+    <div className="plate p-4 sm:p-5">
+      <div className="flex items-center gap-2.5">
+        <span aria-hidden className={`grid h-8 w-8 shrink-0 place-items-center border ${SECTION_TINTS[tint]}`}>
+          {icon}
+        </span>
+        <h2 className="font-display text-xl text-parchment">{title}</h2>
+      </div>
+      {children}
+    </div>
   );
 }
 
-function RecentGameRow({ game }: { game: RecentGame }) {
+function RailCard({
+  title,
+  icon,
+  action,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  action?: { href: string; label: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rail-panel p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span aria-hidden className="text-parchment-400">
+            {icon}
+          </span>
+          <h2 className="font-display text-base text-parchment">{title}</h2>
+        </div>
+        {action && (
+          <Link
+            href={action.href}
+            className="inline-flex items-center gap-0.5 text-xs text-parchment-400 transition-colors hover:text-gold-leaf"
+          >
+            {action.label}
+            <ChevronRight size={12} aria-hidden />
+          </Link>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TournamentRail({ tournaments }: { tournaments: Tournament[] | null }) {
+  if (!tournaments) return <RailSkeleton rows={3} />;
+  const live = tournaments
+    .filter((t) => t.phase !== "finished")
+    .sort((a, b) => {
+      if (a.phase !== b.phase) return a.phase === "ongoing" ? -1 : 1;
+      return (a.starts_at ?? Infinity) - (b.starts_at ?? Infinity);
+    })
+    .slice(0, 4);
+  if (live.length === 0) {
+    return (
+      <EmptyRail>
+        No upcoming events.{" "}
+        <Link href="/tournaments" className="text-gold-leaf hover:underline">
+          Host one
+        </Link>
+        .
+      </EmptyRail>
+    );
+  }
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {live.map((t) => (
+        <li key={t.id}>
+          <Link
+            href={`/tournaments/${t.id}`}
+            className="flex min-h-[44px] items-center gap-2 px-2 -mx-2 transition hover:bg-[var(--surface-hover)]"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-medium text-parchment-100">{t.name}</span>
+              </span>
+              <span className="mt-0.5 flex items-center gap-1.5 text-xs text-parchment-400">
+                <ModeBadge mode={t.mode === "nerf" || t.mode === "buff" ? t.mode : undefined} compact />
+                {modeLabel(t.mode)} · {t.players} entered
+              </span>
+            </span>
+            {t.phase === "ongoing" ? (
+              <span className="inline-flex shrink-0 items-center gap-1 border border-verdigris/40 bg-verdigris/10 px-1.5 py-0.5 text-xs text-verdigris-glow">
+                <span className="h-1.5 w-1.5 rounded-full bg-verdigris-glow" aria-hidden />
+                Live
+              </span>
+            ) : t.starts_at != null ? (
+              <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
+                in {startsInLabel(t.starts_at)}
+              </span>
+            ) : (
+              <span className="shrink-0 text-xs text-parchment-500">Soon</span>
+            )}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RecentGameRow({ game, isBot }: { game: RecentGame; isBot: (name: string) => boolean }) {
   const category = getCategory(isRatingCategoryId(game.category) ? game.category : DEFAULT_CATEGORY);
   const Icon = category.icon;
   return (
-    <li>
+    <li className="flex items-center justify-between gap-3 py-2.5">
+      <span className="min-w-0">
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-parchment-100">
+          <PlayerNameInline name={game.whiteName} isBot={isBot} />
+          <span className="text-parchment-400">vs</span>
+          <PlayerNameInline name={game.blackName} isBot={isBot} />
+        </span>
+        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-parchment-400">
+          <Icon size={12} style={{ color: category.accent }} aria-hidden />
+          {category.label} · {game.rated ? "Rated" : "Casual"} · {timeAgo(game.completedAt)}
+        </span>
+      </span>
       <Link
         href={`/game/${game.id}`}
-        className="group flex cursor-pointer items-center justify-between gap-3 px-2 -mx-2 py-2.5 transition hover:bg-white/[0.05]"
+        aria-label={`Replay ${game.whiteName} versus ${game.blackName}`}
+        className="group inline-flex shrink-0 items-center gap-1.5 font-mono text-sm tabular-nums text-parchment-200 transition-colors hover:text-gold-leaf"
       >
-        <span className="min-w-0">
-          <span className="block truncate text-sm text-parchment-100">
-            {game.whiteName} <span className="text-parchment-400">vs</span> {game.blackName}
-          </span>
-          <span className="mt-0.5 flex items-center gap-1.5 smallcaps text-[9px] text-parchment-400">
-            <Icon size={11} style={{ color: category.accent }} aria-hidden />
-            {category.label} · {game.rated ? "Rated" : "Casual"} · {timeAgo(game.completedAt)}
-          </span>
-        </span>
-        <span className="flex shrink-0 items-center gap-1.5 font-mono text-sm tabular-nums text-parchment-200">
-          {resultLabel(game.winner)}
-          <ChevronRight
-            size={14}
-            className="text-parchment-500 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100"
-            aria-hidden
-          />
-        </span>
+        {resultLabel(game.winner)}
+        <ChevronRight
+          size={14}
+          className="text-parchment-500 transition-all group-hover:translate-x-0.5 group-hover:text-gold-leaf"
+          aria-hidden
+        />
       </Link>
     </li>
   );
 }
 
-function OnlineStatusBadge({ status }: { status: "online" | "searching" | "playing" }) {
-  const styles: Record<string, string> = {
-    online: "border-verdigris/40 bg-verdigris/10 text-verdigris-glow",
-    searching: "border-gold/40 bg-gold/10 text-gold-leaf",
-    playing: "border-bruise/40 bg-bruise/10 text-bruise-glow",
-  };
-  const labels: Record<string, string> = {
-    online: "Online",
-    searching: "Searching",
-    playing: "In game",
-  };
+function PlayerNameInline({ name, isBot }: { name: string; isBot: (name: string) => boolean }) {
   return (
-    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[9px] ${styles[status]}`}>
-      {labels[status]}
+    <span className="inline-flex min-w-0 items-center gap-1">
+      <Link href={`/u/${encodeURIComponent(name)}`} className="truncate hover:text-gold-leaf">
+        {name}
+      </Link>
+      {isBot(name) && <HouseBotChip />}
     </span>
+  );
+}
+
+// House engine accounts wear the outline chip everywhere their name renders.
+function HouseBotChip() {
+  return (
+    <span className="shrink-0 whitespace-nowrap border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-parchment-400">
+      House bot
+    </span>
+  );
+}
+
+function PresenceDot({ status }: { status?: "online" | "searching" | "playing" }) {
+  const cls =
+    status === "playing"
+      ? "bg-coral"
+      : status === "searching"
+        ? "bg-sun"
+        : status === "online"
+          ? "bg-verdigris"
+          : "bg-parchment-500";
+  return <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${cls}`} />;
+}
+
+function presenceLabel(status?: "online" | "searching" | "playing"): string {
+  if (status === "searching") return "Searching";
+  if (status === "online") return "Online";
+  return "Offline";
+}
+
+// A section-level empty state: one sentence and one action, sized to content
+// (design system section 8), sitting flush inside its card without a nested plate.
+function InlineEmpty({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action: { href: string; label: string };
+}) {
+  return (
+    <div className="mt-2 flex flex-col items-start gap-2.5 py-4">
+      <p className="text-sm leading-relaxed text-parchment-300">
+        <span className="font-medium text-parchment-100">{title}.</span> {body}
+      </p>
+      <Link href={action.href} className="btn-ghost press px-3 py-1.5 text-sm">
+        {action.label}
+      </Link>
+    </div>
+  );
+}
+
+function EmptyRail({ children }: { children: React.ReactNode }) {
+  return <p className="mt-2 text-sm text-parchment-400">{children}</p>;
+}
+
+function RailSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="mt-3 space-y-2" aria-hidden>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="skeleton h-8" />
+      ))}
+    </div>
   );
 }
