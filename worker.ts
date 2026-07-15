@@ -37,6 +37,8 @@ import {
   countSeededHouseUsers,
   HOUSE_ROSTER_SIZE,
   ensureOgClub,
+  countOgClubMembers,
+  ogClubMembers,
   houseDraftThinkMs,
   houseNerfPickIndex,
   housePersona,
@@ -491,12 +493,12 @@ const houseSeededKey = "hp:seeded:v5";
 // (>110) and let a bot's first games swing its seeded number wildly. Bump so
 // the settle reaches every existing account on the next cold start.
 const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
-// One-time seed of the "OG NERFCHESS USERS" club (a big veteran club whose
-// membership is ~65% of the house roster). Runs once after ensureHouseUsers has
-// created every persona's users row (the club FKs need it). Bump the suffix to
-// re-seed after a roster change (INSERT OR IGNORE, so a bump only adds any new
-// members, never disturbing rows a real user joined). See ensureOgClub.
-const houseOgClubSeededKey = "hp:og-club:v1";
+// Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
+// ~65% of the house roster). SELF-HEALING: gated below by a live membership
+// COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
+// after a partial/empty seed sticks forever and leaves the club permanently
+// empty (the bug this replaced). INSERT OR IGNORE throughout, so a re-run only
+// fills gaps and never disturbs rows a real user joined. See ensureOgClub.
 const houseNextFillerKey = "hp:nextFillerAt";
 // Bots answer social actions (friend requests, direct challenges) on a poll off
 // the alarm tick rather than an in-DO timer, throttled to this cadence so the
@@ -3945,10 +3947,18 @@ export class GameServer extends DurableObject<Env> {
           await syncHouseRatings(db);
           await this.ctx.storage.put(houseRatingsSyncedKey, now);
         }
-        // Seed the OG club once, after the users rows exist (its FKs need them).
-        if (!(await this.ctx.storage.get<number>(houseOgClubSeededKey))) {
+        // Self-healing OG-club seeding, mirroring the account seed above. The old
+        // gate was a one-shot key, so a seed that set the key but never landed its
+        // membership (club row created first, then the club_members batch failed/
+        // was partial, or its members referenced not-yet-created ghost accounts)
+        // stuck forever and the club stayed empty. Instead, count the club's LIVE
+        // members (rows whose user_id has a users row — what the detail route's
+        // JOIN actually renders) and (re)run ensureOgClub whenever it is short of
+        // the expected membership. Runs after ensureHouseUsers so every persona's
+        // users row exists (the club FKs need it); INSERT OR IGNORE, so it only
+        // fills gaps. Only touches D1 when short (the ensureHouseUsers pattern).
+        if ((await countOgClubMembers(db)) < ogClubMembers().members.length) {
           await ensureOgClub(db);
-          await this.ctx.storage.put(houseOgClubSeededKey, now);
         }
         this.houseSeeded = true;
       } catch (err) {

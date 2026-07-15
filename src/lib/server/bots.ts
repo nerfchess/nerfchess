@@ -1202,9 +1202,13 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
 // large, established club. Seeded idempotently (INSERT OR IGNORE) into the same
 // clubs/club_members tables a real club uses (migrations/0005), so it renders,
 // counts members, and shows a leaderboard exactly like a user-made club. Gated
-// behind a versioned cold-start key in worker.ts so it runs once, after
-// ensureHouseUsers has guaranteed every persona's users row exists (the FKs on
-// clubs.owner_user_id and club_members.user_id require it).
+// in worker.ts behind a SELF-HEALING count (countOgClubMembers < expected), not
+// a one-shot key: a one-shot key that got set after a partial/empty seed (club
+// row created, membership never landed, or members referenced not-yet-created
+// ghost accounts) sticks forever and leaves the club permanently empty — the
+// exact failure the house *accounts* had before the countSeededHouseUsers fix.
+// Runs after ensureHouseUsers has guaranteed every persona's users row exists
+// (the FKs on clubs.owner_user_id and club_members.user_id require it).
 // ---------------------------------------------------------------------------
 
 export const OG_CLUB_ID = "club_og_nerfchess";
@@ -1256,6 +1260,29 @@ export async function ensureOgClub(db: D1Database): Promise<void> {
       .bind(OG_CLUB_ID, p.userId, p.userId === owner.userId ? "owner" : "member", now),
   );
   await batchInChunks(db, statements);
+}
+
+/** How many OG-club members are actually renderable: club_members rows for the
+ * OG club whose user_id resolves to a LIVE users row — the same INNER JOIN the
+ * club detail route uses, so this counts exactly what the page would show. Used
+ * to make OG-club seeding self-healing (mirrors countSeededHouseUsers): when
+ * this is below the expected membership size, the club is empty or partial (a
+ * stuck one-shot seed, a failed/partial club_members batch, or members that
+ * referenced not-yet-created ghost accounts) and ensureOgClub must re-run. One
+ * cheap COUNT; only the OG club's rows are scanned. A read failure reads as
+ * "assume empty" so seeding runs rather than skips. */
+export async function countOgClubMembers(db: D1Database): Promise<number> {
+  try {
+    const row = await db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM club_members cm JOIN users u ON u.id = cm.user_id WHERE cm.club_id = ?`,
+      )
+      .bind(OG_CLUB_ID)
+      .first<{ n: number }>();
+    return row?.n ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 // ---------------------------------------------------------------------------
