@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
+import { fetchMe } from "@/lib/authClient";
 
 // The "New here?" onboarding chip in the home hero: a quiet door into the guided
-// first-game tour. It is aimed at brand-new players, so returning players get a
-// "not new" control beside it that closes it out for good (persisted in
-// localStorage under nerf.newHereDismissed) — after that the chip never shows
+// first-game tour. It is aimed at brand-new players, so it only shows to someone
+// who has never finished a match — a visitor with no account yet, or an account
+// with zero games played. The moment a player has a game on record it hides
+// itself. A "not new" control beside it also closes it out for good (persisted
+// in localStorage under nerf.newHereDismissed) — after that the chip never shows
 // again on this device.
 const DISMISS_KEY = "nerf.newHereDismissed";
 
@@ -18,15 +21,31 @@ export function NewHereChip() {
   const [state, setState] = useState<"loading" | "shown" | "hidden">("loading");
 
   useEffect(() => {
+    let cancelled = false;
     // Deferred a microtask (the project's pattern for reading a stored flag after
     // mount) so the state settle isn't a synchronous set inside the effect body.
     queueMicrotask(() => {
+      let dismissed = false;
       try {
-        setState(localStorage.getItem(DISMISS_KEY) === "1" ? "hidden" : "shown");
+        dismissed = localStorage.getItem(DISMISS_KEY) === "1";
       } catch {
-        setState("shown");
+        // localStorage unavailable — fall through to the games check.
       }
+      if (dismissed) {
+        if (!cancelled) setState("hidden");
+        return;
+      }
+      // No stored "not new" flag: gate on match history. A visitor with no
+      // account yet, or an account with zero games, is new and sees the chip;
+      // anyone who has already played a match does not.
+      fetchMe().then((me) => {
+        if (cancelled) return;
+        setState(me && me.games > 0 ? "hidden" : "shown");
+      });
     });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const dismiss = () => {
