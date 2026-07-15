@@ -19,7 +19,7 @@ test("home page renders", async ({ page }) => {
   });
   await expect(page.getByRole("link", { name: /^play a friend$/i })).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /^practice against the computer$/i }),
+    page.getByRole("link", { name: /^play a bot$/i }),
   ).toBeVisible();
 });
 

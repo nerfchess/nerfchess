@@ -1,7 +1,13 @@
+import { HOUSE_FILLER_THINK_MULTIPLIER, HOUSE_VS_HOUSE_CAP } from "../src/lib/server/bots";
+
 export interface ArenaConfig {
   token: string;
   replayVersion: number;
   maxGames: number;
+  // Filler pacing decimation (the DO's affordability lever, ported): every
+  // think delay is multiplied by this, so 40-55 slow filler games cost the
+  // single-threaded search loop roughly what 15-18 human-paced ones did.
+  thinkMult: number;
   enabled: boolean;
   port: number;
   verboseMoves: boolean;
@@ -34,11 +40,13 @@ export function loadConfig(): ArenaConfig {
   return {
     token: process.env.ARENA_TOKEN ?? "",
     replayVersion: Number(process.env.ARENA_REPLAY_VERSION ?? "0"),
-    // Up to three ongoing bot-vs-bot games, matching the DO's houseVsHouseCapMax.
-    // The spaced filler timer starts a fresh game whenever one ends, so the arena
-    // keeps a steady set running rather than a crowd. Override with ARENA_MAX_GAMES
-    // if a load test needs more.
-    maxGames: Number(process.env.ARENA_MAX_GAMES ?? "3"),
+    // The owner target is 40-55 concurrent bot-vs-bot games around the clock
+    // (80+ personas on boards). The default IS the shared cap so a plain
+    // deploy meets the target; ARENA_MAX_GAMES still overrides for load tests
+    // or smaller boxes. Affordable because thinkMult decimates per-game pacing,
+    // exactly like the DO's filler multiplier.
+    maxGames: Number(process.env.ARENA_MAX_GAMES ?? String(HOUSE_VS_HOUSE_CAP)),
+    thinkMult: Math.max(1, Number(process.env.ARENA_THINK_MULT ?? String(HOUSE_FILLER_THINK_MULTIPLIER))),
     enabled: (process.env.ARENA_ENABLED ?? "true") !== "false",
     port: Number(process.env.PORT ?? "8788"),
     verboseMoves: process.env.ARENA_VERBOSE_MOVES === "true",

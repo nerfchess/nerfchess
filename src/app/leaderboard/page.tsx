@@ -35,18 +35,8 @@ type MeRow = Row & { rank: number };
 // Standings are served top-500; the table pages through them 50 at a time.
 const PAGE_SIZE = 50;
 
-// Population filter, driven by the API's per-row `bot` flag (house engine
-// accounts vs real humans). "all" keeps everyone, ranked together.
-type PopFilter = "all" | "human" | "bot";
-const POP_FILTERS: { id: PopFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "human", label: "Humans" },
-  { id: "bot", label: "House bots" },
-];
-
 export default function LeaderboardPage() {
   const [category, setCategory] = useState<RatingCategoryId>(DEFAULT_CATEGORY);
-  const [pop, setPop] = useState<PopFilter>("all");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [meRow, setMeRow] = useState<MeRow | null>(null);
@@ -68,7 +58,6 @@ export default function LeaderboardPage() {
     setMeRow(null);
     setError(null);
     setPage(0);
-    setPop("all");
   }
 
   useEffect(() => {
@@ -99,9 +88,7 @@ export default function LeaderboardPage() {
   // True rank comes from the full-standings position, so a filtered view still
   // shows each player's real place on the board.
   const ranked = (rows ?? []).map((row, i) => ({ row, rank: i + 1 }));
-  const filtered = ranked.filter(({ row }) =>
-    pop === "all" ? true : pop === "bot" ? !!row.bot : !row.bot,
-  );
+  const filtered = ranked;
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
@@ -121,12 +108,11 @@ export default function LeaderboardPage() {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       pendingRankRef.current = null;
     }
-  }, [jumpNonce, safePage, pop, rows]);
+  }, [jumpNonce, safePage, rows]);
 
   const jumpToMe = () => {
     if (!meRow) return;
     pendingRankRef.current = meRow.rank;
-    setPop("all");
     const inList = meRow.rank <= (rows?.length ?? 0);
     setPage(inList ? Math.floor((meRow.rank - 1) / PAGE_SIZE) : pageCount - 1);
     setJumpNonce((n) => n + 1);
@@ -147,37 +133,8 @@ export default function LeaderboardPage() {
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
 
-        {/* Controls: population filter as a scrollable chip row on mobile, then
-            search and the jump-to-me shortcut. */}
+        {/* Controls: search and the jump-to-me shortcut. */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div
-            role="group"
-            aria-label="Filter by population"
-            className="-mx-1 flex gap-1 overflow-x-auto px-1 py-0.5"
-          >
-            {POP_FILTERS.map((f) => {
-              const selected = pop === f.id;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => {
-                    setPop(f.id);
-                    setPage(0);
-                  }}
-                  className={
-                    "press shrink-0 border px-3 py-1.5 text-[13px] font-medium transition-colors " +
-                    (selected
-                      ? "border-gold/50 bg-gold/15 text-gold-leaf"
-                      : "border-[color:var(--edge)] text-parchment-300 hover:border-[color:var(--edge-strong)] hover:text-parchment-100")
-                  }
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
           {canJump && (
             <button
               type="button"
@@ -248,7 +205,7 @@ export default function LeaderboardPage() {
 
               {pageRows.length === 0 ? (
                 <p className="px-4 py-8 text-center text-sm text-parchment-400">
-                  No {pop === "bot" ? "house bots" : "human players"} on this board yet.
+                  No players on this board yet.
                 </p>
               ) : (
                 pageRows.map(({ row, rank }) => (

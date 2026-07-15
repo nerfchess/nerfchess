@@ -71,26 +71,6 @@ function MovementChip({ delta }: { delta: number }) {
   );
 }
 
-// The W / D / L micro-bar: a single thin track split by proportion. Win segment
-// reads verdigris, draws muted, losses oxblood. Purely decorative (aria-hidden);
-// the exact counts sit beside it in text so the record is never color-only.
-function RecordBar({ wins, draws, losses }: { wins: number; draws: number; losses: number }) {
-  const total = wins + draws + losses;
-  if (total === 0) return null;
-  const pct = (n: number) => `${(n / total) * 100}%`;
-  return (
-    <span
-      aria-hidden
-      className="flex h-1.5 w-full overflow-hidden rounded-full"
-      style={{ background: "var(--edge)" }}
-    >
-      {wins > 0 && <span className="h-full bg-verdigris-glow" style={{ width: pct(wins) }} />}
-      {draws > 0 && <span className="h-full bg-parchment-500" style={{ width: pct(draws) }} />}
-      {losses > 0 && <span className="h-full bg-oxblood-glow" style={{ width: pct(losses) }} />}
-    </span>
-  );
-}
-
 export function ModeRatingCard({ category, row, recentDelta, rank, className = "" }: ModeRatingCardProps) {
   const Icon = category.icon;
   const provisional = row ? isProvisionalRd(row.rd) : false;
@@ -98,24 +78,17 @@ export function ModeRatingCard({ category, row, recentDelta, rank, className = "
 
   return (
     <div
-      className={"plate relative max-h-24 overflow-hidden py-3 pl-4 pr-3 " + className}
+      className={"plate relative max-h-24 overflow-hidden px-3 py-3 " + className}
     >
-      {/* Mode-hue edge down the left rim. */}
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ background: category.accent }}
-      />
-
       {/* Header: mode identity on the left, rank chip on the right. */}
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-[12px] font-medium text-parchment-300">
-          <Icon className="h-3.5 w-3.5" style={{ color: category.accent }} strokeWidth={2.2} aria-hidden />
+          <Icon className="h-3.5 w-3.5 text-parchment-400" strokeWidth={2.2} aria-hidden />
           {category.label}
         </span>
         {rank != null && (
           <span
-            className="rounded-sm border border-gold/25 bg-gold/10 px-1.5 py-0.5 font-mono text-[12px] font-semibold leading-none tabular-nums text-gold-leaf"
+            className="font-mono text-[12px] leading-none tabular-nums text-parchment-400"
             title={`Ranked #${rank} in ${category.label}`}
           >
             #{rank}
@@ -144,13 +117,11 @@ export function ModeRatingCard({ category, row, recentDelta, rank, className = "
           {/* W / D / L record: micro-bar plus explicit counts (never color-only). */}
           <div className="mt-2 flex items-center gap-2">
             <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] tabular-nums">
-              <span className="text-verdigris-glow">{row.wins}W</span>
+              <span className="text-parchment-300">{row.wins}W</span>
               <span className="text-parchment-400">{row.draws}D</span>
-              <span className="text-oxblood-glow">{row.losses}L</span>
+              <span className="text-parchment-300">{row.losses}L</span>
             </span>
-            <span className="min-w-0 flex-1">
-              <RecordBar wins={row.wins} draws={row.draws} losses={row.losses} />
-            </span>
+            <span className="min-w-0 flex-1" />
             {wr != null && (
               <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-300">{wr}% win</span>
             )}

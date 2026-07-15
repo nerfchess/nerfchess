@@ -65,6 +65,9 @@ export class ArenaGame {
     private readonly replayVersion: number,
     private readonly onDone: (g: ArenaGame) => void,
     private readonly fastMs = 0,
+    // Filler pacing decimation (config.thinkMult), passed INTO houseThinkMs so
+    // its clock clamps still apply: slow pacing can never flag a bot.
+    private readonly thinkMult = 1,
   ) {
     this.seats = { w: white, b: black };
     this.ratings = { w: houseSeedRating(white), b: houseSeedRating(black) };
@@ -307,7 +310,7 @@ export class ArenaGame {
     const turn = g.board.turn;
     const grace = this.movedOnce[turn] ? 0 : firstMoveGraceMs;
     const clock = this.timeSec > 0 ? this.clocks[turn] + grace : 0;
-    return houseThinkMs(randomInt, clock, this.timeSec);
+    return houseThinkMs(randomInt, clock, this.timeSec, this.thinkMult);
   }
 
   // ---- the one-action step (port of playHouseAction) ----
