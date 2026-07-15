@@ -167,11 +167,13 @@ test("/play is bot practice with a Play online door and no online queue; homepag
   );
   await expect(page.getByRole("button", { name: /find a .* game/i })).toHaveCount(0);
 
-  // Homepage: a visible practice-against-the-computer entry into /play.
+  // Homepage: a visible play-a-bot entry into /play.
   await page.goto("/");
-  await expect(
-    page.getByRole("link", { name: /practice against the computer/i }),
-  ).toHaveAttribute("href", "/play", { timeout: 30_000 });
+  await expect(page.getByRole("link", { name: /^play a bot$/i })).toHaveAttribute(
+    "href",
+    "/play",
+    { timeout: 30_000 },
+  );
 });
 
 test("responsive: no horizontal overflow at 320px on the profile and lobby pages", async ({
