@@ -21,7 +21,7 @@ export function MobileActionsMenu({ children }: { children: ReactNode }) {
         aria-expanded={open}
         aria-label="Game actions"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-full items-center justify-center gap-1.5 plate text-xs font-display font-semibold tracking-wide text-parchment-200 transition-colors active:bg-white/[0.06]"
+        className="flex h-9 w-full items-center justify-center gap-1.5 plate text-[14px] sm:text-[13px] font-display font-semibold tracking-wide text-parchment-200 transition-colors active:bg-white/[0.06]"
       >
         Game actions
         <span className="text-parchment-400" aria-hidden>

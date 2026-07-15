@@ -33,7 +33,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { arenaSocketUrl, isArenaGameId, isArenaGameLive } from "@/lib/arenaLobby";
-import { MPPlayers, MPSession } from "@/lib/multiplayer";
+import { MPPlayers, MPSession, type MPEvent, type SpectatorEnvelope } from "@/lib/multiplayer";
+import type { Color } from "@/engine/types";
 import {
   appendFeaturedDraftAction,
   featuredDraftFromWatchStart,
@@ -41,6 +42,14 @@ import {
   NOT_A_DRAFT,
   withFeaturedDraftState,
 } from "@/lib/spectate/featuredBoard";
+import {
+  beginWatch,
+  createSpectatorSync,
+  routeSpectatorBaseline,
+  routeSpectatorLiveFrame,
+  spectatorBaselineEnvelope,
+  sweepSpectatorSync,
+} from "@/lib/spectate/spectatorSync";
 import {
   isWatchStartHealthy,
   nextFailoverCandidate,
@@ -79,6 +88,8 @@ export interface FeaturedTune {
   players: MPPlayers | null;
   over: boolean;
   draft: FeaturedDraft;
+  /** Live clocks in ms, or null before the first authoritative value. */
+  clocks: Record<Color, number> | null;
   /** Candidates currently marked temporarily unhealthy. */
   failedIds: ReadonlySet<string>;
   /** Give a candidate (e.g. a user's manual pick) a fresh set of retries. */
@@ -111,6 +122,10 @@ export function useFeaturedTune(
   const [players, setPlayers] = useState<MPPlayers | null>(null);
   const [over, setOver] = useState(false);
   const [draft, setDraft] = useState<FeaturedDraft>(NOT_A_DRAFT);
+  // Live clocks (ms), from the wstart baseline, move frames, and out-of-band
+  // clock frames. Null until the first authoritative value arrives, so
+  // consumers can hide clock pills rather than render a fake 0:00.
+  const [clocks, setClocks] = useState<Record<Color, number> | null>(null);
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
   // Ids whose game has FINISHED. Semantically distinct from failedIds (a health
   // failure): an ended game is excluded from selection so a just-flagged bot game
@@ -121,7 +136,15 @@ export function useFeaturedTune(
   const [slowTune, setSlowTune] = useState(false);
   // Bumped to re-run the watch effect for a backoff retry of the same id.
   const [attempt, setAttempt] = useState(0);
+  // Applied-move count. The AUTHORITATIVE local move length, advanced only when a
+  // move is actually appended -- never stamped from a rejected/out-of-order
+  // frame's ply. Draft-action plies read this, so the move/action interleave the
+  // featured board replays stays exact even if a frame is dropped.
   const movesLenRef = useRef(0);
+  // Deterministic spectator-sync reducer for this hook's stream. Sequenced
+  // frames route through it (ordering / dedupe / gap -> resync); frames with no
+  // envelope (older server) bypass it, unchanged.
+  const syncRef = useRef(createSpectatorSync());
   const retryCountRef = useRef(0);
   // The streamId the retry count currently belongs to. Compared inside the watch
   // effect (never during render) so a NEW candidate starts with a fresh retry
@@ -170,6 +193,7 @@ export function useFeaturedTune(
     setPlayers(null);
     setOver(false);
     setDraft(NOT_A_DRAFT);
+    setClocks(null);
     setFailedIds(new Set());
     setEndedIds(new Set());
     setSlowTune(false);
@@ -260,6 +284,65 @@ export function useFeaturedTune(
     // this check is synchronous.
     if (isArenaGameId(streamId) && arenaSocketUrl()) session.serverUrl = arenaSocketUrl();
 
+    // Apply one already-ordered event to the featured board. Every mutation of
+    // the move list / draft record funnels through here so the reducer path and
+    // the legacy bypass path share identical application logic.
+    const applyFeaturedEvent = (e: MPEvent) => {
+      if (e.type === "move") {
+        // Append only the next move; advance the applied-count only when it
+        // actually appends (never from a rejected frame). In reducer mode the
+        // frames arrive strictly in seq order, so this always advances by one.
+        if (e.move.ply === movesLenRef.current + 1) {
+          movesLenRef.current = e.move.ply;
+          setMoves((m) => [...m, e.move.u]);
+        }
+      } else if (e.type === "draft-used") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "used",
+            color: e.used.color,
+            buffIndex: e.used.buffIndex,
+            picks: e.used.picks,
+            card: e.used.card,
+          }),
+        );
+      } else if (e.type === "draft-resolved") {
+        setDraft((d) =>
+          appendFeaturedDraftAction(d, movesLenRef.current, {
+            kind: "resolved",
+            color: e.resolved.color,
+            picked: e.resolved.kind === "picked",
+            cards: e.resolved.cards,
+          }),
+        );
+      } else if (e.type === "draft-state") {
+        setDraft((d) => withFeaturedDraftState(d, e.state));
+      } else if (e.type === "takeback") {
+        // Rewind the move list and drop any draft actions recorded past the new
+        // head, mirroring the full SpectatorView so the featured board never
+        // replays actions off the end of a shortened move list.
+        movesLenRef.current = e.moves.length;
+        setMoves(e.moves);
+        setDraft((d) =>
+          d.draft ? { ...d, dtActions: d.dtActions.filter((a) => a.ply <= e.moves.length) } : d,
+        );
+      } else if (e.type === "end") {
+        setOver(true);
+        setClocks({ w: e.end.wc, b: e.end.bc });
+        // The featured game just finished: exclude it from selection so we fail
+        // over to the next live candidate instead of clinging to a dead board.
+        markEnded();
+      }
+      // Sequenced move frames also carry the authoritative clocks.
+      if (e.type === "move") setClocks({ w: e.move.wc, b: e.move.bc });
+    };
+
+    // A gap/overflow/version-drift signal: re-issue the watch (a fresh session
+    // via the attempt bump) so a new wstart replaces state wholesale.
+    const resyncFeatured = () => {
+      if (!cancelled) setAttempt((a) => a + 1);
+    };
+
     const off = session.on((e) => {
       if (cancelled) return;
       if (e.type === "watch-start") {
@@ -284,41 +367,47 @@ export function useFeaturedTune(
         // selection so we do not dwell on it -- yield to a live candidate.
         if (e.setup.result) markEnded();
         setDraft(featuredDraftFromWatchStart(e.setup));
-      } else if (e.type === "move") {
-        movesLenRef.current = e.move.ply;
-        setMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
-      } else if (e.type === "draft-used") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "used",
-            color: e.used.color,
-            buffIndex: e.used.buffIndex,
-            picks: e.used.picks,
-            card: e.used.card,
-          }),
-        );
-      } else if (e.type === "draft-resolved") {
-        setDraft((d) =>
-          appendFeaturedDraftAction(d, movesLenRef.current, {
-            kind: "resolved",
-            color: e.resolved.color,
-            picked: e.resolved.kind === "picked",
-            cards: e.resolved.cards,
-          }),
-        );
-      } else if (e.type === "draft-state") {
-        setDraft((d) => withFeaturedDraftState(d, e.state));
-      } else if (e.type === "end") {
-        setOver(true);
-        // The featured game just finished: exclude it from selection so we fail
-        // over to the next live candidate instead of clinging to a dead board.
-        markEnded();
+        setClocks({ w: e.setup.wc, b: e.setup.bc });
+        // Adopt the wstart as the ordered-sync baseline when it carries the
+        // ordered-protocol fields; later envelopes then route through the
+        // reducer. A legacy wstart leaves the sync unbaselined so every frame
+        // bypasses it (behavior unchanged).
+        const baseEnv = spectatorBaselineEnvelope(e.setup);
+        if (baseEnv) {
+          beginWatch(syncRef.current, e.setup.id);
+          const drained = routeSpectatorBaseline(syncRef.current, baseEnv);
+          for (const p of drained.apply) applyFeaturedEvent(p as MPEvent);
+        }
+        return;
       }
+      // Clock frames apply out of band: they are excluded from the sequenced
+      // parity stream (see spectatorSync SEQUENCED_TYPES) and must never be
+      // dropped by seq dedupe.
+      if (e.type === "clocks") {
+        setClocks({ w: e.wc, b: e.bc });
+        return;
+      }
+      // Sequenced live frames route through the reducer (dedupe / order / gap ->
+      // resync); frames without an envelope bypass it and apply directly.
+      const env = (e as { env?: SpectatorEnvelope }).env;
+      const route = routeSpectatorLiveFrame(syncRef.current, env, e);
+      if (route.resync) {
+        resyncFeatured();
+        return;
+      }
+      for (const p of route.apply) applyFeaturedEvent(p as MPEvent);
     });
 
     const slowTimer = window.setTimeout(() => {
       if (!cancelled) setSlowTune(true);
     }, SLOW_TUNE_MS);
+    // A gap that never fills is swept here so one dropped frame can never freeze
+    // the featured board forever: the stranded gap resyncs onto a fresh wstart.
+    const sweepTimer = window.setInterval(() => {
+      if (cancelled) return;
+      const swept = sweepSpectatorSync(syncRef.current);
+      if (swept?.signal === "resync") resyncFeatured();
+    }, 1000);
     let backoffTimer: number | undefined;
 
     // A failed health check: retry with bounded backoff, then mark the candidate
@@ -388,6 +477,7 @@ export function useFeaturedTune(
     return () => {
       cancelled = true;
       window.clearTimeout(slowTimer);
+      window.clearInterval(sweepTimer);
       if (backoffTimer != null) window.clearTimeout(backoffTimer);
       off();
       session.destroy();
@@ -422,6 +512,7 @@ export function useFeaturedTune(
     players,
     over,
     draft,
+    clocks,
     failedIds,
     clearFailed,
   };

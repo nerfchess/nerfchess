@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import { NerfDetail } from "@/components/codex/CardDetail";
+import { AffectedPieces } from "@/app/codex/_components/AffectedPieces";
 import { NERF_BY_ID, metaDescription, tierName } from "@/lib/cardCodex";
 
 // One static page per nerf. Only pre-generated ids resolve; anything else 404s
@@ -37,5 +38,9 @@ export default async function NerfCardPage(props: { params: Promise<{ id: string
   const params = await props.params;
   const nerf = NERF_BY_ID[params.id];
   if (!nerf) notFound();
-  return <NerfDetail nerf={nerf} />;
+  return (
+    <>
+      <NerfDetail nerf={nerf} extra={<AffectedPieces kind="nerf" card={nerf} />} />
+    </>
+  );
 }

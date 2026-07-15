@@ -54,10 +54,11 @@ export function NewHereChip() {
         onClick={dismiss}
         title="Not new? Hide this"
         aria-label="Not new, hide the onboarding chip"
-        className="inline-flex items-center gap-1 border border-white/15 px-1.5 py-1 text-[10px] text-parchment-400 transition-colors hover:border-white/30 hover:text-parchment-100"
+        className="inline-flex items-center gap-1 px-1.5 py-1 text-[12px] text-parchment-400 transition-colors hover:text-parchment-100"
+        style={{ border: "1px solid var(--edge)" }}
       >
-        <span className="smallcaps hidden sm:inline">not new</span>
-        <span aria-hidden className="text-[12px] leading-none">×</span>
+        <span className="hidden sm:inline">Not new</span>
+        <span aria-hidden className="text-[13px] leading-none">×</span>
       </button>
     </div>
   );

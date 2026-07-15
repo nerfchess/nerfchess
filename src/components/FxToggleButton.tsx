@@ -14,7 +14,7 @@ export function FxToggleButton({ className = "" }: { className?: string }) {
     <label
       title="Effects intensity: Off, Calm, Normal, Epic, Max"
       className={
-        "flex items-center gap-2 border border-white/10 bg-white/[0.02] px-2.5 py-1.5 " + className
+        "flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.02] px-2.5 py-1.5 " + className
       }
     >
       {level === 0 ? (
@@ -45,7 +45,7 @@ export function FxToggleButton({ className = "" }: { className?: string }) {
       </datalist>
       <span
         className={
-          "smallcaps w-10 shrink-0 text-[9px] " +
+          "smallcaps w-10 shrink-0 text-[12px] " +
           (level === 0 ? "text-parchment-400" : level >= 3 ? "text-gold-leaf" : "text-parchment-300")
         }
       >

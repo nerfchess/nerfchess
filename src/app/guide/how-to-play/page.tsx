@@ -62,8 +62,8 @@ export default function HowToPlayPage() {
           <strong>Hex</strong>:{" "}
           <GlossaryText text="a curse you cast on your opponent, the most common card in Nerf mode's draft (about 60% of draws)." />{" "}
           Example:{" "}
-          <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link> stops your
-          opponent&apos;s pawns from capturing for their next 3 turns.
+          <Link href="/codex/buff/cold_feet" className="underline">Cold Feet</Link>{" "}
+          stops your opponent&apos;s pawns from capturing for their next 3 turns.
         </p>
         <p>
           <strong>Boon</strong>:{" "}

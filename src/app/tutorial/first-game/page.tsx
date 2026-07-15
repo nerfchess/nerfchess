@@ -3,7 +3,7 @@
 // The "First Game" guided tour route: a REAL local bot game with coach marks.
 //
 // Composition, not duplication: this page renders the existing /game page
-// component (which configures itself from the query string — weakest bot, no
+// component (which configures itself from the query string, weakest bot, no
 // clock, buff mode) and layers the FirstGameTour controller on top. The game
 // page's only tour awareness is the ?tour=1 state-broadcast hook.
 

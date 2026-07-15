@@ -5,6 +5,7 @@ import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { login, register } from "@/lib/authClient";
+import { SiteHeader } from "@/components/SiteHeader";
 
 // Public sitekey; when unset the widget is skipped and signup works as before.
 const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
@@ -116,11 +117,9 @@ function LoginPage() {
           onLoad={() => setTurnstileReady(true)}
         />
       )}
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-      </nav>
+      {/* The standard site nav (design system §9: identical on every page),
+          not a logo-only stub. */}
+      <SiteHeader />
       <section className="max-w-md mx-auto px-6 py-8">
         <h1 className="font-display text-3xl sm:text-4xl">
           {tab === "login" ? "Welcome back" : "Create your account"}
@@ -156,7 +155,7 @@ function LoginPage() {
             </div>
           )}
           <div>
-            <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="username">
+            <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="username">
               {tab === "login" ? "Username or email" : "Username"}
             </label>
             <input
@@ -165,18 +164,18 @@ function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               maxLength={tab === "login" ? 254 : 20}
-              className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               placeholder="knight_rider"
             />
             {tab === "register" && (
-              <p className="mt-1 text-[11px] text-parchment-400">
+              <p className="mt-1 text-[12px] text-parchment-400">
                 3-20 characters: letters, digits, underscores.
               </p>
             )}
           </div>
           {tab === "register" && (
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="email">
+              <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="email">
                 Email <span className="normal-case text-parchment-400/60">(optional)</span>
               </label>
               <input
@@ -186,16 +185,16 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 maxLength={254}
-                className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
                 placeholder="you@example.com"
               />
-              <p className="mt-1 text-[11px] text-parchment-400">
+              <p className="mt-1 text-[12px] text-parchment-400">
                 Lets you sign in with your email instead of your username.
               </p>
             </div>
           )}
           <div>
-            <label className="smallcaps text-[11px] text-parchment-400 block mb-1.5" htmlFor="password">
+            <label className="text-[12px] font-medium text-parchment-300 block mb-1.5" htmlFor="password">
               Password
             </label>
             <input
@@ -204,7 +203,7 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={tab === "login" ? "current-password" : "new-password"}
-              className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment"
+              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment"
               placeholder={tab === "register" ? "at least 8 characters" : ""}
             />
           </div>
@@ -219,19 +218,19 @@ function LoginPage() {
               !password ||
               (tab === "register" && !!TURNSTILE_SITEKEY && !turnstileToken)
             }
-            className="w-full py-3 rounded-sm btn-leaf font-body text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="press w-full py-3 btn-leaf font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {busy ? "One moment…" : tab === "login" ? "Sign in" : "Create account"}
           </button>
 
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[11px] smallcaps text-parchment-400">or</span>
+            <span className="text-[12px] smallcaps text-parchment-400">or</span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
           <a
             href={`/api/auth/google?next=${encodeURIComponent(next)}`}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-sm border border-white/15 bg-ink-900/60 hover:bg-white/5 transition text-parchment font-body text-lg"
+            className="press w-full flex items-center justify-center gap-3 py-3 border border-white/15 bg-ink-900/60 hover:bg-white/5 transition text-parchment font-display text-[15px]"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.6l6.86-6.86C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.2C12.44 13.72 17.74 9.5 24 9.5z" />

@@ -150,7 +150,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             }
             className={
               "pointer-events-auto cursor-pointer rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
-              (newest ? "border-gold/40 py-2.5 animate-rise" : "border-white/10 py-1.5 opacity-85")
+              (newest ? "border-gold/40 py-2.5 animate-rise" : "border-[color:var(--edge)] py-1.5 opacity-85")
             }
           >
             <div className="flex items-center justify-between gap-3">
@@ -158,14 +158,14 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
                 {def.name}
               </span>
               <span
-                className={`shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
+                className={`shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${tier} tier-${tier}`}
               >
                 {TIER_ROMAN[tier]}
               </span>
             </div>
             {newest && (
               <>
-                <div className="smallcaps mt-0.5 text-[10px] text-parchment-400">{p.label}</div>
+                <div className="smallcaps mt-0.5 text-[12px] text-parchment-400">{p.label}</div>
                 <p className="mt-1 text-xs leading-snug text-parchment-300">{def.description}</p>
               </>
             )}
@@ -205,7 +205,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
   if (!landed.length) return null;
   const newestFirst = [...landed].reverse();
   return (
-    <div className="border-t border-white/10 pt-2">
+    <div className="border-t border-[color:var(--edge)] pt-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -219,8 +219,8 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
           className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
         />
         <History aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
-        <span className="smallcaps min-w-0 truncate text-[10px] text-parchment-400">Opponent played</span>
-        <span className="ml-auto shrink-0 rounded-[1px] border border-white/15 bg-white/[0.05] px-1.5 py-px font-mono text-[9px] tabular-nums text-parchment-300">
+        <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">Opponent played</span>
+        <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
           {landed.length}
         </span>
       </button>
@@ -241,24 +241,24 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
                 onClick={() => setOverrides((o) => ({ ...o, [p.key]: !expanded }))}
                 aria-expanded={expanded}
                 className={
-                  "dock-card w-full rounded-[1px] border border-white/10 bg-white/[0.02] px-2 py-1 text-left transition hover:border-white/25 active:translate-y-px" +
+                  "dock-card w-full rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] px-2 py-1 text-left transition hover:border-[color:var(--edge-strong)] active:translate-y-px" +
                   (justLanded ? " dock-pocket-flash" : "")
                 }
               >
                 <span className="flex items-center gap-1.5">
-                  <span className={`min-w-0 flex-1 truncate font-display text-[11px] font-semibold tier-${tier}`}>
+                  <span className={`min-w-0 flex-1 truncate font-display text-[12px] font-semibold tier-${tier}`}>
                     {def.name}
                   </span>
                   <span
-                    className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${tier} tier-${tier}`}
+                    className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${tier} tier-${tier}`}
                   >
                     {TIER_ROMAN[tier]}
                   </span>
                 </span>
                 {expanded && (
                   <>
-                    <span className="smallcaps mt-0.5 block text-[9px] text-parchment-400">{p.label}</span>
-                    <span className="mt-0.5 block text-[10px] leading-snug text-parchment-300">
+                    <span className="smallcaps mt-0.5 block text-[12px] text-parchment-400">{p.label}</span>
+                    <span className="mt-0.5 block text-[12px] leading-snug text-parchment-300">
                       {def.description}
                     </span>
                   </>

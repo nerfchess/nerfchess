@@ -13,13 +13,18 @@ type Action =
 
 export function EmptyState({
   icon: Icon,
+  glyph = "♞",
   title,
   body,
   action,
   secondary,
   className = "",
 }: {
-  icon: LucideIcon;
+  /** Optional line icon; when absent the piece glyph renders instead (the
+   *  design-system default accent for empty states). */
+  icon?: LucideIcon;
+  /** Chess piece glyph used when no icon is supplied. */
+  glyph?: string;
   title: string;
   body: string;
   action?: Action;
@@ -38,7 +43,7 @@ export function EmptyState({
         className="grid h-12 w-12 place-items-center bg-white/[0.02] text-parchment-400"
         style={{ border: "1px solid var(--edge)" }}
       >
-        <Icon size={22} strokeWidth={1.6} />
+        {Icon ? <Icon size={22} strokeWidth={1.6} /> : <span className="text-[26px] leading-none">{glyph}</span>}
       </span>
       <div>
         <h3 className="font-display text-lg font-semibold text-parchment-50">{title}</h3>

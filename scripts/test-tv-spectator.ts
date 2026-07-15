@@ -65,6 +65,9 @@ import {
   createSpectatorSync,
   endWatch,
   requestResync,
+  routeSpectatorBaseline,
+  routeSpectatorLiveFrame,
+  spectatorBaselineEnvelope,
   sweepSpectatorSync,
   DEFAULT_SYNC_CONFIG,
   type SpectatorFrame,
@@ -923,6 +926,172 @@ section("INTEGRATION: disconnect gap, missing event recovery, game-ends-during-l
     ok(selectFeaturedTarget(candidates, failed, null) === "good", "selection fails over from the invalid featured game to the next healthy one");
     ok(nextFailoverCandidate(candidates, failed, "dead") === "good", "the failover target is the next healthy candidate");
   }
+}
+
+// ===========================================================================
+// CONSUMER ROUTING (the production wiring: routeSpectatorBaseline /
+// routeSpectatorLiveFrame / sweepSpectatorSync, exactly as useFeaturedTune and
+// SpectatorView call them). A dropped frame must buffer, then resync onto a
+// fresh snapshot, and the reconstructed board must equal the live board. A
+// draft action arriving after a gap must keep the move/action interleave exact.
+// ===========================================================================
+section("CONSUMER ROUTING: dropped move frame -> buffer -> resync -> board matches live");
+{
+  // Drive a scripted live game and, for each committed event, emit a sequenced
+  // envelope plus a closure that advances a SEPARATE spectator record the same
+  // way -- so applying the reducer's returned frames reproduces the live board.
+  interface RFrame { env: SpectatorEnvelope; apply: () => void }
+
+  const specMoves: string[] = [];
+  const specActions: MPDraftAction[] = [];
+  const rec = freshBuffGame(24680);
+  let seq = 0;
+  const frames: RFrame[] = [];
+  const hashAt = (): string => project(rec.game, { stateRevision: seq, lastSeq: seq }).publicHash;
+  const envAt = (type: SpectatorEnvelopeType, hash: string): SpectatorEnvelope => ({
+    gameId: "g1", schemaVersion: PUBLIC_SNAPSHOT_VERSION, replayVersion: 7,
+    stateRevision: seq, seq, type, publicHash: hash, ts: 3000 + seq,
+  });
+  const emitMove = (u: string) => {
+    play(rec, u); seq++;
+    frames.push({ env: envAt("move", hashAt()), apply: () => { specMoves.push(u); } });
+  };
+  const emitGrant = (color: Color, id: string, tier: Tier): number => {
+    const i = grant(rec, color, id, tier); seq++;
+    const action = rec.actions[rec.actions.length - 1];
+    frames.push({ env: envAt("draftResolved", hashAt()), apply: () => { specActions.push(action); } });
+    return i;
+  };
+  const emitUse = (color: Color, i: number, picks: BuffPick[]) => {
+    fire(rec, color, i, picks); seq++;
+    const action = rec.actions[rec.actions.length - 1];
+    frames.push({ env: envAt("draftUsed", hashAt()), apply: () => { specActions.push(action); } });
+  };
+
+  const baselineHash = hashAt(); // seq 0, opening position
+  emitMove("e2e4");                                  // seq 1
+  emitMove("e7e5");                                  // seq 2  (this frame is DROPPED)
+  const kIdx = emitGrant("w", "summon_knight", 3);   // seq 3
+  emitUse("w", kIdx, [{ square: sq("d4") }]);        // seq 4  (board rewrite)
+  emitMove("b8c6");                                  // seq 5
+
+  // The wstart baseline: the consumer adopts it, then routes later frames.
+  const sync = createSpectatorSync();
+  const baseEnv = spectatorBaselineEnvelope({ id: "g1", seq: 0, schemaVersion: PUBLIC_SNAPSHOT_VERSION, replayVersion: 7, publicHash: baselineHash });
+  ok(baseEnv != null, "wstart with ordered-protocol fields yields a baseline envelope");
+  beginWatch(sync, "g1");
+  routeSpectatorBaseline(sync, baseEnv!);
+  ok(sync.lastAppliedSeq === 0, "baseline adopted at seq 0");
+
+  // Apply seq 1 in order.
+  const r1 = routeSpectatorLiveFrame(sync, frames[0].env, frames[0].apply);
+  ok(!r1.resync && r1.apply.length === 1, "seq 1 applies in order");
+  for (const p of r1.apply) (p as () => void)();
+
+  // DROP seq 2. Deliver seq 3,4,5 -> all buffer (gap at seq 2).
+  let anyApplied = false;
+  for (const f of [frames[2], frames[3], frames[4]]) {
+    const r = routeSpectatorLiveFrame(sync, f.env, f.apply, DEFAULT_SYNC_CONFIG, 1000);
+    if (r.apply.length) anyApplied = true;
+    ok(!r.resync, "a later frame past the gap buffers (does not resync yet)");
+  }
+  ok(!anyApplied, "nothing applies while the gap is open");
+  ok(sync.lastAppliedSeq === 1 && sync.pending.size === 3, "baseline frozen at seq 1 with 3 buffered frames");
+
+  // The gap never fills: the sweep resyncs (never a frozen board on one drop).
+  ok(sweepSpectatorSync(sync, DEFAULT_SYNC_CONFIG, 1000 + 400) === null, "inside the reorder window: still waiting");
+  const swept = sweepSpectatorSync(sync, DEFAULT_SYNC_CONFIG, 1000 + 5000);
+  ok(swept?.signal === "resync" && swept.diag?.event === "tv_event_gap", "a stranded gap resyncs (one dropped frame never freezes the board)");
+  ok(sync.lastAppliedSeq === -1, "resync drops the baseline so a fresh snapshot replaces state");
+
+  // The consumer re-watches: a fresh wstart delivers the CURRENT full state.
+  // Wholesale-replace the spectator record from the authoritative live game.
+  specMoves.length = 0; specActions.length = 0;
+  specMoves.push(...rec.moves); specActions.push(...rec.actions);
+  const freshEnv = spectatorBaselineEnvelope({ id: "g1", seq, schemaVersion: PUBLIC_SNAPSHOT_VERSION, replayVersion: 7, publicHash: hashAt() });
+  routeSpectatorBaseline(sync, freshEnv!);
+  ok(sync.lastAppliedSeq === seq, "fresh snapshot re-baselines at the current head seq");
+
+  const live = project(rec.game);
+  const spectator = project(buildSpectatorDraftGame(specMoves, specActions, undefined, "buff"));
+  ok(
+    publicStateSignature(live) === publicStateSignature(spectator) && live.publicHash === spectator.publicHash,
+    "after resync, the reconstructed spectator board equals the live board (past the rewrite)",
+  );
+  // And the moves-only path would NOT: the rewrite proves the record is load-bearing.
+  const movesOnly = project(buildSpectatorDraftGame(specMoves, [], undefined, "buff"));
+  ok(publicStateSignature(movesOnly) !== publicStateSignature(live), "the summon rewrite genuinely diverges from a moves-only board");
+}
+
+section("CONSUMER ROUTING: draft action after a gap keeps the interleave exact");
+{
+  interface RFrame { env: SpectatorEnvelope; seqNo: number; apply: (m: string[], a: MPDraftAction[]) => void }
+  const rec = freshBuffGame(13579);
+  let seq = 0;
+  const frames: RFrame[] = [];
+  const hashAt = (): string => project(rec.game, { stateRevision: seq, lastSeq: seq }).publicHash;
+  const envAt = (type: SpectatorEnvelopeType): SpectatorEnvelope => ({
+    gameId: "g1", schemaVersion: PUBLIC_SNAPSHOT_VERSION, replayVersion: 7,
+    stateRevision: seq, seq, type, publicHash: hashAt(), ts: 4000 + seq,
+  });
+  const emitMove = (u: string) => {
+    play(rec, u); seq++;
+    const s = seq;
+    frames.push({ env: envAt("move"), seqNo: s, apply: (m) => { m.push(u); } });
+  };
+  const emitGrant = (color: Color, id: string, tier: Tier): number => {
+    const i = grant(rec, color, id, tier); seq++;
+    const s = seq; const action = rec.actions[rec.actions.length - 1];
+    frames.push({ env: envAt("draftResolved"), seqNo: s, apply: (_m, a) => { a.push(action); } });
+    return i;
+  };
+  const emitUse = (color: Color, i: number, picks: BuffPick[]) => {
+    fire(rec, color, i, picks); seq++;
+    const s = seq; const action = rec.actions[rec.actions.length - 1];
+    frames.push({ env: envAt("draftUsed"), seqNo: s, apply: (_m, a) => { a.push(action); } });
+  };
+
+  const baselineHash = hashAt();
+  emitMove("e2e4");                                 // seq 1
+  const kIdx = emitGrant("w", "summon_knight", 3);  // seq 2
+  emitMove("e7e5");                                 // seq 3
+  emitUse("w", kIdx, [{ square: sq("d4") }]);       // seq 4  (rewrite)
+  emitMove("b8c6");                                 // seq 5
+
+  const specMoves: string[] = [];
+  const specActions: MPDraftAction[] = [];
+  const applied: number[] = [];
+  const sync = createSpectatorSync();
+  const baseEnv = spectatorBaselineEnvelope({ id: "g1", seq: 0, schemaVersion: PUBLIC_SNAPSHOT_VERSION, replayVersion: 7, publicHash: baselineHash });
+  beginWatch(sync, "g1");
+  routeSpectatorBaseline(sync, baseEnv!);
+
+  const drive = (f: RFrame) => {
+    const r = routeSpectatorLiveFrame(sync, f.env, f);
+    ok(!r.resync, "no resync while the gap is recoverable");
+    for (const p of r.apply) {
+      const fr = p as RFrame;
+      applied.push(fr.seqNo);
+      fr.apply(specMoves, specActions);
+    }
+  };
+
+  drive(frames[0]); // seq 1 move
+  drive(frames[1]); // seq 2 pick
+  // The board-rewriting USE (seq 4) arrives BEFORE the move it follows (seq 3).
+  drive(frames[3]); // seq 4 use -> buffered (gap at 3)
+  drive(frames[4]); // seq 5 move -> buffered
+  ok(sync.pending.size === 2 && applied.join(",") === "1,2", "the draft use + trailing move buffer behind the gap");
+  drive(frames[2]); // seq 3 move -> fills the gap, drains 3,4,5 in order
+  ok(applied.join(",") === "1,2,3,4,5", "the gap fills and the buffered run (incl. the draft use) drains in seq order");
+
+  const live = project(rec.game);
+  const spectator = project(buildSpectatorDraftGame(specMoves, specActions, undefined, "buff"));
+  ok(
+    publicStateSignature(live) === publicStateSignature(spectator) && live.publicHash === spectator.publicHash,
+    "draft-action-after-gap: the interleave stays exact and the board matches live",
+  );
+  ok(publicStateSignature(project(buildSpectatorDraftGame(specMoves, [], undefined, "buff"))) !== publicStateSignature(live), "moves-only baseline diverges (the buffered use was load-bearing)");
 }
 
 // ---------------------------------------------------------------------------

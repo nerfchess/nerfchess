@@ -37,6 +37,8 @@ import {
   MotifBadge,
   PawnFence,
   prefetchSignatureVisuals,
+  signatureVisualsReady,
+  whenSignatureVisualsReady,
   ShieldMark,
   SIGNATURES,
   type SignatureConfig,
@@ -113,6 +115,9 @@ import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
 import { resolveCardVfx } from "./effects/vfxSpecs";
 import { findKing } from "@/engine/board";
+import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
+import type { PassiveAuraEntry, NerfAuraInput } from "./effects/passive/derive";
 
 // Rendered board-fraction center of a square (orientation-resolved), the
 // coordinate space the canvas VFX layer draws in.
@@ -331,12 +336,14 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
  * gates it behind the fx-hidden switch and the CSS drops every animation
  * when animations are off in Settings (the elements then hold at opacity 0). */
 function NerfRevealSplash({
+  id,
   name,
   tier,
   mine,
   squares,
   orientation,
 }: {
+  id: string;
   name: string;
   tier: number;
   mine: boolean;
@@ -362,7 +369,9 @@ function NerfRevealSplash({
             className="nerf-reveal-cell absolute"
             style={{ left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%" }}
           >
-            <NerfAura tier={tier} />
+            {/* R2: the tier tint becomes the card hue — pass the nerf's id so
+                two different rules read as different colors. */}
+            <NerfAura cardId={id} tier={tier} />
           </div>
         );
       })}
@@ -549,6 +558,10 @@ interface Props {
   // interaction (moves, selection, premoves) is suspended.
   pickSquares?: number[];
   onPickSquare?: (sq: Square) => void;
+  /** Targeting mode only: a tap landed on a NON-eligible square. Purely
+   * informational (the board already shows the refused-input feedback); hosts
+   * use it to surface a one-line "what is targetable" hint near the dock. */
+  onInvalidPick?: (sq: Square) => void;
   // A marquee attack card was just played: its id plus a monotonic key. When
   // the key advances, the board's next piece diff is dressed as that card's
   // signature choreography (derived entirely from which enemy squares cleared)
@@ -581,6 +594,20 @@ interface Props {
    * the squares the nerf's visual() marks. Reduced-motion and the fx-hidden
    * switch stand the whole splash down. */
   nerfReveals?: NerfRevealInfo[];
+  /** Every nerf rule whose PERSISTENT passive aura should paint on the board,
+   * already visibility-filtered by the surface (own rule always, opponent's
+   * once revealed; spectators get public rules only). The PassiveLayer renders
+   * each at its registry target; the reveal spawn still rides `nerfReveals`. */
+  passiveNerfs?: NerfAuraInput[];
+  /** Public buff state used ONLY by the PassiveLayer (per-card buff auras +
+   * alteration pulses). Kept separate from `buffs` so a surface can feed the
+   * passive layer without switching the legacy buff-vs-visual memo paths.
+   * Falls back to `buffs` when omitted. */
+  passiveBuffs?: BuffMatchState | null;
+  /** History review is active on the surface (scrubbing past plies). The
+   * PassiveLayer keeps auras but suppresses live spawn/pulse/exit so scrubbing
+   * never fires spurious intros. */
+  reviewingHistory?: boolean;
 }
 
 /** Placeholder rules that must never play the reveal splash: buff mode's
@@ -1240,7 +1267,6 @@ interface SquareEnv {
   trapMarks: Map<Square, { kind: string; name: string }>;
   lockedSquares: Set<Square>;
   pawnClampSquares: Set<Square>;
-  quietPassiveAuras: Map<Square, { tone: "buff" | "hex"; tier: number; id: string }>;
   strikeSquares: Set<Square>;
   stunBySquare: Map<Square, number>;
   companionSquares: Map<Square, { art: string }>;
@@ -1328,7 +1354,6 @@ const BoardSquare = React.memo(function BoardSquare({
     trapMarks,
     lockedSquares,
     pawnClampSquares,
-    quietPassiveAuras,
     strikeSquares,
     stunBySquare,
     companionSquares,
@@ -1620,26 +1645,11 @@ const BoardSquare = React.memo(function BoardSquare({
                        never doubles up. */
                     <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
                   )}
-                {!fxHiddenPref && !motionOff() && !motifShown && quietPassiveAuras.has(sq) && (
-                  /* Quiet-passive king presence: a color holding a live passive
-                     that declares no motif and no piece scope paints nothing
-                     else while it is held, so its king wears ONE faint standing
-                     aura — the tinted EmpowerShine for a grant, the NerfAura
-                     ember for a hex — in the representative card's own tier + id
-                     (per-card aura identity). Just one per king however many
-                     quiet passives are held, and skipped where the king already
-                     shows a card-fx motif aura (motifShown) so the two never
-                     double up. Mounted before the piece div, so the king always
-                     paints on top. */
-                  (() => {
-                    const aura = quietPassiveAuras.get(sq)!;
-                    return aura.tone === "hex" ? (
-                      <NerfAura cardId={aura.id} tier={aura.tier} />
-                    ) : (
-                      <EmpowerShine tier={aura.tier} cardId={aura.id} />
-                    );
-                  })()
-                )}
+                {/* Quiet-passive standing presence now renders through the
+                    registry-driven PassiveLayer (per card, at its registry
+                    target), mounted on the crop below. The old one-per-king
+                    stopgap and its asymmetric reduced-motion unmount are gone
+                    (docs/passive-effect-audit.md R7, R8). */}
                 {!fxHiddenPref && motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph, parked in the corner the
@@ -1839,6 +1849,13 @@ const BoardSquare = React.memo(function BoardSquare({
                 {isPickTarget && (
                   <div className="sq-pickable absolute inset-0 pointer-events-none rounded-sm" />
                 )}
+                {/* Targeting mode: every NON-eligible square dims 35% (over
+                    its piece) so the breathing eligible rings read instantly.
+                    Static paint, presentation only: the tap handling above is
+                    untouched. */}
+                {pickingSquares && !isPickTarget && (
+                  <div className="sq-pick-dim absolute inset-0 z-20 pointer-events-none" />
+                )}
                 {fogHide ? (
                   // A near-opaque tint instead of backdrop-blur: fog-of-war can
                   // cover ~16 squares at once, and backdrop-filter is the costliest
@@ -1947,7 +1964,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 {showCoordinates && f === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      "absolute text-[12px] font-mono font-semibold pointer-events-none " +
                       (claimedCorners.has("tl")
                         ? "top-0.5 left-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
                         : "top-0.5 left-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
@@ -1959,7 +1976,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 {showCoordinates && r === (orientation === "w" ? 0 : 7) && (
                   <span
                     className={
-                      "absolute text-[10px] font-mono font-semibold pointer-events-none " +
+                      "absolute text-[12px] font-mono font-semibold pointer-events-none " +
                       (claimedCorners.has("br")
                         ? "bottom-0.5 right-[36%] z-20 rounded-[2px] bg-ink-950/60 px-0.5 text-parchment-100/90"
                         : "bottom-0.5 right-1 " + (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85"))
@@ -1999,6 +2016,10 @@ export function Board({
   buffs,
   opponentMoves,
   nerfReveals,
+  passiveNerfs,
+  passiveBuffs,
+  reviewingHistory,
+  onInvalidPick,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
   const pickingSquares = !!onPickSquare;
@@ -2016,6 +2037,17 @@ export function Board({
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
+  // Refused input: the square whose move/target was just rejected. Drives a
+  // brief oxblood inner ring on that square (plus a 150ms transform-only shake
+  // applied imperatively, see flagInvalid) and unmounts right after. Purely
+  // presentational: it never changes what input is accepted.
+  const [invalidFx, setInvalidFx] = useState<{ sq: Square; key: number } | null>(null);
+  const invalidKeyRef = useRef(0);
+  useEffect(() => {
+    if (!invalidFx) return;
+    const t = window.setTimeout(() => setInvalidFx(null), 380);
+    return () => window.clearTimeout(t);
+  }, [invalidFx]);
   // The player's "hide effects/animations" switch (the small eye button in
   // the game rails). Decorative layers stand down; functional reads stay.
   const fxHiddenPref = useFxHidden();
@@ -2155,6 +2187,9 @@ export function Board({
     buffsRef.current = buffs;
   });
   const castSeenKeyRef = useRef(0);
+  // X1: gate ONLY the first cast on the lazy signature chunk, so an early play
+  // waits a bounded moment for its bespoke art rather than racing to GenBurst.
+  const firstCastGatedRef = useRef(false);
   // Play keys whose lead art already rendered through the piece-diff path;
   // the cast-level generated lead only fires for diff-less plays (clock,
   // draft, info cards...) so a card never leads twice.
@@ -2224,6 +2259,7 @@ export function Board({
   const nerfRevealKeyRef = useRef(0);
   const [nerfReveal, setNerfReveal] = useState<{
     key: number;
+    id: string;
     name: string;
     tier: number;
     mine: boolean;
@@ -2245,12 +2281,24 @@ export function Board({
     nerfRevealKeyRef.current += 1;
     setNerfReveal({
       key: nerfRevealKeyRef.current,
+      id: fresh.id,
       name: fresh.name,
       tier: fresh.tier,
       mine: fresh.color === myColor,
       squares: fresh.highlightSquares ?? [],
     });
   }, [nerfReveals, myColor]);
+  // Strict lifecycle: the splash enters, holds, exits, and then UNMOUNTS. It
+  // used to stay mounted forever resting at opacity 0 (the one-shot
+  // convention), which left it hanging over the board and, in reduced-motion,
+  // pinned it visible. Clearing the state once the CSS one-shot has played (its
+  // ~2s budget matches the nerf-reveal keyframes) guarantees it never lingers
+  // over the pieces mid-game. The seen-ref above still stops it re-playing.
+  useEffect(() => {
+    if (!nerfReveal) return;
+    const t = window.setTimeout(() => setNerfReveal(null), 2100);
+    return () => window.clearTimeout(t);
+  }, [nerfReveal]);
   useEffect(() => {
     if (!signatureCard || signatureCard.key <= castSeenKeyRef.current) return;
     castSeenKeyRef.current = signatureCard.key;
@@ -2269,9 +2317,23 @@ export function Board({
         }
       }
     }
-    queueMicrotask(() =>
-      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome }),
-    );
+    const doSetCast = () =>
+      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome });
+    // X1: a plugin card whose bespoke art lives in the not-yet-loaded chunk
+    // (no core sig, PLUGIN_ID) waits up to 500ms for readiness on the FIRST
+    // cast so it lands bespoke instead of GenBurst; later casts resolve per
+    // play and pick up the art once the chunk is warm.
+    const needGate =
+      !firstCastGatedRef.current &&
+      !sigOf(signatureCard.id) &&
+      PLUGIN_ID_SET.has(signatureCard.id) &&
+      !signatureVisualsReady();
+    firstCastGatedRef.current = true;
+    if (needGate) {
+      void whenSignatureVisualsReady(500).then(doSetCast);
+    } else {
+      queueMicrotask(doSetCast);
+    }
     const intensity = castIntensity(def.tier);
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
       playCastVoice(def.category, intensity === "marquee");
@@ -2905,32 +2967,18 @@ export function Board({
   // (category !== "hex") reuses EmpowerShine; a hex uses NerfAura. When a color
   // holds both, the grant wins — a side's own standing presence reads over an
   // inflicted curse. Nerfs are never touched.
-  const quietPassiveAuras = useMemo(() => {
-    const m = new Map<number, { tone: "buff" | "hex"; tier: number; id: string }>();
-    if (!buffs) return m;
-    for (const color of ["w", "b"] as Color[]) {
-      let grant: { tier: number; id: string } | null = null;
-      let hex: { tier: number; id: string } | null = null;
-      for (const inst of buffs.players[color].buffs) {
-        if (!inst.id || inst.spent || inst.nullified) continue;
-        const def = BUFF_BY_ID[inst.id];
-        if (!def) continue;
-        if (def.kind !== "passive") continue;
-        if (def.fx?.motif || def.fx?.pieces) continue; // already paints its own motif
-        if (def.category === "hex") {
-          if (!hex) hex = { tier: inst.tier, id: inst.id };
-        } else if (!grant) {
-          grant = { tier: inst.tier, id: inst.id };
-        }
-      }
-      const pick = grant ?? hex;
-      if (!pick) continue;
-      const king = findKing(board, color);
-      if (king == null || king < 0) continue;
-      m.set(king, { tone: grant ? "buff" : "hex", tier: pick.tier, id: pick.id });
-    }
-    return m;
-  }, [buffs, board]);
+  // Registry-driven per-card passive auras (docs/passive-effect-language.md
+  // section 4; replaces the R8 one-per-king stopgap). Every quiet buff passive
+  // (no motif, no piece scope) and every surface-supplied nerf rule gets its
+  // OWN aura at its registry target, rendered by the PassiveLayer inside the
+  // crop. Motif'd passives keep their EmpowerShine / NerfAura on the affected
+  // pieces, so the layer never doubles them.
+  const passiveBuffState = passiveBuffs ?? buffs ?? null;
+  const passiveAuras: PassiveAuraEntry[] = useMemo(() => {
+    const buffAuras = buffPassiveAuras(passiveBuffState, board);
+    const nerfAuras = nerfPassiveAuras(passiveNerfs ?? [], board);
+    return [...buffAuras, ...nerfAuras];
+  }, [passiveBuffState, board, passiveNerfs]);
   // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
   // get the fence instead). Sorted order drives the clamp-in stagger so the
   // links read as dropping in one after another.
@@ -3281,6 +3329,31 @@ export function Board({
     targetsRef.current = targets;
   });
 
+  // Refused-input feedback: an oxblood inner ring on the refused square plus
+  // a 150ms transform-only shake on the square(s) involved (the refused
+  // square and, when a move was attempted, the piece's square). The shake is
+  // applied imperatively to the grid cells (the same pattern as the marquee
+  // board thump) so the memoized square renders never churn; motionOff()
+  // (Settings anim-off / reduced motion) drops the shake while the ring stays
+  // as a brief static indicator (reduced motion never means zero feedback).
+  const flagInvalid = (ringSq: Square, shakeSq?: Square | null) => {
+    invalidKeyRef.current += 1;
+    setInvalidFx({ sq: ringSq, key: invalidKeyRef.current });
+    if (motionOff()) return;
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    if (!grid) return;
+    const shakeTargets = shakeSq != null && shakeSq !== ringSq ? [ringSq, shakeSq] : [ringSq];
+    for (const s of shakeTargets) {
+      const idx = orderedSquares.indexOf(s);
+      const el = grid.children[idx] as HTMLElement | undefined;
+      if (!el) continue;
+      el.classList.remove("sq-invalid-shake");
+      void el.offsetWidth;
+      el.classList.add("sq-invalid-shake");
+      window.setTimeout(() => el.classList.remove("sq-invalid-shake"), 200);
+    }
+  };
+
   // Everything happens on pointer *down*, lichess-style: pressing a legal
   // destination plays the move immediately (no waiting for the release —
   // that saves the whole press-to-release delay on every move, which adds up
@@ -3309,6 +3382,11 @@ export function Board({
         // effect actually lands. One shot per drop.
         if (legalMoves.some((m) => m.drop != null && m.to === sq)) playDrop();
         onPickSquare?.(sq);
+      } else {
+        // Tap on a non-eligible square while a card is aiming: refused target.
+        // The mode itself stays armed (Escape or the cancel chip exits).
+        flagInvalid(sq);
+        onInvalidPick?.(sq);
       }
       return;
     }
@@ -3329,6 +3407,11 @@ export function Board({
       onPointerDownPiece(e, sq);
       return;
     }
+    // Your own piece with no legal moves right now (pinned, frozen, hexed):
+    // a refused pickup. Feedback only, no return: the flow below still runs
+    // (a frozen piece's effect popover on touch, the shape-clearing dead tap),
+    // so nothing about what happens next changes.
+    if (piece && piece.color === myColor) flagInvalid(sq);
     // Inspect an enemy piece: slate dots preview every square it could reach
     // (turn-flipped legal moves from the host). A second tap on the same
     // piece toggles the preview off; a frozen piece has no moves and falls
@@ -3480,6 +3563,10 @@ export function Board({
         dropSkipRef.current = sq;
         tryPlayRef.current(sq);
       } else if (sq != null && sq !== drag.from) {
+        // Dropped on a square this piece cannot reach: refused move. The
+        // piece returns to its origin exactly as before; the ring + shake are
+        // feedback only.
+        flagInvalid(sq, drag.from);
         setSelected(null);
       } else if (sq === drag.from && pressRef.current?.sq === sq && pressRef.current.wasSelected) {
         // Releasing on an already-selected piece deselects it (click toggle).
@@ -3939,7 +4026,6 @@ export function Board({
       trapMarks,
       lockedSquares,
       pawnClampSquares,
-      quietPassiveAuras,
       strikeSquares,
       stunBySquare,
       companionSquares,
@@ -3991,7 +4077,6 @@ export function Board({
       trapMarks,
       lockedSquares,
       pawnClampSquares,
-      quietPassiveAuras,
       strikeSquares,
       stunBySquare,
       companionSquares,
@@ -4012,7 +4097,7 @@ export function Board({
 
 
   return (
-    <div ref={boardRef} className="relative w-full max-w-[min(92vw,720px)] aspect-square mx-auto">
+    <div ref={boardRef} className="relative w-full max-w-full aspect-square mx-auto">
       <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
         {/* Canvas VFX layer: particles, projectiles, beams and cinematics for
             card plays, drawn over the squares but under floating UI. The
@@ -4065,6 +4150,26 @@ export function Board({
           })}
           {/* eslint-enable react-hooks/refs */}
         </div>
+
+        {/* Passive visual lifecycle: per-card auras (both families) at their
+            registry targets, spawn intros once per activation (buff
+            acquisitions + nerf reveals, FIFO 250ms apart), alteration/rejection
+            pulses, and exits. Inside the crop, above the squares, below the
+            drag layer and HUD. Auras are information and stay under reduced
+            motion; the fx-hidden switch stands the layer down. */}
+        {!fxHiddenPref && (
+          <PassiveLayer
+            auras={passiveAuras}
+            orientation={orientation}
+            reviewing={!!reviewingHistory}
+            nerfReveals={nerfReveals}
+            hookMutations={passiveBuffState?.lastHookMutations ?? null}
+            hookPlyKey={(fxBoard ?? board).history.length}
+            buffs={passiveBuffState}
+            invalid={invalidFx}
+            fxHidden={fxHiddenPref}
+          />
+        )}
 
         {/* Passive-grant edge aura: while any of the VIEWER's own pieces
             carries a live self-grant motif (empower / ward / rally), a very
@@ -4137,6 +4242,7 @@ export function Board({
         {!fxHiddenPref && nerfReveal && (
           <NerfRevealSplash
             key={`nerfrev-${nerfReveal.key}`}
+            id={nerfReveal.id}
             name={nerfReveal.name}
             tier={nerfReveal.tier}
             mine={nerfReveal.mine}
@@ -4212,6 +4318,29 @@ export function Board({
             )}
           </svg>
         )}
+
+        {/* Refused-input ring: a brief oxblood inner ring on the square whose
+            move / card target was just rejected (see flagInvalid). One-shot,
+            keyed per refusal, unmounted ~380ms later; anim-off shows it as a
+            short static flash instead (never zero feedback). */}
+        {invalidFx &&
+          (() => {
+            const col = orientation === "w" ? FILE(invalidFx.sq) : 7 - FILE(invalidFx.sq);
+            const row = orientation === "w" ? 7 - RANK(invalidFx.sq) : RANK(invalidFx.sq);
+            return (
+              <div
+                key={`inv-${invalidFx.key}`}
+                aria-hidden
+                className="sq-invalid-ring pointer-events-none absolute z-[35]"
+                style={{
+                  left: `${col * 12.5}%`,
+                  top: `${row * 12.5}%`,
+                  width: "12.5%",
+                  height: "12.5%",
+                }}
+              />
+            );
+          })()}
       </div>
 
       {/* Expansion Permit construction ring: the ninth file / ninth rank

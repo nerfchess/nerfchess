@@ -69,6 +69,7 @@ import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
 import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
+import { loadRatings } from "@/lib/ratings";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
@@ -253,6 +254,9 @@ function GamePage() {
   // your own rule to the opponent.
   const [oppPeek, setOppPeek] = useState(false);
   const [sharedMine, setSharedMine] = useState(false);
+  // Bumped when a targeting tap lands on a non-eligible square; the
+  // TargetingBanner flashes a one-line "what is targetable" hint per bump.
+  const [invalidPickKey, setInvalidPickKey] = useState(0);
   const aiThinking = useRef(false);
   const gameRef = useRef<NerfGame | null>(null);
   const aiWorkerRef = useRef<Worker | null>(null);
@@ -968,6 +972,12 @@ function GamePage() {
   // never double-records.
   const sawResult = useRef(false);
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number } | null>(null);
+  // Post-game W/L/D in this time-control bucket, read back from the local
+  // rating store once a rated result has been saved. Null for casual games.
+  const [postRecord, setPostRecord] = useState<{ wins: number; losses: number; draws: number } | null>(null);
+  // Snapshot of the card-play-by-ply record (sigPlyRef), taken at game end, for
+  // the result screen's match timeline. A ref can't be read during render.
+  const [timelineEvents, setTimelineEvents] = useState<{ ply: number; cardId: string }[]>([]);
   useEffect(() => {
     if (!game?.result || sawResult.current) return;
     // Plain ref bookkeeping; flagged only as collateral of the mutable-replica
@@ -987,12 +997,20 @@ function GamePage() {
       saveRatingFor(ratingCategory, after, score === 1 ? "win" : score === 0 ? "loss" : "draw");
       change = { before: before.rating, after: after.rating };
       const applied = change;
+      // Read the updated bucket back for the W/L/D line on the result screen.
+      const stats = loadRatings()[ratingCategory];
+      const record = { wins: stats.wins, losses: stats.losses, draws: stats.draws };
       queueMicrotask(() => {
         setPlayerElo(after.rating);
         setRatingChange(applied);
+        setPostRecord(record);
       });
     }
-    queueMicrotask(() => setShowResult(true));
+    const events = Array.from(sigPlyRef.current, ([ply, id]) => ({ ply, cardId: id }));
+    queueMicrotask(() => {
+      setShowResult(true);
+      setTimelineEvents(events);
+    });
     recordCompletedGame({
       mode: "ai",
       opponent: `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
@@ -1389,7 +1407,7 @@ function GamePage() {
       return (
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
-            <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+            <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
             <h1 className="font-display text-4xl text-parchment text-center mt-1">
               Choose your handicap
             </h1>
@@ -1441,18 +1459,18 @@ function GamePage() {
             {/* Nerf mode: the opponent's rule is completely hidden until the
                 game ends, so their options never show either. */}
             {gameMode === "nerf" ? (
-              <p className="mt-5 text-center text-[11px] text-parchment-400">
+              <p className="mt-5 text-center text-[12px] text-parchment-400">
                 Your opponent picks a nerf too. You will see their rule when the game ends.
               </p>
             ) : (
               <div className="mt-5 plate p-3 text-center">
-                <span className="smallcaps text-[10px] text-parchment-400">
+                <span className="smallcaps text-[12px] text-parchment-400">
                   Your opponent is choosing between
                 </span>
                 <div className="mt-1 text-sm text-parchment-200 font-display">
                   {nerfDraft.aiOptions.map((n) => n.name).join("  ·  ")}
                 </div>
-                <div className="mt-0.5 text-[11px] text-parchment-400">
+                <div className="mt-0.5 text-[12px] text-parchment-400">
                   Which one they take stays hidden, unless you draft a reveal.
                 </div>
               </div>
@@ -1518,6 +1536,14 @@ function GamePage() {
       ],
     });
   }
+  // Persistent nerf auras for the PassiveLayer: the same visibility-filtered
+  // known-nerf set the reveal splash uses, minus the reveal-only concerns, so
+  // every known rule wears its registry aura for as long as it holds.
+  const passiveNerfs = nerfReveals.map((r) => ({
+    cardId: r.id,
+    color: r.color,
+    squares: r.highlightSquares ?? [],
+  }));
   // Nerf mode: held boons ride in the same corner card as the nerf, so the
   // handicap and its reliefs read together at a glance.
   const myHeldBoons =
@@ -1567,9 +1593,16 @@ function GamePage() {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
+  // The board is square and must fit BOTH the available height (an h-dvh
+  // layout) and the width left over after the side rails, at every breakpoint,
+  // so it never pushes a rail off-screen. Each min() term reserves the rails
+  // present at that breakpoint: none below sm, the right move rail (~288px +
+  // gaps + page padding) at sm, the left command rail (440px) added at lg, and
+  // its wider 500px form at xl. Below sm the board runs nearly edge to edge
+  // (full width minus 8px). Literal strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] max-w-full"
-    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -1662,7 +1695,7 @@ function GamePage() {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -1680,7 +1713,7 @@ function GamePage() {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -1698,7 +1731,7 @@ function GamePage() {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => { onResign(); setConfirmingResign(false); }}
@@ -1717,7 +1750,7 @@ function GamePage() {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -1781,7 +1814,7 @@ function GamePage() {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
-          <div className="smallcaps text-[11px] text-parchment-400 hidden sm:block">
+          <div className="smallcaps text-[12px] text-parchment-400 hidden sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {gameMode && (
               <>
@@ -1828,7 +1861,7 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -1872,7 +1905,7 @@ function GamePage() {
                 />
                 {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
               </span>
-              <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">
+              <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
                 Casual · vs bot
               </span>
             </div>
@@ -2022,6 +2055,9 @@ function GamePage() {
                   }
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
+                  passiveNerfs={passiveNerfs}
+                  passiveBuffs={isReviewingHistory ? null : game.buffs}
+                  reviewingHistory={isReviewingHistory}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
@@ -2043,6 +2079,7 @@ function GamePage() {
                       ? (sq) => buffTargeting.pick({ square: sq })
                       : undefined
                   }
+                  onInvalidPick={() => setInvalidPickKey((k) => k + 1)}
                 />
                 {bsTheirs && (
                   <DraftNotice
@@ -2058,6 +2095,7 @@ function GamePage() {
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
                     onFinish={buffTargeting.finish}
+                    invalidKey={invalidPickKey}
                   />
                 )}
                 {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
@@ -2091,7 +2129,7 @@ function GamePage() {
                       {myNerf.name}
                     </span>
                     <span
-                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
                       title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
                     >
                       {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
@@ -2280,11 +2318,15 @@ function GamePage() {
           opponentNerf={gameMode === "buff" || plainMode ? undefined : opponentNerf}
           opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
           ratingChange={ratingChange}
+          mode={gameMode}
+          record={postRecord}
+          newOpponentHref={`/lobby?tab=quick${gameMode ? `&mode=${gameMode}` : ""}`}
           onRematch={handleRematch}
           onNewGame={handleRematch}
           onReview={() => handleHistoryPlyChange(0)}
           onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}
+          cardEvents={timelineEvents}
           playerNames={{
             w: myColor === "w" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,
             b: myColor === "b" ? "You" : `${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`,

@@ -1,0 +1,529 @@
+/* Passive-effect primitives: transform and opacity only.
+ *
+ * Every keyframe animates transform and/or opacity exclusively (no layout, no
+ * paint of width/height/color over time). Animations are gated two ways:
+ *   1. html[data-anim="off"] * { animation: none } (global rule in globals.css)
+ *      already stops every keyframe when the player turns animations off.
+ *   2. The prefers-reduced-motion guard below hard-stops them for the OS
+ *      setting, and the components render their static fallback instead.
+ * Settle is the final ~30% of each animation; nothing loops (single play).
+ */
+
+.pfx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: block;
+}
+
+.pfx-el {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation-delay: var(--pfx-delay, 0ms);
+}
+
+/* Reduced-motion static fallback: a faded ring standing in for the static
+ * sigil. Fades in over <=160ms and stays. */
+.pfx-fallback {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 46%;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0.4;
+  animation: pfx-fade-in var(--pfx-d, 160ms) ease-out both;
+}
+
+@keyframes pfx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 0.4; }
+}
+
+/* ---- bolt: fast strike down into the target, settle to a charged core ---- */
+.pfx-bolt-el {
+  width: 8%;
+  height: 70%;
+  background: linear-gradient(var(--pfx-c), transparent);
+  clip-path: polygon(50% 0, 62% 42%, 40% 46%, 55% 100%, 30% 52%, 52% 48%);
+  opacity: 0;
+  animation: pfx-bolt var(--pfx-d) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes pfx-bolt {
+  0% { opacity: 0; transform: translate(-50%, -160%) scaleY(1.4); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
+  100% { opacity: 0.55; transform: translate(-50%, -50%) scaleY(0.9); }
+}
+
+/* ---- shockRing: expanding impact ring, settles thin ---- */
+.pfx-ring-el {
+  width: 20%;
+  height: 20%;
+  border: 3px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-shock var(--pfx-d) cubic-bezier(0.15, 0.7, 0.2, 1) both;
+}
+@keyframes pfx-shock {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.2); }
+  70% { opacity: 0.5; transform: translate(-50%, -50%) scale(3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3.4); }
+}
+
+/* ---- crackLines: radiating fracture lines that glint ---- */
+.pfx-crack-el {
+  width: 3%;
+  height: 44%;
+  background: linear-gradient(var(--pfx-c), transparent);
+  transform-origin: bottom center;
+  opacity: 0;
+  animation: pfx-crack var(--pfx-d) ease-out both;
+}
+@keyframes pfx-crack {
+  0% { opacity: 0; }
+  30% { opacity: 0.9; }
+  100% { opacity: 0.3; }
+}
+
+/* ---- crystallize: facets bloom outward from center ---- */
+.pfx-crystal-el {
+  width: 10%;
+  height: 10%;
+  background: var(--pfx-c);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  opacity: 0;
+  animation: pfx-crystal var(--pfx-d) cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes pfx-crystal {
+  0% { opacity: 0; transform: rotate(var(--r, 0)) scale(0.2); }
+  60% { opacity: 0.85; }
+  100% { opacity: 0.5; transform: scale(1); }
+}
+
+/* ---- chainLink: links draw along a row ---- */
+.pfx-chain-el {
+  top: 50%;
+  width: 7%;
+  height: 14%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 40%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: pfx-chain var(--pfx-d) ease-out both;
+}
+@keyframes pfx-chain {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  60% { opacity: 0.95; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- sigilStamp: stamp from above, ring settle ---- */
+.pfx-sigil-el {
+  width: 40%;
+  height: 40%;
+  border: 3px solid var(--pfx-c);
+  border-radius: 8%;
+  opacity: 0;
+  animation: pfx-sigil var(--pfx-d) cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+@keyframes pfx-sigil {
+  0% { opacity: 0; transform: translate(-50%, -110%) scale(1.6); }
+  55% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- zoneSweep: sweep across the region ---- */
+.pfx-sweep-el {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
+  opacity: 0;
+  animation: pfx-sweep var(--pfx-d) ease-in-out both;
+}
+@keyframes pfx-sweep {
+  0% { opacity: 0; transform: translateX(-100%); }
+  40% { opacity: 0.5; }
+  100% { opacity: 0.12; transform: translateX(0); }
+}
+
+/* ---- edgeBurn: ignite along an edge line ---- */
+.pfx-edgeburn-el {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 6%;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--pfx-c), transparent);
+  opacity: 0.8;
+  animation: pfx-edgeburn var(--pfx-d) ease-out both;
+}
+@keyframes pfx-edgeburn {
+  0% { transform: translateY(-50%) scaleX(0); opacity: 0.9; }
+  70% { transform: translateY(-50%) scaleX(1); opacity: 0.7; }
+  100% { transform: translateY(-50%) scaleX(1); opacity: 0.35; }
+}
+
+/* ---- fogRoll: soft bands roll in ---- */
+.pfx-fog-el {
+  left: 0;
+  width: 100%;
+  height: 34%;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--pfx-c));
+  opacity: 0;
+  animation: pfx-fog var(--pfx-d) ease-out both;
+}
+@keyframes pfx-fog {
+  0% { opacity: 0; transform: translateX(-100%); }
+  60% { opacity: 0.3; }
+  100% { opacity: 0.22; transform: translateX(0); }
+}
+
+/* ---- beamVertical: light down a file ---- */
+.pfx-beam-v-el {
+  top: 0;
+  width: 26%;
+  height: 100%;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top center;
+  background: linear-gradient(var(--pfx-c), transparent);
+  opacity: 0.7;
+  animation: pfx-beam-v var(--pfx-d) ease-out both;
+}
+@keyframes pfx-beam-v {
+  0% { transform: translateX(-50%) scaleY(0); opacity: 0.85; }
+  70% { transform: translateX(-50%) scaleY(1); opacity: 0.6; }
+  100% { transform: translateX(-50%) scaleY(1); opacity: 0.3; }
+}
+
+/* ---- beamHorizontal: light across a rank ---- */
+.pfx-beam-h-el {
+  left: 0;
+  width: 100%;
+  height: 26%;
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--pfx-c), transparent);
+  opacity: 0.7;
+  animation: pfx-beam-h var(--pfx-d) ease-out both;
+}
+@keyframes pfx-beam-h {
+  0% { transform: translateY(-50%) scaleX(0); opacity: 0.85; }
+  70% { transform: translateY(-50%) scaleX(1); opacity: 0.6; }
+  100% { transform: translateY(-50%) scaleX(1); opacity: 0.3; }
+}
+
+/* ---- dropImpact: drop in with a ripple ---- */
+.pfx-drop-el {
+  width: 30%;
+  height: 30%;
+  background: var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-drop var(--pfx-d) cubic-bezier(0.3, 1.2, 0.4, 1) both;
+}
+@keyframes pfx-drop {
+  0% { opacity: 0; transform: translate(-50%, -180%) scale(0.6); }
+  55% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+}
+.pfx-drop-ripple-el {
+  width: 26%;
+  height: 26%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-shock var(--pfx-d) ease-out both;
+  animation-delay: calc(var(--pfx-d) * 0.4);
+}
+
+/* ---- riseGlow: warm glow rises and blooms ---- */
+.pfx-rise-el {
+  width: 44%;
+  height: 44%;
+  background: radial-gradient(circle, var(--pfx-c), transparent 70%);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-rise var(--pfx-d) ease-out both;
+}
+@keyframes pfx-rise {
+  0% { opacity: 0; transform: translate(-50%, -10%) scale(0.6); }
+  60% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- moonCircle: circle settles beneath, gentle ---- */
+.pfx-moon-el {
+  width: 50%;
+  height: 50%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-moon var(--pfx-d) ease-out both;
+}
+@keyframes pfx-moon {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  70% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- gateSlam: portcullis bars drop ---- */
+.pfx-gate-el {
+  top: 0;
+  width: 12%;
+  height: 100%;
+  transform: translate(-50%, -100%);
+  background: linear-gradient(var(--pfx-c), transparent);
+  opacity: 0;
+  animation: pfx-gate var(--pfx-d) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes pfx-gate {
+  0% { opacity: 0; transform: translate(-50%, -100%); }
+  60% { opacity: 0.8; transform: translate(-50%, 0); }
+  100% { opacity: 0.45; transform: translate(-50%, 0); }
+}
+
+/* ---- cardLift: piece raised as a card face, unstable ---- */
+.pfx-card-el {
+  width: 40%;
+  height: 56%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 6%;
+  opacity: 0;
+  animation: pfx-card var(--pfx-d) ease-out both;
+}
+@keyframes pfx-card {
+  0% { opacity: 0; transform: translate(-50%, -30%) rotate(-2deg) scale(0.9); }
+  60% { opacity: 0.8; transform: translate(-50%, -50%) rotate(1deg) scale(1); }
+  100% { opacity: 0.5; transform: translate(-50%, -50%) rotate(-1deg) scale(1); }
+}
+
+/* ---- weightDrop: leaden weight drops and settles ---- */
+.pfx-weight-el {
+  width: 34%;
+  height: 34%;
+  background: var(--pfx-c);
+  border-radius: 12%;
+  opacity: 0;
+  animation: pfx-weight var(--pfx-d) cubic-bezier(0.5, 0, 0.7, 1) both;
+}
+@keyframes pfx-weight {
+  0% { opacity: 0; transform: translate(-50%, -170%) scaleY(0.8); }
+  60% { opacity: 0.9; transform: translate(-50%, -46%) scaleY(1.05); }
+  75% { transform: translate(-50%, -52%) scaleY(0.97); }
+  100% { opacity: 0.6; transform: translate(-50%, -50%) scaleY(1); }
+}
+
+/* ---- tickPips: march-line pips advance ---- */
+.pfx-pip-el {
+  top: 50%;
+  width: 6%;
+  height: 6%;
+  background: var(--pfx-c);
+  border-radius: 2px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5);
+  animation: pfx-pip var(--pfx-d) steps(4, end) both;
+}
+@keyframes pfx-pip {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- orbitSpark: sparks orbit the target ---- */
+.pfx-orbit-el {
+  width: 8%;
+  height: 8%;
+  background: var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--pfx-orbit-offset, 0deg)) translateX(120%);
+  animation: pfx-orbit var(--pfx-d) ease-out both;
+}
+@keyframes pfx-orbit {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* ---- shatterExit: shards fly apart (exit) ---- */
+.pfx-shard-el {
+  width: 9%;
+  height: 9%;
+  background: var(--pfx-c);
+  clip-path: polygon(50% 0, 100% 60%, 30% 100%);
+  opacity: 0;
+  animation: pfx-shatter var(--pfx-d) cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+@keyframes pfx-shatter {
+  0% { opacity: 0.9; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--pfx-shard-x, 0%)), calc(-50% + var(--pfx-shard-y, 0%))); }
+}
+
+/* ---- drainFlow: streams flow inward to center ---- */
+.pfx-drain-el {
+  width: 4%;
+  height: 40%;
+  transform-origin: bottom center;
+  background: linear-gradient(transparent, var(--pfx-c));
+  opacity: 0;
+  animation: pfx-drain var(--pfx-d) ease-in both;
+}
+@keyframes pfx-drain {
+  0% { opacity: 0; }
+  40% { opacity: 0.85; }
+  100% { opacity: 0.25; }
+}
+
+/* ---- pulseRing: single quick pulse (also the trigger pulse) ---- */
+.pfx-pulse-el {
+  width: 30%;
+  height: 30%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-pulse var(--pfx-d) ease-out both;
+}
+@keyframes pfx-pulse {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.6); }
+  60% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.5); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+}
+
+/* ---- Persistent auras (section 4). Information, so they stay under reduced
+ * motion; only the gentle breathe stops. Alphas sit at the section-4 maxima:
+ * the under-piece ring is a full 2px at 40% alpha breathing at 4s, washes hold
+ * their stated 4% (file/rank) and 5% (zone) tints and gain edge ticks / an
+ * edge line for identifiability, per the spec's own aura table. */
+.pfx-aura { position: absolute; inset: 0; pointer-events: none; }
+
+.pfx-aura-piece {
+  display: block;
+  position: relative;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  /* Soft radial fill inside the ring so the hue reads at small board scale. */
+  background: radial-gradient(circle, transparent 45%, var(--pfx-c) 100%);
+  box-shadow: 0 0 6px 0 var(--pfx-c);
+  opacity: 0.4;
+  animation: pfx-breathe 4s ease-in-out infinite;
+}
+.pfx-aura-square {
+  display: block;
+  background: var(--pfx-c);
+  opacity: 0.22;
+  box-shadow: inset 0 0 0 1px var(--pfx-c);
+}
+.pfx-aura-file,
+.pfx-aura-rank {
+  display: block;
+  position: relative;
+  /* The stated 4% wash; the edge ticks below carry identifiability. */
+  background: color-mix(in srgb, var(--pfx-c) 4%, transparent);
+  opacity: 1;
+}
+/* Edge ticks at both board edges (spec: "4% tint wash + edge ticks"). Drawn
+ * per-square; only the squares at the board edge show them prominently, and at
+ * gallery scale they give the wash a readable spine. */
+.pfx-aura-file::before,
+.pfx-aura-file::after {
+  content: "";
+  position: absolute;
+  left: 25%;
+  width: 50%;
+  height: 2px;
+  background: var(--pfx-c);
+}
+.pfx-aura-file::before { top: 0; }
+.pfx-aura-file::after { bottom: 0; }
+.pfx-aura-rank::before,
+.pfx-aura-rank::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  height: 50%;
+  width: 2px;
+  background: var(--pfx-c);
+}
+.pfx-aura-rank::before { left: 0; }
+.pfx-aura-rank::after { right: 0; }
+.pfx-aura-zone {
+  display: block;
+  background: color-mix(in srgb, var(--pfx-c) 5%, transparent);
+  /* Edge burn line (spec: "region tint at 5%, edge burn line"). */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pfx-c) 70%, transparent);
+  opacity: 1;
+}
+.pfx-aura-frame {
+  display: block;
+  box-shadow: inset 0 0 0 1px var(--pfx-c);
+  opacity: 0.6;
+}
+.pfx-aura-move {
+  display: block;
+  border: 2px dashed var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0.45;
+}
+.pfx-aura-capture {
+  display: block;
+  border: 2px solid var(--pfx-c);
+  opacity: 0.5;
+}
+.pfx-aura-chip {
+  display: block;
+  width: 12%;
+  height: 12%;
+  left: 44%;
+  top: 4%;
+  border-radius: 4px;
+  background: var(--pfx-c);
+  opacity: 0.6;
+}
+@keyframes pfx-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.4; }
+}
+
+/* ---- Exit fade (section 7.5) for non-shatter families ---- */
+.pfx-exit-el {
+  width: 40%;
+  height: 40%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0.4;
+  animation: pfx-exit-fade var(--pfx-d, 300ms) ease-in both;
+}
+@keyframes pfx-exit-fade {
+  0% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+}
+
+/* Hard reduced-motion guard: even if a primitive is mounted without the
+ * `reduced` prop, the OS setting stops every keyframe and pins a readable
+ * static end-state. */
+@media (prefers-reduced-motion: reduce) {
+  .pfx-el {
+    animation: none !important;
+    opacity: 0.4 !important;
+  }
+  .pfx-fallback {
+    animation: none !important;
+    opacity: 0.4 !important;
+  }
+  .pfx-aura-piece {
+    animation: none !important;
+  }
+}

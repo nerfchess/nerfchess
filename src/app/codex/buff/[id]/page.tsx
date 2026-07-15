@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { BuffDetail } from "@/components/codex/CardDetail";
+import { AffectedPieces } from "@/app/codex/_components/AffectedPieces";
 import { SocialsRow } from "@/components/SocialsRow";
 import { BUFF_BY_ID, buffType, cardPath, metaDescription, modeLabel, buffModes, tierName } from "@/lib/cardCodex";
 
@@ -62,7 +63,7 @@ export default async function BuffCardPage(props: { params: Promise<{ id: string
           </div>
         </div>
       )}
-      <BuffDetail buff={buff} />
+      <BuffDetail buff={buff} extra={<AffectedPieces kind="buff" card={buff} />} />
       {/* The one card that literally links out: Check Out Our Socials shows the
           real accounts right on its codex page. */}
       {buff.id === "check_out_our_socials" && (

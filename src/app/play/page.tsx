@@ -7,9 +7,7 @@ import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
 import { fetchMe, type AccountUser } from "@/lib/authClient";
 import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
-import { AccountChip } from "@/components/AccountChip";
-import { MobileNavMenu } from "@/components/MobileNavMenu";
-import { Logo } from "@/components/Logo";
+import { SiteHeader } from "@/components/SiteHeader";
 import { useSharedMode } from "@/lib/modeState";
 import {
   FIRST_GAME_TOUR_HREF,
@@ -140,34 +138,28 @@ export default function PlayPage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <div className="flex items-center gap-1 sm:gap-3">
+      <SiteHeader />
+
+      <section className="max-w-2xl mx-auto px-6 py-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-display text-5xl">Play the computer</h1>
+            <p className="mt-2 text-[13px] text-parchment-300">
+              Practice against a bot at your own pace. Buff, Nerf, or plain chess.
+            </p>
+          </div>
           {rating != null && (
             <Link
               href="/leaderboard"
-              className="hidden sm:flex px-3 py-1.5 border border-gold/30 bg-gold/5 hover:border-gold/50 transition items-center gap-2 text-xs"
+              className="hidden sm:flex shrink-0 items-center gap-2 border border-gold/30 bg-gold/5 px-3 py-1.5 transition hover:border-gold/50"
             >
-              <span className="smallcaps text-[10px] text-parchment-400">Rating</span>
-              <span className="font-mono text-sm text-parchment-100">{rating}</span>
-              <span className="font-mono text-[10px] text-parchment-400">·</span>
-              <span className="font-mono text-[10px] text-parchment-400">{games}g</span>
+              <span className="smallcaps text-[11px] text-parchment-400">Rating</span>
+              <span className="font-mono text-sm text-parchment-100 tabular-nums">{rating}</span>
+              <span className="font-mono text-[12px] text-parchment-400">·</span>
+              <span className="font-mono text-[12px] text-parchment-400 tabular-nums">{games}g</span>
             </Link>
           )}
-          <Link href="/lobby" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-gold-leaf">Lobby</Link>
-          <Link href="/leaderboard" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Leaderboard</Link>
-          <Link href="/profile" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Profile</Link>
-          <Link href="/codex" className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium hover:bg-white/5 text-parchment-100">Rules</Link>
-          <span className="hidden sm:block"><AccountChip /></span>
-          <MobileNavMenu />
         </div>
-      </nav>
-
-      <section className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="font-display text-5xl">Play the computer</h1>
-        <p className="mt-2 text-sm text-parchment-300">
-          Practice against a bot at your own pace. Buff, Nerf, or plain chess.
-        </p>
 
         {tourNudge && (
           <div
@@ -195,7 +187,7 @@ export default function PlayPage() {
                   // Storage unavailable: it just hides for this visit.
                 }
               }}
-              className="ml-auto grid h-7 w-7 shrink-0 place-items-center rounded-full text-parchment-400 transition hover:bg-white/10 hover:text-parchment-100"
+              className="ml-auto grid h-7 w-7 shrink-0 place-items-center text-parchment-400 transition hover:bg-white/10 hover:text-parchment-100"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -276,7 +268,7 @@ export default function PlayPage() {
             {(["easy", "medium", "hard"] as const).map((d) => (
               <Pill key={d} selected={difficulty === d} onClick={() => setDifficulty(d)}>
                 {d[0].toUpperCase() + d.slice(1)}
-                <span className="ml-1.5 font-mono text-[10px] opacity-60">~{BOT_ELO[d]}</span>
+                <span className="ml-1.5 font-mono text-[11px] opacity-70">~{BOT_ELO[d]}</span>
               </Pill>
             ))}
           </Group>
@@ -309,7 +301,7 @@ export default function PlayPage() {
           <button
             onClick={start}
             disabled={starting}
-            className="w-full py-3.5 rounded-full btn-leaf font-display text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait"
+            className="press w-full py-3.5 btn-leaf font-display text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait"
           >
             {starting ? "Finding a bot…" : "Start game"}
             {!starting && (
@@ -381,7 +373,7 @@ function TimeSlider({
         onChange={(e) => onChange(values[Number(e.target.value)])}
         className="w-full accent-gold-leaf disabled:cursor-not-allowed"
       />
-      <div className="mt-1 flex justify-between font-mono text-[10px] text-parchment-400">
+      <div className="mt-1 flex justify-between font-mono text-[11px] text-parchment-400">
         <span>{formatEdgeLabel(values[0])}</span>
         <span>{formatEdgeLabel(values[values.length - 1])}</span>
       </div>
@@ -433,12 +425,12 @@ function ModeCard({
           {title}
         </div>
         {recommended && (
-          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] text-gold-leaf">
+          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[11px] text-gold-leaf">
             Recommended
           </span>
         )}
       </div>
-      <div className={"mt-0.5 smallcaps text-[10px] " + identity.title}>{tagline}</div>
+      <div className={"mt-0.5 smallcaps text-[11px] " + identity.title}>{tagline}</div>
       <p className="mt-1.5 text-[12px] leading-snug text-parchment-300">{body}</p>
     </button>
   );
@@ -463,7 +455,7 @@ function Pill({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 py-2 font-display transition " +
+        "press inline-flex min-h-[44px] items-center justify-center border px-4 py-2 font-display text-[13px] transition " +
         (selected
           ? "bg-gold/20 border-gold text-gold-leaf shadow-leaf"
           : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")

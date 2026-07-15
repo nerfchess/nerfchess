@@ -27,6 +27,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
   ssr: false,
 });
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
+import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { FxToggleButton } from "@/components/FxToggleButton";
@@ -211,8 +212,8 @@ function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: n
   const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
   return (
     <div className="plate flex items-center justify-between gap-2 p-2 px-3">
-      <span className="smallcaps text-[9px] text-parchment-400">Rating at stake</span>
-      <span className="font-mono text-[11px] tabular-nums">
+      <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
+      <span className="font-mono text-[12px] tabular-nums">
         <span className="text-verdigris">W {fmt(stakes.win)}</span>
         <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
         <span className="text-oxblood-glow">L {fmt(stakes.loss)}</span>
@@ -310,6 +311,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
   });
   const [ratingChange, setRatingChange] = useState<{ before: number; after: number; provisional?: boolean } | null>(null);
+  // Post-game standing in the mode pool: the viewer's W/L/D and current rank,
+  // read once from the leaderboard API after a rated game. Null for guests and
+  // casual games (the API returns no `me` row for them).
+  const [poolStanding, setPoolStanding] = useState<{
+    record: { wins: number; losses: number; draws: number };
+    rank: number;
+  } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
   // Abandonment claims: opponentGone arrived and no sign of life since; after
@@ -404,7 +412,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const reportHookMutations = (next: NerfGame) => {
     const fired = next.buffs?.lastHookMutations;
     if (!fired) return;
-    let firedSignature = false;
+    // Fire every hook-mutated card's signature, not just the first (docs/
+    // passive-effect-audit.md R9). The passive layer reads the full mutation
+    // list, so simultaneous hook activations each surface their own visual
+    // rather than being coalesced to one.
     for (const { color, index } of fired) {
       const inst = next.buffs?.players[color].buffs[index];
       if (!inst?.id) continue;
@@ -414,10 +425,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           `Opponent's ${draftCardNoun(start.mode)} triggered`,
         );
       }
-      if (!firedSignature) {
-        fireSignature(inst.id);
-        firedSignature = true;
-      }
+      fireSignature(inst.id);
     }
   };
   // Voluntary rule reveals: mine (button flow) and the opponent's (event).
@@ -1324,6 +1332,30 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     });
   }, [game, myColor, oppName, ratingChange, revealedOppNerf, start]);
 
+  // One leaderboard read after a rated game supplies both the post-game W/L/D
+  // record and the current rank for the result screen (the API's `me` row).
+  // Fires once per finished game; guests/casual get no `me` row and are omitted.
+  useEffect(() => {
+    if (!start.rated || !game?.result) return;
+    if (start.mode !== "nerf" && start.mode !== "buff") return;
+    let cancelled = false;
+    fetch(`/api/leaderboard?category=${start.mode}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const me = (data as { me?: { rank?: number; wins?: number; losses?: number; draws?: number } } | null)?.me;
+        if (!cancelled && me && typeof me.rank === "number") {
+          setPoolStanding({
+            record: { wins: me.wins ?? 0, losses: me.losses ?? 0, draws: me.draws ?? 0 },
+            rank: me.rank,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [start.rated, start.mode, game?.result]);
+
   // The reviewed board is derived from the snapshot cache (a ref, so writing it
   // every ply never re-renders). Refs cannot be read during render, so the
   // review board is computed in an effect and held as state instead; review is
@@ -1517,6 +1549,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Activated buffs target on the real board: candidate squares highlight on
   // the live board and clicking one advances the pick chain. Enemy-buff-list
   // targets fall back to the modal below.
+  // Presentation only: bumped when a targeting tap lands on a non-eligible
+  // square, so the TargetingBanner flashes its "what is targetable" hint.
+  const [invalidPickKey, setInvalidPickKey] = useState(0);
+  // Purely visual reconnect treatment: mirror the same coarse connection
+  // state the ConnectionBanner subscribes to (multi-listener, read-only).
+  // While the socket is down the board dims 20% and input is disabled via the
+  // Board's existing disabled prop; nothing about the reconnect logic or the
+  // live game state is touched, and recovery restores silently.
+  const [connectionLost, setConnectionLost] = useState(false);
+  useEffect(() => {
+    return session.onConnectionState((state) => {
+      setConnectionLost(state === "lost" || state === "reconnecting");
+    });
+  }, [session]);
   const buffTargeting = useBuffTargeting({
     game,
     myColor,
@@ -1876,7 +1922,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       <main className="min-h-dvh flex items-center justify-center px-4 py-8">
         <ConnectionBanner session={session} />
         <div className="w-full max-w-2xl">
-          <div className="smallcaps text-[11px] text-parchment-400 text-center">Nerf draft</div>
+          <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
             Choose your handicap
           </h1>
@@ -1961,13 +2007,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               reveals when the game ends, so their options never show. */}
           {!isNerfMode && (
             <div className="mt-5 plate p-3 text-center">
-              <span className="smallcaps text-[10px] text-parchment-400">
+              <span className="smallcaps text-[12px] text-parchment-400">
                 Your opponent is choosing between
               </span>
               <div className="mt-1 text-sm text-parchment-200 font-display">
                 {oppOptions.map((n) => n.name).join("  ·  ")}
               </div>
-              <div className="mt-0.5 text-[11px] text-parchment-400">
+              <div className="mt-0.5 text-[12px] text-parchment-400">
                 {picksVisible
                   ? "Their choice will be visible when the game starts."
                   : "Which one they take stays hidden, unless you draft a reveal."}
@@ -1975,7 +2021,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             </div>
           )}
           {isNerfMode && (
-            <p className="mt-5 text-center text-[11px] text-parchment-400">
+            <p className="mt-5 text-center text-[12px] text-parchment-400">
               Your opponent picks a nerf too. You will see their rule when the game ends.
             </p>
           )}
@@ -2090,6 +2136,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       ],
     });
   }
+  // Persistent nerf auras for the PassiveLayer: the same visibility-filtered
+  // known-nerf set the reveal splash uses (own rule always, opponent's once
+  // revealed), so every known rule wears its registry aura while it holds.
+  const passiveNerfs = nerfReveals.map((r) => ({
+    cardId: r.id,
+    color: r.color,
+    squares: r.highlightSquares ?? [],
+  }));
   // Draft games have no "hidden rule" placeholder: while the opponent's rule
   // is unknown their card shows only the player header, and the rule appears
   // there once revealed (end of game or a voluntary reveal). Buff mode never
@@ -2145,18 +2199,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
-  // Board sizing. Below lg there is no side rail, so the board may use up to
-  // 92vw. From lg up the 440px (xl: 500px) rail sits beside it in a centered
-  // grid; without ALSO capping the board by the width left after the rail, a
-  // tall viewport lets the board reach its 720px cap and the rail + board
-  // overflow the row, which the centered grid then clips on BOTH sides - the
-  // left rail (the buff dock and its Use button included) slides off-screen.
-  // The extra lg/xl width term keeps the whole row on screen at every size,
-  // while the wide-desktop look (where 720px stays the smaller term) is
-  // untouched.
+  // Board sizing, mirroring the local game page: the square board must fit
+  // BOTH the available height (an h-dvh layout) and the width left over after
+  // the rails present at each breakpoint, so it can never push a rail
+  // off-screen. Each min() term reserves those rails: none below sm, the
+  // right move rail (~288px + gaps + page padding) at sm, the left command
+  // rail (440px) added at lg (820px total), and its wider 500px form at xl
+  // (880px total). The old lg/xl terms reserved only 32/36rem, less than the
+  // real rail total, so at 1440x900 the centered grid overflowed and clipped
+  // the left panel and the right rail's clock/Resign at the viewport edges.
+  // Below sm the board runs nearly edge to edge. Literal class strings only,
+  // so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-36rem))] max-w-full"
-    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-36rem))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2168,7 +2224,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : myRevealState === "confirm" ? (
     <div className="plate space-y-2 p-2 px-3">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Show your secret rule to your opponent? This can&apos;t be undone.
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -2199,7 +2255,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Play this move?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -2217,7 +2273,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Offer a draw?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -2235,7 +2291,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Resign the game?</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => {
@@ -2256,7 +2312,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : claimReady ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Your opponent seems to have abandoned the game.
       </div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
@@ -2277,7 +2333,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : opponentGone && !game?.result ? (
     <div className="space-y-2" role="status" aria-live="polite">
-      <div className="smallcaps text-[10px] text-parchment-300">
+      <div className="smallcaps text-[12px] text-parchment-300">
         Opponent disconnected.{" "}
         {claimInSeconds > 0
           ? `You can claim the win in ${claimInSeconds}s.`
@@ -2287,7 +2343,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : takebackOfferBy && takebackOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Opponent asks for a takeback.</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2306,7 +2362,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : drawOfferBy && drawOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[10px] text-parchment-300">Opponent offered a draw.</div>
+      <div className="smallcaps text-[12px] text-parchment-300">Opponent offered a draw.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2332,10 +2388,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Draw declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
       )}
       {takebackStatus === "declined" && (
-        <div className="smallcaps text-[10px] text-parchment-300">Takeback declined.</div>
+        <div className="smallcaps text-[12px] text-parchment-300">Takeback declined.</div>
       )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
@@ -2375,11 +2431,18 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     >
       <ConnectionBanner session={session} />
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
+        {/* Wordmark + collapsed nav menu: design system §9 keeps every global
+            destination reachable from the in-game bar (the menu shows on desktop
+            too via hideAt="none"), compacted rather than dropped. Plain links,
+            no confirm traps -- the live game keeps running server-side. */}
+        <div className="flex items-center gap-2">
+          <MobileNavMenu align="left" hideAt="none" />
+          <Link href="/" className="font-display text-2xl tracking-tight">
+            nerf<span className="text-gold-leaf">chess</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
-          <div className="smallcaps hidden text-[11px] text-parchment-400 sm:block">
+          <div className="smallcaps hidden text-[12px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {isDraft && (
               <>
@@ -2430,7 +2493,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
@@ -2474,7 +2537,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {isBuffMode ? "Buff mode" : "Nerf mode"}
               </span>
               {subtitle && (
-                <span className="smallcaps min-w-0 truncate text-[9px] text-parchment-400">{subtitle}</span>
+                <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">{subtitle}</span>
               )}
               {/* A gold gleam that occasionally travels the header hairline. */}
               <span aria-hidden className="rail-header-sheen" />
@@ -2573,7 +2636,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
-              <div data-board-measure className={`relative mx-auto sm:mx-0 ${boardFitClass}`}>
+              <div
+                data-board-measure
+                className={
+                  `relative mx-auto sm:mx-0 transition-opacity duration-200 ${boardFitClass}` +
+                  // Reconnecting: dim the board 20% (it stays visible, never
+                  // unmounted) while input is disabled below.
+                  (connectionLost ? " opacity-80" : "")
+                }
+              >
                 <Board
                   board={boardForDisplay}
                   // Removal FX diff the committed position, never the premove /
@@ -2640,6 +2711,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   }
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
+                  passiveNerfs={passiveNerfs}
+                  reviewingHistory={isReviewingHistory}
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }
@@ -2648,6 +2721,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     isReviewingHistory ||
                     !!confirmMovePending ||
                     !!myOffer ||
+                    connectionLost ||
                     (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
                   }
                   premoveMode={!isReviewingHistory && premoveMode}
@@ -2674,6 +2748,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       ? submitDrop
                       : undefined
                   }
+                  onInvalidPick={() => setInvalidPickKey((k) => k + 1)}
                 />
                 {isDraft && bsTheirs && (
                   <DraftNotice
@@ -2691,10 +2766,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     targeting={buffTargeting.targeting}
                     onCancel={buffTargeting.cancel}
                     onFinish={buffTargeting.finish}
+                    invalidKey={invalidPickKey}
                   />
                 )}
                 {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
               </div>
+              {/* Reconnecting status line: pairs with the top ConnectionBanner
+                  and the 20% board dim above. Disappears silently on recovery. */}
+              {connectionLost && (
+                <div role="status" aria-live="polite" className="mt-1 flex justify-center">
+                  <span className="plate plate-raised border-oxblood-glow/50 px-3 py-1.5 font-display text-xs font-semibold text-oxblood-glow">
+                    Reconnecting · moves are paused until the connection returns
+                  </span>
+                </div>
+              )}
               {/* Crazyhouse pocket: the viewer's banked pieces sit in a tray
                   directly under the board. Click one to arm a drop; the board
                   then highlights every legal drop square. Hidden while reviewing
@@ -2755,7 +2840,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       {myNerf.name}
                     </span>
                     <span
-                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
                       title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
                     >
                       {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
@@ -2836,7 +2921,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                         onClick={() => session.adjustOppClock(false)}
                         disabled={!!game.result}
                         title="Give your opponent 15 seconds"
-                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[10px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
+                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[12px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
                       >
                         +15s
                       </button>
@@ -2846,7 +2931,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                           onClick={() => session.adjustOppClock(true)}
                           disabled={!!game.result}
                           title="Take 15 seconds from your opponent"
-                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
+                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[12px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
                         >
                           -15s
                         </button>
@@ -3000,7 +3085,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
                 {/* Only claim "on their clock" once the free window has truly
                     expired; before then both clocks are still paused. */}
-                <span className="smallcaps ml-2 text-[10px] text-parchment-400">
+                <span className="smallcaps ml-2 text-[12px] text-parchment-400">
                   {draftGraceOver ? "on their clock now" : "clocks paused"}
                 </span>
               </span>
@@ -3023,7 +3108,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               title="Dismiss"
               className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
-              <div className="smallcaps text-[10px] text-parchment-400">
+              <div className="smallcaps text-[12px] text-parchment-400">
                 {genuinelySkipped
                   ? "Draft skipped"
                   : draftCardNoun(start.mode) === "hex"
@@ -3034,7 +3119,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {genuinelySkipped ? "Your draft was skipped" : `Waiting for ${oppName}`}
               </h2>
               {genuinelySkipped && (
-                <p className="mt-1 text-[11px] leading-snug text-parchment-300">
+                <p className="mt-1 text-[12px] leading-snug text-parchment-300">
                   A card your opponent played skipped your draft this round.
                 </p>
               )}
@@ -3051,7 +3136,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {draftDeadline != null && (
                 <LockInCountdown deadline={draftDeadline} className="mt-3" />
               )}
-              <p className="mt-2 text-[10px] leading-snug text-parchment-400">
+              <p className="mt-2 text-[12px] leading-snug text-parchment-400">
                 Both clocks stay paused until the pick window runs out. Tap to minimize (a banner stays up).
               </p>
             </motion.div>
@@ -3166,6 +3251,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           opponentHidden={uiSettings.hideOpponentReveal}
           ratingChange={ratingChange}
           ratingMode={start.mode === "nerf" || start.mode === "buff" ? start.mode : null}
+          mode={start.mode === "nerf" || start.mode === "buff" ? start.mode : null}
+          record={poolStanding?.record ?? null}
+          rank={poolStanding?.rank ?? null}
+          serverGameId={start.id}
+          newOpponentHref={`/lobby?tab=quick${
+            start.mode === "nerf" || start.mode === "buff" ? `&mode=${start.mode}` : ""
+          }`}
+          profiles={[
+            ...(start.players?.[myColor]?.name
+              ? [
+                  {
+                    name: start.players[myColor]!.name,
+                    href: `/u/${encodeURIComponent(start.players[myColor]!.name)}`,
+                  },
+                ]
+              : []),
+            ...(start.players?.[oppColor]?.name
+              ? [
+                  {
+                    name: oppName,
+                    href: `/u/${encodeURIComponent(oppName)}`,
+                    isBot: !!start.players[oppColor]!.house,
+                  },
+                ]
+              : []),
+          ]}
           rematchStatus={rematchStatus}
           opponentLeft={opponentGone}
           onRematch={handleRematch}

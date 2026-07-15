@@ -384,11 +384,11 @@ export default function ClubPage() {
 
             <div className="mt-8 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
-                {/* Members, sorted by rating — doubles as the club leaderboard. */}
+                {/* Members, sorted by rating, doubles as the club leaderboard. */}
                 <div className="plate overflow-hidden">
                   <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-                    <span className="smallcaps text-[10px] text-parchment-400">Leaderboard</span>
-                    <span className="smallcaps text-[9px] text-parchment-500">
+                    <span className="smallcaps text-[11px] text-parchment-400">Leaderboard</span>
+                    <span className="smallcaps text-[11px] text-parchment-500">
                       {data.members.length} member{data.members.length === 1 ? "" : "s"}
                     </span>
                   </div>
@@ -399,7 +399,7 @@ export default function ClubPage() {
                           href={`/u/${encodeURIComponent(m.username)}`}
                           className="flex items-center gap-2.5 px-5 py-2 transition-colors hover:bg-white/5"
                         >
-                          <span className="w-4 shrink-0 font-mono text-[10px] text-parchment-500">{i + 1}</span>
+                          <span className="w-4 shrink-0 font-mono text-[12px] text-parchment-500">{i + 1}</span>
                           <PlayerAvatar name={m.username} avatar={m.avatar} size={22} />
                           <span className="min-w-0 truncate text-sm text-parchment-100">
                             {m.username}
@@ -418,7 +418,7 @@ export default function ClubPage() {
 
                 {/* Club events */}
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
+                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
                     Events
                   </div>
                   {data.tournaments.length === 0 ? (
@@ -428,7 +428,7 @@ export default function ClubPage() {
                       {data.tournaments.map((t) => (
                         <li key={t.id} className="px-5 py-2.5">
                           <div className="truncate text-sm text-parchment-100">{t.name}</div>
-                          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
+                          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">
                             {t.status} · {t.players}/{t.max_players} players
                             {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
                           </div>
@@ -441,7 +441,7 @@ export default function ClubPage() {
 
               {/* Message board */}
               <div className="plate flex h-fit flex-col overflow-hidden">
-                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
+                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
                   Club board
                 </div>
                 {isMember ? (

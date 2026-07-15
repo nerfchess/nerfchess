@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Users } from "lucide-react";
+import { Plus, Trophy, Users, X } from "lucide-react";
 
 interface Club {
   id: string;
@@ -36,13 +36,13 @@ const CLOCK_PRESETS: { label: string; t: number; i: number }[] = [
 const DURATION_PRESETS = [20, 30, 45, 60, 90, 120];
 
 const INPUT_CLASS =
-  "mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none";
-const LABEL_CLASS = "block smallcaps text-[10px] text-parchment-400";
+  "mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment";
+const LABEL_CLASS = "block text-[12px] font-medium text-parchment-400";
 
 function ModeTag({ mode }: { mode: string }) {
   const cls = mode === "buff" ? "border-mode-buff/40 text-mode-buffGlow" : "border-mode-nerf/40 text-mode-nerfGlow";
   return (
-    <span className={"border px-1.5 py-0.5 smallcaps text-[8px] " + cls}>{modeLabel(mode)}</span>
+    <span className={"border px-1.5 py-0.5 text-[12px] font-medium " + cls}>{modeLabel(mode)}</span>
   );
 }
 
@@ -66,6 +66,8 @@ export default function TournamentsPage() {
   const [maxPlayers, setMaxPlayers] = useState(16);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
     const [tournamentRes, clubRes] = await Promise.all([fetch("/api/tournaments"), fetch("/api/clubs")]);
@@ -78,6 +80,23 @@ export default function TournamentsPage() {
     }
   };
 
+  // Retry from the error state: clear the message, drop back to the loading
+  // skeleton, and refetch. Wired to the Retry button so a recovered network
+  // fills the directory in place instead of dead-ending on the banner.
+  const reload = () => {
+    setError(null);
+    setLoading(true);
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not load tournaments.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  };
+
   useEffect(() => {
     let cancelled = false;
     const initialClub = new URLSearchParams(window.location.search).get("club");
@@ -88,6 +107,8 @@ export default function TournamentsPage() {
         await load();
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load tournaments.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
@@ -149,6 +170,7 @@ export default function TournamentsPage() {
       });
       const data = (await res.json().catch(() => ({}))) as { tournament?: TournamentListRow; error?: string };
       if (!res.ok || !data.tournament) throw new Error(data.error || "Could not create tournament.");
+      setShowCreate(false);
       router.push(`/tournaments/${encodeURIComponent(data.tournament.id)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create tournament.");
@@ -160,27 +182,58 @@ export default function TournamentsPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/tournaments" />
 
-      <section className="mx-auto max-w-6xl px-5 sm:px-6">
+      <section className="mx-auto max-w-4xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Tournaments</h1>
-            <p className="mt-2 text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
+            <p className="mt-2 text-[13px] text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
           </div>
-          <Link href="/clubs" className="btn-ghost px-4 py-2 font-display text-sm">
-            Clubs
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/clubs" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+              Clubs
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowCreate((v) => !v)}
+              aria-expanded={showCreate}
+              className="btn-leaf press inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
+            >
+              {showCreate ? <X size={15} /> : <Plus size={15} />}
+              {showCreate ? "Close" : "New tournament"}
+            </button>
+          </div>
         </div>
 
-        {error && (
-          <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
-            {error}
+        {error && !showCreate && (
+          <div
+            role="alert"
+            className="mt-5 plate flex flex-col gap-3 border-oxblood-glow/60 bg-oxblood/15 p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="text-[13px] text-parchment">{error}</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={reload}
+                className="btn-leaf press px-4 py-2 font-display text-[13px] font-semibold"
+              >
+                Retry
+              </button>
+              <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+                Back to lobby
+              </Link>
+            </div>
           </div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
-          {/* Create panel */}
-          <form onSubmit={createTournament} className="plate h-fit p-5">
-            <div className="font-display text-2xl text-parchment">Create tournament</div>
+        {/* Directory leads; creation is a disclosure opened from the header. */}
+        {showCreate && (
+          <form onSubmit={createTournament} className="mt-5 plate p-5">
+            <div className="font-display text-xl text-parchment">Create tournament</div>
+            {error && (
+              <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
+                {error}
+              </div>
+            )}
             {user === undefined ? (
               <p className="mt-4 text-sm text-parchment-400">Checking account...</p>
             ) : !user ? (
@@ -192,7 +245,7 @@ export default function TournamentsPage() {
               </p>
             ) : (
               <>
-                <label className="mt-4 block smallcaps text-[10px] text-parchment-400" htmlFor="t-name">
+                <label className="mt-4 block text-[12px] font-medium text-parchment-400" htmlFor="t-name">
                   Name
                 </label>
                 <input id="t-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={70} className={INPUT_CLASS} />
@@ -221,7 +274,7 @@ export default function TournamentsPage() {
                   </div>
                 </div>
 
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400">Time control</label>
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400">Time control</label>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {CLOCK_PRESETS.map((preset, i) => (
                     <button
@@ -275,7 +328,7 @@ export default function TournamentsPage() {
                   </div>
                 </div>
 
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-start">
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-start">
                   Starts (optional)
                 </label>
                 <input
@@ -288,7 +341,7 @@ export default function TournamentsPage() {
 
                 {clubs.length > 0 && (
                   <>
-                    <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-club">
+                    <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-club">
                       Club
                     </label>
                     <select id="t-club" value={clubId} onChange={(e) => setClubId(e.target.value)} className={INPUT_CLASS}>
@@ -300,7 +353,7 @@ export default function TournamentsPage() {
                       ))}
                     </select>
                     {selectedClubName && (
-                      <p className="mt-1 text-[11px] text-parchment-500">Members of {selectedClubName} only.</p>
+                      <p className="mt-1 text-[12px] text-parchment-400">Members of {selectedClubName} only.</p>
                     )}
                   </>
                 )}
@@ -310,7 +363,7 @@ export default function TournamentsPage() {
                   Rated
                 </label>
 
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="t-desc">
+                <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-desc">
                   Description
                 </label>
                 <textarea
@@ -325,20 +378,47 @@ export default function TournamentsPage() {
                 <button
                   type="submit"
                   disabled={busy || name.trim().length < 3}
-                  className="btn-leaf mt-4 w-full px-4 py-2.5 font-display text-sm font-semibold disabled:opacity-50"
+                  className="btn-leaf press mt-4 w-full px-4 py-2.5 font-display text-[13px] font-semibold disabled:opacity-50"
                 >
                   {busy ? "Creating..." : "Create tournament"}
                 </button>
               </>
             )}
           </form>
+        )}
 
-          {/* Directory: in progress, starting soon, finished */}
-          <div className="min-w-0 space-y-4">
-            <Section title="In progress" accent tournaments={sections.ongoing} now={now} emptyText="No tournaments running right now." />
-            <Section title="Starting soon" tournaments={sections.upcoming} now={now} emptyText="Nothing scheduled yet. Create the first event." />
-            <Section title="Finished" tournaments={sections.finished} now={now} emptyText="No finished tournaments yet." muted />
-          </div>
+        {/* Directory: in progress, starting soon, finished */}
+        <div className="mt-6 min-w-0 space-y-4">
+          {loading ? (
+            <div className="plate overflow-hidden">
+              <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
+                Loading events
+              </div>
+              <ul className="divide-y divide-white/5" aria-hidden>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="flex items-center gap-4 px-5 py-4">
+                    <div className="h-11 w-14 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-3.5 w-44 bg-white/[0.07] animate-pulse" />
+                      <div className="mt-2 h-3 w-32 bg-white/[0.05] animate-pulse" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : error ? (
+            // A load error owns the screen: the alert above is the single
+            // state. The section bodies must NOT also render their "0 events"
+            // empty states, which would falsely claim an empty (but healthy)
+            // directory next to a "could not load" banner.
+            null
+          ) : (
+            <>
+              <Section title="In progress" accent tournaments={sections.ongoing} now={now} emptyText="No tournaments running right now." />
+              <Section title="Starting soon" tournaments={sections.upcoming} now={now} emptyText="Nothing scheduled yet. Create the first event." />
+              <Section title="Finished" tournaments={sections.finished} now={now} emptyText="No finished tournaments yet." muted />
+            </>
+          )}
         </div>
       </section>
     </main>
@@ -365,16 +445,24 @@ function Section({
   return (
     <div className="plate overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-        <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
-          {accent && <span className="inline-block h-2 w-2 shrink-0 animate-pulse bg-verdigris-glow" aria-hidden />}
+        <span className="flex items-center gap-2 text-[12px] font-medium text-parchment-300">
+          {accent && (
+            <span
+              className="inline-block h-2 w-2 shrink-0 rounded-full bg-[rgb(var(--pos-rgb))] motion-safe:animate-pulse"
+              aria-hidden
+            />
+          )}
           {title}
         </span>
-        <span className="smallcaps text-[9px] text-parchment-500">
+        <span className="font-mono text-[12px] text-parchment-400 tabular-nums">
           {tournaments.length} event{tournaments.length === 1 ? "" : "s"}
         </span>
       </div>
       {tournaments.length === 0 ? (
-        <p className="px-5 py-6 text-sm text-parchment-400">{emptyText}</p>
+        <div className="px-5 py-8 text-center">
+          <Trophy size={24} className="mx-auto text-parchment-500" aria-hidden />
+          <p className="mt-2 text-[13px] text-parchment-400">{emptyText}</p>
+        </div>
       ) : (
         <ul className="divide-y divide-white/5">
           {tournaments.map((t) => (
@@ -420,17 +508,17 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
             <span className="truncate font-display text-lg text-parchment-50">{t.name}</span>
             <ModeTag mode={t.mode} />
             {t.rated ? (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">Rated</span>
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">Rated</span>
             ) : null}
           </div>
-          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">
-            {formatLabel(t.format)} - {durationLabel(t.duration_min)}
-            {t.club_name ? ` - ${t.club_name}` : ""} - by {t.creator_name}
+          <div className="mt-0.5 text-[12px] font-medium text-parchment-400">
+            {formatLabel(t.format)} · {durationLabel(t.duration_min)}
+            {t.club_name ? ` · ${t.club_name}` : ""} · by {t.creator_name}
           </div>
         </div>
         <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
-          <span className={"font-mono text-xs " + whenClass}>{when}</span>
-          <span className="flex items-center gap-1 font-mono text-[11px] text-parchment-500">
+          <span className={"font-mono text-[13px] tabular-nums " + whenClass}>{when}</span>
+          <span className="flex items-center gap-1 font-mono text-[12px] text-parchment-500 tabular-nums">
             <Users size={12} /> {t.players}/{t.max_players}
           </span>
         </div>

@@ -204,11 +204,11 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
   color: rgb(var(--pack-rgb, 216 181 110) / 0.9);
 }
 .pack-label {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--paper-dim);
 }
 .pack-hint {
-  font-size: 8px;
+  font-size: 12px;
   color: rgb(var(--pack-rgb, 216 181 110) / 0.75);
   animation: pack-hint-blink 1.6s ease-in-out infinite;
 }
@@ -1021,15 +1021,17 @@ html[data-anim="off"] .draft-frame::after {
   overflow: hidden;
   pointer-events: none;
 }
-/* Layered candle-light vignette: a warm gold breath at the top, deep ink
-   pooling at the corners and foot. Static — the luxury here is the layering. */
+/* Layered candle-light vignette: a warm gold breath at the top, gentle ink
+   pooling at the corners and foot. Static — the luxury here is the layering.
+   Kept light on purpose: with the scrim at 20% the board must stay readable
+   behind the draft, so the pooling never buries it. */
 .draft-stage__vignette {
   position: absolute;
   inset: 0;
   background:
     radial-gradient(120% 80% at 50% 0%, rgb(216 181 110 / 0.08), transparent 52%),
-    radial-gradient(85% 65% at 50% 46%, transparent 55%, rgba(0, 0, 0, 0.45) 100%),
-    radial-gradient(130% 60% at 50% 112%, rgba(0, 0, 0, 0.6), transparent 60%);
+    radial-gradient(85% 65% at 50% 46%, transparent 55%, rgba(0, 0, 0, 0.22) 100%),
+    radial-gradient(130% 60% at 50% 112%, rgba(0, 0, 0, 0.28), transparent 60%);
 }
 /* Gold aurora: one broad, soft band of gilded light gliding diagonally behind
    the cards. An oversized fixed gradient moved by transform on the compositor

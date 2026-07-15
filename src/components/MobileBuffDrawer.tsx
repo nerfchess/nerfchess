@@ -48,7 +48,7 @@ export function MobileBuffDrawer({
         />
       )}
       <div
-        className="fixed inset-x-0 bottom-11 z-40 plate overflow-hidden border-t border-white/10 sm:bottom-0"
+        className="fixed inset-x-0 bottom-11 z-40 plate overflow-hidden border-t border-[color:var(--edge)] sm:bottom-0"
         // Drawer geometry: rounded top corners, square bottom against the
         // screen edge. Inline so it reliably overrides the plate's 10px.
         style={{ borderRadius: "14px 14px 0 0" }}
@@ -65,7 +65,7 @@ export function MobileBuffDrawer({
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
-          <span className="flex items-center gap-2 smallcaps text-[10px] text-parchment-400">
+          <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
             {/* Mint icon chip echoes the desktop dock's "your buffs" hero so the
                 drawer reads as the same colored surface. */}
             <span
@@ -76,7 +76,7 @@ export function MobileBuffDrawer({
             </span>
             {label}
             {usable > 0 && (
-              <span className="grid h-4 min-w-[1rem] place-items-center rounded-[1px] bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
+              <span className="grid h-4 min-w-[1rem] place-items-center rounded-[1px] bg-gold px-1 font-mono text-[12px] font-bold text-ink-950">
                 {usable}
               </span>
             )}

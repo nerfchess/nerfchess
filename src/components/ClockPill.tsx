@@ -99,8 +99,11 @@ export function ClockPill({
     };
   }, [active, ms, startDelayMs, warnLowTime]);
 
+  // Urgency ramp: under 30s the running clock breathes a subtle pulse (gold),
+  // under 10s it pulses stronger and tints oxblood. Border stays 2px across
+  // every active tier so switching urgency never shifts layout; the countdown
+  // text is always tabular-nums so digits never jitter.
   const low = displayMs < 30000;
-  const warning = displayMs < 15000;
   const critical = displayMs < 10000;
   return (
     <div
@@ -108,8 +111,10 @@ export function ClockPill({
         "plate flex items-center justify-center transition " +
         (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
         (active
-          ? warning
-            ? "border-2 border-oxblood-glow bg-oxblood/20 shadow-oxblood ring-1 ring-oxblood-glow/40 animate-pulse"
+          ? critical
+            ? "border-2 border-oxblood-glow bg-oxblood/25 shadow-oxblood ring-1 ring-oxblood-glow/50 animate-pulse"
+            : low
+            ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40 clock-pulse-soft"
             : "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
           : "opacity-60")
       }

@@ -8,6 +8,8 @@ import { useLobbyFeed, derivePresence } from "@/lib/presence";
 import { LaurelBadge } from "./LaurelBadge";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PresenceBadge } from "./PresenceBadge";
+import { HouseBotBadge, isHouseBotAvatar } from "./profile/HouseBotBadge";
+import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 
 interface Hit {
   username: string;
@@ -15,6 +17,9 @@ interface Hit {
   games: number;
   avatar: string | null;
   flair: string | null;
+  // Per-mode live ratings; null when the player has no rated games in that mode.
+  nerfRating: number | null;
+  buffRating: number | null;
 }
 
 // A previously opened profile, remembered so an empty search box offers a
@@ -264,6 +269,17 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
     const top = standings?.get(item.username.toLowerCase())?.[0];
     const presence = derivePresence(lobby, item.username);
     const isFriend = friends?.has(item.username.toLowerCase()) ?? false;
+    // Result rows carry per-mode ratings; recent rows only kept the best rating.
+    // Show a mode chip only for a mode the player is actually rated in; if a
+    // result row has neither, fall through to the single best-rating figure.
+    const modeChips =
+      "nerfRating" in item
+        ? MODE_RATING_CATEGORIES.map((c) => ({
+            c,
+            value: c.id === "nerf" ? (item as Hit).nerfRating : (item as Hit).buffRating,
+          })).filter((m) => m.value != null)
+        : [];
+    const hasModes = modeChips.length > 0;
     return (
       <>
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -277,8 +293,9 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                 </span>
               )}
               {top && <LaurelBadge rank={top.rank} title={placementTitle(top)} size={12} className="shrink-0" />}
+              {isHouseBotAvatar(item.avatar) && <HouseBotBadge />}
               {isFriend && (
-                <span className="smallcaps shrink-0 rounded-sm border border-gold/40 px-1 py-0.5 text-[10px] leading-none text-gold-leaf">
+                <span className="shrink-0 rounded-sm border border-gold/40 px-1.5 py-0.5 text-[12px] leading-none text-gold-leaf">
                   Friend
                 </span>
               )}
@@ -289,7 +306,23 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
             />
           </span>
         </span>
-        <span className="shrink-0 self-center font-mono text-parchment-400">{Math.round(item.rating)}</span>
+        {hasModes ? (
+          <span className="flex shrink-0 items-center gap-2 self-center">
+            {modeChips.map(({ c, value }) => {
+              const Icon = c.icon;
+              return (
+                <span key={c.id} className="flex items-center gap-1" title={`${c.label} rating`}>
+                  <Icon className="h-3 w-3" style={{ color: c.accent }} strokeWidth={2.2} aria-hidden />
+                  <span className="font-mono text-[12px] tabular-nums text-parchment-300">{value}</span>
+                </span>
+              );
+            })}
+          </span>
+        ) : (
+          <span className="shrink-0 self-center font-mono text-[12px] tabular-nums text-parchment-400">
+            {Math.round(item.rating)}
+          </span>
+        )}
       </>
     );
   };
@@ -331,7 +364,8 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
         aria-activedescendant={open && active >= 0 && navList[active] ? `${listId}-${active}` : undefined}
         autoComplete="off"
         maxLength={20}
-        className="w-full rounded-sm border border-white/15 bg-ink-900/60 px-4 py-2.5 text-base sm:text-sm text-parchment placeholder:text-parchment-400/50 focus:border-gold/60 focus:outline-none"
+        className="w-full rounded-sm border bg-ink-900/60 px-4 py-2.5 text-[16px] text-parchment placeholder:text-parchment-400/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+        style={{ borderColor: "var(--edge)" }}
       />
 
       {showingResults && !error && hits.length > 0 && (
@@ -388,7 +422,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           aria-label="Recent searches"
           className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown overflow-hidden shadow-2xl"
         >
-          <p className="smallcaps px-4 pt-2 pb-1 text-[10px] text-parchment-500">Recent</p>
+          <p className="eyebrow px-4 pt-2 pb-1">Recent</p>
           <div className="divide-y divide-white/5">
             {recent.map((item, i) => (
               <div key={item.username} className="relative flex items-center">

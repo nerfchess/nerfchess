@@ -17,8 +17,10 @@ test("home page renders", async ({ page }) => {
   await expect(page.getByRole("link", { name: /open lobby/i })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByRole("link", { name: /^play online$/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /^play a friend$/i })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /^practice against the computer$/i }),
+  ).toBeVisible();
 });
 
 test("lobby page renders", async ({ page }) => {

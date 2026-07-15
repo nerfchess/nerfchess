@@ -181,7 +181,7 @@ export default function TutorialPage() {
                 <p className="mt-2 text-[15px] leading-relaxed text-parchment-200/90">{c.d}</p>
                 {c.example && (
                   <p className="mt-3 text-[14px] leading-relaxed text-parchment-200/80 border-l border-gold-leaf/40 pl-3">
-                    <span className="smallcaps text-[10px] text-parchment-400">for example</span>
+                    <span className="smallcaps text-[11px] text-parchment-400">for example</span>
                     <br />
                     {c.example}
                   </p>

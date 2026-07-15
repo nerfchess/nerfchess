@@ -67,8 +67,8 @@ export function MoveList({
   );
   const rootClass = compact ? "plate p-2 min-h-0 h-full flex flex-col" : "plate p-4";
   const titleClass = compact
-    ? "smallcaps text-[9px] text-parchment-400 truncate"
-    : "smallcaps text-[10px] text-parchment-400";
+    ? "smallcaps text-[12px] text-parchment-400 truncate"
+    : "smallcaps text-[12px] text-parchment-400";
   const selectedMoveRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export function MoveList({
       {showHeader && (
         <div className="flex shrink-0 items-center justify-between gap-2 mb-2">
           <div className={titleClass}>{compact ? "History" : "Move history"}</div>
-          <div className="font-mono text-[11px] text-parchment-400 tabular-nums">
+          <div className="font-mono text-[12px] text-parchment-400 tabular-nums">
             {currentPly}/{moves.length}
           </div>
         </div>
@@ -133,7 +133,7 @@ export function MoveList({
         </HistoryButton>
       </div>
       {floorPly > 0 && moves.length > 0 && (
-        <p className="shrink-0 mb-2 text-[10px] leading-snug text-parchment-400">
+        <p className="shrink-0 mb-2 text-[12px] leading-snug text-parchment-400">
           {floorPly >= maxPly
             ? "Earlier positions can't be replayed: a card rewrote the board mid-game."
             : "Positions before this point can't be replayed: a card rewrote the board."}
@@ -145,7 +145,7 @@ export function MoveList({
       <div
         className={
           "font-mono space-y-0.5 overflow-y-auto pr-1 " +
-          (compact ? "min-h-0 flex-1 text-[11px]" : "max-h-72 text-[13px]")
+          (compact ? "min-h-0 flex-1 text-[12px]" : "max-h-72 text-[13px]")
         }
       >
         {rows.map((row, i) => (
@@ -153,7 +153,7 @@ export function MoveList({
             key={i}
             className={
               "grid gap-1 " +
-              (compact ? "grid-cols-[1.35rem_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[2.2rem_1fr_1fr]")
+              (compact ? "grid-cols-[1.6rem_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[2.2rem_1fr_1fr]")
             }
           >
             <span className="text-parchment-400/70">{row.num}.</span>

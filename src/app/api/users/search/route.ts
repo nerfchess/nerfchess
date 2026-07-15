@@ -11,11 +11,23 @@ interface Hit {
   games: number;
   avatar: string | null;
   flair: string | null;
+  // Per-mode live ratings for the search rows, NULL when that bucket has no
+  // rated games yet (so the row can show "unrated" honestly rather than the
+  // legacy fallback). Category ids are compile-time literals from our own
+  // registry, never user input.
+  nerf_rating: number | null;
+  buff_rating: number | null;
 }
+
+// The two live mode-bucket rating subqueries, shared by the primary and typo
+// SELECTs. NULL when the player has never played that mode rated.
+const MODE_RATING_COLUMNS = `
+  (SELECT r.rating FROM user_ratings r WHERE r.user_id = u.id AND r.category = 'nerf') AS nerf_rating,
+  (SELECT r.rating FROM user_ratings r WHERE r.user_id = u.id AND r.category = 'buff') AS buff_rating`;
 
 // Is `a` reachable from `b` in at most one single-character edit (insert,
 // delete, or substitution)? Used for the cheap typo pass over a bounded
-// candidate set — never computed over the whole table.
+// candidate set - never computed over the whole table.
 function withinEditDistanceOne(a: string, b: string): boolean {
   if (a === b) return true;
   const la = a.length;
@@ -66,7 +78,7 @@ export async function GET(request: Request) {
     .prepare(
       `SELECT u.username, u.username_lower,
               ${bestLiveRatingSql("u")} AS rating,
-              u.games, u.avatar, u.flair
+              u.games, u.avatar, u.flair,${MODE_RATING_COLUMNS}
        FROM users u
        WHERE u.username_lower LIKE ? ESCAPE '\\'
          AND (u.banned_until IS NULL OR u.banned_until <= ?)
@@ -95,7 +107,7 @@ export async function GET(request: Request) {
       .prepare(
         `SELECT u.username, u.username_lower,
                 ${bestLiveRatingSql("u")} AS rating,
-                u.games, u.avatar, u.flair
+                u.games, u.avatar, u.flair,${MODE_RATING_COLUMNS}
          FROM users u
          WHERE u.username_lower LIKE ? ESCAPE '\\'
            AND ABS(LENGTH(u.username_lower) - ?) <= 1
@@ -119,6 +131,8 @@ export async function GET(request: Request) {
     games: h.games,
     avatar: h.avatar,
     flair: h.flair,
+    nerfRating: h.nerf_rating != null ? Math.round(h.nerf_rating) : null,
+    buffRating: h.buff_rating != null ? Math.round(h.buff_rating) : null,
   }));
   return NextResponse.json({ players });
 }

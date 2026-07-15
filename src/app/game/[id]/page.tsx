@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Board } from "@/components/Board";
+import { Eye } from "lucide-react";
+import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
+import { computeFxVisual } from "@/components/effects/fxZones";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { ModeBadge } from "@/components/ModeBadge";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
-import { GameOver } from "@/components/GameOver";
+import { GameOver, type TimelineCardEvent } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
+import { CompactSiteHeader } from "@/components/SiteHeader";
 import { moveFromUCI, moveToUCI } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, legalMoves } from "@/engine/game";
@@ -36,13 +40,25 @@ import {
   loadOnlineSeat,
   loadSavedFriendSession,
   MPDraftAction,
+  MPDraftCard,
   MPPlayers,
   MPSession,
   MPSpectatorChatMessage,
   MPStart,
   MPWatchStart,
   saveOnlineSeat,
+  type MPEvent,
+  type SpectatorEnvelope,
 } from "@/lib/multiplayer";
+import {
+  beginWatch,
+  createSpectatorSync,
+  routeSpectatorBaseline,
+  routeSpectatorLiveFrame,
+  spectatorBaselineEnvelope,
+  sweepSpectatorSync,
+} from "@/lib/spectate/spectatorSync";
+import type { DraftMode } from "@/engine/buff";
 
 type Mode =
   | { kind: "loading" }
@@ -71,6 +87,12 @@ interface ReplayGame {
   black_rating_after: number | null;
   started_at: number;
   completed_at: number;
+  // Draft games only: the spectator-safe public action stream from the archived
+  // draft record, so the replay reconstructs board rewrites exactly like a live
+  // spectator. Absent for classic games and legacy (recordless) rows, which keep
+  // the moves-only replay + truncation notice.
+  dtActions?: MPDraftAction[];
+  mode?: DraftMode;
 }
 
 function withResponseTimeout<T>(promise: Promise<T>, message: string, ms = 10000): Promise<T> {
@@ -353,10 +375,10 @@ export default function OnlineGamePage() {
         <SiteNav />
         <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="smallcaps text-[11px] text-parchment-400">
+            <div className="smallcaps text-[12px] text-parchment-400">
               {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
             </div>
-            <div className="font-mono text-[11px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
+            <div className="font-mono text-[12px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
           </div>
           {slowConnect && (
             <div
@@ -514,6 +536,10 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // and every other card gets the category cast spectacle.
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
+  // Deterministic spectator-sync reducer for this watch. Sequenced frames route
+  // through it (ordering / dedupe / gap -> resync so one dropped frame can never
+  // freeze the board); frames with no envelope (older server) bypass it.
+  const syncRef = useRef(createSpectatorSync());
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
     setSignatureCard({ id, key: ++sigKeyRef.current });
@@ -523,12 +549,43 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const fireHookSignatures = (g: NerfGame | null) => {
     const fired = g?.buffs?.lastHookMutations;
     if (!fired?.length) return;
-    const first = g?.buffs?.players[fired[0].color].buffs[fired[0].index];
-    if (first?.id) fireSignature(first.id);
+    // Fire every hook-mutated card, not just fired[0] (docs/passive-effect-
+    // audit.md R9/R10). The passive layer reads the full mutation list too, so
+    // simultaneous hook activations each surface a visual for the watcher.
+    for (const { color, index } of fired) {
+      const inst = g?.buffs?.players[color].buffs[index];
+      if (inst?.id) fireSignature(inst.id);
+    }
   };
 
   useEffect(() => {
-    const off = session.on((e) => {
+    // Adopt the wstart as the ordered-sync baseline when it carries the
+    // ordered-protocol fields (seq / schemaVersion / replayVersion / publicHash).
+    // The board was already built from `setup` above, so no frames drain here on
+    // a fresh mount. A legacy wstart leaves the sync unbaselined so every frame
+    // bypasses the reducer (behavior unchanged). This component remounts on every
+    // fresh wstart (outer page's watchGen key), so the baseline is re-adopted per
+    // authoritative snapshot.
+    const baseEnv = spectatorBaselineEnvelope(setup);
+    if (baseEnv) {
+      beginWatch(syncRef.current, setup.id);
+      routeSpectatorBaseline(syncRef.current, baseEnv);
+    }
+    // A gap/overflow/version-drift resync re-issues the watch; the server's fresh
+    // wstart then remounts this view (watchGen) with wholesale-replaced state.
+    let resyncing = false;
+    const resyncSpectator = () => {
+      if (resyncing) return;
+      resyncing = true;
+      session
+        .watch(setup.id)
+        .catch(() => {})
+        .finally(() => {
+          resyncing = false;
+        });
+    };
+
+    const applyEvent = (e: MPEvent) => {
       if (e.type === "move") {
         setUciMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
         setWhiteMs(e.move.wc);
@@ -579,7 +636,27 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           setDtActions((prev) => [...prev, action]);
           // An activation (draft-used) is a card play the watcher must see.
           if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
+          // An instant PICK also plays at pick time for the watcher (R10): the
+          // player surfaces cast instant picks, so spectators must too.
+          if (e.type === "draft-resolved" && e.resolved.kind === "picked") {
+            for (const c of e.resolved.cards ?? []) {
+              if ("id" in c && BUFF_BY_ID[c.id]?.kind === "instant") {
+                fireSignature(c.id);
+                break;
+              }
+            }
+          }
           fireHookSignatures(g);
+          setDraftGame({ ...g });
+        }
+      } else if (e.type === "draft-diff-flag") {
+        // A Chess Diff clock flag: resolve the diff against the flagged color
+        // and record it so history review reproduces the restored board.
+        const g = draftGameRef.current;
+        if (g?.buffs) {
+          const action: MPDraftAction = { ply: g.board.history.length, color: e.color, a: "diffFlag" };
+          applyDraftAction(g, action);
+          setDtActions((prev) => [...prev, action]);
           setDraftGame({ ...g });
         }
       } else if (e.type === "draft-state") {
@@ -624,8 +701,30 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       } else if (e.type === "watch-start") {
         setReconnecting(false);
       }
+    };
+
+    const off = session.on((e) => {
+      // Sequenced live frames route through the reducer (dedupe / order / gap ->
+      // resync); frames without an envelope (control frames, older servers)
+      // bypass it and apply directly.
+      const env = (e as { env?: SpectatorEnvelope }).env;
+      const route = routeSpectatorLiveFrame(syncRef.current, env, e);
+      if (route.resync) {
+        resyncSpectator();
+        return;
+      }
+      for (const p of route.apply) applyEvent(p as MPEvent);
     });
-    return off;
+    // Sweep a gap that never fills so one dropped frame can never freeze the
+    // board: a stranded gap past the reorder window resyncs onto a fresh wstart.
+    const sweepTimer = window.setInterval(() => {
+      const swept = sweepSpectatorSync(syncRef.current);
+      if (swept?.signal === "resync") resyncSpectator();
+    }, 1000);
+    return () => {
+      off();
+      window.clearInterval(sweepTimer);
+    };
     // Subscribe once per session; the signature-firing helpers are recreated
     // every render but must not re-register the listener.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -685,6 +784,27 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   const whiteNerf = nerfs?.w ? IMPLEMENTED_BY_ID[nerfs.w] : undefined;
   const blackNerf = nerfs?.b ? IMPLEMENTED_BY_ID[nerfs.b] : undefined;
 
+  // Passive parity for spectators (docs/passive-effect-audit.md R5/R6):
+  //  - R5: merge computeFxVisual so the persistent per-card fx layer paints
+  //    (king_safe / pawn-clamp / stun / motifs), mirroring game/page.tsx.
+  //  - R6: feed nerfReveals so a rule becoming KNOWN plays the reveal splash;
+  //    `nerfs` is the reveal channel (public rules only, populated at end-of-
+  //    game reveals), so this honours section-9 "hidden until revealed".
+  const fxZone = isDraft && draftGame ? computeFxVisual(draftGame) : null;
+  const nerfReveals: NerfRevealInfo[] = [];
+  for (const [color, nerf] of [["w", whiteNerf], ["b", blackNerf]] as const) {
+    if (nerf && !NERF_REVEAL_SKIP.has(nerf.id)) {
+      nerfReveals.push({
+        id: nerf.id,
+        name: nerf.name,
+        tier: nerf.tier as number,
+        color,
+        highlightSquares: [],
+      });
+    }
+  }
+  const passiveNerfs = nerfReveals.map((r) => ({ cardId: r.id, color: r.color, squares: [] }));
+
   return (
     <>
     <ConnectionBanner session={session} />
@@ -704,23 +824,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       whiteMs={whiteMs}
       blackMs={blackMs}
       activeColor={result ? null : board.turn}
+      mode={setup.mode}
+      headerState={result ? "final" : setup.started ? "live" : "waiting"}
+      watchers={watchers}
       statusLabel={
         <>
           {reconnecting ? "Reconnecting… · " : ""}
-          {isDraft && (
-            <>
-              {setup.mode === "buff" ? (
-                <span className="text-mode-buffGlow">Buff mode</span>
-              ) : setup.mode === "nerf" ? (
-                <span className="text-mode-nerfGlow">Nerf mode</span>
-              ) : (
-                "Draft"
-              )}
-              {" · "}
-            </>
-          )}
           {result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
-          {watchers > 0 ? ` · ${watchers} watching` : ""}
         </>
       }
       nerfs={nerfs}
@@ -739,12 +849,24 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               trapSquares: zones.traps,
               doomSquares: zones.doom,
               lockedSquares: zones.locked,
+              ...(fxZone
+                ? {
+                    kingSafeSquares: fxZone.kingSafeSquares,
+                    pawnClampSquares: fxZone.pawnClampSquares,
+                    stunSquares: fxZone.stunSquares,
+                    motifSquares: fxZone.motifs,
+                  }
+                : {}),
             }
           : undefined
       }
       // No flourish while scrubbing history (a past position isn't a live
       // play), matching the players' own board.
       signatureCard={historyPly == null ? signatureCard : null}
+      nerfReveals={historyPly == null ? nerfReveals : undefined}
+      passiveNerfs={passiveNerfs}
+      passiveBuffs={historyPly == null ? draftGame?.buffs ?? null : null}
+      reviewingHistory={historyPly != null}
       rail={
         <div className="mt-3 space-y-3">
           {isDraft && draftGame && <SpectatorBuffsPanel game={draftGame} players={setup.players} />}
@@ -763,8 +885,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         myColor="w"
         myNerf={whiteNerf}
         opponentNerf={blackNerf}
+        mode={setup.mode === "nerf" || setup.mode === "buff" ? setup.mode : null}
         playerNames={{ w: setup.players.w.name, b: setup.players.b.name }}
         moves={history}
+        cardEvents={cardEventsFromDtActions(dtActions)}
+        profiles={[
+          { name: setup.players.w.name, href: `/u/${encodeURIComponent(setup.players.w.name)}`, isBot: !!setup.players.w.house },
+          { name: setup.players.b.name, href: `/u/${encodeURIComponent(setup.players.b.name)}`, isBot: !!setup.players.b.house },
+        ]}
         myBuffs={draftGame?.buffs?.players.w.buffs}
         opponentBuffs={draftGame?.buffs?.players.b.buffs}
         onRematch={() => {}}
@@ -808,10 +936,10 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
         onClick={() => setTab(color)}
         aria-pressed={active}
         className={
-          "flex min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[11px] font-semibold transition-colors " +
+          "flex min-h-[36px] min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[13px] font-semibold transition-colors " +
           (active
-            ? "border-gold/60 bg-gold/10 text-gold-leaf"
-            : "border-white/10 bg-white/[0.02] text-parchment-300 hover:bg-white/5")
+            ? "border-gold/60 bg-[rgb(var(--accent-rgb)/0.12)] text-gold-leaf"
+            : "border-[color:var(--edge)] text-parchment-300 hover:bg-[var(--surface-hover)]")
         }
       >
         <span
@@ -822,7 +950,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
           }
         />
         <span className="min-w-0 truncate">{players[color].name}</span>
-        <span className="shrink-0 font-mono text-[9px] tabular-nums text-parchment-400">
+        <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
           {held.length}
         </span>
       </button>
@@ -834,7 +962,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
     return (
       <div>
         {held.length === 0 ? (
-          <p className="text-[11px] text-parchment-400">No buffs drafted yet.</p>
+          <p className="text-[12px] text-parchment-400">No buffs drafted yet.</p>
         ) : (
           <div className="mt-1 space-y-1">
             {hiddenOnes.length > 0 && (
@@ -849,7 +977,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       (inst.spent || inst.nullified ? "opacity-40" : "")
                     }
                   >
-                    <span className={`font-display text-[10px] font-bold tier-${inst.tier}`}>
+                    <span className={`font-display text-[12px] font-bold tier-${inst.tier}`}>
                       {TIER_ROMAN[inst.tier]}
                     </span>
                   </span>
@@ -865,16 +993,16 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
               const open = !!expandedRows[key];
               const dead = inst.spent || inst.nullified;
               return (
-                <div key={i} className="rounded-[1px] border border-white/10 bg-white/[0.02]">
+                <div key={i} className="rounded-[1px] border border-[color:var(--edge)]">
                   <button
                     type="button"
                     onClick={() => setExpandedRows((prev) => ({ ...prev, [key]: !open }))}
                     aria-expanded={open}
-                    className="flex w-full items-center gap-1.5 px-2 py-1 text-left"
+                    className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left"
                   >
                     <span
                       className={
-                        "min-w-0 flex-1 truncate font-display text-[11px] font-semibold " +
+                        "min-w-0 flex-1 truncate font-display text-[13px] font-semibold " +
                         (dead
                           ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                           : `tier-${inst.tier}`)
@@ -883,13 +1011,13 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                       {def.name}
                     </span>
                     <span
-                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
+                      className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
                     >
                       {TIER_ROMAN[inst.tier]}
                     </span>
                   </button>
                   {open && (
-                    <p className="px-2 pb-1 text-[10px] leading-snug text-parchment-300">
+                    <p className="px-2 pb-1.5 text-[12px] leading-snug text-parchment-300">
                       {def.description}
                     </p>
                   )}
@@ -902,8 +1030,8 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
     );
   };
   return (
-    <div className="plate max-h-72 space-y-2 overflow-y-auto p-2 px-3">
-      <div className="smallcaps text-[9px] text-parchment-400">Drafted buffs</div>
+    <div className="plate max-h-72 space-y-2 overflow-y-auto p-3">
+      <div className="eyebrow text-parchment-400">Drafted buffs</div>
       <div className="flex gap-1">
         {tabButton("w")}
         {tabButton("b")}
@@ -917,13 +1045,13 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
 function WatchersPanel({ count, names }: { count: number; names: string[] }) {
   const anonymous = Math.max(0, count - names.length);
   return (
-    <div className="plate p-2 px-3">
+    <div className="plate p-3">
       <div className="flex items-center justify-between">
-        <span className="smallcaps text-[9px] text-parchment-400">Spectators</span>
-        <span className="font-mono text-[11px] tabular-nums text-parchment-200">{count}</span>
+        <span className="eyebrow text-parchment-400">Spectators</span>
+        <span className="font-mono text-[13px] tabular-nums text-parchment-100">{count}</span>
       </div>
       {(names.length > 0 || anonymous > 0) && (
-        <p className="mt-1 text-[11px] leading-snug text-parchment-300 break-words">
+        <p className="mt-1 text-[12px] leading-snug text-parchment-300 break-words">
           {names.join(", ")}
           {anonymous > 0 && (
             <span className="text-parchment-400">
@@ -995,23 +1123,23 @@ function SpectatorChat({
 
   return (
     <div className="plate flex h-56 flex-col p-2">
-      <div className="flex shrink-0 items-center justify-between px-1 pb-1">
-        <span className="smallcaps text-[9px] text-parchment-400">Spectator chat</span>
+      <div className="flex shrink-0 items-center justify-between px-1 pb-1.5">
+        <span className="eyebrow text-parchment-400">Spectator chat</span>
         <button
           type="button"
           onClick={() => setHidden((v) => !v)}
-          className="smallcaps text-[9px] text-parchment-400 transition-colors hover:text-parchment-100"
+          className="text-[12px] text-parchment-400 transition-colors hover:text-parchment-100"
           title={hidden ? "Show chat messages" : "Hide chat messages"}
         >
           {hidden ? "Show chat" : "Hide chat"}
         </button>
       </div>
       {hidden ? (
-        <div className="min-h-0 flex-1 px-1 text-[12px] text-parchment-400/60">Chat is hidden.</div>
+        <div className="min-h-0 flex-1 px-1 text-[13px] text-parchment-400">Chat is hidden.</div>
       ) : (
-      <div ref={listRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-1 text-[12px] leading-snug">
+      <div ref={listRef} className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-1 text-[13px] leading-snug">
         {shownMessages.length === 0 && (
-          <div className="text-parchment-400/60">
+          <div className="text-parchment-400">
             Chat with the other spectators. The players can&apos;t see this.
           </div>
         )}
@@ -1031,10 +1159,10 @@ function SpectatorChat({
               </button>
               <span className="text-parchment-200"> {m.text}</span>
               {report === "sent" && (
-                <span className="ml-1 smallcaps text-[9px] text-parchment-400">reported</span>
+                <span className="ml-1 text-[12px] text-parchment-400">reported</span>
               )}
               {actionsFor === key && (
-                <span className="ml-2 inline-flex gap-2 smallcaps text-[9px]">
+                <span className="ml-2 inline-flex gap-2 text-[12px]">
                   <button
                     type="button"
                     onClick={() => muteName(m.name)}
@@ -1063,7 +1191,7 @@ function SpectatorChat({
         <button
           type="button"
           onClick={() => setMutedNames(new Set())}
-          className="shrink-0 px-1 pt-1 text-left smallcaps text-[9px] text-parchment-400 hover:text-parchment-100"
+          className="shrink-0 px-1 pt-1 text-left text-[12px] text-parchment-400 hover:text-parchment-100"
         >
           {mutedNames.size} muted · unmute all
         </button>
@@ -1075,12 +1203,12 @@ function SpectatorChat({
           maxLength={200}
           placeholder="Message…"
           aria-label="Spectator chat message"
-          className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-base sm:text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+          className="min-w-0 flex-1 rounded-sm border border-[color:var(--edge)] bg-ink-900/60 px-2 py-1.5 text-base text-parchment placeholder:text-parchment-400/60 focus-visible:border-gold/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--accent-rgb))] sm:text-[13px]"
         />
         <button
           type="submit"
           disabled={!draft.trim()}
-          className="btn-ghost shrink-0 rounded-sm px-2.5 py-1.5 font-display text-[11px] disabled:opacity-40"
+          className="btn-ghost min-h-[36px] shrink-0 rounded-sm px-3 py-1.5 font-display text-[13px] disabled:opacity-40"
         >
           Send
         </button>
@@ -1093,16 +1221,37 @@ function SpectatorChat({
 
 function ReplayView({ game }: { game: ReplayGame }) {
   const uciMoves = useMemo(() => (game.moves ? game.moves.split(" ").filter(Boolean) : []), [game.moves]);
-  const { history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
-  // Archived draft games can hold moves a plain replay cannot reproduce (a
-  // card rewrote the board mid-game). replayUci stops at the first such move;
-  // say so honestly instead of showing a silently wrong board.
-  const truncated = history.length < uciMoves.length;
+  // Draft games archive a full public action record: reconstruct through the
+  // exact engine path a live spectator uses (buildSpectatorDraftGame), so board
+  // rewrites (summons, removals, teleports, drops, timed losses) are reproduced
+  // and the whole game replays. Classic and legacy (recordless) rows keep the
+  // moves-only replay.
+  const dtActions = game.dtActions;
+  const isDraft = Array.isArray(dtActions);
+  const replayed = useMemo(() => replayUci(uciMoves), [uciMoves]);
+  const draftHead = useMemo(
+    () => (isDraft ? buildSpectatorDraftGame(uciMoves, dtActions ?? [], undefined, game.mode) : null),
+    [isDraft, uciMoves, dtActions, game.mode],
+  );
+  const history = isDraft && draftHead ? draftHead.board.history : replayed.history;
+  // The truncation notice is now ONLY a fallback for legacy rows with no record:
+  // a draft game with the record replays in full, so it never truncates.
+  const truncated = !isDraft && replayed.history.length < uciMoves.length;
   const [historyPly, setHistoryPly] = useState<number>(history.length);
   const [pgnCopied, setPgnCopied] = useState(false);
   // Same neutral result panel as the live spectator, shown over the replay.
   const [showResult, setShowResult] = useState(true);
-  const displayBoard = useMemo(() => boardAtPly(history, historyPly), [history, historyPly]);
+  // A reviewed past ply of a draft game is rebuilt from the record through the
+  // engine (buildSpectatorDraftGameAtPly), so scrubbing works PAST a rewrite; a
+  // ply the record can't reach falls back to the head board.
+  const displayBoard = useMemo(() => {
+    if (isDraft && draftHead) {
+      if (historyPly >= history.length) return draftHead.board;
+      const g = buildSpectatorDraftGameAtPly(uciMoves, dtActions ?? [], historyPly, game.mode);
+      return g.board.history.length === historyPly ? g.board : draftHead.board;
+    }
+    return boardAtPly(history, historyPly);
+  }, [isDraft, draftHead, history, historyPly, uciMoves, dtActions, game.mode]);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
 
   const players: MPPlayers = {
@@ -1148,12 +1297,13 @@ function ReplayView({ game }: { game: ReplayGame }) {
       whiteMs={0}
       blackMs={0}
       activeColor={null}
-      statusLabel={
-        <>
-          {describeResult({ winner: game.winner, reason: game.reason })}
-          {truncated &&
-            ` · replay shows the first ${history.length} of ${uciMoves.length} half-moves (a card rewrote the board mid-game)`}
-        </>
+      mode={game.mode}
+      headerState="final"
+      statusLabel={describeResult({ winner: game.winner, reason: game.reason })}
+      moveListNote={
+        truncated
+          ? `This replay shows the first ${history.length} of ${uciMoves.length} half-moves; a card rewrote the board mid-game.`
+          : undefined
       }
       nerfs={{ w: game.white_nerf_id, b: game.black_nerf_id }}
       rail={
@@ -1177,8 +1327,16 @@ function ReplayView({ game }: { game: ReplayGame }) {
         myColor="w"
         myNerf={whiteNerf}
         opponentNerf={blackNerf}
+        mode={game.mode === "nerf" || game.mode === "buff" ? game.mode : null}
         playerNames={{ w: game.white_name, b: game.black_name }}
         moves={history}
+        cardEvents={dtActions ? cardEventsFromDtActions(dtActions) : undefined}
+        profiles={[
+          { name: game.white_name, href: `/u/${encodeURIComponent(game.white_name)}` },
+          { name: game.black_name, href: `/u/${encodeURIComponent(game.black_name)}` },
+        ]}
+        myBuffs={draftHead?.buffs?.players.w.buffs}
+        opponentBuffs={draftHead?.buffs?.players.b.buffs}
         startedAt={game.started_at}
         gameId={game.id}
         onRematch={() => {}}
@@ -1203,10 +1361,69 @@ function ReplayView({ game }: { game: ReplayGame }) {
 
 // ---------------- shared read-only layout ----------------
 
+// Card markers for the result-screen timeline, drawn from the spectator-safe
+// public action stream: "use" activations and instant "pick"s are the moments a
+// card visibly landed on the board (masked/held picks never reach this stream).
+function cardEventsFromDtActions(actions: MPDraftAction[]): TimelineCardEvent[] {
+  const out: TimelineCardEvent[] = [];
+  for (const a of actions) {
+    if (a.a === "use" && a.card?.id) {
+      out.push({ ply: a.ply, color: a.color, cardId: a.card.id, tier: a.card.tier });
+    } else if (a.a === "pick") {
+      for (const c of a.cards) {
+        const card = c as MPDraftCard;
+        if (card.id) out.push({ ply: a.ply, color: a.color, cardId: card.id, tier: card.tier });
+      }
+    }
+  }
+  return out;
+}
+
 function describeResult(result: { winner: Color | "draw" | null; reason: string }): string {
   const head =
     result.winner === "draw" ? "Draw" : result.winner === "w" ? "White wins" : result.winner === "b" ? "Black wins" : "Over";
   return `${head} · ${result.reason}`;
+}
+
+// The HOUSE BOT badge, per the design system: a parchment outline chip,
+// allcaps (a sanctioned exception). Rendered in the shell header identity unit
+// whenever a seat carries the server-stamped house flag.
+function HouseBotChip() {
+  return (
+    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-[12px] font-medium uppercase tracking-[0.08em] text-parchment-300">
+      House bot
+    </span>
+  );
+}
+
+// Compact identity unit for the shell header: linked name + rating + HOUSE BOT
+// chip. The full avatar rows beside the board stay the primary identity; this
+// mirrors the TV featured header so both surfaces read the same.
+function HeaderIdentity({
+  seat,
+}: {
+  seat: { name: string; rating: number | null; provisional?: boolean; house?: boolean };
+}) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <a
+        href={`/u/${encodeURIComponent(seat.name)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="truncate font-display text-[13px] font-semibold text-parchment-100 transition-colors hover:text-gold-leaf"
+        title={`View ${seat.name}'s profile`}
+      >
+        {seat.name}
+        {seat.provisional && <span className="text-parchment-400">?</span>}
+      </a>
+      {seat.rating != null && (
+        <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
+          {seat.rating}
+        </span>
+      )}
+      {seat.house && <HouseBotChip />}
+    </span>
+  );
 }
 
 function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
@@ -1214,7 +1431,7 @@ function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
   if (!nerf) return null;
   return (
     <div className="plate p-2 px-3">
-      <span className="smallcaps text-[10px] text-parchment-400">{label} </span>
+      <span className="text-[12px] text-parchment-400">{label} </span>
       <span className={`font-display text-sm font-semibold tier-${nerf.tier}`}>{nerf.name}</span>
       <span className="text-xs leading-snug text-parchment-300">: {nerf.description}</span>
     </div>
@@ -1225,6 +1442,9 @@ function GameShell({
   players,
   rated,
   timeControl,
+  mode,
+  headerState,
+  watchers,
   board,
   lastMove,
   history,
@@ -1236,14 +1456,25 @@ function GameShell({
   blackMs,
   activeColor,
   statusLabel,
+  moveListNote,
   nerfs,
   visual,
   signatureCard,
+  nerfReveals,
+  passiveNerfs,
+  passiveBuffs,
+  reviewingHistory,
   rail,
 }: {
   players: MPPlayers;
   rated: boolean;
   timeControl?: string;
+  // Structured header identity fields, shared with the TV featured header:
+  // the mode chip, the LIVE/FINAL/waiting badge, and the watcher count. The
+  // descriptive detail (result text, reconnecting note) still rides statusLabel.
+  mode?: DraftMode;
+  headerState: "live" | "final" | "waiting";
+  watchers?: number;
   board: ReturnType<typeof replayUci>["board"];
   lastMove: ReturnType<typeof replayUci>["history"][number] | null;
   history: ReturnType<typeof replayUci>["history"];
@@ -1256,23 +1487,68 @@ function GameShell({
   blackMs: number;
   activeColor: Color | null;
   statusLabel: React.ReactNode;
+  // A quiet inline note pinned under the move list (e.g. the legacy replay
+  // truncation notice), kept out of the header status line.
+  moveListNote?: React.ReactNode;
   nerfs: Partial<Record<Color, string>> | null;
   // Draft spectating: public zone effects painted on the board.
   visual?: React.ComponentProps<typeof Board>["visual"];
   // Card-use animation: a played card's board-wide flourish fires for
   // spectators too, so watching a game shows the same effects the players see.
   signatureCard?: React.ComponentProps<typeof Board>["signatureCard"];
+  // Passive visual parity (docs/passive-effect-audit.md R5/R6): the reveal
+  // splash + persistent registry auras + buff state the player surfaces feed.
+  nerfReveals?: React.ComponentProps<typeof Board>["nerfReveals"];
+  passiveNerfs?: React.ComponentProps<typeof Board>["passiveNerfs"];
+  passiveBuffs?: React.ComponentProps<typeof Board>["passiveBuffs"];
+  reviewingHistory?: boolean;
   rail?: React.ReactNode;
 }) {
+  const stateBadge =
+    headerState === "live" ? (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
+        Live
+      </span>
+    ) : headerState === "final" ? (
+      <span className="inline-flex items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+        Final
+      </span>
+    ) : (
+      <span className="inline-flex items-center rounded-full border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
+        Waiting
+      </span>
+    );
   return (
     <main className="min-h-screen">
-      <SiteNav />
+      <SiteNav
+        status={
+          <>
+            {stateBadge}
+            {statusLabel && <span className="truncate text-parchment-300">{statusLabel}</span>}
+          </>
+        }
+      />
       <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <div className="smallcaps text-[11px] text-parchment-400">
-            {rated ? `Rated ${timeControl ? `${timeControl} · ` : ""}` : ""}
-            {statusLabel}
-          </div>
+        {/* Featured-game header pattern, shared with TV: identity units, state
+            badge, mode chip, time control, watcher count, then the descriptive
+            status detail. */}
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <HeaderIdentity seat={players.w} />
+            <span className="text-parchment-500">vs</span>
+            <HeaderIdentity seat={players.b} />
+          </span>
+          {stateBadge}
+          <ModeBadge mode={mode} />
+          {timeControl && <span className="tabular-nums">{timeControl}</span>}
+          <span>{rated ? "Rated" : "Casual"}</span>
+          {watchers != null && watchers > 0 && (
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <Eye size={13} aria-hidden /> {watchers}
+            </span>
+          )}
+          {statusLabel && <span className="text-parchment-300">{statusLabel}</span>}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           <div className="min-w-0 flex-1">
@@ -1298,6 +1574,10 @@ function GameShell({
                 fxTimePressure={clockEnabled && activeColor != null && (whiteMs < 15_000 || blackMs < 15_000)}
                 visual={visual}
                 signatureCard={signatureCard}
+                nerfReveals={nerfReveals}
+                passiveNerfs={passiveNerfs}
+                passiveBuffs={passiveBuffs}
+                reviewingHistory={reviewingHistory}
                 lastMove={lastMove}
                 disabled
               />
@@ -1337,6 +1617,9 @@ function GameShell({
                 compact
               />
             </div>
+            {moveListNote && (
+              <p className="mt-1.5 text-[12px] leading-snug text-parchment-400">{moveListNote}</p>
+            )}
             {rail}
           </div>
         </div>
@@ -1345,26 +1628,10 @@ function GameShell({
   );
 }
 
-// Reduced navigation for watch/replay views: the wordmark home, a way back
-// to TV (the page most watchers came from), and the lobby. Kept slim so the
-// board stays the star, but never a dead end.
-function SiteNav() {
-  return (
-    <nav className="flex items-center justify-between gap-2 px-4 sm:px-10 py-5">
-      <Link href="/" className="shrink-0 font-display text-xl sm:text-2xl tracking-tight">
-        nerf<span className="text-gold-leaf">chess</span>
-      </Link>
-      <div className="flex items-center gap-0.5 sm:gap-1">
-        <Link href="/tv" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-gold-leaf whitespace-nowrap">
-          Back to TV
-        </Link>
-        <Link href="/lobby" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
-          Lobby
-        </Link>
-        <Link href="/play" className="px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-display hover:bg-white/5 text-parchment">
-          Play
-        </Link>
-      </div>
-    </nav>
-  );
+// Compact game top bar (design system §9): the standard nav, compacted rather
+// than replaced. Every global destination stays reachable behind the collapsed
+// menu (kept visible on desktop too), so a watcher/replayer never dead-ends on
+// a three-link stub. `status` carries the game state line into the bar.
+function SiteNav({ status }: { status?: React.ReactNode } = {}) {
+  return <CompactSiteHeader status={status} />;
 }

@@ -36,7 +36,9 @@ import {
 import { CurrentGameCard } from "@/components/profile/CurrentGameCard";
 import { RecentGameCard, type RecentGameRow } from "@/components/profile/RecentGameCard";
 import { FriendsModule } from "@/components/profile/FriendsModule";
+import { HouseBotBadge, isHouseBotAvatar } from "@/components/profile/HouseBotBadge";
 import { relativeTime } from "@/components/profile/relativeTime";
+import { usePinnedAchievements } from "@/app/achievements/usePinnedAchievements";
 import { usePresence } from "@/lib/presence";
 import { ACTIVE_RATING_CATEGORIES, MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { clockLabel } from "@/lib/tournaments";
@@ -209,8 +211,9 @@ function ProfileContent() {
       cancelled = true;
     };
     // reloadTick re-runs the primary fetch when the user taps Retry after a
-    // load error.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // load error. Every other value the body touches (setState updaters,
+    // fetchMe, isHouseEditor) is a stable import or setter, so the two reactive
+    // inputs below are the complete dependency set.
   }, [username, reloadTick]);
 
   // Newest finished game (limit 1, no filters) for the recent-game module. Kept
@@ -468,8 +471,15 @@ function ProfileContent() {
       {/* ---- Main column + Friends (spec 2.6 / 2.7) ------------------------- */}
       <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-6">
         <div className="min-w-0">
-          {/* Tabs */}
-          <div role="tablist" aria-label="Profile sections" className="flex items-center gap-1 border-b border-white/10">
+          {/* Tabs. Sticky to the top on mobile so switching sections stays in
+              reach while scrolling a long history; the solid page ink keeps
+              rows from bleeding through (no blur, per the design system). */}
+          <div
+            role="tablist"
+            aria-label="Profile sections"
+            className="sticky top-0 z-20 -mx-5 flex items-center gap-1 border-b bg-ink-900 px-5 sm:static sm:mx-0 sm:bg-transparent sm:px-0"
+            style={{ borderColor: "var(--edge)" }}
+          >
             <TabButton id="activity" label="Activity" active={tab === "activity"} onSelect={() => setTab("activity")} />
             <TabButton id="games" label="Games" active={tab === "games"} onSelect={() => setTab("games")} />
           </div>
@@ -598,8 +608,8 @@ function ProfileHeader({
             className="group relative shrink-0 self-start rounded-md ring-1 ring-transparent transition hover:ring-gold/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
           >
             {avatar}
-            <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 text-center text-[9px] uppercase tracking-wider text-parchment-100 group-hover:block">
-              edit
+            <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 py-0.5 text-center text-[12px] leading-none text-parchment-100 group-hover:block">
+              Edit
             </span>
           </Link>
         ) : (
@@ -624,16 +634,20 @@ function ProfileHeader({
                 />
               )}
             </h1>
+            {isHouseBotAvatar(user.avatar) && <HouseBotBadge />}
             {user.role !== "user" && (
-              <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold-leaf">
+              <span className="rounded-full border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
                 {user.role === "admin" ? "Admin" : "Moderator"}
               </span>
             )}
             {best && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.03] px-2 py-0.5"
+                style={{ border: "1px solid var(--edge)" }}
+              >
                 <best.c.icon className="h-3 w-3" style={{ color: best.c.accent }} strokeWidth={2.2} aria-hidden />
                 <span className="font-mono text-xs tabular-nums text-parchment-100">{Math.round(best.r.rating)}</span>
-                <span className="smallcaps text-[10px] text-parchment-400">{best.c.label}</span>
+                <span className="text-[12px] text-parchment-400">{best.c.label}</span>
               </span>
             )}
           </div>
@@ -650,6 +664,8 @@ function ProfileHeader({
           {user.bio && (
             <p className="mt-3 max-w-prose whitespace-pre-wrap text-sm text-parchment-200">{user.bio}</p>
           )}
+
+          <PinnedAchievements username={user.username} isOwner={isOwner} />
         </div>
       </div>
 
@@ -956,12 +972,12 @@ function MovementSummary({ points }: { points: HistoryPoint[] }) {
   if (rows.every((r) => r.delta == null)) return null;
   return (
     <div className="plate p-3">
-      <div className="smallcaps mb-2 text-[10px] text-parchment-400">Last 30 days</div>
+      <div className="smallcaps mb-2 text-[12px] text-parchment-400">Last 30 days</div>
       <div className="flex flex-wrap gap-4">
         {rows.map(({ c, delta }) => (
           <div key={c.id} className="flex items-center gap-2">
             <c.icon className="h-3.5 w-3.5" style={{ color: c.accent }} strokeWidth={2.2} aria-hidden />
-            <span className="smallcaps text-[10px] text-parchment-400">{c.label}</span>
+            <span className="smallcaps text-[12px] text-parchment-400">{c.label}</span>
             {delta == null ? (
               <span className="font-mono text-sm text-parchment-300">no games</span>
             ) : delta > 0 ? (
@@ -1067,7 +1083,7 @@ function GamesTab({
       {/* Counts header */}
       <div className="plate flex flex-wrap items-center gap-x-5 gap-y-2 p-3">
         {playingNow && (
-          <span className="inline-flex items-center gap-1.5 smallcaps text-[10px] text-oxblood-glow">
+          <span className="inline-flex items-center gap-1.5 smallcaps text-[12px] text-oxblood-glow">
             <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
             Playing now
           </span>
@@ -1175,7 +1191,7 @@ function Count({ label, value }: { label: string; value: string | number }) {
   return (
     <span className="flex items-baseline gap-1.5">
       <span className="font-mono text-sm tabular-nums text-parchment-100">{value}</span>
-      <span className="smallcaps text-[10px] text-parchment-400">{label}</span>
+      <span className="smallcaps text-[12px] text-parchment-400">{label}</span>
     </span>
   );
 }
@@ -1261,7 +1277,7 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
         </span>
 
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
-          <span className="smallcaps text-[10px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
+          <span className="smallcaps text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
           <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
           {/* Rating change as its own bordered chip, with a " · " separator, so
               the delta can never run together with the date. Sign in text. */}
@@ -1375,9 +1391,78 @@ function AchievementsStrip({ username }: { username: string }) {
             </span>
           );
         })}
-        <span className="smallcaps text-[10px] text-gold-leaf">View all</span>
+        <span className="smallcaps text-[12px] text-gold-leaf">View all</span>
       </span>
     </Link>
+  );
+}
+
+// Header achievement chips: up to three. On the OWN profile these are the
+// player's pinned picks (localStorage, via usePinnedAchievements); on anyone
+// else's profile (and for an owner who has pinned nothing) they fall back to the
+// most recently earned. Each chip links into the full wall. Renders nothing
+// until there is at least one unlocked achievement to show.
+function PinnedAchievements({ username, isOwner }: { username: string; isOwner: boolean }) {
+  const pins = usePinnedAchievements();
+  const [items, setItems] = useState<StripAchievement[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/users/${encodeURIComponent(username)}/achievements`)
+      .then((res) =>
+        res.ok ? (res.json() as Promise<{ achievements: StripAchievement[] }>) : null,
+      )
+      .then((body) => {
+        if (!cancelled && body) setItems(body.achievements);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [username]);
+
+  const usingPins = isOwner && pins.ready && pins.pinned.length > 0;
+
+  const chips = useMemo(() => {
+    if (!items) return [];
+    const unlocked = items.filter((a) => a.unlocked);
+    if (usingPins) {
+      const byId = new Map(unlocked.map((a) => [a.id, a]));
+      const picked = pins.pinned
+        .map((id) => byId.get(id))
+        .filter((a): a is StripAchievement => !!a);
+      if (picked.length > 0) return picked.slice(0, 3);
+    }
+    const rarityRank = { legendary: 3, epic: 2, rare: 1, common: 0 } as const;
+    return [...unlocked]
+      .sort(
+        (x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rarityRank[y.rarity] - rarityRank[x.rarity],
+      )
+      .slice(0, 3);
+  }, [items, usingPins, pins.pinned]);
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2">
+      <span className="eyebrow">{usingPins ? "Pinned" : "Recently earned"}</span>
+      {chips.map((a) => {
+        const Icon = achievementIcon(a.icon);
+        const accent = STRIP_ACCENT[a.rarity];
+        return (
+          <Link
+            key={a.id}
+            href={`/achievements?u=${encodeURIComponent(username)}`}
+            title={a.name}
+            className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] text-parchment-200 transition hover:text-parchment-50"
+            style={{ border: `1px solid ${accent}55`, background: `${accent}14` }}
+          >
+            <Icon className="h-3.5 w-3.5" style={{ color: accent }} strokeWidth={2} aria-hidden />
+            <span className="max-w-[10rem] truncate">{a.name}</span>
+          </Link>
+        );
+      })}
+    </div>
   );
 }
 
@@ -1402,10 +1487,10 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
           >
             <LaurelBadge rank={p.rank} size={13} />
             <span className="font-mono text-sm tabular-nums text-parchment-100">#{p.rank}</span>
-            <span className="smallcaps text-[10px] text-parchment-400">{p.label}</span>
+            <span className="smallcaps text-[12px] text-parchment-400">{p.label}</span>
           </span>
         ))}
-        <span className="smallcaps text-[10px] text-gold-leaf">Leaderboard</span>
+        <span className="smallcaps text-[12px] text-gold-leaf">Leaderboard</span>
       </span>
     </Link>
   );
@@ -1633,7 +1718,7 @@ function HouseBotEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold-leaf">
+        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">

@@ -118,7 +118,13 @@ function RelatedGrid({ title, cards }: { title: string; cards: RelatedCard[] }) 
             className="flex items-center justify-between gap-3 rounded-sm border border-white/10 px-3 py-2 transition hover:border-gold/40 hover:bg-white/5"
           >
             <span className="font-display text-parchment-100">{c.name}</span>
-            <span className="smallcaps text-[10px] text-parchment-400">{tierName(c.tier)}</span>
+            {/* 12px tier chip carrying the tier's own color (tier-bg + tier),
+                the shared tier-chip pattern, not a colorless 10px smallcap. */}
+            <span
+              className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
+            >
+              {tierName(c.tier)}
+            </span>
           </Link>
         ))}
       </div>
@@ -145,7 +151,7 @@ function CardCtas({ guideHref, guideLabel }: { guideHref: string; guideLabel: st
   );
 }
 
-export function BuffDetail({ buff }: { buff: Buff }) {
+export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
   const type = buffType(buff);
   const cat = buffCategory(buff);
   const modes = buffModes(buff);
@@ -158,7 +164,7 @@ export function BuffDetail({ buff }: { buff: Buff }) {
     : `You draft ${buff.name} in ${where === "Buff mode and Nerf mode" ? "either mode" : where}.`;
 
   return (
-    <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={<GlossaryText text={buff.description} />}>
+    <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={<GlossaryText text={buff.description} />} extra={extra}>
       <CardBreadcrumbJsonLd section={section} name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
 
@@ -197,12 +203,12 @@ export function BuffDetail({ buff }: { buff: Buff }) {
   );
 }
 
-export function NerfDetail({ nerf }: { nerf: Nerf }) {
+export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
   const path = `/codex/nerf/${nerf.id}`;
   const cats = nerfCategoryLabels(nerf);
 
   return (
-    <InfoPageLayout eyebrow="codex · nerf" title={nerf.name} intro={<GlossaryText text={nerf.description} />}>
+    <InfoPageLayout eyebrow="codex · nerf" title={nerf.name} intro={<GlossaryText text={nerf.description} />} extra={extra}>
       <CardBreadcrumbJsonLd section="Nerfs" name={nerf.name} path={path} />
       {!nerf.implemented && <NotDraftedNote />}
 

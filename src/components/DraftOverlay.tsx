@@ -172,7 +172,7 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
           />
         </svg>
         <div className="leading-none">
-          <div className="smallcaps text-[9px] text-parchment-400">Lock in</div>
+          <div className="smallcaps text-[12px] text-parchment-400">Lock in</div>
           <div
             className={
               "mt-1 font-mono text-2xl font-bold tabular-nums " +
@@ -800,13 +800,13 @@ export function DraftOverlay({
               setTucked(false);
             }}
             aria-label={`Resolve your ${noun} draft`}
-            className="plate flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            className="plate plate-raised flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
             <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
             <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
               Resolve {noun} draft #{offer.index}
             </span>
-            <span className="smallcaps shrink-0 text-[9px] text-oxblood-glow">On your clock</span>
+            <span className="smallcaps shrink-0 text-[12px] text-oxblood-glow">On your clock</span>
           </button>
         </div>
       );
@@ -823,7 +823,7 @@ export function DraftOverlay({
           initial={dragging ? false : { opacity: 0, x: 80, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="plate border-gold/40 p-3 shadow-plate"
+          className="plate plate-raised border-gold/40 p-3 shadow-plate"
         >
           {/* Drag handle: grab the header (mouse or touch) to move the panel so
               it never covers the clock. touch-none stops the page scrolling
@@ -841,14 +841,14 @@ export function DraftOverlay({
           >
             <span className="flex min-w-0 items-center gap-1.5">
               <GripIcon className="text-parchment-500" />
-              <span className="smallcaps truncate text-[10px] text-parchment-400">
+              <span className="smallcaps truncate text-[12px] text-parchment-400">
                 {nounCap} draft #{offer.index}
               </span>
             </span>
-            <span className="smallcaps shrink-0 text-[9px] text-oxblood-glow">On your clock</span>
+            <span className="smallcaps shrink-0 text-[12px] text-oxblood-glow">On your clock</span>
           </div>
           {takeBoth && (
-            <p className="mt-1 text-[11px] font-semibold leading-snug text-gold-leaf">
+            <p className="mt-1 text-[12px] font-semibold leading-snug text-gold-leaf">
               Picking any card takes the whole offer.
             </p>
           )}
@@ -911,7 +911,7 @@ export function DraftOverlay({
               <button
                 onClick={handleReroll}
                 disabled={rerolling}
-                className="flex min-w-[6rem] min-h-[44px] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-2 font-display text-[11px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
+                className="flex min-w-[6rem] min-h-[44px] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
                 title="Roll fresh cards at the same tier"
               >
                 <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} /> Reroll ({rerollsLeft})
@@ -935,10 +935,10 @@ export function DraftOverlay({
               }
               disabled={settled}
               className={
-                "min-w-[6rem] min-h-[44px] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[11px] font-semibold tracking-wide transition disabled:opacity-40 " +
+                "min-w-[6rem] min-h-[44px] flex-1 touch-manipulation rounded-[1px] border px-3 py-2 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide transition disabled:opacity-40 " +
                 (bankArmed
                   ? "border-coral/50 bg-coral/10 text-coral-glow hover:bg-coral/20"
-                  : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf")
+                  : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-200 hover:border-gold/50 hover:text-gold-leaf")
               }
               title={
                 bankArmed
@@ -968,7 +968,7 @@ export function DraftOverlay({
             type="button"
             onClick={() => setHidden(false)}
             aria-label="Show the draft"
-            className="plate flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            className="plate plate-raised flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
             <EyeIcon className="text-gold-leaf" />
             <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
@@ -983,10 +983,11 @@ export function DraftOverlay({
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
         // eat the pick clicks. No backdrop blur: a full-screen blur repainted
-        // on every board animation frame chugged phones; a slightly deeper
-        // scrim reads the same.
+        // on every board animation frame chugged phones. The scrim is a light
+        // 20% dim: the board stays visible behind the draft, never hidden
+        // (the near-opaque panel itself carries the cards' readability).
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/80" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/20" +
           (hidden ? " invisible" : "")
         }
       >
@@ -1037,15 +1038,18 @@ export function DraftOverlay({
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
+          // Entrance inside the system's 320ms budget (dur-3); the card deal
+          // inside is a choreographed game effect with its own budget.
+          transition={{ duration: 0.28, ease: "easeOut" }}
           className={
             "draft-frame corner-cut min-w-0 w-full" +
             // A mythic-grade pull rattles the whole panel as the pack opens.
             (packStage === "open" && maxTier >= 9 && !reduceMotion ? " draft-shake" : "")
           }
         >
-          <div className="plate draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
+          <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps text-[11px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+          <div className="smallcaps text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1053,7 +1057,7 @@ export function DraftOverlay({
                 className="flex items-center gap-1.5 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/10 px-2.5 py-0.5"
               >
                 <CheckIcon className="text-verdigris-glow" />
-                <span className="font-display text-[11px] font-semibold text-verdigris-glow">
+                <span className="font-display text-[12px] font-semibold text-verdigris-glow">
                   {oppBanked ? "Opponent banked" : "Opponent locked in"}
                 </span>
               </div>
@@ -1064,10 +1068,10 @@ export function DraftOverlay({
               type="button"
               onClick={() => setHidden(true)}
               title="Hide the draft and peek at the board"
-              className="flex items-center gap-1.5 min-h-[44px] touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
+              className="flex items-center gap-1.5 min-h-[44px] touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
             >
               <EyeIcon off />
-              <span className="font-display text-[11px] font-semibold tracking-wide">Hide</span>
+              <span className="font-display text-[14px] sm:text-[13px] font-semibold tracking-wide">Hide</span>
             </button>
           </div>
         </div>
@@ -1092,7 +1096,7 @@ export function DraftOverlay({
               </div>
             )}
             {bankedBonus && (
-              <div className="inline-flex items-center gap-2 rounded-[1px] border border-white/20 bg-white/[0.05] px-3 py-1">
+              <div className="inline-flex items-center gap-2 rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.05] px-3 py-1">
                 <span className="font-display text-xs font-semibold tracking-wide text-parchment-200">
                   +1 tier from your banked skip
                 </span>
@@ -1411,7 +1415,9 @@ export function DraftOverlay({
             <button
               onClick={handleReroll}
               disabled={rerolling}
-              className="btn-glass flex w-full touch-manipulation items-center justify-center gap-1.5 px-6 py-3 font-display text-sm font-semibold tracking-wide disabled:opacity-40 sm:w-auto"
+              // Quiet secondary: btn-glass is reserved for the lock-in commits
+              // (Confirm pick / Bank this draft), one glass primary per region.
+              className="flex w-full touch-manipulation items-center justify-center gap-1.5 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-6 py-3 font-display text-sm font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40 sm:w-auto"
               title="Discard this offer and roll fresh cards at the same tier"
             >
               <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} />
@@ -1441,7 +1447,7 @@ export function DraftOverlay({
                   type="button"
                   onClick={() => setBankArmed(false)}
                   disabled={banking}
-                  className="shrink-0 touch-manipulation rounded-[1px] border border-white/15 bg-white/[0.03] px-3 py-3 font-display text-xs font-semibold tracking-wide text-parchment-200 transition hover:border-white/30 hover:text-parchment-100 disabled:opacity-40"
+                  className="shrink-0 touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-3 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide text-parchment-200 transition hover:border-[color:var(--edge-strong)] hover:text-parchment-100 disabled:opacity-40"
                 >
                   Keep looking
                 </button>
@@ -1450,7 +1456,9 @@ export function DraftOverlay({
               <button
                 onClick={() => setBankArmed(true)}
                 disabled={chosen != null || banking}
-                className="btn-glass w-full touch-manipulation px-6 py-3 font-display text-sm font-semibold tracking-wide sm:w-auto"
+                // Quiet secondary (arm step, not a commit): glass stays with
+                // the lock-in buttons only.
+                className="w-full touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-6 py-3 font-display text-sm font-semibold tracking-wide text-parchment-200 transition hover:border-[color:var(--edge-strong)] hover:text-parchment-100 disabled:opacity-40 sm:w-auto"
                 title="Skip this draft; your next one pulls from a tier higher"
               >
                 Skip &amp; bank <span className="ml-1 text-parchment-400">+1 tier next draft</span>
@@ -1504,7 +1512,7 @@ export function DraftOverlay({
         </div>
 
         {opponent && (
-          <div className="mt-4 border-t border-white/10 pt-3 text-center text-[11px] leading-snug text-parchment-400">
+          <div className="mt-4 border-t border-[color:var(--edge)] pt-3 text-center text-[12px] leading-snug text-parchment-400">
             {oppOffer && opponent.showCards ? (
               <span>
                 Opponent&apos;s draft:{" "}
@@ -1571,13 +1579,13 @@ export interface DraftRevealSide {
 function RevealColumn({ label, side }: { label: string; side: DraftRevealSide }) {
   return (
     <span className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="smallcaps text-[9px] text-parchment-400">{label}</span>
+      <span className="smallcaps text-[12px] text-parchment-400">{label}</span>
       {side.banked ? (
-        <span className="inline-flex w-fit items-center rounded-[1px] border border-white/20 bg-white/[0.05] px-1.5 py-px font-display text-[10px] font-semibold tracking-wide text-parchment-200">
+        <span className="inline-flex w-fit items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.05] px-1.5 py-px font-display text-[12px] font-semibold tracking-wide text-parchment-200">
           Banked
         </span>
       ) : side.cards.length === 0 ? (
-        <span className="text-[11px] text-parchment-400">Picked</span>
+        <span className="text-[12px] text-parchment-400">Picked</span>
       ) : (
         side.cards.map((c, i) => {
           const def = c.id ? BUFF_BY_ID[c.id] : undefined;
@@ -1590,14 +1598,14 @@ function RevealColumn({ label, side }: { label: string; side: DraftRevealSide })
                     {def.name}
                   </span>
                   <span
-                    className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
+                    className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
                   >
                     {roman}
                   </span>
                 </span>
                 {/* What the card does: shown only for a revealed pick, so a
                     masked draft (below) never leaks its effect. */}
-                <span className="block text-[10px] leading-snug text-parchment-300">{def.description}</span>
+                <span className="block text-[12px] leading-snug text-parchment-300">{def.description}</span>
               </span>
             );
           }
@@ -1610,9 +1618,9 @@ function RevealColumn({ label, side }: { label: string; side: DraftRevealSide })
                 className="relative flex h-7 w-5 shrink-0 items-center justify-center rounded-[1px] border border-gold/35 bg-ink-950"
               >
                 <span aria-hidden className="absolute inset-[2px] rounded-[1px] border border-gold/20" />
-                <span className={`font-display text-[9px] font-bold tier-${c.tier}`}>{roman}</span>
+                <span className={`font-display text-[12px] font-bold tier-${c.tier}`}>{roman}</span>
               </span>
-              <span className="text-[11px] text-parchment-400">Hidden · tier {c.tier}</span>
+              <span className="text-[12px] text-parchment-400">Hidden · tier {c.tier}</span>
             </span>
           );
         })
@@ -1640,9 +1648,9 @@ export function DraftRevealBanner({
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="plate pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
+        className="plate plate-raised pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
       >
-        <span className="smallcaps block text-[9px] text-parchment-400">Draft resolved</span>
+        <span className="smallcaps block text-[12px] text-parchment-400">Draft resolved</span>
         <span className="mt-1.5 flex items-stretch gap-3">
           {/* My card slides in from the left, theirs from the right, meeting
               in the middle (a single container fade under reduced motion). */}
