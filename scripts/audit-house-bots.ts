@@ -83,6 +83,12 @@ for (const name of HOUSE_PFP_NAMES) {
 }
 
 // --- OG club membership (informational + sanity) ---------------------------
+// NOTE: this audit is DB-free (pure roster/asset checks), so it can only assert
+// the roster-side shape of the OG membership below. The DB round-trip — that
+// ensureOgClub actually lands every member and the club detail route's JOIN
+// returns them, plus the self-healing re-seed — is exercised against a live
+// SQLite DB by scripts/repro-og-club.ts (npx -y tsx scripts/repro-og-club.ts),
+// which exits non-zero on regression.
 const og = ogClubMembers();
 const ogShare = Math.round((og.members.length / HOUSE_ROSTER.length) * 100);
 note(og.members.some((m) => m.userId === og.owner.userId), "OG club owner not among members");
