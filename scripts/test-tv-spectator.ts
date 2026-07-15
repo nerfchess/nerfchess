@@ -427,6 +427,102 @@ section("UNIT: candidate health validation + failover selection");
   ok(pruneFailedIds(same, ["a", "b"]) === same, "prune returns the same ref when nothing changed");
 }
 
+section("UNIT: sticky featured selection (no per-poll churn)");
+{
+  const noFail: ReadonlySet<string> = new Set();
+  const noEnd: ReadonlySet<string> = new Set();
+
+  // The user's exact churn: the directory re-ranks every poll (same members,
+  // different order). With a live current stream present + healthy, selection
+  // MUST return that same id every poll -- never bouncing to candidates[0].
+  const pollA = ["x", "y", "z"];
+  const pollB = ["z", "x", "y"]; // reorder, same members
+  const pollC = ["y", "z", "x"]; // reorder again
+  const current = "x"; // the game we are already showing
+  ok(
+    selectFeaturedTarget(pollA, noFail, null, current, noEnd) === "x" &&
+      selectFeaturedTarget(pollB, noFail, null, current, noEnd) === "x" &&
+      selectFeaturedTarget(pollC, noFail, null, current, noEnd) === "x",
+    "a live current stream stays featured across directory re-ranks (no churn)",
+  );
+  // Contrast: the OLD candidates[0] behavior (no currentId) WOULD have flipped
+  // x -> z -> y across the very same polls. Prove the old rule churned so the fix
+  // is meaningful.
+  ok(
+    selectFeaturedTarget(pollA, noFail, null) === "x" &&
+      selectFeaturedTarget(pollB, noFail, null) === "z" &&
+      selectFeaturedTarget(pollC, noFail, null) === "y",
+    "sanity: the old candidates[0] rule DID flip on re-rank (this is the churn we fixed)",
+  );
+
+  // A pinned id stays selected across reorders while present.
+  ok(
+    selectFeaturedTarget(pollA, noFail, "y", "y", noEnd) === "y" &&
+      selectFeaturedTarget(pollB, noFail, "y", "y", noEnd) === "y" &&
+      selectFeaturedTarget(pollC, noFail, "y", "y", noEnd) === "y",
+    "a pinned id stays selected across directory re-ranks",
+  );
+  // A pin is held across a single transient poll drop while it is the game we are
+  // currently showing (robust to one missing poll, not just a reorder).
+  ok(
+    selectFeaturedTarget(["a", "b"], noFail, "y", "y", noEnd) === "y",
+    "a pinned id we are already showing survives a single transient poll drop",
+  );
+
+  // Failover still works: when the current/pinned id leaves the directory or is
+  // marked failed, selection moves to the next healthy candidate.
+  ok(
+    selectFeaturedTarget(["y", "z"], noFail, null, "x", noEnd) === "y",
+    "current stream that left the directory fails over to the next candidate",
+  );
+  ok(
+    selectFeaturedTarget(pollA, new Set(["x"]), null, "x", noEnd) === "y",
+    "current stream marked failed fails over to the next healthy candidate",
+  );
+  ok(
+    selectFeaturedTarget(pollA, new Set(["x"]), "x", "x", noEnd) === "y",
+    "a failed pinned id fails over instead of being clung to",
+  );
+}
+
+section("UNIT: over/ended games always yield to a live candidate");
+{
+  const noFail: ReadonlySet<string> = new Set();
+
+  // (a) The featured game becomes over: caller passes currentId=null AND the id
+  // is in endedIds. Selection must yield to a still-live candidate, not dwell.
+  ok(
+    selectFeaturedTarget(["done", "live1", "live2"], noFail, null, null, new Set(["done"])) ===
+      "live1",
+    "an over featured game yields to a still-live candidate",
+  );
+  // (b) An ended id the server still transiently lists is never re-featured, even
+  // if it sorts first in the directory.
+  ok(
+    selectFeaturedTarget(["done", "live1"], noFail, null, "done", new Set(["done"])) === "live1",
+    "an ended id transiently still in candidates is not re-selected",
+  );
+  // (c) A pinned game that ends fails over (pin cannot trap the viewer on a
+  // finished board).
+  ok(
+    selectFeaturedTarget(["done", "live1"], noFail, "done", null, new Set(["done"])) === "live1",
+    "a pinned game that ended fails over to a live candidate",
+  );
+  // (d) When ALL candidates are over, selection settles on null so the caller
+  // shows its recent/finished fallback -- no churn, no re-tuning a dead game.
+  const allEnded = new Set(["g1", "g2", "g3"]);
+  ok(
+    selectFeaturedTarget(["g1", "g2", "g3"], noFail, null, null, allEnded) === null &&
+      selectFeaturedTarget(["g3", "g1", "g2"], noFail, null, null, allEnded) === null,
+    "all-over directory settles on null (recent-replay fallback) with no churn",
+  );
+  // A pinned but ended game with no live alternative also settles on null.
+  ok(
+    selectFeaturedTarget(["g1"], noFail, "g1", null, new Set(["g1"])) === null,
+    "a pinned game that ended with no live alternative settles on null",
+  );
+}
+
 // ===========================================================================
 // CARD-PARITY
 // ===========================================================================

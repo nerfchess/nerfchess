@@ -127,6 +127,12 @@ export function useFeaturedTune(
   // consumers can hide clock pills rather than render a fake 0:00.
   const [clocks, setClocks] = useState<Record<Color, number> | null>(null);
   const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
+  // Ids whose game has FINISHED. Semantically distinct from failedIds (a health
+  // failure): an ended game is excluded from selection so a just-flagged bot game
+  // the server still transiently lists is never re-featured. Pruned against the
+  // live directory exactly like failedIds, so it self-cleans once the server
+  // drops the finished game.
+  const [endedIds, setEndedIds] = useState<Set<string>>(new Set());
   const [slowTune, setSlowTune] = useState(false);
   // Bumped to re-run the watch effect for a backoff retry of the same id.
   const [attempt, setAttempt] = useState(0);
@@ -189,6 +195,7 @@ export function useFeaturedTune(
     setDraft(NOT_A_DRAFT);
     setClocks(null);
     setFailedIds(new Set());
+    setEndedIds(new Set());
     setSlowTune(false);
     setAttempt(0);
   }
@@ -202,14 +209,22 @@ export function useFeaturedTune(
     hadFailureRef.current = false;
   }, [resetKey]);
 
-  // Selection: an eligible + healthy pinned pick wins; otherwise the first
-  // healthy candidate. A failed pinned id falls over like any other (manual
-  // selection is not a special unbounded path). The rule lives in the pure
-  // selectFeaturedTarget so it can be unit tested without the renderer.
-  const target = selectFeaturedTarget(candidates, failedIds, pinnedId);
+  // Selection is STICKY: an eligible + healthy pinned pick wins; otherwise the
+  // game we are ALREADY showing (currentId) is kept while it stays a listed,
+  // eligible candidate; otherwise the first healthy candidate. This is what stops
+  // the board tearing down every lobby poll as the directory re-ranks. Stickiness
+  // holds only while the current game is LIVE: once it is over we pass currentId
+  // as null AND it is in endedIds, so an ended game can never win -- selection
+  // moves straight to the next live candidate. A failed pinned id falls over like
+  // any other. The rule lives in the pure selectFeaturedTarget so it can be unit
+  // tested without the renderer.
+  const currentId = over ? null : streamId;
+  const target = selectFeaturedTarget(candidates, failedIds, pinnedId, currentId, endedIds);
 
-  // Keep a just-finished game on screen until a replacement is available;
-  // otherwise follow the target. Derived during render (no cascading render).
+  // Follow the target when there is one. When nothing eligible remains, tear down
+  // to null (over) so the caller falls back to its recent-replay board rather
+  // than dwelling on a finished game; while a non-over stream lingers with no
+  // target, keep it on screen. Derived during render (no cascading render).
   const nextStream = target ? target : over || !streamId ? target : streamId;
   if (nextStream !== streamId) setStreamId(nextStream);
 
@@ -222,6 +237,9 @@ export function useFeaturedTune(
     // sync, not a render-driven state loop.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFailedIds((prev) => pruneFailedIds(prev, candidates));
+    // An ended id the server has dropped from the directory is no longer needed
+    // in the exclusion set; prune it the same way so the set self-cleans.
+    setEndedIds((prev) => pruneFailedIds(prev, candidates));
     // candidateKey captures the membership; candidates is the same set.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidateKey]);
@@ -246,6 +264,19 @@ export function useFeaturedTune(
     // only if this candidate stays un-live past the threshold.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSlowTune(false);
+    // Clear any lingering "over" from the game we just switched away from, so a
+    // freshly-selected live candidate never inherits a stale finished state.
+    setOver(false);
+    // Mark the game we are tuning as finished. Uses the streamId captured by this
+    // effect run, so a switch that fires while `over` is still momentarily true
+    // can never mis-tag the NEW candidate as ended.
+    const markEnded = () =>
+      setEndedIds((prev) => {
+        if (prev.has(streamId)) return prev;
+        const next = new Set(prev);
+        next.add(streamId);
+        return next;
+      });
     const session = new MPSession();
     session.persistFriendSession = false;
     // Arena-hosted (OCI bot-vs-bot) games stream from the arena socket. The
@@ -298,6 +329,9 @@ export function useFeaturedTune(
       } else if (e.type === "end") {
         setOver(true);
         setClocks({ w: e.end.wc, b: e.end.bc });
+        // The featured game just finished: exclude it from selection so we fail
+        // over to the next live candidate instead of clinging to a dead board.
+        markEnded();
       }
       // Sequenced move frames also carry the authoritative clocks.
       if (e.type === "move") setClocks({ w: e.move.wc, b: e.move.bc });
@@ -329,6 +363,9 @@ export function useFeaturedTune(
         setMoves(e.setup.moves);
         setPlayers(e.setup.players);
         setOver(!!e.setup.result);
+        // A game that is already finished at watch-start is excluded from
+        // selection so we do not dwell on it -- yield to a live candidate.
+        if (e.setup.result) markEnded();
         setDraft(featuredDraftFromWatchStart(e.setup));
         setClocks({ w: e.setup.wc, b: e.setup.bc });
         // Adopt the wstart as the ordered-sync baseline when it carries the
