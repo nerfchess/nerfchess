@@ -260,10 +260,10 @@ function LobbyInner() {
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
         {/* Masthead over a plain brass hairline, with the live pulse of the
             lobby as flat chips on the right. */}
-        <header className="relative mt-2 sm:mt-4">
-          <span className="eyebrow">Find a game</span>
+        <header className="relative mt-1 sm:mt-4">
+          <span className="eyebrow hidden sm:inline">Find a game</span>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <h1 className="masthead text-4xl sm:text-6xl text-parchment-50">The Lobby</h1>
+            <h1 className="masthead text-3xl sm:text-6xl text-parchment-50">The Lobby</h1>
             {/* Hidden on phones: the first thing a phone visitor should see is
                 the matchmaking button, not the traffic counters. One coherent
                 status pill (connection + player count), then two quiet stats. */}
@@ -277,7 +277,7 @@ function LobbyInner() {
               )}
             </div>
           </div>
-          <div className="hall-hairline mt-4" aria-hidden />
+          <div className="hall-hairline mt-2 sm:mt-4" aria-hidden />
         </header>
 
         {lobbyError && (

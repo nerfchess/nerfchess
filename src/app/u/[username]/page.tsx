@@ -33,8 +33,7 @@ import {
   recentRatingDelta,
   type HistoryPoint,
 } from "@/components/ratings/RatingHistoryPanel";
-import { CurrentGameCard } from "@/components/profile/CurrentGameCard";
-import { RecentGameCard, type RecentGameRow } from "@/components/profile/RecentGameCard";
+import { type RecentGameRow } from "@/components/profile/RecentGameCard";
 import { FriendsModule } from "@/components/profile/FriendsModule";
 import { relativeTime } from "@/components/profile/relativeTime";
 import { usePresence } from "@/lib/presence";
@@ -240,7 +239,6 @@ function ProfileContent() {
   // The game id a finished live game reported, so the module can swap to the
   // recent-game card without a reload even though the profile payload still
   // carries the (now stale) currentGame id.
-  const [endedLiveId, setEndedLiveId] = useState<string | null>(null);
 
   const isOwner = profile?.relationship === "self";
 
@@ -319,7 +317,7 @@ function ProfileContent() {
   const presenceLiveId =
     presence.state === "in-game" ? (presence.gameId ?? presence.game?.id ?? null) : null;
   const liveGameIdRaw = apiLiveId ?? presenceLiveId;
-  const liveGameId = liveGameIdRaw && liveGameIdRaw !== endedLiveId ? liveGameIdRaw : null;
+  const liveGameId = liveGameIdRaw || null;
   const liveGameMode = profile.currentGame?.mode ?? presence.game?.mode ?? null;
   // The lobby entry adds metadata (time control, rated, watchers) but only when
   // it describes the SAME game; a mismatched entry means one side is stale.
@@ -330,6 +328,7 @@ function ProfileContent() {
       {/* ---- Header (spec 2.2) ---------------------------------------------- */}
       <ProfileHeader
         user={user}
+        liveGameId={liveGameId}
         isOwner={isOwner}
         me={me}
         rel={rel}
@@ -428,31 +427,27 @@ function ProfileContent() {
         })}
       </div>
 
-      {/* ---- Game module (spec 2.3) --------------------------------------- */}
+      {/* ---- Game module: a single quiet line. The big recent-game bar is
+           gone (owner request); a live game reads as one pulsing symbol plus a
+           Watch link, and the empty state survives only for brand-new accounts. */}
       <div className="mt-4">
         {liveGameId ? (
-          <CurrentGameCard
-            username={user.username}
-            gameId={liveGameId}
-            mode={liveGameMode}
-            game={liveLobbyEntry}
-            // Refetch the newest game a beat after it ends so the finished game
-            // (with rating deltas) is ready to take over as the recent module,
-            // then retire the live card without a reload.
-            onEnded={() => {
-              const ended = liveGameId;
-              window.setTimeout(() => {
-                void loadNewestGame().then(() => setEndedLiveId(ended));
-              }, 2000);
-            }}
-          />
-        ) : newestGame === undefined ? (
-          <div className="plate p-4">
-            <div className="skeleton h-24 w-full rounded-[10px]" style={{ borderRadius: 10 }} />
-          </div>
-        ) : newestGame ? (
-          <RecentGameCard game={newestGame} viewer={user.username} />
-        ) : (
+          <Link
+            href={`/game/${encodeURIComponent(liveGameId)}`}
+            className="plate plate-hover flex min-h-[44px] items-center gap-2.5 px-3 py-2 no-underline"
+            title="Watch the live game"
+          >
+            <span aria-hidden className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[rgb(var(--pos-rgb))] opacity-60" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[rgb(var(--pos-rgb))]" />
+            </span>
+            <span className="min-w-0 truncate text-[13px] font-display font-semibold text-parchment-100">
+              Playing now
+            </span>
+            {liveGameMode && <ModeBadge mode={liveGameMode} />}
+            <span className="ml-auto shrink-0 text-[13px] text-gold-leaf">Watch</span>
+          </Link>
+        ) : newestGame !== null ? null : (
           <EmptyState
             icon={Gamepad2}
             title={isOwner ? "You have not played online yet" : "No games yet"}
@@ -489,8 +484,8 @@ function ProfileContent() {
             hidden={tab !== "activity"}
             className="pt-4"
           >
-            <AchievementsStrip username={user.username} />
             {placements.length > 0 && <CurrentStandings placements={placements} />}
+            <AchievementsStrip username={user.username} />
             {stats && (
               <div className="mt-6">
                 <h2 className="font-display text-2xl">Statistics</h2>
@@ -544,6 +539,7 @@ function ProfileContent() {
 
 function ProfileHeader({
   user,
+  liveGameId,
   isOwner,
   me,
   rel,
@@ -559,6 +555,7 @@ function ProfileHeader({
   onReport,
 }: {
   user: ProfileUser;
+  liveGameId: string | null;
   isOwner: boolean;
   me: AccountUser | null;
   rel: Relationship | null;
@@ -617,6 +614,16 @@ function ProfileHeader({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1 className="min-w-0 break-words font-display text-3xl sm:text-4xl">
               {user.username}
+              {liveGameId && (
+                <span
+                  aria-label="In a live game"
+                  title="In a live game"
+                  className="relative ml-2 inline-flex h-3 w-3 align-middle"
+                >
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[rgb(var(--pos-rgb))] opacity-60" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-[rgb(var(--pos-rgb))]" />
+                </span>
+              )}
               {user.flair && (
                 <span className="ml-2 align-middle text-2xl" aria-hidden="true">
                   {user.flair}

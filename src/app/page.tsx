@@ -29,7 +29,7 @@ export default function HomePage() {
           right. The board sells the product; the copy explains it in one
           breath; Open Lobby is the single primary way in. */}
       <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
-        <div className="order-1 animate-rise">
+        <div className="order-2 lg:order-1 animate-rise">
           <HeroTv />
           {/* Socials live right under the hero board (owner request: back to
               its original spot). */}
@@ -40,7 +40,7 @@ export default function HomePage() {
 
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
-        <div className="order-2 stagger-in">
+        <div className="order-1 lg:order-2 stagger-in">
           {/* Eyebrow row, with a quiet onboarding door parked in the upper
               right. It drops brand-new players straight into the built-in
               guided tutorial: a real game against the easiest bot with coach

@@ -32,7 +32,7 @@ interface Row {
 
 type MeRow = Row & { rank: number };
 
-// Standings are served top-500; the table pages through them 50 at a time.
+// Standings are served top-250; the table pages through them 50 at a time.
 const PAGE_SIZE = 50;
 
 export default function LeaderboardPage() {
