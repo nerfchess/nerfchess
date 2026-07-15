@@ -20,6 +20,7 @@
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
     "test:glicko": "npx -y tsx scripts/test-glicko.ts",
+    "test:spectator-sync": "npx -y tsx scripts/test-spectator-sync.ts",
     "test:replay-spectate": "npm run server:build && node scripts/test-replay-spectate.cjs",
     "test:e2e": "playwright test",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

@@ -316,6 +316,11 @@ type StoredMatch = {
   // (they backfill to match.moves.length on first touch). Additive: nothing that
   // reads a StoredMatch requires it.
   seq?: number;
+  // Public-state parity hash of the CURRENT revision (recomputed on every
+  // committed event, not only on the persisted-snapshot cadence), so the
+  // spectator envelope for any event carries the exact post-event hash. Small
+  // (8 hex chars); additive. Absent on legacy records until the next event.
+  seqHash?: string;
   // Server-authoritative PUBLIC spectator snapshot (see toPublicSnapshot). A
   // sanitized projection kept parallel to `checkpoint`: it carries only what a
   // spectator may see (no slot rng, no secret nerf id, no unrevealed card) and
@@ -778,10 +783,41 @@ function matchKey(id: string): string {
   return `match:${id}`;
 }
 
-function send(ws: WebSocket | undefined, t: string, d?: unknown) {
+// `e` is the optional spectator envelope (worker stamps it only on watcher
+// frames). It rides as a sibling of the existing `{t, d}` body; older clients
+// ignore it, so it is fully backward compatible. See sendWatchers.
+function send(ws: WebSocket | undefined, t: string, d?: unknown, e?: SpectatorEnvelope) {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(JSON.stringify(d === undefined ? { t } : { t, d }));
+  const frame: { t: string; d?: unknown; e?: SpectatorEnvelope } = { t };
+  if (d !== undefined) frame.d = d;
+  if (e !== undefined) frame.e = e;
+  ws.send(JSON.stringify(frame));
 }
+
+// The uniform spectator-frame header. Stamped by the server on every fanned
+// watcher frame so a spectator can order, dedupe, and version-check the stream.
+// Carries ONLY public metadata (ids, versions, the monotonic seq, the
+// public-state parity hash) and never any private state.
+type SpectatorEnvelopeType =
+  | "move"
+  | "draftUsed"
+  | "draftResolved"
+  | "draftState"
+  | "draftDiff"
+  | "end"
+  | "clock"
+  | "takeback"
+  | "snapshot";
+type SpectatorEnvelope = {
+  gameId: string;
+  schemaVersion: number;
+  replayVersion: number;
+  stateRevision: number;
+  seq: number;
+  type: SpectatorEnvelopeType;
+  publicHash: string;
+  ts: number;
+};
 
 function error(ws: WebSocket, code: string, message: string) {
   send(ws, "error", { code, message });
@@ -1953,9 +1989,13 @@ export class GameServer extends DurableObject<Env> {
     return { w: seat("w"), b: seat("b") };
   }
 
-  private sendWatchers(match: StoredMatch, t: string, d?: unknown) {
+  private sendWatchers(match: StoredMatch, t: string, d?: unknown, envType?: SpectatorEnvelopeType) {
+    // Stamp the ordered spectator envelope only when a caller names an event
+    // type (the board/draft/clock/end frames). Untyped fanned frames (watcher
+    // counts, spectator chat) carry no header, exactly as before.
+    const e = envType ? this.spectatorEnvelope(match, envType) : undefined;
     for (const [ws, session] of this.sessions) {
-      if (session.watching === match.id && ws.readyState === WebSocket.OPEN) send(ws, t, d);
+      if (session.watching === match.id && ws.readyState === WebSocket.OPEN) send(ws, t, d, e);
     }
   }
 
@@ -2402,6 +2442,13 @@ export class GameServer extends DurableObject<Env> {
     if (!match.startedAt) return;
     const seq = (match.seq ?? match.moves.length) + 1;
     match.seq = seq;
+    // Build the (cheap, replay-free) projection every event so the spectator
+    // envelope carries the exact post-event parity hash. Reuses the already
+    // reconstructed game, never a fresh replay, so this stays O(pieces) per
+    // event. Only the HEAVY full snapshot is persisted on the cadence/force
+    // gate below; the small hash is always refreshed.
+    const built = this.buildPubSnap(match, game, seq);
+    match.seqHash = built.hash;
     const prev = match.pubSnap;
     const cadenceElapsed =
       !prev ||
@@ -2409,8 +2456,51 @@ export class GameServer extends DurableObject<Env> {
       prev.replayVersion !== REPLAY_VERSION ||
       seq - prev.seq >= checkpointEveryPlies;
     if (opts?.force || cadenceElapsed) {
-      match.pubSnap = this.buildPubSnap(match, game, seq);
+      match.pubSnap = built;
     }
+  }
+
+  // Build the SpectatorEnvelope header for a fanned watcher frame. seq and hash
+  // come from match state that the commit path already advanced (persist then
+  // publish), so the emitted seq always agrees with the persisted pubSnap.seq.
+  private spectatorEnvelope(match: StoredMatch, type: SpectatorEnvelopeType): SpectatorEnvelope {
+    const seq = match.seq ?? match.moves.length;
+    return {
+      gameId: match.id,
+      schemaVersion: PUBLIC_SNAPSHOT_VERSION,
+      replayVersion: REPLAY_VERSION,
+      stateRevision: seq,
+      seq,
+      type,
+      publicHash: match.seqHash ?? match.pubSnap?.hash ?? "",
+      ts: Date.now(),
+    };
+  }
+
+  // Ensure a public snapshot exists to ship on join. Returns the stored one, or
+  // builds it on demand from the already-reconstructed game (no persist -- the
+  // next committed event persists it), or null when the game cannot be
+  // reconstructed (a migration stage turns null into a structured wunavailable).
+  private ensurePubSnap(match: StoredMatch): StoredMatch["pubSnap"] {
+    if (
+      match.pubSnap &&
+      match.pubSnap.schemaVersion === PUBLIC_SNAPSHOT_VERSION &&
+      match.pubSnap.replayVersion === REPLAY_VERSION
+    ) {
+      return match.pubSnap;
+    }
+    if (!match.startedAt) return null;
+    let game: NerfGame | null = null;
+    try {
+      game = this.gameFromMatch(match);
+    } catch {
+      game = null;
+    }
+    if (!game) return null;
+    const seq = match.seq ?? match.moves.length;
+    const built = this.buildPubSnap(match, game, seq);
+    match.seqHash = built.hash;
+    return built;
   }
 
   // Rebuild the live game for a play-path caller (moves, resigns, draft
@@ -2599,11 +2689,11 @@ export class GameServer extends DurableObject<Env> {
     // Replicas replay the flag as a draft action; the clock frame carries the
     // restored clocks and the draft state re-syncs the restored effects.
     this.broadcast(match, "dtDiffFlag", { color: flagged });
-    this.sendWatchers(match, "dtDiffFlag", { color: flagged });
+    this.sendWatchers(match, "dtDiffFlag", { color: flagged }, "draftDiff");
     const clocks = this.currentClocks(match, now);
     const clockFrame = { wc: Math.round(clocks.w), bc: Math.round(clocks.b) };
     this.broadcast(match, "n", clockFrame);
-    this.sendWatchers(match, "n", clockFrame);
+    this.sendWatchers(match, "n", clockFrame, "clock");
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
   }
@@ -2824,7 +2914,7 @@ export class GameServer extends DurableObject<Env> {
       ...(draftBuffs ? { draftBuffs } : {}),
     };
     this.broadcast(match, "end", payload);
-    this.sendWatchers(match, "end", payload);
+    this.sendWatchers(match, "end", payload, "end");
   }
 
   private async createMatch(ws: WebSocket, data: unknown) {
@@ -3201,7 +3291,7 @@ export class GameServer extends DurableObject<Env> {
       f: fnv1a(positionKey(nextGame.board)),
     };
     this.broadcast(match, "move", movePayload);
-    this.sendWatchers(match, "move", movePayload);
+    this.sendWatchers(match, "move", movePayload, "move");
     if (match.draft && nextGame.buffs) {
       // The shared draft cadence rolls offers for BOTH seats on the same
       // move, so each seat whose offer appeared gets its dtOffer frame now,
@@ -3384,6 +3474,19 @@ export class GameServer extends DurableObject<Env> {
     match.checkpoint = null;
     match.takebackOfferBy = null;
     match.runningSince = match.startedAt ? now : null;
+    // A takeback rewinds the board: advance the public revision and rebuild the
+    // snapshot from the rewound game so the takeback envelope carries a new seq
+    // (a spectator applies it as the next in-order event) and the exact
+    // post-rewind parity hash. If the rewound game cannot be rebuilt, still
+    // advance the seq so a spectator sees the change and can resync.
+    let rewound: NerfGame | null = null;
+    try {
+      rewound = this.gameFromMatch(match);
+    } catch {
+      rewound = null;
+    }
+    if (rewound) this.bumpPublicSnapshot(match, rewound, { force: true });
+    else match.seq = (match.seq ?? match.moves.length) + 1;
     await this.saveMatch(match);
 
     const payload = {
@@ -3394,7 +3497,7 @@ export class GameServer extends DurableObject<Env> {
       bc: Math.round(match.clocks.b),
     };
     this.broadcast(match, "takeback", payload);
-    this.sendWatchers(match, "takeback", payload);
+    this.sendWatchers(match, "takeback", payload, "takeback");
   }
 
   private async declineTakeback(ws: WebSocket) {
@@ -5555,6 +5658,14 @@ export class GameServer extends DurableObject<Env> {
         ...(game?.buffs ? { dtState: this.draftStateFor(game, match, "spectator") } : {}),
       };
     }
+    // Ship the authoritative PUBLIC snapshot so the spectator joins AT the
+    // current revision and applies only later-seq envelopes -- a join at move
+    // 300 never replays from move 1. Built on demand for legacy/live records
+    // that predate the snapshot. Absent (null) only when the game cannot be
+    // reconstructed; a migration stage turns that into a structured notice
+    // rather than a false starting board. The moves array stays for older
+    // clients that ignore `pub`.
+    const pub = this.ensurePubSnap(match);
     send(ws, "wstart", {
       id,
       timeSec: match.setup.timeSec,
@@ -5571,6 +5682,15 @@ export class GameServer extends DurableObject<Env> {
       spectatorChat: match.spectatorChat ?? [],
       ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
       ...(draftExtras ?? {}),
+      ...(pub
+        ? {
+            pub: pub.snap,
+            seq: pub.seq,
+            schemaVersion: pub.schemaVersion,
+            replayVersion: pub.replayVersion,
+            publicHash: pub.hash,
+          }
+        : {}),
     });
   }
 
@@ -6051,7 +6171,7 @@ export class GameServer extends DurableObject<Env> {
   // passive's granted move) must reach them the same way, spectator-filtered.
   private sendWatcherDraftState(match: StoredMatch, game: NerfGame) {
     const state = this.draftStateFor(game, match, "spectator");
-    if (state) this.sendWatchers(match, "dtState", { state });
+    if (state) this.sendWatchers(match, "dtState", { state }, "draftState");
   }
 
   // The draft record a given viewer may replay: your own picked cards are
@@ -6202,7 +6322,7 @@ export class GameServer extends DurableObject<Env> {
       const c = this.currentClocks(match);
       const clockFrame = { wc: Math.round(c.w), bc: Math.round(c.b) };
       this.broadcast(match, "n", clockFrame);
-      this.sendWatchers(match, "n", clockFrame);
+      this.sendWatchers(match, "n", clockFrame, "clock");
     }
     if (resolved) {
       // FULL TRANSPARENCY: the resolved pick (its real cards included) goes to
@@ -6210,11 +6330,11 @@ export class GameServer extends DurableObject<Env> {
       const publicFrame = { color: resolved.color, kind: resolved.kind };
       const ownFrame = resolved.cards ? { ...publicFrame, cards: resolved.cards } : publicFrame;
       this.broadcast(match, "dtResolved", ownFrame);
-      this.sendWatchers(match, "dtResolved", ownFrame);
+      this.sendWatchers(match, "dtResolved", ownFrame, "draftResolved");
     }
     if (used) {
       this.broadcast(match, "dtUsed", used);
-      this.sendWatchers(match, "dtUsed", used);
+      this.sendWatchers(match, "dtUsed", used, "draftUsed");
     }
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);
@@ -6371,7 +6491,7 @@ export class GameServer extends DurableObject<Env> {
     const c = this.currentClocks(match, now);
     const frame = { wc: Math.round(c.w), bc: Math.round(c.b) };
     this.broadcast(match, "n", frame);
-    this.sendWatchers(match, "n", frame);
+    this.sendWatchers(match, "n", frame, "clock");
     // Only the -15s subtract is a god-panel tool; the +15s add is a courtesy any
     // player may send, so it stays unannounced.
     if (subtract) this.announceGodPanel(match, this.seatName(match, session.color), "cut 15s from the clock");
@@ -6441,6 +6561,10 @@ export class GameServer extends DurableObject<Env> {
     // Buzzer Beater, every addSelfSec/subOppSec instant), so the drained delta
     // above must persist here and be broadcast below.
     this.maybeCheckpoint(match, game);
+    // An instant summon is a board-mutating card resolution: advance the public
+    // revision and refresh the snapshot so the dtResolved envelope below carries
+    // a fresh seq + post-event parity hash, not a stale one.
+    this.bumpPublicSnapshot(match, game, { force: true });
     await this.saveMatch(match);
     // If the summon moved a clock, broadcast the authoritative clock frame so
     // both seats and every spectator see the new time (mirrors draftUse).
@@ -6448,7 +6572,7 @@ export class GameServer extends DurableObject<Env> {
       const c = this.currentClocks(match, now);
       const clockFrame = { wc: Math.round(c.w), bc: Math.round(c.b) };
       this.broadcast(match, "n", clockFrame);
-      this.sendWatchers(match, "n", clockFrame);
+      this.sendWatchers(match, "n", clockFrame, "clock");
     }
     // Instant only: publish the resolved effect so every LIVE client mutates its
     // own board (a spectator or the granting seat replaying later gets the same
@@ -6456,7 +6580,7 @@ export class GameServer extends DurableObject<Env> {
     if (revealsInstant) {
       const resolvedFrame = { color, kind: "picked" as const, cards: [{ id, tier: def.tier as number }] };
       this.broadcast(match, "dtResolved", resolvedFrame);
-      this.sendWatchers(match, "dtResolved", resolvedFrame);
+      this.sendWatchers(match, "dtResolved", resolvedFrame, "draftResolved");
     }
     // Resync BOTH seats and every spectator. The granting seat sees the real
     // card; a HIDEABLE card is masked by draftStateFor (a non-instant,
