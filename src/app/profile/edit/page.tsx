@@ -259,11 +259,18 @@ export default function EditProfilePage() {
             : null,
         )
         .then((data) => {
-          if (cancelled || !data) return;
-          setFriendsPublic(data.friendsVisibility !== "private");
-          setShowOnline(data.showOnline !== false);
+          if (cancelled) return;
+          // A failed read (401 race on a fresh guest session, transient 500)
+          // must not strand the toggles in their skeleton state: fall back to
+          // the column defaults so they are always usable.
+          setFriendsPublic(data ? data.friendsVisibility !== "private" : true);
+          setShowOnline(data ? data.showOnline !== false : true);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (cancelled) return;
+          setFriendsPublic(true);
+          setShowOnline(true);
+        });
     });
     return () => {
       cancelled = true;

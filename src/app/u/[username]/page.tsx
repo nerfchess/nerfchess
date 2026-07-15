@@ -293,6 +293,14 @@ function ProfileContent() {
   // status and the viewer is not the owner (spec 2.2 / section 5).
   const showPresence = user.showOnline || isOwner;
 
+  // The presence feed only sees players on the lobby socket, so an owner
+  // browsing their own profile derives as "offline" ("Last seen 15s ago" while
+  // they are literally looking at the page). They are demonstrably here:
+  // upgrade offline to online for the owner's own badge. Other viewers keep
+  // the raw feed state.
+  const headerPresenceState =
+    isOwner && presence.state === "offline" ? "online" : presence.state;
+
   return (
     <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
       {/* ---- Header (spec 2.2) ---------------------------------------------- */}
@@ -304,7 +312,7 @@ function ProfileContent() {
         friendBusy={friendBusy}
         placements={placements}
         presenceMode={presence.game?.mode ?? null}
-        presenceState={presence.state}
+        presenceState={headerPresenceState}
         showPresence={showPresence}
         ratings={profile.ratings}
         onAddFriend={async () => {
