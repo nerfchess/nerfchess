@@ -7363,12 +7363,22 @@ async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promi
   // s-maxage=3 caps DO lobby load at ~1 hit / 3s TOTAL (shared across every
   // viewer, independent of viewer count) while keeping a freshly-posted or
   // just-answered challenge no more than ~3s + the client poll interval stale.
+  //
+  // Tradeoff: the edge cache is what protects the single global lobby DO, so we
+  // keep it (dropping s-maxage would expose the DO to every poll from every
+  // client and risk overload). But two clients in different colos can be served
+  // snapshots up to (s-maxage + stale-while-revalidate) apart, so we keep SWR
+  // small: s-maxage=3 + swr=1 caps cross-colo snapshot-age skew at ~4s instead
+  // of the ~9s a larger SWR window would allow. The lobby count is intentionally
+  // eventually-consistent (all colos converge within ~4s) rather than
+  // per-request random — the payload is deterministic, so every colo that hits
+  // the DO in a given window serves the identical snapshot.
   const body = await doResp.arrayBuffer();
   const resp = new Response(body, {
     status: 200,
     headers: {
       "content-type": "application/json",
-      "cache-control": "public, s-maxage=3, stale-while-revalidate=6",
+      "cache-control": "public, s-maxage=3, stale-while-revalidate=1",
     },
   });
   ctx.waitUntil(cache.put(cacheKey, resp.clone()));
