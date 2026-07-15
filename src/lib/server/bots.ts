@@ -1335,6 +1335,124 @@ export async function countOgClubMembers(db: D1Database): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
+// Populate EVERY OTHER club with a plausible house-bot membership.
+//
+// The OG club (ensureOgClub above) is the one big, hand-owned veterans' club.
+// Every OTHER club in the table -- user-made ones, or any seeded elsewhere --
+// otherwise reads as dead in the clubs directory: an owner and nobody else.
+// This seeds each such club with a DETERMINISTIC 10-20 house-bot slice enrolled
+// as plain 'member' rows, so the directory looks alive without touching a
+// club's owner row, its identity (name/description/icon), or any real user's
+// membership. INSERT OR IGNORE throughout, and the slice is a stable function
+// of the club's slug, so re-running never duplicates rows or shifts who is in a
+// club -- it only fills gaps (self-healing, like ensureHouseUsers/ensureOgClub).
+// Runs after ensureHouseUsers so every persona's users row exists (the
+// club_members.user_id FK needs it). A bot may belong to several clubs; that is
+// fine and reads like a real regular who joined a few.
+// ---------------------------------------------------------------------------
+
+/** Inclusive per-club bot-membership target band. Every non-OG club is filled
+ * to a deterministic count in [CLUB_FILL_MIN, CLUB_FILL_MAX]. */
+export const CLUB_FILL_MIN = 10;
+export const CLUB_FILL_MAX = 20;
+
+/** A club's deterministic bot-membership target in [CLUB_FILL_MIN,
+ * CLUB_FILL_MAX], hashed from its slug so it is stable across cold starts and
+ * varies club to club (so the directory shows a range of club sizes). */
+export function clubBotTargetCount(slug: string): number {
+  const span = CLUB_FILL_MAX - CLUB_FILL_MIN + 1;
+  return CLUB_FILL_MIN + (nameHash(slug + "|clubfill") % span);
+}
+
+/** The DETERMINISTIC house-bot slice for a club: `count` personas chosen by
+ * hashing each persona's name against the club slug and taking the lowest-hash
+ * `count`. Stable across deploys (name/slug hash, no RNG) and well spread across
+ * the roster (a different club draws a different slice). Never exceeds the
+ * roster. Bots may recur across clubs -- there is no cross-club exclusivity. */
+export function clubBotMembers(slug: string, count: number): HousePersona[] {
+  const n = Math.max(0, Math.min(Math.floor(count), HOUSE_ROSTER.length));
+  return [...HOUSE_ROSTER]
+    .sort((a, b) => {
+      const ha = nameHash(a.name + "|" + slug);
+      const hb = nameHash(b.name + "|" + slug);
+      return ha - hb || (a.name < b.name ? -1 : 1);
+    })
+    .slice(0, n);
+}
+
+/** Enroll a deterministic 10-20 house-bot membership into EVERY club except the
+ * OG club (which ensureOgClub owns, with its own larger membership). For each
+ * club, the slice from clubBotMembers is inserted as plain 'member' rows with
+ * INSERT OR IGNORE, skipping the club's own owner row so an owner is never
+ * duplicated or downgraded (real or bot). Real members' rows are never touched
+ * (we only ever INSERT house-bot ids, and OR IGNORE leaves any existing row as
+ * is). Idempotent and self-healing: safe to run on every cold start. */
+export async function ensureClubsPopulated(db: D1Database): Promise<void> {
+  const clubs = await db
+    .prepare("SELECT id, slug, owner_user_id FROM clubs")
+    .all<{ id: string; slug: string; owner_user_id: string }>();
+  const now = Date.now();
+  const statements: D1PreparedStatement[] = [];
+  for (const club of clubs.results) {
+    // The OG club keeps its own (larger) seed via ensureOgClub; never shrink or
+    // re-seed it here.
+    if (club.slug === OG_CLUB_SLUG) continue;
+    const members = clubBotMembers(club.slug, clubBotTargetCount(club.slug));
+    for (const p of members) {
+      // Never write a membership row for the club's existing owner (bot or real):
+      // its owner row stays exactly as-is.
+      if (p.userId === club.owner_user_id) continue;
+      statements.push(
+        db
+          .prepare(
+            `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, 'member', ?)`,
+          )
+          .bind(club.id, p.userId, now),
+      );
+    }
+  }
+  if (statements.length) await batchInChunks(db, statements);
+}
+
+/** How many non-OG clubs currently have FEWER live house-bot members than their
+ * target -- the self-healing gate for ensureClubsPopulated (mirrors
+ * countOgClubMembers). Counts only club_members whose user_id is a house bot AND
+ * resolves to a live users row (the same INNER JOIN the detail route renders),
+ * so a club short of its target -- freshly created, or a partial prior seed --
+ * is detected and re-seeded. A read failure reads as "assume short" (returns a
+ * positive number) so seeding runs rather than skips. Returns 0 when every club
+ * is already at or above its target (the steady state), so the seed becomes a
+ * no-op without touching D1. */
+export async function countUnderpopulatedClubs(db: D1Database): Promise<number> {
+  try {
+    const clubs = await db
+      .prepare("SELECT id, slug FROM clubs")
+      .all<{ id: string; slug: string }>();
+    const targets = clubs.results.filter((c) => c.slug !== OG_CLUB_SLUG);
+    if (!targets.length) return 0;
+    const ids = HOUSE_ROSTER.map((p) => p.userId);
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = await db
+      .prepare(
+        `SELECT cm.club_id AS club_id, COUNT(*) AS n
+         FROM club_members cm JOIN users u ON u.id = cm.user_id
+         WHERE cm.user_id IN (${placeholders})
+         GROUP BY cm.club_id`,
+      )
+      .bind(...ids)
+      .all<{ club_id: string; n: number }>();
+    const byClub = new Map(rows.results.map((r) => [r.club_id, r.n]));
+    let short = 0;
+    for (const club of targets) {
+      if ((byClub.get(club.id) ?? 0) < clubBotTargetCount(club.slug)) short++;
+    }
+    return short;
+  } catch {
+    return 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Seek selection: which pool and mode a house player advertises.
 // ---------------------------------------------------------------------------
 

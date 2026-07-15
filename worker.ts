@@ -39,6 +39,8 @@ import {
   ensureOgClub,
   countOgClubMembers,
   ogClubMembers,
+  ensureClubsPopulated,
+  countUnderpopulatedClubs,
   houseDraftThinkMs,
   houseNerfPickIndex,
   housePersona,
@@ -3959,6 +3961,16 @@ export class GameServer extends DurableObject<Env> {
         // fills gaps. Only touches D1 when short (the ensureHouseUsers pattern).
         if ((await countOgClubMembers(db)) < ogClubMembers().members.length) {
           await ensureOgClub(db);
+        }
+        // Self-healing membership for EVERY OTHER club (user-made or seeded
+        // elsewhere) so the clubs directory never looks dead: each is filled to
+        // a deterministic 10-20 house-bot slice. Runs after ensureHouseUsers
+        // (the club_members FK needs the persona rows) and skips the OG club
+        // (ensureOgClub owns its larger membership). INSERT OR IGNORE and a
+        // stable per-slug slice, so it only fills gaps and never touches an
+        // owner or a real member's row. Only touches D1 when a club is short.
+        if ((await countUnderpopulatedClubs(db)) > 0) {
+          await ensureClubsPopulated(db);
         }
         this.houseSeeded = true;
       } catch (err) {
