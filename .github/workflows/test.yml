@@ -36,6 +36,12 @@ jobs:
       - name: Nerf tests
         run: npm run test:nerfs
 
+      # Passive visual registry coverage + integrity: every implemented passive
+      # nerf and kind:"passive" buff has a unique, in-budget visual tuple. Fails
+      # the build on any uncovered passive (docs/passive-effect-language.md).
+      - name: Passive effect registry tests
+        run: npm run test:passive-registry
+
       # Every tier-9 apex / tier-10 mythic card activated end-to-end, plus the
       # bank-at-top apex offer's shape and mythic-upgrade rate.
       - name: Apex / mythic tests
