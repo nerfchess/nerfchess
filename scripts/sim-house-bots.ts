@@ -40,8 +40,10 @@ import {
   HOUSE_SOCIAL_MIN_DELAY_MS,
   HOUSE_SOCIAL_MAX_DELAY_MS,
   WEAKENED_PRESET,
+  FILLER_EXCLUDED_CARD_IDS,
   type ResolvedSkillProfile,
 } from "../src/lib/server/bots";
+import { rollOffer, setDraftPoolOverrides } from "../src/engine/draft";
 import {
   UNRESTRICTED_NERF,
   aiChooseBuffActivation,
@@ -591,6 +593,57 @@ check(
 );
 console.log(
   `social delay: ${HOUSE_SOCIAL_MIN_DELAY_MS / 1000}-${HOUSE_SOCIAL_MAX_DELAY_MS / 1000}s, deterministic per request, jittered across requests`,
+);
+
+// ---------------------------------------------------------------------------
+// 9. Chess Diff is never drafted in a bot-vs-bot filler game.
+//
+// Chess Diff (id "chess_diff", tier 6) is a board-rewriting card that breaks
+// spectator reconstruction, so worker.ts folds FILLER_EXCLUDED_CARD_IDS into a
+// filler match's draft-pool `off` set (the same mechanism a moderator-disabled
+// card uses). Roll real offers through the engine's draft path at tier 6 (where
+// Chess Diff lives, and where it is 2x-weighted), across many seeds and BOTH
+// modes, with that override installed, and assert it is never offered. A control
+// run WITHOUT the override proves the roll path can and does produce it, so the
+// exclusion is doing real work. Human games install no such override and keep
+// the card.
+// ---------------------------------------------------------------------------
+
+const CHESS_DIFF_ID = "chess_diff";
+check(FILLER_EXCLUDED_CARD_IDS.includes(CHESS_DIFF_ID), "filler exclusion set contains chess_diff");
+
+/** Count how many of `samples` offers (per mode) contain Chess Diff when rolled
+ * at tier 6, with the given draft-pool override installed. Each sample builds a
+ * fresh draft state seeded distinctly, so draws are deterministic and
+ * independent. */
+function countChessDiffOffers(off: string[] | null, samples: number): number {
+  setDraftPoolOverrides(off ? { off } : null);
+  let seen = 0;
+  try {
+    for (const mode of ["buff", "nerf"] as const) {
+      for (let s = 0; s < samples; s++) {
+        const game = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+        enableDraftMode(game, 0x51d1ff + s * 2654435761, { mode });
+        // Vary the draft RNG per sample so each roll is an independent draw.
+        game.buffs!.rngState = ((0x9e3779b9 ^ (s * 2246822519)) >>> 0) || 1;
+        const offer = rollOffer(game.buffs!, "w", [6, 6], game.board);
+        if (offer?.cards.some((c) => c.id === CHESS_DIFF_ID)) seen++;
+      }
+    }
+  } finally {
+    setDraftPoolOverrides(null);
+  }
+  return seen;
+}
+
+const SAMPLES = 4_000;
+const withoutOverride = countChessDiffOffers(null, SAMPLES);
+const withOverride = countChessDiffOffers([...FILLER_EXCLUDED_CARD_IDS], SAMPLES);
+check(withoutOverride > 0, `control: chess_diff should appear without the filler override (saw ${withoutOverride})`);
+check(withOverride === 0, `filler override: chess_diff must NEVER be offered (saw ${withOverride})`);
+console.log(
+  `chess diff exclusion: tier-6 offers over ${SAMPLES} seeds x 2 modes -> ` +
+    `${withoutOverride} with the card in pool, ${withOverride} with the filler override (must be 0)`,
 );
 
 if (failures) {

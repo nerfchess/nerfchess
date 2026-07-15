@@ -1510,6 +1510,19 @@ export function pickHouseFillerSeek(random: (max: number) => number): { pool: st
   };
 }
 
+/** Card ids that must NEVER be drafted or played in a bot-vs-bot FILLER game.
+ * Chess Diff (id "chess_diff") pauses the running game and spawns a whole fresh
+ * game of chess on top of it (see its def in engine/buffs/library.ts and
+ * ChessDiffState in buff.ts): a board-rewriting mechanic that has caused
+ * spectator (TV) reconstruction problems. Filler games are pure lobby/TV
+ * decoration, so it is simply removed from their draft pool -- worker.ts folds
+ * these into the filler match's draft-pool override `off` set, exactly like a
+ * moderator-disabled card, so they are never OFFERED (hence never picked or
+ * cast) in a filler game. Human-vs-bot and human games are unaffected: this set
+ * is applied ONLY to bot-only filler matches, never to a human's match. The card
+ * itself is not touched globally -- it stays draftable everywhere else. */
+export const FILLER_EXCLUDED_CARD_IDS: readonly string[] = ["chess_diff"];
+
 // ---------------------------------------------------------------------------
 // Filler concurrency targets (owner spec): the Watch tab / TV should always
 // show a busy site, so the steady state is 40-55 SIMULTANEOUS bot-vs-bot games

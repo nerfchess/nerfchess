@@ -58,6 +58,7 @@ import {
   pickHouseSeek,
   pickHouseFillerSeek,
   pickHouseFillerPair,
+  FILLER_EXCLUDED_CARD_IDS,
   houseFillerSpawnDelayMs,
   houseSocialDelayMs,
   HOUSE_VS_HOUSE_FLOOR,
@@ -4800,6 +4801,15 @@ export class GameServer extends DurableObject<Env> {
         bots: { w: white.userId, b: black.userId },
       },
     );
+    // Bot-vs-bot filler must never draft/play Chess Diff (a board-rewriting card
+    // that breaks spectator reconstruction). Fold it into THIS match's draft-pool
+    // `off` set so it is never offered in a filler draft, exactly like a
+    // moderator-disabled card. This is the one path that applies the exclusion:
+    // human-vs-bot pickups (pairHumanWithHouse) and human games go through the
+    // same newHouseMatchRecord but keep the card, so only bot-only filler games
+    // are affected.
+    const off = new Set([...(match.cardOverrides?.off ?? []), ...FILLER_EXCLUDED_CARD_IDS]);
+    match.cardOverrides = { ...(match.cardOverrides ?? {}), off: [...off] };
     // Nerf mode opens with the nerf draft (the house seats pick like anyone
     // else); Buff mode starts outright.
     if (mode !== "buff") {
