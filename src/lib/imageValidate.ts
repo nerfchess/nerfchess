@@ -112,7 +112,7 @@ export function validateImageDataUrl(value: unknown): ImageValidation {
   const dims = readDimensions(mime, bytes);
   if (!dims || dims.width < 1 || dims.height < 1) return { ok: false, error: "That image could not be read." };
   if (dims.width > IMAGE_UPLOAD_MAX_DIM || dims.height > IMAGE_UPLOAD_MAX_DIM) {
-    return { ok: false, error: `Image too large — max ${IMAGE_UPLOAD_MAX_DIM}px per side.` };
+    return { ok: false, error: `Image too large: max ${IMAGE_UPLOAD_MAX_DIM}px per side.` };
   }
   return { ok: true, mime, width: dims.width, height: dims.height, bytes: bytes.length };
 }

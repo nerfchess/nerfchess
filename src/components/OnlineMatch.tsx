@@ -2946,12 +2946,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-gold animate-flicker" />
               </span>
               <span className="font-display text-xs text-parchment-200 sm:text-sm">
-                {genuinelySkipped ? "Your draft was skipped — " : ""}
+                {genuinelySkipped ? "Your draft was skipped. " : ""}
                 Waiting for{" "}
                 <span className="text-gold">{oppName}</span>{" "}
                 to finish drafting
                 <span className="waiting-ellipsis" aria-hidden />{" "}
-                <span className="text-parchment-300">— you&rsquo;re not stuck</span>
+                <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
                 {/* Only claim "on their clock" once the free window has truly
                     expired; before then both clocks are still paused. */}
                 <span className="smallcaps ml-2 text-[10px] text-parchment-400">

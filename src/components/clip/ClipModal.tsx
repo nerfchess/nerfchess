@@ -244,7 +244,7 @@ export function ClipModal({
           </button>
         </div>
         <p className="mt-1 text-xs leading-snug text-parchment-400">
-          A stylized replay of the last moves — captures, spawns, and signature plays are
+          A stylized replay of the last moves: captures, spawns, and signature plays are
           re-drawn in the clip&apos;s own look, not the full in-game effects.
         </p>
 
@@ -377,7 +377,7 @@ export function ClipModal({
           </>
         ) : (
           <div className="mt-4 border border-white/10 bg-white/[0.02] p-4 text-sm text-parchment-300">
-            This game&apos;s final positions can&apos;t be replayed for a clip — a card rewrote
+            This game&apos;s final positions can&apos;t be replayed for a clip: a card rewrote
             the board and no stored positions cover these moves.
           </div>
         )}

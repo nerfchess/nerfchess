@@ -465,7 +465,7 @@ const pliesTitle = (left: string): string | undefined => {
   const m = /(\d+)\s*turn/i.exec(left);
   if (!m) return undefined;
   const n = parseInt(m[1], 10);
-  return `${left} — about ${n * 2} half-move${n * 2 === 1 ? "" : "s"} (plies) of game time`;
+  return `${left}, about ${n * 2} half-move${n * 2 === 1 ? "" : "s"} (plies) of game time`;
 };
 
 // Exported: the game surfaces also feed these rows to the board-wide splash

@@ -432,17 +432,17 @@ export const PT_TIME_CARDS: Buff[] = [
           b.state.squares == null,
       );
       if (eligible.length === 0) {
-        inst.state.outcome = "No other card to bet — nothing happens";
+        inst.state.outcome = "No other card to bet, nothing happens";
         return;
       }
       const stake = eligible[api.rng.int(eligible.length)];
       const stakeName = buffRegistry.byId[stake.id]?.name ?? "a card";
       if (api.rng.int(2) === 0) {
         stake.tier = Math.min(8, stake.tier + 2) as Tier;
-        inst.state.outcome = `Heads — ${stakeName} upgraded to tier ${stake.tier}!`;
+        inst.state.outcome = `Heads: ${stakeName} upgraded to tier ${stake.tier}!`;
       } else {
         stake.tier = Math.max(1, stake.tier - 1) as Tier;
-        inst.state.outcome = `Tails — ${stakeName} knocked to tier ${stake.tier}`;
+        inst.state.outcome = `Tails: ${stakeName} knocked to tier ${stake.tier}`;
       }
     }),
   ),

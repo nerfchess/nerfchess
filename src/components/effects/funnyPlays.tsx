@@ -728,7 +728,7 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <Prop left="34%" top="32%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
           <g className="fnp-slam" style={d(delayMs + 580)}>
-            <WindowFrame title="draft.exe — picking..." bar="#39445c" body="#e8edf6" w={100} h={70} accent="#e84d5b">
+            <WindowFrame title="draft.exe picking..." bar="#39445c" body="#e8edf6" w={100} h={70} accent="#e84d5b">
               {/* the three cards they were about to pick from */}
               {[16, 42, 68].map((x, i) => (
                 <g key={x}>

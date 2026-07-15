@@ -212,7 +212,7 @@ export default function LeaderboardPage() {
         {rows && rows.length > 0 && (
           <p className="mt-3 text-xs text-parchment-400">
             <LaurelBadge rank={1} size={13} title="Top-10 honors" className="mr-1.5" />
-            Top 10 wear the laurel — a radiant crown for the champion, gold for second and
+            Top 10 wear the laurel: a radiant crown for the champion, gold for second and
             third, silver-brass to tenth. Laurelled players may also claim the exclusive 🏵️
             flair from their profile settings, for as long as their place holds.
           </p>

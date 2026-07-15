@@ -547,7 +547,7 @@ export const BRAINROT: Buff[] = [
       icon: "AirVent",
       name: "Frigo Camelo",
       description:
-        "The fridge-camel opens both doors: two of your pieces (never the king) are refrigerated — they cannot be captured for your opponent's next 2 turns, but each is frozen solid for 1 of your turns while it defrosts.",
+        "The fridge-camel opens both doors: two of your pieces (never the king) are refrigerated: they cannot be captured for your opponent's next 2 turns, but each is frozen solid for 1 of your turns while it defrosts.",
       tier: 5,
       category: "protection",
       flavor: "Crisp. Chilled. Slightly humming.",
@@ -627,7 +627,7 @@ export const BRAINROT: Buff[] = [
       icon: "Dog",
       name: "Chill Guy",
       description:
-        "He's just a chill guy: every freeze and every walnut currently stuck to YOUR pieces melts off, and you take 1 extra move. A free action — lowkey he doesn't even care.",
+        "He's just a chill guy: every freeze and every walnut currently stuck to YOUR pieces melts off, and you take 1 extra move. A free action. Lowkey he doesn't even care.",
       tier: 2,
       category: "tempo",
       boon: true,
@@ -693,7 +693,7 @@ export const BRAINROT: Buff[] = [
       icon: "Toilet",
       name: "Skibidi Flush",
       description:
-        "The porcelain vortex opens: up to 3 chosen enemy pieces (never the king) are flushed back to their home squares — or, if home is taken, to the nearest empty square toward home. Nothing is captured; everything is humiliated.",
+        "The porcelain vortex opens: up to 3 chosen enemy pieces (never the king) are flushed back to their home squares (or, if home is taken, to the nearest empty square toward home). Nothing is captured; everything is humiliated.",
       tier: 5,
       category: "tempo",
       flavor: "Skibidi dop dop dop yes yes.",

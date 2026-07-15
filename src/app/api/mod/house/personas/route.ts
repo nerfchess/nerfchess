@@ -218,7 +218,7 @@ export async function POST(request: Request) {
       .run();
   } catch {
     return NextResponse.json(
-      { error: "Could not save — that username may already be in use." },
+      { error: "Could not save. That username may already be in use." },
       { status: 409 },
     );
   }

@@ -371,7 +371,7 @@ function TvView() {
                  pick another), but the board area shows a brief notice. */
               <div className="grid aspect-square w-full place-items-center plate">
                 <p className="max-w-xs px-6 text-center text-sm text-parchment-400">
-                  Couldn&apos;t tune in to that game — retrying automatically. You can
+                  Couldn&apos;t tune in to that game. Retrying automatically. You can
                   also pick another game from the list.
                 </p>
               </div>

@@ -62,7 +62,7 @@ export function Podium({
 
   return (
     <section
-      aria-label="Podium — top three"
+      aria-label="Podium: top three"
       className={"mt-6 plate " + accent.border + " " + accent.shadow + " px-3 sm:px-6 pt-4 pb-0 overflow-hidden"}
     >
       <div className="flex items-center justify-center gap-2 pb-2">
