@@ -14,7 +14,7 @@ test("home page renders", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Nerf Chess/i);
   // One dominant CTA into the lobby, plus the two secondary ways in.
-  await expect(page.getByRole("link", { name: /play nerf chess/i })).toBeVisible({
+  await expect(page.getByRole("link", { name: /open lobby/i })).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.getByRole("link", { name: /^play online$/i })).toBeVisible();
