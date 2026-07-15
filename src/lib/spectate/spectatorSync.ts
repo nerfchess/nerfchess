@@ -392,6 +392,93 @@ export function sweepSpectatorSync(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Consumer routing helpers
+//
+// Thin adapters that let a production consumer (the full spectator view, the TV
+// featured board) route its live MPSession frames through the reducer above
+// without re-implementing the ordering contract. The consumer keeps its own
+// board model; these only decide WHICH payloads to apply, in order, and when to
+// re-watch. The payload is opaque here (the caller casts it back to its event).
+// ---------------------------------------------------------------------------
+
+export interface SpectatorRoute {
+  /** Payloads the caller must apply IN ORDER (the events it stored on the
+   *  frames). Empty when the frame was buffered / deduped / dropped. */
+  apply: unknown[];
+  /** True when the caller must re-issue session.watch() so a fresh wstart
+   *  replaces state wholesale (a gap timed out, the buffer overflowed, or the
+   *  server's version drifted). */
+  resync: boolean;
+}
+
+/**
+ * Route ONE live frame. A frame WITHOUT an envelope (an older server, or a
+ * player frame) predates the ordered protocol, so it is applied directly,
+ * bypassing the reducer -- plain non-spectator play never regresses. A frame
+ * with an envelope is sequenced/deduped/gap-checked; the returned `apply` is
+ * the ordered run to apply (one frame plus any buffered run it unblocked), and
+ * `resync` asks the caller to re-watch.
+ */
+export function routeSpectatorLiveFrame(
+  state: SpectatorSyncState,
+  env: SpectatorEnvelope | undefined,
+  payload: unknown,
+  config: SpectatorSyncConfig = DEFAULT_SYNC_CONFIG,
+  now: number = Date.now(),
+): SpectatorRoute {
+  if (!env) return { apply: [payload], resync: false };
+  const r = applySpectatorEnvelope(state, { env, payload }, config, now);
+  if (r.signal === "resync" || r.signal === "incompatible_version") {
+    return { apply: [], resync: true };
+  }
+  return { apply: r.apply.map((f) => f.payload), resync: false };
+}
+
+/**
+ * Adopt a wstart as the authoritative baseline. The caller has already rebuilt
+ * its board from the wstart payload directly, so the snapshot frame itself is
+ * dropped from the returned run; only the DRAINED buffered live frames (events
+ * that beat the snapshot) are returned to apply on top.
+ */
+export function routeSpectatorBaseline(
+  state: SpectatorSyncState,
+  env: SpectatorEnvelope,
+): SpectatorRoute {
+  const r = applySpectatorSnapshot(state, { env, payload: null });
+  return { apply: r.apply.slice(1).map((f) => f.payload), resync: false };
+}
+
+/**
+ * Build the "snapshot" envelope a wstart implies from its ordered-protocol
+ * fields (seq / schemaVersion / replayVersion / publicHash). Returns null when
+ * those fields are absent (a legacy server) or the schema is unsupported, in
+ * which case the caller bypasses the reducer entirely and keeps the moves-only
+ * bootstrap, exactly as before.
+ */
+export function spectatorBaselineEnvelope(setup: {
+  id: string;
+  seq?: number;
+  schemaVersion?: number;
+  replayVersion?: number;
+  publicHash?: string;
+}): SpectatorEnvelope | null {
+  if (setup.seq == null || setup.schemaVersion == null || setup.replayVersion == null) {
+    return null;
+  }
+  if (setup.schemaVersion !== PUBLIC_SNAPSHOT_VERSION) return null;
+  return {
+    gameId: setup.id,
+    schemaVersion: setup.schemaVersion,
+    replayVersion: setup.replayVersion,
+    stateRevision: setup.seq,
+    seq: setup.seq,
+    type: "snapshot",
+    publicHash: setup.publicHash ?? "",
+    ts: Date.now(),
+  };
+}
+
 export interface ParityCheckResult {
   ok: boolean;
   diag?: SpectatorSyncDiag;

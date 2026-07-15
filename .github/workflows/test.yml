@@ -59,6 +59,12 @@ jobs:
       - name: Replay / spectate reconstruction tests
         run: node scripts/test-replay-spectate.cjs
 
+      # Archived-draft-record replay: the public-filtered archive stream (with a
+      # board-rewriting card) rebuilds every ply of the live board via the exact
+      # draftOnline client path, and raw grant/reroll actions never leak.
+      - name: Archived draft record replay tests
+        run: npm run test:archive-replay
+
       - name: TV / spectator public-projection tests
         run: npm run test:tv-spectator
 

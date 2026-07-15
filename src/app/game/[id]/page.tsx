@@ -42,7 +42,18 @@ import {
   MPStart,
   MPWatchStart,
   saveOnlineSeat,
+  type MPEvent,
+  type SpectatorEnvelope,
 } from "@/lib/multiplayer";
+import {
+  beginWatch,
+  createSpectatorSync,
+  routeSpectatorBaseline,
+  routeSpectatorLiveFrame,
+  spectatorBaselineEnvelope,
+  sweepSpectatorSync,
+} from "@/lib/spectate/spectatorSync";
+import type { DraftMode } from "@/engine/buff";
 
 type Mode =
   | { kind: "loading" }
@@ -71,6 +82,12 @@ interface ReplayGame {
   black_rating_after: number | null;
   started_at: number;
   completed_at: number;
+  // Draft games only: the spectator-safe public action stream from the archived
+  // draft record, so the replay reconstructs board rewrites exactly like a live
+  // spectator. Absent for classic games and legacy (recordless) rows, which keep
+  // the moves-only replay + truncation notice.
+  dtActions?: MPDraftAction[];
+  mode?: DraftMode;
 }
 
 function withResponseTimeout<T>(promise: Promise<T>, message: string, ms = 10000): Promise<T> {
@@ -514,6 +531,10 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // and every other card gets the category cast spectacle.
   const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
   const sigKeyRef = useRef(0);
+  // Deterministic spectator-sync reducer for this watch. Sequenced frames route
+  // through it (ordering / dedupe / gap -> resync so one dropped frame can never
+  // freeze the board); frames with no envelope (older server) bypass it.
+  const syncRef = useRef(createSpectatorSync());
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
     setSignatureCard({ id, key: ++sigKeyRef.current });
@@ -528,7 +549,33 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   };
 
   useEffect(() => {
-    const off = session.on((e) => {
+    // Adopt the wstart as the ordered-sync baseline when it carries the
+    // ordered-protocol fields (seq / schemaVersion / replayVersion / publicHash).
+    // The board was already built from `setup` above, so no frames drain here on
+    // a fresh mount. A legacy wstart leaves the sync unbaselined so every frame
+    // bypasses the reducer (behavior unchanged). This component remounts on every
+    // fresh wstart (outer page's watchGen key), so the baseline is re-adopted per
+    // authoritative snapshot.
+    const baseEnv = spectatorBaselineEnvelope(setup);
+    if (baseEnv) {
+      beginWatch(syncRef.current, setup.id);
+      routeSpectatorBaseline(syncRef.current, baseEnv);
+    }
+    // A gap/overflow/version-drift resync re-issues the watch; the server's fresh
+    // wstart then remounts this view (watchGen) with wholesale-replaced state.
+    let resyncing = false;
+    const resyncSpectator = () => {
+      if (resyncing) return;
+      resyncing = true;
+      session
+        .watch(setup.id)
+        .catch(() => {})
+        .finally(() => {
+          resyncing = false;
+        });
+    };
+
+    const applyEvent = (e: MPEvent) => {
       if (e.type === "move") {
         setUciMoves((m) => (e.move.ply === m.length + 1 ? [...m, e.move.u] : m));
         setWhiteMs(e.move.wc);
@@ -582,6 +629,16 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           fireHookSignatures(g);
           setDraftGame({ ...g });
         }
+      } else if (e.type === "draft-diff-flag") {
+        // A Chess Diff clock flag: resolve the diff against the flagged color
+        // and record it so history review reproduces the restored board.
+        const g = draftGameRef.current;
+        if (g?.buffs) {
+          const action: MPDraftAction = { ply: g.board.history.length, color: e.color, a: "diffFlag" };
+          applyDraftAction(g, action);
+          setDtActions((prev) => [...prev, action]);
+          setDraftGame({ ...g });
+        }
       } else if (e.type === "draft-state") {
         // Spectator-filtered re-sync (identity reveals, effect timers).
         const g = draftGameRef.current;
@@ -624,8 +681,30 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       } else if (e.type === "watch-start") {
         setReconnecting(false);
       }
+    };
+
+    const off = session.on((e) => {
+      // Sequenced live frames route through the reducer (dedupe / order / gap ->
+      // resync); frames without an envelope (control frames, older servers)
+      // bypass it and apply directly.
+      const env = (e as { env?: SpectatorEnvelope }).env;
+      const route = routeSpectatorLiveFrame(syncRef.current, env, e);
+      if (route.resync) {
+        resyncSpectator();
+        return;
+      }
+      for (const p of route.apply) applyEvent(p as MPEvent);
     });
-    return off;
+    // Sweep a gap that never fills so one dropped frame can never freeze the
+    // board: a stranded gap past the reorder window resyncs onto a fresh wstart.
+    const sweepTimer = window.setInterval(() => {
+      const swept = sweepSpectatorSync(syncRef.current);
+      if (swept?.signal === "resync") resyncSpectator();
+    }, 1000);
+    return () => {
+      off();
+      window.clearInterval(sweepTimer);
+    };
     // Subscribe once per session; the signature-firing helpers are recreated
     // every render but must not re-register the listener.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1093,16 +1172,37 @@ function SpectatorChat({
 
 function ReplayView({ game }: { game: ReplayGame }) {
   const uciMoves = useMemo(() => (game.moves ? game.moves.split(" ").filter(Boolean) : []), [game.moves]);
-  const { history } = useMemo(() => replayUci(uciMoves), [uciMoves]);
-  // Archived draft games can hold moves a plain replay cannot reproduce (a
-  // card rewrote the board mid-game). replayUci stops at the first such move;
-  // say so honestly instead of showing a silently wrong board.
-  const truncated = history.length < uciMoves.length;
+  // Draft games archive a full public action record: reconstruct through the
+  // exact engine path a live spectator uses (buildSpectatorDraftGame), so board
+  // rewrites (summons, removals, teleports, drops, timed losses) are reproduced
+  // and the whole game replays. Classic and legacy (recordless) rows keep the
+  // moves-only replay.
+  const dtActions = game.dtActions;
+  const isDraft = Array.isArray(dtActions);
+  const replayed = useMemo(() => replayUci(uciMoves), [uciMoves]);
+  const draftHead = useMemo(
+    () => (isDraft ? buildSpectatorDraftGame(uciMoves, dtActions ?? [], undefined, game.mode) : null),
+    [isDraft, uciMoves, dtActions, game.mode],
+  );
+  const history = isDraft && draftHead ? draftHead.board.history : replayed.history;
+  // The truncation notice is now ONLY a fallback for legacy rows with no record:
+  // a draft game with the record replays in full, so it never truncates.
+  const truncated = !isDraft && replayed.history.length < uciMoves.length;
   const [historyPly, setHistoryPly] = useState<number>(history.length);
   const [pgnCopied, setPgnCopied] = useState(false);
   // Same neutral result panel as the live spectator, shown over the replay.
   const [showResult, setShowResult] = useState(true);
-  const displayBoard = useMemo(() => boardAtPly(history, historyPly), [history, historyPly]);
+  // A reviewed past ply of a draft game is rebuilt from the record through the
+  // engine (buildSpectatorDraftGameAtPly), so scrubbing works PAST a rewrite; a
+  // ply the record can't reach falls back to the head board.
+  const displayBoard = useMemo(() => {
+    if (isDraft && draftHead) {
+      if (historyPly >= history.length) return draftHead.board;
+      const g = buildSpectatorDraftGameAtPly(uciMoves, dtActions ?? [], historyPly, game.mode);
+      return g.board.history.length === historyPly ? g.board : draftHead.board;
+    }
+    return boardAtPly(history, historyPly);
+  }, [isDraft, draftHead, history, historyPly, uciMoves, dtActions, game.mode]);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
 
   const players: MPPlayers = {
