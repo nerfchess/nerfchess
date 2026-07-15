@@ -1139,16 +1139,25 @@ export class MPSession {
     await this.connect();
     return new Promise((resolve, reject) => {
       let timer = 0;
+      // Absolute ceiling on how long watch() may wait, regardless of how many
+      // `watch-pending` acks arrive. A replica that only ever emits `wpending`
+      // (a cold or wedged arena that never streams a `wstart`) used to re-arm the
+      // deadline forever and never reject, stranding the TV tune-in on an eternal
+      // spinner. Once this deadline passes we reject with a timeout so the caller
+      // can fail over to another game.
+      const hardDeadline = Date.now() + 20000;
       // (Re)arm the timeout. A `watch-pending` ack (the DO registered the watch
       // but the arena replica isn't loaded yet) counts as progress and extends
       // the deadline, so a slow-to-stream arena game gets more time while a
-      // genuinely stuck watch still fails.
+      // genuinely stuck watch still fails. The extension is clamped to the
+      // absolute ceiling so re-arming can never postpone the reject indefinitely.
       const arm = (ms: number) => {
         if (timer) window.clearTimeout(timer);
+        const capped = Math.min(ms, Math.max(0, hardDeadline - Date.now()));
         timer = window.setTimeout(() => {
           off();
           reject(new Error("The game server did not respond in time."));
-        }, ms);
+        }, capped);
       };
       const off = this.on((event) => {
         if (event.type === "watch-start") {
