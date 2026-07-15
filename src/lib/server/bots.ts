@@ -1523,23 +1523,37 @@ export const HOUSE_VS_HOUSE_FLOOR = 40;
 /** Hard cap on concurrent bot-vs-bot games (natural variance runs 40-55). */
 export const HOUSE_VS_HOUSE_CAP = 55;
 /** Spawn-ahead hysteresis: the spawner keeps ramping quickly until this many
- * games ABOVE the floor are live, so a normal trickle of games ending never
- * drops the count below the floor before the next spawn lands. */
-export const HOUSE_FILLER_SPAWN_BUFFER = 4;
+ * games ABOVE the floor are live, so the count settles comfortably above the
+ * floor and a normal trickle of games ending never drops it below the floor
+ * before the next spawn lands. Sized well above the floor (not just +4): filler
+ * games end in short bursts (a wave spawned during ramp-up flags out around the
+ * same time), so the steady band must sit high enough that a whole burst ending
+ * still leaves the count above 40. */
+export const HOUSE_FILLER_SPAWN_BUFFER = 10;
+
+/** How many times slower a bot-vs-bot filler game paces its moves than a bot
+ * facing a human (passed to houseThinkMs as thinkMultiplier). Filler is
+ * lobby/TV decoration; slowing it keeps 40+ concurrent games affordable on the
+ * single-threaded DO. Exported so worker.ts (the spawner) and the sim (which
+ * derives realistic filler game lifetimes from it) share one source of truth. */
+export const HOUSE_FILLER_THINK_MULTIPLIER = 8;
 
 /** Delay until the NEXT filler spawn given how many bot-vs-bot games are live
  * after this one. Below floor+buffer: a brisk 1.5-3s stagger, so a cold start
- * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick,
- * never a 40-game burst) and a dip recovers within seconds. At/above: a lazy
- * 8-15s spacing that roughly matches the rate games end at, so the population
- * hovers in the 40-55 band instead of pinning the cap. */
+ * ramps to the 40-game floor over ~2 minutes (one bounded spawn per tick, never
+ * a 40-game burst) and a dip recovers within seconds. At/above: a moderate
+ * 4-8s spacing -- fast enough to outpace the rate blitz filler games end at
+ * (they flag or finish in a few minutes, so turnover across ~50 live games is
+ * brisk), keeping the population pressed up into the high-40s/low-50s band
+ * rather than bleeding below the floor between spawns. The seek reserve and the
+ * seat/game caps in worker.ts bound the top of the band. */
 export function houseFillerSpawnDelayMs(
   liveFillerGames: number,
   random: (max: number) => number,
 ): number {
   return liveFillerGames < HOUSE_VS_HOUSE_FLOOR + HOUSE_FILLER_SPAWN_BUFFER
     ? 1500 + random(1501)
-    : 8000 + random(7001);
+    : 4000 + random(4001);
 }
 
 // ---------------------------------------------------------------------------
@@ -1548,8 +1562,23 @@ export function houseFillerSpawnDelayMs(
 
 /** Move pacing: uniform 1-4s, with roughly 1 move in 10 tanking 6-10s. The
  * delay is clamped hard once the bot's own clock runs low so pacing can never
- * flag a bot that still has bank left. */
-export function houseThinkMs(random: (max: number) => number, myClockMs: number, timeSec: number): number {
+ * flag a bot that still has bank left.
+ *
+ * `thinkMultiplier` (default 1) slows the BASE think for bot-vs-bot filler games
+ * (worker.ts houseFillerThinkMultiplier), keeping 40+ of them affordable on the
+ * single-threaded DO. It is applied to the base delay HERE, BEFORE the low-clock
+ * clamps below, so a slowed filler bot is still bounded by its own remaining
+ * clock and cannot overthink itself into a premature flag. (The multiply used to
+ * live at the call site, AFTER the clamp, so it multiplied the clamp too -- a
+ * filler bot's "safe" move could reach ~1.6x its remaining clock and it flagged
+ * out within a handful of moves, collapsing steady-state concurrency far below
+ * the floor.) */
+export function houseThinkMs(
+  random: (max: number) => number,
+  myClockMs: number,
+  timeSec: number,
+  thinkMultiplier = 1,
+): number {
   const hasClock = timeSec > 0;
   // Fast time controls (1+0, 2+1, 3+0 and the like, base <= 3 min): the bot
   // answers snappily in 1-3s so a bullet/blitz game against a bot feels live and
@@ -1560,6 +1589,10 @@ export function houseThinkMs(random: (max: number) => number, myClockMs: number,
   if (fast) delay = 1000 + random(2001); // 1-3s
   else if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
   else delay = 6000 + random(4001); // 6-10s
+
+  // Filler pacing slows the base think, but is still bounded by the clock clamps
+  // below, so it never causes a premature flag.
+  if (thinkMultiplier > 1) delay = Math.round(delay * thinkMultiplier);
 
   if (hasClock) {
     if (myClockMs < 10_000) delay = Math.min(delay, 300 + random(501));

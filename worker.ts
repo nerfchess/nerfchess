@@ -62,6 +62,7 @@ import {
   houseSocialDelayMs,
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
+  HOUSE_FILLER_THINK_MULTIPLIER,
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
@@ -616,9 +617,14 @@ const houseFillerMaxDeferMs = 10 * 1000;
 // searches per second in total (and none at all when the remote engine is on)
 // while each board still visibly plays for a spectator. Filler draws from the
 // longer blitz pools (pickHouseFillerSeek) so the slow pace does not flag a
-// game within its first few moves; if a filler bot still runs out of time it
-// simply flags — a normal chess result for a game that is never recorded.
-const houseFillerThinkMultiplier = 8;
+// game within its first few moves. The multiplier is passed INTO houseThinkMs
+// (as thinkMultiplier) so it is applied before the low-clock clamps and can
+// never push a filler bot past its own clock into a premature flag; if a filler
+// bot genuinely runs low it simply plays faster, and only truly runs out of
+// time after a full game — a normal chess result for a game that is never
+// recorded. Sourced from the shared constant so the sim derives filler game
+// lifetimes from the exact value the spawner uses.
+const houseFillerThinkMultiplier = HOUSE_FILLER_THINK_MULTIPLIER;
 // How many filler actions one tick may take AFTER every due human-facing
 // action has been served and only while the shared per-tick action/CPU budget
 // has room. With 40+ live filler games the old 1/tick throughput could not
@@ -3585,8 +3591,15 @@ export class GameServer extends DurableObject<Env> {
     if (match.botActAt) return;
     const clocks = this.currentClocks(match, now);
     const grace = this.movesByColor(match, turn) === 0 ? firstMoveGraceMs : 0;
-    let think = houseThinkMs(randomInt, clocks[turn] + grace, match.setup.timeSec);
-    if (this.isBotOnlyMatch(match)) think *= houseFillerThinkMultiplier;
+    // Filler (bot-only) games pace slower via the multiplier passed INTO
+    // houseThinkMs, so the slow pace is still bounded by the bot's own clock and
+    // never flags it early (the multiply used to happen here, after the clamp).
+    const think = houseThinkMs(
+      randomInt,
+      clocks[turn] + grace,
+      match.setup.timeSec,
+      this.isBotOnlyMatch(match) ? houseFillerThinkMultiplier : 1,
+    );
     match.botActAt = now + think;
   }
 
