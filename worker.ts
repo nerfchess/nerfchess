@@ -34,6 +34,8 @@ import {
   type HouseSkill,
   type BotDifficulty,
   ensureHouseUsers,
+  countSeededHouseUsers,
+  HOUSE_ROSTER_SIZE,
   houseDraftThinkMs,
   houseNerfPickIndex,
   housePersona,
@@ -3856,7 +3858,13 @@ export class GameServer extends DurableObject<Env> {
     if (!db) return;
     if (!this.houseSeeded) {
       try {
-        if (!(await this.ctx.storage.get<number>(houseSeededKey))) {
+        // Self-healing account seeding. The old gate was a one-time key, so when
+        // the roster later grew (60 -> 210) the new personas were never created
+        // and showed as accountless "ghost" profiles. Instead, count how many of
+        // the CURRENT roster actually have an account and (re)create any missing
+        // ones — INSERT OR IGNORE, so it only ever fills gaps. Runs at most once
+        // per cold start (this.houseSeeded), and only touches D1 when short.
+        if ((await countSeededHouseUsers(db)) < HOUSE_ROSTER_SIZE) {
           await ensureHouseUsers(db);
           await this.ctx.storage.put(houseSeededKey, now);
         }
