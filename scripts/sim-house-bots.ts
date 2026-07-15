@@ -14,17 +14,24 @@ import {
   HOUSE_ROSTER,
   HOUSE_SKILL_PROFILES,
   HOUSE_SKILLS,
+  HOUSE_WINDOW_STEP,
   HouseSkill,
+  activeHouseRoster,
   houseDraftThinkMs,
   houseNerfPickIndex,
   houseSeedRating,
+  houseSocialDelayMs,
   houseThinkMs,
+  houseWindowStart,
+  pickHouseFillerPair,
   pickHouseMove,
   pickHouseSeek,
   resolveSkillProfile,
   bakedResolvedProfile,
   sanitizeResolvedProfile,
   parseSkillOverrides,
+  HOUSE_SOCIAL_MIN_DELAY_MS,
+  HOUSE_SOCIAL_MAX_DELAY_MS,
   WEAKENED_PRESET,
   type ResolvedSkillProfile,
 } from "../src/lib/server/bots";
@@ -331,6 +338,116 @@ if (process.argv.includes("--roundrobin")) {
   }
   console.log("  (indicative — small sample; raise RR_GAMES to tighten)");
 }
+
+// ---------------------------------------------------------------------------
+// 6. Fair bot-vs-bot pairing + roster rotation coverage.
+//
+// The lobby/TV filler pairs bots to play each other. Weighting selection toward
+// the fewest games played must (a) spread games across the roster so no bot
+// lingers at zero, and (b) reach EVERY persona over time — including ones
+// outside any single day's active window — which relies on the daily window
+// rotation visiting every start offset. Both are asserted here.
+// ---------------------------------------------------------------------------
+
+// (a) Rotation coverage: the window step is coprime with the roster, so over a
+// full rotation every start offset — and therefore every persona — is visited.
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+check(gcd(HOUSE_WINDOW_STEP, HOUSE_ROSTER.length) === 1, "window step coprime with roster (all offsets reachable)");
+const starts = new Set<number>();
+for (let d = 0; d < HOUSE_ROSTER.length; d++) starts.add(houseWindowStart(d));
+check(starts.size === HOUSE_ROSTER.length, "rotation visits every window start over a full cycle");
+const everSeen = new Set<string>();
+for (let d = 0; d < HOUSE_ROSTER.length; d++) {
+  for (const p of activeHouseRoster(60, d)) everSeen.add(p.userId);
+}
+check(everSeen.size === HOUSE_ROSTER.length, "every persona rotates into the active window within one cycle");
+console.log(
+  `rotation: step ${HOUSE_WINDOW_STEP} covers all ${starts.size}/${HOUSE_ROSTER.length} offsets; ` +
+    `every persona reachable in the active window`,
+);
+
+// (b) Fair spread: simulate many filler pairings, advancing the daily active
+// window like production, and confirm the per-bot game counts converge (min > 0,
+// and a tight min/median/max) instead of a few bots hogging games. Compare
+// against a UNIFORM-random control on the same schedule to show the weighting
+// helps.
+const WINDOW_SIZE = 90; // a mid-range daily active window
+const PAIRS_PER_DAY = 40; // filler games spawned per simulated day
+const DAYS = 420; // two full roster rotations
+
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function simulateSchedule(weighted: boolean): Map<string, number> {
+  const games = new Map<string, number>();
+  for (const p of HOUSE_ROSTER) games.set(p.userId, 0);
+  const gamesOf = (id: string) => games.get(id) ?? 0;
+  for (let day = 0; day < DAYS; day++) {
+    const window = activeHouseRoster(WINDOW_SIZE, day);
+    for (let k = 0; k < PAIRS_PER_DAY; k++) {
+      let pair: readonly [(typeof HOUSE_ROSTER)[number], (typeof HOUSE_ROSTER)[number]] | null;
+      if (weighted) {
+        pair = pickHouseFillerPair(window, gamesOf, random);
+      } else {
+        // Uniform control: two distinct random personas from the same window.
+        const i = random(window.length);
+        let j = random(window.length);
+        if (j === i) j = (j + 1) % window.length;
+        pair = [window[i], window[j]];
+      }
+      if (!pair) continue;
+      for (const p of pair) games.set(p.userId, (games.get(p.userId) ?? 0) + 1);
+    }
+  }
+  return games;
+}
+
+const weighted = [...simulateSchedule(true).values()];
+const uniform = [...simulateSchedule(false).values()];
+const wMin = Math.min(...weighted);
+const wMax = Math.max(...weighted);
+const wMed = median(weighted);
+const uMin = Math.min(...uniform);
+const uMax = Math.max(...uniform);
+const uMed = median(uniform);
+console.log(
+  `fair pairing (weighted 1/(1+games), ${DAYS} days x ${PAIRS_PER_DAY} pairs, window ${WINDOW_SIZE}):`,
+);
+console.log(`  weighted -> min ${wMin}, median ${wMed}, max ${wMax}  (spread ${wMax - wMin})`);
+console.log(`  uniform  -> min ${uMin}, median ${uMed}, max ${uMax}  (spread ${uMax - uMin})`);
+// Every persona must have played (no leaderboard zeros)...
+check(wMin > 0, "weighted pairing: every bot played at least one game");
+// ...counts stay in a tight band around the median (no runaway hogging)...
+check(wMax - wMin <= wMed, `weighted spread ${wMax - wMin} should be <= median ${wMed}`);
+// ...and the weighting is at least as even as uniform random on the same schedule.
+check(wMax - wMin <= uMax - uMin, "weighted spread no wider than uniform control");
+
+// ---------------------------------------------------------------------------
+// 7. Bot social-response delay (friend requests + direct challenges).
+// ---------------------------------------------------------------------------
+
+for (let i = 0; i < 20_000; i++) {
+  const d = houseSocialDelayMs(`challenge:${i}:${random(1_000_000_000)}`);
+  check(
+    d >= HOUSE_SOCIAL_MIN_DELAY_MS && d <= HOUSE_SOCIAL_MAX_DELAY_MS,
+    `social delay ${d}ms out of range`,
+  );
+}
+// Deterministic per seed (the poll must compute the same deadline every tick).
+check(houseSocialDelayMs("friend:a:b:123") === houseSocialDelayMs("friend:a:b:123"), "social delay deterministic");
+check(
+  houseSocialDelayMs("friend:a:b:123") !== houseSocialDelayMs("friend:a:b:124") ||
+    houseSocialDelayMs("friend:a:b:125") !== houseSocialDelayMs("friend:a:b:126"),
+  "social delay varies by seed (jittered)",
+);
+console.log(
+  `social delay: ${HOUSE_SOCIAL_MIN_DELAY_MS / 1000}-${HOUSE_SOCIAL_MAX_DELAY_MS / 1000}s, deterministic per request, jittered across requests`,
+);
 
 if (failures) {
   console.error(`\n${failures} check(s) FAILED`);

@@ -832,10 +832,13 @@ export function dailyHouseCount(dayIndex: number): number {
 }
 
 // The rotating window start for a day. Shared by the active and online windows so
-// the active set is always a prefix of the online set. Step 31 is coprime with a
-// 210-deep roster, so all offsets are visited over time.
-function houseWindowStart(dayIndex: number): number {
-  return (Math.floor(dayIndex) * 31) % HOUSE_ROSTER.length;
+// the active set is always a prefix of the online set. The step is coprime with a
+// 210-deep roster (see HOUSE_WINDOW_STEP), so all offsets are visited over time —
+// which is what guarantees EVERY persona rotates into the active window (and so
+// becomes eligible for filler games) rather than a fixed subset always playing.
+export const HOUSE_WINDOW_STEP = 31;
+export function houseWindowStart(dayIndex: number): number {
+  return (Math.floor(dayIndex) * HOUSE_WINDOW_STEP) % HOUSE_ROSTER.length;
 }
 
 /** A `size`-persona window starting at the day's rotating offset, wrapping the
@@ -957,6 +960,66 @@ export function pickHouseBotByDifficulty(
   const banded = free.filter((persona) => inBand[difficulty](persona.skill));
   const pool = banded.length ? banded : free;
   return pool[rand(pool.length)];
+}
+
+// ---------------------------------------------------------------------------
+// Fair bot-vs-bot pairing.
+//
+// Filler (house-vs-house) games are what keep TV and the lobby full, and every
+// persona holds a real leaderboard row, so a roster where the same handful of
+// bots play constantly while others sit at zero games reads as fake. Pairing is
+// therefore biased toward the personas with the FEWEST games played
+// (weight ~ 1/(1+games)): a bot that is behind is picked more often, so counts
+// converge over time and no bot lingers at zero. Rotation of the daily active
+// window (houseWindowStart) is what eventually brings EVERY persona — including
+// ones outside today's window — into the free pool this picks from.
+// ---------------------------------------------------------------------------
+
+// The second seat is kept within this many skill points of the first so a
+// filler game is never a wild rating mismatch on the leaderboard/TV. Falls back
+// to the whole pool when nobody sits in band.
+export const HOUSE_FILLER_SKILL_WINDOW = 300;
+
+/** Weighted pick of ONE index from `pool`, biased toward the lowest game count
+ * (weight = 1/(1+games)). Pure: the caller supplies the RNG (an integer draw in
+ * [0, n), matching randomInt / the sim's random). Returns -1 for an empty pool. */
+function weightedFewestGamesIndex(
+  pool: readonly HousePersona[],
+  gamesOf: (userId: string) => number,
+  rand: (max: number) => number,
+): number {
+  if (!pool.length) return -1;
+  const weights = pool.map((p) => 1 / (1 + Math.max(0, gamesOf(p.userId))));
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  if (!(total > 0)) return rand(pool.length);
+  // Scale a uniform draw in [0,1) up to [0,total). rand only yields integers, so
+  // draw against a large modulus for enough resolution.
+  let roll = (rand(1_000_000) / 1_000_000) * total;
+  for (let i = 0; i < pool.length; i++) {
+    roll -= weights[i];
+    if (roll < 0) return i;
+  }
+  return pool.length - 1;
+}
+
+/** Pick two DISTINCT personas for a bot-vs-bot filler game, both weighted toward
+ * the fewest games played so games spread evenly across the roster over time,
+ * with the second seat kept within a plausible skill band (HOUSE_FILLER_SKILL_
+ * WINDOW) of the first. Pure — the caller supplies the free pool, a games lookup,
+ * and the RNG. Returns null when fewer than two personas are free. */
+export function pickHouseFillerPair(
+  free: readonly HousePersona[],
+  gamesOf: (userId: string) => number,
+  rand: (max: number) => number,
+): [HousePersona, HousePersona] | null {
+  if (free.length < 2) return null;
+  const i = weightedFewestGamesIndex(free, gamesOf, rand);
+  const a = free[i];
+  const rest = free.filter((_, idx) => idx !== i);
+  const inBand = rest.filter((p) => Math.abs(p.skill - a.skill) <= HOUSE_FILLER_SKILL_WINDOW);
+  const pool = inBand.length ? inBand : rest;
+  const b = pool[weightedFewestGamesIndex(pool, gamesOf, rand)];
+  return [a, b];
 }
 
 // The rating a persona ADVERTISES is decoupled from its engine `skill`. The skill
@@ -1252,6 +1315,24 @@ export function houseThinkMs(random: (max: number) => number, myClockMs: number,
  * lock-in window (the server's deadline auto-resolve is the backstop). */
 export function houseDraftThinkMs(random: (max: number) => number): number {
   return 2000 + random(6001);
+}
+
+// House social responses — accepting a friend request or a direct challenge —
+// land after a short, humanlike beat rather than instantly: a bot that friended
+// or accepted you the millisecond you asked would read as a machine. ~8-20s
+// (centered near ~14s), jittered so a burst of requests never resolves in
+// lockstep.
+export const HOUSE_SOCIAL_MIN_DELAY_MS = 8_000;
+export const HOUSE_SOCIAL_MAX_DELAY_MS = 20_000;
+
+/** The accept delay for one bot social action, ~8-20s, derived DETERMINISTICALLY
+ * from a stable per-request seed (e.g. the request's ids + created_at). The
+ * server polls pending requests rather than holding a timer, so the delay must
+ * be the same on every tick — a fresh random each poll would keep moving the
+ * finish line. Compare `now - requestedAt >= houseSocialDelayMs(seed)`. */
+export function houseSocialDelayMs(seed: string): number {
+  const span = HOUSE_SOCIAL_MAX_DELAY_MS - HOUSE_SOCIAL_MIN_DELAY_MS + 1;
+  return HOUSE_SOCIAL_MIN_DELAY_MS + (nameHash(seed) % span);
 }
 
 // ---------------------------------------------------------------------------

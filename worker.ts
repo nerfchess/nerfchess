@@ -52,6 +52,8 @@ import {
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
+  pickHouseFillerPair,
+  houseSocialDelayMs,
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
@@ -492,6 +494,21 @@ const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
 // members, never disturbing rows a real user joined). See ensureOgClub.
 const houseOgClubSeededKey = "hp:og-club:v1";
 const houseNextFillerKey = "hp:nextFillerAt";
+// Bots answer social actions (friend requests, direct challenges) on a poll off
+// the alarm tick rather than an in-DO timer, throttled to this cadence so the
+// pending-row scan is bounded (a few small indexed reads at most every few
+// seconds, never per tick). Comfortably tighter than the ~8-20s accept delay, so
+// a request still resolves within its humanlike window.
+const houseNextSocialKey = "hp:nextSocialAt";
+const houseSocialIntervalMs = 3_000;
+// Hard bound on how many friend/challenge actions one social poll commits, so a
+// backlog can never turn a single tick into a long batch of writes on the
+// single-threaded DO; the rest drain on the next poll.
+const houseSocialMaxAcceptsPerTick = 4;
+// A direct challenge older than this is stale (mirrors CHALLENGE_TTL_MS in
+// src/lib/server/social.ts; kept as a local constant so the DO bundle never
+// imports the next/server-based social module).
+const houseChallengeTtlMs = 30 * 60 * 1000;
 // Slow heartbeat while at least one human socket is connected; with nobody
 // online there is no heartbeat and the DO goes idle between match deadlines.
 // Master switch for the house players (bots). Set to false to temporarily pause
@@ -894,8 +911,18 @@ export class GameServer extends DurableObject<Env> {
     at: number;
     byId: Map<string, Partial<Record<DraftMode, number>>>;
     identity: Map<string, { username: string; avatar: string | null }>;
+    // Total recorded games per persona (summed across the nerf+buff buckets):
+    // the leaderboard "games" figure, used to bias filler pairing toward the
+    // bots with the fewest games so no persona lingers at zero.
+    gamesById: Map<string, number>;
   } | null = null;
   private static readonly HOUSE_RATINGS_TTL_MS = 60_000;
+  // In-memory tally of filler (bot-vs-bot) games each persona has been seated in
+  // this isolate. Bot-vs-bot games are never recorded to the leaderboard, so this
+  // is what lets the fair-pairing bias spread TV/lobby appearances evenly within
+  // a session (folded onto the recorded-games figure). Resets on eviction, which
+  // is fine: it only steers selection, never correctness.
+  private houseFillerGames = new Map<string, number>();
   // Arena (Tier 2 / M2): bot-vs-bot games simulated on the OCI arena, kept in
   // memory only. Refreshed by /arena/games; entries older than the TTL are
   // ignored (self-heals if the arena crashes or the DO loses this on eviction).
@@ -3901,6 +3928,14 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
+    // Answer any pending friend requests / direct challenges addressed to a bot.
+    // Isolated so a social-table hiccup never touches queue/filler orchestration.
+    try {
+      await this.houseSocialTick(db, busy, now);
+    } catch (err) {
+      console.error("house social tick failed", err);
+    }
+
     const free = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter(
       (persona) => !busy.has(persona.userId) && !seeks.some((seek) => seek.userId === persona.userId),
     );
@@ -4001,10 +4036,24 @@ export class GameServer extends DurableObject<Env> {
       try {
         const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;
         if (now >= nextAt) {
-          const a = free.splice(randomInt(free.length), 1)[0];
-          const b = free.splice(randomInt(free.length), 1)[0];
-          await this.startHouseVsHouseGame(a, b, db);
-          await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
+          // Weight the pairing toward the personas with the fewest games played
+          // (recorded leaderboard games + this session's filler appearances), so
+          // filler spreads evenly across the roster and no bot lingers at zero
+          // rather than the same faces churning. The daily active-window rotation
+          // (activeHouseRoster) is what eventually feeds every persona into `free`.
+          const gamesOf = (id: string) =>
+            (liveInfo.gamesById.get(id) ?? 0) + (this.houseFillerGames.get(id) ?? 0);
+          const pair = pickHouseFillerPair(free, gamesOf, randomInt);
+          if (pair) {
+            const [a, b] = pair;
+            for (const p of pair) {
+              const idx = free.findIndex((f) => f.userId === p.userId);
+              if (idx >= 0) free.splice(idx, 1);
+              this.houseFillerGames.set(p.userId, (this.houseFillerGames.get(p.userId) ?? 0) + 1);
+            }
+            await this.startHouseVsHouseGame(a, b, db);
+            await this.ctx.storage.put(houseNextFillerKey, now + 4_000 + randomInt(6_000));
+          }
         }
       } catch (err) {
         console.error("house filler start failed", err);
@@ -4391,6 +4440,7 @@ export class GameServer extends DurableObject<Env> {
   private async houseLiveInfo(db: D1Database | null): Promise<{
     byId: Map<string, Partial<Record<DraftMode, number>>>;
     identity: Map<string, { username: string; avatar: string | null }>;
+    gamesById: Map<string, number>;
   }> {
     const now = Date.now();
     if (this.houseRatingsCache && now - this.houseRatingsCache.at < GameServer.HOUSE_RATINGS_TTL_MS) {
@@ -4398,6 +4448,7 @@ export class GameServer extends DurableObject<Env> {
     }
     const byId = new Map<string, Partial<Record<DraftMode, number>>>();
     const identity = new Map<string, { username: string; avatar: string | null }>();
+    const gamesById = new Map<string, number>();
     if (db) {
       try {
         const ids = HOUSE_ROSTER.map((p) => p.userId);
@@ -4405,11 +4456,11 @@ export class GameServer extends DurableObject<Env> {
         const [rows, users] = await Promise.all([
           db
             .prepare(
-              `SELECT user_id, category, rating FROM user_ratings
+              `SELECT user_id, category, rating, games FROM user_ratings
                WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
             )
             .bind(...ids)
-            .all<{ user_id: string; category: string; rating: number }>(),
+            .all<{ user_id: string; category: string; rating: number; games: number }>(),
           db
             .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
             .bind(...ids)
@@ -4420,6 +4471,7 @@ export class GameServer extends DurableObject<Env> {
           const entry = byId.get(row.user_id) ?? {};
           entry[row.category as DraftMode] = Math.round(row.rating);
           byId.set(row.user_id, entry);
+          gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
         }
         for (const row of users.results) {
           identity.set(row.id, { username: row.username, avatar: row.avatar });
@@ -4428,7 +4480,7 @@ export class GameServer extends DurableObject<Env> {
         // Fall back to seed ratings / baked identity; retry after the TTL.
       }
     }
-    this.houseRatingsCache = { at: now, byId, identity };
+    this.houseRatingsCache = { at: now, byId, identity, gamesById };
     return this.houseRatingsCache;
   }
 
@@ -4679,6 +4731,217 @@ export class GameServer extends DurableObject<Env> {
     match.runningSince = now;
     this.armBotAction(match, null, now);
     await this.saveMatch(match);
+  }
+
+  // ---- Bot social responses: friend requests + direct challenges ----
+  //
+  // Bots have no client, so a friend request or a direct challenge addressed to
+  // one would otherwise sit unanswered forever. This poll (throttled off the
+  // alarm tick, never per tick) does what a real player's tap would: friend
+  // requests flip to 'accepted' after a short humanlike beat; direct challenges
+  // seat the bot in the waiting game and start it — unless the bot is already in
+  // a live game, in which case the challenge is declined (the one-game-per-bot
+  // rule). Every step is isolated so one bad row never blocks the rest, and both
+  // the row scan and the number of accepts per poll are bounded.
+  private async houseSocialTick(db: D1Database, busy: Set<string>, now: number): Promise<void> {
+    const nextAt = (await this.ctx.storage.get<number>(houseNextSocialKey)) ?? 0;
+    if (now < nextAt) return;
+    await this.ctx.storage.put(houseNextSocialKey, now + houseSocialIntervalMs);
+    let budget = houseSocialMaxAcceptsPerTick;
+    budget = await this.houseAcceptFriendRequests(db, now, budget);
+    if (budget > 0) await this.houseAnswerChallenges(db, busy, now, budget);
+  }
+
+  // The persona's current display name (an admin rename from /mod/house lands in
+  // the cached identity map), falling back to the baked constant.
+  private houseDisplayName(userId: string): string {
+    return this.houseRatingsCache?.identity.get(userId)?.username ?? housePersona(userId)?.name ?? "A player";
+  }
+
+  // Insert a bell notification. A local mirror of social.ts's createNotification
+  // so the DO never imports the next/server-based social module.
+  private async houseNotify(
+    db: D1Database,
+    userId: string,
+    actorName: string,
+    text: string,
+    href: string,
+  ): Promise<void> {
+    try {
+      await db
+        .prepare(
+          `INSERT INTO notifications (id, user_id, type, actor_name, text, href, created_at, read)
+           VALUES (?, ?, 'message', ?, ?, ?, ?, 0)`,
+        )
+        .bind(crypto.randomUUID(), userId, actorName, text, href, Date.now())
+        .run();
+    } catch {
+      // A missed notification must never fail the social write it accompanies.
+    }
+  }
+
+  // Accept pending friend requests addressed to a house persona once the request
+  // has aged past its (deterministic, per-request) humanlike delay. Returns the
+  // remaining accept budget.
+  private async houseAcceptFriendRequests(db: D1Database, now: number, budget: number): Promise<number> {
+    let rows: D1Result<{ user_lo: string; user_hi: string; requested_by: string; created_at: number }>;
+    try {
+      rows = await db
+        .prepare(
+          `SELECT user_lo, user_hi, requested_by, created_at FROM friendships
+           WHERE status = 'pending' ORDER BY created_at ASC LIMIT 50`,
+        )
+        .all<{ user_lo: string; user_hi: string; requested_by: string; created_at: number }>();
+    } catch {
+      return budget;
+    }
+    for (const r of rows.results) {
+      if (budget <= 0) break;
+      // The bot is whichever side is a house id; the requester must be the human.
+      // (Bots never send requests, so a house `requested_by` is not ours to
+      // answer — skip it rather than "accept" a request nobody made.)
+      const botId = isHouseUserId(r.user_lo) ? r.user_lo : isHouseUserId(r.user_hi) ? r.user_hi : null;
+      if (!botId || r.requested_by === botId || isHouseUserId(r.requested_by)) continue;
+      const seed = `friend:${r.user_lo}:${r.user_hi}:${r.created_at}`;
+      if (now - r.created_at < houseSocialDelayMs(seed)) continue;
+      try {
+        await db
+          .prepare(
+            `UPDATE friendships SET status = 'accepted'
+             WHERE user_lo = ? AND user_hi = ? AND status = 'pending'`,
+          )
+          .bind(r.user_lo, r.user_hi)
+          .run();
+        const name = this.houseDisplayName(botId);
+        await this.houseNotify(db, r.requested_by, name, `${name} accepted your friend request`, "/friend");
+        budget--;
+      } catch (err) {
+        console.error("house friend accept failed", botId, err);
+      }
+    }
+    return budget;
+  }
+
+  // Accept or decline pending direct challenges addressed to a house persona,
+  // once aged past the humanlike delay. Accept = seat the bot in the waiting
+  // game and start it; decline = the bot is busy (one game per bot) or the
+  // waiting game is gone/host left, so the challenge stops hanging to its TTL.
+  private async houseAnswerChallenges(
+    db: D1Database,
+    busy: Set<string>,
+    now: number,
+    budget: number,
+  ): Promise<number> {
+    let rows: D1Result<{ id: string; from_user_id: string; to_user_id: string; created_at: number }>;
+    try {
+      rows = await db
+        .prepare(
+          `SELECT id, from_user_id, to_user_id, created_at FROM challenges
+           WHERE status = 'pending' AND created_at > ? ORDER BY created_at ASC LIMIT 50`,
+        )
+        .bind(now - houseChallengeTtlMs)
+        .all<{ id: string; from_user_id: string; to_user_id: string; created_at: number }>();
+    } catch {
+      return budget;
+    }
+    for (const r of rows.results) {
+      if (budget <= 0) break;
+      // Only challenges FROM a human TO a bot are ours to answer.
+      if (!isHouseUserId(r.to_user_id) || isHouseUserId(r.from_user_id)) continue;
+      const persona = housePersona(r.to_user_id);
+      if (!persona) continue;
+      const seed = `challenge:${r.id}:${r.created_at}`;
+      if (now - r.created_at < houseSocialDelayMs(seed)) continue;
+
+      // One game per bot: a persona already in a live game declines gracefully
+      // instead of double-booking. `busy` is this tick's live-seat set, updated
+      // as we seat so two challenges in one poll can't both grab the same bot.
+      let outcome: "seated" | "gone" | "retry" | "busy" = busy.has(persona.userId) ? "busy" : "gone";
+      if (outcome !== "busy") {
+        try {
+          outcome = await this.houseSeatChallenge(db, r.id, persona);
+        } catch (err) {
+          console.error("house challenge seat failed", r.id, err);
+          outcome = "retry";
+        }
+      }
+      // A transient failure leaves the row pending for the next poll; a real
+      // outcome commits.
+      if (outcome === "retry") continue;
+      try {
+        if (outcome === "seated") {
+          busy.add(persona.userId);
+          await db
+            .prepare(`UPDATE challenges SET status = 'accepted' WHERE id = ? AND status = 'pending'`)
+            .bind(r.id)
+            .run();
+        } else {
+          await db
+            .prepare(`UPDATE challenges SET status = 'declined' WHERE id = ? AND status = 'pending'`)
+            .bind(r.id)
+            .run();
+        }
+        budget--;
+      } catch (err) {
+        console.error("house challenge resolve failed", r.id, err);
+      }
+    }
+    return budget;
+  }
+
+  // Seat a persona as black in the waiting challenge game `code` and start it,
+  // mirroring joinMatch's start path (a house seat has no socket but counts as
+  // arrived). Returns "seated" on success, "gone" when the waiting game is no
+  // longer joinable (missing/started/host left/black taken), or "retry" on a
+  // transient failure that should be re-attempted next poll.
+  private async houseSeatChallenge(
+    db: D1Database,
+    code: string,
+    persona: HousePersona,
+  ): Promise<"seated" | "gone" | "retry"> {
+    const match = await this.loadMatch(code);
+    if (!match || match.result) return "gone";
+    // Must still be an open, unstarted challenge with a present host and a free
+    // black seat.
+    if (match.startedAt || match.nerfOptions) return "gone";
+    if (!this.connectedSession(code, "w")) return "gone"; // host navigated away
+    if (match.bots?.b || this.connectedSession(code, "b")) return "gone"; // already taken
+    const cat = this.matchRatingCategory(match);
+    let seat: SeatUser;
+    try {
+      const row = await this.seatCategoryRating(db, persona.userId, cat);
+      seat = row
+        ? {
+            id: persona.userId,
+            name: row.username ?? persona.name,
+            rating: row.rating,
+            rd: row.rd,
+            vol: row.vol,
+            avatar: row.avatar ?? persona.avatar,
+          }
+        : { id: persona.userId, name: persona.name, rating: houseSeedRating(persona), rd: 150, vol: 0.06, avatar: persona.avatar };
+    } catch {
+      return "retry";
+    }
+    match.bots = { ...(match.bots ?? {}), b: persona.userId };
+    match.users = { ...(match.users ?? {}), b: seat };
+    // Bring the host's seat rating (snapshotted at challenge creation) current,
+    // exactly like joinMatch does before the start frames go out.
+    await this.refreshSeatRatings(match, ["w"]);
+    // Draft games open with the opening nerf draft (buff mode skips it); a plain
+    // game starts outright.
+    if (match.draft && match.mode !== "buff") {
+      await this.beginNerfDraft(match);
+      return "seated";
+    }
+    const now = Date.now();
+    match.startedAt = now;
+    match.runningSince = now;
+    this.armBotAction(match, null, now);
+    await this.saveMatch(match);
+    this.sendStart(match, "w");
+    this.sendStart(match, "b");
+    return "seated";
   }
 
   // ---- Arena ingestion (Tier 2 / M2) ----
