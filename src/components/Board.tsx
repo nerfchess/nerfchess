@@ -2123,6 +2123,46 @@ export function Board({
     }
     return m;
   }, [buffs, board.pieces]);
+  // Quiet-passive king aura. ~51 passive cards declare no CardFx motif AND no
+  // piece scope, so while held they otherwise paint NOTHING on the board (just
+  // a one-shot entrance and a conditional play effect). To give every held
+  // passive a subtle standing presence, each color whose held, live (not spent
+  // / nullified, non-masked) buffs include at least one such motif-less,
+  // piece-less passive gets ONE faint aura on its king square. Modeled on
+  // boundMarks: iterate the public buff lists, filter the same way, and key the
+  // result by king square. Only one aura per king no matter how many quiet
+  // passives are held (kept QUIET — this shows up on many boards); the
+  // representative card (first live qualifier of the chosen tone) lends its tier
+  // + id so the aura still wears per-card identity (EmpowerAura). A tinted grant
+  // (category !== "hex") reuses EmpowerShine; a hex uses NerfAura. When a color
+  // holds both, the grant wins — a side's own standing presence reads over an
+  // inflicted curse. Nerfs are never touched.
+  const quietPassiveAuras = useMemo(() => {
+    const m = new Map<number, { tone: "buff" | "hex"; tier: number; id: string }>();
+    if (!buffs) return m;
+    for (const color of ["w", "b"] as Color[]) {
+      let grant: { tier: number; id: string } | null = null;
+      let hex: { tier: number; id: string } | null = null;
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id || inst.spent || inst.nullified) continue;
+        const def = BUFF_BY_ID[inst.id];
+        if (!def) continue;
+        if (def.kind !== "passive") continue;
+        if (def.fx?.motif || def.fx?.pieces) continue; // already paints its own motif
+        if (def.category === "hex") {
+          if (!hex) hex = { tier: inst.tier, id: inst.id };
+        } else if (!grant) {
+          grant = { tier: inst.tier, id: inst.id };
+        }
+      }
+      const pick = grant ?? hex;
+      if (!pick) continue;
+      const king = findKing(board, color);
+      if (king == null || king < 0) continue;
+      m.set(king, { tone: grant ? "buff" : "hex", tier: pick.tier, id: pick.id });
+    }
+    return m;
+  }, [buffs, board]);
   // Chain-jailed squares: shackled pieces minus the pawn-clamp family (those
   // get the fence instead). Sorted order drives the clamp-in stagger so the
   // links read as dropping in one after another.
@@ -3363,6 +3403,26 @@ export function Board({
                        never doubles up. */
                     <NerfAura cardId={motifMark.id} tier={motifMark.tier} />
                   )}
+                {!fxHiddenPref && !motionOff() && !motifShown && quietPassiveAuras.has(sq) && (
+                  /* Quiet-passive king presence: a color holding a live passive
+                     that declares no motif and no piece scope paints nothing
+                     else while it is held, so its king wears ONE faint standing
+                     aura — the tinted EmpowerShine for a grant, the NerfAura
+                     ember for a hex — in the representative card's own tier + id
+                     (per-card aura identity). Just one per king however many
+                     quiet passives are held, and skipped where the king already
+                     shows a card-fx motif aura (motifShown) so the two never
+                     double up. Mounted before the piece div, so the king always
+                     paints on top. */
+                  (() => {
+                    const aura = quietPassiveAuras.get(sq)!;
+                    return aura.tone === "hex" ? (
+                      <NerfAura cardId={aura.id} tier={aura.tier} />
+                    ) : (
+                      <EmpowerShine tier={aura.tier} cardId={aura.id} />
+                    );
+                  })()
+                )}
                 {!fxHiddenPref && motifShown && motifMark && (
                   /* Card-fx motif badge, tinted by the card's tier and
                      stamped with its category glyph, parked in the corner the
