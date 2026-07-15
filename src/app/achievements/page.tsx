@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createElement, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Lock, Trophy } from "lucide-react";
+import { ChevronDown, Lock, Pin, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
@@ -14,8 +14,10 @@ import {
   CATEGORY_ORDER,
   CATEGORY_TAGLINE,
   RARITY_LABEL,
+  type AchievementCategory,
   type AchievementRarity,
 } from "@/lib/achievements";
+import { usePinnedAchievements, type PinnedApi } from "./usePinnedAchievements";
 
 interface AchievementView {
   id: string;
@@ -23,6 +25,7 @@ interface AchievementView {
   description: string;
   icon: string;
   rarity: AchievementRarity;
+  category: AchievementCategory;
   goal: number;
   progress: number;
   unlocked: boolean;
@@ -36,84 +39,244 @@ interface AchievementsResponse {
   achievements: AchievementView[];
 }
 
-// Accent per rarity, reused for the icon, the ring, and the rarity label.
-const RARITY_ACCENT: Record<AchievementRarity, string> = {
-  legendary: "#e0b256",
-  epic: "#b78fd6",
-  rare: "#4a9fee",
-  common: "#7eb59a",
+// Rarity is the only differentiator the model actually carries, so it drives a
+// quiet chip using the sanctioned tier-bg-* classes (escalating toward gold as
+// rarity rises). No global unlock-percentage feed exists today, so "X% of
+// players" is deliberately not shown rather than faked.
+const RARITY_TIER_BG: Record<AchievementRarity, string> = {
+  common: "tier-bg-1",
+  rare: "tier-bg-3",
+  epic: "tier-bg-7",
+  legendary: "tier-bg-9",
 };
 
-function AchievementCard({ a }: { a: AchievementView }) {
-  const icon = achievementIcon(a.icon);
-  const accent = RARITY_ACCENT[a.rarity];
-  const showProgress = !a.unlocked && a.goal > 1 && a.progress > 0;
+// Earned trophies read in the reward palette (sun/gold). Kept as literals from
+// the palette so both the icon tint and its resting border share one hue.
+const SUN = "#eec25e";
+const SUN_SOFT_BG = "rgba(238,194,94,0.10)";
+const SUN_BORDER = "rgba(238,194,94,0.40)";
+
+function fmtDate(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// A thin progress bar. Track uses an edge tone; the fill is reward-sun.
+function ProgressBar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
-      className={
-        "relative plate p-4 overflow-hidden transition " +
-        (a.unlocked ? "card-juicy gilt" : "opacity-60")
-      }
-      style={a.unlocked ? { borderColor: `${accent}66` } : undefined}
+      className="h-1.5 w-full overflow-hidden rounded-[1px]"
+      style={{ background: "var(--edge)" }}
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={max}
     >
-      {a.unlocked && (
+      <div
+        className="h-full rounded-[1px] transition-[width] duration-300"
+        style={{ width: `${pct}%`, background: "var(--sun-glow)" }}
+      />
+    </div>
+  );
+}
+
+function PinButton({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
+  const pinned = pins.isPinned(a.id);
+  const blocked = !pinned && !pins.canPin;
+  return (
+    <button
+      type="button"
+      onClick={() => pins.togglePin(a.id)}
+      disabled={blocked}
+      aria-pressed={pinned}
+      aria-label={pinned ? `Unpin ${a.name}` : `Pin ${a.name}`}
+      title={
+        pinned ? "Unpin" : blocked ? "Unpin one first (3 max)" : "Pin to the top"
+      }
+      className={
+        "press grid h-8 w-8 shrink-0 place-items-center rounded-[1px] border transition-colors " +
+        (pinned
+          ? "border-sun/50 text-sun-glow"
+          : blocked
+            ? "border-[color:var(--edge)] text-parchment-500 opacity-40"
+            : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
+      }
+      style={pinned ? { background: SUN_SOFT_BG } : undefined}
+    >
+      <Pin className="h-4 w-4" strokeWidth={2} fill={pinned ? SUN : "none"} />
+    </button>
+  );
+}
+
+function AchievementCard({ a, pins }: { a: AchievementView; pins: PinnedApi }) {
+  const icon = achievementIcon(a.icon);
+  const showProgress = !a.unlocked && a.goal > 1;
+  return (
+    <div
+      className="plate plate-hover relative flex flex-col gap-2.5 p-3 transition-colors"
+      style={a.unlocked ? { borderColor: SUN_BORDER } : undefined}
+    >
+      <div className="flex items-start gap-2.5">
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-16"
-          style={{ background: `linear-gradient(180deg, ${accent}1f, transparent)` }}
-        />
-      )}
-      <div className="relative flex items-start gap-3">
-        <div
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-[1px] border"
           style={{
-            borderColor: a.unlocked ? `${accent}80` : "rgba(255,255,255,0.10)",
-            background: a.unlocked ? `${accent}1a` : "rgba(255,255,255,0.03)",
+            borderColor: a.unlocked ? SUN_BORDER : "var(--edge)",
+            background: a.unlocked ? SUN_SOFT_BG : "var(--surface-hover)",
           }}
         >
-          {a.unlocked ? (
-            createElement(icon, { className: "h-6 w-6", style: { color: accent }, strokeWidth: 2 })
-          ) : (
-            <Lock className="h-5 w-5 text-parchment-500" strokeWidth={2} />
-          )}
+          {createElement(icon, {
+            className: "h-6 w-6" + (a.unlocked ? "" : " opacity-40"),
+            style: { color: a.unlocked ? SUN : "var(--paper-dim)" },
+            strokeWidth: 2,
+          })}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div
-            className="font-display text-lg leading-tight"
-            style={{ color: a.unlocked ? accent : undefined }}
+            className="font-display text-[15px] leading-tight"
+            style={{ color: a.unlocked ? "#f0e6cf" : undefined }}
           >
             {a.name}
           </div>
-          <div className="smallcaps text-[10px]" style={{ color: a.unlocked ? `${accent}cc` : "#8a8577" }}>
+          <span
+            className={
+              "mt-1 inline-block rounded-[1px] border px-1.5 py-0.5 text-[12px] leading-none " +
+              RARITY_TIER_BG[a.rarity]
+            }
+            style={{ color: "rgb(var(--tier-rgb))" }}
+          >
             {RARITY_LABEL[a.rarity]}
-          </div>
+          </span>
         </div>
+        <PinButton a={a} pins={pins} />
       </div>
-      <p className={"relative mt-3 text-[13px] leading-relaxed " + (a.unlocked ? "text-parchment/90" : "text-parchment-400")}>
+
+      <p
+        className={
+          "text-[12px] leading-snug " +
+          (a.unlocked ? "text-parchment-200" : "text-parchment-400")
+        }
+      >
         {a.description}
       </p>
+
       {a.unlocked && a.unlockedAt != null && (
-        <div className="relative mt-3 smallcaps text-[10px] text-sun-glow/80">
-          Unlocked {new Date(a.unlockedAt).toLocaleDateString()}
+        <div className="mt-auto flex items-center gap-1.5 text-[12px] text-sun-glow/90">
+          <Trophy className="h-3.5 w-3.5" strokeWidth={2} />
+          <span className="tabular-nums">Earned {fmtDate(a.unlockedAt)}</span>
         </div>
       )}
+
       {showProgress && (
-        <div className="relative mt-3">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="smallcaps text-[10px] text-parchment-400">Progress</span>
-            <span className="font-mono text-[10px] text-parchment-300">
+        <div className="mt-auto space-y-1">
+          <div className="flex items-center justify-between text-[12px] text-parchment-400">
+            <span>Progress</span>
+            <span className="font-mono tabular-nums text-parchment-300">
               {a.progress}/{a.goal}
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden bg-white/5">
-            <div
-              className="h-full"
-              style={{ width: `${Math.min(100, (a.progress / a.goal) * 100)}%`, background: accent }}
-            />
-          </div>
+          <ProgressBar value={a.progress} max={a.goal} />
+        </div>
+      )}
+
+      {!a.unlocked && !showProgress && (
+        <div className="mt-auto flex items-center gap-1.5 text-[12px] text-parchment-500">
+          <Lock className="h-3.5 w-3.5" strokeWidth={2} />
+          <span>Locked</span>
         </div>
       )}
     </div>
+  );
+}
+
+// A tight horizontal tile for the Recently earned strip. Compact by design: it
+// is a glance, not a full card.
+function RecentTile({ a }: { a: AchievementView }) {
+  const icon = achievementIcon(a.icon);
+  return (
+    <div
+      className="plate flex w-[190px] shrink-0 items-center gap-2.5 p-2.5"
+      style={{ borderColor: SUN_BORDER }}
+    >
+      <div
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-[1px] border"
+        style={{ borderColor: SUN_BORDER, background: SUN_SOFT_BG }}
+      >
+        {createElement(icon, { className: "h-5 w-5", style: { color: SUN }, strokeWidth: 2 })}
+      </div>
+      <div className="min-w-0">
+        <div className="truncate font-display text-[13px]" style={{ color: "#f0e6cf" }}>
+          {a.name}
+        </div>
+        {a.unlockedAt != null && (
+          <div className="text-[12px] tabular-nums text-parchment-400">{fmtDate(a.unlockedAt)}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CategorySection({
+  category,
+  items,
+  pins,
+}: {
+  category: AchievementCategory;
+  items: AchievementView[];
+  pins: PinnedApi;
+}) {
+  const [open, setOpen] = useState(true);
+  const earned = items.filter((a) => a.unlocked).length;
+  // Earned lead within each section; catalog order (easy to hard) is otherwise
+  // preserved by the stable input order.
+  const sorted = useMemo(
+    () => [...items].sort((x, y) => Number(y.unlocked) - Number(x.unlocked)),
+    [items],
+  );
+  const panelId = `cat-${category}`;
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="press flex w-full items-center justify-between gap-3 border-b py-2 text-left"
+        style={{ borderColor: "var(--edge)" }}
+      >
+        <div className="min-w-0">
+          <h2 className="font-display text-[19px] leading-tight text-parchment-50">
+            {CATEGORY_LABEL[category]}
+          </h2>
+          <p className="mt-0.5 truncate text-[12px] text-parchment-400">
+            {CATEGORY_TAGLINE[category]}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <span className="font-mono text-[13px] tabular-nums">
+            <span className={earned > 0 ? "text-sun-glow" : "text-parchment-300"}>{earned}</span>
+            <span className="text-parchment-500">/{items.length}</span>
+          </span>
+          <ChevronDown
+            className={"h-4 w-4 text-parchment-400 transition-transform " + (open ? "" : "-rotate-90")}
+            strokeWidth={2}
+          />
+        </div>
+      </button>
+      {open && (
+        <div
+          id={panelId}
+          className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4"
+        >
+          {sorted.map((a) => (
+            <AchievementCard key={a.id} a={a} pins={pins} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -126,6 +289,7 @@ function lockedWall(): AchievementView[] {
     description: a.description,
     icon: a.icon,
     rarity: a.rarity,
+    category: a.category,
     goal: a.goal,
     progress: 0,
     unlocked: false,
@@ -133,11 +297,16 @@ function lockedWall(): AchievementView[] {
   }));
 }
 
+function CardSkeleton() {
+  return <div className="plate h-[132px] animate-pulse p-3" aria-hidden />;
+}
+
 function AchievementsContent() {
   const searchParams = useSearchParams();
   const requested = searchParams.get("u");
   const [data, setData] = useState<AchievementsResponse | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "signin" | "error">("loading");
+  const pins = usePinnedAchievements();
 
   useEffect(() => {
     let cancelled = false;
@@ -174,110 +343,172 @@ function AchievementsContent() {
 
   // The wall always renders the whole catalog in catalog order; signed-in data
   // overlays progress and unlocks by id.
-  const wall = useMemo(() => {
+  const wall = useMemo<AchievementView[]>(() => {
     if (state !== "ready" || !data) return lockedWall();
     const byId = new Map(data.achievements.map((a) => [a.id, a]));
     return ACHIEVEMENTS.map((a) => {
       const fetched = byId.get(a.id);
-      return (
-        fetched ?? {
-          id: a.id,
-          name: a.name,
-          description: a.description,
-          icon: a.icon,
-          rarity: a.rarity,
-          goal: a.goal,
-          progress: 0,
-          unlocked: false,
-          unlockedAt: null,
-        }
-      );
+      return fetched
+        ? { ...fetched, category: a.category }
+        : {
+            id: a.id,
+            name: a.name,
+            description: a.description,
+            icon: a.icon,
+            rarity: a.rarity,
+            category: a.category,
+            goal: a.goal,
+            progress: 0,
+            unlocked: false,
+            unlockedAt: null,
+          };
     });
   }, [state, data]);
 
-  const unlockedCount = data?.unlockedCount ?? 0;
+  const byId = useMemo(() => new Map(wall.map((a) => [a.id, a])), [wall]);
   const total = ACHIEVEMENTS.length;
+  const earnedCount = wall.filter((a) => a.unlocked).length;
+
+  const pinnedItems = useMemo(
+    () => pins.pinned.map((id) => byId.get(id)).filter((a): a is AchievementView => !!a),
+    [pins.pinned, byId],
+  );
+
+  const recentItems = useMemo(
+    () =>
+      wall
+        .filter((a) => a.unlocked && a.unlockedAt != null)
+        .sort((x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0))
+        .slice(0, 6),
+    [wall],
+  );
+
+  const viewingOther = state === "ready" && !!requested && !!data;
 
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader />
-      <section className="max-w-5xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="font-display text-4xl sm:text-5xl">Achievements</h1>
-            <p className="mt-3 text-parchment-200">
-              {state === "ready" && data
-                ? requested
-                  ? `What ${data.username} has unlocked across the board.`
-                  : "Feats you have unlocked, and the ones still waiting."
-                : "Feats to unlock across Nerf and Buff."}
-            </p>
-          </div>
-          <div className="plate px-4 py-2 text-right">
-            <div className="flex items-center justify-end gap-2 font-mono text-2xl text-parchment-50 tabular-nums">
-              <Trophy className="h-5 w-5 text-sun-glow" strokeWidth={2} />
-              {state === "ready" ? unlockedCount : 0}
-              <span className="text-sm text-parchment-400">/{total}</span>
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        {/* Compact header with overall progress. */}
+        <header>
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <div className="eyebrow">Trophy wall</div>
+              <h1 className="mt-1 font-display text-[26px] leading-none sm:text-[32px]">
+                {viewingOther && data ? `${data.username}'s achievements` : "Achievements"}
+              </h1>
             </div>
-            <div className="smallcaps text-[10px] text-parchment-400">Unlocked</div>
+            <div className="shrink-0 text-right">
+              <div className="flex items-center justify-end gap-2 font-mono text-2xl tabular-nums text-parchment-50">
+                <Trophy className="h-5 w-5 text-sun-glow" strokeWidth={2} />
+                {state === "ready" ? earnedCount : 0}
+                <span className="text-base text-parchment-400">/{total}</span>
+              </div>
+              <div className="text-[12px] text-parchment-400">Earned</div>
+            </div>
           </div>
-        </div>
+          <div className="mt-3">
+            <ProgressBar value={state === "ready" ? earnedCount : 0} max={total} />
+          </div>
+          <p className="mt-3 text-[13px] text-parchment-300">
+            {viewingOther
+              ? "What they have unlocked across the board."
+              : "Feats you unlock across Nerf and Buff, from first steps to the top of the ladder."}
+          </p>
+        </header>
 
-        <UnlockPopupToggle />
-
+        {/* Guest, error, and popup-toggle states. */}
         {state === "signin" && (
-          <div className="mt-6 plate p-4 text-sm text-parchment-300">
-            <Link href="/login?next=/achievements" className="text-gold-leaf hover:underline">
-              Sign in
-            </Link>{" "}
-            to start unlocking these. Every trophy below is waiting for you.
+          <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-parchment-300">
+              Every game you play unlocks milestones: wins, comebacks, king captures, and rating
+              climbs. Browse the full wall below, then start your own.
+            </p>
+            <div className="flex shrink-0 items-center gap-3">
+              <Link href="/lobby" className="btn-leaf press whitespace-nowrap px-4 py-2 text-[13px]">
+                Find a match
+              </Link>
+              <Link
+                href="/login?next=/achievements"
+                className="text-[13px] text-gold-leaf hover:underline"
+              >
+                Sign in
+              </Link>
+            </div>
           </div>
         )}
         {state === "error" && (
-          <div className="mt-6 plate p-4 text-sm text-parchment-300">
-            Your progress is unavailable right now, so the wall shows everything locked. Try
-            again in a minute.
+          <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-parchment-300">
+              Your progress could not load, so the wall shows everything locked.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setState("loading");
+                setData(null);
+                // Re-run the fetch effect by nudging the requested key is not
+                // possible here; a full reload is the simplest recovery.
+                window.location.reload();
+              }}
+              className="btn-ghost press shrink-0 px-4 py-2 text-[13px]"
+            >
+              Retry
+            </button>
           </div>
         )}
 
         {state === "loading" ? (
-          <div className="mt-8 text-parchment-300/60">Loading…</div>
+          <div className="mt-8 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
         ) : (
-          <div className="mt-8 space-y-12">
-            {CATEGORY_ORDER.map((category) => {
-              const ids = new Set(
-                ACHIEVEMENTS.filter((a) => a.category === category).map((a) => a.id),
-              );
-              const group = wall.filter((a) => ids.has(a.id));
-              if (!group.length) return null;
-              // Unlocked first within each section so earned trophies lead;
-              // catalog order (easy to hard) is preserved otherwise.
-              const sorted = [...group].sort((x, y) => Number(y.unlocked) - Number(x.unlocked));
-              const earned = group.filter((a) => a.unlocked).length;
-              return (
-                <div key={category}>
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <div>
-                      <h2 className="font-display text-2xl text-parchment-50">
-                        {CATEGORY_LABEL[category]}
-                      </h2>
-                      <p className="mt-0.5 text-xs text-parchment-400">
-                        {CATEGORY_TAGLINE[category]}
-                      </p>
-                    </div>
-                    <span className="font-mono text-sm tabular-nums text-parchment-300">
-                      <span className={earned > 0 ? "text-sun-glow" : ""}>{earned}</span>
-                      <span className="text-parchment-500">/{group.length}</span>
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {sorted.map((a) => (
-                      <AchievementCard key={a.id} a={a} />
-                    ))}
-                  </div>
+          <div className="mt-8 space-y-9">
+            {/* Pinned row. */}
+            {pins.ready && pinnedItems.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b py-2" style={{ borderColor: "var(--edge)" }}>
+                  <Pin className="h-4 w-4 text-sun-glow" strokeWidth={2} fill={SUN} />
+                  <h2 className="font-display text-[19px] leading-none text-parchment-50">Pinned</h2>
+                  <span className="text-[12px] text-parchment-400">Kept up top, on this device</span>
                 </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
+                  {pinnedItems.map((a) => (
+                    <AchievementCard key={a.id} a={a} pins={pins} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Recently earned strip. */}
+            {recentItems.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 border-b py-2" style={{ borderColor: "var(--edge)" }}>
+                  <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} />
+                  <h2 className="font-display text-[19px] leading-none text-parchment-50">
+                    Recently earned
+                  </h2>
+                </div>
+                <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
+                  {recentItems.map((a) => (
+                    <RecentTile key={a.id} a={a} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Category sections. */}
+            {CATEGORY_ORDER.map((category) => {
+              const items = wall.filter((a) => a.category === category);
+              if (!items.length) return null;
+              return (
+                <CategorySection key={category} category={category} items={items} pins={pins} />
               );
             })}
+
+            {!viewingOther && <UnlockPopupToggle />}
           </div>
         )}
       </section>
@@ -304,10 +535,12 @@ function UnlockPopupToggle() {
     queueMicrotask(() => setOff(achievementToastsDisabled()));
   }, []);
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-white/10 bg-white/[0.02] px-4 py-2.5">
-      <span className="text-sm text-parchment-300">
+    <div className="plate flex flex-wrap items-center justify-between gap-3 p-3">
+      <span className="text-[13px] text-parchment-300">
         Unlock popups{" "}
-        <span className="text-parchment-500">(a small card in the corner when you earn one, desktop only)</span>
+        <span className="text-parchment-500">
+          (a small card in the corner when you earn one, desktop only)
+        </span>
       </span>
       <button
         type="button"
@@ -317,13 +550,13 @@ function UnlockPopupToggle() {
         }}
         aria-pressed={!off}
         className={
-          "min-h-[44px] sm:min-h-0 smallcaps border px-3 py-1 text-[10px] transition-colors " +
+          "press min-h-[36px] rounded-[1px] border px-3 py-1 text-[12px] transition-colors " +
           (off
-            ? "border-white/15 bg-white/[0.03] text-parchment-400 hover:border-white/30"
+            ? "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)]"
             : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")
         }
       >
-        {off ? "Off · turn on" : "On · turn off"}
+        {off ? "Off, turn on" : "On, turn off"}
       </button>
     </div>
   );
