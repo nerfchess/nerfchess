@@ -9,6 +9,7 @@ import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { MPPlayers } from "@/lib/multiplayer";
 import { featuredBoard } from "@/lib/spectate/featuredBoard";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
+import { clockLabel } from "@/lib/tournaments";
 import type { Color } from "@/engine/types";
 
 // The last archived game, fetched once for the no-live-games fallback.
@@ -88,12 +89,17 @@ export function HeroTv() {
 
   const shownId = live ? streamId : recent?.id ?? null;
   const shownPlayers = live ? players : recentPlayers;
+  // The lobby entry for the streaming game, when live: carries the time
+  // control and live move count for the overlay header.
+  const liveGame = live ? lobby?.games.find((g) => g.id === streamId) ?? null : null;
   // The shown game's mode (nerf/buff), when known: labels the seat ratings
   // and feeds the caption below the board.
-  const rawMode = live
-    ? lobby?.games.find((g) => g.id === streamId)?.mode ?? null
-    : recent?.category ?? null;
+  const rawMode = live ? liveGame?.mode ?? null : recent?.category ?? null;
   const shownMode = rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
+  // Move number for the header: the streamed move count when live, otherwise
+  // the length of the replayed line.
+  const moveNumber = shownMoves.length;
+  const timeControl = liveGame ? clockLabel(liveGame.timeSec, liveGame.incrementSec) : null;
 
   // Warm the route the hero links to so tapping "Watch"/"Replay" navigates
   // instantly instead of paying to load the /game/[id] chunk on click. Kept
@@ -103,8 +109,23 @@ export function HeroTv() {
   }, [shownId, router]);
 
   if (!shownId || !shownPlayers) {
+    // Nothing live and nothing archived yet: the built-in demo position stands
+    // in, with a quiet caption so the board still reads as "this is where the
+    // action shows up".
     return (
       <div className="w-full max-w-[600px] mx-auto">
+        <div className="flex items-center justify-between gap-2 pb-2">
+          <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 text-[11px] text-parchment-300">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-parchment-500" />
+            Live games appear here
+          </span>
+          <Link
+            href="/tv"
+            className="text-[12px] text-parchment-400 no-underline transition hover:text-gold-leaf"
+          >
+            Watch TV &rarr;
+          </Link>
+        </div>
         <div className="tv-frame">
           <HeroBoard />
         </div>
@@ -148,17 +169,41 @@ export function HeroTv() {
 
   return (
     <div className="w-full max-w-[600px] mx-auto">
+      {/* Compact header framing the board: black seat on the left, then the
+          live status (LIVE badge when running, mode chip, time control) on the
+          right. Kept out of the board squares so pieces never get covered. */}
       <div className="flex items-center justify-between gap-2 pb-2">
         {seat("b")}
-        <span className="flex items-center gap-2 border border-oxblood-glow/40 bg-oxblood/10 px-2.5 py-1 smallcaps text-[10px] text-oxblood-glow">
-          <span className="dot-live h-2 w-2 bg-oxblood-glow" />
-          {live && over ? "Just finished" : "Live game"}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span
+            className={
+              "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
+              (live && !over
+                ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
+                : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300")
+            }
+          >
+            {live && !over ? <span className="dot-live h-2 w-2 bg-oxblood-glow" /> : null}
+            {live && over ? "Just finished" : "LIVE"}
+          </span>
           {shownMode ? (
-            <span className={shownMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
-              · {shownMode === "nerf" ? "Nerf" : "Buff"}
+            <span
+              className={
+                "border px-2 py-1 text-[11px] " +
+                (shownMode === "nerf"
+                  ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
+                  : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow")
+              }
+            >
+              {shownMode === "nerf" ? "Nerf" : "Buff"}
             </span>
           ) : null}
-        </span>
+          {timeControl ? (
+            <span className="hidden border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1 font-mono text-[11px] tabular-nums text-parchment-300 sm:inline">
+              {timeControl}
+            </span>
+          ) : null}
+        </div>
       </div>
       <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>
         <div className="overflow-hidden">
@@ -167,12 +212,19 @@ export function HeroTv() {
       </Link>
       <div className="flex items-center justify-between gap-2 pt-2">
         {seat("w")}
-        <Link
-          href={`/game/${shownId}`}
-          className="smallcaps text-[10px] text-parchment-400 no-underline transition hover:text-gold-leaf"
-        >
-          {live ? "Watch →" : "Replay →"}
-        </Link>
+        <div className="flex shrink-0 items-center gap-3">
+          {moveNumber > 0 ? (
+            <span className="font-mono text-[12px] tabular-nums text-parchment-400">
+              Move {moveNumber}
+            </span>
+          ) : null}
+          <Link
+            href={`/game/${shownId}`}
+            className="text-[12px] font-medium text-gold-leaf no-underline transition hover:text-parchment-50"
+          >
+            {live ? "Watch live →" : "Replay →"}
+          </Link>
+        </div>
       </div>
     </div>
   );
