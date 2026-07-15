@@ -7,7 +7,6 @@ import { PlayerAvatar } from "./PlayerAvatar";
 import { PlayerLink } from "./PlayerLink";
 import { PresenceBadge } from "./PresenceBadge";
 import { EmptyState } from "./EmptyState";
-import { HouseBotBadge, isHouseBotAvatar } from "./profile/HouseBotBadge";
 import { derivePresence, useLobbyFeed } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 
@@ -303,7 +302,6 @@ function Identity({ f, lobby }: { f: Friend; lobby: MPLobby | null }) {
           {f.rating != null && (
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
-          {isHouseBotAvatar(f.avatar) && <HouseBotBadge />}
         </div>
         <PresenceBadge state={p.state} mode={p.game?.mode ?? null} className="mt-0.5" />
       </div>

@@ -952,18 +952,6 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
   );
 }
 
-// The HOUSE BOT badge, per the design system: a parchment outline chip,
-// allcaps (a sanctioned exception). House bots are labelled every place their
-// name renders; the lobby snapshot only flags them on quick-pairing seeks
-// (seek.house), so that is the only lobby surface with a reliable flag.
-function HouseBotBadge() {
-  return (
-    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-xs font-medium uppercase tracking-[0.08em] text-parchment-300">
-      House bot
-    </span>
-  );
-}
-
 // A player's name linking to their profile, with the rating in muted text.
 // Used in every lobby row (seeks, challenges, live games) so any name is
 // clickable, house bots included (they have real seeded accounts). The tap
@@ -1016,7 +1004,6 @@ function SeekRow({
         <div className="flex min-w-0 items-center gap-2 text-sm text-parchment-100">
           <PlayerNameLink name={seek.name} />
           <RatingChip rating={seek.rating} />
-          {seek.house && <HouseBotBadge />}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-parchment-400">
           <ModeBadge mode={seek.mode} compact />

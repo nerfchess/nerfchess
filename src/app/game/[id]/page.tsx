@@ -1385,18 +1385,7 @@ function describeResult(result: { winner: Color | "draw" | null; reason: string 
   return `${head} · ${result.reason}`;
 }
 
-// The HOUSE BOT badge, per the design system: a parchment outline chip,
-// allcaps (a sanctioned exception). Rendered in the shell header identity unit
-// whenever a seat carries the server-stamped house flag.
-function HouseBotChip() {
-  return (
-    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-[12px] font-medium uppercase tracking-[0.08em] text-parchment-300">
-      House bot
-    </span>
-  );
-}
-
-// Compact identity unit for the shell header: linked name + rating + HOUSE BOT
+// Compact identity unit for the shell header: linked name + rating.
 // chip. The full avatar rows beside the board stay the primary identity; this
 // mirrors the TV featured header so both surfaces read the same.
 function HeaderIdentity({
@@ -1421,7 +1410,6 @@ function HeaderIdentity({
           {seat.rating}
         </span>
       )}
-      {seat.house && <HouseBotChip />}
     </span>
   );
 }

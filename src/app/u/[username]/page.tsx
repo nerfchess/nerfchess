@@ -36,7 +36,6 @@ import {
 import { CurrentGameCard } from "@/components/profile/CurrentGameCard";
 import { RecentGameCard, type RecentGameRow } from "@/components/profile/RecentGameCard";
 import { FriendsModule } from "@/components/profile/FriendsModule";
-import { HouseBotBadge, isHouseBotAvatar } from "@/components/profile/HouseBotBadge";
 import { relativeTime } from "@/components/profile/relativeTime";
 import { usePresence } from "@/lib/presence";
 import { ACTIVE_RATING_CATEGORIES, MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
@@ -632,7 +631,6 @@ function ProfileHeader({
                 />
               )}
             </h1>
-            {isHouseBotAvatar(user.avatar) && <HouseBotBadge />}
             {user.role !== "user" && (
               <span className="rounded-full border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
                 {user.role === "admin" ? "Admin" : "Moderator"}

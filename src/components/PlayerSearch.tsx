@@ -8,7 +8,6 @@ import { useLobbyFeed, derivePresence } from "@/lib/presence";
 import { LaurelBadge } from "./LaurelBadge";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PresenceBadge } from "./PresenceBadge";
-import { HouseBotBadge, isHouseBotAvatar } from "./profile/HouseBotBadge";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 
 interface Hit {
@@ -293,7 +292,6 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                 </span>
               )}
               {top && <LaurelBadge rank={top.rank} title={placementTitle(top)} size={12} className="shrink-0" />}
-              {isHouseBotAvatar(item.avatar) && <HouseBotBadge />}
               {isFriend && (
                 <span className="shrink-0 rounded-sm border border-gold/40 px-1.5 py-0.5 text-[12px] leading-none text-gold-leaf">
                   Friend

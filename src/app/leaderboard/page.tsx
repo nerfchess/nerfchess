@@ -328,7 +328,6 @@ function LeaderboardRow({
         {tier && (
           <LaurelBadge rank={rank} title={`#${rank} on the ${label} board`} size={14} className="shrink-0" />
         )}
-        {row.bot && <HouseBotChip />}
         {row.guest && <MetaChip>Guest</MetaChip>}
         {mine && (
           <span className="shrink-0 border border-gold/45 px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-gold-leaf">
@@ -365,15 +364,6 @@ function LeaderboardRow({
   );
 }
 
-// House engine accounts carry a name everywhere a human does, so they wear the
-// outline HOUSE BOT chip at every appearance (design system section 7).
-function HouseBotChip() {
-  return (
-    <span className="shrink-0 whitespace-nowrap border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-parchment-400">
-      House bot
-    </span>
-  );
-}
 
 function MetaChip({ children }: { children: React.ReactNode }) {
   return (
