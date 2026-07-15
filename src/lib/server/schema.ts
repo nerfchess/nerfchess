@@ -151,6 +151,7 @@ export const SCHEMA_STATEMENTS: string[] = [
     user_id TEXT NOT NULL,
     type TEXT NOT NULL,
     actor_name TEXT,
+    actor_user_id TEXT,
     text TEXT NOT NULL,
     href TEXT,
     created_at INTEGER NOT NULL,
@@ -600,6 +601,12 @@ const ADDITIVE_COLUMNS: string[] = [
      WHERE games = 0 AND rd >= 300
        AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'glicko_lichess_params_v1')`,
   `INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('glicko_lichess_params_v1', '1')`,
+  // Bell notifications now carry the actor's stable user id alongside the
+  // frozen actor_name, so the read path can resolve the CURRENT username live
+  // (a friend who renamed after sending a request no longer shows their old
+  // name). Nullable and additive; legacy rows stay frozen. Mirrors
+  // migrations/0033_notification_actor_id.sql.
+  `ALTER TABLE notifications ADD COLUMN actor_user_id TEXT`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

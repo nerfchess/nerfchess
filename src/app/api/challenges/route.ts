@@ -87,6 +87,7 @@ export async function POST(request: Request) {
     userId: target.id,
     type: "challenge",
     actorName: user.username,
+    actorId: user.id,
     text: `${user.username} challenges you to a ${rated ? "rated" : "casual"} ${clock} game`,
     href: `/friend?code=${encodeURIComponent(code)}`,
   });
