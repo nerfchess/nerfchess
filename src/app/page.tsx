@@ -68,7 +68,7 @@ export default function HomePage() {
           {/* Two quieter ways in, one step below the big button. No mode
               decision here: Buff is the site-wide default, and every setup
               page lets you switch. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-white/10 bg-white/[0.04] p-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
               className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
@@ -80,6 +80,12 @@ export default function HomePage() {
               className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
+            </Link>
+            <Link
+              href="/play"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Play a bot
             </Link>
           </div>
 

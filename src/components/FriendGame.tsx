@@ -198,6 +198,14 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
       setError("Enter a code.");
       return;
     }
+    // Reject obviously-malformed input up front (special characters, spaces,
+    // wrong length) so a garbage code shows a clear message instead of spinning
+    // up a doomed session. Real codes are short and alphanumeric (worker
+    // randomCode), so this never rejects a valid one.
+    if (!/^[A-Z0-9]{3,12}$/.test(trimmed)) {
+      setError("That doesn't look like a game code.");
+      return;
+    }
     const sess = new MPSession();
     sessionRef.current = sess;
     wireSession(sess);
