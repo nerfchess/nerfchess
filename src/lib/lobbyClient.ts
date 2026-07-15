@@ -11,9 +11,12 @@ import { MPLobby } from "./multiplayer";
 // One lobby snapshot over the edge-cached HTTP route. This replaces the old
 // per-viewer WebSocket `lobby` poll: a crowd of browsers now shares one cached
 // copy per colo, so the DO sees ~1 request per cache window instead of one
-// socket poll each, and idle viewers hold no socket at all. Arena (OCI
-// bot-vs-bot) games merge in client-side, fail-soft — see arenaLobby.ts
-// (Tier 3). Throws on a non-OK response so callers keep their last snapshot.
+// socket poll each, and idle viewers hold no socket at all. The counts come
+// entirely from this one shared snapshot — arena (OCI bot-vs-bot) games are
+// unioned into it server-side (worker.ts, gated ARENA_LOBBY_ENABLED), so every
+// client agrees; withArenaLobby only warms arena spectator-routing state and
+// leaves the numbers untouched (see arenaLobby.ts, Tier 3). Throws on a non-OK
+// response so callers keep their last snapshot.
 export async function fetchLobbySnapshot(): Promise<MPLobby> {
   const res = await fetch("/api/lobby", { headers: { accept: "application/json" } });
   if (!res.ok) throw new Error(`lobby ${res.status}`);
@@ -43,9 +46,20 @@ export function useLobbySnapshot(pollMs = 10000): MPLobby | null {
     };
     poll();
     const id = window.setInterval(poll, pollMs);
+    // A backgrounded tab has its setInterval throttled by the browser, so a
+    // screen left on the lobby during ramp-up could otherwise hold a stale count
+    // for a long time. Re-poll immediately on foreground/focus so it converges on
+    // the shared DO snapshot the moment the viewer looks at it again.
+    const onForeground = () => {
+      if (document.visibilityState === "visible") poll();
+    };
+    document.addEventListener("visibilitychange", onForeground);
+    window.addEventListener("focus", onForeground);
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onForeground);
+      window.removeEventListener("focus", onForeground);
     };
   }, [pollMs]);
   return lobby;
