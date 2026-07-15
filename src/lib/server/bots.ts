@@ -1234,50 +1234,99 @@ export function ogClubMembers(): { owner: HousePersona; members: HousePersona[] 
   return { owner, members };
 }
 
-/** Create the OG club and enroll its (large) house-bot membership. Idempotent:
- * INSERT OR IGNORE throughout, so re-running never duplicates rows or disturbs
- * a membership a user later joined. Skips membership seeding if the fixed slug
- * is already held by a different (user-made) club, so it never hijacks one. */
+/** Create (or ADOPT) the OG club and enroll its (large) house-bot membership.
+ *
+ * The target club is resolved by SLUG, not by our hardcoded id. `clubs.slug` is
+ * NOT NULL UNIQUE (migrations/0005), so at most one club can hold OG_CLUB_SLUG —
+ * and that club may be one a REAL USER created with this exact slug before the
+ * seed ever ran. When that happens, our own `INSERT OR IGNORE` keyed by
+ * OG_CLUB_ID conflicts on the slug and is silently ignored, our id never gets a
+ * row, and the old `WHERE id = OG_CLUB_ID` guard bailed — leaving the named
+ * veterans' club permanently bot-less (the live bug). So instead:
+ *   • If a club already holds the slug, ADOPT it: enroll the house personas into
+ *     THAT club id as plain 'member' rows. We NEVER rewrite its owner, name,
+ *     description, or icon — a user-made club keeps its own identity; adoption
+ *     only ADDS bot members. The existing owner's row is left untouched (and we
+ *     skip inserting one for it, so it is never duplicated or downgraded).
+ *   • If NO club holds the slug, create ours (id=OG_CLUB_ID, owner=apexpawn) and
+ *     seed apexpawn as 'owner' plus the rest as 'member' — the original behavior.
+ *
+ * Idempotent: INSERT OR IGNORE throughout, so re-running never duplicates rows,
+ * disturbs a membership a user joined, or overwrites a club's identity. Safe to
+ * run on every cold start (adopting an already-populated club is a no-op). */
 export async function ensureOgClub(db: D1Database): Promise<void> {
   const now = Date.now();
   const { owner, members } = ogClubMembers();
-  await db
-    .prepare(
-      `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now)
-    .run();
-  // Confirm our row actually exists (a pre-existing club could hold the slug);
-  // only seed membership against our own club id.
-  const row = await db.prepare("SELECT id FROM clubs WHERE id = ?").bind(OG_CLUB_ID).first<{ id: string }>();
-  if (!row) return;
-  const statements = members.map((p) =>
-    db
+  // Resolve the target by SLUG. An existing row here may be user-made (a
+  // different id and a real, non-bot owner) or a prior seed of ours.
+  let target = await db
+    .prepare("SELECT id, owner_user_id FROM clubs WHERE slug = ?")
+    .bind(OG_CLUB_SLUG)
+    .first<{ id: string; owner_user_id: string }>();
+  if (!target) {
+    // Nobody holds the slug yet: create ours exactly as before.
+    await db
       .prepare(
-        `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO clubs (id, slug, name, description, icon, owner_user_id, owner_name, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .bind(OG_CLUB_ID, p.userId, p.userId === owner.userId ? "owner" : "member", now),
-  );
+      .bind(OG_CLUB_ID, OG_CLUB_SLUG, OG_CLUB_NAME, OG_CLUB_DESCRIPTION, OG_CLUB_ICON, owner.userId, owner.name, now)
+      .run();
+    // Re-read by slug (a concurrent seed could have raced us to it).
+    target = await db
+      .prepare("SELECT id, owner_user_id FROM clubs WHERE slug = ?")
+      .bind(OG_CLUB_SLUG)
+      .first<{ id: string; owner_user_id: string }>();
+    if (!target) return;
+  }
+  // "Our own" club: our canonical id owned by the founder persona. Only then is
+  // apexpawn seeded as 'owner'; when adopting any other club, every persona
+  // (apexpawn included) joins as a plain 'member' and the club's real owner row
+  // is left alone.
+  const isOurClub = target.id === OG_CLUB_ID && target.owner_user_id === owner.userId;
+  const clubId = target.id;
+  const clubOwnerId = target.owner_user_id;
+  const statements = members
+    // Never write a membership row for the adopted club's existing owner — its
+    // own owner row stays as-is (INSERT OR IGNORE would ignore a duplicate PK,
+    // but skipping makes "no downgrade / no duplicate" explicit).
+    .filter((p) => isOurClub || p.userId !== clubOwnerId)
+    .map((p) =>
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO club_members (club_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)`,
+        )
+        .bind(clubId, p.userId, isOurClub && p.userId === owner.userId ? "owner" : "member", now),
+    );
   await batchInChunks(db, statements);
 }
 
-/** How many OG-club members are actually renderable: club_members rows for the
- * OG club whose user_id resolves to a LIVE users row — the same INNER JOIN the
- * club detail route uses, so this counts exactly what the page would show. Used
- * to make OG-club seeding self-healing (mirrors countSeededHouseUsers): when
- * this is below the expected membership size, the club is empty or partial (a
- * stuck one-shot seed, a failed/partial club_members batch, or members that
- * referenced not-yet-created ghost accounts) and ensureOgClub must re-run. One
- * cheap COUNT; only the OG club's rows are scanned. A read failure reads as
- * "assume empty" so seeding runs rather than skips. */
+/** How many members the OG club would actually render: club_members rows whose
+ * user_id resolves to a LIVE users row — the same INNER JOIN the club detail
+ * route uses, so this counts exactly what the page would show. The club is
+ * resolved by SLUG first (mirroring the detail route and ensureOgClub), so this
+ * measures whichever club holds OG_CLUB_SLUG — including a user-made club we
+ * ADOPT — and therefore converges: once the bots are enrolled into that club the
+ * count exceeds the expected membership and the self-healing gate stops re-
+ * running. When NO club holds the slug yet, returns 0 so the seed runs and
+ * creates it. Used to make OG-club seeding self-healing (mirrors
+ * countSeededHouseUsers): below the expected membership size means empty or
+ * partial (a stuck one-shot seed, a failed/partial club_members batch, or
+ * members that referenced not-yet-created ghost accounts) and ensureOgClub must
+ * re-run. A read failure reads as "assume empty" so seeding runs rather than
+ * skips. */
 export async function countOgClubMembers(db: D1Database): Promise<number> {
   try {
+    const club = await db
+      .prepare("SELECT id FROM clubs WHERE slug = ?")
+      .bind(OG_CLUB_SLUG)
+      .first<{ id: string }>();
+    if (!club) return 0;
     const row = await db
       .prepare(
         `SELECT COUNT(*) AS n FROM club_members cm JOIN users u ON u.id = cm.user_id WHERE cm.club_id = ?`,
       )
-      .bind(OG_CLUB_ID)
+      .bind(club.id)
       .first<{ n: number }>();
     return row?.n ?? 0;
   } catch {
