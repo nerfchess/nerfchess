@@ -49,8 +49,6 @@ export type HeadToHeadEntry = {
   lastPlayed: number;
 };
 
-export type FavoriteNerf = { nerfId: string; dealt: number; wins: number; winRate: number };
-
 /** One calendar day (UTC) of results, for the 30-day activity strip. */
 export type DailyBucket = { date: string; wins: number; losses: number; draws: number };
 
@@ -84,8 +82,6 @@ export type PlayerStats = {
   bestWins: Array<{ id: string; opponent: string; rating: number; at: number }>;
   /** The five most-played opponents, with the record against each. */
   headToHead: HeadToHeadEntry[];
-  /** Rules dealt at least 3 times, ranked by how often they came up. */
-  favoriteNerfs: FavoriteNerf[];
   gameLength: { avgPlies: number | null; avgDurationMs: number | null };
   /** Last 30 UTC days of decided results, oldest first, empty days included. */
   daily: DailyBucket[];
@@ -104,9 +100,6 @@ const MAX_GAME_MS = 4 * 60 * 60 * 1000;
 
 // Games closer together than this belong to the same play session.
 const SESSION_GAP_MS = 60 * 60 * 1000;
-
-// A rule needs to have been dealt this often before it can rank as a favorite.
-const FAVORITE_NERF_MIN_GAMES = 3;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -138,7 +131,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     lossStreak: { longest: emptyStreak(), current: 0 },
     bestWins: [],
     headToHead: [],
-    favoriteNerfs: [],
     gameLength: { avgPlies: null, avgDurationMs: null },
     daily: [],
     sessions: { count: 0, longestGames: 0, avgGames: 0, recent: [] },
@@ -152,7 +144,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
   let runLosses = emptyStreak();
   const bestByOpponent = new Map<string, { id: string; opponent: string; rating: number; at: number }>();
   const byOpponent = new Map<string, HeadToHeadEntry>();
-  const byNerf = new Map<string, { dealt: number; wins: number }>();
   let plySum = 0;
   let plyGames = 0;
   const sessions: SessionInfo[] = [];
@@ -197,8 +188,8 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       if (!stats.lowest || point.rating < stats.lowest.rating) stats.lowest = point;
     }
 
-    // Head-to-head, favorite rules, sessions, and game length track every
-    // game; the win/loss/draw tallies below only cover decided ones.
+    // Head-to-head, sessions, and game length track every game; the
+    // win/loss/draw tallies below only cover decided ones.
     const h2hKey = opponentName.toLowerCase();
     let h2h = byOpponent.get(h2hKey);
     if (!h2h) {
@@ -207,14 +198,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     }
     h2h.games++;
     h2h.lastPlayed = row.completed_at;
-
-    const myNerfId = color === "w" ? row.white_nerf_id : row.black_nerf_id;
-    let nerf = byNerf.get(myNerfId);
-    if (!nerf) {
-      nerf = { dealt: 0, wins: 0 };
-      byNerf.set(myNerfId, nerf);
-    }
-    nerf.dealt++;
 
     if (row.move_count > 0) {
       plySum += row.move_count;
@@ -262,7 +245,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       stats.wins++;
       speed.wins++;
       h2h.wins++;
-      nerf.wins++;
       session.wins++;
       if (daily) daily.wins++;
       runWins = {
@@ -307,11 +289,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
   stats.bestWins = [...bestByOpponent.values()].sort((a, b) => b.rating - a.rating).slice(0, 5);
   stats.headToHead = [...byOpponent.values()]
     .sort((a, b) => b.games - a.games || b.lastPlayed - a.lastPlayed)
-    .slice(0, 5);
-  stats.favoriteNerfs = [...byNerf.entries()]
-    .filter(([, n]) => n.dealt >= FAVORITE_NERF_MIN_GAMES)
-    .map(([nerfId, n]) => ({ nerfId, dealt: n.dealt, wins: n.wins, winRate: n.wins / n.dealt }))
-    .sort((a, b) => b.dealt - a.dealt || b.winRate - a.winRate)
     .slice(0, 5);
   stats.gameLength = {
     avgPlies: plyGames > 0 ? plySum / plyGames : null,

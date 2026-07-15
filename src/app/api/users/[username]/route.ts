@@ -2,17 +2,26 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
 import { categoryForTimeControl } from "@/lib/speed";
+import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
+// Friendships are one canonical row per pair (user_lo < user_hi by id).
+function pair(a: string, b: string): { lo: string; hi: string } {
+  return a < b ? { lo: a, hi: b } : { lo: b, hi: a };
+}
+
+type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
+
+export async function GET(request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
   const username = params.username.trim().toLowerCase();
   // Account + per-category ratings stay on D1; the game archive is on Postgres.
   const db = await getDb();
   const user = await db
     .prepare(
-      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at, role, bio, flair
+      `SELECT id, username, rating, rd, games, wins, losses, draws, avatar, created_at, role, bio, flair,
+              friends_visibility, show_online, last_seen_at
        FROM users WHERE username_lower = ?`,
     )
     .bind(username)
@@ -30,8 +39,75 @@ export async function GET(_request: Request, props: { params: Promise<{ username
       role: string;
       bio: string | null;
       flair: string | null;
+      friends_visibility: string | null;
+      show_online: number | null;
+      last_seen_at: number | null;
     }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+
+  // The signed-in viewer (if any), resolved with the same helpers /api/friends
+  // uses, drives the relationship state and mutual-friends disclosure below.
+  const viewer = await userForSession(
+    db,
+    sessionTokenFromCookieHeader(request.headers.get("cookie")),
+  );
+
+  const friendsVisibility = user.friends_visibility === "private" ? "private" : "public";
+  const showOnline = user.show_online == null ? true : !!user.show_online;
+
+  // Accepted-friendships count (cheap indexed D1 read).
+  const friendCountRow = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM friendships
+       WHERE (user_lo = ? OR user_hi = ?) AND status = 'accepted'`,
+    )
+    .bind(user.id, user.id)
+    .first<{ n: number }>();
+  const friendCount = friendCountRow?.n ?? 0;
+
+  // relationship: null when signed out, else the viewer's tie to this profile.
+  let relationship: Relationship | null = null;
+  if (viewer) {
+    if (viewer.id === user.id) {
+      relationship = "self";
+    } else {
+      const { lo, hi } = pair(viewer.id, user.id);
+      const link = await db
+        .prepare(`SELECT requested_by, status FROM friendships WHERE user_lo = ? AND user_hi = ?`)
+        .bind(lo, hi)
+        .first<{ requested_by: string; status: string }>();
+      if (!link) relationship = "none";
+      else if (link.status === "accepted") relationship = "friends";
+      else relationship = link.requested_by === viewer.id ? "outgoing" : "incoming";
+    }
+  }
+
+  // mutualFriends (cap 6): accepted friends shared by the viewer and this
+  // profile. Only when a viewer is signed in AND may see this player's friends
+  // (public list, or the viewer is the owner or a moderator).
+  const canSeeFriends =
+    relationship === "self" || friendsVisibility === "public" || isModerator(viewer);
+  let mutualFriends: Array<{ username: string; avatar: string | null }> = [];
+  if (viewer && relationship !== "self" && canSeeFriends) {
+    const mutual = await db
+      .prepare(
+        `SELECT u.username, u.avatar FROM users u
+         WHERE u.id IN (
+                 SELECT CASE WHEN user_lo = ? THEN user_hi ELSE user_lo END
+                 FROM friendships
+                 WHERE (user_lo = ? OR user_hi = ?) AND status = 'accepted'
+               )
+           AND u.id IN (
+                 SELECT CASE WHEN user_lo = ? THEN user_hi ELSE user_lo END
+                 FROM friendships
+                 WHERE (user_lo = ? OR user_hi = ?) AND status = 'accepted'
+               )
+         LIMIT 6`,
+      )
+      .bind(user.id, user.id, user.id, viewer.id, viewer.id, viewer.id)
+      .all<{ username: string; avatar: string | null }>();
+    mutualFriends = mutual.results;
+  }
 
   // Independent per-time-control ratings; buckets a user never played show
   // as null so the UI can label them provisional/unrated.
@@ -98,7 +174,14 @@ export async function GET(_request: Request, props: { params: Promise<{ username
       role: user.role,
       bio: user.bio,
       flair: user.flair,
+      // last-seen is suppressed entirely when the player hides their presence.
+      lastSeenAt: showOnline ? (user.last_seen_at ?? null) : null,
+      showOnline,
+      friendsVisibility,
+      friendCount,
     },
+    relationship,
+    mutualFriends,
     games: recentGames,
     ratings,
     ratingHistory: ratingHistory

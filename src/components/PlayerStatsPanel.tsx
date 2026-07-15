@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { getNerf } from "@/engine/nerfs/library";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
-import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import type { DailyBucket, PlayerStats, StreakInfo } from "@/lib/playerStats";
 
 // Lichess-style detailed statistics block, shared by the own-profile page and
@@ -319,54 +317,6 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
                   <td className="py-2 text-right text-xs text-parchment-400">{formatDate(entry.lastPlayed)}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* The secret rules this player is dealt the most. */}
-      {stats.favoriteNerfs.length > 0 && (
-        <div className="plate p-4 sm:p-5 overflow-x-auto">
-          <div className="smallcaps text-[10px] text-parchment-400">Favorite rules</div>
-          <table className="mt-2 w-full text-sm">
-            <thead>
-              <tr className="smallcaps text-[9px] text-parchment-400">
-                <th className="py-1.5 text-left font-normal">Rule</th>
-                <th className="py-1.5 text-right font-normal">Dealt</th>
-                <th className="py-1.5 text-right font-normal">Wins</th>
-                <th className="py-1.5 text-right font-normal">Win rate</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {stats.favoriteNerfs.map((fav) => {
-                const nerf = getNerf(fav.nerfId);
-                return (
-                  <tr key={fav.nerfId}>
-                    <td className="py-2">
-                      {nerf ? (
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className={`truncate font-display font-semibold tier-${nerf.tier}`}>
-                            {nerf.name}
-                          </span>
-                          <span
-                            className="smallcaps shrink-0 text-[9px] text-parchment-400"
-                            title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
-                          >
-                            {TIER_ROMAN[nerf.tier]}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="font-mono text-parchment-300">{fav.nerfId}</span>
-                      )}
-                    </td>
-                    <td className="py-2 text-right font-mono tabular-nums text-parchment-100">{fav.dealt}</td>
-                    <td className="py-2 text-right font-mono tabular-nums text-verdigris-glow">{fav.wins}</td>
-                    <td className="py-2 text-right font-mono tabular-nums text-parchment-100">
-                      {Math.round(fav.winRate * 100)}%
-                    </td>
-                  </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>
