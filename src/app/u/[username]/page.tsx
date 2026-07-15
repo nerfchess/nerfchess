@@ -1,21 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  Check,
+  Flag,
+  Gamepad2,
+  MessageSquare,
+  MoreHorizontal,
+  Share2,
+  Swords,
+  Trophy,
+  UserCheck,
+  UserPlus,
+  UserX,
+} from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
+import { PlayerLink } from "@/components/PlayerLink";
+import { PresenceBadge } from "@/components/PresenceBadge";
+import { EmptyState } from "@/components/EmptyState";
+import { ModeBadge } from "@/components/ModeBadge";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import type { PlayerStats } from "@/lib/playerStats";
-import { RatingChart, RatingPoint } from "@/components/RatingChart";
-import { ACTIVE_RATING_CATEGORIES } from "@/lib/ratingCategories";
-import { isProvisionalRd } from "@/lib/ratingDisplay";
+import type { RatingPoint } from "@/components/RatingChart";
+import { ModeRatingCard } from "@/components/ratings/ModeRatingCard";
+import {
+  RatingHistoryPanel,
+  recentRatingDelta,
+  type HistoryPoint,
+} from "@/components/ratings/RatingHistoryPanel";
+import { CurrentGameCard } from "@/components/profile/CurrentGameCard";
+import { RecentGameCard, type RecentGameRow } from "@/components/profile/RecentGameCard";
+import { FriendsModule } from "@/components/profile/FriendsModule";
+import { relativeTime } from "@/components/profile/relativeTime";
+import { usePresence } from "@/lib/presence";
+import { ACTIVE_RATING_CATEGORIES, MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { clockLabel } from "@/lib/tournaments";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
 import { isHouseEditor } from "@/lib/godPanel";
+import type { DraftMode } from "@/engine/buff";
+
+type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
 interface ProfileUser {
   username: string;
@@ -30,22 +60,11 @@ interface ProfileUser {
   role: "user" | "mod" | "admin";
   bio: string | null;
   flair: string | null;
-}
-
-interface ProfileGame {
-  id: string;
-  white_name: string;
-  black_name: string;
-  winner: "w" | "b" | "draw" | null;
-  reason: string;
-  rated: number;
-  white_rating_before: number | null;
-  white_rating_after: number | null;
-  black_rating_before: number | null;
-  black_rating_after: number | null;
-  time_sec: number;
-  increment_sec: number;
-  completed_at: number;
+  // Extended privacy / social fields (profile-contracts.md).
+  lastSeenAt: number | null;
+  showOnline: boolean;
+  friendsVisibility: "public" | "private";
+  friendCount: number;
 }
 
 interface CategoryRatingRow {
@@ -62,15 +81,32 @@ type ProfileRatingPoint = RatingPoint & { category?: string | null };
 
 interface ProfileData {
   user: ProfileUser;
-  games: ProfileGame[];
+  games: unknown[];
   ratings?: Record<string, CategoryRatingRow>;
   ratingHistory: ProfileRatingPoint[];
+  relationship: Relationship | null;
+  mutualFriends: { username: string; avatar: string | null }[];
 }
 
+// useSearchParams (for the ?tab= state) must sit under a Suspense boundary, so
+// the page shell renders SiteHeader immediately and defers the data-driven body.
 export default function ProfilePage() {
+  return (
+    <main className="min-h-screen pb-16">
+      <SiteHeader />
+      <Suspense fallback={<ProfileSkeleton />}>
+        <ProfileContent />
+      </Suspense>
+    </main>
+  );
+}
+
+function ProfileContent() {
   const params = useParams<{ username: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const username = String(params.username ?? "");
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [me, setMe] = useState<AccountUser | null>(null);
@@ -81,37 +117,33 @@ export default function ProfilePage() {
   // avatar catalog so the inline editor can rename it, swap its pfp, or set its
   // bio. Null for everyone else, so house-bot status stays invisible to others.
   const [houseEdit, setHouseEdit] = useState<{ userId: string; avatars: string[] } | null>(null);
-  // "Add friend" (follow) control: one optimistic request per visit; the
-  // FriendsPanel manages pending/accept state in full.
-  const [friendState, setFriendState] = useState<"idle" | "sent" | "error">("idle");
-  const sendFriendRequest = async () => {
-    setFriendState("sent");
-    try {
-      const res = await fetch("/api/friends", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "request", username }),
-      });
-      if (!res.ok) setFriendState("error");
-    } catch {
-      setFriendState("error");
-    }
-  };
+  // The newest finished game, for the recent-game module (fetched from the games
+  // endpoint so it carries `mode`; the profile payload's games do not).
+  const [newestGame, setNewestGame] = useState<RecentGameRow | null | undefined>(undefined);
 
-  // Client-side profile→profile navigation re-renders this component without a
+  // Friend button state machine, seeded from the payload relationship and driven
+  // locally by the header's Add / Accept / Remove actions.
+  const [rel, setRel] = useState<Relationship | null>(null);
+  const [friendBusy, setFriendBusy] = useState(false);
+
+  // Client-side profile->profile navigation re-renders this component without a
   // remount: clear the previous player's state during render (React's sanctioned
-  // reset-on-key-change) so a stale "not found" flag (or the old profile/stats)
-  // can never stick to the new username while the fetch below is in flight.
+  // reset-on-key-change) so stale data never sticks to the new username while the
+  // fetch below is in flight.
   const [seenUser, setSeenUser] = useState(username);
   if (seenUser !== username) {
     setSeenUser(username);
     setMissing(false);
     setProfile(null);
     setStats(null);
-    setFriendState("idle");
     setHouseEdit(null);
+    setNewestGame(undefined);
+    setRel(null);
+    setReporting(false);
   }
 
+  // Load the profile payload, stats, the signed-in account, and (house editor
+  // only) the persona roster.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -122,21 +154,24 @@ export default function ProfilePage() {
         return;
       }
       const data = (await res.json()) as ProfileData;
+      if (cancelled) return;
       setProfile(data);
+      setRel(data.relationship);
+
       fetch(`/api/users/${encodeURIComponent(username)}/stats`)
         .then((r) => (r.ok ? (r.json() as Promise<{ stats: PlayerStats }>) : null))
         .then((s) => {
           if (!cancelled && s) setStats(s.stats);
         })
         .catch(() => {});
+
       const account = await fetchMe();
       if (cancelled) return;
       setMe(account);
       // House editor (ilovenewjeans only): learn whether this profile is a bot
       // and, if so, load its persona id + the pickable avatar catalog. The
       // personas endpoint is authorized for this account and 403s for everyone
-      // else, so a non-editor never even learns the roster — house-bot status
-      // stays hidden. Matched on the canonical (users-row) username.
+      // else, so a non-editor never even learns the roster.
       if (account && isHouseEditor(account.username)) {
         try {
           const res2 = await fetch("/api/mod/house/personas");
@@ -157,227 +192,1015 @@ export default function ProfilePage() {
     };
   }, [username]);
 
-  const isMe = !!me && !!profile && me.username.toLowerCase() === profile.user.username.toLowerCase();
+  // Newest finished game (limit 1, no filters) for the recent-game module. Kept
+  // separate from the Games tab feed so a finished live game can refetch it.
+  const loadNewestGame = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}/games?limit=1`);
+      if (!res.ok) return;
+      const body = (await res.json()) as { games: RecentGameRow[] };
+      setNewestGame(body.games[0] ?? null);
+    } catch {
+      setNewestGame((g) => (g === undefined ? null : g));
+    }
+  }, [username]);
+
+  useEffect(() => {
+    // loadNewestGame only setState after awaiting the fetch (never synchronously);
+    // the lint rule can't see past the await boundary. Same pattern as FriendsModule.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadNewestGame();
+  }, [loadNewestGame]);
+
+  // Live presence for the game module and the header badge.
+  const presence = usePresence(username);
+
+  const isOwner = profile?.relationship === "self";
 
   // Current top-10 leaderboard honors, derived from the cached standings the
-  // leaderboard endpoint already serves (see lib/laurels.ts). Empty for the
-  // unlaurelled, so both surfaces below simply don't render.
+  // leaderboard endpoint already serves. Empty for the unlaurelled.
   const placements = useTopPlacements(profile?.user.username);
 
+  const tab: "activity" | "games" = searchParams.get("tab") === "games" ? "games" : "activity";
+  const setTab = (next: "activity" | "games") => {
+    router.replace(`/u/${encodeURIComponent(username)}${next === "games" ? "?tab=games" : ""}`, {
+      scroll: false,
+    });
+  };
+
+  if (missing) {
+    return (
+      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+        <h1 className="font-display text-4xl">Player not found</h1>
+        <p className="mt-3 text-parchment-200">No account with that name.</p>
+        <Link href="/lobby" className="mt-6 inline-flex btn-leaf px-4 py-2 font-display text-sm font-semibold">
+          Back to the lobby
+        </Link>
+      </section>
+    );
+  }
+
+  if (!profile) return <ProfileSkeleton />;
+
+  const user = profile.user;
+  const ratingHistory = profile.ratingHistory as HistoryPoint[];
+  const currentRatings: Record<string, number | undefined> = Object.fromEntries(
+    ACTIVE_RATING_CATEGORIES.map((c) => [c.id, profile.ratings?.[c.id]?.rating]),
+  );
+
+  // Presence chip is suppressed entirely when the player hides their online
+  // status and the viewer is not the owner (spec 2.2 / section 5).
+  const showPresence = user.showOnline || isOwner;
+
   return (
-    <main className="min-h-screen">
-      <SiteHeader />
+    <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+      {/* ---- Header (spec 2.2) ---------------------------------------------- */}
+      <ProfileHeader
+        user={user}
+        isOwner={isOwner}
+        me={me}
+        rel={rel}
+        friendBusy={friendBusy}
+        placements={placements}
+        presenceMode={presence.game?.mode ?? null}
+        presenceState={presence.state}
+        showPresence={showPresence}
+        ratings={profile.ratings}
+        onAddFriend={async () => {
+          setFriendBusy(true);
+          setRel("outgoing");
+          try {
+            const r = await fetch("/api/friends", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "request", username: user.username }),
+            });
+            if (!r.ok) setRel("none");
+          } catch {
+            setRel("none");
+          } finally {
+            setFriendBusy(false);
+          }
+        }}
+        onAcceptFriend={async () => {
+          setFriendBusy(true);
+          const prev = rel;
+          setRel("friends");
+          try {
+            const r = await fetch("/api/friends", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "accept", username: user.username }),
+            });
+            if (!r.ok) setRel(prev);
+          } catch {
+            setRel(prev);
+          } finally {
+            setFriendBusy(false);
+          }
+        }}
+        onRemoveFriend={async () => {
+          setFriendBusy(true);
+          const prev = rel;
+          setRel("none");
+          try {
+            const r = await fetch("/api/friends", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "remove", username: user.username }),
+            });
+            if (!r.ok) setRel(prev);
+          } catch {
+            setRel(prev);
+          } finally {
+            setFriendBusy(false);
+          }
+        }}
+        onReport={() => setReporting(true)}
+      />
 
-      <section className="max-w-3xl mx-auto px-6 py-8">
-        {missing ? (
-          <>
-            <h1 className="font-display text-4xl">Player not found</h1>
-            <p className="mt-3 text-parchment-200">No account with that name.</p>
-          </>
-        ) : !profile ? (
-          <div className="text-parchment-300">Loading…</div>
+      {/* House-bot inline editor (house editor only); everyone else sees the
+          read-only bio rendered inside the header component. */}
+      {houseEdit && (
+        <HouseBotEditor
+          userId={houseEdit.userId}
+          avatars={houseEdit.avatars}
+          username={user.username}
+          avatar={user.avatar ?? null}
+          bio={user.bio}
+          onIdentity={(nextName, nextAvatar) => {
+            if (nextName.toLowerCase() !== user.username.toLowerCase()) {
+              router.push(`/u/${encodeURIComponent(nextName)}`);
+            } else {
+              setProfile((p) => (p ? { ...p, user: { ...p.user, avatar: nextAvatar } } : p));
+            }
+          }}
+          onBio={(bio) => setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))}
+        />
+      )}
+
+      {/* ---- Rating cards (spec 2.4) --------------------------------------- */}
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {MODE_RATING_CATEGORIES.map((c) => {
+          const placement = placements.find((p) => p.category === c.id);
+          return (
+            <ModeRatingCard
+              key={c.id}
+              category={c}
+              row={profile.ratings?.[c.id] ?? null}
+              recentDelta={recentRatingDelta(ratingHistory, c.id, 7)}
+              rank={placement?.rank ?? null}
+            />
+          );
+        })}
+      </div>
+
+      {/* ---- Game module (spec 2.3) --------------------------------------- */}
+      <div className="mt-4">
+        {presence.state === "in-game" && presence.game ? (
+          <CurrentGameCard
+            username={user.username}
+            game={presence.game}
+            // Refetch the newest game a beat after it ends so the finished game
+            // (with rating deltas) is ready to take over as the recent module.
+            onEnded={() => {
+              window.setTimeout(() => void loadNewestGame(), 2000);
+            }}
+          />
+        ) : newestGame === undefined ? (
+          <div className="plate p-4">
+            <div className="skeleton h-24 w-full rounded-[10px]" style={{ borderRadius: 10 }} />
+          </div>
+        ) : newestGame ? (
+          <RecentGameCard game={newestGame} viewer={user.username} />
         ) : (
-          <>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex min-w-0 items-center gap-4">
-                {isMe ? (
-                  <Link
-                    href="/profile"
-                    title="Change your profile picture"
-                    className="group relative rounded-md ring-1 ring-transparent hover:ring-gold/60 transition"
-                  >
-                    <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
-                    <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 text-center text-[9px] uppercase tracking-wider text-parchment-100 group-hover:block">
-                      edit
-                    </span>
-                  </Link>
-                ) : (
-                  <PlayerAvatar name={profile.user.username} avatar={profile.user.avatar} size={56} />
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="min-w-0 break-words font-display text-3xl sm:text-5xl">
-                      {profile.user.username}
-                      {profile.user.flair && (
-                        <span className="ml-2 align-middle text-2xl" aria-hidden="true">
-                          {profile.user.flair}
-                        </span>
-                      )}
-                      {placements.length > 0 && (
-                        <LaurelBadge
-                          rank={placements[0].rank}
-                          title={placementTitle(placements[0])}
-                          size={24}
-                          className="ml-2"
-                        />
-                      )}
-                    </h1>
-                    {profile.user.role !== "user" && (
-                      <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
-                        {profile.user.role === "admin" ? "Admin" : "Moderator"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-parchment-300 text-sm">
-                    Member since {new Date(profile.user.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {me && !isMe && (
-                  <>
-                    <button
-                      onClick={() => router.push(`/friend?challenge=${encodeURIComponent(profile.user.username)}`)}
-                      className="px-4 py-2 rounded-sm btn-leaf text-sm font-display font-semibold"
-                    >
-                      Challenge
-                    </button>
-                    {!me.isGuest && (
-                      <button
-                        onClick={sendFriendRequest}
-                        disabled={friendState !== "idle"}
-                        className="px-4 py-2 rounded-sm btn-ghost text-sm font-display disabled:opacity-70"
-                      >
-                        {friendState === "sent"
-                          ? "Request sent"
-                          : friendState === "error"
-                            ? "Try again later"
-                            : "Add friend"}
-                      </button>
-                    )}
-                    <Link
-                      href={`/inbox/${encodeURIComponent(profile.user.username)}`}
-                      className="px-4 py-2 rounded-sm btn-ghost text-sm font-display"
-                    >
-                      Message
-                    </Link>
-                    <button
-                      onClick={() => setReporting(true)}
-                      className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow"
-                    >
-                      Report
-                    </button>
-                  </>
-                )}
-                {isMe && (
-                  <Link href="/profile" className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
-                    Edit profile
-                  </Link>
-                )}
-              </div>
-            </div>
+          <EmptyState
+            icon={Gamepad2}
+            title={isOwner ? "You have not played online yet" : "No games yet"}
+            body={
+              isOwner
+                ? "Play a rated game to start a rating, fill in this profile, and show up on the leaderboard."
+                : "This player has not finished an online game yet. Check back after their first match."
+            }
+            action={isOwner ? { href: "/lobby", label: "Find a match" } : undefined}
+          />
+        )}
+      </div>
 
-            {houseEdit ? (
-              <HouseBotEditor
-                userId={houseEdit.userId}
-                avatars={houseEdit.avatars}
-                username={profile.user.username}
-                avatar={profile.user.avatar ?? null}
-                bio={profile.user.bio}
-                onIdentity={(nextName, nextAvatar) => {
-                  if (nextName.toLowerCase() !== profile.user.username.toLowerCase()) {
-                    // Rename changes the profile URL; navigate so everything
-                    // (URL, data, laurels) refetches under the new handle.
-                    router.push(`/u/${encodeURIComponent(nextName)}`);
-                  } else {
-                    setProfile((p) => (p ? { ...p, user: { ...p.user, avatar: nextAvatar } } : p));
-                  }
-                }}
-                onBio={(bio) => setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))}
-              />
-            ) : (
-              <BioSection
-                bio={profile.user.bio}
-                editable={isMe}
-                onSaved={(bio) =>
-                  setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))
-                }
-              />
-            )}
+      {/* ---- Main column + Friends (spec 2.6 / 2.7) ------------------------- */}
+      <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-6">
+        <div className="min-w-0">
+          {/* Tabs */}
+          <div role="tablist" aria-label="Profile sections" className="flex items-center gap-1 border-b border-white/10">
+            <TabButton id="activity" label="Activity" active={tab === "activity"} onSelect={() => setTab("activity")} />
+            <TabButton id="games" label="Games" active={tab === "games"} onSelect={() => setTab("games")} />
+          </div>
 
-            {/* Exactly two ratings: the Nerf and Buff mode buckets. */}
-            <div className="mt-6 grid grid-cols-2 gap-2">
-              {ACTIVE_RATING_CATEGORIES.map((c) => {
-                const r = profile.ratings?.[c.id];
-                const Icon = c.icon;
-                return (
-                  <div key={c.id} className="plate p-3">
-                    <div className="flex items-center gap-1.5 smallcaps text-[10px] text-parchment-400">
-                      <Icon className="h-3 w-3" style={{ color: c.accent }} strokeWidth={2.2} />
-                      {c.label}
-                    </div>
-                    <div className="mt-1 font-mono text-xl tabular-nums text-parchment-100">
-                      {r ? (
-                        <>
-                          {Math.round(r.rating)}
-                          {isProvisionalRd(r.rd) && <span className="text-parchment-400">?</span>}
-                        </>
-                      ) : (
-                        <span className="text-parchment-500">-</span>
-                      )}
-                    </div>
-                    <div className="mt-0.5 font-mono text-[10px] text-parchment-400">
-                      {r
-                        ? `${r.games} games · ${r.wins}W ${r.losses}L ${r.draws}D · peak ${Math.round(r.peak)}`
-                        : "no rated games"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <StatCard label="Rated games" value={profile.user.games.toString()} />
-              <StatCard
-                label="Record"
-                value={`${profile.user.wins}-${profile.user.losses}-${profile.user.draws}`}
-              />
-              <StatCard label="Member since" value={new Date(profile.user.createdAt).toLocaleDateString()} />
-            </div>
-
-            <AchievementsStrip username={profile.user.username} />
-
+          <div
+            role="tabpanel"
+            id="panel-activity"
+            aria-labelledby="tab-activity"
+            hidden={tab !== "activity"}
+            className="pt-4"
+          >
+            <MovementSummary points={ratingHistory} />
+            <AchievementsStrip username={user.username} />
             {placements.length > 0 && <CurrentStandings placements={placements} />}
-
-            {profile.ratingHistory.length > 0 && (
-              // Keyed by profile: the section seeds its tab from the player's
-              // most-played bucket on mount, so navigating profile→profile
-              // must remount it — otherwise the previous player's tab sticks.
-              <RatingHistorySection
-                key={profile.user.username}
-                points={profile.ratingHistory}
-              />
-            )}
-
             {stats && (
-              <>
-                <h2 className="mt-10 font-display text-2xl">Statistics</h2>
+              <div className="mt-6">
+                <h2 className="font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} />
                 </div>
-              </>
-            )}
-
-            <h2 className="mt-10 font-display text-2xl">Recent games</h2>
-            {profile.games.length === 0 ? (
-              <p className="mt-3 text-parchment-300">No online games yet.</p>
-            ) : (
-              <div className="mt-3 plate divide-y divide-white/5">
-                {profile.games.map((game) => (
-                  <GameRow key={game.id} game={game} viewer={profile.user.username} />
-                ))}
               </div>
             )}
+            {ratingHistory.length > 0 && (
+              <div className="mt-6">
+                <div className="rule-ornament mb-3">
+                  <span className="font-display">Rating history</span>
+                </div>
+                <RatingHistoryPanel
+                  key={user.username}
+                  points={ratingHistory}
+                  currentRatings={currentRatings}
+                />
+              </div>
+            )}
+          </div>
 
-            {reporting && (
-              <ReportModal username={profile.user.username} onClose={() => setReporting(false)} />
+          <div
+            role="tabpanel"
+            id="panel-games"
+            aria-labelledby="tab-games"
+            hidden={tab !== "games"}
+            className="pt-4"
+          >
+            <GamesTab
+              username={user.username}
+              user={user}
+              playingNow={presence.state === "in-game"}
+              active={tab === "games"}
+            />
+          </div>
+        </div>
+
+        {/* Friends: a right column on xl, stacked full-width below it. */}
+        <aside className="mt-8 xl:mt-0">
+          <FriendsModule username={user.username} isOwner={isOwner} />
+        </aside>
+      </div>
+
+      {reporting && <ReportModal username={user.username} onClose={() => setReporting(false)} />}
+    </section>
+  );
+}
+
+// ---- Header -----------------------------------------------------------------
+
+function ProfileHeader({
+  user,
+  isOwner,
+  me,
+  rel,
+  friendBusy,
+  placements,
+  presenceMode,
+  presenceState,
+  showPresence,
+  ratings,
+  onAddFriend,
+  onAcceptFriend,
+  onRemoveFriend,
+  onReport,
+}: {
+  user: ProfileUser;
+  isOwner: boolean;
+  me: AccountUser | null;
+  rel: Relationship | null;
+  friendBusy: boolean;
+  placements: LaurelPlacement[];
+  presenceMode: DraftMode | null;
+  presenceState: ReturnType<typeof usePresence>["state"];
+  showPresence: boolean;
+  ratings?: Record<string, CategoryRatingRow>;
+  onAddFriend: () => void;
+  onAcceptFriend: () => void;
+  onRemoveFriend: () => void;
+  onReport: () => void;
+}) {
+  // Strongest current rating (best of the mode buckets) for the inline chip.
+  const best = useMemo(() => {
+    let top: { c: (typeof MODE_RATING_CATEGORIES)[number]; r: CategoryRatingRow } | null = null;
+    for (const c of MODE_RATING_CATEGORIES) {
+      const r = ratings?.[c.id];
+      if (r && (!top || r.rating > top.r.rating)) top = { c, r };
+    }
+    return top;
+  }, [ratings]);
+
+  const avatar = (
+    <>
+      <span className="sm:hidden">
+        <PlayerAvatar name={user.username} avatar={user.avatar} size={56} />
+      </span>
+      <span className="hidden sm:block">
+        <PlayerAvatar name={user.username} avatar={user.avatar} size={72} />
+      </span>
+    </>
+  );
+
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-4">
+        {isOwner ? (
+          <Link
+            href="/profile/edit"
+            title="Edit your profile picture"
+            aria-label="Edit your profile picture"
+            className="group relative shrink-0 self-start rounded-md ring-1 ring-transparent transition hover:ring-gold/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
+          >
+            {avatar}
+            <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 text-center text-[9px] uppercase tracking-wider text-parchment-100 group-hover:block">
+              edit
+            </span>
+          </Link>
+        ) : (
+          <div className="shrink-0 self-start">{avatar}</div>
+        )}
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="min-w-0 break-words font-display text-3xl sm:text-4xl">
+              {user.username}
+              {user.flair && (
+                <span className="ml-2 align-middle text-2xl" aria-hidden="true">
+                  {user.flair}
+                </span>
+              )}
+              {placements.length > 0 && (
+                <LaurelBadge
+                  rank={placements[0].rank}
+                  title={placementTitle(placements[0])}
+                  size={24}
+                  className="ml-2"
+                />
+              )}
+            </h1>
+            {user.role !== "user" && (
+              <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold-leaf">
+                {user.role === "admin" ? "Admin" : "Moderator"}
+              </span>
+            )}
+            {best && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5">
+                <best.c.icon className="h-3 w-3" style={{ color: best.c.accent }} strokeWidth={2.2} aria-hidden />
+                <span className="font-mono text-xs tabular-nums text-parchment-100">{Math.round(best.r.rating)}</span>
+                <span className="smallcaps text-[9px] text-parchment-400">{best.c.label}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
+            {showPresence && (
+              <PresenceBadge state={presenceState} mode={presenceMode} lastSeenAt={user.lastSeenAt} />
+            )}
+            <span className="text-parchment-400">
+              Member since {new Date(user.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+
+          {user.bio && (
+            <p className="mt-3 max-w-prose whitespace-pre-wrap text-sm text-parchment-200">{user.bio}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <HeaderActions
+        user={user}
+        isOwner={isOwner}
+        me={me}
+        rel={rel}
+        friendBusy={friendBusy}
+        onAddFriend={onAddFriend}
+        onAcceptFriend={onAcceptFriend}
+        onRemoveFriend={onRemoveFriend}
+        onReport={onReport}
+      />
+    </div>
+  );
+}
+
+function HeaderActions({
+  user,
+  isOwner,
+  me,
+  rel,
+  friendBusy,
+  onAddFriend,
+  onAcceptFriend,
+  onRemoveFriend,
+  onReport,
+}: {
+  user: ProfileUser;
+  isOwner: boolean;
+  me: AccountUser | null;
+  rel: Relationship | null;
+  friendBusy: boolean;
+  onAddFriend: () => void;
+  onAcceptFriend: () => void;
+  onRemoveFriend: () => void;
+  onReport: () => void;
+}) {
+  const router = useRouter();
+
+  if (isOwner) {
+    return (
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <Link
+          href="/profile/edit"
+          className="btn-ghost inline-flex min-h-[44px] items-center px-4 font-display text-sm"
+        >
+          Edit profile
+        </Link>
+        <ShareButton username={user.username} />
+      </div>
+    );
+  }
+
+  // Signed out: no actions (Challenge needs an account).
+  if (!me) return null;
+
+  const signedInNonGuest = !me.isGuest;
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => router.push(`/friend?challenge=${encodeURIComponent(user.username)}`)}
+        className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold"
+      >
+        <Swords size={15} strokeWidth={2.3} aria-hidden />
+        Challenge
+      </button>
+
+      {/* Friend button state machine (only for real accounts, not guests). */}
+      {signedInNonGuest && rel === "none" && (
+        <button
+          type="button"
+          onClick={onAddFriend}
+          disabled={friendBusy}
+          className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm disabled:opacity-60"
+        >
+          <UserPlus size={15} strokeWidth={2.2} aria-hidden />
+          Add friend
+        </button>
+      )}
+      {signedInNonGuest && rel === "outgoing" && (
+        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-white/10 px-4 font-display text-sm text-parchment-400">
+          <Check size={15} strokeWidth={2.2} aria-hidden />
+          Request sent
+        </span>
+      )}
+      {signedInNonGuest && rel === "incoming" && (
+        <button
+          type="button"
+          onClick={onAcceptFriend}
+          disabled={friendBusy}
+          className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold disabled:opacity-60"
+        >
+          <Check size={15} strokeWidth={2.3} aria-hidden />
+          Accept request
+        </button>
+      )}
+      {signedInNonGuest && rel === "friends" && (
+        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-verdigris-glow/40 bg-verdigris/10 px-4 font-display text-sm text-verdigris-glow">
+          <UserCheck size={15} strokeWidth={2.2} aria-hidden />
+          Friends
+        </span>
+      )}
+
+      {signedInNonGuest && (
+        <ShareButton username={user.username} />
+      )}
+
+      {/* Overflow: Message, Report, and Remove friend (when friends). */}
+      {signedInNonGuest && (
+        <OverflowMenu
+          username={user.username}
+          showRemove={rel === "friends"}
+          friendBusy={friendBusy}
+          onRemoveFriend={onRemoveFriend}
+          onReport={onReport}
+        />
+      )}
+    </div>
+  );
+}
+
+// Share via the Web Share API, falling back to a clipboard copy with a transient
+// "Link copied" confirmation.
+function ShareButton({ username }: { username: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const share = async () => {
+    const url =
+      typeof window !== "undefined"
+        ? window.location.origin + `/u/${encodeURIComponent(username)}`
+        : "";
+    const title = `${username} on Nerf Chess`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // Cancelled or unsupported: fall through to the clipboard copy.
+      }
+    }
+    try {
+      await navigator.clipboard?.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // No clipboard access: nothing else we can do quietly.
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={share}
+      className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm"
+    >
+      <Share2 size={15} strokeWidth={2.2} aria-hidden />
+      {copied ? "Link copied" : "Share"}
+    </button>
+  );
+}
+
+// A keyboard-accessible overflow menu (Escape / click-outside close, focus
+// returns to the trigger) holding Message, Report, and an optional Remove friend.
+function OverflowMenu({
+  username,
+  showRemove,
+  friendBusy,
+  onRemoveFriend,
+  onReport,
+}: {
+  username: string;
+  showRemove: boolean;
+  friendBusy: boolean;
+  onRemoveFriend: () => void;
+  onReport: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`More actions for ${username}`}
+        className="grid h-11 w-11 place-items-center rounded-sm border border-white/10 text-parchment-400 transition hover:border-white/25 hover:text-parchment-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
+      >
+        <MoreHorizontal size={18} strokeWidth={2.2} aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label={`Actions for ${username}`}
+          className="absolute right-0 top-full z-40 mt-1.5 w-48 plate dropdown p-1 shadow-2xl"
+        >
+          <Link
+            role="menuitem"
+            href={`/inbox/${encodeURIComponent(username)}`}
+            className="flex min-h-[44px] items-center gap-2 rounded px-3 font-display text-[13px] text-parchment-200 transition hover:bg-white/[0.05]"
+          >
+            <MessageSquare size={15} strokeWidth={2.2} aria-hidden />
+            Message
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onReport();
+            }}
+            className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-oxblood/15 hover:text-oxblood-glow"
+          >
+            <Flag size={15} strokeWidth={2.2} aria-hidden />
+            Report
+          </button>
+          {showRemove && (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={friendBusy}
+              onClick={() => {
+                setOpen(false);
+                onRemoveFriend();
+              }}
+              className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-oxblood/15 hover:text-oxblood-glow disabled:opacity-50"
+            >
+              <UserX size={15} strokeWidth={2.2} aria-hidden />
+              Remove friend
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- Tabs -------------------------------------------------------------------
+
+function TabButton({
+  id,
+  label,
+  active,
+  onSelect,
+}: {
+  id: string;
+  label: string;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      id={`tab-${id}`}
+      aria-selected={active}
+      aria-controls={`panel-${id}`}
+      onClick={onSelect}
+      className={
+        "relative -mb-px min-h-[44px] px-4 font-display text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf " +
+        (active
+          ? "border-b-2 border-gold text-parchment-50"
+          : "border-b-2 border-transparent text-parchment-400 hover:text-parchment-200")
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+// 30-day rating movement per mode (spec 2.6 Activity).
+function MovementSummary({ points }: { points: HistoryPoint[] }) {
+  const rows = MODE_RATING_CATEGORIES.map((c) => ({
+    c,
+    delta: recentRatingDelta(points, c.id, 30),
+  }));
+  if (rows.every((r) => r.delta == null)) return null;
+  return (
+    <div className="plate p-3">
+      <div className="smallcaps mb-2 text-[10px] text-parchment-400">Last 30 days</div>
+      <div className="flex flex-wrap gap-4">
+        {rows.map(({ c, delta }) => (
+          <div key={c.id} className="flex items-center gap-2">
+            <c.icon className="h-3.5 w-3.5" style={{ color: c.accent }} strokeWidth={2.2} aria-hidden />
+            <span className="smallcaps text-[10px] text-parchment-400">{c.label}</span>
+            {delta == null ? (
+              <span className="font-mono text-sm text-parchment-500">no games</span>
+            ) : delta > 0 ? (
+              <span className="font-mono text-sm tabular-nums text-gold-leaf">up {delta}</span>
+            ) : delta < 0 ? (
+              <span className="font-mono text-sm tabular-nums text-oxblood-glow">down {Math.abs(delta)}</span>
+            ) : (
+              <span className="font-mono text-sm text-parchment-400">flat</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---- Games tab (spec 2.6) ---------------------------------------------------
+
+type ModeFilter = "" | DraftMode;
+type ResultFilter = "" | "win" | "loss" | "draw";
+type RatedFilter = "" | "1" | "0";
+
+function GamesTab({
+  username,
+  user,
+  playingNow,
+  active,
+}: {
+  username: string;
+  user: ProfileUser;
+  playingNow: boolean;
+  active: boolean;
+}) {
+  const [mode, setMode] = useState<ModeFilter>("");
+  const [result, setResult] = useState<ResultFilter>("");
+  const [rated, setRated] = useState<RatedFilter>("");
+  const [games, setGames] = useState<RecentGameRow[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const query = (extra?: Record<string, string>) => {
+    const qs = new URLSearchParams();
+    if (mode) qs.set("mode", mode);
+    if (result) qs.set("result", result);
+    if (rated) qs.set("rated", rated);
+    qs.set("limit", "30");
+    for (const [k, v] of Object.entries(extra ?? {})) qs.set(k, v);
+    return qs.toString();
+  };
+
+  useEffect(() => {
+    // Lazy: fetch only while the Games tab is actually shown (and refetch on any
+    // filter change, which can only happen while it is visible).
+    if (!active) return;
+    let cancelled = false;
+    // Loading-then-fetch: the remaining setState calls all fire after the await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhase("loading");
+    fetch(`/api/users/${encodeURIComponent(username)}/games?${query()}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ games: RecentGameRow[]; hasMore: boolean }>) : Promise.reject()))
+      .then((body) => {
+        if (cancelled) return;
+        setGames(body.games);
+        setHasMore(body.hasMore);
+        setPhase("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setPhase("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // query() reads mode/result/rated/username; re-run when any change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, mode, result, rated, username]);
+
+  const loadMore = async () => {
+    const last = games[games.length - 1];
+    if (!last) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(
+        `/api/users/${encodeURIComponent(username)}/games?${query({ before: String(last.completed_at) })}`,
+      );
+      if (!res.ok) return;
+      const body = (await res.json()) as { games: RecentGameRow[]; hasMore: boolean };
+      setGames((g) => [...g, ...body.games]);
+      setHasMore(body.hasMore);
+    } catch {
+      /* keep what we have; the button re-enables below */
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const decided = user.wins + user.losses + user.draws;
+
+  return (
+    <div>
+      {/* Counts header */}
+      <div className="plate flex flex-wrap items-center gap-x-5 gap-y-2 p-3">
+        {playingNow && (
+          <span className="inline-flex items-center gap-1.5 smallcaps text-[10px] text-oxblood-glow">
+            <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
+            Playing now
+          </span>
+        )}
+        <Count label="Total" value={user.games} />
+        <Count label="Record" value={`${user.wins}W ${user.losses}L ${user.draws}D`} />
+        {decided > 0 && (
+          <Count label="Win rate" value={`${Math.round((user.wins / Math.max(1, user.wins + user.losses)) * 100)}%`} />
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="mt-3 flex flex-col gap-2">
+        <ChipGroup
+          aria-label="Filter by mode"
+          value={mode}
+          onChange={(v) => setMode(v as ModeFilter)}
+          options={[
+            { value: "", label: "All" },
+            { value: "buff", label: "Buff" },
+            { value: "nerf", label: "Nerf" },
+          ]}
+        />
+        <ChipGroup
+          aria-label="Filter by result"
+          value={result}
+          onChange={(v) => setResult(v as ResultFilter)}
+          options={[
+            { value: "", label: "All" },
+            { value: "win", label: "Wins" },
+            { value: "loss", label: "Losses" },
+            { value: "draw", label: "Draws" },
+          ]}
+        />
+        <ChipGroup
+          aria-label="Filter by rated"
+          value={rated}
+          onChange={(v) => setRated(v as RatedFilter)}
+          options={[
+            { value: "", label: "All" },
+            { value: "1", label: "Rated" },
+            { value: "0", label: "Casual" },
+          ]}
+        />
+      </div>
+
+      {/* List */}
+      <div className="mt-3">
+        {phase === "loading" ? (
+          <div className="plate p-3">
+            <div className="space-y-2">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-10 animate-pulse rounded bg-white/[0.04] motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+          </div>
+        ) : phase === "error" ? (
+          <div className="plate p-6 text-center text-sm text-parchment-300">
+            Could not load games. Try again in a moment.
+          </div>
+        ) : games.length === 0 ? (
+          <div className="plate p-6 text-center text-sm text-parchment-400">
+            {mode || result || rated ? "No games match these filters." : "No games yet."}
+          </div>
+        ) : (
+          <>
+            <div className="plate overflow-hidden">
+              {games.map((g) => (
+                <GameHistoryRow key={g.id} game={g} viewer={username} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-3 text-center">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm disabled:opacity-60"
+                >
+                  {loadingMore ? "Loading..." : "Load more"}
+                </button>
+              </div>
             )}
           </>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
+
+function Count({ label, value }: { label: string; value: string | number }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span className="font-mono text-sm tabular-nums text-parchment-100">{value}</span>
+      <span className="smallcaps text-[10px] text-parchment-400">{label}</span>
+    </span>
+  );
+}
+
+function ChipGroup({
+  value,
+  onChange,
+  options,
+  "aria-label": ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  "aria-label": string;
+}) {
+  return (
+    <div role="group" aria-label={ariaLabel} className="flex flex-wrap gap-1.5">
+      {options.map((o) => {
+        const on = value === o.value;
+        return (
+          <button
+            key={o.value || "all"}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(o.value)}
+            className={
+              "inline-flex min-h-[44px] items-center rounded-sm border px-3 text-[13px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf sm:min-h-0 sm:py-1.5 " +
+              (on
+                ? "border-gold/40 bg-gold/15 text-gold-leaf"
+                : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")
+            }
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// One finished-game row for the Games tab. The whole row opens the replay via a
+// stretched overlay Link that is a SIBLING of the inner opponent PlayerLink (the
+// content is pointer-events-none so clicks fall through to the overlay, while
+// PlayerLink re-enables pointer events for itself), so no anchors nest. Below
+// 640px it stacks so nothing is truncated away.
+function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string }) {
+  const viewerIsWhite = game.white_name.toLowerCase() === viewer.toLowerCase();
+  const myColor: "w" | "b" = viewerIsWhite ? "w" : "b";
+  const opponent = viewerIsWhite ? game.black_name : game.white_name;
+  const oppRating = viewerIsWhite ? game.black_rating_before : game.white_rating_before;
+
+  const outcome = game.winner === "draw" ? "Draw" : game.winner === myColor ? "Won" : "Lost";
+  const tone =
+    outcome === "Won" ? "text-gold-leaf" : outcome === "Lost" ? "text-oxblood-glow" : "text-bruise-glow";
+
+  const before = viewerIsWhite ? game.white_rating_before : game.black_rating_before;
+  const after = viewerIsWhite ? game.white_rating_after : game.black_rating_after;
+  const delta = before != null && after != null ? Math.round(after) - Math.round(before) : null;
+
+  return (
+    <div className="relative border-b border-white/5 last:border-b-0 transition hover:bg-white/[0.03]">
+      <Link
+        href={`/game/${game.id}`}
+        aria-label={`View replay of the ${outcome.toLowerCase()} game vs ${opponent}`}
+        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60"
+      />
+      <div className="pointer-events-none relative z-10 flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-3">
+        <span className={`shrink-0 font-display text-sm font-semibold sm:w-14 ${tone}`}>{outcome}</span>
+
+        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="text-xs text-parchment-500">vs</span>
+          <PlayerAvatar name={opponent} avatar={null} size={22} />
+          <PlayerLink
+            name={opponent}
+            className="pointer-events-auto relative z-20 min-w-0 font-display text-sm text-parchment-100 hover:text-gold-leaf"
+          />
+          {oppRating != null && (
+            <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
+              ({Math.round(oppRating)})
+            </span>
+          )}
+          {game.mode ? <ModeBadge mode={game.mode} /> : null}
+        </span>
+
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
+          <span className="smallcaps text-[10px] text-parchment-500">{game.rated ? "Rated" : "Casual"}</span>
+          <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
+          {/* Rating change as its own bordered chip, with a " · " separator, so
+              the delta can never run together with the date. Sign in text. */}
+          {delta != null && (
+            <span
+              className={
+                "inline-flex items-center rounded-sm border px-1.5 py-px font-mono text-[11px] tabular-nums " +
+                (delta > 0
+                  ? "border-gold/40 bg-gold/10 text-gold-leaf"
+                  : delta < 0
+                    ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
+                    : "border-white/15 bg-white/[0.03] text-parchment-400")
+              }
+            >
+              {delta > 0 ? "+" : ""}
+              {delta}
+            </span>
+          )}
+          <span aria-hidden className="text-parchment-600">·</span>
+          <span className="text-parchment-500">{game.reason}</span>
+          <span aria-hidden className="text-parchment-600">·</span>
+          <span className="text-parchment-500">{relativeTime(game.completed_at)}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Activity: achievements + standings -------------------------------------
 
 interface StripAchievement {
   id: string;
@@ -422,8 +1245,7 @@ function AchievementsStrip({ username }: { username: string }) {
         const recent = body.achievements
           .filter((a) => a.unlocked)
           .sort(
-            (x, y) =>
-              (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rank[y.rarity] - rank[x.rarity],
+            (x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rank[y.rarity] - rank[x.rarity],
           )
           .slice(0, 6);
         setData({ unlockedCount: body.unlockedCount, total: body.total, recent });
@@ -437,7 +1259,7 @@ function AchievementsStrip({ username }: { username: string }) {
   return (
     <Link
       href={`/achievements?u=${encodeURIComponent(username)}`}
-      className="mt-2 plate p-3 flex flex-wrap items-center justify-between gap-3 hover:border-gold/40 transition"
+      className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-3 transition hover:border-gold/40"
     >
       <span className="flex items-center gap-2 font-display text-parchment-100">
         <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
@@ -470,14 +1292,12 @@ function AchievementsStrip({ username }: { username: string }) {
 }
 
 // The honors shelf: every leaderboard the player currently places top 10 on,
-// each with its rank-tiered laurel. Stateless by design — hold the spot and
-// the honor shows, drop out and it quietly disappears. Sits beside the
-// achievements strip and links to the boards where the ranks were earned.
+// each with its rank-tiered laurel, linking to the boards where they were earned.
 function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
   return (
     <Link
       href="/leaderboard"
-      className="mt-2 plate p-3 flex flex-wrap items-center justify-between gap-3 hover:border-gold/40 transition"
+      className="mt-2 plate flex flex-wrap items-center justify-between gap-3 p-3 transition hover:border-gold/40"
     >
       <span className="flex items-center gap-2 font-display text-parchment-100">
         <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />
@@ -501,36 +1321,47 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
   );
 }
 
-// The rating graph, Lichess-style: one colored line per active mode bucket
-// (Nerf and Buff), overlaid on a single time axis. Each line's legend chip
-// toggles it, so "one bucket at a time" is still a click away. Points from
-// retired speed buckets are simply not drawn (their ratings live on in the
-// stats, but a retired line has no tab anywhere else either).
-function RatingHistorySection({ points }: { points: ProfileRatingPoint[] }) {
-  const series = useMemo(
-    () =>
-      ACTIVE_RATING_CATEGORIES.map((c) => ({
-        id: c.id,
-        label: c.label,
-        color: c.accent,
-        points: points
-          .filter((p) => p.category === c.id)
-          .map((p) => ({ at: p.at, rating: p.rating })),
-      })).filter((s) => s.points.length >= 2),
-    [points],
-  );
+// ---- Skeleton ---------------------------------------------------------------
 
+function ProfileSkeleton() {
   return (
-    <div className="mt-6">
-      {series.length > 0 ? (
-        <RatingChart series={series} />
-      ) : (
-        <div className="plate p-4 text-sm text-parchment-400">Not enough rated games yet</div>
-      )}
-    </div>
+    <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+      <div className="flex items-center gap-4">
+        <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
+        <div className="min-w-0">
+          <div className="skeleton h-9 w-48 max-w-full rounded-[10px]" style={{ borderRadius: 10 }} />
+          <div className="skeleton mt-2 h-4 w-40 rounded-[10px]" style={{ borderRadius: 10 }} />
+        </div>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div key={i} className="plate p-4">
+            <div className="skeleton h-4 w-16 rounded-[10px]" style={{ borderRadius: 10 }} />
+            <div className="skeleton mt-3 h-7 w-20 rounded-[10px]" style={{ borderRadius: 10 }} />
+            <div className="skeleton mt-3 h-3 w-32 rounded-[10px]" style={{ borderRadius: 10 }} />
+          </div>
+        ))}
+      </div>
+      <div className="plate mt-4 p-4">
+        <div className="skeleton h-24 w-full rounded-[10px]" style={{ borderRadius: 10 }} />
+      </div>
+      <div className="plate mt-8 p-5">
+        <div className="skeleton h-5 w-28 rounded-[10px]" style={{ borderRadius: 10 }} />
+        <div className="mt-4 space-y-2.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton h-9 rounded-[10px]" style={{ borderRadius: 10 }} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
+// ---- House-bot editor (unchanged behavior) ----------------------------------
+
+// Read-only bio helper reused by the house editor's editable variant. For a
+// normal profile the bio renders read-only in the header; owners edit it at
+// /profile/edit. The house editor still writes the bot's row inline.
 function BioSection({
   bio,
   editable,
@@ -540,9 +1371,6 @@ function BioSection({
   bio: string | null;
   editable: boolean;
   onSaved: (bio: string | null) => void;
-  // Optional custom saver (returns the stored bio). Defaults to editing the
-  // signed-in account's own bio via /api/auth/bio; the house-bot editor passes
-  // one that writes the bot's row instead.
   saveBio?: (bio: string | null) => Promise<string | null>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -579,36 +1407,42 @@ function BioSection({
   };
 
   return (
-    <div className="mt-5">
+    <div className="mt-4">
       {editing ? (
         <div className="plate p-3">
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, 300))}
             rows={3}
-            placeholder="Say something about yourself…"
-            className="w-full bg-transparent text-sm text-parchment-100 outline-none resize-none"
+            placeholder="Say something about this account..."
+            className="w-full resize-none bg-transparent text-sm text-parchment-100 outline-none"
             autoFocus
           />
           <div className="mt-2 flex items-center gap-2 text-sm">
             <button
+              type="button"
               onClick={save}
               disabled={saving}
-              className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf font-display"
+              className="min-h-[44px] rounded-sm btn-ghost px-3 font-display text-gold-leaf"
             >
-              {saving ? "Saving…" : "Save"}
+              {saving ? "Saving..." : "Save"}
             </button>
-            <button onClick={() => setEditing(false)} className="px-3 py-1 rounded-sm btn-ghost">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="min-h-[44px] rounded-sm btn-ghost px-3"
+            >
               Cancel
             </button>
-            <span className="ml-auto text-parchment-400 text-xs">{draft.length}/300</span>
+            <span className="ml-auto text-xs text-parchment-400">{draft.length}/300</span>
           </div>
         </div>
       ) : (
-        <p className="text-parchment-200 text-sm whitespace-pre-wrap">
+        <p className="whitespace-pre-wrap text-sm text-parchment-200">
           {bio}
           {editable && (
             <button
+              type="button"
               onClick={() => {
                 setDraft(bio ?? "");
                 setEditing(true);
@@ -625,10 +1459,8 @@ function BioSection({
 }
 
 // Inline editor for a house-bot account, shown on its profile ONLY to the
-// designated house editor (ilovenewjeans). Renames it, swaps its picture from
-// the house avatar catalog, or sets its bio — all through the house-persona
-// route, which writes the users row every surface reads. It looks and behaves
-// like editing your own profile, without pretending the account is yours.
+// designated house editor (ilovenewjeans). Renames it, swaps its picture, or
+// sets its bio through the house-persona route.
 function HouseBotEditor({
   userId,
   avatars,
@@ -695,9 +1527,6 @@ function HouseBotEditor({
     }
   };
 
-  // Custom bio saver for BioSection: writes the bot's row and returns the
-  // stored (profanity-censored) value the server kept, read back from the
-  // roster payload the route echoes (this persona's effective.bio).
   const saveBio = async (nextBio: string | null): Promise<string | null> => {
     const res = await fetch("/api/mod/house/personas", {
       method: "POST",
@@ -712,9 +1541,9 @@ function HouseBotEditor({
   };
 
   return (
-    <div className="mt-5 plate p-4 border border-gold/25">
+    <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
+        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[10px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">
@@ -740,9 +1569,9 @@ function HouseBotEditor({
           type="button"
           disabled={saving || !dirty}
           onClick={saveName}
-          className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
+          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Saving..." : "Save"}
         </button>
       </div>
 
@@ -788,6 +1617,8 @@ function HouseBotEditor({
   );
 }
 
+// ---- Report modal (unchanged) -----------------------------------------------
+
 const REPORT_REASONS = [
   ["cheating", "Cheating / outside assistance"],
   ["boosting", "Rating manipulation"],
@@ -823,14 +1654,19 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6"
       onClick={onClose}
     >
-      <div className="plate p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="plate w-full max-w-md max-h-[90dvh] overflow-y-auto p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         {status === "sent" ? (
           <>
             <h2 className="font-display text-2xl">Report sent</h2>
-            <p className="mt-2 text-parchment-200 text-sm">
-              Thanks, a moderator will take a look.
-            </p>
-            <button onClick={onClose} className="mt-4 px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+            <p className="mt-2 text-sm text-parchment-200">Thanks, a moderator will take a look.</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
+            >
               Close
             </button>
           </>
@@ -841,7 +1677,10 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
             </h2>
             <div className="mt-4 space-y-2">
               {REPORT_REASONS.map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 text-sm text-parchment-100 cursor-pointer">
+                <label
+                  key={value}
+                  className="flex cursor-pointer items-center gap-2 text-sm text-parchment-100"
+                >
                   <input
                     type="radio"
                     name="report-reason"
@@ -857,18 +1696,23 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
               onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
               rows={4}
               placeholder="What happened? Include game links or examples."
-              className="mt-4 w-full plate bg-transparent p-3 text-sm text-parchment-100 outline-none resize-none focus:border-gold/40"
+              className="mt-4 w-full plate resize-none bg-transparent p-3 text-sm text-parchment-100 outline-none focus:border-gold/40"
             />
-            {status === "error" && <p className="mt-2 text-oxblood-glow text-sm">{error}</p>}
+            {status === "error" && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
             <div className="mt-4 flex items-center gap-2">
               <button
+                type="button"
                 onClick={submit}
                 disabled={status === "sending" || !description.trim()}
-                className="px-4 py-2 rounded-sm btn-ghost text-sm font-display text-oxblood-glow disabled:opacity-50"
+                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm text-oxblood-glow disabled:opacity-50"
               >
-                {status === "sending" ? "Sending…" : "Send report"}
+                {status === "sending" ? "Sending..." : "Send report"}
               </button>
-              <button onClick={onClose} className="px-4 py-2 rounded-sm btn-ghost text-sm font-display">
+              <button
+                type="button"
+                onClick={onClose}
+                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
+              >
                 Cancel
               </button>
             </div>
@@ -876,52 +1720,5 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
         )}
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="plate p-4">
-      <div className="smallcaps text-[10px] text-parchment-400">{label}</div>
-      <div className={`mt-1 font-display text-2xl sm:text-3xl font-bold ${accent ? "text-gold-leaf" : "text-parchment"}`}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function GameRow({ game, viewer }: { game: ProfileGame; viewer: string }) {
-  const viewerIsWhite = game.white_name.toLowerCase() === viewer.toLowerCase();
-  const myColor = viewerIsWhite ? "w" : "b";
-  const opponent = viewerIsWhite ? game.black_name : game.white_name;
-  const outcome = game.winner === "draw" ? "Draw" : game.winner === myColor ? "Won" : "Lost";
-  const tone =
-    outcome === "Won" ? "text-gold-leaf" : outcome === "Lost" ? "text-oxblood-glow" : "text-bruise-glow";
-  const before = viewerIsWhite ? game.white_rating_before : game.black_rating_before;
-  const after = viewerIsWhite ? game.white_rating_after : game.black_rating_after;
-  const delta = before != null && after != null ? Math.round(after) - Math.round(before) : null;
-
-  return (
-    <Link
-      href={`/game/${game.id}`}
-      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition"
-    >
-      <div className="min-w-0">
-        <span className={`font-display font-semibold ${tone}`}>{outcome}</span>
-        <span className="text-parchment-200"> vs {opponent}</span>
-        <span className="text-parchment-400 text-sm"> · {game.reason}</span>
-      </div>
-      <div className="shrink-0 text-right text-sm">
-        {delta != null && (
-          <span className={delta >= 0 ? "text-gold-leaf" : "text-oxblood-glow"}>
-            {delta >= 0 ? "+" : ""}
-            {delta}
-          </span>
-        )}
-        <span className="text-parchment-400 ml-3">
-          {new Date(game.completed_at).toLocaleDateString()}
-        </span>
-      </div>
-    </Link>
   );
 }
