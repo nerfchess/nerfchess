@@ -457,7 +457,7 @@ function HowItWorks() {
       title: "Pick your mode",
       body: (
         <>
-          In <span className="font-semibold text-mode-nerfGlow">Nerf</span> mode you pick a
+          In <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}mode you pick a
           secret handicap from two cards; your opponent&apos;s stays hidden until the game
           ends. In <span className="font-semibold text-mode-buffGlow">Buff</span> mode nobody
           is handicapped.
@@ -557,6 +557,7 @@ function SiteFooter() {
     { href: "/contact", label: "Contact" },
     { href: "/guidelines", label: "Guidelines" },
     { href: "/privacy-policy", label: "Privacy policy" },
+    { href: "/terms-of-service", label: "Terms of service" },
     { href: "/about", label: "About" },
     { href: "/faq", label: "FAQ" },
   ];

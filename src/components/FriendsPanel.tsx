@@ -79,7 +79,7 @@ export function FriendsPanel() {
       }
       await load();
     } catch {
-      setNote({ kind: "err", text: "Network error — try again." });
+      setNote({ kind: "err", text: "Network error. Try again." });
     } finally {
       setBusy(false);
     }

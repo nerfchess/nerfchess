@@ -179,7 +179,7 @@ export default function PlayPage() {
               >
                 Take the tour
               </Link>
-              <span className="hidden sm:inline"> — a guided first game, about 3 minutes.</span>
+              <span className="hidden sm:inline">: a guided first game, about 3 minutes.</span>
             </span>
             <button
               type="button"

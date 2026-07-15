@@ -48,12 +48,12 @@ export default function ChessWithPowerUpsPage() {
           <strong>Instant</strong>{" "}
           <GlossaryText text="buffs fire the moment you pick them, like a freeze or a board reveal." />{" "}
           <strong>Activated</strong>{" "}
-          <GlossaryText text="buffs wait in your hand until you choose to spend them, which costs your turn unless the card is a free action — every card wears a turn-cost badge that tells you which, straight from the engine." />
+          <GlossaryText text="buffs wait in your hand until you choose to spend them, which costs your turn unless the card is a free action: every card wears a turn-cost badge that tells you which, straight from the engine." />
         </p>
         <p>
           Power-ups get stronger as the game goes on. Every card carries a difficulty{" "}
           <Link href="/guide/glossary#tier" className="underline">tier</Link>
-          <GlossaryText text=" from I (Trivial) to VIII (Unhinged), and the draft climbs that ladder over the course of a game. You can also skip a draft to bank it, so your next offer rolls one tier higher: a small gamble on timing — and banking an offer that held a tier-8 card earns a guaranteed apex (tier 9) offer." />{" "}
+          <GlossaryText text=" from I (Trivial) to VIII (Unhinged), and the draft climbs that ladder over the course of a game. You can also skip a draft to bank it, so your next offer rolls one tier higher: a small gamble on timing, and banking an offer that held a tier-8 card earns a guaranteed apex (tier 9) offer." />{" "}
           The whole power-up library, 1,000+ cards and rules, lives in the{" "}
           <Link href="/codex" className="underline">codex</Link>.
         </p>

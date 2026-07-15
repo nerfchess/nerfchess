@@ -56,7 +56,7 @@ export default function HowToPlayPage() {
         </p>
         <p>
           <strong>Buff</strong>:{" "}
-          <GlossaryText text="a straight power-up and the whole of Buff mode. Passive buffs work while held, instant buffs fire the moment they are picked, and activated buffs wait until you use them — which costs your turn, unless the card is a free action." />
+          <GlossaryText text="a straight power-up and the whole of Buff mode. Passive buffs work while held, instant buffs fire the moment they are picked, and activated buffs wait until you use them, which costs your turn, unless the card is a free action." />
         </p>
         <p>
           <strong>Hex</strong>:{" "}
@@ -84,7 +84,7 @@ export default function HowToPlayPage() {
           <GlossaryText text="Every 5 of your own moves, the game deals you a draft: two cards, pick one. Both players draft at the same time, and in online games each offer has a 20-second lock-in window while the clocks stay paused (dawdle past it and your own clock restarts)." />{" "}
           Offers grow stronger over time through the card{" "}
           <Link href="/guide/glossary#tier" className="underline">tier system</Link>
-          <GlossaryText text=", which runs from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it: your next offer then rolls one tier higher. Banking does not stack, so the skill is picking the right moment to be patient — with one famous exception: banking an offer that contained a tier-8 card earns a guaranteed apex (tier 9) offer, with a small chance of a tier-10 mythic." />
+          <GlossaryText text=", which runs from tier I (Trivial) to tier VIII (Unhinged). You can also skip a draft to bank it: your next offer then rolls one tier higher. Banking does not stack, so the skill is picking the right moment to be patient, with one famous exception: banking an offer that contained a tier-8 card earns a guaranteed apex (tier 9) offer, with a small chance of a tier-10 mythic." />
         </p>
         <p>
           <GlossaryText text="Not feeling either card? Every player also starts with one reroll: it discards the offer on the table and deals a fresh, guaranteed-different pair at the same tiers." />

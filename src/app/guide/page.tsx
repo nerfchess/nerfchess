@@ -45,7 +45,7 @@ export default function GuideIndexPage() {
           <GlossaryText text="Buff mode keeps perfect information about the board but adds drafting, the kind of decision you would find in a card game: take the safe card now, or skip the draft to bank a one-tier-stronger offer later." />{" "}
           Over 1,000 cards and rules live in the{" "}
           <Link href="/codex" className="underline">codex</Link>
-          <GlossaryText text=", each with a difficulty tier from I (Trivial) to VIII (Unhinged) — plus the granted-only Apex and Mythic bands above them." />
+          <GlossaryText text=", each with a difficulty tier from I (Trivial) to VIII (Unhinged), plus the granted-only Apex and Mythic bands above them." />
         </p>
       </InfoSection>
 

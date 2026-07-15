@@ -51,7 +51,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Modes & winning",
     def: "The mode of secret handicaps: each player picks one hidden nerf before move one, then drafts hexes and boons as the game runs.",
     detail:
-      "Both players are shown two nerf cards and pick one inside a 20-second lock-in window (an unpicked seat auto-takes its first card). Both players' options are public — only the picks stay secret until the game ends. A draft then lands every 5 of your own moves: about 60% of draws prefer the hex bucket, the rest boons and items. Nerf mode is rated in its own pool, separate from Buff mode.",
+      "Both players are shown two nerf cards and pick one inside a 20-second lock-in window (an unpicked seat auto-takes its first card). Both players' options are public, only the picks stay secret until the game ends. A draft then lands every 5 of your own moves: about 60% of draws prefer the hex bucket, the rest boons and items. Nerf mode is rated in its own pool, separate from Buff mode.",
     related: ["nerf", "hex", "boon", "lock-in-window", "buff-mode"],
   },
   {
@@ -60,7 +60,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Modes & winning",
     def: "The mode with no handicaps: both players draft power-up cards every 5 moves and race to build the stronger army.",
     detail:
-      "Buff mode has no nerfs at all, so it never offers hexes or nerf-relief cards — every draft is a straight power-up. Offers climb the tier ladder as the game goes on, and the mode keeps its own rating pool, separate from Nerf mode.",
+      "Buff mode has no nerfs at all, so it never offers hexes or nerf-relief cards, every draft is a straight power-up. Offers climb the tier ladder as the game goes on, and the mode keeps its own rating pool, separate from Nerf mode.",
     related: ["buff", "draft", "tier", "nerf-mode"],
   },
   {
@@ -68,7 +68,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     slug: "capture-the-king",
     group: "Modes & winning",
     aliases: ["king capture"],
-    def: "The win condition: there is no checkmate and no stalemate — the game ends the instant a king is actually taken.",
+    def: "The win condition: there is no checkmate and no stalemate, the game ends the instant a king is actually taken.",
     detail:
       "Because only capture ends the game, moving into check is legal, both kings can be in check at the same time, and you may castle through, into, or out of check. The first king captured wins on the spot, even if the capturer's own king was hanging. Games can still be drawn by the fifty-move rule, threefold repetition, or mutual paralysis.",
     related: ["check", "forced-pass", "premove", "castling"],
@@ -77,7 +77,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     term: "Check",
     slug: "check",
     group: "Modes & winning",
-    def: "A direct threat to capture the king — which, in Nerf Chess, you are never forced to answer.",
+    def: "A direct threat to capture the king, which, in Nerf Chess, you are never forced to answer.",
     detail:
       "Check still exists as a fact about the board, but carries no rule: you may ignore it, move into it, or leave your king in it, and both kings can be in check at once. Ignoring it usually loses on the spot, because the game ends the moment a king is captured. Only inside a Chess Diff sub-game do the standard check rules return.",
     related: ["capture-the-king", "premove", "chess-diff"],
@@ -107,7 +107,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["premoves"],
     def: "A move queued during your opponent's turn that fires the instant it becomes your move.",
     detail:
-      "Premoves are filtered by your own nerf and include buff-granted movement, so you can only queue what you could actually play. A premove that would land or leave your own king in check is cancelled instead of played: walking into check stays legal, but only as a deliberate manual move — a blind premove never does it for you.",
+      "Premoves are filtered by your own nerf and include buff-granted movement, so you can only queue what you could actually play. A premove that would land or leave your own king in check is cancelled instead of played: walking into check stays legal, but only as a deliberate manual move. A blind premove never does it for you.",
     related: ["check", "capture-the-king"],
   },
   {
@@ -128,7 +128,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["nerfs"],
     def: "A secret handicap rule that weakens one player for the whole game.",
     detail:
-      "Chosen one-of-two before the first move in Nerf mode and revealed only when the game ends. The board pre-filters anything your nerf forbids, so you can never break it by accident — though some nerfs instead add a losing condition that fires on its own terms. A nerf can never strand you: if its filter would empty your move list, it relaxes for that one turn.",
+      "Chosen one-of-two before the first move in Nerf mode and revealed only when the game ends. The board pre-filters anything your nerf forbids, so you can never break it by accident, though some nerfs instead add a losing condition that fires on its own terms. A nerf can never strand you: if its filter would empty your move list, it relaxes for that one turn.",
     example: "“You cannot capture queens.”",
     related: ["nerf-mode", "boon", "suspend"],
   },
@@ -149,7 +149,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["hexes"],
     def: "A curse-style card that hampers your opponent, the bulk of Nerf mode's draft.",
     detail:
-      "About 60% of nerf-mode draws prefer the hex bucket: freezes, petrifications, muzzles, and other curses cast on the enemy army. Hexes never appear in Buff mode, and kings are protected from the harshest of them — no hex can freeze or petrify a king.",
+      "About 60% of nerf-mode draws prefer the hex bucket: freezes, petrifications, muzzles, and other curses cast on the enemy army. Hexes never appear in Buff mode, and kings are protected from the harshest of them: no hex can freeze or petrify a king.",
     example: "Cold Feet: your opponent's pawns cannot capture for their next 3 turns.",
     related: ["freeze", "walnut", "nerf-mode"],
   },
@@ -160,7 +160,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["boons"],
     def: "A beneficial card in Nerf mode's pool: relief from your own nerf, or a light supportive effect.",
     detail:
-      "Nerf-relief boons soften, suspend, or even permanently remove your handicap. While your nerf is suspended or removed, relief cards leave your draft pool entirely — and if you are offered nerf-relief twice without ever taking one, the category stops appearing for the rest of the game.",
+      "Nerf-relief boons soften, suspend, or even permanently remove your handicap. While your nerf is suspended or removed, relief cards leave your draft pool entirely, and if you are offered nerf-relief twice without ever taking one, the category stops appearing for the rest of the game.",
     example: "Reprieve suspends your nerf for your next 2 turns.",
     related: ["nerf", "suspend", "item"],
   },
@@ -171,7 +171,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["items"],
     def: "A playful one-use consumable card, drafted in both modes.",
     detail:
-      "Items are the light-hearted corner of the pool — apples, bananas, coconuts — spent for a small one-shot effect. In Nerf mode they share the non-hex slice of the draft with boons; in Buff mode they roll alongside the power-ups.",
+      "Items are the light-hearted corner of the pool (apples, bananas, coconuts) spent for a small one-shot effect. In Nerf mode they share the non-hex slice of the draft with boons; in Buff mode they roll alongside the power-ups.",
     related: ["boon", "hex"],
   },
 
@@ -200,7 +200,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Playing a card",
     def: "A card that works automatically the whole time you hold it.",
     detail:
-      "Passive cards change the rules quietly — a piece gains a new way to move, your army gets a standing guard — with nothing to click. They keep working until spent, nullified, or the game ends. Nerfs themselves are always passive.",
+      "Passive cards change the rules quietly (a piece gains a new way to move, your army gets a standing guard) with nothing to click. They keep working until spent, nullified, or the game ends. Nerfs themselves are always passive.",
     related: ["activated", "instant", "turn-cost"],
   },
   {
@@ -210,7 +210,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["free actions"],
     def: "An activated card that resolves within your turn instead of consuming it.",
     detail:
-      "The extra-move family are free actions: you play the card and still make your normal move. Every other activated card costs the turn — the turn-cost badge on each card tells you which, straight from the engine's own fields.",
+      "The extra-move family are free actions: you play the card and still make your normal move. Every other activated card costs the turn: the turn-cost badge on each card tells you which, straight from the engine's own fields.",
     related: ["activated", "extra-move", "turn-cost"],
   },
   {
@@ -229,7 +229,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["signature animations"],
     def: "The bespoke board animation each card plays when it fires.",
     detail:
-      "Every card in the library has its own visual flourish — roughly 180 are hand-crafted and the rest are generated from the card's family — so no card fires silently. Signatures are cosmetic only and can be toggled off with the FX button.",
+      "Every card in the library has its own visual flourish (roughly 180 are hand-crafted and the rest are generated from the card's family) so no card fires silently. Signatures are cosmetic only and can be toggled off with the FX button.",
     related: ["instant", "activated"],
   },
   {
@@ -238,7 +238,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Playing a card",
     def: "A tier-6 card that pauses the game and spawns a fresh, completely normal game of 1+0 chess; the winner seizes an apex card.",
     detail:
-      "While the diff runs there are no drafts, no nerfs, and no buffs — and the standard chess rules return, so you may not move into check, and the diff is decided by checkmate, stalemate, or its 1-minute clocks. Only the diff's winner is handed a guaranteed apex (tier 9) card; a drawn diff grants nobody anything. The paused board, effects, and clocks then resume exactly where they left off.",
+      "While the diff runs there are no drafts, no nerfs, and no buffs, and the standard chess rules return, so you may not move into check, and the diff is decided by checkmate, stalemate, or its 1-minute clocks. Only the diff's winner is handed a guaranteed apex (tier 9) card; a drawn diff grants nobody anything. The paused board, effects, and clocks then resume exactly where they left off.",
     related: ["apex", "tier", "capture-the-king"],
   },
 
@@ -260,7 +260,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["tiers"],
     def: "A card's power level, from I (Trivial) to VIII (Unhinged), plus the granted-only bands IX (Apex) and X (Mythic).",
     detail:
-      "The ladder reads Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Draft rounds climb a fixed curve — roughly tiers I, II, III, V, VII round by round, with a small random wobble — and every level above VI has a 45% chance per card to slip back down one, so tier VII–VIII offers stay rare blowout moments. Tiers IX and X never roll in the normal draft.",
+      "The ladder reads Trivial, Easy, Common, Severe, Brutal, Cruel, Punishing, Unhinged. Draft rounds climb a fixed curve (roughly tiers I, II, III, V, VII round by round, with a small random wobble) and every level above VI has a 45% chance per card to slip back down one, so tier VII-VIII offers stay rare blowout moments. Tiers IX and X never roll in the normal draft.",
     related: ["apex", "mythic", "draft", "bank"],
   },
   {
@@ -280,7 +280,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["mythics"],
     def: "A tier-10 card, the rarest band: an apex grant upgrades into a mythic about one time in ten.",
     detail:
-      "Mythics replace a tier-9 apex roll roughly 10% of the time, per slot, wherever apex cards are granted. Rerolling an apex offer never downgrades a landed mythic — but a tier-9 slot rerolls the upgrade gate again, so a reroll can still roll up into one.",
+      "Mythics replace a tier-9 apex roll roughly 10% of the time, per slot, wherever apex cards are granted. Rerolling an apex offer never downgrades a landed mythic, but a tier-9 slot rerolls the upgrade gate again, so a reroll can still roll up into one.",
     related: ["apex", "reroll", "tier"],
   },
   {
@@ -290,7 +290,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["banked", "banking"],
     def: "Skipping a draft to save its value: your next offer rolls exactly one tier higher.",
     detail:
-      "Banking never stacks past +1, so back-to-back skips buy nothing extra. The exception is at the top: banking an offer that contained a tier-8 card promotes your next offer into a guaranteed two-card apex (tier 9–10) offer — you do not have to draft the tier-8, passing it up is what earns the pull.",
+      "Banking never stacks past +1, so back-to-back skips buy nothing extra. The exception is at the top: banking an offer that contained a tier-8 card promotes your next offer into a guaranteed two-card apex (tier 9-10) offer: you do not have to draft the tier-8, passing it up is what earns the pull.",
     related: ["draft", "apex", "tier"],
   },
   {
@@ -329,7 +329,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["lock in window", "lock-in"],
     def: "The 20 seconds each online pick must resolve in while the game clock is paused.",
     detail:
-      "The opening nerf pick auto-resolves at the deadline — an unpicked seat takes its first card — so a vanished player cannot hold the table hostage. A mid-game buff offer instead stays open when the window ends, but the clock starts running again: deliberating past the window costs your own time.",
+      "The opening nerf pick auto-resolves at the deadline (an unpicked seat takes its first card) so a vanished player cannot hold the table hostage. A mid-game buff offer instead stays open when the window ends, but the clock starts running again: deliberating past the window costs your own time.",
     related: ["draft", "flagging"],
   },
   {
@@ -380,7 +380,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["shields", "shielded"],
     def: "A protection that blocks pieces or squares from being captured while it lasts.",
     detail:
-      "A shield can cover chosen squares (following the piece standing there when it moves) or your whole army, and its timer ticks on your opponent's turns. It never protects the king itself — king invulnerability is exclusively the king-safe ward. And an uncapturable piece may not be the one to capture the enemy king: you must expose a piece to win.",
+      "A shield can cover chosen squares (following the piece standing there when it moves) or your whole army, and its timer ticks on your opponent's turns. It never protects the king itself: king invulnerability is exclusively the king-safe ward. And an uncapturable piece may not be the one to capture the enemy king: you must expose a piece to win.",
     related: ["uncapturable", "ward", "king-safe"],
   },
   {
@@ -397,7 +397,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     term: "Uncapturable",
     slug: "uncapturable",
     group: "Effects on the board",
-    def: "A piece that cannot currently be taken — and therefore may not take the enemy king.",
+    def: "A piece that cannot currently be taken, and therefore may not take the enemy king.",
     detail:
       "Shields, wards, and the king-safe effect all make pieces uncapturable for a time. The balance rule is symmetric: an untouchable attacker would be a riskless finish, so the winning capture must always be made by a piece your opponent could have taken.",
     related: ["shield", "king-safe", "ward"],
@@ -419,7 +419,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["barred squares"],
     def: "Squares that are off-limits to you while the effect lasts.",
     detail:
-      "A move that would capture the king ignores any wall — winning is king capture, so a barred zone can never seal the game unwinnable. Full-line walls (a whole file or rank) also block moves that cross the line, not just ones landing on it, and every wall relaxes for a turn rather than leaving you with zero moves.",
+      "A move that would capture the king ignores any wall: winning is king capture, so a barred zone can never seal the game unwinnable. Full-line walls (a whole file or rank) also block moves that cross the line, not just ones landing on it, and every wall relaxes for a turn rather than leaving you with zero moves.",
     related: ["capture-the-king", "forced-pass"],
   },
   {
@@ -429,7 +429,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["suspended", "suspends"],
     def: "To temporarily pause a nerf's effect, usually via a boon.",
     detail:
-      "While your nerf is suspended (Reprieve, Grace Period) or removed for good (Nerf Breaker), the moves it forbade come back — and nerf-relief cards leave your draft pool, since there is nothing left to relieve.",
+      "While your nerf is suspended (Reprieve, Grace Period) or removed for good (Nerf Breaker), the moves it forbade come back, and nerf-relief cards leave your draft pool, since there is nothing left to relieve.",
     related: ["nerf", "boon"],
   },
   {
@@ -448,7 +448,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Effects on the board",
     def: "A restriction that stops your pawns from moving straight forward; pawn captures stay legal.",
     detail:
-      "Only the forward push is blocked — diagonal captures (and en passant) still work, so a pawn chain can keep fighting while it lasts.",
+      "Only the forward push is blocked: diagonal captures (and en passant) still work, so a pawn chain can keep fighting while it lasts.",
     related: ["hex"],
   },
   {
@@ -458,7 +458,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["extra moves"],
     def: "A granted bonus move: you move again before your opponent replies.",
     detail:
-      "Extra moves chain — but while you are chaining, capturing the enemy king is off the table until your opponent has played one reply move. The final chained move may still give check or set up threats; it just cannot end the game on the spot. Extra-move cards are free actions.",
+      "Extra moves chain, but while you are chaining, capturing the enemy king is off the table until your opponent has played one reply move. The final chained move may still give check or set up threats; it just cannot end the game on the spot. Extra-move cards are free actions.",
     related: ["skip", "free-action", "capture-the-king"],
   },
   {
@@ -468,7 +468,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["skips", "skipped"],
     def: "A stolen tempo: your opponent's next turn is consumed and you move again.",
     detail:
-      "Skips are the mirror of extra moves and obey the same guard: no king capture while the chain runs — the defender always gets one reply before the axe can fall. (Skipping a draft is a different thing: that is banking.)",
+      "Skips are the mirror of extra moves and obey the same guard: no king capture while the chain runs: the defender always gets one reply before the axe can fall. (Skipping a draft is a different thing: that is banking.)",
     related: ["extra-move", "bank", "capture-the-king"],
   },
   {
@@ -506,7 +506,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["drops"],
     def: "Placing a piece from your pocket onto an empty square, which spends your turn.",
     detail:
-      "A drop can only land on an empty square, so it can never capture anything — the king included. Pawns may never be dropped on the 1st or 8th rank, and a king is never in a pocket. Drops count as legal moves, so a player who can only drop is not stalemated.",
+      "A drop can only land on an empty square, so it can never capture anything, the king included. Pawns may never be dropped on the 1st or 8th rank, and a king is never in a pocket. Drops count as legal moves, so a player who can only drop is not stalemated.",
     related: ["pocket", "forced-pass"],
   },
   {
@@ -524,7 +524,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     slug: "chebyshev-distance",
     group: "Board vocabulary",
     aliases: ["chebyshev"],
-    def: "How cards measure distance: the larger of the file difference and the rank difference — king steps.",
+    def: "How cards measure distance: the larger of the file difference and the rank difference, in king steps.",
     detail:
       "Whenever a card says “within N squares”, count how many king moves it would take, not straight-line distance. A square 2 files and 1 rank away is 2 squares away.",
     related: ["file", "rank"],
@@ -602,7 +602,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     aliases: ["castle", "castles"],
     def: "A single move where the king and a rook shift together to tuck the king safely away.",
     detail:
-      "In Nerf Chess you may castle through, into, or out of check — only the normal geometry (empty squares, an unmoved king and rook) is required. Cards can even restore castling rights you already spent. Only inside a Chess Diff do the standard castling-through-check bans return.",
+      "In Nerf Chess you may castle through, into, or out of check: only the normal geometry (empty squares, an unmoved king and rook) is required. Cards can even restore castling rights you already spent. Only inside a Chess Diff do the standard castling-through-check bans return.",
     related: ["capture-the-king", "chess-diff"],
   },
   {
