@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { BuffDetail } from "@/components/codex/CardDetail";
+import { AffectedPieces } from "@/app/codex/_components/AffectedPieces";
 import { BUFF_BY_ID, buffType, metaDescription, tierName } from "@/lib/cardCodex";
 
 // One static page per boon, at the family path the codex's Boons tab implies.
@@ -37,5 +38,10 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
 export default function BoonCardPage({ params }: { params: { id: string } }) {
   const buff = BUFF_BY_ID[params.id];
   if (!buff || buffType(buff) !== "Boon") notFound();
-  return <BuffDetail buff={buff} />;
+  return (
+    <>
+      <BuffDetail buff={buff} />
+      <AffectedPieces kind="buff" card={buff} />
+    </>
+  );
 }
