@@ -32,9 +32,10 @@ const chromiumExe = preinstalledChromium();
 
 export default defineConfig({
   testDir: "./e2e",
-  // The bot game test drives a full game flow; give it room, but the whole
-  // suite should stay well under two minutes.
-  timeout: 100_000,
+  // The bot game test drives a full game flow (in-page AI search), which can be
+  // slow on a cold first run; give it real room so a slow-but-correct run isn't
+  // failed by the per-test cap before the CI retry can help.
+  timeout: 150_000,
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
   // The tests share one dev server and the game test is CPU-heavy (AI search

@@ -9,6 +9,7 @@ import { PT_CARDS } from "./pt";
 import { TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
 import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
+import { buffRegistry } from "./registry";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
@@ -4589,6 +4590,10 @@ export const ALL_BUFFS: Buff[] = [
 export const BUFF_BY_ID: Record<string, Buff> = Object.fromEntries(
   ALL_BUFFS.map((b) => [b.id, b]),
 );
+
+// Publish the id->card map into the cycle-free registry so card modules can look
+// a card up by id without importing this file (which would cycle). See registry.ts.
+buffRegistry.byId = BUFF_BY_ID;
 
 export const IMPLEMENTED_BUFFS: Buff[] = ALL_BUFFS.filter((b) => b.implemented);
 

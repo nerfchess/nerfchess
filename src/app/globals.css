@@ -1732,7 +1732,9 @@ html[data-anim="off"] .sq-pickable {
   pointer-events: none;
   z-index: 60;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 14px 18px rgba(0,0,0,0.5));
+  /* A tighter, closer shadow reads as a light piece skimming the board rather
+     than one hoisted far above it — and repaints cheaper on the moving ghost. */
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.38));
 }
 
 /* --- Animations --- */
@@ -2798,14 +2800,16 @@ main.recording-mode .board-strip {
   display: none !important;
 }
 
-/* Board · pockets, centered in the frame, with the bottom clock bar's height
-   reserved so nothing ever collides with it. */
+/* Board · pockets, centered in the frame. The clock bar now flows directly
+   under the board (inside the board shell), so only a small breathing gap is
+   reserved at the bottom rather than the tall band the old frame-fixed bar
+   needed. */
 main.recording-mode .match-board-col {
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding-bottom: 6.5rem;
+  padding-bottom: 0.75rem;
 }
 main.recording-mode .match-board-shell {
   display: flex;
@@ -2831,23 +2835,26 @@ main.recording-mode .match-board-shell {
   box-shadow: 0 0 0 100vmax rgb(4 5 9 / 0.82);
 }
 
-/* Both clocks (with names), sitting a little above the bottom of the frame. */
+/* Both clocks (with names), flowing DIRECTLY beneath the board. Rendered inside
+   the board shell (not fixed to the frame bottom) so it hugs the board's bottom
+   edge and rides up/down with the board instead of leaving a size-dependent gap
+   near the frame floor. */
 .rec-clock-bar {
-  position: fixed;
-  bottom: 3.25rem;
-  left: 50%;
-  width: min(calc(var(--rec-w) - 1rem), 92vw);
-  transform: translateX(-50%);
-  z-index: 40;
+  /* Match the board's width (--board-cap) and center under it, so the two
+     clocks sit at the board's left/right edges rather than spreading across the
+     full-width board shell. */
+  width: min(var(--board-cap), calc(var(--rec-w) - 1rem), 92vw);
+  margin: 0.5rem auto 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.75rem;
   pointer-events: none;
 }
 
-/* Draft menu in recording mode: capped to the frame so it lands centered on
-   the (screen-centered) board and stays inside the crop. */
+/* Draft menu in recording mode: capped to the NORMAL rectangle scale (the same
+   48rem lg:max-w-3xl the non-recording draft uses) so the nerf-card screen never
+   renders larger than normal, while still never exceeding the 9:16 crop width. */
 main.recording-mode .draft-col--rec {
-  max-width: min(calc(var(--rec-w) - 1rem), 92vw) !important;
+  max-width: min(48rem, calc(var(--rec-w) - 1rem), 92vw) !important;
 }

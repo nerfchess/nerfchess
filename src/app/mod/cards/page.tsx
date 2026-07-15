@@ -6,8 +6,8 @@
 // page only edits the overlay. Server-side authorization happens in
 // /api/mod/cards; like /mod, this page just hides itself from non-mods.
 
-import { ALL_BUFFS } from "@/engine/buffs/library";
-import { ALL_NERFS } from "@/engine/nerfs/library";
+import type { Buff } from "@/engine/buff";
+import type { Nerf } from "@/engine/nerf";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -36,29 +36,32 @@ interface OverrideRow {
   updated_at: number | null;
 }
 
-// The code-defined catalog, assembled once. Overrides layer on top of this.
-const CODE_CARDS: CodeCard[] = [
-  ...ALL_NERFS.map((d) => ({
-    id: d.id,
-    kind: "nerf" as Kind,
-    name: d.name,
-    description: d.description,
-    flavor: d.flavor ?? null,
-    tier: d.tier as number,
-    category: null,
-    implemented: d.implemented,
-  })),
-  ...ALL_BUFFS.map((b) => ({
-    id: b.id,
-    kind: "buff" as Kind,
-    name: b.name,
-    description: b.description,
-    flavor: b.flavor ?? null,
-    tier: b.tier as number,
-    category: b.category,
-    implemented: b.implemented,
-  })),
-];
+// The code-defined catalog, assembled from the (lazily imported) card
+// libraries. Overrides layer on top of this.
+function buildCodeCards(allNerfs: Nerf[], allBuffs: Buff[]): CodeCard[] {
+  return [
+    ...allNerfs.map((d) => ({
+      id: d.id,
+      kind: "nerf" as Kind,
+      name: d.name,
+      description: d.description,
+      flavor: d.flavor ?? null,
+      tier: d.tier as number,
+      category: null,
+      implemented: d.implemented,
+    })),
+    ...allBuffs.map((b) => ({
+      id: b.id,
+      kind: "buff" as Kind,
+      name: b.name,
+      description: b.description,
+      flavor: b.flavor ?? null,
+      tier: b.tier as number,
+      category: b.category,
+      implemented: b.implemented,
+    })),
+  ];
+}
 
 const LIST_CAP = 120;
 
@@ -83,6 +86,10 @@ function draftFrom(card: CodeCard, o: OverrideRow | undefined): Draft {
 export default function ModCardsPage() {
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
   const [overrides, setOverrides] = useState<Map<string, OverrideRow>>(new Map());
+  // The code-defined catalog, built from the lazily imported card libraries so
+  // the ~26k-line engine stays out of the initial /mod/cards bundle. Null until
+  // the import resolves (only fetched once the mod check passes).
+  const [codeCards, setCodeCards] = useState<CodeCard[] | null>(null);
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState<"all" | Kind>("all");
   const [onlyOverridden, setOnlyOverridden] = useState(false);
@@ -110,9 +117,24 @@ export default function ModCardsPage() {
     if (isMod) void (async () => { await loadOverrides(); })();
   }, [isMod]);
 
+  // Pull the card engine in its own async chunk once the mod check passes, then
+  // assemble the code-defined catalog from it.
+  useEffect(() => {
+    if (!isMod) return;
+    let cancelled = false;
+    Promise.all([import("@/engine/nerfs/library"), import("@/engine/buffs/library")])
+      .then(([nerfs, buffs]) => {
+        if (!cancelled) setCodeCards(buildCodeCards(nerfs.ALL_NERFS, buffs.ALL_BUFFS));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isMod]);
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = CODE_CARDS.filter((c) => {
+    const list = (codeCards ?? []).filter((c) => {
       if (kind !== "all" && c.kind !== kind) return false;
       const o = overrides.get(`${c.kind}:${c.id}`);
       if (onlyOverridden && !o) return false;
@@ -122,7 +144,7 @@ export default function ModCardsPage() {
     });
     list.sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
     return list;
-  }, [search, kind, onlyOverridden, overrides]);
+  }, [search, kind, onlyOverridden, overrides, codeCards]);
 
   const startEdit = (card: CodeCard) => {
     const key = `${card.kind}:${card.id}`;
@@ -234,6 +256,11 @@ export default function ModCardsPage() {
 
             {notice && <p className="mt-3 text-sm text-red-400">{notice}</p>}
 
+            {!codeCards ? (
+              <div className="mt-4 plate p-10 text-center text-parchment-400">
+                Loading the library…
+              </div>
+            ) : (
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -286,6 +313,7 @@ export default function ModCardsPage() {
                 </p>
               )}
             </div>
+            )}
           </>
         )}
       </section>

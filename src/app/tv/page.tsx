@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Eye, Radio } from "lucide-react";
-import { Board } from "@/components/Board";
+// TV is a read-only browsing/preview surface (the full interactive + card-VFX
+// experience lives on the spectate page /game/[id]). Rendering the lightweight
+// HeroBoard here instead of the full Board keeps the ENTIRE effects/animation
+// stack and card database (~26k lines + framer-motion + the VFX engine) out of
+// the /tv route bundle — the dominant cause of slow TV load (~1.6MB → a fraction).
+import { HeroBoard } from "@/components/HeroBoard";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -318,15 +323,7 @@ function TvView() {
               </span>
             </div>
             {shownId && shownPlayers ? (
-              <Board
-                board={board}
-                legalMoves={[]}
-                orientation="w"
-                onMove={() => {}}
-                myColor="w"
-                lastMove={lastMove}
-                disabled
-              />
+              <HeroBoard board={board} lastMove={lastMove} />
             ) : streamId && failedStreamId === streamId ? (
               /* Tune-in failed after a retry: don't spin forever. The featured
                  game stays selected (the lobby may recover it, or the viewer can

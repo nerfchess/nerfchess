@@ -13,7 +13,7 @@ import { StarField } from "@/components/StarField";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
-import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
+import { NewHereChip } from "@/components/NewHereChip";
 
 export default function HomePage() {
   return (
@@ -43,14 +43,7 @@ export default function HomePage() {
               marks over the live board. */}
           <div className="flex items-start justify-between gap-3">
             <span className="eyebrow">Nerf Chess</span>
-            <Link
-              href={FIRST_GAME_TOUR_HREF}
-              className="shrink-0 inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
-            >
-              <span className="smallcaps">New here?</span>
-              <span className="hidden sm:inline">Learn the game in 3 minutes</span>
-              <span aria-hidden>→</span>
-            </Link>
+            <NewHereChip />
           </div>
           {/* ONE dominant action. It enters the lobby's Quick Play tab, where
               Buff and 3+2 are already selected, so the next click is the
@@ -75,7 +68,7 @@ export default function HomePage() {
           {/* Two quieter ways in, one step below the big button. No mode
               decision here: Buff is the site-wide default, and every setup
               page lets you switch. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-white/10 bg-white/[0.04] p-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 border border-white/10 bg-white/[0.04] p-4">
             <Link
               href="/lobby"
               className="btn-glass btn-glass--primary flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
@@ -87,6 +80,12 @@ export default function HomePage() {
               className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
             >
               Play a Friend
+            </Link>
+            <Link
+              href="/play"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Play a bot
             </Link>
           </div>
 

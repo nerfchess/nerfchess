@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Field of red poppies">
+  <defs>
+    <linearGradient id="pop-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa8d8"/><stop offset="0.7" stop-color="#bfe0ec"/><stop offset="1" stop-color="#eef6e6"/></linearGradient>
+    <linearGradient id="pop-field" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb85a"/><stop offset="1" stop-color="#4d7a33"/></linearGradient>
+    <radialGradient id="pop-sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.6" stop-color="#ffef c0" stop-opacity="0.6"/><stop offset="1" stop-color="#ffefc0" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#pop-sky)"/>
+  <circle cx="150" cy="48" r="40" fill="url(#pop-sun)"/>
+  <circle cx="150" cy="48" r="16" fill="#fff6d8"/>
+  <ellipse cx="56" cy="40" rx="30" ry="9" fill="#ffffff" opacity="0.6"/>
+  <ellipse cx="90" cy="60" rx="22" ry="6" fill="#ffffff" opacity="0.5"/>
+  <path d="M0 96 Q50 84 100 92 Q150 100 200 88 L200 200 L0 200 Z" fill="url(#pop-field)"/>
+  <path d="M0 96 Q50 84 100 92 Q150 100 200 88 L200 104 Q150 114 100 106 Q50 100 0 110 Z" fill="#7aa64c" opacity="0.6"/>
+  <g stroke="#3f6b2b" stroke-width="1.4" stroke-linecap="round">
+    <path d="M34 176 V150 M64 190 V158 M104 182 V152 M140 194 V160 M170 178 V150 M20 158 V138 M86 158 V140 M124 168 V146 M156 150 V132"/>
+  </g>
+  <g>
+    <g transform="translate(34,146)"><circle r="11" fill="#e02f22"/><circle r="11" cx="-6" cy="-3" fill="#c82419" opacity="0.7"/><circle r="3" fill="#2b1410"/></g>
+    <g transform="translate(64,154)"><circle r="13" fill="# e5382a"/><circle r="13" cx="6" cy="-4" fill="#f0533f" opacity="0.7"/><circle r="3.4" fill="#2b1410"/></g>
+    <g transform="translate(104,148)"><circle r="12" fill="#dd2e21"/><circle r="12" cx="-5" cy="4" fill="#c82419" opacity="0.7"/><circle r="3.2" fill="#2b1410"/></g>
+    <g transform="translate(140,156)"><circle r="13" fill="#e5382a"/><circle r="13" cx="5" cy="-4" fill="#f0533f" opacity="0.7"/><circle r="3.4" fill="#2b1410"/></g>
+    <g transform="translate(170,146)"><circle r="10" fill="#d4291d"/><circle r="3" fill="#2b1410"/></g>
+    <g transform="translate(20,134)"><circle r="7" fill="#cf271c"/><circle r="2" fill="#2b1410"/></g>
+    <g transform="translate(86,136)"><circle r="7" fill="#e5382a"/><circle r="2" fill="#2b1410"/></g>
+    <g transform="translate(124,142)"><circle r="8" fill="#d4291d"/><circle r="2.4" fill="#2b1410"/></g>
+    <g transform="translate(156,128)"><circle r="6" fill="#cf271c"/><circle r="1.8" fill="#2b1410"/></g>
+  </g>
+</svg>

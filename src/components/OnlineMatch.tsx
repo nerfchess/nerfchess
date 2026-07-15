@@ -2413,7 +2413,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(6rem,1fr)_auto] lg:self-start">
+          <aside className="rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
             <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
@@ -2728,6 +2728,42 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <MobileActionsMenu>{historyActions}</MobileActionsMenu>
                 </div>
               )}
+              {/* Recording mode: both clocks (with names) flow directly beneath
+                  the board, inside the board shell, so they hug the board's
+                  bottom edge in the 9:16 frame instead of being pinned near the
+                  frame floor. Owner-only layout; purely presentational. */}
+              {recordingLayout && clockEnabled && (
+                <div className="rec-clock-bar">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="max-w-[7rem] truncate font-display text-sm font-semibold text-parchment-100"
+                      title={oppName}
+                    >
+                      {oppName}
+                    </span>
+                    <ClockPill
+                      ms={myColor === "w" ? blackMs : whiteMs}
+                      active={chargedColor === oppColor}
+                      startDelayMs={clockStartDelay(oppColor)}
+                      compact
+                    />
+                  </div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <ClockPill
+                      ms={myColor === "w" ? whiteMs : blackMs}
+                      active={chargedColor === myColor}
+                      startDelayMs={clockStartDelay(myColor)}
+                      compact
+                    />
+                    <span
+                      className="max-w-[7rem] truncate font-display text-sm font-semibold text-gold-leaf"
+                      title={myName}
+                    >
+                      {myName}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             <div
               className={
@@ -2812,46 +2848,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         />
       )}
 
-      {/* Recording mode chrome: a 9:16 crop guide (dims everything outside the
-          vertical frame) and a bottom clock bar carrying both players' clocks.
-          Both are purely presentational and only mount in recording mode. */}
-      {recordingLayout && (
-        <>
-          <div className="rec-frame-guide" aria-hidden />
-          {clockEnabled && (
-            <div className="rec-clock-bar">
-              <div className="flex min-w-0 items-center gap-2">
-                <span
-                  className="max-w-[7rem] truncate font-display text-sm font-semibold text-parchment-100"
-                  title={oppName}
-                >
-                  {oppName}
-                </span>
-                <ClockPill
-                  ms={myColor === "w" ? blackMs : whiteMs}
-                  active={chargedColor === oppColor}
-                  startDelayMs={clockStartDelay(oppColor)}
-                  compact
-                />
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <ClockPill
-                  ms={myColor === "w" ? whiteMs : blackMs}
-                  active={chargedColor === myColor}
-                  startDelayMs={clockStartDelay(myColor)}
-                  compact
-                />
-                <span
-                  className="max-w-[7rem] truncate font-display text-sm font-semibold text-gold-leaf"
-                  title={myName}
-                >
-                  {myName}
-                </span>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      {/* Recording mode chrome: just the 9:16 crop guide (dims everything
+          outside the vertical frame). The clocks now render inside the board
+          shell, directly beneath the board (see above). Purely presentational
+          and only mounts in recording mode. */}
+      {recordingLayout && <div className="rec-frame-guide" aria-hidden />}
 
       {/* Shared reveal moment: both sides of the draft round resolved, show
           the outcome briefly. Non-blocking, click to dismiss, auto-dismisses

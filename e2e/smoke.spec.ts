@@ -105,10 +105,12 @@ test("buff-mode bot game: moves, draft pick, card in dock", async ({ page }) => 
   }
 
   // After the fifth own move (and the bot's reply) the shared draft fires:
-  // the overlay deals an offer of buff cards.
+  // the overlay deals an offer of buff cards. Generous timeout: the bot's AI
+  // search runs in-page and a cold first run (dev server + JIT warmup) can be
+  // slow to reach the draft, so give it margin before the CI retry kicks in.
   await expect(
     page.getByRole("heading", { name: /choose a buff/i }),
-  ).toBeVisible({ timeout: 45_000 });
+  ).toBeVisible({ timeout: 75_000 });
 
   // Pick the first card: one click selects it, the explicit "Confirm pick"
   // button locks it in (exempt from the double-click guard).

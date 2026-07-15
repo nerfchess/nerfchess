@@ -40,10 +40,11 @@ import {
   dist,
 } from "../funny/shared";
 import { grantRandomTier9 } from "../helpers";
-// Live binding, read only inside a runtime effect (never at module load), so
-// the library <-> card-module cycle resolves fine: BUFF_BY_ID is fully built
-// by the time any Double or Nothing is ever played.
-import { BUFF_BY_ID } from "../library";
+// Card-name lookup via the cycle-free registry (populated by library.ts), read
+// only inside a runtime effect — never at module load. Importing library.ts
+// directly here would form a library <-> card-module cycle that TDZ-crashes
+// under some module-eval orders; the registry breaks that edge.
+import { buffRegistry } from "../registry";
 
 /** King "reaching out" to devour: one capture move onto every enemy piece
  * (never a king) standing exactly two king-steps away, leaping whatever sits
@@ -435,7 +436,7 @@ export const PT_TIME_CARDS: Buff[] = [
         return;
       }
       const stake = eligible[api.rng.int(eligible.length)];
-      const stakeName = BUFF_BY_ID[stake.id]?.name ?? "a card";
+      const stakeName = buffRegistry.byId[stake.id]?.name ?? "a card";
       if (api.rng.int(2) === 0) {
         stake.tier = Math.min(8, stake.tier + 2) as Tier;
         inst.state.outcome = `Heads — ${stakeName} upgraded to tier ${stake.tier}!`;

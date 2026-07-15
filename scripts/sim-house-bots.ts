@@ -174,16 +174,21 @@ console.log("pacing: low-clock clamps and 2-8s draft picks ok");
 // 3. Roster shape, seek mix, nerf pick.
 // ---------------------------------------------------------------------------
 
-// The roster grew from the original 16 to a moderator-sliderable 60 and its
-// skill bands were re-seeded (1550 floor, 2200 top): assert the invariants
-// that must hold whatever the current mix is, not a frozen census.
-check(HOUSE_ROSTER.length === 60, "roster size");
+// The roster grew to 210 personas (an active window of 60-90 rotates daily) and
+// spans the 1350-2200 skill tiers: assert the invariants that must hold whatever
+// the current mix is, not a frozen census.
+check(HOUSE_ROSTER.length === 210, "roster size");
 check(
   HOUSE_ROSTER.every((p) => HOUSE_SKILL_PROFILES[p.skill] != null),
   "every persona uses a real skill tier",
 );
 check(HOUSE_ROSTER.every((p) => !/bot/i.test(p.name)), "no 'bot' in names");
-check(HOUSE_ROSTER.every((p) => p.avatar.endsWith("_flower")), "house avatar preset ids");
+// Every persona debuts with a house look: an uploaded-style image pfp
+// (house_pfp:) or a flower preset. Both live only in the house avatar space.
+check(
+  HOUSE_ROSTER.every((p) => p.avatar.startsWith("house_pfp:") || p.avatar.endsWith("_flower")),
+  "house avatar preset ids",
+);
 check(new Set(HOUSE_ROSTER.map((p) => p.name.toLowerCase())).size === HOUSE_ROSTER.length, "unique names");
 console.log(
   "roster:",

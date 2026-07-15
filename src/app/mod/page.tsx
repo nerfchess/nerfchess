@@ -5,8 +5,8 @@
 // Server-side authorization happens in the /api/mod routes; this page just
 // hides itself from non-mods.
 
-import { ALL_NERFS } from "@/engine/nerfs/library";
-import { BUFF_BY_ID } from "@/engine/buffs/library";
+import type { Nerf } from "@/engine/nerf";
+import type { Buff } from "@/engine/buff";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
@@ -222,6 +222,9 @@ type NerfFeedbackVote = {
 function RuleFeedbackTab() {
   const [totals, setTotals] = useState<NerfFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<NerfFeedbackVote[]>([]);
+  // The nerf library is lazy-loaded so the ~26k-line card engine stays out of
+  // the /mod bundle; this tab only mounts for a moderator who opens it.
+  const [nerfs, setNerfs] = useState<Nerf[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,9 +241,19 @@ function RuleFeedbackTab() {
     };
   }, []);
 
-  const nerf = (id: string) => ALL_NERFS.find((n) => n.id === id);
+  useEffect(() => {
+    let cancelled = false;
+    import("@/engine/nerfs/library").then((m) => {
+      if (!cancelled) setNerfs(m.ALL_NERFS);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  if (!totals) return <p className="text-sm text-parchment-400">Loading rule feedback…</p>;
+  const nerf = (id: string) => nerfs?.find((n) => n.id === id);
+
+  if (!totals || !nerfs) return <p className="text-sm text-parchment-400">Loading rule feedback…</p>;
   if (totals.length === 0) {
     return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their rule post-game.</p>;
   }
@@ -280,6 +293,8 @@ type BuffFeedbackVote = {
 function BuffFeedbackTab() {
   const [totals, setTotals] = useState<BuffFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<BuffFeedbackVote[]>([]);
+  // Lazy-load the buff library so the card engine stays out of the /mod bundle.
+  const [buffs, setBuffs] = useState<Record<string, Buff> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -296,9 +311,19 @@ function BuffFeedbackTab() {
     };
   }, []);
 
-  const buff = (id: string) => BUFF_BY_ID[id];
+  useEffect(() => {
+    let cancelled = false;
+    import("@/engine/buffs/library").then((m) => {
+      if (!cancelled) setBuffs(m.BUFF_BY_ID);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  if (!totals) return <p className="text-sm text-parchment-400">Loading buff feedback…</p>;
+  const buff = (id: string) => buffs?.[id];
+
+  if (!totals || !buffs) return <p className="text-sm text-parchment-400">Loading buff feedback…</p>;
   if (totals.length === 0) {
     return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their buffs post-game.</p>;
   }
@@ -985,7 +1010,7 @@ type HouseState = {
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [count, setCount] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 30, max: 60 });
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 60, max: 120 });
   const [strength, setStrength] = useState<Pick<
     HouseState,
     "clamp" | "presets" | "skillTiers"
@@ -1074,13 +1099,15 @@ function HouseBotsToggle() {
           {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
         </button>
       </div>
-      {/* Active-bot count: how many of the roster seek, play, and appear online.
-          The first N are active, so the base set is always on and raising this
-          switches in the expansion personas. Commits on release. */}
+      {/* Active-bot count: how many of the 210-deep roster actually seek and play
+          at once (up to ~150 more idle "online" for presence). By default this
+          varies daily (60-120) and the active window rotates so the crowd cycles
+          through the whole roster over time; moving this slider PINS a fixed count
+          instead. Commits on release. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-center justify-between">
           <label htmlFor="house-count" className="smallcaps text-[11px] text-parchment-400">
-            Active bots in the lobby
+            Active bots playing (pins the daily 60-120)
           </label>
           <span className="font-mono text-sm text-gold-leaf tabular-nums">{count ?? "…"}</span>
         </div>

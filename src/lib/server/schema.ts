@@ -506,6 +506,32 @@ const ADDITIVE_COLUMNS: string[] = [
        AND user_id = (SELECT id FROM users WHERE username_lower = 'ilovenewjeans')
        AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ilovenewjeans_2250')`,
   `INSERT OR IGNORE INTO schema_meta (key, value) VALUES ('grant_ilovenewjeans_2250', '1')`,
+  // One-time rating grant: set ruylopezsolos's nerf and buff buckets (and the
+  // legacy users.rating) to 2150. Same gated pattern as the grants above, with its
+  // OWN marker so it fires exactly once. The INSERTs seed the buckets if missing;
+  // the UPDATEs do the real work when they already exist (migration 0006 backfills
+  // every user). The marker plant is guarded on the account EXISTING, so if the
+  // row is somehow absent at deploy the grant is not permanently marked done (it
+  // can still land on a later additive-version bump). Mirrors
+  // migrations/0030_ruylopezsolos_2150.sql.
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'nerf', 2150, 90, 0.06, 2150 FROM users
+     WHERE username_lower = 'ruylopezsolos'
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ruylopezsolos_2150')`,
+  `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
+     SELECT id, 'buff', 2150, 90, 0.06, 2150 FROM users
+     WHERE username_lower = 'ruylopezsolos'
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ruylopezsolos_2150')`,
+  `UPDATE user_ratings SET rating = 2150, rd = MIN(rd, 90), peak = MAX(peak, 2150)
+     WHERE category IN ('nerf','buff')
+       AND user_id = (SELECT id FROM users WHERE username_lower = 'ruylopezsolos')
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ruylopezsolos_2150')`,
+  `UPDATE users SET rating = 2150
+     WHERE username_lower = 'ruylopezsolos'
+       AND NOT EXISTS (SELECT 1 FROM schema_meta WHERE key = 'grant_ruylopezsolos_2150')`,
+  `INSERT OR IGNORE INTO schema_meta (key, value)
+     SELECT 'grant_ruylopezsolos_2150', '1'
+     WHERE EXISTS (SELECT 1 FROM users WHERE username_lower = 'ruylopezsolos')`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

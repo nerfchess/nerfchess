@@ -45,7 +45,7 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // public URL (not just localhost:8787 on the box) before raising any of
 // these -- don't trust the nominal number, and don't trust a localhost-only
 // measurement either.
-export type HouseSkill = 1350 | 1550 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
+export type HouseSkill = 1350 | 1450 | 1550 | 1650 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
 
 // Baked per-tier profile. The weakening fields are OPTIONAL and every baked
 // tier below leaves them unset, so a fresh install resolves to topK:1 / no
@@ -81,7 +81,9 @@ export type ResolvedSkillProfile = {
 
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   1350: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
+  1450: { level: "medium", budgetMs: 40, blunderChance: 0.075 },
   1550: { level: "medium", budgetMs: 60, blunderChance: 0.05 },
+  1650: { level: "hard", budgetMs: 100, blunderChance: 0.02 },
   1750: { level: "hard", budgetMs: 150, blunderChance: 0.005 },
   1900: { level: "hard", budgetMs: 180, blunderChance: 0.005 },
   1950: { level: "hard", budgetMs: 250, blunderChance: 0.005 },
@@ -376,6 +378,162 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // 2100-2200 top band
   ["quietstormq", 2150],
   ["apexpawn", 2200],
+
+  // --- Expansion wave: 150 more personas so the roster is 210 deep, letting
+  // the daily active window (60-90) cycle through a large, ever-changing
+  // crowd instead of always showing the same faces. Skills span the full
+  // 1350-2200 range; handles are in the same Lichess-style mix. New handles
+  // mean new hp_ ids, so worker.ts's houseSeededKey is bumped to create them.
+  ["kaij25", 1900],
+  ["swiftblitz", 1950],
+  ["chenj48", 1550],
+  ["najdorfflag", 1350],
+  ["grinddragon9", 1550],
+  ["swiftlondon", 2000],
+  ["clock90", 1950],
+  ["crushh4ing", 1650],
+  ["pressgambiting", 1750],
+  ["slavpetroff", 2050],
+  ["e4gambit", 1900],
+  ["irina26", 1900],
+  ["hannah35", 1650],
+  ["crushskewer", 2200],
+  ["chloe_sergei", 2100],
+  ["flickd4", 2150],
+  ["mike_mila", 1900],
+  ["carlosc90", 1650],
+  ["bjornm21", 2100],
+  ["pedro_mateo", 1900],
+  ["hans_pat", 1650],
+  ["slav30", 1650],
+  ["goran59", 2050],
+  ["d427", 1750],
+  ["tim_alex", 1650],
+  ["olga_mila", 1750],
+  ["c4castle", 1450],
+  ["stalemateg6", 1450],
+  ["boris_j37", 1450],
+  ["raul19", 1450],
+  ["sergei_luca", 1550],
+  ["dodgecometz", 2000],
+  ["javierj54", 1550],
+  ["hangslavz", 2100],
+  ["novaecho", 1900],
+  ["dodgebullet14", 2000],
+  ["adam_javier", 1750],
+  ["blitz68", 2000],
+  ["stackclocking", 1750],
+  ["paolot44", 1650],
+  ["dawn77", 1900],
+  ["coldgrind", 1450],
+  ["priya_kenji", 1350],
+  ["silentbaitz", 1950],
+  ["john_b2011", 1450],
+  ["baitf6er", 1550],
+  ["erik15", 1750],
+  ["rajb31", 1550],
+  ["priya13", 2100],
+  ["rajc2007", 1750],
+  ["finn_m64", 1900],
+  ["boldblunder", 1650],
+  ["teae4", 2100],
+  ["luke37", 1350],
+  ["presstempo", 1750],
+  ["hannah55", 1650],
+  ["kenji_sergei", 1750],
+  ["grimstackz", 2150],
+  ["humblefrost", 1950],
+  ["bjorn79", 2000],
+  ["lena_omar", 1450],
+  ["luke95", 1650],
+  ["boris87", 1550],
+  ["slav85", 2050],
+  ["dodgeskewerer", 1950],
+  ["sleepycomet", 1650],
+  ["catalan28", 1750],
+  ["gambitopening", 1550],
+  ["catalan2", 2000],
+  ["coldendgame", 2100],
+  ["leo38", 1350],
+  ["shinyhunt", 2000],
+  ["humbletrapz", 1900],
+  ["echoknight", 1750],
+  ["flagb6", 1750],
+  ["petroffecho", 2150],
+  ["tim_t6", 2100],
+  ["grimhangz", 2150],
+  ["chloe_b81", 1350],
+  ["vikram_g23", 2100],
+  ["crushlufter", 1950],
+  ["arjun_alex", 1950],
+  ["grimdragon", 1450],
+  ["tariq_diego", 1750],
+  ["sleepysniper", 1750],
+  ["openingdraw", 2050],
+  ["cozyoutpost", 1900],
+  ["sleepyd4", 1650],
+  ["dmitri55", 1750],
+  ["trapdrawing", 1900],
+  ["layla_w8", 1350],
+  ["tempoecho", 1900],
+  ["diego_j26", 2000],
+  ["king4", 2150],
+  ["bullet72", 2050],
+  ["dan_k60", 1450],
+  ["frost21", 1950],
+  ["silverskewer", 1900],
+  ["mattw34", 2050],
+  ["g673", 1650],
+  ["latte76", 1950],
+  ["snipelufting", 1350],
+  ["matt_v46", 1450],
+  ["gambitd4", 2000],
+  ["silverd4", 1450],
+  ["caro56", 1750],
+  ["sergei_mila", 1950],
+  ["cozystorm", 1650],
+  ["skewermate", 1900],
+  ["sneakybaitr", 1450],
+  ["chris77", 1750],
+  ["sharpdrift", 1450],
+  ["stormmate", 1650],
+  ["layla_marco", 2050],
+  ["humbleecho", 1350],
+  ["trapmateer", 2000],
+  ["slaylondon", 1650],
+  ["blunderdrifter", 1900],
+  ["olga_nina", 1450],
+  ["stackzug", 1650],
+  ["finn_marco", 2050],
+  ["hassan_t64", 1950],
+  ["embernova", 1950],
+  ["wei_max", 1650],
+  ["bishop95", 1950],
+  ["coldpunishr", 2050],
+  ["vera_raul", 1350],
+  ["frostpetroff", 1550],
+  ["blunderpining", 1350],
+  ["sneakyhuntr", 2050],
+  ["convertf6z", 1450],
+  ["lazydodge", 1750],
+  ["silverconvert", 1950],
+  ["quietsnipez", 2000],
+  ["carlos_chris", 2000],
+  ["warmhang", 1650],
+  ["outpost33", 2100],
+  ["slowzug", 1650],
+  ["aleks_alex", 2000],
+  ["flickdawner", 1450],
+  ["silentpressr", 2200],
+  ["jordan24", 1350],
+  ["ren60", 1900],
+  ["gracew16", 2200],
+  ["ren59", 1350],
+  ["kenji11", 1650],
+  ["steve77", 1950],
+  ["cozyslay", 2100],
+  ["wei52", 2050],
+  ["paolo2002", 1650],
 ];
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
@@ -448,6 +606,62 @@ function personaAvatar(name: string): string {
   return HOUSE_PFP_PREFIX + HOUSE_PFP_NAMES[nameHash(name) % HOUSE_PFP_NAMES.length];
 }
 
+// Short, generic, SFW blurbs — the kind a real player might jot on their profile.
+// Deliberately name-agnostic (assigned by hash), so any bio fits any persona.
+// Roughly half the roster gets one (personaBio); the rest stay blank, like real
+// users where some wrote something and some never bothered. A moderator's bio
+// override (houseIdentity) still wins over the baked one.
+const HOUSE_BIOS: string[] = [
+  "here for the blitz",
+  "London System enjoyer",
+  "1. e4 and pray",
+  "coffee then chess",
+  "always down for a rematch",
+  "bullet addict, sorry",
+  "trying to hit 2000 someday",
+  "endgames are underrated",
+  "gambit or bust",
+  "just vibing",
+  "chess is my cardio",
+  "will trade queens for peace",
+  "premove enthusiast",
+  "still learning the Sicilian",
+  "flag me if you can",
+  "rapid > blitz, fight me",
+  "chess and dogs",
+  "here to blunder in style",
+  "one more game, always",
+  "knight before bishop, usually",
+  "casual player, competitive heart",
+  "back-rank mates ruin my day",
+  "opening theory? never heard of it",
+  "grinding the ladder slowly",
+  "tea, rain, and a good game",
+  "chess club refugee",
+  "weekends only",
+  "hoping for a brilliant move someday",
+  "draws are a state of mind",
+  "student by day, patzer by night",
+  "traveling and playing",
+  "self-taught, still trying",
+  "long games, short patience",
+  "here for the vibes and the wins",
+  "Fischer random is real chess",
+  "will resign gracefully, eventually",
+  "checkmate or bust",
+  "the pieces move themselves",
+  "down bad in the endgame",
+  "chess over everything",
+];
+
+/** A persona's baked bio: a stable hashed blurb for ~45% of the roster, null for
+ * the rest. Deterministic per name, so it never flickers across deploys. Used as
+ * the fallback under any staff bio override. */
+export function personaBio(persona: HousePersona): string | null {
+  if (nameHash(persona.name + "|hasbio") % 100 >= 45) return null;
+  return HOUSE_BIOS[nameHash(persona.name + "|bio") % HOUSE_BIOS.length];
+}
+
 // The avatar id space a house persona may hold: the full flowered catalog plus
 // the house-pfp catalog. Exported for the /mod/house admin editor (its avatar
 // picker offers exactly these, and the save route validates against this set),
@@ -456,9 +670,9 @@ function personaAvatar(name: string): string {
 export const HOUSE_AVATAR_IDS: readonly string[] = [...HOUSE_PFP_IDS, ...FLOWER_AVATARS];
 
 // One plausible home base per persona (owner report: every bot showed the
-// same location). Distinct for the whole roster (>= PERSONA_DEFS.length
-// entries, assigned by roster index) and spread world-wide so the crowd reads
-// like a real player base. Shown only as a label in the /mod/house editor; it
+// same location). Spread world-wide so the crowd reads like a real player base
+// (assigned by roster index; the list wraps for the 210-deep roster, so some
+// repeat). Shown only as a label in the /mod/house editor; it
 // is NOT written into the profile bio anymore (that read as a weird
 // auto-generated description). A bot's bio is empty until a moderator sets one
 // (see HouseIdentityOverride / ensureHouseUsers / syncHouseRatings).
@@ -549,21 +763,70 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
-// House-bot count is a moderator slider (30-60): the FIRST N of HOUSE_ROSTER are
-// the ACTIVE bots that seek, get picked up, play filler, and appear online. The
-// base 30 are always on; raising the slider switches in the expansion personas.
-// Every persona still holds a seeded account, so an idle one's profile/rating
-// stay intact if the count later drops back below it.
-export const HOUSE_COUNT_MIN = 30;
-export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
+// House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
+// of the full 210-deep roster (same day offset, so the smaller set is always a
+// prefix of the larger — no persona is "playing" without also being "online"):
+//   • ACTIVE (60-120, varies daily): the bots that actually seek, get picked up,
+//     and play filler. dailyHouseCount picks the day's count; a moderator may
+//     still pin an explicit one from /mod (worker.ts houseCount honours it).
+//   • ONLINE (up to 150): how many bots SHOW in the lobby's online list at once.
+//     The active ones among them read as playing/searching; the rest just idle
+//     "online" for a fuller lobby (they don't seek or play).
+// The window's start advances each day (step coprime with the roster) so the
+// site cycles through every persona over time. Every persona still holds a seeded
+// account, so its profile/rating/leaderboard entry stay intact whether or not it
+// is currently in a window.
+export const HOUSE_COUNT_MIN = 60;
+export const HOUSE_COUNT_MAX = 120;
+// How many bots idle "online" for presence — never more than the roster holds.
+export const HOUSE_ONLINE_COUNT = Math.min(150, HOUSE_ROSTER.length);
+
 export function clampHouseCount(n: number): number {
   return Number.isFinite(n)
     ? Math.max(HOUSE_COUNT_MIN, Math.min(HOUSE_COUNT_MAX, Math.floor(n)))
     : HOUSE_COUNT_MIN;
 }
-/** The active house personas: the first N of the roster (moderator-set count). */
-export function activeHouseRoster(count: number): HousePersona[] {
-  return HOUSE_ROSTER.slice(0, clampHouseCount(count));
+
+/** The active count for a given day: a deterministic value in [MIN, MAX] that
+ * changes daily so the house population breathes day to day. `dayIndex` = whole
+ * days since the epoch (Math.floor(Date.now() / 86400000)); the DO passes it in so
+ * this module stays clock-free (Date is unavailable in some call contexts). */
+export function dailyHouseCount(dayIndex: number): number {
+  const span = HOUSE_COUNT_MAX - HOUSE_COUNT_MIN + 1;
+  return HOUSE_COUNT_MIN + (nameHash("house-count:" + Math.floor(dayIndex)) % span);
+}
+
+// The rotating window start for a day. Shared by the active and online windows so
+// the active set is always a prefix of the online set. Step 31 is coprime with a
+// 210-deep roster, so all offsets are visited over time.
+function houseWindowStart(dayIndex: number): number {
+  return (Math.floor(dayIndex) * 31) % HOUSE_ROSTER.length;
+}
+
+/** A `size`-persona window starting at the day's rotating offset, wrapping the
+ * roster. Clamped to the roster length; returns the whole roster when size >= it. */
+function houseWindow(size: number, dayIndex: number): HousePersona[] {
+  const len = HOUSE_ROSTER.length;
+  const n = Math.max(0, Math.min(Math.floor(size), len));
+  if (n >= len) return HOUSE_ROSTER.slice();
+  const start = houseWindowStart(dayIndex);
+  const out: HousePersona[] = [];
+  for (let i = 0; i < n; i++) out.push(HOUSE_ROSTER[(start + i) % len]);
+  return out;
+}
+
+/** The ACTIVE house personas for a day (seek / pickup / filler): a window of
+ * `count` (clamped to 60-120), rotating daily. `dayIndex` defaults to 0 (a stable
+ * first-N window) for pure/test callers that don't rotate. */
+export function activeHouseRoster(count: number, dayIndex = 0): HousePersona[] {
+  return houseWindow(clampHouseCount(count), dayIndex);
+}
+
+/** The ONLINE-presence personas for a day: the active window PLUS extra idle bots,
+ * up to HOUSE_ONLINE_COUNT, sharing the same day offset so the active set is a
+ * prefix. Used only for the lobby "online" list — the extra ones never seek/play. */
+export function onlineHouseRoster(dayIndex = 0): HousePersona[] {
+  return houseWindow(HOUSE_ONLINE_COUNT, dayIndex);
 }
 
 export function isHouseUserId(id: string | null | undefined): boolean {
@@ -615,8 +878,9 @@ export async function loadHouseIdentityOverrides(
   }
 }
 
-/** A persona's effective display identity: override ?? baked default. Bio has
- * no baked default (empty unless a moderator set one). */
+/** A persona's effective display identity: override ?? baked default. Bio falls
+ * back to the persona's baked blurb (personaBio — set for ~45% of the roster,
+ * null for the rest) when no staff override exists. */
 export function houseIdentity(
   persona: HousePersona,
   override: HouseIdentityOverride | undefined | null,
@@ -624,7 +888,7 @@ export function houseIdentity(
   return {
     name: override?.username || persona.name,
     avatar: override?.avatar || persona.avatar,
-    bio: override?.bio || null,
+    bio: override?.bio || personaBio(persona),
   };
 }
 
@@ -650,7 +914,7 @@ export function pickHouseBotByDifficulty(
 ): HousePersona | null {
   const inBand: Record<BotDifficulty, (skill: HouseSkill) => boolean> = {
     easy: (skill) => skill <= 1550,
-    medium: (skill) => skill >= 1750 && skill <= 1900,
+    medium: (skill) => skill >= 1650 && skill <= 1900,
     hard: (skill) => skill >= 1950,
   };
   const free = roster.filter((persona) => !busy.has(persona.userId));
@@ -660,10 +924,51 @@ export function pickHouseBotByDifficulty(
   return pool[rand(pool.length)];
 }
 
-/** Seeded rating: the skill tier plus a stable +-40 jitter from the name so
- * the roster doesn't debut as blocks of identical numbers. */
+// The rating a persona ADVERTISES is decoupled from its engine `skill`. The skill
+// still drives how hard it actually plays (HOUSE_SKILL_PROFILES, capped by the DO
+// ceiling), but the displayed/rated number is shifted here so the field can be
+// re-spread without touching strength or the difficulty-band picker.
+//
+// Owner spread: every bot +100, EXCEPT sub-1600 bots (the 1350/1450/1550 tiers)
+// which drop 100-150 instead — pulling the low end down and pushing everyone else
+// up, so the roster spans ~1150 to ~2300 instead of ~1510-2240.
+function houseSeedBase(persona: HousePersona): number {
+  const seed = persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
+  if (persona.skill < 1600) {
+    const drop = 100 + (nameHash(persona.name + "|drop") % 51); // 100..150
+    return seed - drop;
+  }
+  return seed + 100;
+}
+
+/** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
+ * stronger at one mode): a stable 0..50 spread applied +/- around the base, with a
+ * per-persona direction, so the two modes sit symmetric about houseSeedBase and
+ * never more than 100 apart. Deterministic — re-derived identically on every sync. */
+export function houseSeedRatingForMode(persona: HousePersona, mode: DraftMode): number {
+  const spread = nameHash(persona.name + "|spread") % 51; // 0..50
+  const buffHigher = nameHash(persona.name + "|dir") % 2 === 0;
+  const delta = (mode === "buff") === buffHigher ? spread : -spread;
+  return Math.max(100, houseSeedBase(persona) + delta);
+}
+
+/** The mode-neutral seeded rating: the base. Written to the legacy users.rating
+ * column and used as the fallback wherever a live per-mode bucket isn't loaded. */
 export function houseSeedRating(persona: HousePersona): number {
-  return persona.skill - 40 + (nameHash(persona.name) % 81);
+  return Math.max(100, houseSeedBase(persona));
+}
+
+/** Batch a large statement list in bounded chunks (the 210-deep roster produces
+ * ~630 statements; D1 batches have practical size limits, so never send them all
+ * at once). Order within a chunk is preserved; chunks run sequentially. */
+async function batchInChunks(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  size = 90,
+): Promise<void> {
+  for (let i = 0; i < statements.length; i += size) {
+    await db.batch(statements.slice(i, i + size));
+  }
 }
 
 // Create any missing house accounts, with both per-mode rating buckets seeded
@@ -678,7 +983,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
   const now = Date.now();
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
-    const rating = houseSeedRating(persona);
+    const base = houseSeedRating(persona);
     const identity = houseIdentity(persona, overrides.get(persona.userId));
     return [
       db
@@ -686,18 +991,21 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
           `INSERT OR IGNORE INTO users (id, username, username_lower, password_hash, created_at, rating, rd, vol, avatar, bio)
            VALUES (?, ?, ?, ?, ?, ?, 150, 0.06, ?, ?)`,
         )
-        .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, rating, identity.avatar, identity.bio),
-      ...(["nerf", "buff"] as const).map((mode) =>
-        db
+        .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, base, identity.avatar, identity.bio),
+      // Nerf and Buff seed at DIFFERENT numbers (houseSeedRatingForMode), so a bot
+      // reads like a real player who is stronger in one mode than the other.
+      ...(["nerf", "buff"] as const).map((mode) => {
+        const r = houseSeedRatingForMode(persona, mode);
+        return db
           .prepare(
             `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
              VALUES (?, ?, ?, 150, 0.06, ?)`,
           )
-          .bind(persona.userId, mode, rating, rating),
-      ),
+          .bind(persona.userId, mode, r, r);
+      }),
     ];
   });
-  await db.batch(statements);
+  await batchInChunks(db, statements);
 }
 
 // Re-point every EXISTING house account's rating (and its per-mode buckets) at
@@ -717,30 +1025,32 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
 export async function syncHouseRatings(db: D1Database): Promise<void> {
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
-    const rating = houseSeedRating(persona);
+    const base = houseSeedRating(persona);
     const identity = houseIdentity(persona, overrides.get(persona.userId));
     return [
-      // With a bio override, write it; otherwise clear any leftover
-      // location-as-bio (older seed) and leave a real bio alone.
+      // With a bio (staff override or the baked blurb), write it; otherwise clear
+      // any leftover location-as-bio (older seed) and leave a real bio alone.
       identity.bio !== null
         ? db
             .prepare(`UPDATE users SET rating = ?, avatar = ?, bio = ? WHERE id = ?`)
-            .bind(rating, identity.avatar, identity.bio, persona.userId)
+            .bind(base, identity.avatar, identity.bio, persona.userId)
         : db
             .prepare(
               `UPDATE users SET rating = ?, avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
             )
-            .bind(rating, identity.avatar, persona.location, persona.userId),
-      ...(["nerf", "buff"] as const).map((mode) =>
-        db
+            .bind(base, identity.avatar, persona.location, persona.userId),
+      // Re-point each mode bucket at its own per-mode number (peak only ratchets up).
+      ...(["nerf", "buff"] as const).map((mode) => {
+        const r = houseSeedRatingForMode(persona, mode);
+        return db
           .prepare(
             `UPDATE user_ratings SET rating = ?, peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
           )
-          .bind(rating, rating, persona.userId, mode),
-      ),
+          .bind(r, r, persona.userId, mode);
+      }),
     ];
   });
-  await db.batch(statements);
+  await batchInChunks(db, statements);
 }
 
 // ---------------------------------------------------------------------------

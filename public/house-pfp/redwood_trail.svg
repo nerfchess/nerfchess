@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Trail through redwood forest">
+  <defs>
+    <linearGradient id="rt-air" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe8cf"/><stop offset="1" stop-color="#9cb383"/></linearGradient>
+    <linearGradient id="rt-bark" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a3a24"/><stop offset="0.5" stop-color="#9c4e2e"/><stop offset="1" stop-color="#5e2b1a"/></linearGradient>
+    <linearGradient id="rt-path" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9b184"/><stop offset="1" stop-color="#8a6f4a"/></linearGradient>
+    <radialGradient id="rt-beam" cx="0.5" cy="0" r="0.8"><stop offset="0" stop-color="#fdf6d8" stop-opacity="0.8"/><stop offset="1" stop-color="#fdf6d8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#rt-air)"/>
+  <rect x="0" y="120" width="200" height="80" fill="#3f5a35"/>
+  <path d="M84 200 L96 118 L104 118 L116 200 Z" fill="url(#rt-path)"/>
+  <polygon points="88,0 108,0 100,40 92,40" fill="url(#rt-beam)"/>
+  <rect x="14" y="20" width="30" height="180" rx="6" fill="url(#rt-bark)"/>
+  <rect x="156" y="12" width="34" height="188" rx="6" fill="url(#rt-bark)"/>
+  <rect x="66" y="46" width="18" height="120" rx="4" fill="#6e3320"/>
+  <rect x="120" y="40" width="20" height="120" rx="4" fill="#7a3a24"/>
+  <g stroke="#5e2b1a" stroke-width="1.4" opacity="0.6"><path d="M22 30 v170 M34 30 v170 M164 22 v178 M178 22 v178"/></g>
+  <ellipse cx="29" cy="36" rx="26" ry="30" fill="#4a6b3a"/>
+  <ellipse cx="173" cy="26" rx="30" ry="32" fill="#3f5f32"/>
+  <ellipse cx="75" cy="52" rx="22" ry="22" fill="#567c42"/>
+  <ellipse cx="130" cy="46" rx="24" ry="24" fill="#4d7238"/>
+  <g stroke="#6b8a4e" stroke-width="1.2" opacity="0.5"><path d="M50 150 l8 -6 M148 158 l-8 -6 M60 175 l7 -5"/></g>
+</svg>

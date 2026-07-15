@@ -1,11 +1,10 @@
 "use client";
 
 import { SiteHeader } from "@/components/SiteHeader";
-import { NerfCard } from "@/components/NerfCard";
-import { BuffCard } from "@/components/BuffCard";
-import { ALL_NERFS } from "@/engine/nerfs/library";
-import { ALL_BUFFS } from "@/engine/buffs/library";
 import { isBoon } from "@/engine/buff";
+import type { Buff } from "@/engine/buff";
+import type { Nerf } from "@/engine/nerf";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORY_DEFS } from "@/lib/nerfCategories";
@@ -23,6 +22,17 @@ import { BUFF_COLLECTIONS, NERF_COLLECTIONS, buffCollection } from "@/lib/cardCo
 import { cardPath } from "@/lib/cardCodex";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+
+// The heavy card renderers pull in framer-motion; load them only when the
+// (search-driven, below-the-fold) grid actually renders, so they stay out of
+// the initial /codex bundle. Props are unchanged. Declared AFTER all imports
+// (never interleaved between them) so module init order stays well-defined.
+const NerfCard = dynamic(() => import("@/components/NerfCard").then((m) => m.NerfCard), {
+  ssr: false,
+});
+const BuffCard = dynamic(() => import("@/components/BuffCard").then((m) => m.BuffCard), {
+  ssr: false,
+});
 
 // Draft-buff categories, presented like the rule categories. Nerf-relief
 // boons are deliberately absent: they only exist in Nerf mode's draft pool
@@ -42,21 +52,25 @@ const BUFF_CATEGORY_DEFS = [
 // ALL_BUFFS but split apart here so each reads as its own category.
 type Library = "rules" | "buffs" | "hexes" | "boons";
 
+// The buff-family list backing each library tab. Filled once the card engine
+// is lazily imported on mount (see the engine effect in the component).
+type BuffLists = Record<Exclude<Library, "rules">, Buff[]>;
+
 // Hexes are the curse cards (category "hex"); boons are the self-relief pool
 // (the nerf-breakers plus the light general cards flagged boon). A plain buff
 // is anything that is neither, so the three buff-family lists never overlap.
-const isHexCard = (b: (typeof ALL_BUFFS)[number]) => b.category === "hex";
-const isBoonCard = (b: (typeof ALL_BUFFS)[number]) => isBoon(b) && !isHexCard(b);
+// (isBoon comes from the small @/engine/buff module, not the heavy library.)
+const isHexCard = (b: Buff) => b.category === "hex";
+const isBoonCard = (b: Buff) => isBoon(b) && !isHexCard(b);
 
-const PLAIN_BUFFS = ALL_BUFFS.filter((b) => !isHexCard(b) && !isBoonCard(b));
-const HEX_CARDS = ALL_BUFFS.filter(isHexCard);
-const BOON_CARDS = ALL_BUFFS.filter(isBoonCard);
-
-// The buff-family list backing each library tab.
-const BUFF_LIST: Record<Exclude<Library, "rules">, typeof ALL_BUFFS> = {
-  buffs: PLAIN_BUFFS,
-  hexes: HEX_CARDS,
-  boons: BOON_CARDS,
+// The ~26k-line card engine (ALL_BUFFS / ALL_NERFS) is pulled in via dynamic
+// import() on mount rather than shipped in the initial bundle; these are the
+// browsable families derived from it once it loads.
+type EngineData = {
+  nerfs: Nerf[];
+  plainBuffs: Buff[];
+  hexCards: Buff[];
+  boonCards: Buff[];
 };
 
 // Per-library copy so the four tabs read consistently.
@@ -87,27 +101,65 @@ export default function CodexPage() {
   const [library, setLibrary] = useState<Library>("rules");
   const hydrated = useRef(false);
   const initialSearch = useRef<string | null>(null);
-  // Moderator card overrides (name/description/flavor/tier), fetched once
-  // from /api/cards. Until (or unless) they land, the code libraries render
-  // as-is, so the codex never waits on the network.
-  const [nerfSource, setNerfSource] = useState(ALL_NERFS);
-  const [buffLists, setBuffLists] = useState(BUFF_LIST);
+  // The card libraries, lazily imported on mount so the ~26k-line engine (and
+  // framer-motion, via the card components) stays out of the initial bundle.
+  // Null until the import resolves; the grid shows a loading placeholder until
+  // then.
+  const [engine, setEngine] = useState<EngineData | null>(null);
+  // Whether moderator card overrides (name/description/flavor/tier), fetched
+  // once from /api/cards, exist. Until (or unless) they land, the code
+  // libraries render as-is, so the codex never waits on the network.
+  const [textHydrated, setTextHydrated] = useState(false);
+
+  // Pull the card engine in its own async chunk on mount, then derive the four
+  // browsable families (nerfs, plain buffs, hexes, boons) from it.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([import("@/engine/nerfs/library"), import("@/engine/buffs/library")])
+      .then(([nerfs, buffs]) => {
+        if (cancelled) return;
+        const all = buffs.ALL_BUFFS;
+        setEngine({
+          nerfs: nerfs.ALL_NERFS,
+          plainBuffs: all.filter((b) => !isHexCard(b) && !isBoonCard(b)),
+          hexCards: all.filter(isHexCard),
+          boonCards: all.filter(isBoonCard),
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
     hydrateCardText().then((any) => {
-      if (!alive || !any) return;
-      setNerfSource(ALL_NERFS.map((d) => cardText("nerf", d)));
-      setBuffLists({
-        buffs: PLAIN_BUFFS.map((b) => cardText("buff", b)),
-        hexes: HEX_CARDS.map((b) => cardText("buff", b)),
-        boons: BOON_CARDS.map((b) => cardText("buff", b)),
-      });
+      if (alive && any) setTextHydrated(true);
     });
     return () => {
       alive = false;
     };
   }, []);
+
+  // The displayed card sources: the raw libraries once loaded, re-mapped
+  // through the moderator text overrides only if any exist. Empty until the
+  // engine import resolves.
+  const nerfSource = useMemo<Nerf[]>(
+    () =>
+      !engine ? [] : textHydrated ? engine.nerfs.map((d) => cardText("nerf", d)) : engine.nerfs,
+    [engine, textHydrated],
+  );
+  const buffLists = useMemo<BuffLists>(() => {
+    if (!engine) return { buffs: [], hexes: [], boons: [] };
+    if (!textHydrated)
+      return { buffs: engine.plainBuffs, hexes: engine.hexCards, boons: engine.boonCards };
+    return {
+      buffs: engine.plainBuffs.map((b) => cardText("buff", b)),
+      hexes: engine.hexCards.map((b) => cardText("buff", b)),
+      boons: engine.boonCards.map((b) => cardText("buff", b)),
+    };
+  }, [engine, textHydrated]);
 
   // Initialise from the URL on mount so links / refreshes restore filters.
   // The search string is cached because the mirror effect below may rewrite
@@ -167,7 +219,7 @@ export default function CodexPage() {
   // are a cross-cutting pool, so they browse by tier and search alone.
   const showCategoryFilter = library === "rules" || library === "buffs";
   const shownCount = isRules ? filtered.length : buffFiltered.length;
-  const totalCount = isRules ? ALL_NERFS.length : buffSource.length;
+  const totalCount = isRules ? nerfSource.length : buffSource.length;
   const noun = LIBRARY_NOUN[library];
   const nounPlural = `${noun}s`;
   const LIBRARY_TABS: Library[] = ["rules", "buffs", "hexes", "boons"];
@@ -183,8 +235,8 @@ export default function CodexPage() {
         </h1>
         <p className="mt-3 text-parchment-200">
           {isRules
-            ? `${ALL_NERFS.length} nerfs: search by name, effect, or category.`
-            : `${totalCount} ${nounPlural}: search by name, effect, or category.`}
+            ? `${engine ? nerfSource.length : "…"} nerfs: search by name, effect, or category.`
+            : `${engine ? totalCount : "…"} ${nounPlural}: search by name, effect, or category.`}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link
@@ -298,7 +350,7 @@ export default function CodexPage() {
 
         <div className="mt-5 flex items-center justify-between gap-3">
           <p className="smallcaps text-[10px] text-parchment-400" role="status" aria-live="polite">
-            Showing {shownCount} of {totalCount} {nounPlural}
+            {engine ? `Showing ${shownCount} of ${totalCount} ${nounPlural}` : `Loading the ${nounPlural}…`}
           </p>
           {active && (
             <button
@@ -310,7 +362,11 @@ export default function CodexPage() {
           )}
         </div>
 
-        {shownCount > 0 ? (
+        {!engine ? (
+          <div className="mt-6 plate p-10 text-center">
+            <p className="font-display text-lg text-parchment-100">Loading the library…</p>
+          </div>
+        ) : shownCount > 0 ? (
           <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {isRules
               ? filtered.map((d) => (

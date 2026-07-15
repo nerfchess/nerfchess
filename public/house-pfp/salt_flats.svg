@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Salt flats under a wide sky">
+  <defs>
+    <linearGradient id="slf-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f7fb5"/><stop offset="0.6" stop-color="#bcd4e6"/><stop offset="1" stop-color="#f3ecdd"/></linearGradient>
+    <linearGradient id="slf-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ddc8"/><stop offset="0.4" stop-color="#f6f2ea"/><stop offset="1" stop-color="#d6ccbd"/></linearGradient>
+    <linearGradient id="slf-mtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8f9bb0"/><stop offset="1" stop-color="#b8bfc9"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#slf-sky)"/>
+  <ellipse cx="150" cy="46" rx="34" ry="12" fill="#ffffff" opacity="0.55"/>
+  <ellipse cx="44" cy="62" rx="26" ry="8" fill="#ffffff" opacity="0.5"/>
+  <path d="M0 118 L34 96 L58 110 L92 90 L120 108 L150 94 L200 114 L200 122 L0 122 Z" fill="url(#slf-mtn)"/>
+  <path d="M0 116 L34 96 L48 104 L44 110 L36 104 L28 110 Z" fill="#7a879e" opacity="0.7"/>
+  <path d="M92 90 L112 102 L106 106 L100 100 L94 106 Z" fill="#7a879e" opacity="0.6"/>
+  <rect x="0" y="120" width="200" height="80" fill="url(#slf-ground)"/>
+  <path d="M0 122 L34 130 L58 126 L92 132 L120 127 L150 131 L200 124 L200 132 L0 132 Z" fill="#9aa6b6" opacity="0.4"/>
+  <g stroke="#c3b9a6" stroke-width="1" opacity="0.6" fill="none">
+    <path d="M20 150 L60 150 L60 176 L100 176 L100 150 L140 150"/>
+    <path d="M40 190 L40 168 L84 168 L84 194"/>
+    <path d="M120 196 L120 170 L164 170 L164 150"/>
+    <path d="M8 168 L44 168 M100 158 L150 158 M150 188 L192 188"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="1.4" opacity="0.7" stroke-linecap="round"><path d="M30 142 h28 M96 146 h34 M60 158 h24 M130 164 h30"/></g>
+</svg>

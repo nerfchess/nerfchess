@@ -9,7 +9,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import { getNerf } from "@/engine/nerfs/library";
+import type { Nerf } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
 interface SiteStats {
@@ -31,6 +31,10 @@ export default function ModStatsPage() {
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [failed, setFailed] = useState(false);
+  // getNerf is pulled from the card engine lazily so the ~26k-line library
+  // stays out of the initial /mod/stats bundle. Null until it loads (only
+  // fetched once the mod check passes).
+  const [getNerf, setGetNerf] = useState<((id: string) => Nerf | undefined) | null>(null);
 
   useEffect(() => {
     fetchMe().then(setMe);
@@ -49,6 +53,19 @@ export default function ModStatsPage() {
       .catch(() => {
         if (!cancelled) setFailed(true);
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMod]);
+
+  // Pull the nerf library in its own async chunk once the mod check passes, to
+  // resolve rule names/tiers in the "most dealt rules" table below.
+  useEffect(() => {
+    if (!isMod) return;
+    let cancelled = false;
+    import("@/engine/nerfs/library").then((m) => {
+      if (!cancelled) setGetNerf(() => m.getNerf);
+    });
     return () => {
       cancelled = true;
     };
@@ -113,7 +130,9 @@ export default function ModStatsPage() {
                   <div className="rule-ornament mb-4">
                     <span className="font-display">Most dealt rules</span>
                   </div>
-                  {stats.topNerfs.length === 0 ? (
+                  {!getNerf ? (
+                    <p className="text-sm text-parchment-400">Loading the library…</p>
+                  ) : stats.topNerfs.length === 0 ? (
                     <p className="text-sm text-parchment-400">No games recorded yet.</p>
                   ) : (
                     <div className="plate overflow-hidden">

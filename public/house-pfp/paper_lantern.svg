@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Glowing red paper lantern at night">
+  <defs>
+    <linearGradient id="pl-night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241a3a"/><stop offset="1" stop-color="#0e1230"/></linearGradient>
+    <radialGradient id="pl-halo" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd08a" stop-opacity="0.8"/><stop offset="1" stop-color="#ffd08a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="pl-body" cx="0.4" cy="0.4" r="0.7"><stop offset="0" stop-color="#ff9b6b"/><stop offset="0.5" stop-color="#e8422f"/><stop offset="1" stop-color="#a51e26"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#pl-night)"/>
+  <circle cx="70" cy="30" r="1.6" fill="#fdf0c8"/>
+  <circle cx="150" cy="22" r="1.3" fill="#fdf0c8"/>
+  <circle cx="172" cy="70" r="1.4" fill="#fdf0c8"/>
+  <circle cx="28" cy="64" r="1.2" fill="#fdf0c8"/>
+  <circle cx="36" cy="150" r="1.3" fill="#fdf0c8"/>
+  <circle cx="168" cy="160" r="1.4" fill="#fdf0c8"/>
+  <circle cx="100" cy="108" r="78" fill="url(#pl-halo)"/>
+  <rect x="96" y="14" width="8" height="18" fill="#3a2a18"/>
+  <rect x="78" y="30" width="44" height="8" rx="3" fill="#caa25a"/>
+  <ellipse cx="100" cy="108" rx="48" ry="62" fill="url(#pl-body)"/>
+  <rect x="78" y="178" width="44" height="8" rx="3" fill="#caa25a"/>
+  <g stroke="#8f1a20" stroke-width="2" opacity="0.6" fill="none"><path d="M60 78 Q100 68 140 78 M54 108 Q100 96 146 108 M60 138 Q100 150 140 138"/></g>
+  <g stroke="#f7b98a" stroke-width="1.4" opacity="0.7" fill="none"><path d="M76 50 Q84 108 76 166 M100 44 Q100 108 100 172 M124 50 Q116 108 124 166"/></g>
+  <g stroke="#e0b24a" stroke-width="2"><path d="M100 186 v14"/></g>
+  <path d="M96 200 l4 -8 l4 8 Z" fill="#d94f34"/>
+</svg>
