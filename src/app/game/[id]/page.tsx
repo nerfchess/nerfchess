@@ -1302,6 +1302,47 @@ function describeResult(result: { winner: Color | "draw" | null; reason: string 
   return `${head} · ${result.reason}`;
 }
 
+// The HOUSE BOT badge, per the design system: a parchment outline chip,
+// allcaps (a sanctioned exception). Rendered in the shell header identity unit
+// whenever a seat carries the server-stamped house flag.
+function HouseBotChip() {
+  return (
+    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-[12px] font-medium uppercase tracking-[0.08em] text-parchment-300">
+      House bot
+    </span>
+  );
+}
+
+// Compact identity unit for the shell header: linked name + rating + HOUSE BOT
+// chip. The full avatar rows beside the board stay the primary identity; this
+// mirrors the TV featured header so both surfaces read the same.
+function HeaderIdentity({
+  seat,
+}: {
+  seat: { name: string; rating: number | null; provisional?: boolean; house?: boolean };
+}) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <a
+        href={`/u/${encodeURIComponent(seat.name)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="truncate font-display text-[13px] font-semibold text-parchment-100 transition-colors hover:text-gold-leaf"
+        title={`View ${seat.name}'s profile`}
+      >
+        {seat.name}
+        {seat.provisional && <span className="text-parchment-400">?</span>}
+      </a>
+      {seat.rating != null && (
+        <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
+          {seat.rating}
+        </span>
+      )}
+      {seat.house && <HouseBotChip />}
+    </span>
+  );
+}
+
 function NerfLine({ label, nerfId }: { label: string; nerfId: string }) {
   const nerf: Nerf | undefined = IMPLEMENTED_BY_ID[nerfId];
   if (!nerf) return null;
@@ -1389,9 +1430,15 @@ function GameShell({
     <main className="min-h-screen">
       <SiteNav />
       <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
-        {/* Featured-game header pattern, shared with TV: state badge, mode chip,
-            time control, watcher count, then the descriptive status detail. */}
+        {/* Featured-game header pattern, shared with TV: identity units, state
+            badge, mode chip, time control, watcher count, then the descriptive
+            status detail. */}
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <HeaderIdentity seat={players.w} />
+            <span className="text-parchment-500">vs</span>
+            <HeaderIdentity seat={players.b} />
+          </span>
           {stateBadge}
           <ModeBadge mode={mode} />
           {timeControl && <span className="tabular-nums">{timeControl}</span>}
