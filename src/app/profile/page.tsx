@@ -33,9 +33,11 @@ export default function ProfilePage() {
     // landing on a signed-out strip.
     ensureAccount().then((me) => {
       if (cancelled) return;
-      if (me && !me.isGuest) {
-        // Registered players: /u/<name> is the profile. replace (not push) so
-        // Back does not bounce them straight back here.
+      if (me) {
+        // Any resolved account, guest or registered: /u/<name> is THE profile
+        // (guests are full user rows and their /u page renders completely).
+        // replace (not push) so Back does not bounce straight back here. The
+        // in-place shell below is only the no-account (offline) fallback.
         router.replace(`/u/${encodeURIComponent(me.username)}`);
         return;
       }

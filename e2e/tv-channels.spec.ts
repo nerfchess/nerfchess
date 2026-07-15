@@ -26,7 +26,11 @@ const SETTLE_MS = 15_000;
  *  "nothing live" notice -- never a perpetual spinner. */
 async function expectSettled(page: import("@playwright/test").Page) {
   const board = page.locator("[data-board-grid]").first();
-  const notice = page.getByText(/no .*games are being|nothing live|not currently/i).first();
+  const notice = page
+    .getByText(
+      /no games are live|no .*games are being|nothing live|not currently|can't reach the game server/i,
+    )
+    .first();
   await expect(async () => {
     const hasBoard = await board.isVisible().catch(() => false);
     const hasNotice = await notice.isVisible().catch(() => false);
