@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
 //
 // Buff is the universal NerfChess default: /lobby and /play open with Buff
 // preselected and the matchmaking button naming the exact game it will find
-// ("Find a 3+2 Buff Game"). An explicit ?mode= query param overrides both the
+// ("Find a 3+2 Buff game"). An explicit ?mode= query param overrides both the
 // default and the remembered last choice, and every selector on /play drives
 // the ONE shared mode. All client-side: no worker backend needed.
 // ---------------------------------------------------------------------------
@@ -15,7 +15,7 @@ const findButton = (page: import("@playwright/test").Page) =>
 
 test("lobby defaults to a 3+2 Buff game", async ({ page }) => {
   await page.goto("/lobby");
-  await expect(findButton(page)).toHaveText("Find a 3+2 Buff Game", { timeout: 30_000 });
+  await expect(findButton(page)).toHaveText("Find a 3+2 Buff game", { timeout: 30_000 });
   // The Buff mode card is selected (and marked recommended); Nerf is not.
   const buffCard = page.getByRole("button", { name: /buff.*recommended.*start with normal chess/is });
   await expect(buffCard).toHaveAttribute("aria-pressed", "true");
@@ -36,7 +36,7 @@ test("?mode=nerf overrides the default and stored preference", async ({ page }) 
     } catch {}
   });
   await page.goto("/lobby?mode=nerf");
-  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf Game", { timeout: 30_000 });
+  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf game", { timeout: 30_000 });
 });
 
 test("?mode=buff selects Buff explicitly", async ({ page }) => {
@@ -46,17 +46,17 @@ test("?mode=buff selects Buff explicitly", async ({ page }) => {
     } catch {}
   });
   await page.goto("/lobby?mode=buff");
-  await expect(findButton(page)).toHaveText("Find a 3+2 Buff Game", { timeout: 30_000 });
+  await expect(findButton(page)).toHaveText("Find a 3+2 Buff game", { timeout: 30_000 });
 });
 
 test("switching mode updates the matchmaking button and is remembered", async ({ page }) => {
   await page.goto("/lobby");
-  await expect(findButton(page)).toHaveText("Find a 3+2 Buff Game", { timeout: 30_000 });
+  await expect(findButton(page)).toHaveText("Find a 3+2 Buff game", { timeout: 30_000 });
   await page.getByRole("button", { name: /start with a secret handicap/i }).click();
-  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf Game");
+  await expect(findButton(page)).toHaveText("Find a 3+2 Nerf game");
   // Switching the time control keeps the mode and renames the button.
   await page.getByRole("button", { name: /^5\+0 blitz$/i }).click();
-  await expect(findButton(page)).toHaveText("Find a 5+0 Nerf Game");
+  await expect(findButton(page)).toHaveText("Find a 5+0 Nerf game");
   const saved = await page.evaluate(() => window.localStorage.getItem("dc:last-mode"));
   expect(saved).toBe("nerf");
 });

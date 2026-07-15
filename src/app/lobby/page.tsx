@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Cpu, Eye, Swords, Users } from "lucide-react";
-import { QueueButton } from "@/components/QueueButton";
+import { QuickMatch } from "./QuickMatch";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
@@ -33,6 +33,10 @@ type LobbyTab = (typeof LOBBY_TABS)[number]["id"];
 // The Online-now sidebar starts folded to this many rows so it never
 // competes with matchmaking; "View all N players" unfolds the full list.
 const ONLINE_LIST_FOLD = 8;
+
+// The right-rail "Games to watch" panel shows a handful of live boards; the
+// full directory lives in the Watch tab.
+const WATCH_RAIL_FOLD = 4;
 
 // The lobby is wrapped in FriendGameProvider so the Friends tab can host the
 // full "Play a Friend" flow (create + share code, wait for a friend, join by
@@ -241,6 +245,10 @@ function LobbyInner() {
   };
 
   return (
+    // Room for the Quick Match mobile sticky bar comes from QuickMatch itself:
+    // it mirrors the bar's measured height into the body's bottom padding
+    // while the bar is shown, so content is never covered and no static guess
+    // is needed here.
     <main className="min-h-screen pb-16">
       <StarField />
       <SiteHeader active="/lobby" />
@@ -253,19 +261,16 @@ function LobbyInner() {
           <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <h1 className="masthead text-4xl sm:text-6xl text-parchment-50">The Lobby</h1>
             {/* Hidden on phones: the first thing a phone visitor should see is
-                the matchmaking button, not the traffic counters. */}
+                the matchmaking button, not the traffic counters. One coherent
+                status pill (connection + player count), then two quiet stats. */}
             <div className="hidden sm:flex flex-wrap items-center gap-2 pb-1">
-              <HallStat dotClass="bg-verdigris animate-flicker">
-                {onlineCount === null
-                  ? "Connecting…"
-                  : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
-              </HallStat>
-              <HallStat dotClass="bg-sun/80">
-                {lobby ? `${waitingCount} waiting` : "…"}
-              </HallStat>
-              <HallStat dotClass="bg-coral/80">
-                {lobby ? `${lobby.games.length} in play` : "…"}
-              </HallStat>
+              <StatusPill lobby={!!lobby} error={!!lobbyError} onlineCount={onlineCount} />
+              {lobby && (
+                <>
+                  <HallStat dotClass="bg-sun/80">{`${waitingCount} waiting`}</HallStat>
+                  <HallStat dotClass="bg-coral/80">{`${lobby.games.length} in play`}</HallStat>
+                </>
+              )}
             </div>
           </div>
           <div className="hall-hairline mt-4" aria-hidden />
@@ -287,7 +292,7 @@ function LobbyInner() {
         <div
           role="tablist"
           aria-label="Lobby sections"
-          className="mt-6 flex items-stretch gap-5 sm:gap-7 overflow-x-auto border-b border-white/10"
+          className="mt-6 flex items-stretch gap-5 sm:gap-7 overflow-x-auto border-b border-[color:var(--edge)]"
         >
           {LOBBY_TABS.map((t) => {
             const count =
@@ -316,10 +321,10 @@ function LobbyInner() {
                 {count != null && count > 0 && (
                   <span
                     className={
-                      "border px-1.5 py-px font-mono text-[10px] tabular-nums transition-colors " +
+                      "border px-1.5 py-px font-mono text-xs tabular-nums transition-colors " +
                       (selected
                         ? "border-gold/40 bg-gold/15 text-gold-leaf"
-                        : "border-white/10 bg-white/[0.06] text-parchment-300")
+                        : "border-[color:var(--edge)] bg-white/[0.06] text-parchment-300")
                     }
                   >
                     {count}
@@ -360,11 +365,11 @@ function LobbyInner() {
                   <button
                     type="button"
                     onClick={() => setTab("friends")}
-                    className="inline-flex min-h-[44px] items-center sm:min-h-0 smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
+                    className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
                   >
                     Create a friend game
                   </button>
-                  <span className="smallcaps text-[10px] text-parchment-400">
+                  <span className="text-xs text-parchment-400">
                     {lobby ? `${waitingCount} waiting` : "…"}
                   </span>
                 </div>
@@ -412,11 +417,11 @@ function LobbyInner() {
                 <div className="flex items-center gap-3">
                   <Link
                     href="/tv"
-                    className="inline-flex min-h-[44px] items-center sm:min-h-0 smallcaps text-[10px] text-gold-leaf hover:text-gold transition-colors"
+                    className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
                   >
                     Open Nerf Chess TV
                   </Link>
-                  <span className="smallcaps text-[10px] text-parchment-400">
+                  <span className="text-xs text-parchment-400">
                     {lobby ? `${lobby.games.length} in play` : "…"}
                   </span>
                 </div>
@@ -462,44 +467,48 @@ function LobbyInner() {
               hidden={tab !== "quick"}
               className="space-y-5"
             >
-              {/* The main action: get matched with a real opponent. */}
-              <QueueButton />
-              {/* The other ways to start a game, one tap from the queue: an open
-                  custom challenge, a private game with a friend, or a bot to
-                  practice against. Kept quiet beneath the dominant Find match
-                  button so matchmaking stays the headline. */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setTab("challenges")}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
-                >
-                  <Swords size={14} aria-hidden />
-                  Create custom game
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTab("friends")}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
-                >
-                  <Users size={14} aria-hidden />
-                  Challenge a friend
-                </button>
-                <Link
-                  href="/play"
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
-                >
-                  <Cpu size={14} aria-hidden />
-                  Practice against computer
-                </Link>
+              {/* The main action: get matched with a real opponent. `active`
+                  gates the portalled mobile sticky bar to the Quick Play tab. */}
+              <QuickMatch active={tab === "quick"} />
+              {/* The other ways to start a game, as a proper 3-card row beneath
+                  the dominant Quick Match panel so matchmaking stays the
+                  headline while these stay one tap away. Each links to its
+                  existing flow (Challenges tab, Friends tab, bot practice). */}
+              <div>
+                <div className="eyebrow text-parchment-400">Other ways to play</div>
+                <div className="mt-2 grid gap-2.5 sm:grid-cols-3">
+                  <SecondaryModeCard
+                    icon={<Swords size={18} aria-hidden />}
+                    title="Custom game"
+                    description="Set your own clock and mode, then share an open challenge."
+                    onClick={() => setTab("challenges")}
+                  />
+                  <SecondaryModeCard
+                    icon={<Users size={18} aria-hidden />}
+                    title="Challenge a friend"
+                    description="Create a private game and send the code to someone you know."
+                    onClick={() => setTab("friends")}
+                  />
+                  <SecondaryModeCard
+                    icon={<Cpu size={18} aria-hidden />}
+                    title="Practice vs computer"
+                    description="Warm up against a house bot at your chosen difficulty."
+                    href="/play"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Who's here right now — rides along on desktop scroll. */}
-          <aside className="plate p-5 h-fit lg:sticky lg:top-6">
+          {/* Who's here right now, plus boards to watch: a stack of rail panels
+              that ride along on desktop scroll. */}
+          <aside className="h-fit space-y-5 lg:sticky lg:top-6">
+            <div className="plate p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="sec-title font-display text-xl text-parchment">Online now</div>
+              {lobby && onlineCount != null && (
+                <span className="font-mono text-xs tabular-nums text-parchment-400">{onlineCount}</span>
+              )}
             </div>
             {!lobby ? (
               <>
@@ -545,7 +554,7 @@ function LobbyInner() {
                   <button
                     type="button"
                     onClick={() => setShowAllPlayers((v) => !v)}
-                    className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-white/10 bg-white/[0.03] px-3 py-2 smallcaps text-[10px] text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                    className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
                   >
                     {showAllPlayers
                       ? "Show fewer"
@@ -558,8 +567,8 @@ function LobbyInner() {
                   </p>
                 )}
                 {(user === null || user?.isGuest) && (
-                  <p className="mt-4 border-t border-white/10 pt-3 text-xs text-parchment-400">
-                    <Link href="/login?next=/lobby" className="text-gold-leaf hover:underline">
+                  <p className="mt-4 border-t border-[color:var(--edge)] pt-3 text-[13px] text-parchment-300">
+                    <Link href="/login?next=/lobby" className="font-semibold text-gold-leaf hover:underline">
                       Sign in
                     </Link>{" "}
                     to keep your rating.
@@ -567,6 +576,48 @@ function LobbyInner() {
                 )}
               </>
             )}
+            </div>
+
+            {/* Games to watch: live boards from the same lobby snapshot, linked
+                into the spectator route. The data source (lobby.games) always
+                exists in the payload, so this panel renders with a designed
+                empty state rather than disappearing. */}
+            <div className="plate p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
+                {lobby && (
+                  <span className="font-mono text-xs tabular-nums text-parchment-400">{lobby.games.length}</span>
+                )}
+              </div>
+              {!lobby ? (
+                <ul className="mt-3 space-y-2" aria-hidden>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <li key={i} className="skeleton h-12" />
+                  ))}
+                </ul>
+              ) : lobby.games.length === 0 ? (
+                <p className="mt-3 text-sm text-parchment-400">
+                  No live games right now. Answer a challenge and the boards light up here.
+                </p>
+              ) : (
+                <>
+                  <ul className="mt-3 space-y-2">
+                    {lobby.games.slice(0, WATCH_RAIL_FOLD).map((game) => (
+                      <RailWatchRow key={game.id} game={game} />
+                    ))}
+                  </ul>
+                  {lobby.games.length > WATCH_RAIL_FOLD && (
+                    <button
+                      type="button"
+                      onClick={() => setTab("watch")}
+                      className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                    >
+                      {`See all ${lobby.games.length} live games`}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </aside>
         </div>
       </section>
@@ -574,13 +625,92 @@ function LobbyInner() {
   );
 }
 
-// One live-pulse chip in the header: a status dot beside a smallcaps count.
+// One live-pulse chip in the header: a status dot beside a readable count.
 function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
   return (
-    <span className="flex items-center gap-2 border border-white/10 bg-white/[0.04] px-3 py-1.5 smallcaps text-[10px] text-parchment-300">
+    <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
       <span aria-hidden className={`h-1.5 w-1.5 shrink-0 ${dotClass}`} />
       {children}
     </span>
+  );
+}
+
+// The single, coherent connection pill: Connecting while the first snapshot is
+// in flight, Reconnecting when polls are failing, otherwise Live with the
+// player count. Replaces the old row of fragmentary "…" chips.
+function StatusPill({
+  lobby,
+  error,
+  onlineCount,
+}: {
+  lobby: boolean;
+  error: boolean;
+  onlineCount: number | null;
+}) {
+  let dot: string;
+  let label: string;
+  if (error) {
+    dot = "bg-oxblood-glow motion-safe:animate-pulse";
+    label = "Reconnecting…";
+  } else if (!lobby || onlineCount === null) {
+    dot = "bg-parchment-400 motion-safe:animate-pulse";
+    label = "Connecting…";
+  } else {
+    dot = "bg-verdigris animate-flicker";
+    label = `Live · ${onlineCount} player${onlineCount === 1 ? "" : "s"}`;
+  }
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs font-medium tabular-nums text-parchment-200"
+    >
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      {label}
+    </span>
+  );
+}
+
+// One secondary play-mode card: a full-height, fully clickable tile (min 44px)
+// with an icon, a title, and a one-line description. Renders as a link when it
+// points at a route, or a button when it switches lobby tabs.
+function SecondaryModeCard({
+  icon,
+  title,
+  description,
+  href,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
+      <span
+        aria-hidden
+        className="grid h-9 w-9 shrink-0 place-items-center border border-[color:var(--edge)] bg-white/[0.04] text-parchment-200 transition-colors group-hover:border-gold/40 group-hover:text-gold-leaf"
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block font-display text-[15px] font-semibold text-parchment-100">{title}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-parchment-400">{description}</span>
+      </span>
+    </>
+  );
+  const className =
+    "plate plate-hover press group flex min-h-[44px] items-start gap-3 p-3.5 text-left transition-colors";
+  return href ? (
+    <Link href={href} className={className}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} className={className}>
+      {inner}
+    </button>
   );
 }
 
@@ -640,10 +770,10 @@ function ModeFilter({
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={
-            "min-h-[44px] sm:min-h-0 border px-3 py-1 smallcaps text-[10px] transition-colors " +
+            "min-h-[44px] sm:min-h-0 border px-3 py-1 text-xs transition-colors " +
             (value === o.id
               ? o.selectedClass
-              : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")
+              : "border-[color:var(--edge)] text-parchment-400 hover:border-white/25 hover:text-parchment-200")
           }
         >
           {o.label}
@@ -666,7 +796,7 @@ function rowModeClass(mode: MPLobbySeek["mode"], fallback = ""): string {
 function RatingChip({ rating }: { rating?: number | null }) {
   if (rating == null) return null;
   return (
-    <span className="shrink-0 border border-[rgb(216_181_110_/_0.35)] bg-[rgb(216_181_110_/_0.08)] px-1.5 py-px font-mono text-[10px] tabular-nums text-parchment-200">
+    <span className="shrink-0 border border-[rgb(216_181_110_/_0.35)] bg-[rgb(216_181_110_/_0.08)] px-1.5 py-px font-mono text-xs tabular-nums text-parchment-200">
       {rating}
     </span>
   );
@@ -688,7 +818,7 @@ function TimeControlGlyph({
   return (
     <span className="inline-flex items-center gap-1 text-parchment-300">
       <Icon size={12} style={{ color: category.accent }} aria-hidden className="shrink-0" />
-      <span className="font-mono text-[10px] tracking-normal">{clock}</span>
+      <span className="font-mono text-xs tracking-normal">{clock}</span>
       <span>· {category.label}</span>
     </span>
   );
@@ -734,7 +864,7 @@ function SkeletonPlayerRows({ count }: { count: number }) {
 // Empty state: a quiet flat brass checkerboard with star motes drifting off it.
 function HallEmpty({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="mt-4 flex items-center gap-4 border border-dashed border-white/10 bg-white/[0.015] p-4">
+    <div className="mt-4 flex items-center gap-4 border border-dashed border-[color:var(--edge)] bg-white/[0.015] p-4">
       <div className="hall-empty-board" aria-hidden>
         <span className="hall-mote" style={{ left: "28%", bottom: "18%" }} />
         <span
@@ -766,8 +896,20 @@ function StatusBadge({ status }: { status: "online" | "searching" | "playing" })
     playing: "In game",
   };
   return (
-    <span className={`shrink-0 border px-2 py-0.5 smallcaps text-[10px] ${styles[status]}`}>
+    <span className={`shrink-0 border px-2 py-0.5 text-xs font-medium ${styles[status]}`}>
       {labels[status]}
+    </span>
+  );
+}
+
+// The HOUSE BOT badge, per the design system: a parchment outline chip,
+// allcaps (a sanctioned exception). House bots are labelled every place their
+// name renders; the lobby snapshot only flags them on quick-pairing seeks
+// (seek.house), so that is the only lobby surface with a reliable flag.
+function HouseBotBadge() {
+  return (
+    <span className="shrink-0 border border-parchment-400/50 px-1.5 py-px text-xs font-medium uppercase tracking-[0.08em] text-parchment-300">
+      House bot
     </span>
   );
 }
@@ -824,15 +966,16 @@ function SeekRow({
         <div className="flex min-w-0 items-center gap-2 text-sm text-parchment-100">
           <PlayerNameLink name={seek.name} />
           <RatingChip rating={seek.rating} />
+          {seek.house && <HouseBotBadge />}
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-parchment-400">
           <ModeBadge mode={seek.mode} compact />
           <TimeControlGlyph timeSec={seek.timeSec} incrementSec={seek.incrementSec} clock={clock} />
           <span>{seek.mode ? "Rated" : "Draft"}</span>
         </div>
       </div>
       {isMine ? (
-        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 smallcaps text-[10px] text-gold-leaf">
+        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-medium text-gold-leaf">
           Your seek
         </span>
       ) : (
@@ -862,7 +1005,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           <PlayerNameLink name={challenge.host.name} />
           <RatingChip rating={challenge.host.rating} />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-parchment-400">
           <ModeBadge mode={challenge.mode} compact />
           {!challenge.mode && challenge.draft && <span className="text-gold-leaf">Draft</span>}
           {challenge.timeSec > 0 ? (
@@ -875,7 +1018,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
             <span>{clock}</span>
           )}
           <span>{challenge.rated ? "Rated" : "Casual"}</span>
-          <span className="font-mono text-[10px] tracking-normal text-parchment-400">
+          <span className="font-mono text-xs tracking-normal text-parchment-400">
             code {challenge.id}
           </span>
         </div>
@@ -903,7 +1046,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           <span className="shrink-0 text-parchment-400">vs</span>
           <PlayerNameLink name={game.players.b.name} rating={game.players.b.rating} className="max-w-[45%]" />
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 smallcaps text-[10px] text-parchment-400">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-parchment-400">
           <ModeBadge mode={game.mode} compact />
           {!game.mode && game.draft && <span className="text-gold-leaf">Draft</span>}
           {game.timeSec > 0 ? (
@@ -926,6 +1069,38 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           <circle cx="12" cy="12" r="3" />
         </svg>
         Watch
+      </Link>
+    </li>
+  );
+}
+
+// A compact live game for the right-rail "Games to watch" panel: the whole row
+// is one link into the spectator route, showing both players, mode + clock, and
+// the live-watcher count. Denser than the full LiveGameRow in the Watch tab.
+function RailWatchRow({ game }: { game: MPLobbyGame }) {
+  const clock =
+    game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
+  return (
+    <li>
+      <Link
+        href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
+        aria-label={`Watch ${game.players.w.name} versus ${game.players.b.name}`}
+        className={`hall-row ${rowModeClass(game.mode, "hall-row--live")} flex flex-col gap-1 p-2.5`}
+      >
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-parchment-100">
+          <span className="min-w-0 truncate">{game.players.w.name}</span>
+          <span className="shrink-0 text-parchment-400">vs</span>
+          <span className="min-w-0 truncate">{game.players.b.name}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-parchment-400">
+          <ModeBadge mode={game.mode} compact />
+          <span className="font-mono tabular-nums">{clock}</span>
+          {game.watchers > 0 && (
+            <span className="tabular-nums">
+              {game.watchers} watching
+            </span>
+          )}
+        </div>
       </Link>
     </li>
   );

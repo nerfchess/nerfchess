@@ -29,27 +29,44 @@ export default function Loading() {
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-5">
-            {/* Quick Play: mode cards, time-control grid, one big button. */}
+            {/* Quick Match: mode cards, balanced 3x3 time-control grid, one
+                primary button. */}
             <div className="plate p-5">
               <div className="skeleton h-6 w-36" />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="skeleton h-24" />
-                <div className="skeleton h-24" />
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <div className="skeleton h-28" />
+                <div className="skeleton h-28" />
               </div>
-              <div className="mt-4 grid grid-cols-5 gap-1.5">
+              <div className="mt-4 grid grid-cols-3 gap-1.5">
                 {Array.from({ length: 9 }).map((_, i) => (
-                  <div key={i} className="skeleton h-14" />
+                  <div key={i} className="skeleton h-16" />
                 ))}
               </div>
               <div className="skeleton mt-4 h-14 w-full" />
             </div>
-          </div>
-          <div className="plate h-fit p-5">
-            <div className="skeleton h-5 w-28" />
-            <div className="mt-4 space-y-2.5">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="skeleton h-8" />
+            {/* Secondary play-mode cards. */}
+            <div className="grid gap-2.5 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="skeleton h-20" />
               ))}
+            </div>
+          </div>
+          <div className="h-fit space-y-5">
+            <div className="plate p-5">
+              <div className="skeleton h-5 w-28" />
+              <div className="mt-4 space-y-2.5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="skeleton h-8" />
+                ))}
+              </div>
+            </div>
+            <div className="plate p-5">
+              <div className="skeleton h-5 w-32" />
+              <div className="mt-4 space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="skeleton h-12" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
