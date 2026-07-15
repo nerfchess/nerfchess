@@ -3,6 +3,7 @@
 import { History } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -24,10 +25,17 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "draw", label: "Draws" },
 ];
 
-const OUTCOME_STYLE: Record<GameOutcome, { badge: string; text: string; label: string }> = {
-  win: { badge: "border-gold/50 bg-gold/15 text-gold-leaf", text: "text-gold-leaf", label: "Win" },
-  loss: { badge: "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow", text: "text-oxblood-glow", label: "Loss" },
-  draw: { badge: "border-bruise-glow/40 bg-bruise/10 text-bruise-glow", text: "text-bruise-glow", label: "Draw" },
+const OUTCOME_STYLE: Record<GameOutcome, { badge: string; text: string; edge: string; label: string }> = {
+  win: { badge: "border-verdigris-glow/50 bg-verdigris/15 text-verdigris-glow", text: "text-verdigris-glow", edge: "border-l-verdigris-glow", label: "Win" },
+  loss: { badge: "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow", text: "text-oxblood-glow", edge: "border-l-oxblood-glow", label: "Loss" },
+  draw: { badge: "border-bruise-glow/40 bg-bruise/10 text-bruise-glow", text: "text-bruise-glow", edge: "border-l-parchment-500", label: "Draw" },
+};
+
+// The game's venue, shown as a small mode chip on each row.
+const VENUE_LABEL: Record<CompletedGame["mode"], string> = {
+  ai: "Bot",
+  friend: "Friend",
+  online: "Online",
 };
 
 function formatWhen(endedAt: number): string {
@@ -76,14 +84,14 @@ export default function HistoryPage() {
               type="button"
               onClick={() => setFilter(f.id)}
               className={
-                "min-h-[44px] sm:min-h-0 px-4 py-2 border font-display text-sm transition " +
+                "press min-h-[44px] sm:min-h-0 px-4 py-2 border font-display text-[13px] transition " +
                 (filter === f.id
                   ? "bg-gold/20 border-gold text-gold-leaf"
                   : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")
               }
             >
               {f.label}
-              <span className="ml-2 font-mono text-[11px] opacity-70 tabular-nums">
+              <span className="ml-2 font-mono text-[12px] opacity-70 tabular-nums">
                 {counts[f.id]}
               </span>
             </button>
@@ -136,7 +144,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
       ? `/game/${game.serverGameId}`
       : null;
   return (
-    <div className="plate w-full flex items-stretch transition-colors duration-150 hover:bg-white/[0.04]">
+    <div className={`plate w-full flex items-stretch border-l-2 transition-colors duration-150 hover:bg-white/[0.04] ${style.edge}`}>
       <button
         type="button"
         onClick={onSelect}
@@ -148,16 +156,22 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
       >
         {style.label[0]}
       </span>
+      {/* Opponent identity unit: avatar + name, with a bot glyph for house
+          bots so the practice opponents read as bots at a glance. */}
+      <PlayerAvatar name={game.opponent} size={28} className="hidden shrink-0 sm:block" />
       <span className="min-w-0 flex-1">
-        <span className="flex items-baseline gap-2">
+        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="truncate font-display text-base text-parchment-50">
             {game.opponent}
           </span>
-          <span className="smallcaps text-[9px] text-parchment-400">
+          <span className="border border-white/15 px-1.5 py-0.5 smallcaps text-[11px] text-parchment-400">
+            {VENUE_LABEL[game.mode]}
+          </span>
+          <span className="smallcaps text-[11px] text-parchment-400">
             {game.rated ? "rated" : "casual"}
           </span>
         </span>
-        <span className="mt-0.5 block text-xs text-parchment-300">
+        <span className="mt-0.5 block text-[12px] text-parchment-300">
           {formatWhen(game.endedAt)} · {game.moveCount} moves
         </span>
       </span>
@@ -165,7 +179,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <span className="block font-mono text-sm text-parchment-100 tabular-nums">
           {timeControlLabel(game.baseSec, game.incSec)}
         </span>
-        <span className="smallcaps block text-[9px] text-parchment-400">
+        <span className="smallcaps block text-[11px] text-parchment-400">
           {speedLabel(game.baseSec)}
         </span>
       </span>
@@ -173,7 +187,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <span
           className={
             "shrink-0 w-12 text-right font-mono text-sm tabular-nums " +
-            (delta >= 0 ? "text-gold-leaf" : "text-oxblood-glow")
+            (delta >= 0 ? "text-verdigris-glow" : "text-oxblood-glow")
           }
         >
           {delta >= 0 ? "+" : ""}
@@ -185,7 +199,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <Link
           href={replayHref}
           title="Step through this game move by move"
-          className="smallcaps shrink-0 grid place-items-center border-l border-white/10 px-3 text-[9px] text-parchment-400 hover:text-gold-leaf transition-colors"
+          className="smallcaps shrink-0 grid place-items-center border-l border-white/10 px-3 text-[11px] text-parchment-400 hover:text-gold-leaf transition-colors"
         >
           Replay
         </Link>
@@ -210,7 +224,7 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
       role="dialog"
       aria-modal="true"
       aria-label="Game summary"
-      className="fixed inset-0 z-50 grid place-items-center bg-[#0a111e]/65 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-[#0a111e]/80 px-4 py-6"
       onMouseDown={onClose}
     >
       <div
@@ -219,7 +233,7 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="smallcaps text-[10px] text-parchment-400">Game summary</p>
+            <p className="smallcaps text-[11px] text-parchment-400">Game summary</p>
             <h2 className={`mt-1 font-display text-3xl font-bold ${style.text}`}>
               {style.label}
             </h2>
@@ -271,7 +285,7 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
           </Link>
         )}
 
-        <p className="mt-5 font-mono text-[10px] text-parchment-400/60 break-all">
+        <p className="mt-5 font-mono text-[11px] text-parchment-500 break-all">
           id {game.id}
         </p>
       </div>
@@ -282,7 +296,7 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="smallcaps shrink-0 text-[10px] text-parchment-400">{label}</dt>
+      <dt className="smallcaps shrink-0 text-[11px] text-parchment-400">{label}</dt>
       <dd className="text-right text-parchment-100">{value}</dd>
     </div>
   );
@@ -298,8 +312,8 @@ function RuleLine({
   return (
     <div className={`border p-3 tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="smallcaps text-[9px] text-parchment-400">{label}</span>
-        <span className={`smallcaps text-[9px] tier-${nerf.tier}`}>
+        <span className="smallcaps text-[11px] text-parchment-400">{label}</span>
+        <span className={`smallcaps text-[11px] tier-${nerf.tier}`}>
           {TIER_LABEL[nerf.tier] ?? ""}
         </span>
       </div>

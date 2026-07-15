@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { PlayerLink } from "@/components/PlayerLink";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 
 type ThreadMessage = { id: string; fromMe: boolean; text: string; at: number };
@@ -16,6 +16,8 @@ export default function ThreadPage() {
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [thread, setThread] = useState<Thread | null>(null);
   const [missing, setMissing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export default function ThreadPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    let loaded = false;
     let intervalId: number | undefined;
     const stop = () => {
       if (intervalId !== undefined) {
@@ -55,7 +58,14 @@ export default function ThreadPage() {
           stop();
           return;
         }
-        if (!res.ok) return;
+        if (!res.ok) {
+          // Only surface an error before the first successful load; a failed
+          // poll on an open thread should stay quiet and retry on the next tick.
+          if (!loaded) setLoadError(true);
+          return;
+        }
+        loaded = true;
+        setLoadError(false);
         const data = (await res.json()) as Thread;
         setThread((prev) => {
           if (!prev) return data;
@@ -72,7 +82,9 @@ export default function ThreadPage() {
           const merged = [...data.messages, ...localExtra].sort((a, b) => a.at - b.at);
           return { ...data, messages: merged };
         });
-      } catch {}
+      } catch {
+        if (!loaded) setLoadError(true);
+      }
     };
     load();
     intervalId = window.setInterval(load, 5000);
@@ -80,7 +92,7 @@ export default function ThreadPage() {
       cancelled = true;
       stop();
     };
-  }, [user, username]);
+  }, [user, username, reloadKey]);
 
   useEffect(() => {
     if (stickToBottom.current) bottomRef.current?.scrollIntoView({ block: "end" });
@@ -126,12 +138,14 @@ export default function ThreadPage() {
           </Link>
           <span className="text-parchment-500">/</span>
           {thread && (
-            <Link href={`/u/${encodeURIComponent(thread.peer.username)}`} className="flex min-w-0 items-center gap-2 hover:text-gold-leaf">
-              <PlayerAvatar name={thread.peer.username} avatar={thread.peer.avatar} size={26} />
-              <span className="min-w-0 truncate font-display text-lg text-parchment-50">{thread.peer.username}</span>
-            </Link>
+            <PlayerLink
+              name={thread.peer.username}
+              avatar={thread.peer.avatar}
+              avatarSize={26}
+              className="min-h-[44px] font-display text-lg text-parchment-50 hover:text-gold-leaf"
+            />
           )}
-          {!thread && !missing && <span className="text-sm text-parchment-400">{username}</span>}
+          {!thread && !missing && <span className="text-[13px] text-parchment-400">{username}</span>}
         </div>
 
         {user === null && (
@@ -144,7 +158,32 @@ export default function ThreadPage() {
         )}
         {missing && <p className="text-parchment-300">No player with that name.</p>}
 
-        {user && !missing && (
+        {user && !missing && loadError && !thread && (
+          <div className="plate flex flex-col items-start gap-3 p-4">
+            <p className="text-[13px] text-parchment-300">
+              We could not load this conversation. Check your connection and try again.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setLoadError(false);
+                  setReloadKey((k) => k + 1);
+                }}
+                className="btn-leaf min-h-[44px] px-5 font-display text-[13px] font-semibold"
+              >
+                Retry
+              </button>
+              <Link
+                href="/inbox"
+                className="btn-ghost flex min-h-[44px] items-center px-5 font-display text-[13px]"
+              >
+                Back to inbox
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {user && !missing && !(loadError && !thread) && (
           <>
             <div
               className="plate h-[50dvh] overflow-y-auto p-4"
@@ -170,7 +209,7 @@ export default function ThreadPage() {
                         }
                       >
                         <div className="whitespace-pre-wrap break-words">{m.text}</div>
-                        <div className="mt-1 text-right font-mono text-[9px] text-parchment-400">
+                        <div className="mt-1 text-right font-mono text-[11px] text-parchment-400">
                           {new Date(m.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                         </div>
                       </div>
@@ -193,12 +232,13 @@ export default function ThreadPage() {
                 }}
                 placeholder={`Message ${thread?.peer.username ?? username}`}
                 maxLength={1000}
-                className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-4 py-3 text-sm text-parchment placeholder:text-parchment-400/50 focus:border-gold/60 focus:outline-none"
+                aria-label={`Message ${thread?.peer.username ?? username}`}
+                className="min-h-[44px] min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-4 py-3 text-[13px] text-parchment placeholder:text-parchment-400/50"
               />
               <button
                 onClick={send}
                 disabled={!draft.trim() || sending}
-                className="btn-leaf px-5 font-display text-sm font-semibold disabled:opacity-50"
+                className="btn-leaf min-h-[44px] px-5 font-display text-[13px] font-semibold disabled:opacity-50"
               >
                 {sending ? "Sending…" : "Send"}
               </button>

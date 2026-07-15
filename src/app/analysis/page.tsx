@@ -186,14 +186,14 @@ function AnalysisInner() {
     URL.revokeObjectURL(url);
   };
 
-  const navBtn = "btn-ghost grid h-9 w-9 place-items-center disabled:opacity-30";
+  const navBtn = "btn-ghost press grid h-9 w-9 place-items-center disabled:opacity-30";
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="mx-auto flex w-full max-w-[640px] gap-3">
           {/* Eval bar */}
-          <div className="relative hidden w-4 shrink-0 overflow-hidden border border-white/10 bg-[#1a1917] sm:block">
+          <div className="relative hidden w-6 shrink-0 overflow-hidden border border-white/10 bg-[#1a1917] sm:block">
             <div
               className="absolute inset-x-0 bottom-0 bg-parchment-100 transition-[height] duration-300"
               style={{ height: `${engineOn && analysis ? evalPercent(cpWhite) : 50}%` }}
@@ -201,7 +201,7 @@ function AnalysisInner() {
             {engineOn && analysis && (
               <span
                 className={
-                  "absolute inset-x-0 text-center font-mono text-[8px] leading-4 " +
+                  "absolute inset-x-0 text-center font-mono text-[12px] leading-4 " +
                   (cpWhite >= 0 ? "bottom-0 text-black" : "top-0 text-parchment-100")
                 }
               >
@@ -251,7 +251,7 @@ function AnalysisInner() {
               <button
                 onClick={() => setEngineOn((v) => !v)}
                 className={
-                  "ml-auto flex items-center gap-1.5 px-3 py-2 text-sm transition-colors " +
+                  "press ml-auto flex items-center gap-1.5 px-3 py-2 text-sm transition-colors " +
                   (engineOn ? "bg-white/10 text-gold-leaf" : "btn-ghost text-parchment-300")
                 }
                 title="Toggle engine"
@@ -281,7 +281,7 @@ function AnalysisInner() {
           </div>
 
           <div className="plate min-h-[120px] p-4">
-            <div className="smallcaps text-[10px] text-parchment-400">Moves</div>
+            <div className="smallcaps text-[11px] tracking-[0.14em] text-parchment-400">Moves</div>
             {moves.length === 0 ? (
               <p className="mt-2 text-sm text-parchment-400">
                 Play moves for either side, or load a FEN below.
@@ -314,12 +314,12 @@ function AnalysisInner() {
           </div>
 
           <div className="plate p-4">
-            <div className="smallcaps text-[10px] text-parchment-400">FEN</div>
+            <div className="smallcaps text-[11px] tracking-[0.14em] text-parchment-400">FEN</div>
             <input
               readOnly
               value={fen}
               onFocus={(e) => e.currentTarget.select()}
-              className="mt-1.5 w-full border border-white/10 bg-black/20 px-2 py-1.5 font-mono text-[11px] text-parchment-300"
+              className="mt-1.5 w-full border border-white/10 bg-black/20 px-2 py-1.5 font-mono text-[12px] text-parchment-300"
             />
             <div className="mt-2 flex gap-2">
               <input
@@ -331,11 +331,11 @@ function AnalysisInner() {
                 onKeyDown={(e) => e.key === "Enter" && loadFen()}
                 placeholder="Paste a FEN to set up a position"
                 className={
-                  "min-w-0 flex-1 border bg-black/20 px-2 py-1.5 font-mono text-[11px] text-parchment-100 " +
+                  "min-w-0 flex-1 border bg-black/20 px-2 py-1.5 font-mono text-[12px] text-parchment-100 " +
                   (fenError ? "border-oxblood-glow" : "border-white/10")
                 }
               />
-              <button onClick={loadFen} className="btn-ghost shrink-0 px-3 py-1.5 text-sm">
+              <button onClick={loadFen} className="btn-ghost press shrink-0 px-3 py-1.5 text-sm">
                 Load
               </button>
             </div>
@@ -343,7 +343,7 @@ function AnalysisInner() {
             {!customStart && moves.length > 0 && (
               <button
                 onClick={downloadPgn}
-                className="btn-ghost mt-3 flex items-center gap-1.5 px-3 py-1.5 text-sm"
+                className="btn-ghost press mt-3 flex items-center gap-1.5 px-3 py-1.5 text-sm"
               >
                 <Download size={14} /> Download PGN
               </button>

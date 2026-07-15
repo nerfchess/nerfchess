@@ -165,7 +165,7 @@ function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               maxLength={tab === "login" ? 254 : 20}
-              className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               placeholder="knight_rider"
             />
             {tab === "register" && (
@@ -186,7 +186,7 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 maxLength={254}
-                className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
                 placeholder="you@example.com"
               />
               <p className="mt-1 text-[11px] text-parchment-400">
@@ -204,7 +204,7 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={tab === "login" ? "current-password" : "new-password"}
-              className="w-full bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 focus:outline-none focus:border-gold/60 text-parchment"
+              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment"
               placeholder={tab === "register" ? "at least 8 characters" : ""}
             />
           </div>
@@ -219,7 +219,7 @@ function LoginPage() {
               !password ||
               (tab === "register" && !!TURNSTILE_SITEKEY && !turnstileToken)
             }
-            className="w-full py-3 rounded-sm btn-leaf font-body text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="press w-full py-3 btn-leaf font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {busy ? "One moment…" : tab === "login" ? "Sign in" : "Create account"}
           </button>
@@ -231,7 +231,7 @@ function LoginPage() {
           </div>
           <a
             href={`/api/auth/google?next=${encodeURIComponent(next)}`}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-sm border border-white/15 bg-ink-900/60 hover:bg-white/5 transition text-parchment font-body text-lg"
+            className="press w-full flex items-center justify-center gap-3 py-3 border border-white/15 bg-ink-900/60 hover:bg-white/5 transition text-parchment font-display text-[15px]"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.6l6.86-6.86C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.2C12.44 13.72 17.74 9.5 24 9.5z" />

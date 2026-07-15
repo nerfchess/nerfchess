@@ -121,7 +121,7 @@ function timeAgo(at: number): string {
 function Badge({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
-    <span className="absolute -right-0.5 -top-0.5 grid min-w-[15px] place-items-center bg-oxblood-glow px-1 font-mono text-[9px] leading-[15px] text-white">
+    <span className="absolute -right-1 -top-1 grid min-w-[17px] place-items-center bg-oxblood-glow px-1 font-mono text-[11px] leading-[17px] text-white tabular-nums">
       {n > 9 ? "9+" : n}
     </span>
   );
@@ -358,7 +358,7 @@ export function SiteHeader({ active }: { active?: string }) {
             </button>
             {menu === "challenges" && (
               <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
-                <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[10px] text-parchment-400">
+                <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[11px] text-parchment-400">
                   Challenges
                 </div>
                 {challenges.length === 0 ? (
@@ -372,7 +372,7 @@ export function SiteHeader({ active }: { active?: string }) {
                             name={challenge.from}
                             className="text-sm text-parchment-100 hover:text-gold-leaf"
                           />
-                          <div className="smallcaps text-[10px] text-parchment-400">
+                          <div className="smallcaps text-[11px] text-parchment-400">
                             {challenge.rated ? "Rated" : "Casual"} · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
                           </div>
                         </div>
@@ -405,7 +405,7 @@ export function SiteHeader({ active }: { active?: string }) {
             {menu === "bell" && (
               <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-                  <span className="smallcaps text-[10px] text-parchment-400">Notifications</span>
+                  <span className="smallcaps text-[11px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
                     <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
                       Mark all read
@@ -441,7 +441,7 @@ export function SiteHeader({ active }: { active?: string }) {
                           <div className="text-sm leading-snug text-parchment-100">
                             <NotificationText text={n.text} actorName={n.actorName} />
                           </div>
-                          <div className="mt-0.5 smallcaps text-[10px] text-parchment-400">{timeAgo(n.at)}</div>
+                          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">{timeAgo(n.at)}</div>
                         </div>
                       </li>
                     ))}

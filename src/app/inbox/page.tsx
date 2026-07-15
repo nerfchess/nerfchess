@@ -99,23 +99,23 @@ export default function InboxPage() {
                   <li key={c.username}>
                     <Link
                       href={`/inbox/${encodeURIComponent(c.username)}`}
-                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04]"
+                      className="flex min-h-[44px] items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04]"
                     >
                       <PlayerAvatar name={c.username} avatar={c.avatar} size={36} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className={"truncate text-sm " + (c.unread ? "font-semibold text-parchment-50" : "text-parchment-100")}>
+                          <span className={"truncate text-[13px] " + (c.unread ? "font-semibold text-parchment-50" : "text-parchment-100")}>
                             {c.username}
                           </span>
                           <span className="shrink-0 text-[11px] text-parchment-400">{formatWhen(c.lastAt)}</span>
                         </div>
-                        <div className={"mt-0.5 truncate text-xs " + (c.unread ? "text-parchment-100" : "text-parchment-400")}>
+                        <div className={"mt-0.5 truncate text-[13px] " + (c.unread ? "text-parchment-100" : "text-parchment-400")}>
                           {c.fromMe ? "You: " : ""}
                           {c.lastText}
                         </div>
                       </div>
                       {c.unread > 0 && (
-                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-full bg-oxblood-glow px-1.5 font-mono text-[10px] leading-[18px] text-white">
+                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-full bg-oxblood-glow px-1.5 font-mono text-[11px] leading-[18px] text-white">
                           {c.unread}
                         </span>
                       )}

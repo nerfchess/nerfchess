@@ -6,7 +6,7 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronRight, Search, Users } from "lucide-react";
+import { ChevronRight, Plus, Search, Users, X } from "lucide-react";
 
 interface Club {
   id: string;
@@ -29,12 +29,31 @@ export default function ClubsPage() {
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The live directory leads the page; creation is a disclosure opened from the
+  // header so the flat form never dominates the surface.
+  const [showCreate, setShowCreate] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
     const res = await fetch("/api/clubs");
     if (!res.ok) throw new Error("Could not load clubs.");
     const data = (await res.json()) as { clubs: Club[] };
     setClubs(data.clubs);
+  };
+
+  const reload = () => {
+    setLoading(true);
+    setLoadError(null);
+    void (async () => {
+      try {
+        await load();
+      } catch (e) {
+        setLoadError(e instanceof Error ? e.message : "Could not load clubs.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   useEffect(() => {
@@ -44,7 +63,9 @@ export default function ClubsPage() {
       try {
         await load();
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Could not load clubs.");
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : "Could not load clubs.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -65,6 +86,7 @@ export default function ClubsPage() {
       });
       const data = (await res.json().catch(() => ({}))) as { club?: Club; error?: string };
       if (!res.ok || !data.club) throw new Error(data.error || "Could not create club.");
+      setShowCreate(false);
       router.push(`/clubs/${encodeURIComponent(data.club.slug)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create club.");
@@ -75,7 +97,7 @@ export default function ClubsPage() {
 
   // Client-side filter over the already-fetched list, lichess-teams-style:
   // one search box narrows both "Your clubs" and the full directory. No new
-  // API call — we just re-slice what we already have.
+  // API call; we just re-slice what we already have.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return clubs;
@@ -93,125 +115,174 @@ export default function ClubsPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/clubs" />
 
-      <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-6 sm:pt-8">
+      <section className="mx-auto max-w-4xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Clubs</h1>
-            <p className="mt-2 text-parchment-300">Player groups for organizing games and events.</p>
+            <p className="mt-2 text-[13px] text-parchment-300">Player groups for organizing games and events.</p>
           </div>
-          <Link href="/tournaments" className="btn-ghost px-4 py-2 font-display text-sm">
-            Tournaments
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/tournaments" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+              Tournaments
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowCreate((v) => !v)}
+              aria-expanded={showCreate}
+              className="btn-leaf press inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
+            >
+              {showCreate ? <X size={15} /> : <Plus size={15} />}
+              {showCreate ? "Close" : "New club"}
+            </button>
+          </div>
         </div>
 
-        {error && (
-          <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <form onSubmit={createClub} className="plate h-fit p-5">
-            <div className="font-display text-2xl text-parchment">Create club</div>
+        {/* Creation disclosure: a secondary panel that only opens on demand, so
+            the live directory always leads the page. */}
+        {showCreate && (
+          <form onSubmit={createClub} className="mt-5 plate p-5">
+            <div className="font-display text-xl text-parchment">Create club</div>
+            {error && (
+              <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
+                {error}
+              </div>
+            )}
             {user === undefined ? (
-              <p className="mt-4 text-sm text-parchment-400">Checking account...</p>
+              <p className="mt-4 text-[13px] text-parchment-400">Checking account...</p>
             ) : !user ? (
-              <p className="mt-4 text-sm text-parchment-400">
+              <p className="mt-4 text-[13px] text-parchment-400">
                 <Link href="/login?next=/clubs" className="text-gold-leaf hover:underline">
                   Sign in
                 </Link>{" "}
                 to create a club.
               </p>
             ) : (
-              <>
-                <label className="mt-4 block smallcaps text-[10px] text-parchment-400" htmlFor="club-name">
-                  Name
-                </label>
-                <input
-                  id="club-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={60}
-                  className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
-                />
-                <label className="mt-3 block smallcaps text-[10px] text-parchment-400" htmlFor="club-description">
-                  Description
-                </label>
-                <textarea
-                  id="club-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={240}
-                  rows={4}
-                  className="mt-1 w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
-                />
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block smallcaps text-[11px] text-parchment-400" htmlFor="club-name">
+                    Name
+                  </label>
+                  <input
+                    id="club-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={60}
+                    className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment"
+                  />
+                </div>
+                <div className="sm:row-span-2">
+                  <label className="block smallcaps text-[11px] text-parchment-400" htmlFor="club-description">
+                    Description
+                  </label>
+                  <textarea
+                    id="club-description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    maxLength={240}
+                    rows={4}
+                    className="mt-1 w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={busy || name.trim().length < 3}
-                  className="btn-leaf mt-4 w-full px-4 py-2.5 font-display text-sm font-semibold disabled:opacity-50"
+                  className="btn-leaf press h-fit w-full px-4 py-2.5 font-display text-[13px] font-semibold disabled:opacity-50"
                 >
                   {busy ? "Creating..." : "Create club"}
                 </button>
-              </>
+              </div>
             )}
           </form>
+        )}
 
-          <div className="min-w-0 space-y-4">
-            {/* Search: filters the whole directory in place, like lichess's
-                team search box at the top of the teams list. */}
-            <div className="plate flex items-center gap-2.5 px-4 py-2.5">
-              <Search size={16} className="shrink-0 text-parchment-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search clubs by name, owner, or description"
-                aria-label="Search clubs"
-                className="w-full bg-transparent text-sm text-parchment placeholder:text-parchment-500 focus:outline-none"
-              />
-              {query && (
+        <div className="mt-6 min-w-0 space-y-4">
+          {/* Search: filters the whole directory in place, like lichess's
+              team search box at the top of the teams list. */}
+          <div className="plate flex items-center gap-2.5 px-4 py-2.5">
+            <Search size={16} className="shrink-0 text-parchment-400" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search clubs by name, owner, or description"
+              aria-label="Search clubs"
+              className="w-full bg-transparent text-[13px] text-parchment placeholder:text-parchment-500 focus:outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="shrink-0 smallcaps text-[11px] text-parchment-400 hover:text-parchment-100"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Your clubs: the memberships this account already holds, lifted
+              to the top the way lichess surfaces "Your teams". */}
+          {yourClubs.length > 0 && (
+            <div className="plate overflow-hidden">
+              <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                Your clubs
+              </div>
+              <ul className="divide-y divide-white/5">
+                {yourClubs.map((club) => (
+                  <ClubRow key={club.id} club={club} />
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="plate overflow-hidden">
+            <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+              {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
+            </div>
+            {loading ? (
+              <ul className="divide-y divide-white/5" aria-hidden>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li key={i} className="flex items-center gap-4 px-5 py-4">
+                    <div className="h-11 w-11 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-3.5 w-40 bg-white/[0.07] animate-pulse" />
+                      <div className="mt-2 h-3 w-56 max-w-full bg-white/[0.05] animate-pulse" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : loadError ? (
+              <div className="px-5 py-8 text-center">
+                <p className="text-[13px] text-parchment-200">{loadError}</p>
                 <button
                   type="button"
-                  onClick={() => setQuery("")}
-                  className="shrink-0 smallcaps text-[10px] text-parchment-400 hover:text-parchment-100"
+                  onClick={reload}
+                  className="btn-ghost press mt-3 px-4 py-2 font-display text-[13px]"
                 >
-                  Clear
+                  Try again
                 </button>
-              )}
-            </div>
-
-            {/* Your clubs: the memberships this account already holds, lifted
-                to the top the way lichess surfaces "Your teams". */}
-            {yourClubs.length > 0 && (
-              <div className="plate overflow-hidden">
-                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
-                  Your clubs
-                </div>
-                <ul className="divide-y divide-white/5">
-                  {yourClubs.map((club) => (
-                    <ClubRow key={club.id} club={club} />
-                  ))}
-                </ul>
               </div>
-            )}
-
-            <div className="plate overflow-hidden">
-              <div className="border-b border-white/10 px-5 py-3 smallcaps text-[10px] text-parchment-400">
-                {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
-              </div>
-              {filtered.length === 0 ? (
-                <p className="px-5 py-8 text-sm text-parchment-400">
-                  {clubs.length === 0
-                    ? "No clubs yet. Create the first one."
-                    : "No clubs match that search."}
+            ) : filtered.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <Users size={26} className="mx-auto text-parchment-500" aria-hidden />
+                <p className="mt-2 text-[13px] text-parchment-300">
+                  {clubs.length === 0 ? "No clubs yet. Start the first one." : "No clubs match that search."}
                 </p>
-              ) : (
-                <ul className="divide-y divide-white/5">
-                  {filtered.map((club) => (
-                    <ClubRow key={club.id} club={club} />
-                  ))}
-                </ul>
-              )}
-            </div>
+                {clubs.length === 0 && !showCreate && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCreate(true)}
+                    className="btn-leaf press mt-3 inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
+                  >
+                    <Plus size={15} /> New club
+                  </button>
+                )}
+              </div>
+            ) : (
+              <ul className="divide-y divide-white/5">
+                {filtered.map((club) => (
+                  <ClubRow key={club.id} club={club} />
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </section>
@@ -236,19 +307,19 @@ function ClubRow({ club }: { club: Club }) {
               {club.name}
             </span>
             {!!club.joined && (
-              <span className="shrink-0 rounded-md border border-gold/40 px-1.5 py-0.5 smallcaps text-[8px] text-gold-leaf">
+              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 smallcaps text-[11px] text-gold-leaf">
                 Joined
               </span>
             )}
           </div>
           {club.description ? (
-            <p className="mt-0.5 truncate text-sm text-parchment-300">{club.description}</p>
+            <p className="mt-0.5 truncate text-[13px] text-parchment-300">{club.description}</p>
           ) : (
-            <p className="mt-0.5 truncate text-sm italic text-parchment-500">No description.</p>
+            <p className="mt-0.5 truncate text-[13px] italic text-parchment-500">No description.</p>
           )}
-          <div className="mt-0.5 smallcaps text-[9px] text-parchment-400">owner {club.owner_name}</div>
+          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">owner {club.owner_name}</div>
         </div>
-        <span className="flex shrink-0 items-center gap-1.5 font-mono text-xs text-parchment-400">
+        <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] text-parchment-400 tabular-nums">
           <Users size={13} />
           {club.members}
         </span>

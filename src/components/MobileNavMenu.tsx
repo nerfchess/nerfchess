@@ -45,6 +45,7 @@ function buildGroups(user: AccountUser | null | undefined): MobileNavGroup[] {
       items: [
         { href: user ? `/u/${encodeURIComponent(user.username)}` : "/login", label: "Profile" },
         { href: "/history", label: "Game history" },
+        ...(user ? [{ href: "/inbox", label: "Inbox" }] : []),
         { href: "/achievements", label: "Achievements" },
         { href: "/analysis", label: "Analysis board" },
         { href: "/codex", label: "Rules" },
@@ -129,7 +130,7 @@ export function MobileNavMenu({
               page content underneath can never bleed through the menu. */}
           {/* max-h + internal scroll so a short landscape viewport (height <
               480px) never traps the lower destinations off-screen. */}
-          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown border border-white/10 py-1.5 shadow-xl"}>
+          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown border border-white/10 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"}>
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
               onClick={() => setOpen(false)}
@@ -140,7 +141,7 @@ export function MobileNavMenu({
                   <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />
                   <span className="min-w-0 truncate">{user.username}</span>
                   {/* Live displayed rating (best mode bucket), matching the
-                      header chip and profile — not the frozen legacy column. */}
+                      header chip and profile, not the frozen legacy column. */}
                   <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
                     {Math.round(user.displayRating ?? user.rating)}
                   </span>
@@ -152,7 +153,7 @@ export function MobileNavMenu({
             {groups.map((group) => (
               <div key={group.header}>
                 <div className="mx-3 mb-1 mt-2 h-px bg-white/10" />
-                <div className="smallcaps px-4 pb-1 pt-0.5 text-[10px] text-parchment-400">{group.header}</div>
+                <div className="smallcaps px-4 pb-1 pt-0.5 text-[11px] text-parchment-400">{group.header}</div>
                 {group.items.map((item) => {
                   const activeItem = itemActive(item.href, pathname);
                   return (

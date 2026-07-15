@@ -19,22 +19,24 @@ export function InfoPageLayout({
 }: InfoPageLayoutProps) {
   return (
     <main className="min-h-screen pb-20">
-      <nav className="flex items-center justify-between px-10 py-7">
+      <nav className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-7 sm:px-8">
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <Link
           href="/play"
-          className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment"
+          className="btn-ghost press px-4 py-2 font-display text-[13px]"
         >
           Play
         </Link>
       </nav>
 
-      <section className="max-w-3xl mx-auto px-6 pt-4">
-        <div className="smallcaps text-[11px] text-parchment-400">{eyebrow}</div>
-        <h1 className="font-display text-5xl sm:text-6xl mt-1">{title}</h1>
-        <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">{intro}</p>
+      <section className="mx-auto max-w-[1100px] px-6 pt-4 sm:px-8">
+        <div className="eyebrow">{eyebrow}</div>
+        {/* Fluid display ramp instead of ad-hoc sizes; the prose column below
+            stays narrower than the card grid so long lines remain readable. */}
+        <h1 className="display-1 mt-2">{title}</h1>
+        <p className="mt-5 max-w-3xl text-[16px] leading-[1.7] text-parchment-200">{intro}</p>
         <div className="mt-9 space-y-4">{children}</div>
       </section>
 
@@ -52,8 +54,8 @@ export function InfoSection({
 }) {
   return (
     <section className="plate p-6 sm:p-7">
-      <h2 className="font-display text-2xl text-parchment">{title}</h2>
-      <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-parchment-200/90">
+      <h2 className="display-3 text-parchment">{title}</h2>
+      <div className="mt-3 max-w-3xl space-y-3 text-[15px] leading-relaxed text-parchment-200/90">
         {children}
       </div>
     </section>
