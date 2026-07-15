@@ -117,7 +117,7 @@ export async function POST(request: Request) {
         .prepare(`UPDATE friendships SET status = 'accepted' WHERE user_lo = ? AND user_hi = ?`)
         .bind(lo, hi)
         .run();
-      await notifyFriend(db, target.id, user.username, "accepted your friend request");
+      await notifyFriend(db, target.id, user.id, user.username, "accepted your friend request");
       return NextResponse.json({ ok: true, status: "accepted" });
     }
     if (existing?.status === "pending") {
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       )
       .bind(lo, hi, user.id, Date.now())
       .run();
-    await notifyFriend(db, target.id, user.username, "sent you a friend request");
+    await notifyFriend(db, target.id, user.id, user.username, "sent you a friend request");
     return NextResponse.json({ ok: true, status: "pending" });
   }
 
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
         .prepare(`UPDATE friendships SET status = 'accepted' WHERE user_lo = ? AND user_hi = ?`)
         .bind(lo, hi)
         .run();
-      await notifyFriend(db, target.id, user.username, "accepted your friend request");
+      await notifyFriend(db, target.id, user.id, user.username, "accepted your friend request");
       return NextResponse.json({ ok: true, status: "accepted" });
     }
     return NextResponse.json({ error: "No request to accept." }, { status: 404 });
@@ -163,6 +163,7 @@ export async function POST(request: Request) {
 async function notifyFriend(
   db: Parameters<typeof createNotification>[0],
   toUserId: string,
+  actorId: string,
   actor: string,
   text: string,
 ): Promise<void> {
@@ -171,6 +172,7 @@ async function notifyFriend(
       userId: toUserId,
       type: "message",
       actorName: actor,
+      actorId,
       text: `${actor} ${text}`,
       href: "/friend",
     });

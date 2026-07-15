@@ -26,20 +26,26 @@ export async function createNotification(
     userId: string;
     type: NotificationType;
     actorName?: string | null;
+    // Stable id of the acting user. Stored so the read path can resolve the
+    // actor's CURRENT username live, instead of trusting the frozen actorName
+    // snapshotted into `text` at send time (a rename must not leave a stale
+    // name in the bell).
+    actorId?: string | null;
     text: string;
     href?: string | null;
   },
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO notifications (id, user_id, type, actor_name, text, href, created_at, read)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO notifications (id, user_id, type, actor_name, actor_user_id, text, href, created_at, read)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
     )
     .bind(
       crypto.randomUUID(),
       input.userId,
       input.type,
       input.actorName ?? null,
+      input.actorId ?? null,
       input.text,
       input.href ?? null,
       Date.now(),
@@ -62,6 +68,7 @@ export async function notifyMessage(db: D1Database, from: SessionUser, toUserId:
     userId: toUserId,
     type: "message",
     actorName: from.username,
+    actorId: from.id,
     text: `New message from ${from.username}`,
     href: `/inbox/${encodeURIComponent(from.username)}`,
   });
