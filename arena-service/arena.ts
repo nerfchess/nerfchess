@@ -1,7 +1,7 @@
 // Orchestrator — port of houseTick's filler path. It only handles SPAWNING;
 // each game drives its own actions via its own timer (see game.ts), so there is
 // no per-tick engine batch and none of the DO's single-thread caps.
-import { HOUSE_ROSTER, pickHouseSeek, type HousePersona } from "../src/lib/server/bots";
+import { HOUSE_ROSTER, houseFillerSpawnDelayMs, pickHouseSeek, type HousePersona } from "../src/lib/server/bots";
 import type { ArenaConfig } from "./config";
 import { ArenaGame } from "./game";
 import type { IngestClient } from "./ingest";
@@ -102,7 +102,9 @@ export class Arena {
         const a = free.splice(randomInt(free.length), 1)[0];
         const b = free.splice(randomInt(free.length), 1)[0];
         this.spawn(a, b);
-        this.nextFillerAt = now + 4000 + randomInt(6000);
+        // Ramp fast below the 40-game floor, breathe above it (shared pacing
+        // with the DO's spawner, so a cold arena reaches the floor in minutes).
+        this.nextFillerAt = now + houseFillerSpawnDelayMs(this.games.size, randomInt);
       }
     }
   }
@@ -111,7 +113,7 @@ export class Arena {
     const { pool, mode } = pickHouseSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
-    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs);
+    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs, this.config.thinkMult);
     this.games.set(game.id, game);
     this.busy.add(white.userId);
     this.busy.add(black.userId);
