@@ -2190,18 +2190,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
-  // Board sizing. Below lg there is no side rail, so the board may use up to
-  // 92vw. From lg up the 440px (xl: 500px) rail sits beside it in a centered
-  // grid; without ALSO capping the board by the width left after the rail, a
-  // tall viewport lets the board reach its 720px cap and the rail + board
-  // overflow the row, which the centered grid then clips on BOTH sides - the
-  // left rail (the buff dock and its Use button included) slides off-screen.
-  // The extra lg/xl width term keeps the whole row on screen at every size,
-  // while the wide-desktop look (where 720px stays the smaller term) is
-  // untouched.
+  // Board sizing, mirroring the local game page: the square board must fit
+  // BOTH the available height (an h-dvh layout) and the width left over after
+  // the rails present at each breakpoint, so it can never push a rail
+  // off-screen. Each min() term reserves those rails: none below sm, the
+  // right move rail (~288px + gaps + page padding) at sm, the left command
+  // rail (440px) added at lg (820px total), and its wider 500px form at xl
+  // (880px total). The old lg/xl terms reserved only 32/36rem, less than the
+  // real rail total, so at 1440x900 the centered grid overflowed and clipped
+  // the left panel and the right rail's clock/Resign at the viewport edges.
+  // Below sm the board runs nearly edge to edge. Literal class strings only,
+  // so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(92vw,var(--board-cap,720px),calc(100dvh-11rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-36rem))] max-w-full"
-    : "w-[min(92vw,var(--board-cap,720px),calc(100dvh-8rem))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-32rem))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-36rem))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2475,7 +2477,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-3 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
         {hint && (
           <div
             role="status"
