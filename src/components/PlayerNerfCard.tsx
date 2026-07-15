@@ -225,7 +225,10 @@ export function PlayerNerfCard({
       {boons && boons.length > 0 && (
         <div className={(compact ? "mt-2.5" : "mt-4") + " border-t border-white/10 pt-2"}>
           <div className="smallcaps text-[10px] text-parchment-400">Your cards</div>
-          <ul className="mt-1 space-y-1">
+          {/* Cap + scroll the held-cards list so a full late-game hand never grows
+              this card tall enough to squeeze the interactive card dock (with its
+              Use buttons) out of the rail. */}
+          <ul className={"mt-1 space-y-1 overflow-y-auto overscroll-contain pr-0.5 " + (compact ? "max-h-32" : "max-h-56")}>
             {boons.map((b, i) => (
               <li key={`${b.name}-${i}`} className="flex items-baseline gap-1.5">
                 <span
