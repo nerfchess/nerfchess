@@ -774,7 +774,7 @@ const HOUSE_LOCATIONS: string[] = [
   "🇱🇻 Riga, Latvia",
 ];
 
-function nameHash(name: string): number {
+export function nameHash(name: string): number {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return hash;

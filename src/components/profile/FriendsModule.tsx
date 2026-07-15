@@ -150,12 +150,17 @@ function OwnerFriends() {
   // snapshot. Memoized against the snapshot + list so a re-render without new
   // data does no work.
   const sorted = useMemo(() => sortByPresence(friends, lobby), [friends, lobby]);
+  const [expanded, setExpanded] = useState(false);
 
   // The filter box only earns its place once the list is long; below that a
   // roster reads faster without it.
   const showFilter = friends.length > 8;
   const q = filter.trim().toLowerCase();
-  const visible = q ? sorted.filter((f) => f.username.toLowerCase().includes(q)) : sorted;
+  const matched = q ? sorted.filter((f) => f.username.toLowerCase().includes(q)) : sorted;
+  // Big rosters (house-friend cohorts run to 150) render a bounded page with an
+  // expander instead of a 150-row rail; searching always scans the full list.
+  const visible = expanded || q ? matched : matched.slice(0, 30);
+  const hiddenCount = matched.length - visible.length;
 
   const title = `Friends (${friends.length})`;
 
@@ -252,6 +257,16 @@ function OwnerFriends() {
             visible.map((f) => (
               <FriendRow key={f.id} f={f} lobby={lobby} busy={busy} onRemove={() => void act("remove", f.username)} />
             ))
+          )}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="press mt-1 w-full min-h-[36px] border px-3 py-1.5 text-[13px] font-medium text-parchment-300 transition-colors hover:text-parchment-100"
+              style={{ borderColor: "var(--edge)" }}
+            >
+              Show all {matched.length}
+            </button>
           )}
         </div>
 

@@ -56,14 +56,14 @@ export async function GET(request: Request) {
        FROM user_ratings r JOIN users u ON u.id = r.user_id
        WHERE r.category = ? AND ${houseFilter}
          AND (u.banned_until IS NULL OR u.banned_until <= ?)
-       ORDER BY r.rating DESC, r.games DESC LIMIT 500`,
+       ORDER BY r.rating DESC, r.games DESC LIMIT 250`,
     )
     .bind(HOUSE_ID_MATCH, category, HOUSE_ID_MATCH, Date.now())
     .all<LeaderboardRow>();
 
   const players = rows.results.map((row) => ({ ...row, guest: !!row.guest, bot: !!row.bot }));
 
-  // The viewer's own standing in this category, even when outside the top 500.
+  // The viewer own standing in this category, even when outside the top 250.
   let me: (Omit<LeaderboardRow, "guest" | "bot"> & { guest: boolean; bot: boolean; rank: number }) | null = null;
   try {
     const token = sessionTokenFromCookieHeader(request.headers.get("cookie"));

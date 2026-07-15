@@ -66,6 +66,7 @@ import {
   FILLER_EXCLUDED_CARD_IDS,
   houseFillerSpawnDelayMs,
   houseSocialDelayMs,
+  nameHash,
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
   HOUSE_FILLER_THINK_MULTIPLIER,
@@ -5115,9 +5116,81 @@ export class GameServer extends DurableObject<Env> {
     const nextAt = (await this.ctx.storage.get<number>(houseNextSocialKey)) ?? 0;
     if (now < nextAt) return;
     await this.ctx.storage.put(houseNextSocialKey, now + houseSocialIntervalMs);
+    await this.houseSeedFriendCohorts(db, now);
     let budget = houseSocialMaxAcceptsPerTick;
     budget = await this.houseAcceptFriendRequests(db, now, budget);
     if (budget > 0) await this.houseAnswerChallenges(db, busy, now, budget);
+  }
+
+  // Owner-configured friend cohorts: the named accounts hold N accepted house
+  // friendships. Idempotent and resumable: each social tick tops one cohort up
+  // by a bounded batch (INSERT OR IGNORE on the canonical pair key), and once
+  // every cohort meets its target a storage flag ends the work for good. Reruns
+  // after a version bump only ever ADD missing rows, never duplicate or remove.
+  private async houseSeedFriendCohorts(db: D1Database, now: number): Promise<void> {
+    const FLAG = "houseFriendCohortsDone:v1";
+    if (await this.ctx.storage.get<boolean>(FLAG)) return;
+    const COHORTS: { username: string; count: number }[] = [
+      { username: "ilovenewjeans", count: 150 },
+      { username: "ilovemyboyfriend", count: 50 },
+      { username: "ilovemygirlfriend", count: 50 },
+    ];
+    const BATCH = 30;
+    try {
+      let allMet = true;
+      for (const cohort of COHORTS) {
+        const user = await db
+          .prepare(`SELECT id FROM users WHERE LOWER(username) = ? LIMIT 1`)
+          .bind(cohort.username.toLowerCase())
+          .first<{ id: string }>();
+        // A cohort whose account does not exist yet stays pending (the flag is
+        // withheld), so it seeds automatically once the account is created.
+        if (!user) {
+          allMet = false;
+          continue;
+        }
+        const existing = await db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM friendships
+             WHERE status = 'accepted' AND (user_lo = ? OR user_hi = ?)`,
+          )
+          .bind(user.id, user.id)
+          .first<{ n: number }>();
+        const have = existing?.n ?? 0;
+        if (have >= cohort.count) continue;
+        // Deterministically shuffled roster (seeded per cohort) so the picks
+        // read random but reruns walk the same order and stay idempotent.
+        const pool = [...HOUSE_ROSTER]
+          .map((p) => ({ p, k: nameHash(`${cohort.username}:${p.userId}`) }))
+          .sort((a, b) => a.k - b.k)
+          .map(({ p }) => p);
+        const missing = Math.min(cohort.count - have, BATCH);
+        const statements: D1PreparedStatement[] = [];
+        for (const persona of pool) {
+          if (statements.length >= missing) break;
+          if (persona.userId === user.id) continue;
+          const [lo, hi] =
+            persona.userId < user.id ? [persona.userId, user.id] : [user.id, persona.userId];
+          // Jittered created_at so the roster does not read as one bulk import.
+          const at = now - 3600_000 - nameHash(`${lo}:${hi}:at`) % (30 * 24 * 3600_000);
+          statements.push(
+            db
+              .prepare(
+                `INSERT OR IGNORE INTO friendships (user_lo, user_hi, requested_by, status, created_at)
+                 VALUES (?, ?, ?, 'accepted', ?)`,
+              )
+              .bind(lo, hi, persona.userId, at),
+          );
+        }
+        if (statements.length > 0) await db.batch(statements);
+        // Counting again next tick decides whether this cohort is met; INSERT
+        // OR IGNORE may have skipped rows that already existed as pending.
+        allMet = false;
+      }
+      if (allMet) await this.ctx.storage.put(FLAG, true);
+    } catch (err) {
+      console.error("house friend cohort seeding failed", err);
+    }
   }
 
   // The persona's current display name (an admin rename from /mod/house lands in
