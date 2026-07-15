@@ -198,12 +198,13 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
       setError("Enter a code.");
       return;
     }
-    // Reject obviously-malformed input up front (special characters, spaces,
-    // wrong length) so a garbage code shows a clear message instead of spinning
-    // up a doomed session. Real codes are short and alphanumeric (worker
-    // randomCode), so this never rejects a valid one.
-    if (!/^[A-Z0-9]{3,12}$/.test(trimmed)) {
-      setError("That doesn't look like a game code.");
+    // Validate the shape before opening a socket: an obvious typo (wrong
+    // length or illegal characters) gets an inline explanation instead of a
+    // dead-end "Connecting…" screen that can only time out. Real codes are
+    // 5 or 8 chars from a fixed uppercase alphabet, so this only rejects
+    // input that could never be a code; the server stays the final authority.
+    if (!/^[A-Z0-9]{4,8}$/.test(trimmed)) {
+      setError("That doesn't look like a game code. Codes are 4-8 letters and digits, e.g. ABCDE.");
       return;
     }
     const sess = new MPSession();

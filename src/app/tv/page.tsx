@@ -205,7 +205,9 @@ function TvView() {
         if (retriesLeft > 0) {
           const arenaHosted = await isArenaGameLive(streamId).catch(() => false);
           if (cancelled) return;
-          session.serverUrl = arenaHosted && arenaSocketUrl() ? arenaSocketUrl() : null;
+          // setServerUrl (not a bare field write): it drops the socket to the
+          // wrong server, so the retry actually dials the right one.
+          session.setServerUrl(arenaHosted && arenaSocketUrl() ? arenaSocketUrl() : null);
           tuneIn(retriesLeft - 1);
         } else {
           setPlayers(null);

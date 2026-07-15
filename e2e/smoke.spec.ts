@@ -13,13 +13,12 @@ import { test, expect, type Page } from "@playwright/test";
 test("home page renders", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Nerf Chess/i);
-  // One dominant CTA into the lobby, plus the three secondary ways in.
+  // One dominant CTA into the lobby, plus the two secondary ways in.
   await expect(page.getByRole("link", { name: /play nerf chess/i })).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.getByRole("link", { name: /^play online$/i })).toBeVisible();
   await expect(page.getByRole("link", { name: /^play a friend$/i })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^play a bot$/i })).toBeVisible();
 });
 
 test("lobby page renders", async ({ page }) => {
