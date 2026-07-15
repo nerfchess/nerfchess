@@ -7,16 +7,6 @@ import type { Nerf } from "@/engine/nerf";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-// The heavy card renderers pull in framer-motion; load them only when the
-// (search-driven, below-the-fold) grid actually renders, so they stay out of
-// the initial /codex bundle. Props are unchanged.
-const NerfCard = dynamic(() => import("@/components/NerfCard").then((m) => m.NerfCard), {
-  ssr: false,
-});
-const BuffCard = dynamic(() => import("@/components/BuffCard").then((m) => m.BuffCard), {
-  ssr: false,
-});
 import { CATEGORY_DEFS } from "@/lib/nerfCategories";
 import {
   EMPTY_FILTERS,
@@ -32,6 +22,17 @@ import { BUFF_COLLECTIONS, NERF_COLLECTIONS, buffCollection } from "@/lib/cardCo
 import { cardPath } from "@/lib/cardCodex";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+
+// The heavy card renderers pull in framer-motion; load them only when the
+// (search-driven, below-the-fold) grid actually renders, so they stay out of
+// the initial /codex bundle. Props are unchanged. Declared AFTER all imports
+// (never interleaved between them) so module init order stays well-defined.
+const NerfCard = dynamic(() => import("@/components/NerfCard").then((m) => m.NerfCard), {
+  ssr: false,
+});
+const BuffCard = dynamic(() => import("@/components/BuffCard").then((m) => m.BuffCard), {
+  ssr: false,
+});
 
 // Draft-buff categories, presented like the rule categories. Nerf-relief
 // boons are deliberately absent: they only exist in Nerf mode's draft pool
