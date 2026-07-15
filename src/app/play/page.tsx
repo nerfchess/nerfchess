@@ -10,7 +10,6 @@ import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { AccountChip } from "@/components/AccountChip";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { Logo } from "@/components/Logo";
-import { QueueButton } from "@/components/QueueButton";
 import { useSharedMode } from "@/lib/modeState";
 import {
   FIRST_GAME_TOUR_HREF,
@@ -47,8 +46,9 @@ export default function PlayPage() {
   const [baseSec, setBaseSec] = useState<number>(10 * 60);
   const [incrementSec, setIncrementSec] = useState<number>(0);
   // One shared mode for the whole page (Buff default, ?mode= override, last
-  // choice remembered): the top selector, the online queue, the friend link,
-  // and the bot game all read it, so no two sections can disagree.
+  // choice remembered): the top mode cards and the bot setup both read it, so
+  // the two selectors can never disagree. This page is bot practice only; the
+  // shared mode still persists site-wide so the lobby opens on the same choice.
   const [gameMode, setSharedMode] = useSharedMode();
   // Plain chess (no nerfs, no buffs) only exists against the bot; it is a
   // deliberate bot-only override of the shared mode, never a page mode.
@@ -164,7 +164,10 @@ export default function PlayPage() {
       </nav>
 
       <section className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="font-display text-5xl">New game</h1>
+        <h1 className="font-display text-5xl">Play the computer</h1>
+        <p className="mt-2 text-sm text-parchment-300">
+          Practice against a bot at your own pace. Buff, Nerf, or plain chess.
+        </p>
 
         {tourNudge && (
           <div
@@ -202,6 +205,37 @@ export default function PlayPage() {
           </div>
         )}
 
+        {/* This page is bot practice only. Anyone who came here wanting a real
+            opponent gets a prominent door into the online lobby up top, so no
+            one lands here and gets stuck. */}
+        <Link
+          href="/lobby"
+          className="mt-6 plate group flex items-center gap-4 border-mode-buff/40 bg-mode-buff/5 p-4 no-underline transition-colors hover:border-mode-buff/70 hover:bg-mode-buff/10"
+        >
+          <span
+            aria-hidden
+            className="grid h-11 w-11 shrink-0 place-items-center border border-mode-buff/50 bg-mode-buff/10 text-mode-buffGlow"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M2 12h20" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg font-semibold text-parchment-50">Play online</span>
+            <span className="block text-[13px] leading-snug text-parchment-300">
+              Find a real opponent in the lobby. Everything below is practice against the computer.
+            </span>
+          </span>
+          <span
+            aria-hidden
+            className="shrink-0 font-display text-sm font-semibold text-gold-leaf motion-safe:transition-transform motion-safe:duration-200 group-hover:translate-x-0.5"
+          >
+            &rarr;
+          </span>
+        </Link>
+
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ModeCard
             mode="buff"
@@ -220,28 +254,6 @@ export default function PlayPage() {
             tagline="Handicaps"
             body="Start with a secret handicap. Draft curses for your opponent."
           />
-        </div>
-
-        <div className="mt-6">
-          <QueueButton mode={gameMode} onModeChange={selectMode} showModeCards={false} />
-        </div>
-
-        <div className="mt-4">
-          <Link
-            href={`/friend?mode=${gameMode}`}
-            className="btn-leaf btn-cta w-full flex items-center justify-center gap-3 px-6 py-4 font-display text-lg font-semibold"
-          >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            Play a Friend
-          </Link>
-          <div className="rule-ornament mt-6">
-            <span>or set up a bot game</span>
-          </div>
         </div>
 
         <div className="mt-8 plate p-6 sm:p-7 space-y-6">

@@ -81,6 +81,15 @@ export default function HomePage() {
             >
               Play a Friend
             </Link>
+            {/* Bot practice: a way in for players who want to warm up against the
+                computer before facing a real opponent. Full width under the two
+                online entries so it reads as the quieter, single-player option. */}
+            <Link
+              href="/play"
+              className="btn-glass flex items-center justify-center gap-2 px-4 py-3.5 font-display text-base font-medium sm:col-span-2 motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out motion-safe:hover:-translate-y-px motion-safe:active:scale-[0.98]"
+            >
+              Practice against the computer
+            </Link>
           </div>
 
           {/* What the two words on the tin actually mean. Each card is a link

@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Eye, Swords, Users } from "lucide-react";
+import { Cpu, Eye, Swords, Users } from "lucide-react";
 import { QueueButton } from "@/components/QueueButton";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
@@ -464,9 +464,33 @@ function LobbyInner() {
             >
               {/* The main action: get matched with a real opponent. */}
               <QueueButton />
-              <div className="text-sm">
-                <Link href="/play" className="text-parchment-400 hover:text-parchment-100 transition-colors">
-                  Prefer practice? Play a bot instead
+              {/* The other ways to start a game, one tap from the queue: an open
+                  custom challenge, a private game with a friend, or a bot to
+                  practice against. Kept quiet beneath the dominant Find match
+                  button so matchmaking stays the headline. */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setTab("challenges")}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Swords size={14} aria-hidden />
+                  Create custom game
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab("friends")}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Users size={14} aria-hidden />
+                  Challenge a friend
+                </button>
+                <Link
+                  href="/play"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-parchment-300 transition-colors hover:text-gold-leaf sm:min-h-0"
+                >
+                  <Cpu size={14} aria-hidden />
+                  Practice against computer
                 </Link>
               </div>
             </div>

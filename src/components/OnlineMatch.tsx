@@ -2517,6 +2517,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   name={oppName}
                   elo={oppRating}
                   avatar={start.players?.[oppColor]?.avatar}
+                  linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
@@ -2690,6 +2691,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   name={myName}
                   elo={myRating}
                   avatar={start.players?.[myColor]?.avatar}
+                  linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (

@@ -1960,6 +1960,7 @@ function GamePage() {
                   myColor={myColor}
                   name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
                   elo={BOT_ELO[difficulty]}
+                  linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
@@ -2071,6 +2072,7 @@ function GamePage() {
                   myColor={myColor}
                   name="You"
                   elo={playerElo}
+                  linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
                 />
                 {clockEnabled && (
