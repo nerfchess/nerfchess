@@ -305,6 +305,36 @@
 }
 .bwp-target { animation: bwp-target calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 
+/* --- WAVE 3 bespoke-scene beats ------------------------------------------- */
+
+/* Turn the Tide — the pawn front swells and surges forward one rank as one. */
+@keyframes bwp-surge {
+  0% { opacity: 0; transform: translateY(30%) scale(0.82); }
+  26% { opacity: 1; transform: translateY(4%) scale(1.05); }
+  56% { transform: translateY(-38%) scale(1); }
+  84% { opacity: 1; transform: translateY(-66%) scale(1); }
+  100% { opacity: 0; transform: translateY(-78%) scale(1); }
+}
+.bwp-surge { animation: bwp-surge calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+/* Reckoning / Martyrdom — a figure flares, then flies apart and is gone. */
+@keyframes bwp-shatter {
+  0% { opacity: 0; transform: scale(0.85); }
+  22% { opacity: 1; transform: scale(1.1); }
+  44% { opacity: 1; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+.bwp-shatter { animation: bwp-shatter calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+/* Mummers' Dance — the carousel of masks whirls the minor corps around. */
+@keyframes bwp-whirl {
+  0% { opacity: 0; transform: rotate(-40deg) scale(0.6); }
+  26% { opacity: 1; transform: rotate(60deg) scale(1); }
+  80% { opacity: 0.9; transform: rotate(300deg) scale(1); }
+  100% { opacity: 0; transform: rotate(342deg) scale(0.92); }
+}
+.bwp-whirl { animation: bwp-whirl calc(1.45s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
+
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every boon play outright. */
 html[data-anim="off"] [class^="bwp-"], html[data-anim="off"] [class*=" bwp-"] { animation: none !important; opacity: 0 !important; }

@@ -476,3 +476,90 @@ pool smoke: 44 boons, 0 new id/name collisions, 0 em/en dashes).
    exemptions hold).
 9. Cross-family: ward-vs-mandate and barred-vs-nerf interactions reviewed and
    found safe (no unavoidable loss introduced).
+
+## Animation map (Animation Mapper, keyed on frozen ids)
+
+All 44 flagships live in `src/components/effects/boonPlays.tsx` (+ `.css`).
+Cadence matches wave 2: T1-T6 reuse one of the five boon G-templates with a
+fresh per-card flourish dressing block (own SVG, not a recolor); T7-T8 are
+fully bespoke S-scenes. Every keyframe animates transform/opacity only, is a
+one-shot `both`, scaled by `--fx-dur`, ends at opacity 0, and is parked under
+`html[data-anim="off"]`. Sounds are existing `SigSoundKey`s only.
+
+Split: 31 dressed-template (DawnHalo 7, Reliquary 7, PactScroll 7, FalconDash 5,
+AstralAnvil 5) + 13 bespoke scenes. New keyframes added: `bwp-surge`,
+`bwp-shatter`, `bwp-whirl`.
+
+### T1-T6 dressed templates
+
+| id | template | flourish | sound | reuse rationale |
+| --- | --- | --- | --- | --- |
+| bw3_bishops_blessing | DawnHalo | b3ward | aegis | ward halo; knight lunges and is bounced off the blessed bishop |
+| bw3_first_blood | Reliquary | firstblood | blitz | a red drop falls onto the ticking dial and speeds it (clock payout) |
+| bw3_postern_gate | Reliquary | postern | aegis | a small side door swings open in the keep wall (restored castling) |
+| bw3_heir_apparent | AstralAnvil | heir | coronation | forge crossfade: a pawn re-forged into the fallen minor's crest |
+| bw3_shield_wall | DawnHalo | phalanx3 | aegis | two flanking pawns lock edge to edge under one warding bar |
+| bw3_home_guard | PactScroll | homeward | wall | a decree seals the home rank behind a fence-line (override: designer said WarBanner/greatPlays, not editable -> PactScroll edict fits terrain-sealing) |
+| bw3_kings_shield | DawnHalo | kingfront | aegis | a half-shield drops in front of the crown |
+| bw3_forced_march | FalconDash | march2 | blitz | two pawns spring two ranks forward on the dash template |
+| bw3_double_down | PactScroll | doubledown | shades | three cards fan and chips slide in (chose PactScroll over greatPlays CardRite; boon-native) |
+| bw3_underdogs_gambit | FalconDash | sidejab | siege | the scrappy pawn jabs to both sides |
+| bw3_field_knighting | AstralAnvil | knighting | coronation | a sword taps a kneeling pawn that rises a knight |
+| bw3_praetorian | DawnHalo | praetor | aegis | a ring of knight-guards closes around the queen |
+| bw3_battlefield_commission | AstralAnvil | commission | coronation | a field medal pins onto an advancing pawn |
+| bw3_royal_caper | FalconDash | caper | blitz | a check-ray rakes in; the king vaults away in an L |
+| bw3_plunderers_ledger | Reliquary | ledger | shades | captured coins drop into a ledger that flips a reroll die |
+| bw3_coronation_bonus | Reliquary | coronclock | coronation | a crown lands and the clock dial jumps forward |
+| bw3_eleventh_hour | Reliquary | eleventh | cathedral | a grave-lantern lifts a fallen piece at the last tick |
+| bw3_kings_road | PactScroll | kingsroad | wall | a milestone line paints down one file (override: designer said territory/WarBanner -> PactScroll decree) |
+| bw3_ironwrights_bargain | AstralAnvil | ironwright | coronation | a pawn thrown into the forge, a minor hammered up to a rook |
+| bw3_tunnelers | FalconDash | tunnel | blitz | the rook drills through a screen of its own pawns (chose FalconDash over RiftGate) |
+| bw3_deep_position | Reliquary | deeptime | blitz | a flag plants deep in enemy ground, the dial jumps |
+| bw3_martyrs_gift | Reliquary | martyrgift | shades | a falling piece scatters reroll motes upward |
+| bw3_watchword | DawnHalo | sentry | aegis | a pawn sentry lights up whatever it guards |
+| bw3_hallowed_ground | DawnHalo | hallow | cathedral | a consecration circle burns onto one square; the king blinks into it (king_safe) |
+| bw3_second_face | AstralAnvil | archbishop | coronation | a bishop mask flips to reveal a knight crest (archbishop) |
+| bw3_rally_royal | FalconDash | rally | blitz | a piece snaps clear across to the king's side |
+| bw3_futures_market | PactScroll | futures | crownrain | three cards deal, one glows apex-gold, two burn away (override: designer said CardRite -> PactScroll, apex-fish read) |
+| bw3_castle_in_the_storm | PactScroll | stormcastle | wall | king and rook slam into castled rank amid arrows (override: WarBanner/RiftGate -> PactScroll) |
+| bw3_last_muster | PactScroll | muster | wall | three faint pawns rise from the ground (they will fade; source: summon) |
+| bw3_funeral_pyre | PactScroll | pyre | atomic | a chosen piece ignites; a ring blast clears its neighbors (atomic reused per designer) |
+| bw3_vantage_point | DawnHalo | vantage | aegis | pieces on the far ranks gain a mountaintop ward glint |
+
+### T7-T8 bespoke scenes
+
+| id | scene | sound | notes |
+| --- | --- | --- | --- |
+| bw3_mummers_dance | MummersDanceScene | shades | carousel of masks whirls the minor corps, every n<->b crossfading (bwp-whirl) |
+| bw3_last_stand | LastStandScene | cathedral | a shield wall snaps up along the front, a king-safety dome settles (source: shield) |
+| bw3_high_stakes | HighStakesScene | blitz | the whole offer table sweeps to the holder, forfeited dice shatter (bwp-shatter) |
+| bw3_from_the_ashes | FromTheAshesScene | crownrain | the fallen re-form up to a level line, embers rising (source: summon) |
+| bw3_kingsguard_duel | KingsguardDuelScene | siege | two guards charge from before their kings, meet, and both fall |
+| bw3_kings_sanctuary | KingsSanctuaryScene | coronation | the king streaks to the safe corner haloed in sanctuary light (source: kingSafe) |
+| bw3_martyrdom | MartyrdomScene | siege | one friendly minor shatters, its light strikes two enemy minors down (bwp-shatter) |
+| bw3_the_reckoning | ReckoningScene | extinction | one sweep, every knight and bishop of both sides dissolves (godPlays-scale) |
+| bw3_covenant_of_return | CovenantScene | cathedral | an eternal loop sigil turns, the fallen arc back home (source: summon) |
+| bw3_the_homecoming | HomecomingScene | crownrain | veterans march back to the home rank under a mustering tent-banner (source: summon) |
+| bw3_turn_the_tide | TurnTheTideScene | siege | the whole pawn front surges forward one rank as one wave (bwp-surge) |
+| bw3_pretender | PretenderScene | coronation | a new queen crowned out of a pillar of light, gold raining (source: summon) |
+| bw3_drive_them_out | DriveThemOutScene | rampage | a river-line splits the board; two sweeps clear invaders from either half |
+
+### Notes / designer suggestions overridden
+
+- Designer `anim:` hints that named greatPlays/godPlays templates (WarBanner,
+  CardRite, RiftGate, SiegeRoll/AbyssMaw, BannerMuster) were remapped to the
+  nearest boon-native G-template, because file ownership is limited to
+  `boonPlays.*` / `cursePlays.*` and those templates live in modules I may not
+  edit. Each remap keeps the intended motif (edict/terrain -> PactScroll,
+  card-deal -> PactScroll, forge -> AstralAnvil, dash/drill -> FalconDash).
+- The "passive-visual candidate" cards (first_blood, heir_apparent, shield_wall,
+  home_guard, kings_shield, plunderers_ledger, coronation_bonus, eleventh_hour,
+  deep_position, martyrs_gift, watchword, bishops_blessing, praetorian,
+  vantage_point, underdogs_gambit, forced_march, royal_caper, covenant_of_return)
+  still receive a full play here: the animation audit (`F1`) requires a play for
+  EVERY implemented tier 1-8 card regardless of `kind`, exactly as wave-2 passive
+  boons/hexes do. Their standing passive aura remains the integrator's separate
+  data-driven `passive/compositions.ts` regen.
+- Audit (`scripts/audit-animations.ts`, read-only): 84/84 wave-3 entries parse,
+  zero bw3_/hw3_ problems, shared-flagship baseline held at 381 total / 45 at
+  tier>=5 (NOT increased) - every wave-3 card counts as bespoke-or-dressed.

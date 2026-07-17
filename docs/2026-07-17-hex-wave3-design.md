@@ -445,3 +445,86 @@ No wave-3 hex qualifies:
    frozen/possessed/removed; Effigy refuses check-giving placement.
 9. Cross-family: turn-taxes are the safe conditional-on-own-action shape (not
    turn theft); no wave-3 hex makes an existing nerf's loss unavoidable.
+
+## Animation map (Animation Mapper, keyed on frozen ids)
+
+All 40 flagships live in `src/components/effects/cursePlays.tsx` (+ `.css`).
+Cadence matches wave 2: T1-T6 reuse one of the five curse G-templates with a
+fresh per-card flourish dressing block (own SVG, not a recolor); T7-T8 are fully
+bespoke S-scenes. Every keyframe animates transform/opacity only, one-shot
+`both`, scaled by `--fx-dur`, ends at opacity 0, and is parked under
+`html[data-anim="off"]`. Sounds are existing `SigSoundKey`s only.
+
+Split: 32 dressed-template (HexBrand 10, BlightGarden 7, OmenBell 5, ChainWeb 5,
+MidasVeil 5) + 8 bespoke scenes. New keyframes added: `cwp-swapout`,
+`cwp-swapin` (turncoat/aging identity crossfade), `cwp-grind`, `cwp-grindrev`
+(Curse Engine gears), `cwp-wilt` (Pyrrhic laurel).
+
+### T1-T6 dressed templates
+
+| id | template | flourish | sound | reuse rationale |
+| --- | --- | --- | --- | --- |
+| hw3_wrong_foot | HexBrand | wrongfoot | shades | a piece dragged from a light square onto a forced dark one |
+| hw3_no_retreat | ChainWeb | noretreat | shades | a rein snaps taut behind a piece pulled off its own back rank |
+| hw3_overexertion | HexBrand | overexert | clockice | a twice-moved piece seizes up under frost cuffs (source: frozen) |
+| hw3_toll_road | HexBrand | tollroad | shades | a border stile stamps a coin-toll on any crossing piece |
+| hw3_fifth_column | MidasVeil | fifthcolumn | shades | an enemy pawn's coat gilds to serve the caster, then reverts (crossfade) |
+| hw3_binding_oath | ChainWeb | bindingoath | shades | two pieces bound by one thread may not strike while both live |
+| hw3_slow_poison | OmenBell | slowpoison | shades | a green drop seeps in; the piece withers a rank down (gild-over) |
+| hw3_bloodlust | HexBrand | bloodlust | shades | the killer piece is dragged on to strike again |
+| hw3_curse_hop | MidasVeil | handeddown | shades | the curse-coin hops off a captured bearer to the nearest comrade |
+| hw3_wandering_sentry | BlightGarden | sentry | shades | one barred tile paces a rank, marching its beat |
+| hw3_bloodbond | ChainWeb | bloodbond | clockice | one bound piece captures, its partner freezes in sympathy (source: frozen) |
+| hw3_exiles_mark | HexBrand | exile | shades | a marked piece hauled toward the far half or it crumbles |
+| hw3_debtors_mark | HexBrand | debtor | clockice | freeze-debt tallies pile beside an idle piece (source: frozen) |
+| hw3_jammed_castle | OmenBell | jammedgate | clockice | a castled rook barred in behind a dropped grate (source: frozen) |
+| hw3_coronation_tax | HexBrand | coronationtax | clockice | a promotion strikes a different piece cold (source: frozen) |
+| hw3_mutiny | MidasVeil | mutiny | shades | the first enemy knight to capture turns its coat and defects |
+| hw3_sinking_mire | BlightGarden | mire | shades | a plus-shaped mire that shrinks one square per turn |
+| hw3_time_bomb | OmenBell | powderkeg | siege | a lit keg on an empty square counts down to a blast |
+| hw3_pilgrimage | HexBrand | pilgrimage | shades | a marked piece hauled toward a distant shrine or it freezes |
+| hw3_aging_blade | MidasVeil | agingblade | shades | a heavy piece that captures ages one rank down on the spot (crossfade) |
+| hw3_miasma | BlightGarden | miasma | petrifiedforest | a piece sickens beside its neighbours; the third dose freezes it |
+| hw3_defectors_mark | MidasVeil | sleeper | shades | a marked minor waits on a fuse, then turns its coat |
+| hw3_roaming_void | BlightGarden | maw | shades | a void drifts toward the nearest piece and devours it |
+| hw3_shared_fate | ChainWeb | sharedfate | shades | capturing one of a bound pair kills the other outright |
+| hw3_collapsing_floor | OmenBell | collapse | clockice | a chosen rank caves in, freezing what stands on it (source: frozen) |
+| hw3_bounty_mark | HexBrand | bounty | clockice | a marked piece freezes itself each time it captures (source: frozen) |
+| hw3_wildfire | BlightGarden | wildfire | shades | rot spreads comrade to comrade along a burning tendril |
+| hw3_effigy_of_dread | BlightGarden | effigy | petrifiedforest | a caster's effigy rises and bars the ring around it (source: summon; override: designer's PhantomParade lives in greatPlays) |
+| hw3_avalanche | BlightGarden | avalanche | shades | after the dormant fuse the empty squares of a half are sealed |
+| hw3_kings_guard | ChainWeb | kingsguard | clockice | each king move freezes the piece nearest the king (source: frozen) |
+| hw3_feeding_frenzy | HexBrand | feedingfrenzy | shades | the slider reach cinches tighter per active curse (override: WitchCircle is greatPlays) |
+| hw3_doomed_vow | OmenBell | doomedvow | cathedral | a condemned piece pleads under a falling axe unless the king comes |
+
+### T7-T8 bespoke scenes
+
+| id | scene | sound | notes |
+| --- | --- | --- | --- |
+| hw3_enemy_within | EnemyWithinScene | shades | the marked heavy piece's own shadow peels off and turns its coat (cwp-swapout/in) |
+| hw3_eclipse | EclipseScene | shades | a black moon slides across the sun; bishops and queen go dark (gild-over) |
+| hw3_hydra_hex | HydraScene | petrify | the branded head is struck off, two rise, each seizing a piece in frost (source: frozen) |
+| hw3_pyrrhic_toll | PyrrhicScene | cathedral | a laurel wilts as the bell tolls and a bystander is caught cold (cwp-wilt; source: frozen) |
+| hw3_martyrs_crown | MartyrCrownScene | aegis | the king's briar crown drinks the second check and lashes frost around him (source: frozen) |
+| hw3_curse_engine | CurseEngineScene | clockcage | two iron gears grind up the winding; a cold discharge seizes the strongest piece (cwp-grind/grindrev; source: frozen) |
+| hw3_blood_tithe | BloodTitheScene | rampage | every heavy capture drags one of their own pawns off to the tithe-ledger |
+| hw3_inverted_crown | InvertedCrownScene | shades | a promoted pawn's crown flips to a tin knight's helm whatever they chose (cwp-swapout/in) |
+
+### Notes / designer suggestions
+
+- The designer `anim:` hints matched the five curse templates almost verbatim
+  and were followed. Where a hint offered a greatPlays/godPlays alternative
+  (`effigy` -> PhantomParade, `feeding_frenzy` -> WitchCircle, and the T8
+  godPlays fallbacks CelestialRing/ChronoLord/ReaperSweep/CrownForge), the
+  self-contained curse-native path was taken instead, since those modules are
+  outside this task's file ownership. All six T7-T8 marquees named as "bespoke"
+  by the designer were built as bespoke S-scenes, and the two that offered an
+  OmenBell/greatPlays fallback (`pyrrhic_toll`, `inverted_crown`) were also
+  given full bespoke scenes rather than the fallback.
+- Freeze-payload flourishes tag `source: "frozen"` where the card reliably
+  paints the frozen zone at play time (Board takes squares from that zone);
+  hazards/marks with no matching `SigZone` leave `source` unset, exactly as
+  wave-2 BlightGarden cards do (there is no "barred" zone).
+- Audit (`scripts/audit-animations.ts`, read-only): 84/84 wave-3 entries parse,
+  zero bw3_/hw3_ problems, shared-flagship baseline held at 381 total / 45 at
+  tier>=5 (NOT increased).
