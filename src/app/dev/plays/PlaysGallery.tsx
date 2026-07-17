@@ -72,7 +72,7 @@ function Cell({ row }: { row: Row }) {
 }
 
 export function PlaysGallery() {
-  const all = React.useMemo(rows, []);
+  const all = React.useMemo(() => rows(), []);
   const [q, setQ] = React.useState("");
   const [tier, setTier] = React.useState(0);
   const [ready, setReady] = React.useState(false);

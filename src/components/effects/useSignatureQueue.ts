@@ -33,13 +33,21 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
     setSignatureCard({ id, key: ++keyRef.current });
   }, []);
 
-  const drain = useCallback(() => {
-    timerRef.current = null;
-    if (gateRef?.current) return; // resumes via notifyGateOpen
-    const id = queueRef.current.shift();
-    if (id == null) return;
-    playNow(id);
-    if (queueRef.current.length > 0) timerRef.current = window.setTimeout(drain, SPACING_MS);
+  // The stepper self-reschedules through a ref (a useCallback cannot refer to
+  // itself before its own declaration). Written from an effect, never during
+  // render; the initial value is a safe no-op that no caller can reach before
+  // the first effect pass has run.
+  const drainRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    drainRef.current = () => {
+      timerRef.current = null;
+      if (gateRef?.current) return; // resumes via notifyGateOpen
+      const id = queueRef.current.shift();
+      if (id == null) return;
+      playNow(id);
+      if (queueRef.current.length > 0)
+        timerRef.current = window.setTimeout(() => drainRef.current(), SPACING_MS);
+    };
   }, [gateRef, playNow]);
 
   /** Fire a card's signature: immediately when the board is free, queued when
@@ -49,19 +57,22 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
       if (gateRef?.current || timerRef.current != null || Date.now() < busyUntilRef.current) {
         queueRef.current = [...queueRef.current, id].slice(-MAX_QUEUED);
         if (!gateRef?.current && timerRef.current == null) {
-          timerRef.current = window.setTimeout(drain, Math.max(0, busyUntilRef.current - Date.now()));
+          timerRef.current = window.setTimeout(
+            () => drainRef.current(),
+            Math.max(0, busyUntilRef.current - Date.now()),
+          );
         }
         return;
       }
       playNow(id);
     },
-    [drain, gateRef, playNow],
+    [gateRef, playNow],
   );
 
   /** The gate flipped open (draft overlay dismissed): held plays step out. */
   const notifyGateOpen = useCallback(() => {
-    if (timerRef.current == null && queueRef.current.length > 0) drain();
-  }, [drain]);
+    if (timerRef.current == null && queueRef.current.length > 0) drainRef.current();
+  }, []);
 
   // Unmount: stop the stepper so no timer outlives the board.
   useEffect(

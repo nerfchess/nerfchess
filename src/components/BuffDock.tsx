@@ -153,8 +153,11 @@ export function useBuffTargeting({
   const cancel = () => setTargeting(null);
 
   // Keep the keydown handler's Enter shortcut pointed at the CURRENT finish
-  // closure without re-subscribing the listener on every pick.
-  finishRef.current = finish;
+  // closure without re-subscribing the listener on every pick. Written from
+  // an effect (never during render) per the react-hooks refs rule.
+  useEffect(() => {
+    finishRef.current = finish;
+  });
 
   return { targeting, start, pick, cancel, finish };
 }
