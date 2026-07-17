@@ -144,7 +144,7 @@ html[data-anim="fast"] *::after {
 
 /* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
    the core surfaces and text ramps like the high-contrast block below. The
-   named dark variants (midnight, void, abyss, ember, moss, nebula — see
+   named dark variants (midnight, void, abyss, ember, crimson, moss, nebula — see
    SITE_THEMES in src/lib/settings.ts) inherit every dark style and remap only
    the surface variables plus the page wash, so each reads as a full palette
    shift with zero per-component work. */
@@ -207,6 +207,21 @@ html[data-theme="ember"] {
 html[data-theme="ember"], html[data-theme="ember"] body {
   background-color: #170f0e;
   background-image: linear-gradient(180deg, #251715 0%, #1d1210 46%, #170f0e 100%);
+}
+html[data-theme="crimson"] {
+  --paper: #e6cbd1;
+  --paper-dim: #ab8790;
+  --ink-deep: #0d0507;
+  --ink-warm: #1e0f13;
+  --surface-panel: #291015;
+  --surface-raise: #38181f;
+  --surface-hover: #31141a;
+  --edge: #48222b;
+  --edge-strong: #612e39;
+}
+html[data-theme="crimson"], html[data-theme="crimson"] body {
+  background-color: #150a0c;
+  background-image: linear-gradient(180deg, #241217 0%, #1b0e12 46%, #150a0c 100%);
 }
 html[data-theme="moss"] {
   --paper: #ced6c6;
