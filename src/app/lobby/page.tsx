@@ -510,7 +510,7 @@ function LobbyInner() {
                   <SecondaryModeCard
                     icon={<Cpu size={18} aria-hidden />}
                     title="Practice vs computer"
-                    description="Warm up against a house bot at your chosen difficulty."
+                    description="Warm up against the computer at your chosen difficulty."
                     href="/play"
                   />
                 </div>

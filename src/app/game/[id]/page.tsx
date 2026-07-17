@@ -890,8 +890,8 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         moves={history}
         cardEvents={cardEventsFromDtActions(dtActions)}
         profiles={[
-          { name: setup.players.w.name, href: `/u/${encodeURIComponent(setup.players.w.name)}`, isBot: !!setup.players.w.house },
-          { name: setup.players.b.name, href: `/u/${encodeURIComponent(setup.players.b.name)}`, isBot: !!setup.players.b.house },
+          { name: setup.players.w.name, href: `/u/${encodeURIComponent(setup.players.w.name)}` },
+          { name: setup.players.b.name, href: `/u/${encodeURIComponent(setup.players.b.name)}` },
         ]}
         myBuffs={draftGame?.buffs?.players.w.buffs}
         opponentBuffs={draftGame?.buffs?.players.b.buffs}
@@ -1391,7 +1391,7 @@ function describeResult(result: { winner: Color | "draw" | null; reason: string 
 function HeaderIdentity({
   seat,
 }: {
-  seat: { name: string; rating: number | null; provisional?: boolean; house?: boolean };
+  seat: { name: string; rating: number | null; provisional?: boolean };
 }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">

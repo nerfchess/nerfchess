@@ -18,7 +18,6 @@ type OpenRow = {
   timeSec: number;
   incrementSec: number;
   rated: boolean;
-  house?: boolean;
 };
 
 export function OpenLobbyPanel({ className = "" }: { className?: string }) {
@@ -33,7 +32,6 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
           timeSec: s.timeSec,
           incrementSec: s.incrementSec,
           rated: true,
-          house: s.house,
         })),
         ...(lobby.challenges ?? []).map((c) => ({
           key: `chal:${c.id}`,
