@@ -173,18 +173,32 @@ export const PLUGIN_IDS: readonly string[] = [
   // casinoPlays.tsx (7)
   "cs_slot_machine", "cs_roulette", "cs_blackjack", "cs_scratch_card", "cs_let_it_ride", "cs_loot_box",
   "cs_poker_bluff",
-  // boonPlays.tsx (28)
+  // boonPlays.tsx (72)
   "bw2_ancient_custom", "bw2_hit_and_run", "bw2_cornered_king", "bw2_blood_duel", "bw2_divine_right", "bw2_pioneers_banner",
   "bw2_diplomatic_immunity", "bw2_deathless_oath", "bw2_spoils_of_war", "bw2_prisoner_exchange", "bw2_highwaymans_toll", "bw2_queens_testament",
   "bw2_scarecrow", "bw2_masquerade", "bw2_alchemists_trade", "bw2_early_coronation", "bw2_standard_bearer", "bw2_ascetics_bargain",
   "bw2_jesters_rule", "bw2_blood_price", "bw2_kingmakers_pact", "bw2_bolt_hole", "bw2_carnival_of_masks", "bw2_restitution",
-  "bw2_long_truce", "bw2_great_return", "bw2_shadow_reserve", "bw2_eternal_keep",
-  // cursePlays.tsx (27)
+  "bw2_long_truce", "bw2_great_return", "bw2_shadow_reserve", "bw2_eternal_keep", "bw3_forced_march", "bw3_royal_caper",
+  "bw3_tunnelers", "bw3_rally_royal", "bw3_underdogs_gambit", "bw3_bishops_blessing", "bw3_shield_wall", "bw3_kings_shield",
+  "bw3_praetorian", "bw3_watchword", "bw3_vantage_point", "bw3_hallowed_ground", "bw3_first_blood", "bw3_postern_gate",
+  "bw3_coronation_bonus", "bw3_plunderers_ledger", "bw3_eleventh_hour", "bw3_deep_position", "bw3_martyrs_gift", "bw3_heir_apparent",
+  "bw3_field_knighting", "bw3_battlefield_commission", "bw3_ironwrights_bargain", "bw3_second_face", "bw3_home_guard", "bw3_double_down",
+  "bw3_kings_road", "bw3_futures_market", "bw3_castle_in_the_storm", "bw3_last_muster", "bw3_funeral_pyre", "bw3_mummers_dance",
+  "bw3_last_stand", "bw3_high_stakes", "bw3_from_the_ashes", "bw3_kingsguard_duel", "bw3_kings_sanctuary", "bw3_martyrdom",
+  "bw3_the_reckoning", "bw3_covenant_of_return", "bw3_the_homecoming", "bw3_turn_the_tide", "bw3_pretender", "bw3_drive_them_out",
+  // cursePlays.tsx (67)
   "hw2_witchs_veto", "hw2_long_road_home", "hw2_blood_price", "hw2_tarnished_crown", "hw2_war_rations", "hw2_compounding_misery",
   "hw2_bad_omen", "hw2_tolling_bell", "hw2_witching_hour", "hw2_weight_of_toil", "hw2_cold_footprints", "hw2_creeping_blight",
   "hw2_gravebloom", "hw2_gathering_storm", "hw2_twinned_torment", "hw2_no_reins", "hw2_curse_of_recoil", "hw2_queens_ransom",
   "hw2_bound_court", "hw2_cursed_coin", "hw2_gilded_rot", "hw2_death_knell", "hw2_hollow_crown", "hw2_tide_of_ash",
-  "hw2_crown_of_thorns", "hw2_pauper_crown", "hw2_beacon_of_woe",
+  "hw2_crown_of_thorns", "hw2_pauper_crown", "hw2_beacon_of_woe", "hw3_wrong_foot", "hw3_overexertion", "hw3_toll_road",
+  "hw3_bloodlust", "hw3_exiles_mark", "hw3_debtors_mark", "hw3_coronation_tax", "hw3_pilgrimage", "hw3_bounty_mark",
+  "hw3_feeding_frenzy", "hw3_slow_poison", "hw3_jammed_castle", "hw3_time_bomb", "hw3_collapsing_floor", "hw3_doomed_vow",
+  "hw3_wandering_sentry", "hw3_sinking_mire", "hw3_miasma", "hw3_roaming_void", "hw3_wildfire", "hw3_effigy_of_dread",
+  "hw3_avalanche", "hw3_binding_oath", "hw3_bloodbond", "hw3_shared_fate", "hw3_kings_guard", "hw3_no_retreat",
+  "hw3_fifth_column", "hw3_curse_hop", "hw3_mutiny", "hw3_defectors_mark", "hw3_aging_blade", "hw3_enemy_within",
+  "hw3_eclipse", "hw3_hydra_hex", "hw3_pyrrhic_toll", "hw3_martyrs_crown", "hw3_curse_engine", "hw3_blood_tithe",
+  "hw3_inverted_crown",
 ];
 // </plugin-ids:generated>
 
