@@ -21,15 +21,18 @@ const EMBERS = [
   { ex: "84%", edelay: "2.7s" },
 ];
 
+// The minor doors burn fewer sparks: same file, half the count.
+const EMBERS_MINOR = [EMBERS[1], EMBERS[3]];
+
 // The rune carvings flanking the label: real Elder Futhark glyphs, purely
 // decorative (aria-hidden), reading as the gate's old inscription.
 const RUNES_L = "ᚦᛟᚱ";
 const RUNES_R = "ᚷᚨᛏ";
 
-function GateDressing() {
+function GateDressing({ minor = false }: { minor?: boolean }) {
   return (
     <>
-      {EMBERS.map((e, i) => (
+      {(minor ? EMBERS_MINOR : EMBERS).map((e, i) => (
         <span
           key={i}
           aria-hidden="true"
@@ -46,6 +49,7 @@ export function DungeonGateButton({
   onClick,
   loading = false,
   disabled = false,
+  variant = "gate",
   className = "",
   children,
 }: {
@@ -56,10 +60,14 @@ export function DungeonGateButton({
   loading?: boolean;
   /** Torches out: cold gray stone, no glow, no input. */
   disabled?: boolean;
+  /** "gate" is the full-size entrance; "minor" is the same carved-stone
+   *  material at postern-door scale, for secondary actions beside it. */
+  variant?: "gate" | "minor";
   className?: string;
   children: ReactNode;
 }) {
-  const cls = "dgn-gate " + className;
+  const minor = variant === "minor";
+  const cls = "dgn-gate " + (minor ? "dgn-gate--minor " : "") + className;
   const label = (
     <span className="dgn-gate__label">
       {/* Runes render via CSS content so the button's textContent stays the
@@ -78,7 +86,7 @@ export function DungeonGateButton({
   if (href && !disabled && !loading) {
     return (
       <Link href={href} onClick={onClick} className={cls} data-loading={loading || undefined}>
-        <GateDressing />
+        <GateDressing minor={minor} />
         {label}
       </Link>
     );
@@ -91,7 +99,7 @@ export function DungeonGateButton({
       data-loading={loading || undefined}
       className={cls}
     >
-      <GateDressing />
+      <GateDressing minor={minor} />
       {label}
     </button>
   );

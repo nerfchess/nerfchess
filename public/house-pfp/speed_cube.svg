@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Speed cube puzzle">
+  <defs>
+    <radialGradient id="sc-bg" cx="0.5" cy="0.4" r="0.75"><stop offset="0" stop-color="#5aa9e6"/><stop offset="1" stop-color="#1b3a6b"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#sc-bg)"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.14"/>
+  <!-- isometric cube: top face -->
+  <path d="M100 36 L156 62 L100 88 L44 62 Z" fill="#f2f2ee"/>
+  <g stroke="#20242e" stroke-width="3">
+    <path d="M100 36 L156 62 L100 88 L44 62 Z" fill="none"/>
+    <path d="M62.6 53.3 L118.6 79.3 M81.3 44.6 L137.3 70.6 M62.6 70.6 L118.6 44.6 M81.3 79.3 L137.3 53.3" opacity="0.6"/>
+  </g>
+  <!-- left face -->
+  <path d="M44 62 L100 88 V158 L44 132 Z" fill="#e84040"/>
+  <g stroke="#20242e" stroke-width="3">
+    <path d="M44 62 L100 88 V158 L44 132 Z" fill="none"/>
+    <path d="M44 85 L100 111 M44 108 L100 134 M62.6 70.6 V140.6 M81.3 79.3 V149.3" opacity="0.6"/>
+  </g>
+  <!-- right face -->
+  <path d="M156 62 L100 88 V158 L156 132 Z" fill="#f2c73a"/>
+  <g stroke="#20242e" stroke-width="3">
+    <path d="M156 62 L100 88 V158 L156 132 Z" fill="none"/>
+    <path d="M156 85 L100 111 M156 108 L100 134 M137.3 70.6 V140.6 M118.6 79.3 V149.3" opacity="0.6"/>
+  </g>
+  <!-- speed lines -->
+  <g stroke="#eaf4ff" stroke-width="4" stroke-linecap="round" opacity="0.8">
+    <path d="M156 44 q14 -4 24 4 M162 58 q12 0 18 8"/>
+  </g>
+</svg>

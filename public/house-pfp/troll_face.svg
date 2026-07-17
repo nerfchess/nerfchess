@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mischievous troll grin">
+  <defs>
+    <linearGradient id="tf-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c7a89"/><stop offset="1" stop-color="#2b3440"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#tf-bg)"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.14"/>
+  <!-- lumpy head -->
+  <path d="M100 34 q34 -4 48 22 q14 24 8 52 q12 4 6 16 q-6 10 -16 6 q-10 26 -46 28 q-36 -2 -46 -28 q-10 4 -16 -6 q-6 -12 6 -16 q-6 -28 8 -52 q14 -26 48 -22z" fill="#e8e4da" stroke="#20242e" stroke-width="4"/>
+  <!-- knowing sidelong eyes -->
+  <path d="M58 88 q16 -14 32 -2" stroke="#20242e" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M110 86 q16 -12 32 2" stroke="#20242e" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="84" cy="94" r="5" fill="#20242e"/>
+  <circle cx="126" cy="94" r="5" fill="#20242e"/>
+  <!-- big lumpy nose -->
+  <path d="M96 96 q-10 16 -2 24 q6 6 14 2" stroke="#20242e" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- the wide toothy grin -->
+  <path d="M52 118 q48 40 96 0 q-6 32 -48 32 q-42 0 -48 -32z" fill="#fff" stroke="#20242e" stroke-width="4" stroke-linejoin="round"/>
+  <g stroke="#20242e" stroke-width="2.5">
+    <path d="M64 126 l7 16 M78 133 l5 13 M92 137 l3 11 M108 137 l-3 11 M122 133 l-5 13 M136 126 l-7 16"/>
+  </g>
+  <!-- grin creases -->
+  <path d="M50 116 q-8 6 -8 14 M150 116 q8 6 8 14" stroke="#20242e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+</svg>

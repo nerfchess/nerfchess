@@ -146,15 +146,30 @@ const CURATED_PFP_NAMES = [
   "window_rain",
   "desert_cactus",
   "moonlit_bay",
+  // Third wave: memorable character/meme-style pfps (owner ask: the roster
+  // read as wall-to-wall sunsets). All original flat vector art — nothing
+  // traced from an existing image — assigned thematically in bots.ts
+  // (lazydodge -> shiba_wow, dev_e4 -> rubber_ducky, ...).
+  "troll_face",
+  "speed_cube",
+  "shiba_wow",
+  "moai_statue",
+  "rubber_ducky",
+  "pixel_knight",
+  "nerd_glasses",
+  "cool_cat",
 ] as const;
 
-// Deterministically generated scenic pfps (scripts/gen-house-pfps.mjs). With
-// ~210 personas the ~60 hand-authored scenes couldn't give every bot a UNIQUE
-// pfp, so a generator emits a large pool of distinct dawn/dusk landscapes
-// (palette x scene x celestial x accents) in the same art style. Each name maps
-// to /public/house-pfp/gen_NNN.svg. KEEP GENERATED_PFP_COUNT + generatedPfpName
-// in lockstep with the generator script (same count + naming); the audit script
-// asserts every roster pfp resolves to an on-disk file.
+// Deterministically generated pfps (scripts/gen-house-pfps.mjs). With ~210
+// personas the hand-authored set couldn't give every bot a UNIQUE pfp, so a
+// generator emits a large pool of distinct images. The current generation is
+// 50 bold, memorable subjects (animal faces, meme-style grins, a puzzle cube,
+// an arcade stick, a moai, ...) x 4 palette/backdrop variations — replacing
+// the earlier all-sunset landscape pool that made every bot look alike. Each
+// name maps to /public/house-pfp/gen_NNN.svg. KEEP GENERATED_PFP_COUNT +
+// generatedPfpName in lockstep with the generator script (same count +
+// naming); the audit script asserts every roster pfp resolves to an on-disk
+// file.
 export const GENERATED_PFP_COUNT = 200;
 export function generatedPfpName(i: number): string {
   return `gen_${String(i).padStart(3, "0")}`;
@@ -163,8 +178,8 @@ const GENERATED_PFP_NAMES: string[] = Array.from({ length: GENERATED_PFP_COUNT }
   generatedPfpName(i),
 );
 
-// The full house-pfp catalog: curated scenes first, then the generated pool.
-// Large enough (260) that every persona in the ~210-deep roster gets a unique
+// The full house-pfp catalog: curated images first, then the generated pool.
+// Large enough (268) that every persona in the ~210-deep roster gets a unique
 // pfp with room to spare (see assignHousePfps in lib/server/bots.ts).
 export const HOUSE_PFP_NAMES: readonly string[] = [...CURATED_PFP_NAMES, ...GENERATED_PFP_NAMES];
 
