@@ -811,15 +811,13 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-// Floor raised 60 -> 110 (owner target: 40+ concurrent house games around the
-// clock). 40 bot-vs-bot games seat 80 personas; add the seek reserve, human
-// pickups, and headroom for the 40-55 steady band and the smallest daily window
-// must still supply ~100+ active personas. The window keeps breathing daily
-// (110-120), just above the new floor.
-export const HOUSE_COUNT_MIN = 110;
-export const HOUSE_COUNT_MAX = 120;
-// How many bots idle "online" for presence — never more than the roster holds.
-export const HOUSE_ONLINE_COUNT = Math.min(150, HOUSE_ROSTER.length);
+// Owner target: EVERY persona active at once. Min == Max == roster size, so the
+// daily window is always the whole roster (houseWindow returns the full roster
+// when size >= length) and every bot seeks / gets picked up / plays filler.
+export const HOUSE_COUNT_MIN = HOUSE_ROSTER.length;
+export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
+// Every bot also shows "online" for presence — the whole roster.
+export const HOUSE_ONLINE_COUNT = HOUSE_ROSTER.length;
 
 export function clampHouseCount(n: number): number {
   return Number.isFinite(n)
@@ -1032,16 +1030,11 @@ export function pickHouseFillerPair(
 // ceiling), but the displayed/rated number is shifted here so the field can be
 // re-spread without touching strength or the difficulty-band picker.
 //
-// Owner spread: every bot +100, EXCEPT sub-1600 bots (the 1350/1450/1550 tiers)
-// which drop 100-150 instead — pulling the low end down and pushing everyone else
-// up, so the roster spans ~1150 to ~2300 instead of ~1510-2240.
+// Owner spread: every bot advertises a random-looking rating in [100, 300],
+// name-hashed so it is deterministic per persona (re-derived identically on
+// every sync) and independent of the engine skill tier.
 function houseSeedBase(persona: HousePersona): number {
-  const seed = persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
-  if (persona.skill < 1600) {
-    const drop = 100 + (nameHash(persona.name + "|drop") % 51); // 100..150
-    return seed - drop;
-  }
-  return seed + 100;
+  return 100 + (nameHash(persona.name + "|elo") % 201); // 100..300
 }
 
 /** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
@@ -1052,7 +1045,8 @@ export function houseSeedRatingForMode(persona: HousePersona, mode: DraftMode): 
   const spread = nameHash(persona.name + "|spread") % 51; // 0..50
   const buffHigher = nameHash(persona.name + "|dir") % 2 === 0;
   const delta = (mode === "buff") === buffHigher ? spread : -spread;
-  return Math.max(100, houseSeedBase(persona) + delta);
+  // Clamp both modes into the advertised 100-300 band.
+  return Math.max(100, Math.min(300, houseSeedBase(persona) + delta));
 }
 
 /** The mode-neutral seeded rating: the base. Written to the legacy users.rating

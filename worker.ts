@@ -528,7 +528,11 @@ const houseSeededKey = "hp:seeded:v5";
 // HOUSE_SEED_RD (60) — older deployments seeded RD 150, which is provisional
 // (>110) and let a bot's first games swing its seeded number wildly. Bump so
 // the settle reaches every existing account on the next cold start.
-const houseRatingsSyncedKey = "hp:ratings-synced:rating-v6";
+// rating-v7: the advertised ratings were re-spread again — every bot now
+// advertises a name-hashed random rating in [100, 300] (per-mode buckets clamp
+// into the same band). Bump so syncHouseRatings rewrites every existing
+// account's users.rating and both per-mode buckets on the next cold start.
+const houseRatingsSyncedKey = "hp:ratings-synced:rating-v7";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set

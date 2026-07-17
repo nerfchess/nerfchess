@@ -27,10 +27,25 @@ export default function HomePage() {
 
       {/* Hero: the live featured board on the left, the action column on the
           right. The board sells the product; the copy explains it in one
-          breath; Open Lobby is the single primary way in. */}
+          breath; Open Lobby is the single primary way in.
+          Mobile order (owner request): the live TV board leads the page, with
+          the Open lobby CTA immediately below it — everything else follows. */}
       <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
-        <div className="order-2 lg:order-1 animate-rise">
+        <div className="order-1 animate-rise">
           <HeroTv />
+          {/* Mobile-only primary CTA: keeps "Open lobby" as high as possible,
+              directly under the live board. Desktop keeps the CTA in the
+              action column beside the board. */}
+          <Link
+            href="/lobby"
+            className="btn-leaf btn-cta press mt-4 flex w-full items-center justify-center gap-3 px-6 py-5 font-display text-3xl font-bold no-underline lg:hidden"
+          >
+            Open lobby
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </Link>
           {/* Socials live right under the hero board (owner request: back to
               its original spot). */}
           <div className="mt-4">
@@ -40,7 +55,7 @@ export default function HomePage() {
 
         {/* The action column is kept short on purpose: it should never run
             taller than the board beside it. */}
-        <div className="order-1 lg:order-2 stagger-in">
+        <div className="order-2 stagger-in">
           {/* Eyebrow row, with a quiet onboarding door parked in the upper
               right. It drops brand-new players straight into the built-in
               guided tutorial: a real game against the easiest bot with coach
@@ -64,7 +79,7 @@ export default function HomePage() {
               next click is the matchmaking button. */}
           <Link
             href="/lobby"
-            className="btn-leaf btn-cta press mt-5 flex w-full items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold no-underline"
+            className="btn-leaf btn-cta press mt-5 hidden w-full items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold no-underline lg:flex"
           >
             Open lobby
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

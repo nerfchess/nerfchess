@@ -28,6 +28,11 @@ export interface PassiveAuraEntry {
   targetSquares: number[];
   /** Stable-ish activation stamp for the spawn dedupe (see PassiveLayer). */
   activationPly: string;
+  /** Whether the persistent stage-3 aura renders. Motif'd / piece-scoped
+   *  passives already paint their own per-piece motif aura, so they join the
+   *  lifecycle (spawn intro, trigger pulses, exit) WITHOUT double-painting a
+   *  second standing aura. Quiet passives and nerf rules render both. */
+  renderAura: boolean;
 }
 
 /** Contract Side from engine Color. */
@@ -57,13 +62,15 @@ function kingSquare(board: BoardState, color: Color): number | null {
   return sq != null && sq >= 0 ? sq : null;
 }
 
-/** Derive persistent buff-passive auras. Scoped to the QUIET passives: those
- *  that declare no CardFx motif and no piece scope, so they otherwise paint
- *  nothing on the board (the motif'd passives already wear a per-card
- *  EmpowerShine / NerfAura on their affected pieces). Each qualifier now gets
- *  its OWN registry aura at its registry target instead of the one-per-king
- *  stopgap (docs/passive-effect-audit.md R8), anchored on the owner's king as
- *  the standing presence. */
+/** Derive live buff-passive entries — EVERY running passive with a registry
+ *  visual, so the whole hand participates in the lifecycle (spawn intro on
+ *  acquisition, trigger pulses, exit). Passives that declare a CardFx motif or
+ *  piece scope already wear a per-piece EmpowerShine / NerfAura, so their
+ *  entries carry renderAura:false and skip the standing stage-3 aura (no
+ *  double paint); the QUIET passives render theirs at the owner's king as the
+ *  standing presence (docs/passive-effect-audit.md R8). Previously the motif'd
+ *  passives were dropped entirely here, which silenced ~80% of the passive
+ *  pool's spawn/pulse animation — the "passives never animate" bug. */
 export function buffPassiveAuras(buffs: BuffMatchState | null, board: BoardState): PassiveAuraEntry[] {
   const out: PassiveAuraEntry[] = [];
   if (!buffs) return out;
@@ -74,7 +81,6 @@ export function buffPassiveAuras(buffs: BuffMatchState | null, board: BoardState
       if (!inst.id || inst.spent || inst.nullified) continue;
       const def = BUFF_BY_ID[inst.id];
       if (!def || def.kind !== "passive") continue;
-      if (def.fx?.motif || def.fx?.pieces) continue; // already paints its own motif aura
       if (!getPassiveVisual(inst.id, "buff")) continue;
       if (!fxRunning(def, inst)) continue;
       const king = kingSquare(board, color);
@@ -85,6 +91,7 @@ export function buffPassiveAuras(buffs: BuffMatchState | null, board: BoardState
         color,
         targetSquares: king != null ? [king] : [],
         activationPly: `b${i}`,
+        renderAura: !(def.fx?.motif || def.fx?.pieces),
       });
     }
   }
@@ -120,6 +127,7 @@ export function nerfPassiveAuras(rules: NerfAuraInput[], board: BoardState): Pas
       color: r.color,
       targetSquares: squares,
       activationPly: "start",
+      renderAura: true,
     });
   }
   return out;
