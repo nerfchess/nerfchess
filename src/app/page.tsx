@@ -32,14 +32,20 @@ export default function HomePage() {
           breath; Open Lobby is the single primary way in.
           Mobile order (owner request): the live TV board leads the page, with
           the Open lobby CTA immediately below it — everything else follows. */}
-      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
+      <section className="relative w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
+        {/* Torchlight pooling at the hero's far corners: the landing page
+            opens inside the dungeon, not in front of it. Decorative only. */}
+        <span aria-hidden className="torch-pool hidden lg:block" style={{ top: "-40px", left: "-90px" }} />
+        <span aria-hidden className="torch-pool hidden lg:block" style={{ bottom: "-60px", right: "-80px" }} />
         <div className="order-1 animate-rise">
           <HeroTv />
-          {/* Mobile stack (owner order): board, then Live RV, then Open Lobby
-              directly below it, nothing in between. Desktop keeps its action
-              column beside the board, so both panels hide at lg. */}
-          <LiveRvPanel className="mt-3 lg:hidden" />
+          {/* Mobile stack (owner order, 2026-07): board, then the LOBBY entry
+              directly below it, then the live-games panel. The lobby is the
+              page's one primary action and must outrank spectating. Desktop
+              keeps its action column beside the board, so both panels hide
+              at lg. */}
           <OpenLobbyPanel className="mt-2.5 lg:hidden" />
+          <LiveRvPanel className="mt-3 lg:hidden" />
           {/* Socials live right under the hero board (owner request: back to
               its original spot). */}
           <div className="mt-4">
@@ -73,7 +79,7 @@ export default function HomePage() {
               next click is the matchmaking button. */}
           <Link
             href="/lobby"
-            className="btn-leaf btn-cta press mt-5 hidden w-full items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold no-underline lg:flex"
+            className="btn-leaf btn-cta cta-shine press mt-5 hidden w-full items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold no-underline lg:flex"
           >
             Open lobby
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -337,7 +343,8 @@ function HowItWorks() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-6">
       <header className="mb-5">
-        <h2 className="display-3 text-parchment-50">How it works</h2>
+        <span className="kicker eyebrow">The rules of the dungeon</span>
+        <h2 className="display-3 mt-1.5 text-parchment-50">How it works</h2>
       </header>
       <div className="stagger-in grid gap-4 sm:grid-cols-3">
         {steps.map((step) => {
@@ -347,7 +354,7 @@ function HowItWorks() {
           return (
             <div
               key={step.n}
-              className={`plate relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
+              className={`plate dgn-rivets relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
             >
               {/* One aligned header row per card: number chip, title, icon.
                   The row reserves a fixed two-line height and centers its
@@ -462,7 +469,10 @@ function FeaturedCards() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-8 pb-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="display-3 text-parchment-50">Draft from hundreds of cards</h2>
+        <div>
+          <span className="kicker eyebrow">The vault</span>
+          <h2 className="display-3 mt-1.5 text-parchment-50">Draft from hundreds of cards</h2>
+        </div>
         <Link href="/codex" className="text-[13px] text-gold-leaf no-underline transition-colors hover:text-parchment-50">
           Browse the codex →
         </Link>
@@ -473,7 +483,7 @@ function FeaturedCards() {
               <Link
                 key={`${c.kind}-${c.id}`}
                 href={c.href}
-                className="plate group flex flex-col gap-2.5 p-3 no-underline transition-colors hover:border-gold/40"
+                className="plate hover-lift group flex flex-col gap-2.5 p-3 no-underline transition-colors hover:border-gold/40"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className={`grid h-9 w-9 shrink-0 place-items-center border tier-bg-${c.tier} tier-${c.tier}`}>

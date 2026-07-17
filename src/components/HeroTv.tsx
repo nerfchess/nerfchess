@@ -2,37 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { MPPlayers } from "@/lib/multiplayer";
 import { featuredBoard } from "@/lib/spectate/featuredBoard";
+import { useArchiveReplay } from "@/lib/spectate/useArchiveReplay";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import { clockLabel } from "@/lib/tournaments";
 import type { Color } from "@/engine/types";
 
-// The last archived game, fetched once for the no-live-games fallback.
-type RecentGame = {
-  id: string;
-  white_name: string;
-  black_name: string;
-  white_rating_before: number | null;
-  black_rating_before: number | null;
-  moves: string;
-  category: string | null;
-  white_avatar: string | null;
-  black_avatar: string | null;
-};
-
 // Lichess-TV-style hero: when a real game is being played, the landing board
 // streams it live (top game = most watched, then longest running). With no
-// live games it shows the most recently finished game; the static demo
-// position only appears before anything has ever been played.
+// live games the channel keeps running: a random archived game reruns move by
+// move (badged REPLAY), then the next one; the static demo position only
+// appears before anything has ever been played.
 export function HeroTv() {
   const router = useRouter();
   const lobby = useLobbySnapshot(10000);
-  const [recent, setRecent] = useState<RecentGame | null>(null);
 
   // Featured selection + health-checked failover, shared with /tv. The hero has
   // no channel filter and no manual pin, so it simply follows the first HEALTHY
@@ -43,43 +30,18 @@ export function HeroTv() {
   const tune = useFeaturedTune(candidateIds, null, "hero", { surface: "hero", filter: "hero" });
   const { streamId, moves, players, over, draft } = tune;
 
-  // Pull the latest finished game IMMEDIATELY on mount, in parallel with the
-  // lobby poll, so the hero board shows real play right away instead of waiting
-  // for the (single global Durable Object, sometimes slow) lobby snapshot. A
-  // live game, when one is being played, takes over below; until it does, this
-  // recent game keeps the board alive so a visitor never sees a loading gap.
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/games/recent")
-      .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
-      .then((data) => {
-        if (!cancelled && data?.game) setRecent(data.game);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const live = tune.live;
-  const recentPlayers = useMemo<MPPlayers | null>(() => {
-    if (!recent) return null;
-    return {
-      w: {
-        name: recent.white_name,
-        rating: recent.white_rating_before ? Math.round(recent.white_rating_before) : null,
-        avatar: recent.white_avatar,
-      },
-      b: {
-        name: recent.black_name,
-        rating: recent.black_rating_before ? Math.round(recent.black_rating_before) : null,
-        avatar: recent.black_avatar,
-      },
-    };
-  }, [recent]);
+  // The archive rerun: a random recently finished game replayed move by move,
+  // then another. The hook fetches its pool IMMEDIATELY on mount, in parallel
+  // with the lobby poll, so the hero board shows real play right away instead
+  // of waiting for the (single global Durable Object, sometimes slow) lobby
+  // snapshot. A live game, when one is being played, takes over below (which
+  // also pauses every rerun timer); until it does, the rerun keeps the board
+  // alive so a visitor never sees a loading gap or a frozen position.
+  const replay = useArchiveReplay(!live, null);
   const shownMoves = useMemo(
-    () => (live ? moves : recent?.moves ? recent.moves.split(" ").filter(Boolean) : []),
-    [live, moves, recent],
+    () => (live ? moves : replay.moves),
+    [live, moves, replay.moves],
   );
   const { board, history } = useMemo(
     () => featuredBoard(live, shownMoves, draft),
@@ -87,15 +49,18 @@ export function HeroTv() {
   );
   const lastMove = history[history.length - 1] ?? null;
 
-  const shownId = live ? streamId : recent?.id ?? null;
-  const shownPlayers = live ? players : recentPlayers;
+  const shownId = live ? streamId : replay.game?.id ?? null;
+  const shownPlayers = live ? players : replay.players;
   // The lobby entry for the streaming game, when live: carries the time
   // control and live move count for the overlay header.
   const liveGame = live ? lobby?.games.find((g) => g.id === streamId) ?? null : null;
   // The shown game's mode (nerf/buff), when known: labels the seat ratings
   // and feeds the caption below the board.
-  const rawMode = live ? liveGame?.mode ?? null : recent?.category ?? null;
-  const shownMode = rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
+  const shownMode = live
+    ? liveGame?.mode === "nerf" || liveGame?.mode === "buff"
+      ? liveGame.mode
+      : null
+    : replay.mode;
   // Move number for the header: the streamed move count when live, otherwise
   // the length of the replayed line.
   const moveNumber = shownMoves.length;
@@ -175,16 +140,21 @@ export function HeroTv() {
       <div className="flex items-center justify-between gap-2 pb-2">
         {seat("b")}
         <div className="flex shrink-0 items-center gap-1.5">
+          {/* LIVE when streaming, "Just finished" while the result lingers,
+              and the ember REPLAY chip for an archive rerun — a rerun must
+              never wear the live colors. */}
           <span
             className={
               "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
               (live && !over
                 ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
-                : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300")
+                : live
+                  ? "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300"
+                  : "border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] text-[rgb(var(--energy-ember-rgb))]")
             }
           >
             {live && !over ? <span className="dot-live h-2 w-2 bg-oxblood-glow" /> : null}
-            {live && over ? "Just finished" : "LIVE"}
+            {live ? (over ? "Just finished" : "LIVE") : "REPLAY"}
           </span>
           {shownMode ? (
             <span
@@ -213,6 +183,11 @@ export function HeroTv() {
       <div className="flex items-center justify-between gap-2 pt-2">
         {seat("w")}
         <div className="flex shrink-0 items-center gap-3">
+          {!live && (
+            <span className="hidden text-[12px] text-parchment-400 sm:inline">
+              from the archive
+            </span>
+          )}
           {moveNumber > 0 ? (
             <span className="font-mono text-[12px] tabular-nums text-parchment-400">
               Move {moveNumber}

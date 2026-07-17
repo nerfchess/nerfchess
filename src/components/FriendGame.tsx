@@ -452,8 +452,10 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
 // The friend-game setup, rendered inline inside the lobby's Friends tab. Time
 // control, a color-coded mode pick, casual/rated stakes, the create+share
 // button, and a join-with-code box — everything the standalone page used to
-// carry, without leaving /lobby.
-export function FriendGameSetup() {
+// carry, without leaving /lobby. `showFriends={false}` suppresses the inline
+// FriendsPanel for call sites (the lobby's Friends tab) that lay the panel
+// out themselves next to this form; other call sites are unchanged.
+export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean }) {
   const {
     baseSec,
     setBaseSec,
@@ -574,8 +576,9 @@ export function FriendGameSetup() {
 
       {/* Your friends: add by username and challenge in one tap. Hidden on the
           challenge-specific flow (arriving via ?challenge=name), where the
-          panel is already about one opponent. */}
-      {!challenging && <FriendsPanel />}
+          panel is already about one opponent, and when the host layout renders
+          the panel itself (showFriends={false}). */}
+      {!challenging && showFriends && <FriendsPanel />}
     </div>
   );
 }
@@ -646,10 +649,10 @@ function StakeButton({
     <button
       onClick={onClick}
       className={
-        "px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
+        "press px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
         (selected
-          ? "border-gold/60 bg-gold/10 text-gold-leaf"
-          : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
+          ? "border-gold/60 bg-gold/10 text-gold-leaf shadow-[0_0_14px_-8px_rgb(var(--accent-hi-rgb)/0.5)]"
+          : "border-[color:var(--edge)] bg-black/10 text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-white/[0.06]")
       }
     >
       {children}

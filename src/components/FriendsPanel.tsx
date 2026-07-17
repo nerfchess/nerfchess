@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Eye, Swords, UserPlus, Users, X } from "lucide-react";
+import { Check, Eye, Swords, UserPlus, X } from "lucide-react";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PlayerLink } from "./PlayerLink";
 import { PresenceBadge } from "./PresenceBadge";
-import { EmptyState } from "./EmptyState";
-import { derivePresence, useLobbyFeed } from "@/lib/presence";
+import { derivePresence, useLobbyFeed, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
@@ -16,8 +15,9 @@ import type { MPLobby } from "@/lib/multiplayer";
 // contained: fetches /api/friends and posts actions there. Live presence is
 // read from the one shared lobby snapshot, so every row shows whether a friend
 // is online / searching / in a game (with a Watch link) without opening a
-// socket of its own. Restyled to the design system: identity rows, 44px touch
-// targets and edge-token hairlines.
+// socket of its own. Dungeon-materials pass: riveted plate, rune divider
+// between the add form and the list, carved input, online-count rune badge,
+// and presence-sorted rows (reachable friends surface first).
 
 interface Friend {
   id: string;
@@ -35,11 +35,25 @@ interface FriendsData {
   outgoing: Friend[];
 }
 
+// Presence sort order: friends you can act on (watch, challenge while they're
+// at the board) rise to the top; offline sinks. Ties break alphabetically so
+// the list is stable between polls.
+const PRESENCE_RANK: Record<PresenceState, number> = {
+  "in-game": 0,
+  searching: 1,
+  online: 2,
+  offline: 3,
+};
+
+// The name filter only appears once the list is long enough to need it.
+const FILTER_THRESHOLD = 6;
+
 export function FriendsPanel() {
   const [data, setData] = useState<FriendsData | null>(null);
   // undefined = still checking, false = signed out, true = signed in.
   const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
   const [addName, setAddName] = useState("");
+  const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const lobby = useLobbyFeed();
@@ -98,7 +112,7 @@ export function FriendsPanel() {
   if (signedIn === undefined) return null; // still checking; render nothing
   if (!signedIn) {
     return (
-      <div className="plate p-4">
+      <div className="plate dgn-rivets p-4">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         <p className="mt-1 text-sm text-parchment-300">
           <Link href="/login" className="text-gold-leaf hover:underline">
@@ -115,14 +129,69 @@ export function FriendsPanel() {
   const outgoing = data?.outgoing ?? [];
   const empty = friends.length === 0 && incoming.length === 0 && outgoing.length === 0;
 
+  // Reachable friends first (in-game > searching > online > offline), then
+  // alphabetical so the order is stable between presence polls.
+  const sorted = [...friends].sort((a, b) => {
+    const ra = PRESENCE_RANK[derivePresence(lobby, a.username).state];
+    const rb = PRESENCE_RANK[derivePresence(lobby, b.username).state];
+    return ra !== rb ? ra - rb : a.username.localeCompare(b.username);
+  });
+  const onlineCount = friends.filter((f) => derivePresence(lobby, f.username).state !== "offline").length;
+
+  // Client-side name filter, only offered once the list outgrows a glance.
+  // Below the threshold the input is hidden and any stale query is ignored.
+  const showFilter = friends.length > FILTER_THRESHOLD;
+  const query = showFilter ? filter.trim().toLowerCase() : "";
+  const visible = query ? sorted.filter((f) => f.username.toLowerCase().includes(query)) : sorted;
+
   return (
-    <div className="plate p-4">
+    <div className="plate dgn-rivets p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         {friends.length > 0 && (
-          <span className="font-mono text-[12px] tabular-nums text-parchment-400">{friends.length}</span>
+          <span
+            className="rune-badge tabular-nums"
+            style={
+              {
+                "--badge-rgb": onlineCount > 0 ? "var(--energy-teal-rgb)" : "var(--energy-ember-rgb)",
+              } as React.CSSProperties
+            }
+          >
+            {onlineCount} of {friends.length} online
+          </span>
         )}
       </div>
+
+      {/* Incoming requests answer first: a raised accent-edged strip above
+          everything else, because they are the most actionable thing here. */}
+      {incoming.length > 0 && (
+        <div className="mt-4 space-y-2 rounded-sm border border-gold/40 bg-gold/[0.07] p-2.5">
+          <div className="eyebrow text-gold-leaf">Requests ({incoming.length})</div>
+          {incoming.map((f) => (
+            <div key={f.id} className="flex items-center gap-3">
+              <Identity f={f} lobby={lobby} />
+              <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                <button
+                  onClick={() => void act("accept", f.username)}
+                  disabled={busy}
+                  aria-label={`Accept ${f.username}`}
+                  className="press grid h-11 w-11 place-items-center rounded-sm border border-verdigris-glow/50 bg-verdigris/20 text-verdigris-glow transition hover:bg-verdigris/30 disabled:opacity-40"
+                >
+                  <Check size={16} strokeWidth={2.4} aria-hidden />
+                </button>
+                <button
+                  onClick={() => void act("decline", f.username)}
+                  disabled={busy}
+                  aria-label={`Decline ${f.username}`}
+                  className="press grid h-11 w-11 place-items-center rounded-sm border border-[color:var(--edge)] text-parchment-400 transition hover:border-oxblood-glow/50 hover:text-oxblood-glow disabled:opacity-40"
+                >
+                  <X size={16} strokeWidth={2.4} aria-hidden />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add a friend by username. */}
       <form
@@ -139,8 +208,7 @@ export function FriendsPanel() {
           placeholder="Add a friend by username"
           aria-label="Friend's username"
           maxLength={24}
-          className="min-h-[44px] min-w-0 flex-1 rounded-sm border bg-ink-900/60 px-3 text-[16px] text-parchment placeholder:text-parchment-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:text-sm"
-          style={{ borderColor: "var(--edge)" }}
+          className="input-rune min-h-[44px] min-w-0 flex-1 px-3 text-[16px] sm:text-sm"
         />
         <button
           type="submit"
@@ -157,55 +225,38 @@ export function FriendsPanel() {
         </p>
       )}
 
-      {/* Incoming requests to answer first. */}
-      {incoming.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <div className="eyebrow">Requests ({incoming.length})</div>
-          {incoming.map((f) => (
-            <div
-              key={f.id}
-              className="flex items-center gap-3 rounded-sm border border-gold/30 bg-gold/[0.06] p-2"
-            >
-              <Identity f={f} lobby={lobby} />
-              <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                <button
-                  onClick={() => void act("accept", f.username)}
-                  disabled={busy}
-                  aria-label={`Accept ${f.username}`}
-                  className="grid h-11 w-11 place-items-center rounded-sm border border-verdigris-glow/50 bg-verdigris/15 text-verdigris-glow transition hover:bg-verdigris/25 disabled:opacity-40"
-                >
-                  <Check size={16} strokeWidth={2.4} aria-hidden />
-                </button>
-                <button
-                  onClick={() => void act("decline", f.username)}
-                  disabled={busy}
-                  aria-label={`Decline ${f.username}`}
-                  className="grid h-11 w-11 place-items-center rounded-sm border text-parchment-400 transition hover:border-oxblood-glow/50 hover:text-oxblood-glow disabled:opacity-40"
-                  style={{ borderColor: "var(--edge)" }}
-                >
-                  <X size={16} strokeWidth={2.4} aria-hidden />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="rune-divider my-4" aria-hidden />
 
-      {/* Accepted friends, each with a presence-aware action. */}
+      {/* Accepted friends, presence-sorted, each with a one-tap action. */}
       {empty ? (
-        <EmptyState
-          className="mt-4"
-          icon={Users}
-          title="No friends yet"
-          body="Add someone by username to line up challenges and quick rematches any time."
-          action={{ href: "/lobby", label: "Find players" }}
-        />
+        <div className="empty-vault">
+          <p className="text-[13px]">Add friends by username to challenge them in one tap.</p>
+          <Link
+            href="/lobby"
+            className="btn-ghost press inline-flex min-h-[44px] items-center px-4 font-display text-[13px] no-underline sm:min-h-9"
+          >
+            Find players
+          </Link>
+        </div>
       ) : (
         friends.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {friends.map((f) => (
-              <FriendRow key={f.id} f={f} lobby={lobby} busy={busy} onRemove={() => void act("remove", f.username)} />
-            ))}
+          <div className="space-y-2">
+            {showFilter && (
+              <input
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Filter by name"
+                aria-label="Filter friends by name"
+                className="input-rune min-h-[44px] w-full px-3 text-[16px] sm:min-h-9 sm:text-sm"
+              />
+            )}
+            {visible.length === 0 ? (
+              <p className="py-2 text-[13px] text-parchment-400">No friends match “{filter.trim()}”.</p>
+            ) : (
+              visible.map((f) => (
+                <FriendRow key={f.id} f={f} lobby={lobby} busy={busy} onRemove={() => void act("remove", f.username)} />
+              ))
+            )}
           </div>
         )
       )}
@@ -235,8 +286,10 @@ export function FriendsPanel() {
   );
 }
 
-// One accepted-friend row: identity + presence, a Watch link when they are in a
-// game, a Challenge when they are reachable, and a quiet Remove.
+// One accepted-friend row: identity + presence, a Watch link when they are in
+// a game, a Challenge when they are reachable, and a quiet Remove that only
+// turns cursed-red on hover. Row hover warms the surface and lights an ember
+// hairline — pointer devices only, so touch never gets a sticky hover.
 function FriendRow({
   f,
   lobby,
@@ -251,27 +304,30 @@ function FriendRow({
   const presence = derivePresence(lobby, f.username);
   return (
     <div
-      className="flex items-center gap-3 rounded-sm border bg-white/[0.02] p-2"
-      style={{ borderColor: "var(--edge)" }}
+      className="flex items-center gap-3 rounded-sm border border-[color:var(--edge)] bg-white/[0.02] p-2 transition-[background-color,border-color] duration-200 [@media(hover:hover)]:hover:border-[color:rgb(var(--energy-ember-rgb)/0.45)] [@media(hover:hover)]:hover:bg-[color:var(--surface-hover)]"
     >
       <Identity f={f} lobby={lobby} />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        {/* Labels compress to icon-only below sm so actions never wrap; the
+            aria-labels keep them readable. */}
         {presence.state === "in-game" && presence.gameId && (
           <Link
             href={`/game/${encodeURIComponent(presence.gameId)}`}
-            className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] no-underline"
+            aria-label={`Watch ${f.username}'s game`}
+            className="btn-ghost press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] no-underline"
           >
             <Eye size={14} strokeWidth={2.2} aria-hidden />
-            Watch
+            <span className="hidden sm:inline">Watch</span>
           </Link>
         )}
         {presence.state !== "in-game" && (
           <Link
             href={`/friend?challenge=${encodeURIComponent(f.username)}`}
-            className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
+            aria-label={`Challenge ${f.username}`}
+            className="btn-leaf press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
           >
             <Swords size={14} strokeWidth={2.3} aria-hidden />
-            Challenge
+            <span className="hidden sm:inline">Challenge</span>
           </Link>
         )}
         <button

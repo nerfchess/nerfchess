@@ -61,7 +61,7 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
       </div>
       <Link
         href="/lobby"
-        className="btn-leaf btn-cta press mt-2.5 flex w-full items-center justify-center gap-2.5 px-5 py-4 font-display text-2xl font-bold no-underline"
+        className="btn-leaf btn-cta cta-shine press mt-2.5 flex w-full items-center justify-center gap-2.5 px-5 py-4 font-display text-2xl font-bold no-underline"
       >
         Enter the lobby
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

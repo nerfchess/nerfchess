@@ -59,7 +59,9 @@ export function PresenceBadge({ state, mode, lastSeenAt, className }: PresenceBa
           pulse ? " animate-pulse motion-reduce:animate-none" : ""
         }`}
       />
-      <span className="smallcaps text-[10px]">{label}</span>
+      {/* Sentence-case 12px label: the smallcaps micro-label pattern is
+          retired sitewide (12px caption floor). */}
+      <span className="text-[12px]">{label}</span>
     </span>
   );
 }

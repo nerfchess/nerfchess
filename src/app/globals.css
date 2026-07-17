@@ -1007,6 +1007,243 @@ html[data-anim="off"] .rune-loader { animation: none; }
   opacity: 0.6;
 }
 
+/* --- Dungeon material set ----------------------------------------------------
+   The 2026-07 "full dungeon" pass: reusable carved-stone and forged-iron
+   surfaces so major panels (settings, friends, leaderboard, home sections)
+   share one material world with the draft chamber and the nav menus, instead
+   of each page whispering its own theme. Everything below is background /
+   border / shadow layering on the existing tokens — no new DOM, no filters,
+   and all ambient motion parks under html[data-anim="off"]. */
+
+/* Carved stone slab: the hero panel. Hewn block courses, a torchlit top
+   edge, and a deep inset foot. Use INSTEAD of .plate on surfaces that should
+   read as monumental (modals, podium, chamber panels) — not on every card. */
+.dgn-slab {
+  position: relative;
+  border: 1px solid rgb(122 96 58 / 0.45);
+  border-radius: 1px;
+  background:
+    /* Torchlight pooling at the top edge. */
+    radial-gradient(120% 42% at 50% -6%, rgb(var(--energy-ember-rgb) / 0.09), transparent 60%),
+    /* Faint star pinpricks in the stone. */
+    radial-gradient(1px 1px at 18% 32%, rgba(255, 235, 200, 0.05), transparent 100%),
+    radial-gradient(1px 1px at 74% 68%, rgba(255, 235, 200, 0.04), transparent 100%),
+    radial-gradient(1px 1px at 42% 84%, rgba(255, 235, 200, 0.035), transparent 100%),
+    /* Block-joint courses: hairline mortar lines every 56px. */
+    repeating-linear-gradient(180deg, transparent 0 55px, rgba(0, 0, 0, 0.22) 55px 56px),
+    /* The stone itself: top-lit, cooling toward the foot. */
+    linear-gradient(180deg, var(--stone-hi), var(--stone) 45%, var(--stone-deep)),
+    var(--surface-panel);
+  box-shadow:
+    inset 0 1px 0 rgb(255 178 96 / 0.1),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -14px 24px -18px rgba(0, 0, 0, 0.7),
+    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+}
+html[data-theme="light"] .dgn-slab {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 24px 60px -36px rgba(43, 40, 34, 0.5);
+}
+
+/* Forged-iron corner rivets: four dots hammered into a slab's corners.
+   Pure background layers, composable with .dgn-slab or .plate. */
+.dgn-rivets {
+  background-image:
+    radial-gradient(2.5px 2.5px at 8px 8px, rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 8px) 8px, rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at 8px calc(100% - 8px), rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 8px) calc(100% - 8px), rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%);
+  background-repeat: no-repeat;
+}
+
+/* Rune divider: an ornament rule with a glowing diamond bead — the dungeon
+   sibling of .mode-seam for use inside themed panels. */
+.rune-divider {
+  position: relative;
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(var(--energy-ember-rgb) / 0.35) 30%,
+    rgb(var(--energy-ember-rgb) / 0.5) 50%,
+    rgb(var(--energy-ember-rgb) / 0.35) 70%,
+    transparent 100%
+  );
+}
+.rune-divider::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgb(var(--energy-ember-rgb) / 0.7);
+  box-shadow: 0 0 8px 1px rgb(var(--energy-ember-rgb) / 0.45);
+}
+
+/* Treasure button: the gold slab for reward/prestige actions (claim,
+   celebrate, rank reveal). Same physics as .btn-leaf, forged in vault gold.
+   Use sparingly — gold is the color of reward, not of "act here". */
+.btn-gold {
+  background:
+    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.6), transparent 70%),
+    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.4), transparent 70%),
+    radial-gradient(120% 95% at 50% 118%, rgb(var(--energy-gold-rgb) / 0.6), transparent 58%),
+    linear-gradient(to bottom, #f0c65a, #cf9d2e 55%, #7d5c14);
+  color: #241a05;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 0 0 1px rgb(var(--energy-gold-rgb) / 0.3) inset,
+    0 -9px 16px -10px rgba(0, 0, 0, 0.45) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+  transition: filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+.btn-gold:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 0 22px -8px rgb(var(--energy-gold-rgb) / 0.6),
+    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+}
+.btn-gold:active:not(:disabled) {
+  filter: brightness(0.94);
+  transform: translateY(0.5px);
+}
+.btn-gold:disabled {
+  background: linear-gradient(to bottom, #34302a, #262320);
+  color: #8f887a;
+  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  filter: none;
+  cursor: not-allowed;
+}
+
+/* Parameterized slab: the .btn-leaf physics with a caller-supplied energy
+   core, for primaries that must keep a non-accent identity (the mode-colored
+   matchmaking button). Feed --slab-rgb; text stays white on the lit body. */
+.btn-slab {
+  background:
+    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.35), transparent 70%),
+    radial-gradient(120% 95% at 50% 118%, rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.55), transparent 58%),
+    linear-gradient(
+      to bottom,
+      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.9),
+      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.65) 55%,
+      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.3)
+    ),
+    #12100c;
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    0 0 0 1px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.25) inset,
+    0 -9px 16px -10px rgba(0, 0, 0, 0.55) inset,
+    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+  transition: filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+.btn-slab:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.24) inset,
+    0 0 0 1px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.4) inset,
+    0 0 22px -8px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.55),
+    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+}
+.btn-slab:active:not(:disabled) {
+  filter: brightness(0.94);
+  transform: translateY(0.5px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 1px 2px -1px rgba(0, 0, 0, 0.5);
+}
+.btn-slab:disabled {
+  background: linear-gradient(to bottom, #34302a, #262320);
+  color: #8f887a;
+  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  filter: none;
+  cursor: not-allowed;
+}
+
+/* Busy state for any slab button: the label dims and a rune-loader (added by
+   the call site) carries the motion, so loading never reads as a dead click. */
+.btn-busy {
+  pointer-events: none;
+  filter: saturate(0.7) brightness(0.9);
+}
+
+/* Torch sconce ambience: a warm ember pool for section corners on themed
+   pages. Position with inline styles; decorative only. */
+.torch-pool {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  pointer-events: none;
+  background: radial-gradient(50% 50% at 50% 50%, rgb(var(--energy-ember-rgb) / 0.1), transparent 70%);
+  animation: aura-breathe 11s ease-in-out infinite;
+}
+html[data-anim="off"] .torch-pool { animation: none; }
+
+/* --- Podium celebration ------------------------------------------------------
+   Dressing for the leaderboard's treasure-dais (Podium.tsx) and the profile's
+   honors shelf. The champion surface wears a gold rim — the .energy-edge
+   masked-frame device forged entirely in vault gold — and a handful of rising
+   gold motes. Decoration only: transform/opacity, capped node count at the
+   call site, and everything parks under html[data-anim="off"]. */
+.podium-rim-gold { position: relative; }
+.podium-rim-gold::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--energy-gold-rgb) / 0.65),
+    rgb(var(--energy-gold-rgb) / 0.22) 45%,
+    rgb(var(--energy-gold-rgb) / 0.4) 70%,
+    rgb(var(--energy-gold-rgb) / 0.55)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.podium-mote {
+  position: absolute;
+  bottom: 18%;
+  left: var(--mx, 50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: rgb(var(--energy-gold-rgb) / 0.85);
+  box-shadow: 0 0 6px 1px rgb(var(--energy-gold-rgb) / 0.4);
+  opacity: 0;
+  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
+}
+@keyframes podium-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  14% { opacity: 0.65; }
+  70% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-68px) scale(1); }
+}
+html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
+
 /* Victory burst: the Level-3 celebration behind the game-over panel. One
    energy ring blooms outward while a handful of sparks in the four energy
    hues climb and die. One shot, pointer-events-none, transform/opacity only,

@@ -7,7 +7,9 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { playDraftChime } from "@/lib/sounds";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { BuffCard } from "./BuffCard";
+import { DraftChest } from "./DraftChest";
 import "./DraftOverlay.css";
 
 interface Props {
@@ -189,31 +191,6 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   );
 }
 
-/** One-shot pack-tear pyrotechnics: a soft golden shockwave ring plus a fan
- * of gold filaments flung outward from the tear line. Purely decorative
- * (aria-hidden, pointer-events-none), deterministic angles, transform/opacity
- * only. Rendered only while the pack is tearing and never under reduced
- * motion (the caller gates it). */
-function PackTearFX() {
-  return (
-    <span aria-hidden className="pack-tear-fx">
-      <span className="pack-shockwave" />
-      <span className="pack-shockwave pack-shockwave--echo" />
-      {Array.from({ length: 12 }).map((_, i) => (
-        <i
-          key={i}
-          style={{
-            ["--ang" as string]: `${(i * 30 + ((i * 7) % 14)) % 360}deg`,
-            ["--fdist" as string]: `${64 + ((i * 37) % 54)}px`,
-            ["--fdelay" as string]: `${(i % 4) * 35}ms`,
-          }}
-          className="pack-filament"
-        />
-      ))}
-    </span>
-  );
-}
-
 /** Small inline check mark (no text glyphs, no emoji). */
 function CheckIcon({ className = "" }: { className?: string }) {
   return (
@@ -335,7 +312,9 @@ const PACK_HOLD_MS = 1150;
 // The minimized panel runs on the player's own clock: the pack still shows
 // (a reroll always earns its box) but tears itself almost immediately.
 const PACK_HOLD_MINIMIZED_MS = 450;
-const PACK_TEAR_MS = 520;
+// The chest-opening sequence: quake -> hasp pops -> lid swings -> light
+// floods. Slightly longer than the old pack tear so the lid swing lands.
+const PACK_TEAR_MS = 780;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
 // Accidental-double-click guard: a click on the already-selected card only
@@ -413,8 +392,14 @@ export function DraftOverlay({
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
   const oppOffer = opponent?.offer ?? null;
   const reduceMotion = useReducedMotion();
-  // The strongest card in the offer decides the pack's finish (gold for 7+,
-  // mythic for 9/10) and whether the reveal earns a shake + confetti.
+  // The board-effects dial also governs the draft spectacle: Off/Calm strips
+  // the chest's particle/ray layers and stands down the shake + confetti.
+  const fxLevel = useFxLevel();
+  const fxCalm = fxLevel <= 1;
+  const fxShake = FX_LEVELS[fxLevel].shake !== "none";
+  // The strongest card in the offer decides the chest's material (wood ->
+  // iron -> gilded -> arcane -> apex -> mythic) and whether the reveal earns
+  // a shake + confetti.
   const maxTier = offer.cards.reduce((m, c) => Math.max(m, c.tier), 1);
   // Two-step pick: the first click only selects (highlight); the Confirm
   // button (or a second click on the same card) locks it in. `chosen` is the
@@ -861,29 +846,17 @@ export function DraftOverlay({
           )}
           {packStage !== "open" ? (
             /* Reroll (or a fresh offer) in the compact panel still earns its
-               pack moment: a mini pack that tears itself on a fast fuse. */
-            <button type="button" onClick={tearPack} className="pack-shell mx-auto mt-2 block scale-75">
-              <div
-                data-tier={maxTier}
-                className={
-                  "pack " +
-                  (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
-                  (packStage === "tearing" ? "pack--tearing" : "")
-                }
-              >
-                <span aria-hidden className="pack-burst" />
-                {packStage === "tearing" && !reduceMotion && <PackTearFX />}
-                <span aria-hidden className="pack-flap">
-                  <span className="pack-flap__zigzag" />
-                </span>
-                <span className="pack-body">
-                  <span className="pack-numeral font-display">{offer.cards.length}</span>
-                  <span className="smallcaps pack-label">
-                    {nounCap} pack · draft #{offer.index}
-                  </span>
-                </span>
-              </div>
-            </button>
+               chest moment: a mini chest that springs open on a fast fuse. */
+            <DraftChest
+              tier={maxTier}
+              count={offer.cards.length}
+              label={`${nounCap} draft #${offer.index}`}
+              stage={packStage}
+              onOpen={tearPack}
+              mini
+              calm={fxCalm}
+              still={!!reduceMotion}
+            />
           ) : (
           <div className="mt-2 space-y-1.5">
             {offer.cards.map((card, i) => {
@@ -1043,7 +1016,7 @@ export function DraftOverlay({
       {/* A high-tier pull warms the whole screen once: a soft tier-colored
           glow pulse breathing in from the viewport edges as the cards reveal.
           Decorative, one shot per deal, gone under reduced motion. */}
-      {packStage === "open" && maxTier >= 7 && !reduceMotion && (
+      {packStage === "open" && maxTier >= 7 && !reduceMotion && !fxCalm && (
         <span key={`edge-${dealKey}`} aria-hidden data-tier={maxTier} className="draft-edge-pulse" />
       )}
       {/* A min-height flex wrapper centers the panel when it fits and lets the
@@ -1091,8 +1064,9 @@ export function DraftOverlay({
           transition={{ duration: 0.28, ease: "easeOut" }}
           className={
             "draft-frame corner-cut min-w-0 w-full" +
-            // A mythic-grade pull rattles the whole panel as the pack opens.
-            (packStage === "open" && maxTier >= 9 && !reduceMotion ? " draft-shake" : "")
+            // A mythic-grade pull rattles the whole panel as the chest opens
+            // (stood down when the FX dial disables shake).
+            (packStage === "open" && maxTier >= 9 && !reduceMotion && fxShake ? " draft-shake" : "")
           }
         >
           {/* Iron braces bolted over the frame's two square corners (the
@@ -1158,51 +1132,23 @@ export function DraftOverlay({
         )}
 
         {packStage !== "open" && (
-          /* The sealed pack: the individual cards stay secret, but the pack
-             wears the tier color of the best card inside (owner request) and
-             the finish scales with it (halo 5+, foil glow 7+, mythic shimmer
-             9/10). Tap tears it open immediately. */
-          <button
-            type="button"
-            onClick={tearPack}
-            aria-label="Tear the pack open"
-            className="pack-shell mx-auto mt-6 block"
-          >
-            <div
-              data-tier={maxTier}
-              className={
-                "pack " +
-                (maxTier >= 9 ? "pack--mythic " : maxTier >= 7 ? "pack--gold " : maxTier >= 5 ? "pack--rare " : "") +
-                (packStage === "tearing" ? "pack--tearing" : "")
-              }
-            >
-              <span aria-hidden className="pack-burst" />
-              {/* The rune seal: two counter-rotating rings of tier-colored
-                  rune dashes circling the unopened pack; tearing it breaks
-                  the seal (they flare and burst outward). */}
-              {!reduceMotion && (
-                <>
-                  <span aria-hidden className="pack-portal" />
-                  <span aria-hidden className="pack-rune" />
-                  <span aria-hidden className="pack-rune pack-rune--inner" />
-                </>
-              )}
-              {packStage === "tearing" && !reduceMotion && <PackTearFX />}
-              <span aria-hidden className="pack-flap">
-                <span className="pack-flap__zigzag" />
-              </span>
-              <span className="pack-body">
-                <span className="pack-numeral font-display">{offer.cards.length}</span>
-                <span className="smallcaps pack-label">
-                  {nounCap} pack · draft #{offer.index}
-                </span>
-                <span className="smallcaps pack-hint">Tap to tear open</span>
-              </span>
-            </div>
-          </button>
+          /* The sealed treasure chest: the individual cards stay secret, but
+             the chest's material climbs with the best card inside — worn oak
+             at the bottom of the ladder, up through iron, gilded vault,
+             arcane relic, apex crown, and the mythic star chest. Tap opens
+             it immediately. */
+          <DraftChest
+            tier={maxTier}
+            count={offer.cards.length}
+            label={`${nounCap} draft #${offer.index}`}
+            stage={packStage}
+            onOpen={tearPack}
+            calm={fxCalm}
+            still={!!reduceMotion}
+          />
         )}
 
-        {packStage === "open" && maxTier >= 9 && !reduceMotion && (
+        {packStage === "open" && maxTier >= 9 && !reduceMotion && !fxCalm && (
           /* A tier 9/10 pull is THE event: the pack detonates into a white
              flash, a rotating god-ray fan floods the panel, sparks climb the
              air, and the classic confetti burst rides on top. One shot,
@@ -1267,16 +1213,17 @@ export function DraftOverlay({
                   "draft-fx mx-auto h-full w-full max-w-md sm:max-w-none " +
                   (selected === i && chosen == null && !banking ? "draft-fx--selected" : "")
                 }
-                // Deal from the deck: the card starts face-down on a stack at
-                // the bottom center of the panel, then flies to its slot.
+                // Deal from the chest: the card starts face-down where the
+                // chest's open mouth sat (top center of the grid), then fans
+                // out and down into its slot as if lifted from the hoard.
                 initial={
                   reduceMotion
                     ? { opacity: 0 }
                     : {
                         x: `${(mid - i) * 104}%`,
-                        y: "56%",
+                        y: "-42%",
                         rotate: (i - mid) * 2,
-                        scale: 0.62,
+                        scale: 0.58,
                         opacity: 1,
                       }
                 }
@@ -1312,10 +1259,10 @@ export function DraftOverlay({
                     ? {
                         // Reroll: the rejected cards flip face-down (inner
                         // wrapper below) and converge into ONE spinning stack
-                        // at the deck spot, each a beat apart with a slight
-                        // fan, then the fresh offer deals back out of it.
+                        // back at the chest's mouth, each a beat apart with a
+                        // slight fan, then the fresh offer deals back out.
                         x: `${(mid - i) * 104 * 0.06}%`,
-                        y: "54%",
+                        y: "-40%",
                         rotate: 360 + (i - mid) * 14,
                         scale: 0.5,
                         opacity: [1, 1, 1, 0],
