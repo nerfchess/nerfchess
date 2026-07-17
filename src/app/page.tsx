@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { LiveRvPanel } from "@/components/LiveRvPanel";
+import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StarField } from "@/components/StarField";
@@ -74,19 +75,15 @@ export default function HomePage() {
             mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
 
-          {/* ONE dominant action, on the theme accent. It enters the lobby's
-              Quick Play tab, where Buff and 3+2 are already selected, so the
-              next click is the matchmaking button. */}
-          <Link
+          {/* ONE dominant action: the dungeon gate itself. It enters the
+              lobby's Quick Play tab, where Buff and 3+2 are already selected,
+              so the next click is the matchmaking button. */}
+          <DungeonGateButton
             href="/lobby"
-            className="btn-leaf btn-cta cta-shine press mt-5 hidden w-full items-center justify-center gap-3 px-6 py-6 font-display text-3xl sm:text-4xl font-bold no-underline lg:flex"
+            className="mt-5 hidden w-full items-center justify-center px-6 py-6 font-display text-3xl font-bold no-underline sm:text-4xl lg:flex"
           >
             Open lobby
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M5 12h14" />
-              <path d="m13 6 6 6-6 6" />
-            </svg>
-          </Link>
+          </DungeonGateButton>
 
           {/* Two quieter ways in, one step below the big button. No mode
               decision here: Buff is the site-wide default, and every setup

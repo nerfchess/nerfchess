@@ -3133,6 +3133,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         <DraftOverlay
           key={`draft-${replayEpoch}-${myOffer.index}`}
           offer={myOffer}
+          // The reveal ledger scope: ties the chest animation to this game's
+          // exact offer versions, so remounts (this key changes on every new
+          // offer and replay epoch), reconnects, and refreshes never replay a
+          // reveal the player already watched — and never skip a fresh one.
+          revealScope={start.id}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={draftDeadline}
