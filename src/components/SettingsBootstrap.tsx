@@ -43,9 +43,14 @@ export function SettingsBootstrap() {
     const media = window.matchMedia?.("(prefers-color-scheme: light)");
     const onScheme = () => applyUiPrefs(loadSettings());
     media?.addEventListener?.("change", onScheme);
+    // The OS reduced-motion flag is honored live too (see applyUiPrefs):
+    // flipping it in system settings stands animations down without a reload.
+    const motionMedia = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    motionMedia?.addEventListener?.("change", onScheme);
     return () => {
       window.removeEventListener(SETTINGS_CHANGED_EVENT, apply);
       media?.removeEventListener?.("change", onScheme);
+      motionMedia?.removeEventListener?.("change", onScheme);
     };
   }, []);
 
