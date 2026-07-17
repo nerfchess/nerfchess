@@ -85,7 +85,7 @@ import {
   saveOnlineSeat,
 } from "@/lib/multiplayer";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
-import { isMuted, playCapture, playChallenge, playCheck, playError, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { isMuted, playCapture, playChallenge, playCheck, playError, playGameStart, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -267,6 +267,31 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       cancelled = true;
     };
   }, [isOwnerAccount]);
+
+  // "Game on" flourish: the board just went live for you — your challenge was
+  // accepted, you were matched, or you joined a friend's game and both players
+  // are now here. Play it once, at the true start only:
+  //  - `start.moves.length === 0` keeps a mid-game reconnect / resume silent
+  //    (the server replays a `start` frame with the moves already on the board,
+  //    and opening an in-progress game in a fresh tab lands here too).
+  //  - a per-game-id sessionStorage flag survives a refresh in the opening
+  //    seconds (before either side has moved), so the kickoff never repeats.
+  // Spectators render a different view and never reach OnlineMatch, so they are
+  // naturally excluded. Empty deps: this fires on the initial mount only.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (start.moves && start.moves.length > 0) return;
+    const key = `dc:started:${start.id}`;
+    try {
+      if (window.sessionStorage.getItem(key)) return;
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      // sessionStorage unavailable (private mode / quota): fall through and
+      // still announce — a rare double-ding beats silence at the true start.
+    }
+    playGameStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Draft games open with a nerf draft: pick one of two rules before the
   // game exists. While it is unresolved there is no game to build (the

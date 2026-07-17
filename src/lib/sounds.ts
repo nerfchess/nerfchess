@@ -394,6 +394,22 @@ export function playChallenge() {
   tone({ freq: 880, dur: 0.22, type: "triangle", gain: 0.12, attack: 0.005, release: 0.20, delay: 0.12 });
 }
 
+// Game start: a bright, rising "game on" flourish, played once when a game
+// begins for you — your challenge was accepted, you were matched, or you joined
+// a friend's game and both players are now at the board. Deliberately ascending
+// and upbeat so it reads as a kickoff, distinct from the descending game-over
+// chime and the neutral notify dong. Synthesized (no sample): a quick C-major
+// arpeggio (C5-E5-G5-C6) capped with a soft high-octave sparkle. Gated by the
+// master switch + mute like the other notify voices (no per-event pref).
+export function playGameStart() {
+  if (!soundPrefs.enabled) return;
+  tone({ freq: 523, dur: 0.14, type: "triangle", gain: 0.16, attack: 0.004, release: 0.12 });
+  tone({ freq: 659, dur: 0.14, type: "triangle", gain: 0.15, attack: 0.004, release: 0.12, delay: 0.09 });
+  tone({ freq: 784, dur: 0.16, type: "triangle", gain: 0.15, attack: 0.004, release: 0.14, delay: 0.18 });
+  tone({ freq: 1046, dur: 0.30, type: "sine", gain: 0.15, attack: 0.004, release: 0.30, delay: 0.28 });
+  tone({ freq: 2093, dur: 0.24, type: "sine", gain: 0.05, attack: 0.006, release: 0.26, delay: 0.30 });
+}
+
 // Low time: urgent double tick, like a clock tapping your shoulder.
 export function playLowTime() {
   if (!soundPrefs.enabled) return;
