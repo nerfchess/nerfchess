@@ -74,13 +74,13 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
    watermark. No gradients. */
 .draft-deal-grid {
   perspective: 1200px;
-  /* Headroom for the "Highest tier" chip (top: -9px) plus the hover lift
-     (-3px): without it the chip clips against the panel edge on the first
-     row and collides with the row above in the stacked mobile layout. */
+  /* Headroom for the hover lift (-3px): without it the raised card clips
+     against the panel edge on the first row and collides with the row above
+     in the stacked mobile layout. */
   padding-top: 12px;
 }
 @media (max-width: 639px) {
-  /* Stacked cards on phones: open the row gap so a card's floating chip and
+  /* Stacked cards on phones: open the row gap so a card's hover lift and
      its neighbor's hover/select ring never share pixels. */
   .draft-deal-grid {
     row-gap: 1.5rem;
@@ -755,9 +755,9 @@ html[data-anim="off"] .dock-pocket-flash { animation: none; }
 }
 
 /* Keep the real card above the tier edge but below the shine. The pick
-   dissolve layer and the top-tier chip are excluded: they position
-   themselves absolutely over the card. */
-.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve):not(.dgn-top-tier) {
+   dissolve layer is excluded: it positions itself absolutely over the
+   card. */
+.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve) {
   position: relative;
   z-index: 1;
 }
@@ -1467,30 +1467,6 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
 /* The smallcaps chamber label above it takes a quiet ember tint. */
 .dgn-label {
   color: rgb(255 178 96 / 0.75) !important;
-}
-
-/* --- Comparison chip --------------------------------------------------------- */
-/* When the offer's tiers differ, the strongest card wears a small gold rune
-   chip so the tier comparison is one glance, not a scan. Data only (tier is
-   already public on both cards); no judgement about which card is BETTER. */
-.dgn-top-tier {
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
-  white-space: nowrap;
-  pointer-events: none;
-  padding: 0.1rem 0.55rem;
-  border-radius: 1px;
-  border: 1px solid rgb(244 196 48 / 0.65);
-  background: linear-gradient(165deg, #2a2110, #1c1608);
-  color: rgb(255 224 140);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  box-shadow: 0 0 14px -6px rgb(244 196 48 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12);
 }
 
 /* --- Anim-off gating for the dungeon pass ---------------------------------- */
