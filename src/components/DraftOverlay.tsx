@@ -991,14 +991,19 @@ export function DraftOverlay({
           (hidden ? " invisible" : "")
         }
       >
-      {/* Ambient stage behind the cards: a layered candle-lit vignette, a slow
-          gold aurora sweep, and drifting ember motes. Fixed (never scrolls with
-          the panel), pointer-events-none, transform/opacity only; the moving
-          layers are skipped entirely under reduced motion. */}
+      {/* Ambient stage behind the cards — the dungeon chamber: a torchlit
+          vignette, two guttering torch glows low on the walls, crawling floor
+          fog, a slow firelight aurora, and rising ember motes. Fixed (never
+          scrolls with the panel), pointer-events-none, transform/opacity only;
+          the moving layers are skipped entirely under reduced motion. */}
       <div aria-hidden className="draft-stage">
         <span className="draft-stage__vignette" />
         {!reduceMotion && (
           <>
+            <span className="draft-stage__torch draft-stage__torch--l" />
+            <span className="draft-stage__torch draft-stage__torch--r" />
+            <span className="draft-stage__fog" />
+            <span className="draft-stage__fog draft-stage__fog--far" />
             <span className="draft-stage__aurora" />
             {Array.from({ length: 14 }).map((_, i) => (
               <i
@@ -1035,6 +1040,30 @@ export function DraftOverlay({
         }
       >
         {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
+        {/* Unclipped wrapper: hosts the wall torches straddling the slab's top
+            corners. They must sit OUTSIDE the frame, whose corner-cut
+            clip-path would behead anything poking past its bounds. */}
+        <div className="relative min-w-0 w-full">
+          {!reduceMotion && (
+            <>
+              <span aria-hidden className="dgn-torch dgn-torch--l">
+                <i className="dgn-torch__halo" />
+                <i className="dgn-torch__bracket" />
+                <i className="dgn-torch__flame" />
+                <i className="dgn-torch__flame dgn-torch__flame--inner" />
+                <i className="dgn-torch__spark" />
+                <i className="dgn-torch__spark dgn-torch__spark--b" />
+              </span>
+              <span aria-hidden className="dgn-torch dgn-torch--r">
+                <i className="dgn-torch__halo" />
+                <i className="dgn-torch__bracket" />
+                <i className="dgn-torch__flame" />
+                <i className="dgn-torch__flame dgn-torch__flame--inner" />
+                <i className="dgn-torch__spark" />
+                <i className="dgn-torch__spark dgn-torch__spark--b" />
+              </span>
+            </>
+          )}
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1047,9 +1076,13 @@ export function DraftOverlay({
             (packStage === "open" && maxTier >= 9 && !reduceMotion ? " draft-shake" : "")
           }
         >
+          {/* Iron braces bolted over the frame's two square corners (the
+              chamfered corner-cut owns the other two). */}
+          <span aria-hidden className="dgn-brace dgn-brace--tr"><i /></span>
+          <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1075,7 +1108,7 @@ export function DraftOverlay({
             </button>
           </div>
         </div>
-        <h2 className="font-display text-3xl text-parchment mt-1">
+        <h2 className="dgn-title font-display text-3xl mt-1">
           {takeBoth
             ? "Take your cards"
             : noun === "hex"
@@ -1125,6 +1158,15 @@ export function DraftOverlay({
               }
             >
               <span aria-hidden className="pack-burst" />
+              {/* The rune seal: two counter-rotating rings of tier-colored
+                  rune dashes circling the unopened pack; tearing it breaks
+                  the seal (they flare and burst outward). */}
+              {!reduceMotion && (
+                <>
+                  <span aria-hidden className="pack-rune" />
+                  <span aria-hidden className="pack-rune pack-rune--inner" />
+                </>
+              )}
               {packStage === "tearing" && !reduceMotion && <PackTearFX />}
               <span aria-hidden className="pack-flap">
                 <span className="pack-flap__zigzag" />
@@ -1548,6 +1590,7 @@ export function DraftOverlay({
         )}
           </div>
         </motion.div>
+        </div>
       </div>
       </div>
       </div>
