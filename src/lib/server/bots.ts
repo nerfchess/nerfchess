@@ -1030,11 +1030,17 @@ export function pickHouseFillerPair(
 // ceiling), but the displayed/rated number is shifted here so the field can be
 // re-spread without touching strength or the difficulty-band picker.
 //
-// Owner spread: every bot advertises a random-looking rating in [100, 300],
-// name-hashed so it is deterministic per persona (re-derived identically on
-// every sync) and independent of the engine skill tier.
+// The ORIGINAL spread (every bot +100, sub-1600 tiers dropping 100-150 so the
+// roster spans ~1150 to ~2300), PLUS the owner boost: every bot gains a
+// further +100..+300 Elo, name-hashed so each persona's boost is stable
+// (never re-randomized on refresh or resync). Net roster span ~1250 to ~2600.
 function houseSeedBase(persona: HousePersona): number {
-  return 100 + (nameHash(persona.name + "|elo") % 201); // 100..300
+  const seed = persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
+  const spread = persona.skill < 1600
+    ? -(100 + (nameHash(persona.name + "|drop") % 51)) // 100..150 drop
+    : 100;
+  const boost = 100 + (nameHash(persona.name + "|boost") % 201); // +100..+300
+  return seed + spread + boost;
 }
 
 /** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
@@ -1045,8 +1051,7 @@ export function houseSeedRatingForMode(persona: HousePersona, mode: DraftMode): 
   const spread = nameHash(persona.name + "|spread") % 51; // 0..50
   const buffHigher = nameHash(persona.name + "|dir") % 2 === 0;
   const delta = (mode === "buff") === buffHigher ? spread : -spread;
-  // Clamp both modes into the advertised 100-300 band.
-  return Math.max(100, Math.min(300, houseSeedBase(persona) + delta));
+  return Math.max(100, houseSeedBase(persona) + delta);
 }
 
 /** The mode-neutral seeded rating: the base. Written to the legacy users.rating

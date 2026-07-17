@@ -25,7 +25,6 @@ interface TopPlayer {
   rd: number;
   games: number;
   guest?: boolean;
-  bot?: boolean;
 }
 
 interface ActivePlayer {
@@ -235,11 +234,6 @@ export default function CommunityPage() {
   const topBoard = getCategory(DEFAULT_CATEGORY);
   const signedIn = !!me && !me.isGuest;
 
-  // House-bot names, resolved from the leaderboard's own bot flag, so a bot is
-  // labeled everywhere its name appears (recent games, friends, active list).
-  const botNames = new Set((top ?? []).filter((p) => p.bot).map((p) => p.username.toLowerCase()));
-  const isBot = (name: string) => botNames.has(name.toLowerCase());
-
   // Cross-reference friends with the live lobby snapshot for presence and a
   // Watch link when they are in a game right now.
   const lobbyStatus = new Map(lobby?.players.map((p) => [p.name.toLowerCase(), p.status]) ?? []);
@@ -393,7 +387,7 @@ export default function CommunityPage() {
               ) : (
                 <ul className="mt-1 divide-y divide-[color:var(--edge)]">
                   {recent.map((game) => (
-                    <RecentGameRow key={game.id} game={game} isBot={isBot} />
+                    <RecentGameRow key={game.id} game={game} />
                   ))}
                 </ul>
               )}
@@ -648,16 +642,16 @@ function TournamentRail({
   );
 }
 
-function RecentGameRow({ game, isBot }: { game: RecentGame; isBot: (name: string) => boolean }) {
+function RecentGameRow({ game }: { game: RecentGame }) {
   const category = getCategory(isRatingCategoryId(game.category) ? game.category : DEFAULT_CATEGORY);
   const Icon = category.icon;
   return (
     <li className="flex items-center justify-between gap-3 py-2.5">
       <span className="min-w-0">
         <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-parchment-100">
-          <PlayerNameInline name={game.whiteName} isBot={isBot} />
+          <PlayerNameInline name={game.whiteName} />
           <span className="text-parchment-400">vs</span>
-          <PlayerNameInline name={game.blackName} isBot={isBot} />
+          <PlayerNameInline name={game.blackName} />
         </span>
         <span className="mt-0.5 flex items-center gap-1.5 text-xs text-parchment-400">
           <Icon size={12} style={{ color: category.accent }} aria-hidden />
@@ -680,7 +674,7 @@ function RecentGameRow({ game, isBot }: { game: RecentGame; isBot: (name: string
   );
 }
 
-function PlayerNameInline({ name, isBot }: { name: string; isBot: (name: string) => boolean }) {
+function PlayerNameInline({ name }: { name: string }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1">
       <Link href={`/u/${encodeURIComponent(name)}`} className="truncate hover:text-gold-leaf">
@@ -689,8 +683,6 @@ function PlayerNameInline({ name, isBot }: { name: string; isBot: (name: string)
     </span>
   );
 }
-
-// House engine accounts wear the outline chip everywhere their name renders.
 
 function PresenceDot({ status }: { status?: "online" | "searching" | "playing" }) {
   const cls =

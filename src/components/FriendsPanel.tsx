@@ -17,7 +17,7 @@ import type { MPLobby } from "@/lib/multiplayer";
 // read from the one shared lobby snapshot, so every row shows whether a friend
 // is online / searching / in a game (with a Watch link) without opening a
 // socket of its own. Restyled to the design system: identity rows, 44px touch
-// targets, edge-token hairlines, and House Bot labeling.
+// targets and edge-token hairlines.
 
 interface Friend {
   id: string;
@@ -287,7 +287,7 @@ function FriendRow({
   );
 }
 
-// Avatar + clickable name + rating + House Bot label + presence badge.
+// Avatar + clickable name + rating + presence badge.
 function Identity({ f, lobby }: { f: Friend; lobby: MPLobby | null }) {
   const p = derivePresence(lobby, f.username);
   return (

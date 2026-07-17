@@ -513,13 +513,12 @@ type RecentGame = {
   completedAt: number;
 };
 
-// Live activity: the most recently finished games, linked to their replays,
-// with House Bot labels wherever a bot's name renders. Empty-safe: the whole
-// section disappears when the archive has nothing to show, so no dead air.
+// Live activity: the most recently finished games, linked to their replays.
+// Empty-safe: the whole section disappears when the archive has nothing to
+// show, so no dead air.
 function LiveActivity() {
   const [games, setGames] = useState<RecentGame[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [botNames, setBotNames] = useState<Set<string>>(new Set());
   const mountedRef = useRef(true);
 
   const loadGames = useCallback(() => {
@@ -545,15 +544,6 @@ function LiveActivity() {
     queueMicrotask(() => {
       if (mountedRef.current) loadGames();
     });
-    // House-bot names come from the leaderboard's own bot flag, so a bot is
-    // labeled here exactly as it is on the community hub.
-    fetch("/api/leaderboard?category=nerf")
-      .then((res) => (res.ok ? (res.json() as Promise<{ players: { username: string; bot?: number }[] }>) : null))
-      .then((data) => {
-        if (mountedRef.current && data)
-          setBotNames(new Set(data.players.filter((p) => p.bot).map((p) => p.username.toLowerCase())));
-      })
-      .catch(() => {});
     return () => {
       mountedRef.current = false;
     };
@@ -563,7 +553,6 @@ function LiveActivity() {
   // settled to an empty list here, never a still-pending or failed load.
   if (!failed && games !== null && games.length === 0) return null;
 
-  const isBot = (name: string) => botNames.has(name.toLowerCase());
   const modeOf = (category: string) => (category === "nerf" || category === "buff" ? category : undefined);
 
   return (
@@ -596,9 +585,9 @@ function LiveActivity() {
                 className="group flex items-center justify-between gap-3 px-3 py-2.5 no-underline transition-colors hover:bg-[color:var(--surface-hover)]"
               >
                 <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[14px] text-parchment-100">
-                  <PlayerNameInline name={g.whiteName} isBot={isBot} />
+                  <PlayerNameInline name={g.whiteName} />
                   <span className="text-parchment-400">vs</span>
-                  <PlayerNameInline name={g.blackName} isBot={isBot} />
+                  <PlayerNameInline name={g.blackName} />
                   <ModeBadge mode={modeOf(g.category)} compact />
                 </span>
                 <span className="flex shrink-0 items-center gap-2.5">
@@ -622,19 +611,14 @@ function LiveActivity() {
   );
 }
 
-// A name links to its profile; a House engine account wears the outline chip
-// everywhere its name renders (design system section 7).
-function PlayerNameInline({ name, isBot }: { name: string; isBot: (name: string) => boolean }) {
+// A name links to its profile. Every account renders the same way here; no
+// labels or chips distinguish one kind of account from another.
+function PlayerNameInline({ name }: { name: string }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1">
       <Link href={`/u/${encodeURIComponent(name)}`} className="truncate hover:text-gold-leaf">
         {name}
       </Link>
-      {isBot(name) && (
-        <span className="shrink-0 whitespace-nowrap border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-[12px] uppercase tracking-[0.06em] text-parchment-400">
-          House bot
-        </span>
-      )}
     </span>
   );
 }

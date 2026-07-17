@@ -678,7 +678,7 @@ function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
           maxLength={20}
           placeholder="New username"
           aria-label="New username"
-          className="w-40 border border-white/15 bg-ink-900/60 px-2 py-1.5 text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
+          className="input-rune w-40 px-2 py-1.5 focus:outline-none"
         />
         <button
           type="submit"

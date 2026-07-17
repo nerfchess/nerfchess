@@ -5,6 +5,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDraftChime } from "@/lib/sounds";
+import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { BuffCard } from "./BuffCard";
 import "./DraftOverlay.css";
@@ -604,7 +605,11 @@ export function DraftOverlay({
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packStage]);
-  const tearPack = () => setPackStage((s) => (s === "sealed" ? "tearing" : s));
+  const tearPack = () =>
+    setPackStage((s) => {
+      if (s === "sealed") haptic("light");
+      return s === "sealed" ? "tearing" : s;
+    });
 
   useEffect(
     () => () => {
@@ -649,6 +654,7 @@ export function DraftOverlay({
 
   const confirmCard = (i: number) => {
     if (chosen != null || banking || committedRef.current) return;
+    haptic("medium");
     if (reduceMotion) {
       // No pocket flight to wait for: commit on the spot. Relying on framer's
       // animate-complete under reduced motion would leave the commit hostage
@@ -710,6 +716,7 @@ export function DraftOverlay({
   // banks immediately.
   const handleBank = () => {
     if (chosen != null || banking || committedRef.current) return;
+    haptic("medium");
     committedRef.current = true;
     setCommitted(true);
     if (reduceMotion) {
@@ -956,6 +963,14 @@ export function DraftOverlay({
 
   const mid = (offer.cards.length - 1) / 2;
 
+  // The chamber answers the offer: the strongest card's category re-tints the
+  // torch light once the pack is open (attack burns blood red, hexes go void,
+  // protection cools to teal, tempo turns astral). Ember is the default mood.
+  const topCard = offer.cards.reduce((best, c) => (c.tier > best.tier ? c : best), offer.cards[0]);
+  const topCat = topCard ? BUFF_BY_ID[topCard.id]?.category : undefined;
+  const stageMood =
+    topCat === "attack" ? "blood" : topCat === "hex" ? "void" : topCat === "protection" ? "teal" : topCat === "tempo" ? "astral" : undefined;
+
   return (
     <>
       {/* Peek at the board: while hidden, a slim chip keeps the draft (and
@@ -996,7 +1011,7 @@ export function DraftOverlay({
           fog, a slow firelight aurora, and rising ember motes. Fixed (never
           scrolls with the panel), pointer-events-none, transform/opacity only;
           the moving layers are skipped entirely under reduced motion. */}
-      <div aria-hidden className="draft-stage">
+      <div aria-hidden className="draft-stage" data-mood={packStage === "open" ? stageMood : undefined}>
         <span className="draft-stage__vignette" />
         {!reduceMotion && (
           <>
