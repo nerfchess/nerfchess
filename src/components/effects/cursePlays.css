@@ -326,6 +326,26 @@
 }
 .cwp-crack { animation: cwp-crack calc(0.7s * var(--fx-dur, 1)) ease-out both; }
 
+/* WAVE 3 — identity crossfade for turncoat / aging curses: the old coat gives
+   way to the new (both tracks still end dark). */
+@keyframes cwp-swapout {
+  0% { opacity: 0; transform: scale(0.9); }
+  22% { opacity: 1; transform: scale(1); }
+  48% { opacity: 1; }
+  64% { opacity: 0; transform: scale(1.06); }
+  100% { opacity: 0; }
+}
+.cwp-swapout { animation: cwp-swapout calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+@keyframes cwp-swapin {
+  0% { opacity: 0; transform: scale(0.8); }
+  52% { opacity: 0; transform: scale(0.8); }
+  70% { opacity: 1; transform: scale(1.1); }
+  82% { transform: scale(1); }
+  90% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.cwp-swapin { animation: cwp-swapin calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
 /* --- Target-square hit (non-lead renders) ---------------------------------- */
 
 @keyframes cwp-tflash {
@@ -341,6 +361,32 @@
   100% { opacity: 0; transform: scale(1.25); }
 }
 .cwp-tring { animation: cwp-tring calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+
+/* WAVE 3 — The Curse Engine's iron gears grinding up the winding. */
+@keyframes cwp-grind {
+  0% { opacity: 0; transform: rotate(-30deg); }
+  22% { opacity: 1; transform: rotate(0deg); }
+  82% { opacity: 0.9; transform: rotate(260deg); }
+  100% { opacity: 0; transform: rotate(300deg); }
+}
+.cwp-grind { animation: cwp-grind calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
+@keyframes cwp-grindrev {
+  0% { opacity: 0; transform: rotate(30deg); }
+  22% { opacity: 1; transform: rotate(0deg); }
+  82% { opacity: 0.9; transform: rotate(-260deg); }
+  100% { opacity: 0; transform: rotate(-300deg); }
+}
+.cwp-grindrev { animation: cwp-grindrev calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
+
+/* WAVE 3 — Pyrrhic Toll's laurel wilting as the bell rings. */
+@keyframes cwp-wilt {
+  0% { opacity: 0; transform: translateY(-8%) scale(0.9); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  62% { transform: translateY(6%) scale(0.96) rotate(3deg); }
+  84% { opacity: 0.85; transform: translateY(10%) scale(0.92) rotate(4deg); }
+  100% { opacity: 0; transform: translateY(14%) scale(0.9) rotate(5deg); }
+}
+.cwp-wilt { animation: cwp-wilt calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
 
 /* --- Kill switch ------------------------------------------------------------
    Settings animation toggle: park every cwp-* element outright. */

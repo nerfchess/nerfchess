@@ -172,3 +172,25 @@ Nerf-mode wave 2 (audit: docs/2026-07-17-card-library-audit.md):
 - Tier 6-8 nerf rebalance (12 cards, all documented in docs/2026-07-17-nerf-wave2-and-rebalance.md): after-my-move grace + warning hints for the instant-execution loss cards (boastful, wn_glass_queen, wn_pin_cushion, wn_house_of_cards), narrowed trigger zones (hold_them_back, abstinence, helicopter_parent, closed_book), announced windows (glorious_battle), capped requirements (inching_forward), budget raise (war_footing), death_wish re-tiered 6->8.
 - Animation coverage: five boon templates + five curse templates, 41 unique per-card flourish dressings, 14 fully bespoke tier 7-8 scenes (boonPlays.tsx/cursePlays.tsx); shared-flagship ratchet unchanged at 381/45 — every new card has a bespoke flagship. Passive-effect registry regenerated: 639 unique compositions covering all 16 new nerfs.
 - Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:animations, test:desync, test:snapshot all green.
+
+---
+
+## 2026-07-17 17:45 ET (wave 3: multi-agent expansion, dungeon lobby, bot identity)
+
+Delivered by a seven-subagent pipeline (content audit, boon designer, hex designer, balance reviewer, animation mapper, lobby redesign, bot data consistency) coordinated by the integrator.
+
+Content (audit brief: docs/2026-07-17-wave3-content-map.md):
+- +44 boons (bw3_*, boons3.ts) and +40 hexes (hw3_*, hexes/wave3.ts) in the genuinely open mechanic families (turncoat/possession, summoned hazards, sympathetic links, contracts, contagion, comeback, clocks, terrain, miracles); zero additions to the saturated petrify/freeze/zone/leash piles. Totals: boons 88->132, hexes 207->247, ALL_BUFFS 1006.
+- Balance review over all 84 cards: bw3_futures_market fixed (prepThree gated out the banked-apex path, the card could never fire as described) and retiered T6->T7; bw3_battlefield_commission differentiated from field_knighting via deficit scaling; hw3_hydra_hex T7->T6. Verified: no new COMBO_TAGS families needed, no ward-stack lockouts, no soft-lock paths, determinism clean.
+- Animation map: 63 dressed-template flagships (unique per-card SVG dressings across the ten wave templates) + 21 bespoke T7/T8 scenes; 8 new transform/opacity keyframes; shared-flagship baseline held at 381/45. Registries regenerated: 1355 icons, 687 plugin ids, 675 passive compositions.
+
+Lobby (Fable agent):
+- Full dungeon-chamber redesign extending the DungeonGateButton system: granite Quick-match chamber with Buff/Nerf carved-door mode cards (igniting in-flow selected state), engraved stone time-control tokens with a mobile bottom-sheet picker, ember tab underline, segmented rune filter, engraved section labels, stone secondary cards, dungeonized loading skeleton, sticky CTA as a real DungeonGateButton on a torchlit plinth.
+- Mobile overhaul: hidden tab scrollbar with edge fade (no active-tab clipping), compact one-row masthead, 44px+ targets, safe-area insets, wrap-safe rating rows, no horizontal overflow at 360px; FpsMeter debug chip is now development-only.
+
+Bot identity (worker.ts, games.ts, ratingSql.ts, profile page):
+- Inline bot-avatar browser upload for house editors (ilovenewjeans): client validation, center-crop + compress to ~200KB, preview-before-save, server-side re-validation through the centralized isHouseEditor permission.
+- Username propagation: houseNotify records actor_user_id (notifications heal on rename), live seats re-read canonical names, retained seeks re-sync from houseLiveInfo. Rule: archived games keep at-the-time names; current-state surfaces always canonical.
+- Rating sync: bestLiveRatingSql unified onto the most-played-bucket rule (ends the MAX-vs-most-played divergence), per-mode challenge seeding, and recordFinishedGame rating writes converted to optimistic CAS with bounded retry so concurrent DO + arena-isolate results never lose an update.
+
+Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:animations, test:desync, test:snapshot, test:glicko, and next build all green.

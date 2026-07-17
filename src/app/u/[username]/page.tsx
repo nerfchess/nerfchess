@@ -43,6 +43,7 @@ import { clockLabel } from "@/lib/tournaments";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
 import { isHouseEditor } from "@/lib/godPanel";
+import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
@@ -1622,6 +1623,14 @@ function HouseBotEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // Custom-upload flow: `preparing` covers the client-side decode/downscale;
+  // `preview` holds the compressed square data URL awaiting confirmation, so the
+  // editor can show it before committing (preview-before-save). The hidden file
+  // input is driven by the "Upload image…" button (desktop click / mobile tap;
+  // `accept` also lets a phone offer its camera).
+  const [preparing, setPreparing] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const post = async (body: Record<string, unknown>): Promise<boolean> => {
     setSaving(true);
@@ -1663,6 +1672,42 @@ function HouseBotEditor({
       setNote("Saved");
       setPicking(false);
       onIdentity(username, id);
+    }
+  };
+
+  // Read a chosen file, then downscale + center-crop it to a compact square data
+  // URL on the client (256px, matching the site's round avatar shape) and hold
+  // it as a preview. Nothing is persisted until the editor confirms below. The
+  // server re-validates MIME / byte-size / pixel-dimensions on save
+  // (validateImageDataUrl in the personas route), so these client-side checks
+  // are convenience only and never trusted for authorization or acceptance.
+  const onFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    setError(null);
+    setNote(null);
+    setPreparing(true);
+    try {
+      const dataUrl = await fileToDataUrl(file, { maxDim: 256, maxChars: 200_000, cover: true });
+      setPreview(dataUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not read that image.");
+    } finally {
+      setPreparing(false);
+      // Clear the input so re-selecting the same file still fires onChange.
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  // Commit the previewed upload as this bot's avatar (persisted immediately and
+  // reflected everywhere the bot appears via onIdentity).
+  const confirmUpload = async () => {
+    if (!preview || saving) return;
+    const dataUrl = preview;
+    if (await post({ avatar: dataUrl })) {
+      setNote("Saved");
+      setPreview(null);
+      setPicking(false);
+      onIdentity(username, dataUrl);
     }
   };
 
@@ -1725,26 +1770,87 @@ function HouseBotEditor({
           <PlayerAvatar name={username} avatar={avatar} size={40} />
         </button>
         <span className="text-xs text-parchment-400">
-          {picking ? "Pick one below" : "Click to change"}
+          {picking ? "Upload or pick one below" : "Click to change"}
         </span>
       </div>
       {picking && (
-        <div className="mt-2 flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
-          {avatars.map((id) => (
-            <button
-              key={id}
-              type="button"
-              disabled={saving}
-              onClick={() => pickAvatar(id)}
-              title={id}
-              className={
-                "press rounded-md border p-0.5 transition " +
-                (id === avatar ? "border-gold/60" : "border-transparent hover:border-white/25")
-              }
-            >
-              <PlayerAvatar name={username} avatar={id} size={28} />
-            </button>
-          ))}
+        <div className="mt-3">
+          {/* Custom upload (from device/camera). Hidden input driven by the
+              button so the control matches the site's styling on desktop and
+              mobile alike. */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+          {preview ? (
+            // Preview-before-save: show the cropped square exactly as it will
+            // render, then confirm or discard.
+            <div className="flex flex-wrap items-center gap-3">
+              <PlayerAvatar name={username} avatar={preview} size={56} />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={confirmUpload}
+                  className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
+                >
+                  {saving ? "Saving..." : "Use this picture"}
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => fileRef.current?.click()}
+                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
+                >
+                  Choose another
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setPreview(null)}
+                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={saving || preparing}
+                onClick={() => fileRef.current?.click()}
+                className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
+              >
+                {preparing ? "Preparing..." : "Upload image..."}
+              </button>
+              <span className="text-[11px] text-parchment-500">
+                PNG, JPEG, WebP, or GIF. Cropped to a square; max 1 MB after compression.
+              </span>
+            </div>
+          )}
+          {!preview && (
+            <div className="mt-2 flex max-h-56 flex-wrap gap-1.5 overflow-y-auto">
+              {avatars.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  disabled={saving}
+                  onClick={() => pickAvatar(id)}
+                  title={id}
+                  className={
+                    "press rounded-md border p-0.5 transition " +
+                    (id === avatar ? "border-gold/60" : "border-transparent hover:border-white/25")
+                  }
+                >
+                  <PlayerAvatar name={username} avatar={id} size={28} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

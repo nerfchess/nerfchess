@@ -123,7 +123,12 @@
 
 /* The rune lintel: carved glyphs flanking the label. Dim by default —
    half-remembered carvings — they ignite on hover/focus and cycle while the
-   gate is loading. Decorative, aria-hidden in the markup. */
+   gate is loading. Decorative, aria-hidden in the markup; the glyphs come
+   from CSS content (attr(data-runes)) so they never enter the button's
+   textContent. */
+.dgn-gate__rune::before {
+  content: attr(data-runes);
+}
 .dgn-gate__rune {
   position: relative;
   z-index: 3;

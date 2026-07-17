@@ -92,7 +92,7 @@ import type { AchievementExtras } from "./src/lib/server/achievements";
 import { sessionTokenFromCookieHeader, userForSession } from "./src/lib/server/auth";
 import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
-import { categoryForTimeControl, type RatingCategory } from "./src/lib/speed";
+import { categoryForTimeControl, isModeCategory, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { isGodPanelUser } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
@@ -2006,6 +2006,15 @@ export class GameServer extends DurableObject<Env> {
           seat.rd = row.rd;
           seat.vol = row.vol;
           seat.avatar = row.avatar;
+          // House bots can be renamed from /mod/house (or the inline profile
+          // editor). The users row is the canonical identity, so a LIVE seat
+          // reflects a rename on the next attach/start refresh — every
+          // current-state surface built from match.users (game cards, spectate,
+          // board rows) then shows the new name. Human seats keep their session
+          // name; only house identities are re-synced here. (Once the game ends,
+          // endMatch snapshots the name into the archived games row, which is a
+          // HISTORICAL record and is never rewritten by a later rename.)
+          if (row.username && isHouseUserId(seat.id)) seat.name = row.username;
         }
       }),
     );
@@ -4344,6 +4353,24 @@ export class GameServer extends DurableObject<Env> {
     // Nerf and Buff, rotating which personas via random draw). Seeks carry
     // the persona's LIVE rating (cached, one bounded query per TTL window).
     const liveInfo = await this.houseLiveInfo(db);
+    // Heal identity + rating on RETAINED seeks from the live (cached) roster
+    // info. A seek row is created once (newHouseSeek) with the name/avatar/rating
+    // current at that moment, then kept across ticks until it is picked up or
+    // TTLs out — so without this, a bot renamed or re-rated from /mod/house kept
+    // showing its OLD name and stale elo in the lobby's seek list until the seek
+    // expired. Re-syncing here brings every current-state seek row to the
+    // canonical value within one cache window (the same source newHouseSeek and
+    // the online-list query read), so the lobby, seek, profile, and leaderboard
+    // never disagree for a live bot.
+    for (const seek of seeks) {
+      const identity = liveInfo.identity.get(seek.userId);
+      if (identity) {
+        seek.name = identity.username;
+        if (identity.avatar) seek.avatar = identity.avatar;
+      }
+      const liveRating = liveInfo.byId.get(seek.userId)?.[seek.mode];
+      if (typeof liveRating === "number") seek.rating = liveRating;
+    }
     while (seeks.length < houseSeekMin && free.length) {
       const persona = free.splice(randomInt(free.length), 1)[0];
       seeks.push(this.newHouseSeek(persona, now, liveInfo));
@@ -5213,14 +5240,20 @@ export class GameServer extends DurableObject<Env> {
     actorName: string,
     text: string,
     href: string,
+    // The acting house persona's user id. Stored as actor_user_id so the
+    // notifications read path (/api/notifications) resolves the CURRENT username
+    // live and rewrites the frozen actor_name in the row's text — a bot renamed
+    // after the notification was sent shows its new name in the bell instead of
+    // the stale one, matching how human-actor notifications already self-heal.
+    actorUserId: string | null = null,
   ): Promise<void> {
     try {
       await db
         .prepare(
-          `INSERT INTO notifications (id, user_id, type, actor_name, text, href, created_at, read)
-           VALUES (?, ?, 'message', ?, ?, ?, ?, 0)`,
+          `INSERT INTO notifications (id, user_id, type, actor_user_id, actor_name, text, href, created_at, read)
+           VALUES (?, ?, 'message', ?, ?, ?, ?, ?, 0)`,
         )
-        .bind(crypto.randomUUID(), userId, actorName, text, href, Date.now())
+        .bind(crypto.randomUUID(), userId, actorUserId, actorName, text, href, Date.now())
         .run();
     } catch {
       // A missed notification must never fail the social write it accompanies.
@@ -5260,7 +5293,7 @@ export class GameServer extends DurableObject<Env> {
           .bind(r.user_lo, r.user_hi)
           .run();
         const name = this.houseDisplayName(botId);
-        await this.houseNotify(db, r.requested_by, name, `${name} accepted your friend request`, "/friend");
+        await this.houseNotify(db, r.requested_by, name, `${name} accepted your friend request`, "/friend", botId);
         budget--;
       } catch (err) {
         console.error("house friend accept failed", botId, err);
@@ -5366,7 +5399,19 @@ export class GameServer extends DurableObject<Env> {
             vol: row.vol,
             avatar: row.avatar ?? persona.avatar,
           }
-        : { id: persona.userId, name: persona.name, rating: houseSeedRating(persona), rd: 150, vol: 0.06, avatar: persona.avatar };
+        : {
+            id: persona.userId,
+            name: persona.name,
+            // Seed the SAME per-mode number houseSeatUser uses (the bucket this
+            // game is rated in), not the mode-neutral base — otherwise a bot's
+            // advertised rating in a challenge could differ from the number the
+            // rest of the site shows for that mode. Non-mode (classic/speed)
+            // challenges have no per-mode seed, so fall back to the base.
+            rating: isModeCategory(cat) ? houseSeedRatingForMode(persona, cat) : houseSeedRating(persona),
+            rd: 150,
+            vol: 0.06,
+            avatar: persona.avatar,
+          };
     } catch {
       return "retry";
     }

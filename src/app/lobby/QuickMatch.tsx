@@ -11,6 +11,9 @@ import { MPConnectionState, MPSession, saveOnlineSeat } from "@/lib/multiplayer"
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
+import { DungeonGateButton } from "@/components/DungeonGateButton";
+import { EngravedLabel } from "@/components/dungeon/primitives";
+import "@/components/dungeon/dungeon-lobby.css";
 
 // The lobby's Quick Match panel: pick a mode (Buff recommended / Nerf), pick a
 // time control, and one primary button finds a rated game against a real
@@ -238,15 +241,20 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const findLabel = `Find a ${selected.label} ${modeLabel} game`;
 
   return (
-    <div className="plate gilt p-4 sm:p-6">
+    <div className="dgn-chamber p-4 sm:p-6">
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden
-          className="grid h-8 w-8 shrink-0 place-items-center border border-gold/40 bg-gold/10 text-gold-leaf"
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[rgb(122_96_58_/_0.6)] bg-[rgb(var(--energy-ember-rgb)/0.12)] text-[rgb(var(--energy-ember-rgb))] shadow-[inset_0_1px_0_rgba(255,230,180,0.15)]"
         >
-          <Swords size={15} />
+          <Swords size={16} />
         </span>
-        <div className="font-display text-2xl text-parchment">Quick match</div>
+        <div>
+          <div className="font-display text-2xl leading-none text-parchment-50">Quick match</div>
+          <EngravedLabel className="mt-1.5" torch={false}>
+            The matchmaking chamber
+          </EngravedLabel>
+        </div>
       </div>
 
       {state === "searching" ? (
@@ -264,29 +272,34 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
         </div>
       ) : (
         <>
-          {/* Step 1: mode. Two equal-height cards, each wearing its mode hue on
-              a selected edge and showing the rating it stakes. Buff leads and is
-              preselected. Selecting a card does not queue; the button does. */}
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            <ModeCard
-              mode="buff"
-              rating={ratingFor("buff")}
-              selected={mode === "buff"}
-              onClick={() => pickMode("buff")}
-            />
-            <ModeCard
-              mode="nerf"
-              rating={ratingFor("nerf")}
-              selected={mode === "nerf"}
-              onClick={() => pickMode("nerf")}
-            />
+          {/* Step 1: mode. Two dungeon doors, each wearing its mode hue on a
+              carved jamb and igniting when chosen (no floating checkbox). Buff
+              leads and is preselected. Choosing a door does not queue; the gate
+              does. */}
+          <div className="mt-5">
+            <EngravedLabel>Choose your gate</EngravedLabel>
+            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+              <ModeCard
+                mode="buff"
+                rating={ratingFor("buff")}
+                selected={mode === "buff"}
+                onClick={() => pickMode("buff")}
+              />
+              <ModeCard
+                mode="nerf"
+                rating={ratingFor("nerf")}
+                selected={mode === "nerf"}
+                onClick={() => pickMode("nerf")}
+              />
+            </div>
           </div>
 
-          {/* Step 2: time control. Desktop shows the balanced 3x3 grid inline;
-              mobile collapses it to a summary that opens a bottom sheet. */}
-          <div className="mt-4">
-            <div className="eyebrow text-parchment-400">Time control</div>
-            <div className="mt-2 hidden grid-cols-3 gap-1.5 sm:grid">
+          {/* Step 2: time control. Desktop shows the balanced 3x3 grid of
+              engraved stone tokens inline; mobile collapses it to a summary
+              tablet that opens a bottom sheet. */}
+          <div className="mt-5">
+            <EngravedLabel>Time control</EngravedLabel>
+            <div className="mt-2.5 hidden grid-cols-3 gap-2 sm:grid">
               {QUEUE_POOL_OPTIONS.map((option) => (
                 <TimeCell
                   key={option.pool}
@@ -296,30 +309,32 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                 />
               ))}
             </div>
-            {/* Mobile: a single summary button opens the picker sheet. */}
+            {/* Mobile: a single summary tablet opens the picker sheet. */}
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="mt-2 flex min-h-[44px] w-full items-center justify-between border border-[color:var(--edge)] bg-ink-900/60 px-3.5 py-2.5 text-parchment-100 transition-colors hover:border-white/30 sm:hidden"
+              data-selected="true"
+              className="dgn-token mt-2.5 flex min-h-[48px] w-full items-center justify-between px-3.5 py-2.5 sm:hidden"
             >
               <span className="flex items-center gap-2">
                 <Clock size={16} aria-hidden style={{ color: selectedCategory.accent }} />
-                <span className="font-mono text-base tabular-nums">{selected.label}</span>
-                <span className="text-sm text-parchment-400">{selectedCategory.label}</span>
+                <span className="font-mono text-base tabular-nums text-parchment-50">{selected.label}</span>
+                <span className="text-sm text-parchment-300">{selectedCategory.label}</span>
               </span>
-              <span className="text-sm text-parchment-400">Change</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-gold-leaf">Change</span>
             </button>
           </div>
 
-          {/* The one primary action. Desktop renders it full width in the panel;
-              on mobile it moves to the sticky bottom bar below so it is always
+          {/* The one primary action, forged as the same dungeon gate as the
+              homepage CTA. Desktop renders it full width in the chamber; on
+              mobile it moves to the sticky bottom rail so it is always
               reachable. */}
-          <button
+          <DungeonGateButton
             onClick={startSearch}
-            className="btn-leaf press mt-4 hidden w-full items-center justify-center px-8 py-4 font-display text-xl font-semibold sm:flex"
+            className="dgn-gate--block press mt-5 hidden px-8 py-4 font-display text-lg font-semibold sm:flex"
           >
             {findLabel}
-          </button>
+          </DungeonGateButton>
 
           {user !== undefined && (!user || user.isGuest) && (
             <p className="mt-3 text-center text-[13px] text-parchment-300 sm:text-sm">
@@ -352,12 +367,12 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
             {showBar && (
               <div
                 ref={barRef}
-                className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--edge)] bg-ink-900/95 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] shadow-plate sm:hidden"
+                className="dgn-ctabar fixed inset-x-0 bottom-0 z-40 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:hidden"
               >
                 {state === "searching" ? (
                   <div className="flex items-center justify-between gap-3">
                     <span className="flex items-center gap-2 text-sm text-parchment-100">
-                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 bg-verdigris animate-flicker" />
+                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-[rgb(var(--energy-ember-rgb))] animate-flicker" />
                       <span>Searching</span>
                       <span className="font-mono text-sm tabular-nums text-parchment-200">{formatElapsed(elapsed)}</span>
                     </span>
@@ -369,12 +384,12 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                     </button>
                   </div>
                 ) : (
-                  <button
+                  <DungeonGateButton
                     onClick={startSearch}
-                    className="btn-leaf press flex min-h-[52px] w-full items-center justify-center px-6 py-3 font-display text-lg font-semibold"
+                    className="dgn-gate--block press flex min-h-[52px] px-6 py-3 font-display text-lg font-semibold"
                   >
                     {findLabel}
-                  </button>
+                  </DungeonGateButton>
                 )}
               </div>
             )}
@@ -388,10 +403,10 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                   onClick={() => setSheetOpen(false)}
                   className="absolute inset-0 bg-black/60"
                 />
-                <div className="absolute inset-x-0 bottom-0 border-t border-[color:var(--edge)] bg-ink-900 p-4 pb-[max(env(safe-area-inset-bottom),1rem)] shadow-plate">
-                  <div aria-hidden className="mx-auto mb-3 h-1 w-9 rounded-full bg-white/15" />
+                <div className="dgn-ctabar absolute inset-x-0 bottom-0 p-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
+                  <div aria-hidden className="mx-auto mb-3 h-1 w-9 rounded-full bg-[rgb(var(--energy-ember-rgb)/0.5)]" />
                   <div className="mb-3 flex items-center justify-between">
-                    <div className="font-display text-lg text-parchment">Time control</div>
+                    <EngravedLabel as="h3" className="text-[13px]">Time control</EngravedLabel>
                     <button
                       type="button"
                       onClick={() => setSheetOpen(false)}
@@ -452,10 +467,15 @@ function SearchingPanel({
 }) {
   const reconnecting = connection !== "connected";
   return (
-    <div ref={rootRef} className="mt-4 border border-verdigris/30 bg-verdigris/[0.06] p-4">
+    <div
+      ref={rootRef}
+      className="dgn-token mt-5 p-4"
+      data-selected="true"
+      style={{ "--energy-gold-rgb": "98 153 36" } as React.CSSProperties}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-2.5 text-sm text-parchment-100">
-          <span aria-hidden className="h-2.5 w-2.5 shrink-0 bg-verdigris animate-flicker" />
+          <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-verdigris animate-flicker" />
           <span>
             Finding a{" "}
             <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
@@ -501,12 +521,8 @@ function TimeCell({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={
-        "flex min-h-[44px] flex-col items-center justify-center gap-0.5 border px-1 py-2 transition-colors " +
-        (selected
-          ? "border-gold bg-gold/15 text-gold-leaf"
-          : "border-[color:var(--edge)] text-parchment-200 hover:border-white/30 hover:bg-white/5")
-      }
+      data-selected={selected || undefined}
+      className="dgn-token press flex min-h-[48px] flex-col items-center justify-center gap-0.5 px-1 py-2"
     >
       <Icon size={15} style={{ color: category.accent }} aria-hidden />
       <span className="font-mono text-base tabular-nums">{option.label}</span>
@@ -532,57 +548,53 @@ function ModeCard({
   onClick: () => void;
 }) {
   const isNerf = mode === "nerf";
-  const identity = isNerf
-    ? {
-        card: selected
-          ? "border-mode-nerf bg-mode-nerf/15 ring-2 ring-inset ring-mode-nerf"
-          : "border-mode-nerf/25 bg-mode-nerf/[0.04] hover:border-mode-nerf/50 hover:bg-mode-nerf/10",
-        title: "text-mode-nerfGlow",
-        badge: "bg-mode-nerf",
-      }
-    : {
-        card: selected
-          ? "border-mode-buff bg-mode-buff/15 ring-2 ring-inset ring-mode-buff"
-          : "border-mode-buff/25 bg-mode-buff/[0.04] hover:border-mode-buff/50 hover:bg-mode-buff/10",
-        title: "text-mode-buffGlow",
-        badge: "bg-mode-buff",
-      };
+  const title = isNerf ? "text-mode-nerfGlow" : "text-mode-buffGlow";
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
+      data-selected={selected || undefined}
       className={
-        "plate corner-cut relative flex h-full flex-col p-3.5 text-left transition-colors duration-200 sm:p-4 " +
-        identity.card
+        "dgn-door press p-3.5 text-left sm:p-4 " + (isNerf ? "dgn-door--nerf" : "dgn-door--buff")
       }
     >
-      {selected && (
-        <span
-          aria-hidden
-          className={"absolute right-2 top-2 grid h-6 w-6 place-items-center text-white " + identity.badge}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className={"font-display text-2xl font-semibold leading-none sm:text-3xl " + title}>
+              {isNerf ? "Nerf" : "Buff"}
+            </span>
+            {!isNerf && (
+              <span className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-xs font-medium text-gold-leaf">
+                Recommended
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Chosen indicator, in normal flow (no overlap): a lit rune housing
+            when chosen, a dim bead when not. */}
+        <span aria-hidden className="dgn-door__mark">
+          {selected ? (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          )}
         </span>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className={"font-display text-2xl font-semibold sm:text-3xl " + identity.title}>{isNerf ? "Nerf" : "Buff"}</div>
-        {!isNerf && (
-          <span className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-xs font-medium text-gold-leaf">
-            Recommended
-          </span>
-        )}
       </div>
-      <p className="mt-1.5 text-[13px] leading-snug text-parchment-300">
+      <p className="mt-2 text-[13px] leading-snug text-parchment-300">
         {isNerf
           ? "Start with a secret handicap. Draft curses for your opponent."
           : "Start with normal chess. Draft powers for your own army."}
       </p>
-      <div className="mt-auto flex items-center gap-2 pt-2.5">
+      {/* The rating this door stakes. flex-wrap: on the narrowest phones the
+          number drops to its own line instead of clipping against the door's
+          overflow:hidden. */}
+      <div className="mt-auto flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-t border-white/[0.06] pt-2.5">
         <span className="text-xs text-parchment-400">Your {isNerf ? "Nerf" : "Buff"} rating</span>
-        <span className={"font-mono text-base tabular-nums " + identity.title}>{rating ?? "?"}</span>
+        <span className={"font-mono text-base leading-none tabular-nums " + title}>{rating ?? "?"}</span>
       </div>
     </button>
   );

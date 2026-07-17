@@ -62,13 +62,16 @@ export function DungeonGateButton({
   const cls = "dgn-gate " + className;
   const label = (
     <span className="dgn-gate__label">
-      <span aria-hidden="true" className="dgn-gate__rune">
-        {RUNES_L}
-      </span>
+      {/* Runes render via CSS content so the button's textContent stays the
+          plain label (screen readers, copy/paste, and text assertions all see
+          only the real text). */}
+      <span aria-hidden="true" className="dgn-gate__rune" data-runes={RUNES_L} />
       {children}
-      <span aria-hidden="true" className="dgn-gate__rune dgn-gate__rune--r">
-        {RUNES_R}
-      </span>
+      <span
+        aria-hidden="true"
+        className="dgn-gate__rune dgn-gate__rune--r"
+        data-runes={RUNES_R}
+      />
     </span>
   );
 

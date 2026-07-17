@@ -56,7 +56,11 @@ export function SettingsBootstrap() {
 
   return (
     <>
-      {fps && <FpsMeter />}
+      {/* The fps readout is a developer diagnostic: it only ever renders in
+          dev builds, so the little "60 fps" chip can never float over real
+          UI (the lobby's sticky action bar sits in the same corner) in
+          production. The Settings > Advanced toggle still gates it in dev. */}
+      {fps && process.env.NODE_ENV === "development" && <FpsMeter />}
       <LagWatch />
     </>
   );

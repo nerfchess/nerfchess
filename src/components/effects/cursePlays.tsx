@@ -385,6 +385,137 @@ function HexBrand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           ))}
         </>
       )}
+      {/* wave3 Wrong Foot — a piece forced from a light square onto a dark one */}
+      {flourish === "wrongfoot" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "38%", top: "58%", width: "8%", height: "6%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.5" y="0.5" width="5" height="7" fill={tint(p2, 0.75)} /><rect x="6" y="0.5" width="5" height="7" fill={tint(p0, 0.9)} />
+            </svg>
+          </span>
+          <span className="cwp-tug absolute block" style={{ left: "40%", top: "58%", width: "5%", height: "7.5%", "--dx": "120%", "--dy": "0%", animationDelay: `${delayMs + 700}ms` } as CSSProperties}>
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* wave3 Overexertion — a piece moved twice running seizes up, frost cuffs it */}
+      {flourish === "overexert" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "46%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          {[0, 1].map((i) => (
+            <span key={i} className="cwp-crack absolute block" style={{ left: `${43 + i * 8}%`, top: "58%", width: "4%", height: "5%", animationDelay: `${delayMs + 760 + i * 120}ms` }}>
+              <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M4 0.6 L3 3 L5 4.4 L3.4 7.4 M1 4 H7" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.6" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Toll Road — a border stile stamps a toll on any crossing piece */}
+      {flourish === "tollroad" && (
+        <>
+          <span className="cwp-beam absolute block" style={{ left: "32%", top: "56%", width: "36%", height: "1.4%", background: tint(p1, 0.9), transformOrigin: "0% 50%", animationDelay: `${delayMs + 560}ms` }} />
+          <span className="cwp-tug absolute block" style={{ left: "38%", top: "48%", width: "5.5%", height: "8%", "--dx": "160%", "--dy": "60%", animationDelay: `${delayMs + 700}ms` } as CSSProperties}>
+            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="cwp-pop absolute block" style={{ left: "54%", top: "60%", width: "5%", height: "5%", animationDelay: `${delayMs + 900}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5" r="4" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.6" /><path d="M5 2.6 V7.4 M3.4 4 H6.6" stroke="#8a6a3a" strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* wave3 Bloodlust — the killer piece is dragged on to strike again */}
+      {flourish === "bloodlust" && (
+        <>
+          <span className="cwp-tug absolute block" style={{ left: "34%", top: "58%", width: "5.5%", height: "8%", "--dx": "260%", "--dy": "0%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          {[0, 1].map((i) => (
+            <span key={i} className="cwp-glint absolute block" style={{ left: `${52 + i * 9}%`, top: "60%", width: "2.6%", height: "3%", animationDelay: `${delayMs + 900 + i * 150}ms` }}>
+              <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" /></svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Exile's Mark — a marked piece dragged toward the far half or it crumbles */}
+      {flourish === "exile" && (
+        <>
+          <span className="absolute block" style={{ left: "34%", top: "57%", width: "34%", height: "0.9%", rotate: "-6deg" }}>
+            <span className="cwp-beam absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.85)} 0 6px, transparent 6px 11px)`, animationDelay: `${delayMs + 560}ms` }} />
+          </span>
+          <span className="cwp-tug absolute block" style={{ left: "36%", top: "50%", width: "5.5%", height: "8%", "--dx": "420%", "--dy": "-30%", animationDelay: `${delayMs + 660}ms` } as CSSProperties}>
+            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* wave3 Debtor's Mark — freeze-debt tallies pile up beside an idle piece */}
+      {flourish === "debtor" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "38%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className="cwp-pop absolute block" style={{ left: `${52 + i * 3.4}%`, top: "58%", width: "1.4%", height: "5%", background: tint(p2, 0.85), animationDelay: `${delayMs + 760 + i * 140}ms` }} />
+          ))}
+        </>
+      )}
+      {/* wave3 Coronation Tax — a promotion strikes a different piece cold */}
+      {flourish === "coronationtax" && (
+        <>
+          <span className="cwp-pop absolute block" style={{ left: "34%", top: "52%", width: "8%", height: "6%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true"><path d="M1.4 6.6 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V6.6 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
+          </span>
+          <span className="absolute block" style={{ left: "42%", top: "58%", width: "18%", height: "0.7%", rotate: "10deg" }}>
+            <span className="cwp-beam absolute inset-0 block" style={{ background: tint(p2, 0.85), animationDelay: `${delayMs + 720}ms` }} />
+          </span>
+          <span className="cwp-hold absolute block" style={{ left: "60%", top: "58%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 880}ms` }}>
+            <Man kind="n" fill={tint(p2, 0.85)} stroke={p1} />
+          </span>
+        </>
+      )}
+      {/* wave3 Forced Pilgrimage — a marked piece hauled toward a distant shrine */}
+      {flourish === "pilgrimage" && (
+        <>
+          <span className="cwp-pop absolute block" style={{ left: "62%", top: "50%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true"><path d="M5 1 L7.6 5 H2.4 Z M3 5 H7 V13 H3 Z" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.6" {...SJ} /></svg>
+          </span>
+          <span className="cwp-tug absolute block" style={{ left: "32%", top: "56%", width: "5.5%", height: "8%", "--dx": "440%", "--dy": "-20%", animationDelay: `${delayMs + 680}ms` } as CSSProperties}>
+            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* wave3 Bounty Mark — a marked piece freezes itself each time it captures */}
+      {flourish === "bounty" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "46%", top: "54%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="cwp-pop absolute block" style={{ left: "45%", top: "46%", width: "8%", height: "6%", animationDelay: `${delayMs + 720}ms` }}>
+            <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M6 0.8 L7 3 L9.4 3 L7.5 4.6 L8.2 7 L6 5.6 L3.8 7 L4.5 4.6 L2.6 3 L5 3 Z" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.6" {...SJ} />
+            </svg>
+          </span>
+          {[0, 1].map((i) => (
+            <span key={i} className="cwp-crack absolute block" style={{ left: `${45 + i * 5}%`, top: "56%", width: "4%", height: "5%", animationDelay: `${delayMs + 900 + i * 120}ms` }}>
+              <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true"><path d="M4 0.6 L3 3 L5 4.4 L3.4 7.4" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.6" {...SJ} /></svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Feeding Frenzy — the slider reach cinches tighter per active curse */}
+      {flourish === "feedingfrenzy" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "46%", top: "54%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="cwp-scorch absolute block rounded-full" style={{ left: `${34 - i * 3}%`, top: `${42 - i * 3}%`, width: `${32 + i * 6}%`, height: `${32 + i * 6}%`, border: `2px solid ${tint(i % 2 ? p2 : p1, 0.75)}`, animationDelay: `${delayMs + 760 + i * 140}ms` }} />
+          ))}
+        </>
+      )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1150} />
     </Stage>
   );
@@ -510,6 +641,82 @@ function OmenBell({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
               <Mote color="#bfe6ff" />
             </span>
           ))}
+        </>
+      )}
+      {/* wave3 Slow Poison — a green drop seeps into a piece that withers a rank down */}
+      {flourish === "slowpoison" && (
+        <>
+          <span className="absolute block" style={{ left: "56%", top: "48%", width: "6%", height: "10%" }}>
+            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 620}ms` }}>
+              <Man kind="q" fill={tint(p1, 0.9)} stroke={p2} />
+            </span>
+            <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 820}ms` }}>
+              <Man kind="b" fill="#6f9a3a" stroke={p0} />
+            </span>
+          </span>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="cwp-settle absolute block" style={{ left: `${57 + i * 1.4}%`, top: `${40 + i * 3}%`, width: "1.6%", height: "1.6%", "--dx": "10%", "--dy": "220%", "--rot": "40deg", animationDelay: `${delayMs + 640 + i * 130}ms` } as CSSProperties}>
+              <Mote color="#7fae4a" />
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Jammed Portcullis — a castled rook is barred in behind a dropped grate */}
+      {flourish === "jammedgate" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "56%", top: "54%", width: "6%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="cwp-drop absolute block" style={{ left: "52%", top: "44%", width: "14%", height: "18%", animationDelay: `${delayMs + 780}ms` }}>
+            <svg viewBox="0 0 14 18" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 1 V17 M5 1 V17 M8 1 V17 M11 1 V17 M2 6 H12 M2 11 H12" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.7" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* wave3 Powder Keg — a lit keg on an empty square counts down to a blast */}
+      {flourish === "powderkeg" && (
+        <>
+          <span className="cwp-pop absolute block" style={{ left: "46%", top: "54%", width: "8%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <rect x="1.4" y="3" width="7.2" height="8" rx="1" fill={tint(p0, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="0.6" />
+              <path d="M5 3 C5.4 1.6 6.4 1 7 1.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="cwp-flame absolute block" style={{ left: "56%", top: "42%", width: "4%", height: "5%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3 6.2 4.6 4 8 C1.8 4.6 2 3 4 0.8 Z" fill="#ff9d3d" /></svg>
+          </span>
+          <span className="cwp-scorch absolute block rounded-full" style={{ left: "38%", top: "48%", width: "24%", height: "24%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 1040}ms` }} />
+        </>
+      )}
+      {/* wave3 Collapsing Floor — a chosen rank caves in, freezing what stands on it */}
+      {flourish === "collapse" && (
+        <>
+          <span className="absolute block" style={{ left: "30%", top: "58%", width: "40%", height: "3%" }}>
+            <span className="cwp-spreadtile absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p0, 0.9)} 0 8px, ${tint(p2, 0.6)} 8px 12px)`, animationDelay: `${delayMs + 620}ms` }} />
+          </span>
+          {[36, 48, 60].map((l, i) => (
+            <span key={l} className="cwp-settle absolute block" style={{ left: `${l}%`, top: "60%", width: "5%", height: "8%", "--dx": "0%", "--dy": "120%", "--rot": "10deg", animationDelay: `${delayMs + 820 + i * 130}ms` } as CSSProperties}>
+              <Man kind={(["p", "n", "b"] as const)[i]} fill={tint(p1, 0.9)} stroke={p2} />
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Doomed Vow — a condemned piece pleads under a falling axe unless the king comes */}
+      {flourish === "doomedvow" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "46%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
+            <Man kind="b" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="cwp-drop absolute block" style={{ left: "44%", top: "44%", width: "10%", height: "10%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0.8 V9" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
+              <path d="M5 1 C7 1.2 8.4 2.4 8.6 4 L5 3.4 Z" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span className="cwp-glint absolute block" style={{ left: "60%", top: "56%", width: "3%", height: "3%", animationDelay: `${delayMs + 1120}ms` }}>
+            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" /></svg>
+          </span>
         </>
       )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1200} />
@@ -639,6 +846,115 @@ function BlightGarden({ palette, glyph, lead, delayMs, flourish }: TemplateProps
               <path d="M3.6 0.6 L1.4 5 H2.8 L1.8 9.4 L4.8 4.4 H3.2 L4.6 0.6 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.3" {...SJ} />
             </svg>
           </span>
+        </>
+      )}
+      {/* wave3 Wandering Sentry — one barred tile paces a rank, marching its beat */}
+      {flourish === "sentry" && (
+        <>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className="cwp-spreadtile absolute block" style={{ left: `${34 + i * 11}%`, top: "58%", width: "8%", height: "5.6%", animationDelay: `${delayMs + 600 + i * 240}ms` }}>
+              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true"><path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.9)} strokeWidth="0.6" {...SJ} /></svg>
+            </span>
+          ))}
+          <span className="cwp-beam absolute block" style={{ left: "34%", top: "64%", width: "30%", height: "0.8%", background: tint(p1, 0.7), transformOrigin: "0% 50%", animationDelay: `${delayMs + 640}ms` }} />
+        </>
+      )}
+      {/* wave3 Sinking Mire — a plus-shaped mire that shrinks one square per turn */}
+      {flourish === "mire" && (
+        <>
+          {[
+            { l: 46, t: 44, s: 8, d: 0 },
+            { l: 38, t: 50, s: 7, d: 200 },
+            { l: 54, t: 50, s: 7, d: 400 },
+            { l: 46, t: 56, s: 6, d: 600 },
+          ].map((v, i) => (
+            <span key={i} className="cwp-spreadtile absolute block rounded-full" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 0.72}%`, background: tint(p0, 0.7), border: `1px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 500 + v.d}ms` }} />
+          ))}
+        </>
+      )}
+      {/* wave3 Miasma — a piece sickens beside its neighbours; a third dose freezes it */}
+      {flourish === "miasma" && (
+        <>
+          {[38, 50, 60].map((l, i) => (
+            <span key={l} className="cwp-tellglow absolute block rounded-full" style={{ left: `${l}%`, top: "50%", width: "8%", height: "8%", background: tint(p1, 0.4), animationDelay: `${delayMs + 620 + i * 170}ms` }} />
+          ))}
+          <span className="cwp-hold absolute block" style={{ left: "56%", top: "54%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 900}ms` }}>
+            <Man kind="n" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="cwp-crack absolute block" style={{ left: "56%", top: "54%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 1060}ms` }}>
+            <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true"><path d="M4 0.6 L3 3 L5 4.4 L3.4 7.4" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.6" {...SJ} /></svg>
+          </span>
+        </>
+      )}
+      {/* wave3 Roaming Maw — a void drifts toward the nearest piece and devours it */}
+      {flourish === "maw" && (
+        <>
+          <span className="cwp-tug absolute block rounded-full" style={{ left: "34%", top: "48%", width: "9%", height: "9%", background: `radial-gradient(circle, ${tint(p0, 0.98)}, ${tint(p2, 0.5)})`, "--dx": "220%", "--dy": "40%", animationDelay: `${delayMs + 560}ms` } as CSSProperties} />
+          <span className="cwp-hold absolute block" style={{ left: "58%", top: "54%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 620}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="cwp-settle absolute block" style={{ left: "59%", top: "54%", width: "3%", height: "4%", "--dx": "-30%", "--dy": "80%", "--rot": "120deg", animationDelay: `${delayMs + 980}ms` } as CSSProperties}>
+            <Mote color={tint(p2, 0.8)} />
+          </span>
+        </>
+      )}
+      {/* wave3 Wildfire Rot — rot spreads comrade to comrade along a burning tendril */}
+      {flourish === "wildfire" && (
+        <>
+          {[
+            { l: 36, t: 52, d: 0 },
+            { l: 48, t: 50, d: 200 },
+            { l: 60, t: 52, d: 400 },
+          ].map((v, i) => (
+            <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5%", height: "7.5%" }}>
+              <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 560 + v.d}ms` }}>
+                <Man kind="p" fill={tint(p1, 0.9)} stroke={p2} />
+              </span>
+              <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 720 + v.d}ms` }}>
+                <Man kind="p" fill="#c95a2a" stroke={p0} />
+              </span>
+            </span>
+          ))}
+          {[42, 54].map((l, i) => (
+            <span key={l} className="cwp-cinder absolute block" style={{ left: `${l}%`, top: "50%", width: "1.6%", height: "1.6%", "--dx": "30%", animationDelay: `${delayMs + 900 + i * 130}ms` } as CSSProperties}>
+              <Mote color="#ff9d3d" />
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Effigy of Dread — a caster's effigy rises and bars the ring around it */}
+      {flourish === "effigy" && (
+        <>
+          <span className="cwp-rise absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "16%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M4 3.4 V14.8 M1 5.6 H7" stroke={tint(p2, 0.9)} strokeWidth="1" strokeLinecap="round" />
+              <circle cx="4" cy="2.4" r="1.4" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.4" />
+            </svg>
+          </span>
+          {[
+            { l: 38, t: 40 }, { l: 58, t: 40 }, { l: 38, t: 58 }, { l: 58, t: 58 },
+          ].map((v, i) => (
+            <span key={i} className="cwp-spreadtile absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "4.4%", animationDelay: `${delayMs + 820 + i * 90}ms` }}>
+              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true"><path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.85)} strokeWidth="0.6" {...SJ} /></svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Avalanche — after a dormant fuse the empty squares of a half are sealed */}
+      {flourish === "avalanche" && (
+        <>
+          {[
+            { t: 24, a: 0.4, d: 0, tx: "30%" },
+            { t: 30, a: 0.6, d: 180, tx: "24%" },
+            { t: 36, a: 0.8, d: 360, tx: "18%" },
+          ].map((v, i) => (
+            <span key={i} className="cwp-sweep absolute block" style={{ left: "22%", top: `${v.t}%`, width: "44%", height: "5%", borderRadius: "40%", background: tint(p1, v.a), "--tx": v.tx, animationDelay: `${delayMs + 520 + v.d}ms` } as CSSProperties} />
+          ))}
+          {[40, 52, 62].map((l, i) => (
+            <span key={l} className="cwp-spreadtile absolute block" style={{ left: `${l}%`, top: "56%", width: "6%", height: "4.4%", animationDelay: `${delayMs + 1000 + i * 100}ms` }}>
+              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true"><path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p2, 0.7)} strokeWidth="0.6" {...SJ} /></svg>
+            </span>
+          ))}
         </>
       )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1150} />
@@ -779,6 +1095,83 @@ function ChainWeb({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           </span>
         </>
       )}
+      {/* wave3 Binding Oath — two pieces bound by one thread may not strike while both live */}
+      {flourish === "bindingoath" && (
+        <>
+          <span className="cwp-hold absolute block" style={{ left: "30%", top: "62%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 720}ms` }}>
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="absolute block" style={{ left: "35%", top: "65%", width: "30%", height: "0.7%", rotate: "2deg" }}>
+            <span className="cwp-beam absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.9)} 0 5px, transparent 5px 9px)`, animationDelay: `${delayMs + 820}ms` }} />
+          </span>
+          <span className="cwp-hold absolute block" style={{ left: "64%", top: "62%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 900}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="cwp-pop absolute block" style={{ left: "47%", top: "62.5%", width: "5%", height: "5%", animationDelay: `${delayMs + 1020}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true"><path d="M2 5 L5 2 L8 5 L5 8 Z M3.4 5 H6.6" fill="none" stroke="#c94a5a" strokeWidth="0.8" {...SJ} /></svg>
+          </span>
+        </>
+      )}
+      {/* wave3 Blood Bond — one bound piece captures, its partner freezes in sympathy */}
+      {flourish === "bloodbond" && (
+        <>
+          <span className="cwp-tug absolute block" style={{ left: "28%", top: "62%", width: "5.5%", height: "8%", "--dx": "80%", "--dy": "-6%", animationDelay: `${delayMs + 720}ms` } as CSSProperties}>
+            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="absolute block" style={{ left: "34%", top: "65%", width: "30%", height: "0.7%", rotate: "-2deg" }}>
+            <span className="cwp-lash absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p2, 0.9)} 0 4px, transparent 4px 7px)`, animationDelay: `${delayMs + 820}ms` }} />
+          </span>
+          <span className="absolute block" style={{ left: "64%", top: "62%", width: "5.5%", height: "8%" }}>
+            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 900}ms` }}>
+              <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+            <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1040}ms` }}>
+              <Man kind="n" fill="#9fd8ff" stroke={p0} />
+            </span>
+          </span>
+        </>
+      )}
+      {/* wave3 Shared Fate — capturing one of a bound pair kills the other outright */}
+      {flourish === "sharedfate" && (
+        <>
+          <span className="cwp-snapback absolute block" style={{ left: "28%", top: "62%", width: "5.5%", height: "8%", "--dx": "60%", "--dy": "0%", animationDelay: `${delayMs + 720}ms` } as CSSProperties}>
+            <Man kind="r" fill={tint(p2, 0.85)} stroke={p1} />
+          </span>
+          <span className="absolute block" style={{ left: "34%", top: "65%", width: "30%", height: "0.7%", rotate: "0deg" }}>
+            <span className="cwp-beam absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p1, 0.9)}, #c94a5a)`, animationDelay: `${delayMs + 860}ms` }} />
+          </span>
+          <span className="cwp-settle absolute block" style={{ left: "64%", top: "62%", width: "5.5%", height: "8%", "--dx": "0%", "--dy": "70%", "--rot": "18deg", animationDelay: `${delayMs + 1000}ms` } as CSSProperties}>
+            <Man kind="r" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* wave3 Standing Guard — each king move freezes the piece nearest the king */}
+      {flourish === "kingsguard" && (
+        <>
+          <span className="cwp-tug absolute block" style={{ left: "42%", top: "58%", width: "6%", height: "9%", "--dx": "40%", "--dy": "0%", animationDelay: `${delayMs + 720}ms` } as CSSProperties}>
+            <Man kind="k" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="absolute block" style={{ left: "58%", top: "58%", width: "6%", height: "9%" }}>
+            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 860}ms` }}>
+              <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+            <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1000}ms` }}>
+              <Man kind="b" fill="#9fd8ff" stroke={p0} />
+            </span>
+          </span>
+        </>
+      )}
+      {/* wave3 No Retreat — a rein snaps taut behind a piece pulled back from its own rank */}
+      {flourish === "noretreat" && (
+        <>
+          <span className="cwp-snapback absolute block" style={{ left: "44%", top: "48%", width: "6%", height: "9%", "--dx": "10%", "--dy": "140%", animationDelay: `${delayMs + 700}ms` } as CSSProperties}>
+            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="absolute block" style={{ left: "40%", top: "44%", width: "16%", height: "0.9%", rotate: "-70deg" }}>
+            <span className="cwp-lash absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.9)} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs + 840}ms` }} />
+          </span>
+        </>
+      )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1180} />
     </Stage>
   );
@@ -862,6 +1255,76 @@ function MidasVeil({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
             </span>
           ))}
         </>
+      )}
+      {/* wave3 Fifth Column — an enemy pawn's coat turns to serve the caster, then reverts */}
+      {flourish === "fifthcolumn" && (
+        <span className="absolute block" style={{ left: "56%", top: "40%", width: "6%", height: "9%" }}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
+            <Man kind="p" fill="#8a94a8" stroke="#2a2a30" />
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </span>
+      )}
+      {/* wave3 Handed Down — the curse hops off a captured bearer to the nearest comrade */}
+      {flourish === "handeddown" && (
+        <>
+          <span className="cwp-settle absolute block" style={{ left: "37%", top: "44%", width: "5%", height: "7%", "--dx": "10%", "--dy": "90%", "--rot": "20deg", animationDelay: `${delayMs + 760}ms` } as CSSProperties}>
+            <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
+          </span>
+          <span className="cwp-spark absolute block" style={{ left: "42%", top: "44%", width: "2.6%", height: "2.6%", "--dx": "520%", "--dy": "-40%", "--rot": "420deg", animationDelay: `${delayMs + 860}ms` } as CSSProperties}>
+            <Mote color={tint(p1, 0.95)} />
+          </span>
+          <span className="absolute block" style={{ left: "62%", top: "40%", width: "5.5%", height: "8%" }}>
+            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 980}ms` }}>
+              <Man kind="b" fill={tint(p2, 0.9)} stroke={p0} />
+            </span>
+            <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1120}ms` }}>
+              <Man kind="b" fill={tint(p1, 0.95)} stroke={p0} />
+            </span>
+          </span>
+        </>
+      )}
+      {/* wave3 Mutiny — the first enemy knight to capture defects across the lines */}
+      {flourish === "mutiny" && (
+        <span className="absolute block" style={{ left: "36%", top: "40%", width: "6.5%", height: "10%" }}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
+            <Man kind="n" fill="#8a94a8" stroke="#2a2a30" />
+          </span>
+          <span className="cwp-tug absolute inset-0 block" style={{ "--dx": "220%", "--dy": "0%", animationDelay: `${delayMs + 900}ms` } as CSSProperties}>
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </span>
+      )}
+      {/* wave3 Sleeper Cell — a marked minor waits on a fuse, then turns its coat */}
+      {flourish === "sleeper" && (
+        <>
+          <span className="absolute block" style={{ left: "44%", top: "42%", width: "6.5%", height: "10%" }}>
+            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 620}ms` }}>
+              <Man kind="b" fill="#8a94a8" stroke="#2a2a30" />
+            </span>
+            <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 980}ms` }}>
+              <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+          </span>
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className="cwp-glint absolute block" style={{ left: `${44 + i * 3}%`, top: "36%", width: "1.8%", height: "1.8%", animationDelay: `${delayMs + 700 + i * 120}ms` }}>
+              <Mote color={tint(p1, 0.9)} />
+            </span>
+          ))}
+        </>
+      )}
+      {/* wave3 Aging Blade — a heavy piece that captures ages one rank down on the spot */}
+      {flourish === "agingblade" && (
+        <span className="absolute block" style={{ left: "44%", top: "40%", width: "6.5%", height: "10%" }}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 820}ms` }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 820}ms` }}>
+            <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
+          </span>
+        </span>
       )}
       <SettlePair color={tint(p1, 0.75)} delayMs={delayMs + 1240} />
     </Stage>
@@ -1245,6 +1708,315 @@ function BeaconOfWoeScene({ lead, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   WAVE 3 tier 7-8 bespoke curse scenes.
+   ========================================================================== */
+
+/* --- The Enemy Within: a marked heavy piece's own shadow peels away and
+   turns its coat to the caster on the third move. ------------------------- */
+const ENEMY_WITHIN: Palette = ["#26262e", "#8a94a8", "#c94a5a"];
+function EnemyWithinScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = ENEMY_WITHIN;
+  if (!lead) return <CurseHit palette={ENEMY_WITHIN} glyph={GLYPH.hw3_enemy_within} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={40} />
+      <span className="cwp-hold absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "13%", animationDelay: `${delayMs + 300}ms` }}>
+        <Man kind="r" fill={tint(p1, 0.9)} stroke={p0} />
+      </span>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="cwp-glint absolute block" style={{ left: `${44 + i * 3}%`, top: "38%", width: "1.8%", height: "1.8%", animationDelay: `${delayMs + 520 + i * 140}ms` }}>
+          <Mote color={tint(p2, 0.9)} />
+        </span>
+      ))}
+      <span className="cwp-tug absolute block" style={{ left: "48%", top: "46%", width: "7%", height: "12%", "--dx": "160%", "--dy": "0%", animationDelay: `${delayMs + 820}ms` } as CSSProperties}>
+        <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 900}ms` }}>
+          <Man kind="r" fill={tint(p0, 0.95)} stroke={p1} />
+        </span>
+        <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 900}ms` }}>
+          <Man kind="r" fill={tint(p2, 0.9)} stroke={p0} />
+        </span>
+      </span>
+      <span className="cwp-ring absolute block rounded-full" style={{ left: "36%", top: "38%", width: "28%", height: "22%", border: `2.5px solid ${tint(p2, 0.8)}`, animationDelay: `${delayMs + 980}ms` }} />
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1240} />
+    </Stage>
+  );
+}
+
+/* --- The Long Eclipse: a black moon slides across the sun and the diagonal
+   court goes dark for the duration. --------------------------------------- */
+const ECLIPSE: Palette = ["#12121c", "#ff9d3d", "#c9b0e8"];
+function EclipseScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = ECLIPSE;
+  if (!lead) return <CurseHit palette={ECLIPSE} glyph={GLYPH.hw3_eclipse} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.36)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={44} top={26} />
+      <span className="cwp-facein absolute block" style={{ left: "42%", top: "24%", width: "16%", height: "16%", animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="7" fill={tint(p1, 0.85)} />
+          <path d="M10 0.6 V2.6 M10 17.4 V19.4 M0.6 10 H2.6 M17.4 10 H19.4 M3.2 3.2 L4.6 4.6 M16.8 3.2 L15.4 4.6 M3.2 16.8 L4.6 15.4 M16.8 16.8 L15.4 15.4" stroke={tint(p1, 0.7)} strokeWidth="0.8" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="cwp-sweep absolute block rounded-full" style={{ left: "36%", top: "24%", width: "16%", height: "16%", background: tint(p0, 0.96), "--tx": "60%", animationDelay: `${delayMs + 560}ms` } as CSSProperties} />
+      <span className="cwp-ring absolute block rounded-full" style={{ left: "40%", top: "22%", width: "20%", height: "20%", border: `2px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 900}ms` }} />
+      {[
+        { k: "b" as const, l: 34, t: 56 },
+        { k: "q" as const, l: 58, t: 56 },
+      ].map((v, i) => (
+        <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "9%" }}>
+          <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 760 + i * 120}ms` }}>
+            <Man kind={v.k} fill={tint(p2, 0.9)} stroke={p0} />
+          </span>
+          <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 940 + i * 120}ms` }}>
+            <Man kind={v.k} fill={tint(p0, 0.9)} stroke={p2} />
+          </span>
+        </span>
+      ))}
+      <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- Hydra Hex: the branded head is struck off and two rise in its place,
+   each seizing the nearest piece in frost. -------------------------------- */
+const HYDRA: Palette = ["#1c2a1c", "#7fae4a", "#9fd8ff"];
+function HydraScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = HYDRA;
+  if (!lead) return <CurseHit palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={40} />
+      <span className="cwp-settle absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "10%", "--dx": "0%", "--dy": "60%", "--rot": "20deg", animationDelay: `${delayMs + 360}ms` } as CSSProperties}>
+        <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 1 C7 2.4 7 5 5 6.4 C6.4 7 7 8 6.6 9.4 H3.4 C3 8 3.6 7 5 6.4 C3 5 3 2.4 5 1 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { l: 34, t: 34, d: 0 },
+        { l: 58, t: 34, d: 160 },
+      ].map((v, i) => (
+        <span key={i} className="cwp-sprout absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "7%", height: "13%", animationDelay: `${delayMs + 640 + v.d}ms` }}>
+          <svg viewBox="0 0 8 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M4 13 C2.4 10 3 7 4 4.6 C5 7 5.6 10 4 13 Z M4 4.6 C5 2.4 5 1.4 4 0.8 C3 1.4 3 2.4 4 4.6 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {[
+        { l: 30, t: 56 },
+        { l: 62, t: 56 },
+      ].map((v, i) => (
+        <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%" }}>
+          <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 900 + i * 120}ms` }}>
+            <Man kind={i ? "n" : "b"} fill={tint(p1, 0.85)} stroke={p0} />
+          </span>
+          <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1040 + i * 120}ms` }}>
+            <Man kind={i ? "n" : "b"} fill={tint(p2, 0.85)} stroke={p0} />
+          </span>
+        </span>
+      ))}
+      <span className="cwp-ring absolute block rounded-full" style={{ left: "34%", top: "36%", width: "32%", height: "24%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 980}ms` }} />
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- Pyrrhic Toll: every capture rings a bell and a laurel wilts as some
+   bystander piece is caught cold. ----------------------------------------- */
+const PYRRHIC: Palette = ["#2f3a26", "#c9b89a", "#9fd8ff"];
+function PyrrhicScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = PYRRHIC;
+  if (!lead) return <CurseHit palette={PYRRHIC} glyph={GLYPH.hw3_pyrrhic_toll} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
+      <span className="cwp-drop absolute block" style={{ left: "42%", top: "22%", width: "16%", height: "20%", animationDelay: `${delayMs + 200}ms` }}>
+        <span className="cwp-swing absolute inset-0 block" style={{ animationDelay: `${delayMs + 620}ms` }}>
+          <svg viewBox="0 0 16 20" className="block h-full w-full" aria-hidden="true">
+            <path d="M8 1 V4" stroke={tint(p1, 0.8)} strokeWidth="0.9" strokeLinecap="round" />
+            <path d="M4 15 C4 8 5.4 5 8 3.8 C10.6 5 12 8 12 15 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.9)} strokeWidth="1" {...SJ} />
+            <path d="M3 15 H13 L12.4 17 H3.6 Z" fill={tint(p1, 0.85)} stroke={tint(p2, 0.6)} strokeWidth="0.5" {...SJ} />
+            <circle cx="8" cy="18" r="1" fill={tint(p1, 0.9)} />
+          </svg>
+        </span>
+      </span>
+      {[0, 1].map((i) => (
+        <span key={i} className="cwp-ring absolute block rounded-full" style={{ left: "34%", top: "38%", width: "32%", height: "22%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 720 + i * 180}ms` }} />
+      ))}
+      <span className="cwp-wilt absolute block" style={{ left: "56%", top: "54%", width: "12%", height: "10%", animationDelay: `${delayMs + 820}ms` }}>
+        <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M6 1 C3 2 1.6 4.4 2 7.4 M6 1 C9 2 10.4 4.4 10 7.4" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.8" strokeLinecap="round" />
+          <path d="M3.4 3 L2.2 2.6 M2.6 5 L1.4 5 M8.6 3 L9.8 2.6 M9.4 5 L10.6 5" stroke={tint(p1, 0.8)} strokeWidth="0.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="absolute block" style={{ left: "30%", top: "56%", width: "5.5%", height: "8%" }}>
+        <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 900}ms` }}>
+          <Man kind="n" fill={tint(p1, 0.85)} stroke={p0} />
+        </span>
+        <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1040}ms` }}>
+          <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
+        </span>
+      </span>
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- Martyr's Crown: the king's briar crown drinks the second check and
+   lashes frost around every piece that stands beside him. ----------------- */
+const MARTYR: Palette = ["#2a2030", "#8faf4a", "#c94a5a"];
+function MartyrCrownScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = MARTYR;
+  if (!lead) return <CurseHit palette={MARTYR} glyph={GLYPH.hw3_martyrs_crown} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={44} top={40} />
+      <span className="cwp-facein absolute block" style={{ left: "45%", top: "44%", width: "10%", height: "15%", animationDelay: `${delayMs + 240}ms` }}>
+        <Man kind="k" fill={tint(p1, 0.9)} stroke={p0} />
+      </span>
+      {[
+        { l: 38, t: 40, rot: "-14deg", flip: false, d: 0 },
+        { l: 56, t: 39, rot: "12deg", flip: true, d: 160 },
+      ].map((v, i) => (
+        <span key={i} className="cwp-sprout absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "8%", height: "12%", rotate: v.rot, animationDelay: `${delayMs + 420 + v.d}ms`, ...(v.flip ? { scale: "-1 1" } : {}) }}>
+          <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 13.4 C3 9 6.6 7 4.6 3.4 C3.4 1.8 4.4 0.8 5.6 0.6" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1" strokeLinecap="round" />
+            <path d="M4.6 10 L2.8 9.4 M5.2 6.4 L7 6 M4.4 2.6 L2.8 2" stroke={tint(p1, 0.95)} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+      {[0, 1].map((i) => (
+        <span key={i} className="cwp-pop absolute block" style={{ left: `${40 + i * 14}%`, top: "30%", width: "5%", height: "5%", animationDelay: `${delayMs + 620 + i * 220}ms` }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 2 L8 8 M8 2 L2 8" stroke="#c94a5a" strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+      <span className="cwp-ring absolute block rounded-full" style={{ left: "34%", top: "38%", width: "32%", height: "26%", border: `2.5px solid ${tint(p2, 0.8)}`, animationDelay: `${delayMs + 1020}ms` }} />
+      {[
+        { k: "n" as const, l: 32, t: 56 },
+        { k: "b" as const, l: 62, t: 56 },
+      ].map((v, i) => (
+        <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%" }}>
+          <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 1000 + i * 120}ms` }}>
+            <Man kind={v.k} fill={tint(p1, 0.85)} stroke={p0} />
+          </span>
+          <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1140 + i * 120}ms` }}>
+            <Man kind={v.k} fill="#9fd8ff" stroke={p0} />
+          </span>
+        </span>
+      ))}
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1360} />
+    </Stage>
+  );
+}
+
+/* --- The Curse Engine: two iron gears grind up the winding, and every third
+   turn a cold discharge seizes the strongest piece. ----------------------- */
+const CURSE_ENGINE: Palette = ["#2a2a32", "#8a94a8", "#9fd8ff"];
+function CurseEngineScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = CURSE_ENGINE;
+  if (!lead) return <CurseHit palette={CURSE_ENGINE} glyph={GLYPH.hw3_curse_engine} delayMs={delayMs} />;
+  const gear = (fill: string) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 1 L11.4 3.2 L14 2.4 L14.2 5.1 L16.9 5.4 L15.6 7.8 L17.6 9.6 L15.2 10.8 L15.8 13.5 L13.1 13.2 L12.2 15.8 L10 14.2 L7.8 15.8 L6.9 13.2 L4.2 13.5 L4.8 10.8 L2.4 9.6 L4.4 7.8 L3.1 5.4 L5.8 5.1 L6 2.4 L8.6 3.2 Z" fill={fill} stroke={p0} strokeWidth="0.5" {...SJ} />
+      <circle cx="10" cy="9" r="3.2" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.5" />
+    </svg>
+  );
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.34)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={36} />
+      <span className="cwp-grind absolute block" style={{ left: "34%", top: "34%", width: "18%", height: "18%", animationDelay: `${delayMs + 300}ms` }}>{gear(tint(p1, 0.9))}</span>
+      <span className="cwp-grindrev absolute block" style={{ left: "50%", top: "44%", width: "15%", height: "15%", animationDelay: `${delayMs + 420}ms` }}>{gear(tint(p1, 0.7))}</span>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className="cwp-glint absolute block" style={{ left: `${38 + i * 10}%`, top: "28%", width: "2%", height: "2%", animationDelay: `${delayMs + 620 + i * 150}ms` }}>
+          <Mote color={tint(p1, 0.9)} />
+        </span>
+      ))}
+      <span className="absolute block" style={{ left: "36%", top: "62%", width: "8%", height: "8%", rotate: "-90deg" }}>
+        <span className="cwp-lash absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p2, 0.95)}, transparent)`, animationDelay: `${delayMs + 900}ms` }} />
+      </span>
+      <span className="absolute block" style={{ left: "58%", top: "58%", width: "6.5%", height: "10%" }}>
+        <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 960}ms` }}>
+          <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
+        </span>
+        <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1100}ms` }}>
+          <Man kind="q" fill={tint(p2, 0.85)} stroke={p0} />
+        </span>
+      </span>
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1360} />
+    </Stage>
+  );
+}
+
+/* --- Blood Tithe: every heavy capture drags one of their own pawns off to
+   the tithe-ledger as tribute. -------------------------------------------- */
+const BLOOD_TITHE: Palette = ["#2b1218", "#e8b04b", "#c94a5a"];
+function BloodTitheScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = BLOOD_TITHE;
+  if (!lead) return <CurseHit palette={BLOOD_TITHE} glyph={GLYPH.hw3_blood_tithe} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={34} />
+      <span className="cwp-facein absolute block" style={{ left: "34%", top: "40%", width: "22%", height: "16%", animationDelay: `${delayMs + 240}ms` }}>
+        <svg viewBox="0 0 22 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 2.4 C5 1 9 1.4 11 3 C13 1.4 17 1 21 2.4 V13.4 C17 12 13 12.4 11 14 C9 12.4 5 12 1 13.4 Z" fill="#e8dcc0" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
+          <path d="M3.4 5 H9 M3.4 7 H8 M3.4 9 H9 M13 5 H18.6 M13 7 H18 M13 9 H18.6" stroke="#8a6a3a" strokeWidth="0.4" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="cwp-tug absolute block" style={{ left: "58%", top: "56%", width: "5%", height: "7.5%", "--dx": "-140%", "--dy": "-30%", animationDelay: `${delayMs + 700}ms` } as CSSProperties}>
+        <Man kind="p" fill={tint(p1, 0.9)} stroke={p0} />
+      </span>
+      <span className="cwp-settle absolute block" style={{ left: "48%", top: "40%", width: "3%", height: "3.6%", "--dx": "6%", "--dy": "320%", "--rot": "220deg", animationDelay: `${delayMs + 860}ms` } as CSSProperties}>
+        <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill={p2} /></svg>
+      </span>
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1240} />
+    </Stage>
+  );
+}
+
+/* --- The Inverted Crown: every promoted pawn's crown flips to a tin knight's
+   helm, whatever they chose. ---------------------------------------------- */
+const INVERTED: Palette = ["#26262e", "#c9b89a", "#8faf4a"];
+function InvertedCrownScene({ lead, delayMs }: SceneProps) {
+  const [p0, p1, p2] = INVERTED;
+  if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
+      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
+      <span className="cwp-beam absolute block" style={{ left: "30%", top: "58%", width: "40%", height: "1.2%", background: tint(p1, 0.85), transformOrigin: "0% 50%", animationDelay: `${delayMs + 300}ms` }} />
+      <span className="cwp-rise absolute block" style={{ left: "46%", top: "46%", width: "6.5%", height: "11%", animationDelay: `${delayMs + 440}ms` }}>
+        <Man kind="p" fill={tint(p1, 0.9)} stroke={p0} />
+      </span>
+      <span className="absolute block" style={{ left: "44.5%", top: "30%", width: "10%", height: "10%" }}>
+        <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
+          <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true"><path d="M1.4 8 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
+        </span>
+        <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
+          <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
+        </span>
+      </span>
+      {[
+        { l: 46, t: 30, dx: "-160%", dy: "-90%", rot: "-120deg" },
+        { l: 52, t: 30, dx: "180%", dy: "-70%", rot: "140deg" },
+      ].map((v, i) => (
+        <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 940 + i * 90}ms` } as CSSProperties}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true"><path d="M2 8 L5 1 L8 8 Z" fill="#e8b04b" /></svg>
+        </span>
+      ))}
+      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* =============================================================================
    Glyphs — one 10x10 mini-emblem per card, drawn flat.
    ========================================================================== */
 
@@ -1474,6 +2246,314 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M1.6 2.6 L2.6 3.2 M8.4 2.6 L7.4 3.2" stroke="#ff9d3d" strokeWidth="0.5" strokeLinecap="round" />
     </Gl>
   ),
+
+  /* --- WAVE 3 curse devices ------------------------------------------------ */
+  // a light and a dark square with a forced step between
+  hw3_wrong_foot: (
+    <Gl>
+      <rect x="1" y="1" width="4" height="4" fill="#c9b0e8" /><rect x="5" y="5" width="4" height="4" fill="#3a3346" />
+      <path d="M4.4 4.4 L5.6 5.6 M5.6 5.6 L4.6 5.6 M5.6 5.6 L5.6 4.6" fill="none" stroke="#c94a5a" strokeWidth="0.6" {...SJ} />
+    </Gl>
+  ),
+  // a barred back rank with a blocked retreat arrow
+  hw3_no_retreat: (
+    <Gl>
+      <path d="M1 8.2 H9" stroke="#c9a84c" strokeWidth="1" strokeLinecap="round" />
+      <path d="M5 6.6 V2.4 M5 6.6 L3.8 5.4 M5 6.6 L6.2 5.4" fill="none" stroke="#8a94a8" strokeWidth="0.7" {...SJ} />
+      <path d="M2.8 2 L7.2 4" stroke="#c94a5a" strokeWidth="0.7" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a piece with a jammed cog seizing it
+  hw3_overexertion: (
+    <Gl>
+      <circle cx="5" cy="5" r="2.6" fill="none" stroke="#8a94a8" strokeWidth="0.7" />
+      <path d="M5 1.6 V2.8 M5 7.2 V8.4 M1.6 5 H2.8 M7.2 5 H8.4 M2.6 2.6 L3.5 3.5 M7.4 2.6 L6.5 3.5 M2.6 7.4 L3.5 6.5 M7.4 7.4 L6.5 6.5" stroke="#8a94a8" strokeWidth="0.7" strokeLinecap="round" />
+      <path d="M4 4 L6 6 M6 4 L4 6" stroke="#c94a5a" strokeWidth="0.6" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a toll gate with a coin
+  hw3_toll_road: (
+    <Gl>
+      <path d="M2 9 V3 M8 9 V3 M1.4 3 H8.6" fill="none" stroke="#8a94a8" strokeWidth="0.7" strokeLinecap="round" />
+      <circle cx="5" cy="6" r="1.8" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" />
+      <path d="M5 4.6 V7.4 M4 5.4 H6" stroke="#8a6a3a" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a pawn split half-friend half-foe
+  hw3_fifth_column: (
+    <Gl>
+      <path d="M5 1.4 C6.2 1.4 7 2.2 7 3.2 C7 3.9 6.6 4.5 6 4.8 L7 8.4 H5 Z M5 8.8 H7.6 V9.8 H5 Z" fill="#8f6bff" stroke="#2a1030" strokeWidth="0.35" {...SJ} />
+      <path d="M5 1.4 C3.8 1.4 3 2.2 3 3.2 C3 3.9 3.4 4.5 4 4.8 L3 8.4 H5 Z M5 8.8 H2.4 V9.8 H5 Z" fill="#8a94a8" stroke="#2a2a30" strokeWidth="0.35" {...SJ} />
+    </Gl>
+  ),
+  // two rings knotted by one thread
+  hw3_binding_oath: (
+    <Gl>
+      <circle cx="3" cy="5" r="2.2" fill="none" stroke="#c9b0e8" strokeWidth="0.8" />
+      <circle cx="7" cy="5" r="2.2" fill="none" stroke="#c9b0e8" strokeWidth="0.8" />
+      <path d="M4.8 3.6 L5.2 6.4" stroke="#c94a5a" strokeWidth="0.6" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a phial dripping green over a rank line
+  hw3_slow_poison: (
+    <Gl>
+      <path d="M4 1.4 H6 V3.4 C7.4 4.4 8 5.8 7.8 7.2 C7.6 8.4 6.6 9 5 9 C3.4 9 2.4 8.4 2.2 7.2 C2 5.8 2.6 4.4 4 3.4 Z" fill="none" stroke="#7fae4a" strokeWidth="0.55" {...SJ} />
+      <path d="M5 5.2 C5.9 6.2 6 7 5 7.8 C4 7 4.1 6.2 5 5.2 Z" fill="#7fae4a" />
+    </Gl>
+  ),
+  // a fanged mouth over two red drops
+  hw3_bloodlust: (
+    <Gl>
+      <path d="M1.6 2.4 C3.6 4 6.4 4 8.4 2.4 C8.4 2.4 7.4 1.4 5 1.4 C2.6 1.4 1.6 2.4 1.6 2.4 Z M3 2.8 L3.6 4 L4.2 2.8 M5.8 2.8 L6.4 4 L7 2.8" fill="#7a1a24" stroke="#c94a5a" strokeWidth="0.35" {...SJ} />
+      <path d="M4 6 C5 7.2 5.4 8 5.4 8.6 A1.4 1.4 0 1 1 2.6 8.6 C2.6 8 3 7.2 4 6 Z M7 6.4 C7.8 7.4 8.1 8 8.1 8.5 A1.1 1.1 0 1 1 5.9 8.5 C5.9 8 6.2 7.4 7 6.4 Z" fill="#c94a5a" />
+    </Gl>
+  ),
+  // a hobbled figure passing a hex-mark on
+  hw3_curse_hop: (
+    <Gl>
+      <circle cx="3" cy="4" r="1.8" fill="none" stroke="#e8b04b" strokeWidth="0.7" />
+      <circle cx="7" cy="6" r="1.8" fill="none" stroke="#c9cdd6" strokeWidth="0.7" />
+      <path d="M4.4 4.6 C5.2 4.4 5.8 5 6 5.6 M5.6 4.6 L6.2 5 L6 5.7" fill="none" stroke="#c94a5a" strokeWidth="0.5" {...SJ} />
+    </Gl>
+  ),
+  // a barred tile with a patrol arrow
+  hw3_wandering_sentry: (
+    <Gl>
+      <path d="M5 2 L8.6 5 L5 8 L1.4 5 Z" fill="#3a3a40" stroke="#8a94a8" strokeWidth="0.5" {...SJ} />
+      <path d="M3.4 5 H6.6 M6.6 5 L5.8 4.4 M6.6 5 L5.8 5.6" fill="none" stroke="#c9cdd6" strokeWidth="0.5" {...SJ} />
+    </Gl>
+  ),
+  // two hearts joined, one frosted
+  hw3_bloodbond: (
+    <Gl>
+      <path d="M3 3.4 C3 2.4 4.2 2.4 4.2 3.4 C4.2 2.4 5.4 2.4 5.4 3.4 C5.4 4.6 4.2 5.6 4.2 5.6 C4.2 5.6 3 4.6 3 3.4 Z" fill="#c94a5a" />
+      <path d="M5 6 C5 5 6.2 5 6.2 6 C6.2 5 7.4 5 7.4 6 C7.4 7.2 6.2 8.2 6.2 8.2 C6.2 8.2 5 7.2 5 6 Z" fill="#9fd8ff" />
+      <path d="M4.2 4.6 L6 6" stroke="#8a94a8" strokeWidth="0.5" strokeDasharray="0.8 0.6" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a marked piece and a road out of the border
+  hw3_exiles_mark: (
+    <Gl>
+      <path d="M2.6 8 C2.6 5.4 3.6 4 5.2 3.2 L4.8 1.6 L6.2 2.6 C6.9 3.2 7.1 4.2 6.7 5.1 L5.6 4.8 C5.8 6.4 5.8 7 6.4 8 Z" fill="#5a6b8f" stroke="#2b2218" strokeWidth="0.35" {...SJ} />
+      <path d="M1 9 C3 8 5 6.6 6 4" fill="none" stroke="#c9a84c" strokeWidth="0.5" strokeDasharray="1.1 0.8" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a piece with a debt-tally growing beside it
+  hw3_debtors_mark: (
+    <Gl>
+      <path d="M2 8.4 C1.6 5 3 3 4.4 3 L4 1.6 L5.4 2.6 C6.1 3.2 6 4 5.6 4.8 C6 6 6 7.2 6.4 8.4 Z" fill="#c9a84c" stroke="#3a2a16" strokeWidth="0.35" {...SJ} />
+      <path d="M7 8.4 V3.4 M7.9 8.4 V4.4 M8.8 8.4 V5.4" stroke="#8a94a8" strokeWidth="0.7" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a portcullis dropped over a rook
+  hw3_jammed_castle: (
+    <Gl>
+      <path d="M2 1.2 V8.8 M4 1.2 V8.8 M6 1.2 V8.8 M8 1.2 V8.8 M2 4 H8 M2 6.4 H8" fill="none" stroke="#8a94a8" strokeWidth="0.6" strokeLinecap="round" />
+      <path d="M3.4 8.8 V6.6 H6.6 V8.8" fill="#5a6b8f" stroke="#2c3e6b" strokeWidth="0.4" {...SJ} />
+    </Gl>
+  ),
+  // a crown taxing a frosted piece
+  hw3_coronation_tax: (
+    <Gl>
+      <path d="M1.6 4 L1.2 1.6 L2.6 2.8 L3.8 1 L5 2.8 L6.2 1.4 L5.8 4 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.4" transform="translate(0.6 0)" {...SJ} />
+      <circle cx="7" cy="6.8" r="1.8" fill="#2c3e6b" stroke="#9fd8ff" strokeWidth="0.4" />
+      <path d="M7 5.4 L7 8.2 M5.8 6.8 H8.2 M6.2 6 L7.8 7.6 M7.8 6 L6.2 7.6" stroke="#9fd8ff" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a knight turning its coat
+  hw3_mutiny: (
+    <Gl>
+      <path d="M2.6 8 C2.6 5.4 3.6 4 5.2 3.2 L4.8 1.6 L6.2 2.6 C6.9 3.2 7.1 4.2 6.7 5.1 L5.6 4.8 C5.8 6.4 5.8 7 6.4 8 Z M2.2 8.6 H7.4 V9.6 H2.2 Z" fill="#8f6bff" stroke="#2a1030" strokeWidth="0.35" {...SJ} />
+      <path d="M8 3 H9 M8.6 2.2 L9.2 3.6" stroke="#c94a5a" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a plus-shaped mire shrinking
+  hw3_sinking_mire: (
+    <Gl>
+      <path d="M4 2 H6 V4 H8 V6 H6 V8 H4 V6 H2 V4 H4 Z" fill="#3a3a40" stroke="#6f8a4a" strokeWidth="0.4" {...SJ} />
+      <path d="M4.2 5 H5.8" stroke="#6f8a4a" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a powder keg with a lit fuse
+  hw3_time_bomb: (
+    <Gl>
+      <rect x="2.2" y="3.4" width="5.6" height="5.2" rx="1" fill="#3a3a40" stroke="#c9cdd6" strokeWidth="0.5" />
+      <path d="M6 3.4 C6.4 1.8 7.6 1.2 8.2 1.8" fill="none" stroke="#8a6a3a" strokeWidth="0.5" strokeLinecap="round" />
+      <circle cx="8.4" cy="1.6" r="0.8" fill="#ff9d3d" />
+    </Gl>
+  ),
+  // a shrine with a pilgrim's road
+  hw3_pilgrimage: (
+    <Gl>
+      <path d="M5 1 L8 4.4 H2 Z M2.6 4.4 H7.4 V9 H2.6 Z" fill="none" stroke="#c9b0e8" strokeWidth="0.5" {...SJ} />
+      <path d="M4.6 9 V6.4 H5.4 V9" fill="none" stroke="#c9b0e8" strokeWidth="0.4" {...SJ} />
+    </Gl>
+  ),
+  // a blade rusting with age
+  hw3_aging_blade: (
+    <Gl>
+      <path d="M6.6 1 L3 6 L4.2 7 L8 2 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+      <path d="M2.4 6.6 L4.6 8.4 M2 8.8 L3.4 7.4" stroke="#8a6a3a" strokeWidth="0.6" strokeLinecap="round" />
+      <circle cx="5" cy="4" r="0.5" fill="#8a5a3a" /><circle cx="6.2" cy="2.6" r="0.4" fill="#8a5a3a" />
+    </Gl>
+  ),
+  // a piece clouded by sickly vapor
+  hw3_miasma: (
+    <Gl>
+      <path d="M2 4 C1 4 0.8 2.6 1.8 2.2 C1.8 0.8 3.6 0.6 4.2 1.6 C4.8 0.6 6.8 0.8 6.8 2.2 C8 2 8.6 3.6 7.4 4 Z" fill="#6f8a4a" stroke="#2f3a26" strokeWidth="0.35" {...SJ} />
+      <circle cx="5" cy="6.8" r="1.9" fill="none" stroke="#8faf4a" strokeWidth="0.6" />
+      <path d="M4 6 L6 7.6 M6 6 L4 7.6" stroke="#c94a5a" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a sleeper minor over a lit fuse
+  hw3_defectors_mark: (
+    <Gl>
+      <path d="M2.6 7 C2.6 4.8 3.6 3.6 5.2 3 L4.8 1.6 L6.2 2.4 C6.9 3 7.1 3.8 6.7 4.6 L5.6 4.4 C5.8 5.8 5.8 6.2 6.4 7 Z" fill="#8f6bff" stroke="#2a1030" strokeWidth="0.35" {...SJ} />
+      <path d="M2 8.6 C3.6 8.6 3.6 9.4 5 9.4 C6.4 9.4 6.4 8.6 8 8.6" fill="none" stroke="#ff9d3d" strokeWidth="0.6" strokeLinecap="round" />
+      <circle cx="8.2" cy="8.6" r="0.6" fill="#ff9d3d" />
+    </Gl>
+  ),
+  // a hungry void drifting
+  hw3_roaming_void: (
+    <Gl>
+      <circle cx="5" cy="5" r="3.4" fill="#12081f" stroke="#5b2b8f" strokeWidth="0.6" />
+      <path d="M5 1.6 C5 1.6 6 3.4 6 5 C6 6.6 5 8.4 5 8.4" fill="none" stroke="#8f6bff" strokeWidth="0.4" strokeDasharray="0.8 0.7" />
+      <path d="M8.4 5 H9.6 M8.4 5 L7.8 4.4 M8.4 5 L7.8 5.6" fill="none" stroke="#8f6bff" strokeWidth="0.5" {...SJ} />
+    </Gl>
+  ),
+  // two figures sharing one fate-cut
+  hw3_shared_fate: (
+    <Gl>
+      <circle cx="3" cy="4" r="1.6" fill="#c9b0e8" /><circle cx="7" cy="4" r="1.6" fill="#8a94a8" />
+      <path d="M1.4 9 L8.6 5.4" stroke="#c94a5a" strokeWidth="0.7" strokeLinecap="round" />
+      <path d="M4.4 5 L5.6 6" stroke="#c94a5a" strokeWidth="0.5" strokeDasharray="0.7 0.6" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a rank of tiles caving in
+  hw3_collapsing_floor: (
+    <Gl>
+      <path d="M1 3.4 H9 V4.6 H1 Z" fill="#3a3a40" stroke="#8a94a8" strokeWidth="0.4" />
+      <path d="M2 4.6 L1.6 8 M4 4.6 L4.4 8.4 M6 4.6 L5.6 8 M8 4.6 L8.4 8.4" stroke="#8a94a8" strokeWidth="0.5" strokeLinecap="round" strokeDasharray="1 0.8" />
+    </Gl>
+  ),
+  // a bounty target with a frost cuff
+  hw3_bounty_mark: (
+    <Gl>
+      <circle cx="5" cy="5" r="3.6" fill="none" stroke="#c94a5a" strokeWidth="0.7" />
+      <circle cx="5" cy="5" r="1.8" fill="none" stroke="#c94a5a" strokeWidth="0.6" />
+      <circle cx="5" cy="5" r="0.6" fill="#c94a5a" />
+      <path d="M5 0.6 V2 M5 8 V9.4 M0.6 5 H2 M8 5 H9.4" stroke="#9fd8ff" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a flame spreading along a chain of figures
+  hw3_wildfire: (
+    <Gl>
+      <path d="M3 8.6 C1.6 6.6 2.4 4.6 3.2 5.4 C3 3.6 4.2 2.4 4 4 C4.8 2.6 5.6 4 5 5 C6 4.6 6 6.4 5 7 C6 7.4 5.6 8.6 4 8.6 Z" fill="#c95a2a" stroke="#7a2a10" strokeWidth="0.35" {...SJ} />
+      <path d="M6.4 6 H8.4 M8.4 6 L7.6 5.4 M8.4 6 L7.6 6.6" fill="none" stroke="#ff9d3d" strokeWidth="0.5" {...SJ} />
+    </Gl>
+  ),
+  // a scarecrow effigy over barred ground
+  hw3_effigy_of_dread: (
+    <Gl>
+      <path d="M5 3 V8.4 M2.6 4.6 H7.4" stroke="#8faf4a" strokeWidth="0.7" strokeLinecap="round" />
+      <circle cx="5" cy="2.2" r="1.2" fill="#3a3a40" stroke="#8faf4a" strokeWidth="0.4" />
+      <path d="M1.4 9 L2.4 8 M8.6 9 L7.6 8 M1.4 8 L2.4 9 M8.6 8 L7.6 9" stroke="#6f8a4a" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a snow shelf breaking over sealed squares
+  hw3_avalanche: (
+    <Gl>
+      <path d="M1 2.6 C3 1.6 7 1.6 9 3 C7 3 5 3.4 3 4 C2 3.6 1.4 3.2 1 2.6 Z" fill="#c9cdd6" stroke="#8a94a8" strokeWidth="0.4" {...SJ} />
+      <path d="M2 6 L3.2 7.2 M4.2 5.6 L5.4 6.8 M6.4 6 L7.6 7.2" stroke="#8a94a8" strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M2.4 8.6 L3.2 7.8 M5 8.8 L5.8 8 M7.4 8.6 L8.2 7.8" stroke="#5a6b8f" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a crown that freezes its nearest guard
+  hw3_kings_guard: (
+    <Gl>
+      <path d="M2.4 4 L2 1.6 L3.4 2.8 L4.6 1 L5.8 2.8 L7.2 1.6 L6.8 4 Z" fill="#c9a84c" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+      <circle cx="7" cy="7" r="1.8" fill="#2c3e6b" stroke="#9fd8ff" strokeWidth="0.4" />
+      <path d="M6.2 6.2 L7.8 7.8 M7.8 6.2 L6.2 7.8" stroke="#9fd8ff" strokeWidth="0.45" strokeLinecap="round" />
+    </Gl>
+  ),
+  // rings tightening around a slider
+  hw3_feeding_frenzy: (
+    <Gl>
+      <circle cx="5" cy="5" r="3.8" fill="none" stroke="#8f6bff" strokeWidth="0.5" />
+      <circle cx="5" cy="5" r="2.6" fill="none" stroke="#c9b0e8" strokeWidth="0.5" />
+      <circle cx="5" cy="5" r="1.4" fill="none" stroke="#c94a5a" strokeWidth="0.6" />
+    </Gl>
+  ),
+  // a condemned piece under an hourglass axe
+  hw3_doomed_vow: (
+    <Gl>
+      <path d="M3 1.4 H7 L4.2 5 L7 8.6 H3 L5.8 5 Z" fill="none" stroke="#c9b0e8" strokeWidth="0.55" {...SJ} />
+      <path d="M4.2 5 H5.8 L5 6.2 Z" fill="#c94a5a" />
+    </Gl>
+  ),
+  // a piece with a peeling turncoat shadow
+  hw3_enemy_within: (
+    <Gl>
+      <path d="M2.4 8.4 L3.2 3.4 H5.4 L6.2 8.4 Z M2 8.8 H6.6 V9.8 H2 Z" fill="#8a94a8" stroke="#2a2a30" strokeWidth="0.35" {...SJ} />
+      <path d="M4.8 8.4 L5.6 3.4 H7 L7.8 8.4 Z" fill="#c94a5a" opacity="0.75" />
+    </Gl>
+  ),
+  // a black moon crossing the sun
+  hw3_eclipse: (
+    <Gl>
+      <circle cx="5" cy="5" r="3.4" fill="#ff9d3d" />
+      <circle cx="6.4" cy="4.2" r="3" fill="#12121c" />
+      <path d="M5 0.6 V1.6 M5 8.4 V9.4 M0.6 5 H1.6 M8.4 5 H9.4" stroke="#ff9d3d" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  // one severed head, two rising
+  hw3_hydra_hex: (
+    <Gl>
+      <path d="M3 9 C2.4 7 3 5.4 4 4 C4 5.4 4.4 6.8 3 9 Z M7 9 C7.6 7 7 5.4 6 4 C6 5.4 5.6 6.8 7 9 Z" fill="#7fae4a" stroke="#1c2a1c" strokeWidth="0.4" {...SJ} />
+      <path d="M4 4 C4 2.4 6 2.4 6 4 M5 2.8 V1.4" fill="none" stroke="#7fae4a" strokeWidth="0.6" strokeLinecap="round" />
+      <path d="M4.4 1.4 L5 0.6 L5.6 1.4" fill="#c94a5a" stroke="#1c2a1c" strokeWidth="0.3" {...SJ} />
+    </Gl>
+  ),
+  // a wilting laurel over a bell
+  hw3_pyrrhic_toll: (
+    <Gl>
+      <path d="M5 5 C2.6 5.4 1.6 3.4 2 1.4 M5 5 C7.4 5.4 8.4 3.4 8 1.4" fill="none" stroke="#c9b89a" strokeWidth="0.7" strokeLinecap="round" />
+      <path d="M3.6 7 C3.6 5.8 4.2 5.2 5 5 C5.8 5.2 6.4 5.8 6.4 7 Z M3 7 H7 L6.6 7.8 H3.4 Z" fill="#9fd8ff" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+    </Gl>
+  ),
+  // a briar crown drawing a checkmark
+  hw3_martyrs_crown: (
+    <Gl>
+      <path d="M1.6 6 C3.6 4.4 6.4 4.4 8.4 6" fill="none" stroke="#8faf4a" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M3 5.2 L2.6 4.2 M5 4.8 L5 3.8 M7 5.2 L7.4 4.2" stroke="#8faf4a" strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M3.4 8 L4.6 9.2 L7 6.4" fill="none" stroke="#c94a5a" strokeWidth="0.7" {...SJ} />
+    </Gl>
+  ),
+  // two grinding gears with a cold spark
+  hw3_curse_engine: (
+    <Gl>
+      <circle cx="3.6" cy="4" r="1.8" fill="none" stroke="#8a94a8" strokeWidth="0.7" />
+      <path d="M3.6 1.6 V2.4 M3.6 5.6 V6.4 M1.2 4 H2 M5.2 4 H6" stroke="#8a94a8" strokeWidth="0.6" strokeLinecap="round" />
+      <circle cx="6.8" cy="6.4" r="1.5" fill="none" stroke="#8a94a8" strokeWidth="0.6" />
+      <path d="M6.8 4.6 V5.2 M6.8 7.6 V8.2 M5 6.4 H5.6 M8 6.4 H8.6" stroke="#8a94a8" strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M4.4 8 L5.6 9.2" stroke="#9fd8ff" strokeWidth="0.6" strokeLinecap="round" />
+    </Gl>
+  ),
+  // a ledger claiming a pawn as tribute
+  hw3_blood_tithe: (
+    <Gl>
+      <path d="M1.2 2.4 C3.2 1.4 4.6 1.6 5 2.6 C5.4 1.6 6.8 1.4 8.8 2.4 V7.4 C6.8 6.4 5.4 6.6 5 7.6 C4.6 6.6 3.2 6.4 1.2 7.4 Z" fill="#e8dcc0" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+      <path d="M2.4 3.6 H4.4 M2.4 4.8 H4 M6 3.6 H8 M6 4.8 H7.6" stroke="#8a6a3a" strokeWidth="0.35" strokeLinecap="round" />
+      <path d="M5 8 C5.9 9 6 9.5 6 9.9 A1 1 0 1 1 4 9.9 C4 9.5 4.1 9 5 8 Z" fill="#c94a5a" />
+    </Gl>
+  ),
+  // a crown flipped to a tin knight helm
+  hw3_inverted_crown: (
+    <Gl>
+      <path d="M1.6 3.4 V7.6 L3.8 5.8 L5 8.4 L6.2 5.8 L8.4 7.6 V3.4 Z" fill="#c9b89a" stroke="#5a4a36" strokeWidth="0.45" {...SJ} />
+      <path d="M4 3 L5 1 L6 3" fill="none" stroke="#8faf4a" strokeWidth="0.5" {...SJ} />
+    </Gl>
+  ),
 };
 
 /* =============================================================================
@@ -1602,5 +2682,139 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hw2_beacon_of_woe: S(BeaconOfWoeScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r", "q"], hasLead: true, sound: "nova",
+  }),
+
+  /* === WAVE 3 ============================================================== */
+
+  /* --- HexBrand (marks / contracts / taxes / tallies) --------------------- */
+  hw3_wrong_foot: G(HexBrand, ["#6b4a8f", "#c9b0e8", "#2a1030"], GLYPH.hw3_wrong_foot, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+  }, "wrongfoot"),
+  hw3_overexertion: G(HexBrand, ["#3a3a44", "#8a94a8", "#12121a"], GLYPH.hw3_overexertion, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "overexert"),
+  hw3_toll_road: G(HexBrand, ["#5a6b8f", "#c9a84c", "#2b2218"], GLYPH.hw3_toll_road, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+  }, "tollroad"),
+  hw3_bloodlust: G(HexBrand, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.hw3_bloodlust, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+  }, "bloodlust"),
+  hw3_exiles_mark: G(HexBrand, ["#5a6b8f", "#c9a84c", "#1c2418"], GLYPH.hw3_exiles_mark, {
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
+  }, "exile"),
+  hw3_debtors_mark: G(HexBrand, ["#4a3a22", "#c9a84c", "#2a2a30"], GLYPH.hw3_debtors_mark, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "debtor"),
+  hw3_coronation_tax: G(HexBrand, ["#4a3a22", "#e8b04b", "#2c3e6b"], GLYPH.hw3_coronation_tax, {
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen",
+  }, "coronationtax"),
+  hw3_pilgrimage: G(HexBrand, ["#5b2b8f", "#c9b0e8", "#1c0f18"], GLYPH.hw3_pilgrimage, {
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
+  }, "pilgrimage"),
+  hw3_bounty_mark: G(HexBrand, ["#6b1a2a", "#c94a5a", "#2b1218"], GLYPH.hw3_bounty_mark, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "bounty"),
+  hw3_feeding_frenzy: G(HexBrand, ["#5b2b8f", "#8f6bff", "#12081f"], GLYPH.hw3_feeding_frenzy, {
+    ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+  }, "feedingfrenzy"),
+
+  /* --- OmenBell (countdowns / fuses / delayed dooms) ---------------------- */
+  hw3_slow_poison: G(OmenBell, ["#2f3a26", "#7fae4a", "#1c241c"], GLYPH.hw3_slow_poison, {
+    ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+  }, "slowpoison"),
+  hw3_jammed_castle: G(OmenBell, ["#3a3a40", "#8a94a8", "#1c1c24"], GLYPH.hw3_jammed_castle, {
+    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen",
+  }, "jammedgate"),
+  hw3_time_bomb: G(OmenBell, ["#3a3a40", "#ff9d3d", "#1c1c24"], GLYPH.hw3_time_bomb, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege",
+  }, "powderkeg"),
+  hw3_collapsing_floor: G(OmenBell, ["#4a4a52", "#c9cdd6", "#1c1c24"], GLYPH.hw3_collapsing_floor, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "collapse"),
+  hw3_doomed_vow: G(OmenBell, ["#2a1030", "#c9b0e8", "#8a94a8"], GLYPH.hw3_doomed_vow, {
+    ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "cathedral",
+  }, "doomedvow"),
+
+  /* --- BlightGarden (hazards / contagion / terrain) ----------------------- */
+  hw3_wandering_sentry: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw3_wandering_sentry, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+  }, "sentry"),
+  hw3_sinking_mire: G(BlightGarden, ["#2f3a26", "#6f8a4a", "#1c241c"], GLYPH.hw3_sinking_mire, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+  }, "mire"),
+  hw3_miasma: G(BlightGarden, ["#2f3a26", "#8faf4a", "#6f9a3a"], GLYPH.hw3_miasma, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
+  }, "miasma"),
+  hw3_roaming_void: G(BlightGarden, ["#12081f", "#8f6bff", "#5b2b8f"], GLYPH.hw3_roaming_void, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+  }, "maw"),
+  hw3_wildfire: G(BlightGarden, ["#2b1208", "#ff9d3d", "#7a2a10"], GLYPH.hw3_wildfire, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+  }, "wildfire"),
+  hw3_effigy_of_dread: G(BlightGarden, ["#1c2a1c", "#8faf4a", "#3a3a40"], GLYPH.hw3_effigy_of_dread, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon",
+  }, "effigy"),
+  hw3_avalanche: G(BlightGarden, ["#3a3a40", "#c9cdd6", "#8a94a8"], GLYPH.hw3_avalanche, {
+    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "shades",
+  }, "avalanche"),
+
+  /* --- ChainWeb (binds / leashes / sympathetic links) --------------------- */
+  hw3_binding_oath: G(ChainWeb, ["#3a3a40", "#8a94a8", "#c94a5a"], GLYPH.hw3_binding_oath, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+  }, "bindingoath"),
+  hw3_bloodbond: G(ChainWeb, ["#5b2b8f", "#c9b0e8", "#9fd8ff"], GLYPH.hw3_bloodbond, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "bloodbond"),
+  hw3_shared_fate: G(ChainWeb, ["#3a2630", "#c9b0e8", "#c94a5a"], GLYPH.hw3_shared_fate, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+  }, "sharedfate"),
+  hw3_kings_guard: G(ChainWeb, ["#2c3e6b", "#8a94a8", "#9fd8ff"], GLYPH.hw3_kings_guard, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+  }, "kingsguard"),
+  hw3_no_retreat: G(ChainWeb, ["#3a3026", "#c9a84c", "#8a6a3a"], GLYPH.hw3_no_retreat, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+  }, "noretreat"),
+
+  /* --- MidasVeil (possession / transferring marks) ------------------------ */
+  hw3_fifth_column: G(MidasVeil, ["#3a2a4a", "#8f6bff", "#1c1024"], GLYPH.hw3_fifth_column, {
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades",
+  }, "fifthcolumn"),
+  hw3_curse_hop: G(MidasVeil, ["#3a3026", "#e8b04b", "#c9cdd6"], GLYPH.hw3_curse_hop, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+  }, "handeddown"),
+  hw3_mutiny: G(MidasVeil, ["#42264a", "#a07bff", "#1c1024"], GLYPH.hw3_mutiny, {
+    ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades",
+  }, "mutiny"),
+  hw3_defectors_mark: G(MidasVeil, ["#32284a", "#8f6bff", "#160f24"], GLYPH.hw3_defectors_mark, {
+    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
+  }, "sleeper"),
+  hw3_aging_blade: G(MidasVeil, ["#3a3026", "#c9cdd6", "#5a6b8f"], GLYPH.hw3_aging_blade, {
+    ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+  }, "agingblade"),
+
+  /* --- Tier 7-8 bespoke scenes -------------------------------------------- */
+  hw3_enemy_within: S(EnemyWithinScene, {
+    ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true, sound: "shades",
+  }),
+  hw3_eclipse: S(EclipseScene, {
+    ordering: "radial", staggerMs: 0, victims: ["b", "q"], hasLead: true, sound: "shades",
+  }),
+  hw3_hydra_hex: S(HydraScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", source: "frozen",
+  }),
+  hw3_pyrrhic_toll: S(PyrrhicScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "frozen",
+  }),
+  hw3_martyrs_crown: S(MartyrCrownScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "frozen",
+  }),
+  hw3_curse_engine: S(CurseEngineScene, {
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockcage", source: "frozen",
+  }),
+  hw3_blood_tithe: S(BloodTitheScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+  }),
+  hw3_inverted_crown: S(InvertedCrownScene, {
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
   }),
 };

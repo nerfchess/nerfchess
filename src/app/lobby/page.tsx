@@ -16,6 +16,8 @@ import { FriendsPanel } from "@/components/FriendsPanel";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
+import { EngravedLabel } from "@/components/dungeon/primitives";
+import "@/components/dungeon/dungeon-lobby.css";
 
 // The lobby: the central place to find a game, styled to match the home
 // page's dark starry identity. The shared StarField drifts behind flat solid
@@ -259,22 +261,22 @@ function LobbyInner() {
       <SiteHeader active="/lobby" />
 
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
-        {/* Masthead over a plain brass hairline, with the live pulse of the
-            lobby as flat chips on the right. */}
-        <header className="relative mt-1 sm:mt-4">
-          <span className="eyebrow hidden sm:inline">Find a game</span>
-          <div className="mt-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-            <h1 className="masthead text-3xl sm:text-6xl text-parchment-50">The Lobby</h1>
-            {/* Hidden on phones: the first thing a phone visitor should see is
-                the matchmaking button, not the traffic counters. One coherent
-                status pill (connection + player count), then two quiet stats. */}
-            <div className="hidden sm:flex flex-wrap items-center gap-2 pb-1">
+        {/* Masthead over a torchlit brass hairline. On a phone it collapses to
+            one compact row — a small engraved title beside the live status pill
+            — so matchmaking content starts high on the page instead of below a
+            full-height headline. Desktop keeps the monumental masthead and the
+            two quiet traffic counters. */}
+        <header className="relative mt-2 sm:mt-4">
+          <EngravedLabel className="hidden sm:inline-flex">Find a game</EngravedLabel>
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 sm:mt-1 sm:items-end">
+            <h1 className="masthead text-2xl sm:text-6xl text-parchment-50">The Lobby</h1>
+            <div className="flex flex-wrap items-center gap-2 pb-0.5">
               <StatusPill lobby={!!lobby} error={!!lobbyError} onlineCount={onlineCount} />
               {lobby && (
-                <>
+                <span className="hidden sm:contents">
                   <HallStat dotClass="bg-sun/80">{`${waitingCount} waiting`}</HallStat>
                   <HallStat dotClass="bg-coral/80">{`${lobby.games.length} in play`}</HallStat>
-                </>
+                </span>
               )}
             </div>
           </div>
@@ -297,7 +299,7 @@ function LobbyInner() {
         <div
           role="tablist"
           aria-label="Lobby sections"
-          className="mt-6 flex items-stretch gap-5 sm:gap-7 overflow-x-auto border-b border-[color:var(--edge)]"
+          className="dgn-tabscroll mt-6 flex items-stretch gap-4 overflow-x-auto border-b border-[color:var(--edge)] sm:gap-7"
         >
           {LOBBY_TABS.map((t) => {
             const count =
@@ -316,9 +318,9 @@ function LobbyInner() {
                 aria-controls={`lobby-panel-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={
-                  "-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
+                  "-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
                   (selected
-                    ? "border-gold text-gold-leaf"
+                    ? "dgn-tab-active text-gold-leaf"
                     : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-50")
                 }
               >
@@ -353,7 +355,7 @@ function LobbyInner() {
             /* Open challenges: players waiting in a quick-pairing pool plus
                 friend games waiting for an opponent, each on its own flat row
                 wearing its mode color as a plain left border. */
-            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="plate p-5 sm:p-6">
+            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="dgn-slab dgn-rivets p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
                   Open challenges
@@ -413,7 +415,7 @@ function LobbyInner() {
 
             {tab === "watch" && (
             /* Watch a game that's happening right now. */
-            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="plate p-5 sm:p-6">
+            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="dgn-slab dgn-rivets p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                   Live games
@@ -486,8 +488,8 @@ function LobbyInner() {
                   headline while these stay one tap away. Each links to its
                   existing flow (Challenges tab, Friends tab, bot practice). */}
               <div>
-                <div className="eyebrow text-parchment-400">Other ways to play</div>
-                <div className="mt-2 grid gap-2.5 sm:grid-cols-3">
+                <EngravedLabel>Other ways to play</EngravedLabel>
+                <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
                   <SecondaryModeCard
                     icon={<Swords size={18} aria-hidden />}
                     title="Custom game"
@@ -514,7 +516,7 @@ function LobbyInner() {
           {/* Who's here right now, plus boards to watch: a stack of rail panels
               that ride along on desktop scroll. */}
           <aside className="h-fit space-y-5 lg:sticky lg:top-6">
-            <div className="plate p-5">
+            <div className="dgn-slab dgn-rivets p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="sec-title font-display text-xl text-parchment">Online now</div>
               {lobby && onlineCount != null && (
@@ -600,7 +602,7 @@ function LobbyInner() {
                 into the spectator route. The data source (lobby.games) always
                 exists in the payload, so this panel renders with a designed
                 empty state rather than disappearing. */}
-            <div className="plate p-5">
+            <div className="dgn-slab dgn-rivets p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
                 {lobby && (
@@ -716,7 +718,7 @@ function SecondaryModeCard({
     <>
       <span
         aria-hidden
-        className="grid h-9 w-9 shrink-0 place-items-center border border-[color:var(--edge)] bg-white/[0.04] text-parchment-200 transition-colors group-hover:border-gold/40 group-hover:text-gold-leaf"
+        className="grid h-9 w-9 shrink-0 place-items-center border border-[color:var(--edge)] bg-black/25 text-parchment-200 transition-colors group-hover:border-gold/40 group-hover:text-gold-leaf"
       >
         {icon}
       </span>
@@ -726,8 +728,10 @@ function SecondaryModeCard({
       </span>
     </>
   );
-  const className =
-    "plate plate-hover press group flex min-h-[44px] items-start gap-3 p-3.5 text-left transition-colors";
+  // The same carved stone tablet as the time-control tokens, so the whole
+  // Quick Play column speaks one material (never the flat .plate next to the
+  // chamber's granite).
+  const className = "dgn-token press group flex min-h-[44px] items-start gap-3 p-3.5 text-left";
   return href ? (
     <Link href={href} className={className}>
       {inner}
@@ -765,7 +769,7 @@ function FriendsTab() {
       aria-labelledby="lobby-tab-friends"
       className={"min-w-0 " + (challenging ? "" : "grid gap-5 lg:grid-cols-2 lg:items-start")}
     >
-      <div className="plate dgn-rivets p-5 sm:p-6">
+      <div className="dgn-slab dgn-rivets p-5 sm:p-6">
         <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
           Play a friend
         </SectionTitle>
@@ -811,25 +815,23 @@ function ModeFilter({
   onChange: (value: "all" | "nerf" | "buff") => void;
   label: string;
 }) {
+  // Each segment lights in its own hue when pressed: All in vault gold (the
+  // CSS default), Buff sky-blue, Nerf terracotta. Fed via --seg-rgb.
   const options = [
-    { id: "all", label: "All", selectedClass: "border-gold/50 bg-gold/10 text-gold-leaf" },
-    { id: "buff", label: "Buff", selectedClass: "border-mode-buff bg-mode-buff/15 text-mode-buffGlow" },
-    { id: "nerf", label: "Nerf", selectedClass: "border-mode-nerf bg-mode-nerf/15 text-mode-nerfGlow" },
+    { id: "all", label: "All", rgb: null },
+    { id: "buff", label: "Buff", rgb: "91 155 212" },
+    { id: "nerf", label: "Nerf", rgb: "196 120 95" },
   ] as const;
   return (
-    <div role="group" aria-label={label} className="mt-3 flex gap-1.5">
+    <div role="group" aria-label={label} className="dgn-seg mt-3">
       {options.map((o) => (
         <button
           key={o.id}
           type="button"
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
-          className={
-            "min-h-[44px] sm:min-h-0 border px-3 py-1 text-xs transition-colors " +
-            (value === o.id
-              ? o.selectedClass
-              : "border-[color:var(--edge)] text-parchment-400 hover:border-white/25 hover:text-parchment-200")
-          }
+          style={o.rgb ? ({ "--seg-rgb": o.rgb } as React.CSSProperties) : undefined}
+          className="dgn-seg__opt min-h-[44px] px-4 py-1 text-xs font-medium sm:min-h-[34px]"
         >
           {o.label}
         </button>
