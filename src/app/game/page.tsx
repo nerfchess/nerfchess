@@ -1735,7 +1735,7 @@ function GamePage() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => { onResign(); setConfirmingResign(false); }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
         >
           Yes
         </button>
@@ -1766,7 +1766,7 @@ function GamePage() {
           onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
         >
           Resign
         </button>

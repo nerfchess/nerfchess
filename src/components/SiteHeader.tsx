@@ -199,17 +199,22 @@ export function SiteHeader({ active }: { active?: string }) {
       if (m === "bell" && opening) {
         // Opening the bell clears everything automatically: refresh first so
         // the dropdown still shows what was new (rows keep their unread look
-        // for this viewing), then mark all read server-side and drop the badge.
+        // for this viewing), then mark all read server-side and drop the
+        // badge optimistically. If the mark-read request fails, refetch so
+        // the badge shows the TRUE unread state again instead of lying.
         void (async () => {
           await refreshSocial();
+          setUnread(0);
           try {
-            await fetch("/api/notifications", {
+            const res = await fetch("/api/notifications", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({}),
             });
-          } catch {}
-          setUnread(0);
+            if (!res.ok) await refreshSocial();
+          } catch {
+            await refreshSocial();
+          }
         })();
       } else {
         refreshSocial();
@@ -419,8 +424,15 @@ export function SiteHeader({ active }: { active?: string }) {
             )}
 
             {/* Notifications */}
-            <button type="button" aria-label="Notifications" title="Notifications" className={iconButton} onClick={() => toggle("bell")}>
+            <button
+              type="button"
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+              title="Notifications"
+              className={iconButton + (unread > 0 ? " relic-unread" : "")}
+              onClick={() => toggle("bell")}
+            >
               <Bell size={17} />
+              {unread > 0 && <span aria-hidden className="relic-orbit" />}
               <Badge n={unread} />
             </button>
             {menu === "bell" && (

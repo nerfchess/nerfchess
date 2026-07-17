@@ -2298,7 +2298,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             onResign();
             setConfirmingResign(false);
           }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/70 bg-oxblood/25 text-oxblood-glow hover:bg-oxblood/40 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
         >
           Yes
         </button>
@@ -2380,7 +2380,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </div>
       <button
         onClick={requestResign}
-        className="w-full min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+        className="w-full min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
       >
         Resign
       </button>
@@ -2414,7 +2414,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         )}
         <button
           onClick={requestResign}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-oxblood/40 bg-oxblood/10 text-oxblood-glow hover:bg-oxblood/20 hover:border-oxblood/70 transition text-xs font-display font-semibold tracking-wide"
+          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
         >
           Resign
         </button>
