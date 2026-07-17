@@ -181,12 +181,6 @@ export function CardInsights({
                 games {verb} against other players.
               </p>
             )}
-            {botVolume > 0 && bots && (
-              <p className="text-sm text-parchment-400">
-                House bots: {verb} {botVolume.toLocaleString()} times
-                {bots.decided >= MIN_DECIDED ? `, ${pct(bots.wins, bots.decided)} win rate` : ""}.
-              </p>
-            )}
             <p className="text-xs text-parchment-400">
               Counted from finished online games. Offers are only visible when a player picked from
               them, so banked offers are not counted.

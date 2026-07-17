@@ -155,8 +155,8 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
       >
         {style.label[0]}
       </span>
-      {/* Opponent identity unit: avatar + name, with a bot glyph for house
-          bots so the practice opponents read as bots at a glance. */}
+      {/* Opponent identity unit: avatar + name. Every opponent renders the
+          same way; only the venue chip (Bot = local practice) differs. */}
       <PlayerAvatar name={game.opponent} size={28} className="hidden shrink-0 sm:block" />
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

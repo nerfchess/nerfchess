@@ -27,7 +27,6 @@ interface Row {
   losses: number;
   draws: number;
   guest?: boolean;
-  bot?: boolean;
 }
 
 type MeRow = Row & { rank: number };

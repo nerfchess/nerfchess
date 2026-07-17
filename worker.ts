@@ -528,11 +528,13 @@ const houseSeededKey = "hp:seeded:v5";
 // HOUSE_SEED_RD (60) — older deployments seeded RD 150, which is provisional
 // (>110) and let a bot's first games swing its seeded number wildly. Bump so
 // the settle reaches every existing account on the next cold start.
-// rating-v7: the advertised ratings were re-spread again — every bot now
-// advertises a name-hashed random rating in [100, 300] (per-mode buckets clamp
-// into the same band). Bump so syncHouseRatings rewrites every existing
-// account's users.rating and both per-mode buckets on the next cold start.
-const houseRatingsSyncedKey = "hp:ratings-synced:rating-v7";
+// rating-v7 (retracted): briefly re-spread every bot to a flat [100, 300].
+// rating-v8: the owner's actual intent — keep the ORIGINAL rating spread and
+// ADD a stable name-hashed +100..+300 Elo boost per bot. Bump so
+// syncHouseRatings rewrites every existing account's users.rating and both
+// per-mode buckets on the next cold start (including any deployment that
+// already ran the retracted v7 numbers).
+const houseRatingsSyncedKey = "hp:ratings-synced:rating-v8";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
@@ -2020,8 +2022,8 @@ export class GameServer extends DurableObject<Env> {
             // Provisional (RD still wide) so clients can render "1500?".
             // Omitted when the seat snapshot predates rd tracking.
             ...(typeof user.rd === "number" ? { provisional: isProvisional({ rd: user.rd }) } : {}),
-            // House-bot seat: lets every consumer render the HOUSE BOT chip.
-            ...(match.bots?.[color] ? { house: true } : {}),
+            // No house flag leaves the server: house seats are shaped exactly
+            // like human seats (owner request: no bot trace anywhere).
           }
         : { name: "Anonymous", rating: null, avatar: null };
     };
@@ -7242,8 +7244,9 @@ export class GameServer extends DurableObject<Env> {
       at: number;
       // Stable identity so the client can answer a specific seek and the server
       // can pair with exactly that person (or bot), never a random pool waiter.
+      // Deliberately NO house flag: house seeks are shaped exactly like human
+      // seeks on the wire.
       userId: string;
-      house: boolean;
     }> = [];
     for (const mode of QUEUE_MODES) {
       for (const [poolName, pool] of Object.entries(QUEUE_POOLS)) {
@@ -7261,7 +7264,6 @@ export class GameServer extends DurableObject<Env> {
             incrementSec: pool.incrementSec,
             at: entry.at,
             userId: entry.userId,
-            house: false,
           });
         }
       }
@@ -7285,7 +7287,6 @@ export class GameServer extends DurableObject<Env> {
           incrementSec: pool.incrementSec,
           at: seek.at,
           userId: seek.userId,
-          house: true,
         });
       }
     } catch {

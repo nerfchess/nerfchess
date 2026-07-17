@@ -362,7 +362,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
         aria-activedescendant={open && active >= 0 && navList[active] ? `${listId}-${active}` : undefined}
         autoComplete="off"
         maxLength={20}
-        className="w-full rounded-sm border bg-ink-900/60 px-4 py-2.5 text-[16px] text-parchment placeholder:text-parchment-400/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+        className="input-rune w-full px-4 py-2.5 text-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
         style={{ borderColor: "var(--edge)" }}
       />
 
