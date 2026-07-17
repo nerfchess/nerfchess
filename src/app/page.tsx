@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
+import { LiveRvPanel } from "@/components/LiveRvPanel";
+import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StarField } from "@/components/StarField";
 import { ModeBadge } from "@/components/ModeBadge";
@@ -33,19 +35,11 @@ export default function HomePage() {
       <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
         <div className="order-1 animate-rise">
           <HeroTv />
-          {/* Mobile-only primary CTA: keeps "Open lobby" as high as possible,
-              directly under the live board. Desktop keeps the CTA in the
-              action column beside the board. */}
-          <Link
-            href="/lobby"
-            className="btn-leaf btn-cta press mt-4 flex w-full items-center justify-center gap-3 px-6 py-5 font-display text-3xl font-bold no-underline lg:hidden"
-          >
-            Open lobby
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M5 12h14" />
-              <path d="m13 6 6 6-6 6" />
-            </svg>
-          </Link>
+          {/* Mobile stack (owner order): board, then Live RV, then Open Lobby
+              directly below it, nothing in between. Desktop keeps its action
+              column beside the board, so both panels hide at lg. */}
+          <LiveRvPanel className="mt-3 lg:hidden" />
+          <OpenLobbyPanel className="mt-2.5 lg:hidden" />
           {/* Socials live right under the hero board (owner request: back to
               its original spot). */}
           <div className="mt-4">

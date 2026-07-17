@@ -202,7 +202,9 @@ export function QueueButton({
         <div className="mt-4 border border-verdigris/30 bg-verdigris/[0.06] p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="flex items-center gap-2.5 text-sm text-parchment-100">
-              <span aria-hidden className="w-2.5 h-2.5 shrink-0 bg-verdigris animate-flicker" />
+              {/* Themed loader: the rune ring turning is the "search is live"
+                  signal, replacing the plain flicker dot. */}
+              <span aria-hidden className="rune-loader shrink-0 text-[15px]" />
               <span>
                 Finding a{" "}
                 <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
