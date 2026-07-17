@@ -1576,7 +1576,15 @@ export type SigVisual =
   | "devotion" // i_love_my_gf (was aegis): two locket-halves clasp with a heartbeat shock
   | "holyrampart" // divine_fortress (was cathedral): the frontier wall consecrates the near half
   | "foxholes" // ww_dug_in_defense (was dugin): three foxholes blown open one by one
-  | "wishlamp"; // wc_genie_wish (was geniepoof): the wish splits gold/green over the fine print
+  | "wishlamp" // wc_genie_wish (was geniepoof): the wish splits gold/green over the fine print
+  // Tier 5-6 follow-up: the tier-6 members of the biggest remaining shared
+  // CORE groups (summonrift / blitz / blink / coronation) each get their own.
+  | "pocketpair" // grand_summon (was summonrift): knight + bishop banked into the pocket
+  | "hornnote" // horn_of_summoning (was summonrift): one long note rolls sound-rings across the stone
+  | "sellsword" // ww_mercenary_queen (was summonrift): the hired queen strides in over coin
+  | "triplewave" // overwhelm (was blitz): three push-waves roll up the board in a row
+  | "warpquad" // warp_storm (was blink): four paired micro-portals hop four pieces at once
+  | "kingsleap"; // god_king (was coronation): the king's ghost takes the L-shaped leap between heartbeats
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1776,7 +1784,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   excalibur: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
   dragon_form: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
   celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
-  god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "kingsleap", hasLead: true, sound: "coronation", source: "empower" },
   banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "bannerwar", hasLead: true, sound: "blitz", source: "empower" },
 
   // Barred walls (blindfold zone).
@@ -1792,7 +1800,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
   imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "chalkcircle", hasLead: true, sound: "wall", source: "summon" },
-  horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "hornnote", hasLead: true, sound: "wall", source: "summon" },
   roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "rocperch", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
@@ -1915,7 +1923,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Extra-move rallies (rally zone): lightning strobes and war-banner surges.
   extra_move: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
-  overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "triplewave", hasLead: true, sound: "blitz", source: "rally" },
   wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
@@ -1928,9 +1936,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
 
   // Summons / reinforcements (summon zone).
-  grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "pocketpair", hasLead: true, sound: "wall", source: "summon" },
   kings_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "kingsmuster", hasLead: true, sound: "wall", source: "summon" },
-  ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  ww_mercenary_queen: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sellsword", hasLead: true, sound: "wall", source: "summon" },
   second_army: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "reinforce", hasLead: false, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the clone army rolls out of the same photocopier as its
   // sibling card Clone — a board-wide scan-bar lead instead of the generic
@@ -1949,7 +1957,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
   wc_yeet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
   warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
-  warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
+  warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "warpquad", hasLead: true, sound: "wall", source: "summon" },
 
   // Walls / voids / traps (blindfold zone).
   fault_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
