@@ -187,21 +187,26 @@ export const NERFS_T7: Nerf[] = [
     {
       id: "war_footing",
       name: "War Footing",
-      description: "You lose if you make more than 10 non-capturing moves all game.",
+      description: "You lose if you make more than 14 non-capturing moves all game.",
       flavor: "Peace is a luxury you cannot afford.",
       icon: "timer",
     },
     {
+      // Rebalance 2026-07: quiet budget raised 10 -> 14. With at most 15 enemy
+      // units to capture, a 10-move budget hard-capped the whole game near 25
+      // of your moves, turning most normal wins into losses by clock-out. At
+      // 14 the card still demands a fast, violent game (about 29 moves) but a
+      // direct attacking plan can actually finish inside it.
       init: () => ({ quiet: 0 }),
       onTurnStart: (_state, ctx) => ({
         quiet: countHistory(ctx, (m) => !m.captured),
       }),
       checkLoss: (state) =>
-        (state.quiet as number) > 10 ? { reason: "too many idle turns off the attack" } : null,
+        (state.quiet as number) > 14 ? { reason: "too many idle turns off the attack" } : null,
       progress: (state) => ({
         value: state.quiet as number,
-        max: 10,
-        label: (state.quiet as number) + "/10 quiet moves",
+        max: 14,
+        label: (state.quiet as number) + "/14 quiet moves",
       }),
     },
   ),

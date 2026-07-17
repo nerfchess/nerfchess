@@ -2226,6 +2226,11 @@ function GamePage() {
       {myOffer && !game.result && (
         <DraftOverlay
           offer={myOffer}
+          // Local games have no server id; the start stamp survives the AI
+          // save/restore round-trip, so it scopes the chest-reveal ledger to
+          // this exact game (a restored game skips already-seen reveals, a
+          // fresh game never inherits them).
+          revealScope={`ai:${game.startedAt}`}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}

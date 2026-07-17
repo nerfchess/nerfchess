@@ -384,16 +384,24 @@ export const WINDUP_TOYS: Nerf = db({
 
 export const ABSTINENCE: Nerf = db({
   id: "abstinence", name: "Abstinence", tier: 7, implemented: true,
-  description: "If opponent ever has two same-type non-pawns adjacent, you lose.",
+  description: "If your opponent ever has two same-type non-pawns adjacent inside your half of the board, you lose.",
+  // Rebalance 2026-07: the pair now only counts when BOTH pieces stand in your
+  // half. The old board-wide trigger fired on completely ordinary opponent
+  // play in their own camp (connected rooks on the back rank, doubled rooks on
+  // a file) with zero counterplay for the owner. Restricted to your half, the
+  // owner can actually fight it: contest invading pieces and break up pairs
+  // before they settle. Still tier 7.
   checkLoss: (_s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
+    const inMyHalf = (sq: number) => (ctx.me === "w" ? RANK(sq) <= 3 : RANK(sq) >= 4);
     for (let a = 0; a < 64; a++) {
       const pa = ctx.board.pieces[a];
       if (!pa || pa.color !== opp || pa.type === "p" || pa.type === "k") continue;
+      if (!inMyHalf(a)) continue;
       for (let b = a + 1; b < 64; b++) {
         const pb = ctx.board.pieces[b];
         if (!pb || pb.color !== opp || pb.type !== pa.type) continue;
-        if (adj(a, b)) return { reason: "two same-type non-pawns adjacent" };
+        if (inMyHalf(b) && adj(a, b)) return { reason: "two same-type invaders paired up in your half" };
       }
     }
     return null;
@@ -953,22 +961,59 @@ export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
 
 export const GLORIOUS_BATTLE: Nerf = db({
   id: "glorious_battle", name: "Glorious Battle", tier: 7, implemented: true,
-  description: "Starting on a random move, for 4 consecutive moves, you must capture or lose.",
-  init: (rng) => ({ start: 4 + rng.int(8) }),
+  description: "On a midgame move drawn at random (you are warned two turns ahead), the battle begins: for 3 consecutive moves you must capture, or lose.",
+  // Rebalance 2026-07, three surgical changes to what was a pure lottery:
+  //  - the window now starts on move 9-16 (was 4-11, often before any contact
+  //    exists, making the required captures physically unavailable);
+  //  - the window is 3 turns (was 4): needing an available capture on four
+  //    consecutive turns was rarely survivable even with perfect prep;
+  //  - the start is announced two turns in advance via hint, so the owner can
+  //    build up capture targets (keep tension, refuse early trades) instead of
+  //    being executed by hidden state. Still tier 7.
+  init: (rng) => ({ start: 9 + rng.int(8) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { start: number };
     const turn = ctx.moveNumber + 1;
-    if (turn < s.start || turn >= s.start + 4) return moves;
+    if (turn < s.start || turn >= s.start + 3) return moves;
     const caps = moves.filter((m) => m.captured);
     return caps.length ? caps : moves;
   },
   checkLoss: (state, ctx) => {
     const s = state as { start: number };
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
-    const end = Math.min(mine.length, s.start + 3);
+    const end = Math.min(mine.length, s.start + 2);
     for (let i = s.start - 1; i < end; i++) {
       if (i < 0 || i >= mine.length) continue;
       if (!mine[i].captured) return { reason: "missed required capture" };
+    }
+    return null;
+  },
+  progress: (state, ctx) => {
+    const s = state as { start: number };
+    const turn = ctx.moveNumber + 1;
+    if (turn >= s.start + 3) return { value: 3, max: 3, label: "battle survived" };
+    if (turn < s.start) return { value: 0, max: 3, label: `battle begins on your move ${s.start}` };
+    return { value: turn - s.start, max: 3, label: `battle turn ${turn - s.start + 1} of 3` };
+  },
+  hint: (state, ctx, legal) => {
+    const s = state as { start: number };
+    const turn = ctx.moveNumber + 1;
+    if (turn >= s.start && turn < s.start + 3) {
+      const caps = legal.filter((m) => m.captured);
+      if (!caps.length) {
+        return { text: "The battle rages and you have no capture. This move loses.", tone: "warn" };
+      }
+      return {
+        text: `Glorious battle (turn ${turn - s.start + 1} of 3): you must capture.`,
+        squares: Array.from(new Set(caps.map((m) => m.from))),
+        tone: "warn",
+      };
+    }
+    if (turn >= s.start - 2 && turn < s.start) {
+      return {
+        text: `The glorious battle begins on your move ${s.start}: line up captures now.`,
+        tone: "info",
+      };
     }
     return null;
   },
@@ -1113,13 +1158,29 @@ export const IRRESISTIBLE: Nerf = db({
 
 export const BOASTFUL: Nerf = db({
   id: "boastful", name: "Boastful", tier: 7, implemented: true,
-  description: "Lose if you have fewer pieces than opponent.",
+  description: "You lose if you end one of your turns with fewer pieces than your opponent.",
+  // Rebalance 2026-07: judged only after YOUR OWN move (the after-my-move
+  // grace pattern from cowardly / eye_for_an_eye). Previously the loss fired
+  // the instant the opponent's capture resolved, so any trade sequence where
+  // they took first was an immediate loss with no chance to recapture. Now an
+  // opponent capture gives you one move to restore parity (recapture) before
+  // the count is judged. Still tier 7.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
     const opp = ctx.me === "w" ? "b" : "w";
     return pieceSquares(ctx.board, ctx.me).length < pieceSquares(ctx.board, opp).length
       ? { reason: "outnumbered" }
       : null;
+  },
+  hint: (_s, ctx) => {
+    const opp = ctx.me === "w" ? "b" : "w";
+    const mine = pieceSquares(ctx.board, ctx.me).length;
+    const theirs = pieceSquares(ctx.board, opp).length;
+    if (mine >= theirs) return null;
+    return { text: "You are outnumbered. End this turn with equal material or lose.", tone: "warn" };
   },
 });
 
@@ -1259,7 +1320,13 @@ export const HEDONIC_TREADMILL: Nerf = db({
 });
 
 export const DEATH_WISH: Nerf = db({
-  id: "death_wish", name: "Death Wish", tier: 6, implemented: true,
+  // Rebalance 2026-07: tier 6 -> 8. Whenever any suicidal king step exists the
+  // filter forces it, and the opponent then simply takes the king: strictly
+  // more lethal than bottled_lightning (any king move forced, tier 8). The
+  // counterplay (keep every square around the king occupied or unattacked) is
+  // the same boxed-king puzzle as bottled_lightning, so it belongs on the same
+  // rung. Mechanics unchanged.
+  id: "death_wish", name: "Death Wish", tier: 8, implemented: true,
   description: "If you can move king into check, you must.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
@@ -1283,18 +1350,37 @@ export const CHECKERS: Nerf = db({
 
 export const CLOSED_BOOK: Nerf = db({
   id: "closed_book", name: "Closed Book", tier: 6, implemented: true,
-  description: "Lose if you ever start a turn with an open file.",
+  description: "You lose if two or more files ever have none of your pawns on them.",
+  // Rebalance 2026-07: one open file is now tolerated; the loss fires at two.
+  // The old rule (ANY open file loses) meant that losing a single lone-file
+  // pawn, or making almost any pawn capture yourself (it empties the source
+  // file), was an instant loss: effectively glass pawns at tier 6. With one
+  // file of slack you can absorb a pawn break or make one capture toward a
+  // file, and the identity (keep your pawn structure intact) survives.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    let open = 0;
     for (let f = 0; f < 8; f++) {
       let has = false;
       for (let r = 0; r < 8; r++) {
         const p = ctx.board.pieces[SQ(f, r)];
         if (p && p.color === ctx.me && p.type === "p") { has = true; break; }
       }
-      if (!has) return { reason: `open file ${"abcdefgh"[f]}` };
+      if (!has) open++;
     }
-    return null;
+    return open >= 2 ? { reason: "two files fell open" } : null;
+  },
+  progress: (_s, ctx) => {
+    let open = 0;
+    for (let f = 0; f < 8; f++) {
+      let has = false;
+      for (let r = 0; r < 8; r++) {
+        const p = ctx.board.pieces[SQ(f, r)];
+        if (p && p.color === ctx.me && p.type === "p") { has = true; break; }
+      }
+      if (!has) open++;
+    }
+    return { value: Math.min(open, 2), max: 2, label: `${open}/2 open files` };
   },
 });
 
@@ -1377,10 +1463,16 @@ export const COLORBLIND: Nerf = db({
 
 export const INCHING_FORWARD: Nerf = db({
   id: "inching_forward", name: "Inching Forward", tier: 6, implemented: true,
-  description: "After turn 6, king must be in front of home rank. Required rank advances every 6 turns.",
+  description: "After turn 6, king must be in front of home rank. Required rank advances every 6 turns, up to your 7th rank.",
+  // Rebalance 2026-07: the required rank is now capped at your 7th rank
+  // (advance <= 6). The uncapped ladder demanded a rank beyond the board from
+  // your 48th move on, which was a GUARANTEED loss in any long game, with no
+  // line of play that could satisfy it. With the cap, the endgame demand is
+  // "keep your king on the enemy's second rank or deeper": brutal, but a real
+  // target a king can reach and hold. Still tier 6.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 6) return null;
-    const advance = Math.floor(ctx.moveNumber / 6);
+    const advance = Math.min(6, Math.floor(ctx.moveNumber / 6));
     const required = ctx.me === "w" ? advance : 7 - advance;
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return null;
@@ -1459,14 +1551,40 @@ export const GOING_THE_DISTANCE: Nerf = db({
 
 export const HELICOPTER_PARENT: Nerf = db({
   id: "helicopter_parent", name: "Helicopter Parent", tier: 6, implemented: true,
-  description: "Lose if you have an undefended pawn.",
+  description: "You lose if you end one of your turns with a pawn that is attacked and undefended.",
+  // Rebalance 2026-07, two surgical changes:
+  //  - a pawn now has to be ATTACKED and undefended (was: undefended, even
+  //    with no attacker anywhere), which made every pawn advance a standing
+  //    death sentence and was harder than house_of_cards a full two tiers up;
+  //  - judged only after YOUR move, so when the opponent's move creates the
+  //    threat you get one turn to defend the child (or move it) first.
+  // The card keeps its identity: hover over threatened pawns. Still tier 6.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    const opp = ctx.me === "w" ? "b" : "w";
+    const attackers = attackedBy(ctx.board, opp);
     const defenders = attackedBy(ctx.board, ctx.me);
     for (const sq of pieceSquares(ctx.board, ctx.me, "p")) {
-      if (!defenders.has(sq)) return { reason: "undefended pawn" };
+      if (attackers.has(sq) && !defenders.has(sq)) return { reason: "a pawn was left alone and in danger" };
     }
     return null;
+  },
+  hint: (_s, ctx) => {
+    const opp = ctx.me === "w" ? "b" : "w";
+    const attackers = attackedBy(ctx.board, opp);
+    const defenders = attackedBy(ctx.board, ctx.me);
+    const exposed = pieceSquares(ctx.board, ctx.me, "p").filter(
+      (sq) => attackers.has(sq) && !defenders.has(sq),
+    );
+    if (!exposed.length) return null;
+    return {
+      text: "A pawn is attacked and undefended. End this turn with every pawn safe or lose.",
+      squares: exposed,
+      tone: "warn",
+    };
   },
 });
 

@@ -530,23 +530,53 @@ export const DAISY_CHAIN: Nerf = db({
 
 export const GLASS_QUEEN: Nerf = db({
   id: "wn_glass_queen", name: "Glass Queen", tier: 7, icon: "crown", implemented: true,
-  description: "You lose the instant your queen is attacked by the enemy.",
+  description: "You lose if you end one of your turns with your queen attacked by the enemy.",
   flavor: "One touch and she shatters.",
+  // Rebalance 2026-07: judged only after YOUR OWN move (the after-my-move
+  // grace pattern from cowardly / eye_for_an_eye). Previously the queen
+  // shattered the instant an opponent's ordinary developing move happened to
+  // attack her: an unanswerable lottery loss. Now that move gives you one turn
+  // to rescue her (move her, block the line, or capture the attacker) before
+  // the glass is judged. Still tier 7.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
     const queens = pieceSquares(ctx.board, ctx.me, "q");
     if (!queens.length) return null;
     const atk = attackedBy(ctx.board, other(ctx.me));
     return queens.some((sq) => atk.has(sq)) ? { reason: "the glass queen was menaced" } : null;
   },
+  hint: (_s, ctx) => {
+    const queens = pieceSquares(ctx.board, ctx.me, "q");
+    if (!queens.length) return null;
+    const atk = attackedBy(ctx.board, other(ctx.me));
+    const menaced = queens.filter((sq) => atk.has(sq));
+    if (!menaced.length) return null;
+    return {
+      text: "Your glass queen is menaced. End this turn with her safe or lose.",
+      squares: menaced,
+      tone: "warn",
+    };
+  },
 });
 
 export const PIN_CUSHION: Nerf = db({
   id: "wn_pin_cushion", name: "Pin Cushion", tier: 7, icon: "crosshair", implemented: true,
-  description: "You lose if two or more of your pieces (other than the king) are attacked by the enemy at once.",
+  description: "You lose if you end one of your turns with two or more of your pieces (other than the king) attacked by the enemy at once.",
   flavor: "Get forked, get finished.",
+  // Rebalance 2026-07: judged only after YOUR OWN move. The old instant
+  // judgment meant any opponent move that attacked two of your pieces (a fork,
+  // or often just a routine developing move) ended the game before you could
+  // respond. Now you get one turn to break the double attack: move a target,
+  // block a line, or remove the attacker. Ending your own turn with two
+  // pieces hanging is still the promised loss. Still tier 7.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
     const atk = attackedBy(ctx.board, other(ctx.me));
     let count = 0;
     for (let sq = 0; sq < 64; sq++) {
@@ -557,6 +587,20 @@ export const PIN_CUSHION: Nerf = db({
       }
     }
     return null;
+  },
+  hint: (_s, ctx) => {
+    const atk = attackedBy(ctx.board, other(ctx.me));
+    const hit: number[] = [];
+    for (let sq = 0; sq < 64; sq++) {
+      const p = ctx.board.pieces[sq];
+      if (p && p.color === ctx.me && p.type !== "k" && atk.has(sq)) hit.push(sq);
+    }
+    if (hit.length < 2) return null;
+    return {
+      text: "Two of your pieces are attacked. End this turn with at most one attacked or lose.",
+      squares: hit,
+      tone: "warn",
+    };
   },
 });
 
@@ -584,10 +628,19 @@ export const KINGPIN: Nerf = db({
 
 export const HOUSE_OF_CARDS: Nerf = db({
   id: "wn_house_of_cards", name: "House of Cards", tier: 8, icon: "layers", implemented: true,
-  description: "From your 6th move on, you lose if any of your pieces (other than the king) is attacked and undefended.",
+  description: "From your 6th move on, you lose if you end one of your turns with any of your pieces (other than the king) attacked and undefended.",
   flavor: "One loose card and the whole thing falls.",
+  // Rebalance 2026-07: judged only after YOUR OWN move. Previously an
+  // opponent move that created the attack toppled the house immediately, with
+  // no chance to respond; the filter-based sibling no_hanging_pieces (tier 6)
+  // at least let you fix things. Now the opponent's threat gives you one turn
+  // to defend, trade, or retreat the loose card; failing to end your turn
+  // clean is still the promised tier-8 loss.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 5) return null;
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
     const me = ctx.me;
     const oppAtk = attackedBy(ctx.board, other(me));
     const myDef = attackedBy(ctx.board, me);
@@ -597,6 +650,23 @@ export const HOUSE_OF_CARDS: Nerf = db({
       if (oppAtk.has(sq) && !myDef.has(sq)) return { reason: "a piece was left hanging" };
     }
     return null;
+  },
+  hint: (_s, ctx) => {
+    if (ctx.moveNumber < 5) return null;
+    const oppAtk = attackedBy(ctx.board, other(ctx.me));
+    const myDef = attackedBy(ctx.board, ctx.me);
+    const loose: number[] = [];
+    for (let sq = 0; sq < 64; sq++) {
+      const p = ctx.board.pieces[sq];
+      if (!p || p.color !== ctx.me || p.type === "k") continue;
+      if (oppAtk.has(sq) && !myDef.has(sq)) loose.push(sq);
+    }
+    if (!loose.length) return null;
+    return {
+      text: "A card is loose: end this turn with no piece hanging or the house falls.",
+      squares: loose,
+      tone: "warn",
+    };
   },
 });
 

@@ -173,6 +173,18 @@ export const PLUGIN_IDS: readonly string[] = [
   // casinoPlays.tsx (7)
   "cs_slot_machine", "cs_roulette", "cs_blackjack", "cs_scratch_card", "cs_let_it_ride", "cs_loot_box",
   "cs_poker_bluff",
+  // boonPlays.tsx (28)
+  "bw2_ancient_custom", "bw2_hit_and_run", "bw2_cornered_king", "bw2_blood_duel", "bw2_divine_right", "bw2_pioneers_banner",
+  "bw2_diplomatic_immunity", "bw2_deathless_oath", "bw2_spoils_of_war", "bw2_prisoner_exchange", "bw2_highwaymans_toll", "bw2_queens_testament",
+  "bw2_scarecrow", "bw2_masquerade", "bw2_alchemists_trade", "bw2_early_coronation", "bw2_standard_bearer", "bw2_ascetics_bargain",
+  "bw2_jesters_rule", "bw2_blood_price", "bw2_kingmakers_pact", "bw2_bolt_hole", "bw2_carnival_of_masks", "bw2_restitution",
+  "bw2_long_truce", "bw2_great_return", "bw2_shadow_reserve", "bw2_eternal_keep",
+  // cursePlays.tsx (27)
+  "hw2_witchs_veto", "hw2_long_road_home", "hw2_blood_price", "hw2_tarnished_crown", "hw2_war_rations", "hw2_compounding_misery",
+  "hw2_bad_omen", "hw2_tolling_bell", "hw2_witching_hour", "hw2_weight_of_toil", "hw2_cold_footprints", "hw2_creeping_blight",
+  "hw2_gravebloom", "hw2_gathering_storm", "hw2_twinned_torment", "hw2_no_reins", "hw2_curse_of_recoil", "hw2_queens_ransom",
+  "hw2_bound_court", "hw2_cursed_coin", "hw2_gilded_rot", "hw2_death_knell", "hw2_hollow_crown", "hw2_tide_of_ash",
+  "hw2_crown_of_thorns", "hw2_pauper_crown", "hw2_beacon_of_woe",
 ];
 // </plugin-ids:generated>
 

@@ -1,10 +1,12 @@
 "use client";
 
 // The leaderboard podium: a treasure-dais for the top three of the active
-// ladder — runner-up left, champion center and elevated, third right. On
-// phones the dais stacks vertically with the champion first; from `sm` up it
-// is the classic three-across arrangement. Purely a highlight above the full
-// table; it never replaces a row. Metal identity (gold / silver / bronze)
+// ladder — runner-up left, champion center and elevated, third right. The
+// dais keeps the same three-across silhouette on every screen (owner request:
+// the phone podium must read like the desktop one, not a squashed stack) —
+// on phones the columns simply tighten: smaller avatars, trimmed padding,
+// and the bios step down onto their own line. Purely a highlight above the
+// full table; it never replaces a row. Metal identity (gold / silver / bronze)
 // marks the places, while the header wears the active mode's color (Nerf
 // rose, Buff blue) so switching tabs re-tints the dais. Each riser reads as
 // carved stone (the dungeon slab carries the section); the champion's column
@@ -12,7 +14,7 @@
 // motes — all decoration, all parked under html[data-anim="off"].
 
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { LaurelBadge } from "@/components/LaurelBadge";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
@@ -35,14 +37,23 @@ export interface PodiumRow {
 // the rgb triple fed to .rune-badge's --badge-rgb for the place chip.
 const MEDALS: Record<
   1 | 2 | 3,
-  { metal: string; chip: string; label: string; avatar: number; riser: string; wash: string }
+  {
+    metal: string;
+    chip: string;
+    label: string;
+    avatar: number;
+    avatarNarrow: number;
+    riser: string;
+    wash: string;
+  }
 > = {
   1: {
     metal: "#ffd97e",
     chip: "244 196 48",
     label: "1st",
     avatar: 72,
-    riser: "sm:min-h-20 md:min-h-24",
+    avatarNarrow: 52,
+    riser: "min-h-14 sm:min-h-20 md:min-h-24",
     wash: "bg-sun/[0.08]",
   },
   2: {
@@ -50,7 +61,8 @@ const MEDALS: Record<
     chip: "202 198 189",
     label: "2nd",
     avatar: 56,
-    riser: "sm:min-h-12",
+    avatarNarrow: 42,
+    riser: "min-h-8 sm:min-h-12",
     wash: "bg-white/[0.03]",
   },
   3: {
@@ -58,14 +70,31 @@ const MEDALS: Record<
     chip: "201 138 94",
     label: "3rd",
     avatar: 56,
-    riser: "sm:min-h-9",
+    avatarNarrow: 42,
+    riser: "min-h-6 sm:min-h-9",
     wash: "bg-white/[0.02]",
   },
 };
 
-// DOM order is [2nd, 1st, 3rd] so the champion sits center on the wide dais;
-// the mobile stack reorders the champion first via the order utilities below.
+// DOM order is [2nd, 1st, 3rd] so the champion sits center on the dais at
+// every width — the phone keeps the same silhouette instead of restacking.
 const PLACES: { rank: 1 | 2 | 3 }[] = [{ rank: 2 }, { rank: 1 }, { rank: 3 }];
+
+// One shared narrow-viewport signal (below Tailwind's `sm`), used to hand the
+// avatars a smaller pixel size on phones so the three columns never squish.
+// Starts false on both server and first client render, so hydration matches;
+// the flip to true on a phone happens in the effect, before paint settles.
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setNarrow(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return narrow;
+}
 
 // Rising gold motes above the champion card: a fixed handful (well under the
 // 8-node cap), spread and phased inline so no two climb in step.
@@ -117,6 +146,7 @@ export function Podium({
   /** Highlights the viewer's own card, matching the table below. */
   isMe?: (name: string) => boolean;
 }) {
+  const narrow = useNarrow();
   if (rows.length === 0) return null;
 
   // Mode identity for the header + accents, mirroring ModeBadge's tokens so
@@ -150,18 +180,19 @@ export function Podium({
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+      <div className="flex flex-row items-end gap-1.5 sm:gap-3">
         {PLACES.map(({ rank }) => {
           const row = rows[rank - 1];
           if (!row) return null;
           const medal = MEDALS[rank];
           const champion = rank === 1;
           const mine = !!isMe && !row.guest && isMe(row.username);
+          const avatarSize = narrow ? medal.avatarNarrow : medal.avatar;
 
           const card = (
             <div
               className={
-                "relative flex flex-col items-center rounded-md rounded-b-none border border-b-0 px-2 pt-4 pb-3 text-center motion-safe:transition sm:px-3 " +
+                "relative flex flex-col items-center rounded-md rounded-b-none border border-b-0 px-1 pt-3 pb-2 text-center motion-safe:transition sm:px-3 sm:pt-4 sm:pb-3 " +
                 (champion ? "podium-rim-gold " : "") +
                 (mine ? "bg-gold/10 border-gold/40" : medal.wash)
               }
@@ -199,7 +230,7 @@ export function Podium({
                     a static metal tint for second and third. */}
                 <WreathArc
                   color={medal.metal}
-                  size={medal.avatar + 26}
+                  size={avatarSize + 26}
                   opacity={champion ? 0.4 : 0.2}
                 />
                 <span className="relative inline-block">
@@ -207,7 +238,7 @@ export function Podium({
                     name={row.username}
                     avatar={row.avatar}
                     flair={row.flair}
-                    size={medal.avatar}
+                    size={avatarSize}
                   />
                 </span>
                 <span className="absolute -right-1 -top-1">
@@ -216,7 +247,7 @@ export function Podium({
               </div>
               <span
                 className={
-                  "mt-2 max-w-full truncate font-medium " +
+                  "mt-2 max-w-full truncate text-[13px] font-medium sm:text-base " +
                   (mine
                     ? "text-gold-leaf"
                     : champion
@@ -238,7 +269,7 @@ export function Podium({
               )}
               <span
                 className={
-                  "mt-1.5 font-mono text-lg tabular-nums " +
+                  "mt-1.5 font-mono text-base tabular-nums sm:text-lg " +
                   (champion ? "text-sun" : "text-parchment-50")
                 }
               >
@@ -269,7 +300,9 @@ export function Podium({
                 }}
               >
                 {row.bio ? (
-                  <span className="line-clamp-3 max-w-full text-[12px] leading-snug text-parchment-400">
+                  // Bios only fit from `sm` up; on phones the riser stays as a
+                  // clean stone step so the columns keep the dais silhouette.
+                  <span className="hidden max-w-full text-[12px] leading-snug text-parchment-400 sm:line-clamp-3">
                     {row.bio}
                   </span>
                 ) : null}
@@ -277,8 +310,8 @@ export function Podium({
             </div>
           );
 
-          // Champion first in the mobile stack; DOM order takes over on sm+.
-          const wrapClass = "min-w-0 sm:flex-1 " + (champion ? "-order-1 sm:order-none" : "");
+          // Same three-across order at every width; the champion holds center.
+          const wrapClass = "min-w-0 flex-1";
 
           if (row.guest) {
             return (

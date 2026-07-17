@@ -7,6 +7,7 @@
 // Empty state keeps the next actions obvious instead of going quiet.
 
 import Link from "next/link";
+import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ModeBadge } from "@/components/ModeBadge";
 
@@ -59,16 +60,12 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
           </span>
         )}
       </div>
-      <Link
+      <DungeonGateButton
         href="/lobby"
-        className="btn-leaf btn-cta cta-shine press mt-2.5 flex w-full items-center justify-center gap-2.5 px-5 py-4 font-display text-2xl font-bold no-underline"
+        className="mt-2.5 flex w-full items-center justify-center px-5 py-4 font-display text-2xl font-bold no-underline"
       >
         Enter the lobby
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M5 12h14" />
-          <path d="m13 6 6 6-6 6" />
-        </svg>
-      </Link>
+      </DungeonGateButton>
       {rows === null ? (
         <div className="mt-2 space-y-1.5" aria-hidden>
           <div className="skeleton h-8 w-full" />

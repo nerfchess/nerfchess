@@ -2,6 +2,7 @@
 
 import { createElement } from "react";
 import { Buff, turnCost } from "@/engine/buff";
+import { COMBO_TAGS, COMBO_TAG_LABELS } from "@/engine/draft";
 import { Tier } from "@/engine/nerf";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -183,6 +184,15 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
           Note: a piece that cannot be captured may not capture the king while its
           protection lasts. You must expose a piece to win.
+        </p>
+      )}
+      {/* Exclusive-family note (combination guard): the draft never offers a
+          card from these families while you hold another unspent one, and the
+          rule must be readable on the card face, never silent. */}
+      {!compact && (COMBO_TAGS[buff.id]?.length ?? 0) > 0 && (
+        <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
+          Exclusive: {COMBO_TAGS[buff.id]!.map((t) => COMBO_TAG_LABELS[t] ?? t).join(", ")} — while
+          you hold this unspent, no other card of the same family is offered to you.
         </p>
       )}
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards

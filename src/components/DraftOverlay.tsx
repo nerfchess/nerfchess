@@ -5,6 +5,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDraftChime } from "@/lib/sounds";
+import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
@@ -44,6 +45,13 @@ interface Props {
   /** Recording mode (owner 9:16 layout): constrain the panel to the vertical
    * frame so it centers over the board and stays inside the crop. */
   recordingMode?: boolean;
+  /** Stable per-game scope for the reveal ledger (online: the server game
+   * id; local: a per-game stamp). Ties the treasure-chest reveal to the
+   * exact offer version: each unique offer plays the chest once, and a
+   * remount / reconnect / refresh of an already-revealed offer skips it.
+   * Omitted (previews, unkeyed hosts): every mount treats the offer as
+   * fresh, matching the old behavior. */
+  revealScope?: string;
   /** What we can legitimately show about the opponent's draft. */
   opponent?: {
     offer: BuffOffer | null;
@@ -386,6 +394,7 @@ export function DraftOverlay({
   oppLockedIn,
   oppBanked,
   recordingMode = false,
+  revealScope,
   opponent,
 }: Props) {
   const noun = cardNoun;
@@ -432,12 +441,19 @@ export function DraftOverlay({
   // chip (still one click from the cards), and a fresh offer / reroll pops it
   // back so an unresolved draft keeps re-announcing itself.
   const [tucked, setTucked] = useState(false);
-  // Pack opening: each offer arrives as a sealed pack that tears open before
-  // the cards deal. Tap to tear immediately; it auto-tears after a beat so a
-  // player who just wants cards is never held up. Skipped entirely under
-  // reduced motion and in the minimized panel.
+  // Pack opening: each offer arrives as a sealed treasure chest that opens
+  // before the cards deal. Tap to open immediately; it auto-opens after a
+  // beat so a player who just wants cards is never held up. The chest plays
+  // exactly once per unique offer version: the reveal ledger (localStorage,
+  // keyed by game + offer index + reroll count) remembers which reveals this
+  // player has watched, so remounts, reconnects, StrictMode double-mounts,
+  // and refreshes of an already-seen offer all skip straight to the cards,
+  // while a genuinely new offer — including one that lands while the panel
+  // is minimized — always gets its chest (the minimized panel just runs the
+  // fast fuse). Reduced motion skips the sequence and counts as revealed.
+  const alreadyRevealed = (key: string) => !!revealScope && hasRevealPlayed(revealScope, key);
   const [packStage, setPackStage] = useState<"sealed" | "tearing" | "open">(() =>
-    reduceMotion || minimized ? "open" : "sealed",
+    reduceMotion || alreadyRevealed(offerRevealKey(offer.index, offer.rerolled)) ? "open" : "sealed",
   );
   // Measured flight path from the chosen card to the dock, captured at
   // confirm time (measuring during render would thrash layout).
@@ -548,11 +564,12 @@ export function DraftOverlay({
     setRerolling(false);
     setCommitted(false);
     setDealt(!!reduceMotion);
-    // Fresh cards arrive as a sealed pack (full overlay, motion on); the deal
-    // timer starts once the pack tears open (see the pack effects below). The
-    // minimized panel gets the pack too (a reroll should ALWAYS show the box)
-    // but on a fast fuse since that panel runs on the player's own clock.
-    setPackStage(reduceMotion ? "open" : "sealed");
+    // Fresh cards arrive as a sealed chest (full overlay or the minimized
+    // panel, which runs the fast fuse); the deal timer starts once the chest
+    // opens (see the pack effects below). An offer version whose reveal
+    // already played — a re-delivered draft state, a replayed merge — skips
+    // straight to the cards instead of re-running the chest.
+    setPackStage(reduceMotion || alreadyRevealed(dealKey) ? "open" : "sealed");
   }
   // Ref bookkeeping and the attention chime are side effects, so they stay in
   // an effect keyed on the same offer identity (runs on mount and each deal).
@@ -562,9 +579,21 @@ export function DraftOverlay({
     userPinnedRef.current = false;
     committedRef.current = false;
     selectedAtRef.current = 0;
-    // A fresh offer demands attention: the board is blocked until it resolves.
-    playDraftChime();
+    // A fresh offer demands attention: the board is blocked until it
+    // resolves. But only a fresh offer — a remount of an already-revealed
+    // one (refresh, reconnect, replay epoch) stays quiet.
+    if (!revealScope || !hasRevealPlayed(revealScope, dealKey)) playDraftChime();
+    // revealScope is stable for the life of a game; keying on the offer only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealKey]);
+
+  // The reveal has played (or was skipped by reduced motion, which still
+  // counts as the player seeing the offer): record it, so this exact offer
+  // version never replays the chest. Idempotent, so StrictMode double-effects
+  // and rerenders are harmless.
+  useEffect(() => {
+    if (packStage === "open" && revealScope) markRevealPlayed(revealScope, dealKey);
+  }, [packStage, dealKey, revealScope]);
 
   // Pack lifecycle: sealed -> (tap or auto) tearing -> open. The card deal and
   // its settle timer only start once the pack is open.
@@ -1136,16 +1165,27 @@ export function DraftOverlay({
              the chest's material climbs with the best card inside — worn oak
              at the bottom of the ladder, up through iron, gilded vault,
              arcane relic, apex crown, and the mythic star chest. Tap opens
-             it immediately. */
-          <DraftChest
-            tier={maxTier}
-            count={offer.cards.length}
-            label={`${nounCap} draft #${offer.index}`}
-            stage={packStage}
-            onOpen={tearPack}
-            calm={fxCalm}
-            still={!!reduceMotion}
-          />
+             it immediately; Skip drops the whole ceremony and deals now. */
+          <>
+            <DraftChest
+              tier={maxTier}
+              count={offer.cards.length}
+              label={`${nounCap} draft #${offer.index}`}
+              stage={packStage}
+              onOpen={tearPack}
+              calm={fxCalm}
+              still={!!reduceMotion}
+            />
+            <div className="mt-1 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setPackStage("open")}
+                className="min-h-[36px] px-3 py-1 text-[12px] text-parchment-400 transition-colors hover:text-parchment-100"
+              >
+                Skip
+              </button>
+            </div>
+          </>
         )}
 
         {packStage === "open" && maxTier >= 9 && !reduceMotion && !fxCalm && (
