@@ -200,7 +200,7 @@ export const ACCENT_THEMES: Record<
 };
 
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
-  wood:       { light: "#e8dcc0", dark: "#8d6e4b", label: "Wood" },
+  wood:       { light: "#ecd9ae", dark: "#8a5a38", label: "Wood" },
   brown:      { light: "#f0d9b5", dark: "#b58863", label: "Brown" },
   walnut:     { light: "#e0c39a", dark: "#7a5230", label: "Walnut" },
   green:      { light: "#eeeed2", dark: "#769656", label: "Green" },

@@ -132,6 +132,46 @@ export function HeroTv() {
     );
   };
 
+  // The archive rerun wears ONE clean attribution line under the board —
+  // "Featured replay · white vs black · Mode" plus a single Watch link —
+  // instead of scattering a REPLAY badge, mode chip, and archive labels
+  // around the frame. Live games keep their full seat-row broadcast header.
+  if (!live) {
+    const modeLabel = shownMode === "nerf" ? "Nerf" : shownMode === "buff" ? "Buff" : null;
+    return (
+      <div className="w-full max-w-[600px] mx-auto">
+        <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title="Replay this game">
+          <div className="overflow-hidden">
+            <HeroBoard board={board} lastMove={lastMove} />
+          </div>
+        </Link>
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <span className="min-w-0 truncate text-[13px] text-parchment-300">
+            Featured replay
+            <span className="mx-1.5 text-parchment-500">·</span>
+            <span className="text-parchment-100">{shownPlayers.w.name}</span>{" "}
+            <span className="text-parchment-400">vs</span>{" "}
+            <span className="text-parchment-100">{shownPlayers.b.name}</span>
+            {modeLabel && (
+              <>
+                <span className="mx-1.5 text-parchment-500">·</span>
+                <span className={shownMode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
+                  {modeLabel}
+                </span>
+              </>
+            )}
+          </span>
+          <Link
+            href={`/game/${shownId}`}
+            className="shrink-0 text-[13px] font-medium text-gold-leaf no-underline transition hover:text-parchment-50"
+          >
+            Watch replay →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-[600px] mx-auto">
       {/* Compact header framing the board: black seat on the left, then the
@@ -140,21 +180,17 @@ export function HeroTv() {
       <div className="flex items-center justify-between gap-2 pb-2">
         {seat("b")}
         <div className="flex shrink-0 items-center gap-1.5">
-          {/* LIVE when streaming, "Just finished" while the result lingers,
-              and the ember REPLAY chip for an archive rerun — a rerun must
-              never wear the live colors. */}
+          {/* LIVE while streaming, "Just finished" while the result lingers. */}
           <span
             className={
               "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
-              (live && !over
+              (!over
                 ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
-                : live
-                  ? "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300"
-                  : "border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] text-[rgb(var(--energy-ember-rgb))]")
+                : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300")
             }
           >
-            {live && !over ? <span className="dot-live h-2 w-2 bg-oxblood-glow" /> : null}
-            {live ? (over ? "Just finished" : "LIVE") : "REPLAY"}
+            {!over ? <span className="dot-live h-2 w-2 bg-oxblood-glow" /> : null}
+            {over ? "Just finished" : "LIVE"}
           </span>
           {shownMode ? (
             <span
@@ -175,7 +211,7 @@ export function HeroTv() {
           ) : null}
         </div>
       </div>
-      <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title={live ? "Watch this game" : "Replay this game"}>
+      <Link href={`/game/${shownId}`} className="tv-frame group block no-underline" title="Watch this game">
         <div className="overflow-hidden">
           <HeroBoard board={board} lastMove={lastMove} />
         </div>
@@ -183,11 +219,6 @@ export function HeroTv() {
       <div className="flex items-center justify-between gap-2 pt-2">
         {seat("w")}
         <div className="flex shrink-0 items-center gap-3">
-          {!live && (
-            <span className="hidden text-[12px] text-parchment-400 sm:inline">
-              from the archive
-            </span>
-          )}
           {moveNumber > 0 ? (
             <span className="font-mono text-[12px] tabular-nums text-parchment-400">
               Move {moveNumber}
@@ -197,7 +228,7 @@ export function HeroTv() {
             href={`/game/${shownId}`}
             className="text-[12px] font-medium text-gold-leaf no-underline transition hover:text-parchment-50"
           >
-            {live ? "Watch live →" : "Replay →"}
+            Watch live →
           </Link>
         </div>
       </div>

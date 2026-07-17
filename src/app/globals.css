@@ -1035,7 +1035,10 @@ html[data-anim="off"] .rune-loader { animation: none; }
    read as monumental (modals, podium, chamber panels) — not on every card. */
 .dgn-slab {
   position: relative;
-  border: 1px solid rgb(122 96 58 / 0.45);
+  /* The slab is defined by its stone fill and shadows, not a colored border:
+     a neutral dark seam keeps panels from competing with interactive and
+     selected elements for the accent hues. */
+  border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 1px;
   background:
     /* Torchlight pooling at the top edge. */
@@ -1945,8 +1948,10 @@ html[data-theme="nebula"] .mode-def-card {
 
 /* --- Board treatments: warm wood-tone, less candy than chess.com green --- */
 :root {
-  --sq-light: #e8dcc0;
-  --sq-dark: #8d6e4b;
+  /* Default board: warm parchment cream over walnut, so the board reads as
+     native to the site's warm brown/red tavern palette (never cold grey). */
+  --sq-light: #ecd9ae;
+  --sq-dark: #8a5a38;
   /* Piece palette (recolored per piece theme; see lib/settings) */
   --piece-w-fill: #f5f5f5;
   --piece-w-stroke: #1a1a22;
@@ -3328,8 +3333,11 @@ html[data-theme="light"] .hall-hairline {
    Hover only firms the borders — no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid var(--edge);
+  /* Rows are a raised ink step over the panel — background contrast, not a
+     bordered box. Only the mode's left bar carries color at rest; the full
+     edge lights on hover (interactive feedback). */
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid transparent;
   border-left: 2px solid rgb(var(--row-rgb) / 0.6);
   transition:
     border-color var(--dur-2) var(--ease-out),

@@ -1,74 +1,59 @@
-/* The Open Lobby gate: the homepage's way into the matchmaking chamber,
-   dressed as a sealed dungeon gate rather than a colored slab. Carved granite
-   courses, an iron frame with forged corner braces, a rune lintel that
-   ignites on approach, torchlight pooling at both jambs, and a thin file of
-   embers rising inside the stonework. Everything decorative is absolutely
-   positioned inside the button and clipped by it (overflow hidden), so the
-   glow and particles can never spill over neighboring UI, and every state
-   change animates transform/filter/box-shadow only — the button's box never
-   changes size, so nothing around it shifts on hover.
+/* The Open Lobby gate: the primary CTA, forged as a slab of molten gold in an
+   iron frame rather than dim lettering on dark stone. It must read as the
+   single brightest, most obviously pressable thing on the page. The dressing
+   (torch bloom, ember file, corner rivets) is absolutely positioned inside
+   the button and clipped by it (overflow hidden), so the glow and particles
+   never spill over neighboring UI, and every state change animates
+   transform/filter/box-shadow only — the button's box never changes size, so
+   nothing around it shifts on hover.
 
-   States: default (sealed, embers idling) · hover (runes ignite, torchlight
-   swells, gate lifts 1px off its base) · pressed (gate sinks into the floor)
-   · focus-visible (gold ring) · loading (runes cycle while the gate unbars;
-   pointer disabled) · disabled (torches out: gray stone, dark runes).
+   States: default (lit, embers idling) · hover (glow swells, gate lifts off
+   its base) · pressed (gate sinks into the floor) · focus-visible (gold ring)
+   · loading (label pulses while the gate unbars; pointer disabled) ·
+   disabled (torches out: cold gray stone, dark lettering).
 
    Motion gates: html[data-anim="off"] already zeroes all animation globally;
-   the ember file and torch flicker are additionally removed wholesale under
-   data-perf="low" so weak devices pay nothing for the dressing. */
+   the ember file is additionally removed wholesale under data-perf="low" so
+   weak devices pay nothing for the dressing. */
 
 .dgn-gate {
   position: relative;
   overflow: hidden;
   isolation: isolate;
   cursor: pointer;
-  /* Gate-arch silhouette: softened lintel corners over a square stone base.
-     Reads as a raised, pressable slab instead of a flat decorative panel. */
+  /* Gate-arch silhouette: softened lintel corners over a square base. */
   border-radius: 9px 9px 3px 3px;
-  border: 1px solid rgb(20 16 12);
-  color: #f2e4c2;
+  border: 1px solid rgb(66 36 8);
+  color: #2a1604;
   background:
     /* Convex face light: the slab bows toward you, like a real button cap. */
-    linear-gradient(to bottom, rgba(255, 235, 200, 0.09), rgba(255, 235, 200, 0.02) 34%, transparent 55%),
-    /* Torch pools burning at the two jambs. */
-    radial-gradient(34% 78% at 0% 52%, rgb(var(--energy-ember-rgb) / 0.2), transparent 72%),
-    radial-gradient(34% 78% at 100% 52%, rgb(var(--energy-ember-rgb) / 0.2), transparent 72%),
-    /* Treasure light seeping under the gate's foot. */
-    radial-gradient(70% 46% at 50% 108%, rgb(var(--energy-gold-rgb) / 0.28), transparent 62%),
-    /* Mortar joints: two coursing lines and staggered head joints. */
-    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) 0 33% / 100% 1px no-repeat,
-    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)) 0 66% / 100% 1px no-repeat,
-    linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) 22% 0 / 1px 33% no-repeat,
-    linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) 64% 66% / 1px 34% no-repeat,
-    linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)) 78% 33% / 1px 33% no-repeat,
-    /* Star pinpricks caught in the grain. */
-    radial-gradient(1px 1px at 16% 28%, rgba(255, 235, 200, 0.07), transparent 100%),
-    radial-gradient(1px 1px at 71% 74%, rgba(255, 235, 200, 0.06), transparent 100%),
-    radial-gradient(1px 1px at 88% 22%, rgba(255, 235, 200, 0.05), transparent 100%),
-    /* The granite itself. */
-    linear-gradient(to bottom, #3a332b, #2a241e 55%, #1d1915);
+    linear-gradient(to bottom, rgba(255, 244, 214, 0.55), rgba(255, 244, 214, 0.12) 38%, transparent 60%),
+    /* Heat pooling at the two jambs. */
+    radial-gradient(34% 78% at 0% 52%, rgb(255 122 32 / 0.35), transparent 72%),
+    radial-gradient(34% 78% at 100% 52%, rgb(255 122 32 / 0.35), transparent 72%),
+    /* The molten gold itself: saturated, hot at the crown, ember at the foot. */
+    linear-gradient(to bottom, #f6bd3f, #e89a28 52%, #cf7418);
   box-shadow:
-    /* Forged iron frame: a raised metal lip all around... */
-    0 0 0 1px rgba(126, 108, 82, 0.5) inset,
-    0 0 0 3px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 4px rgba(94, 80, 60, 0.28) inset,
-    /* ...top light and the dark settle at the foot of the stone... */
-    0 1px 0 rgba(255, 230, 180, 0.14) inset,
-    0 -12px 22px -14px rgba(0, 0, 0, 0.75) inset,
-    /* ...and the physical base edge the gate rests on: a taller stone lip
-       with a faint brass rim so the slab clearly stands proud of the page. */
-    0 4px 0 rgb(12 9 6),
-    0 4px 0 1px rgba(126, 108, 82, 0.3),
-    0 9px 18px -7px rgba(0, 0, 0, 0.7),
-    0 0 26px -12px rgb(var(--energy-ember-rgb) / 0.5);
+    /* Forged frame: a raised metal lip all around... */
+    0 0 0 1px rgba(255, 232, 178, 0.55) inset,
+    0 0 0 2px rgba(96, 52, 10, 0.55) inset,
+    /* ...top light and the heat settling at the foot of the slab... */
+    0 1px 0 rgba(255, 246, 214, 0.7) inset,
+    0 -12px 22px -14px rgba(120, 52, 0, 0.55) inset,
+    /* ...and the physical base edge the gate rests on: a taller bronze lip
+       so the slab clearly stands proud of the page. */
+    0 4px 0 rgb(92 46 8),
+    0 4px 0 1px rgba(50, 24, 4, 0.9),
+    0 9px 20px -7px rgba(0, 0, 0, 0.7),
+    0 0 34px -8px rgb(var(--energy-ember-rgb) / 0.55);
   transition:
     filter 160ms ease,
     box-shadow 200ms ease,
     transform 130ms ease;
 }
 
-/* Corner braces: four riveted iron angles, drawn as layered gradients on one
-   overlay so the DOM stays flat. Sits above the stone, below the label. */
+/* Corner rivets: four hammered bronze dots on one overlay so the DOM stays
+   flat. Sits above the gold, below the label. */
 .dgn-gate::before {
   content: "";
   position: absolute;
@@ -76,19 +61,13 @@
   z-index: 1;
   pointer-events: none;
   background:
-    /* Rivet heads at all four corners. */
-    radial-gradient(2.5px 2.5px at 9px 9px, rgba(220, 200, 160, 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 9px) 9px, rgba(220, 200, 160, 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at 9px calc(100% - 9px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 9px) calc(100% - 9px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    /* The iron angles behind the rivets. */
-    linear-gradient(135deg, rgba(70, 60, 46, 0.85) 14px, transparent 14px) 0 0 / 26px 26px no-repeat,
-    linear-gradient(225deg, rgba(70, 60, 46, 0.8) 14px, transparent 14px) 100% 0 / 26px 26px no-repeat,
-    linear-gradient(45deg, rgba(70, 60, 46, 0.75) 14px, transparent 14px) 0 100% / 26px 26px no-repeat,
-    linear-gradient(315deg, rgba(70, 60, 46, 0.75) 14px, transparent 14px) 100% 100% / 26px 26px no-repeat;
+    radial-gradient(2.5px 2.5px at 9px 9px, rgba(120, 66, 14, 0.75), rgba(255, 232, 178, 0.35) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 9px) 9px, rgba(120, 66, 14, 0.7), rgba(255, 232, 178, 0.3) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at 9px calc(100% - 9px), rgba(120, 66, 14, 0.65), rgba(255, 232, 178, 0.3) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 9px) calc(100% - 9px), rgba(120, 66, 14, 0.65), rgba(255, 232, 178, 0.3) 60%, transparent 75%);
 }
 
-/* Breathing torchlight across the whole gate: a slow ember sheen that swells
+/* Breathing torchlight across the whole gate: a slow molten sheen that swells
    on hover. Opacity-only, so it costs one composited layer. */
 .dgn-gate::after {
   content: "";
@@ -98,8 +77,8 @@
   pointer-events: none;
   opacity: 0.5;
   background:
-    radial-gradient(42% 90% at 8% 50%, rgb(var(--energy-ember-rgb) / 0.16), transparent 70%),
-    radial-gradient(42% 90% at 92% 50%, rgb(var(--energy-ember-rgb) / 0.16), transparent 70%);
+    radial-gradient(42% 90% at 8% 50%, rgba(255, 246, 210, 0.28), transparent 70%),
+    radial-gradient(42% 90% at 92% 50%, rgba(255, 246, 210, 0.28), transparent 70%);
   animation: dgn-gate-torch 3.4s ease-in-out infinite;
   transition: opacity 200ms ease;
 }
@@ -111,45 +90,20 @@
 
 /* ---- Label ---------------------------------------------------------- */
 
-/* Engraved lettering: the label is chiselled into the stone (dark upper
-   bite, warm lower light) and gilded so it stays the most readable thing on
-   the gate at every state. */
+/* Struck lettering: dark on hot gold, with a light lower bevel so the label
+   reads as stamped into the metal. The highest-contrast thing on the page. */
 .dgn-gate__label {
   position: relative;
   z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 0.55em;
-  color: #f6e7c4;
-  text-shadow:
-    0 -1px 0 rgba(0, 0, 0, 0.85),
-    0 1px 0 rgba(255, 226, 158, 0.22),
-    0 0 14px rgb(var(--energy-gold-rgb) / 0.24);
+  color: #2a1604;
+  text-shadow: 0 1px 0 rgba(255, 240, 196, 0.45);
   transition: text-shadow 200ms ease, color 200ms ease;
 }
 
-/* The rune lintel: carved glyphs flanking the label. Dim by default —
-   half-remembered carvings — they ignite on hover/focus and cycle while the
-   gate is loading. Decorative, aria-hidden in the markup; the glyphs come
-   from CSS content (attr(data-runes)) so they never enter the button's
-   textContent. */
-.dgn-gate__rune::before {
-  content: attr(data-runes);
-}
-.dgn-gate__rune {
-  position: relative;
-  z-index: 3;
-  font-family: var(--font-display, serif);
-  font-size: 0.52em;
-  line-height: 1;
-  letter-spacing: 0.4em;
-  color: rgba(214, 178, 118, 0.5);
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8);
-  transition: color 220ms ease, text-shadow 220ms ease, opacity 220ms ease;
-  user-select: none;
-}
-
-/* Ember file: a few sparks drifting up the stonework, clipped by the gate.
+/* Ember file: a few sparks drifting up the slab, clipped by the gate.
    Fixed count (4), transform/opacity only, phased inline via --edelay/--ex. */
 .dgn-gate__ember {
   position: absolute;
@@ -160,8 +114,8 @@
   height: 3px;
   border-radius: 50%;
   pointer-events: none;
-  background: rgb(var(--energy-ember-rgb) / 0.85);
-  box-shadow: 0 0 6px 1px rgb(var(--energy-ember-rgb) / 0.45);
+  background: rgba(255, 246, 214, 0.9);
+  box-shadow: 0 0 6px 1px rgb(var(--energy-ember-rgb) / 0.6);
   opacity: 0;
   animation: dgn-gate-ember 4.6s linear infinite;
   animation-delay: var(--edelay, 0s);
@@ -175,88 +129,64 @@
 
 /* ---- States --------------------------------------------------------- */
 
-/* Hover: the gate notices you. Runes ignite, torchlight swells, the whole
-   slab lifts two pixels off its base edge — and the base edge grows to meet
-   it, so the lift reads as physical travel, not a slide (transform only; the
-   box the page laid out never changes, so neighbors never shift). */
+/* Hover: the gate runs hotter. Glow swells, the whole slab lifts two pixels
+   off its base edge — and the base edge grows to meet it, so the lift reads
+   as physical travel, not a slide (transform only; the box the page laid out
+   never changes, so neighbors never shift). */
 .dgn-gate:hover:not(:disabled):not([data-loading="true"]) {
-  filter: brightness(1.09);
+  filter: brightness(1.07) saturate(1.06);
   transform: translateY(-2px);
   box-shadow:
-    0 0 0 1px rgba(160, 136, 100, 0.6) inset,
-    0 0 0 3px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 4px rgba(122, 102, 74, 0.36) inset,
-    0 1px 0 rgba(255, 230, 180, 0.18) inset,
-    0 -12px 22px -14px rgba(0, 0, 0, 0.7) inset,
-    0 6px 0 rgb(12 9 6),
-    0 6px 0 1px rgba(160, 136, 100, 0.35),
-    0 12px 22px -7px rgba(0, 0, 0, 0.65),
-    0 0 34px -10px rgb(var(--energy-ember-rgb) / 0.65);
+    0 0 0 1px rgba(255, 240, 196, 0.7) inset,
+    0 0 0 2px rgba(96, 52, 10, 0.55) inset,
+    0 1px 0 rgba(255, 250, 226, 0.8) inset,
+    0 -12px 22px -14px rgba(120, 52, 0, 0.5) inset,
+    0 6px 0 rgb(92 46 8),
+    0 6px 0 1px rgba(50, 24, 4, 0.9),
+    0 12px 24px -7px rgba(0, 0, 0, 0.65),
+    0 0 44px -6px rgb(var(--energy-ember-rgb) / 0.65);
 }
 .dgn-gate:hover:not(:disabled):not([data-loading="true"])::after {
   opacity: 0.85;
 }
-.dgn-gate:hover:not(:disabled):not([data-loading="true"]) .dgn-gate__rune,
-.dgn-gate:focus-visible .dgn-gate__rune {
-  color: rgb(var(--energy-ember-rgb) / 0.95);
-  text-shadow:
-    0 -1px 0 rgba(0, 0, 0, 0.8),
-    0 0 10px rgb(var(--energy-ember-rgb) / 0.6);
-}
-.dgn-gate:hover:not(:disabled):not([data-loading="true"]) .dgn-gate__label {
-  color: #fdf3d8;
-  text-shadow:
-    0 -1px 0 rgba(0, 0, 0, 0.85),
-    0 1px 0 rgba(255, 226, 158, 0.3),
-    0 0 20px rgb(var(--energy-gold-rgb) / 0.4);
-}
 
 /* Pressed: the gate sinks flush onto its base edge — the lip all but
-   disappears and the stone darkens under your hand, so the click lands with
+   disappears and the metal darkens under your hand, so the click lands with
    obvious travel. Snappier than the hover transition on purpose. */
 .dgn-gate:active:not(:disabled):not([data-loading="true"]) {
-  filter: brightness(0.9);
+  filter: brightness(0.92);
   transform: translateY(3px);
   transition-duration: 60ms;
   box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.45) inset,
-    0 0 0 3px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 4px rgba(94, 80, 60, 0.24) inset,
-    0 2px 4px rgba(0, 0, 0, 0.4) inset,
-    0 -12px 22px -14px rgba(0, 0, 0, 0.8) inset,
-    0 1px 0 rgb(12 9 6),
+    0 0 0 1px rgba(255, 232, 178, 0.4) inset,
+    0 0 0 2px rgba(96, 52, 10, 0.55) inset,
+    0 2px 4px rgba(70, 32, 4, 0.5) inset,
+    0 -12px 22px -14px rgba(120, 52, 0, 0.6) inset,
+    0 1px 0 rgb(92 46 8),
     0 2px 6px -4px rgba(0, 0, 0, 0.6);
 }
 
-/* Keyboard focus: a clear gold ring outside the iron frame. */
+/* Keyboard focus: a clear gold ring outside the frame. */
 .dgn-gate:focus-visible {
   outline: 2px solid rgb(var(--energy-gold-rgb) / 0.9);
   outline-offset: 2px;
 }
 
-/* Loading: the gate is unbarring. Runes cycle brightness in sequence, the
-   label steps back, and input is ignored until the way is open. */
+/* Loading: the gate is unbarring. The label pulses while input is ignored. */
 .dgn-gate[data-loading="true"] {
   cursor: progress;
   pointer-events: none;
 }
 .dgn-gate[data-loading="true"] .dgn-gate__label {
-  opacity: 0.75;
+  animation: dgn-gate-label-pulse 1.1s ease-in-out infinite;
 }
-.dgn-gate[data-loading="true"] .dgn-gate__rune {
-  color: rgb(var(--energy-ember-rgb) / 0.9);
-  animation: dgn-gate-rune-cycle 1.1s ease-in-out infinite;
-}
-.dgn-gate[data-loading="true"] .dgn-gate__rune--r {
-  animation-delay: 0.55s;
-}
-@keyframes dgn-gate-rune-cycle {
-  0%, 100% { opacity: 0.35; }
+@keyframes dgn-gate-label-pulse {
+  0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
 
-/* Disabled: torches out. The stone goes cold gray, runes go dark, embers and
-   glow disappear; the carving stays legible (never just faded). */
+/* Disabled: torches out. The metal goes cold gray stone, embers and glow
+   disappear; the lettering stays legible (never just faded). */
 .dgn-gate:disabled,
 .dgn-gate[aria-disabled="true"] {
   cursor: not-allowed;
@@ -280,73 +210,60 @@
 .dgn-gate[aria-disabled="true"] .dgn-gate__label {
   color: #97907f;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7);
-}
-.dgn-gate:disabled .dgn-gate__rune,
-.dgn-gate[aria-disabled="true"] .dgn-gate__rune {
-  color: rgba(120, 108, 90, 0.35);
-  text-shadow: none;
   animation: none;
 }
 
-/* ---- Minor gate: the same material at postern-door scale ------------- */
+/* ---- Minor gate: the same metal, banked lower ------------------------ */
 
 /* A compact sibling for secondary actions (Play a friend / Play a bot):
-   identical carved-stone + iron language, scaled to a smaller doorway. The
-   corner braces and rivets shrink to fit, the rune carvings step up slightly
-   (relative to the smaller label) so they stay legible, and the base edge is
-   one course shorter — clearly a door beside the main gate, not the gate. */
+   the same forged-gold language a full step dimmer and deeper, so the doors
+   read as clearly pressable but never outshine the main gate. */
 .dgn-gate--minor {
   border-radius: 6px 6px 3px 3px;
+  color: #241302;
+  background:
+    linear-gradient(to bottom, rgba(255, 240, 205, 0.4), rgba(255, 240, 205, 0.08) 38%, transparent 60%),
+    linear-gradient(to bottom, #d9a02f, #b97c1d 52%, #9c5f14);
+  box-shadow:
+    0 0 0 1px rgba(255, 226, 166, 0.4) inset,
+    0 0 0 2px rgba(84, 46, 8, 0.5) inset,
+    0 1px 0 rgba(255, 238, 196, 0.5) inset,
+    0 -8px 16px -10px rgba(100, 44, 0, 0.5) inset,
+    0 3px 0 rgb(76 38 6),
+    0 3px 0 1px rgba(44, 21, 3, 0.9),
+    0 7px 14px -6px rgba(0, 0, 0, 0.6),
+    0 0 20px -10px rgb(var(--energy-ember-rgb) / 0.4);
 }
 .dgn-gate--minor::before {
   background:
-    radial-gradient(2px 2px at 6px 6px, rgba(220, 200, 160, 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at calc(100% - 6px) 6px, rgba(220, 200, 160, 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at 6px calc(100% - 6px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at calc(100% - 6px) calc(100% - 6px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    linear-gradient(135deg, rgba(70, 60, 46, 0.85) 10px, transparent 10px) 0 0 / 18px 18px no-repeat,
-    linear-gradient(225deg, rgba(70, 60, 46, 0.8) 10px, transparent 10px) 100% 0 / 18px 18px no-repeat,
-    linear-gradient(45deg, rgba(70, 60, 46, 0.75) 10px, transparent 10px) 0 100% / 18px 18px no-repeat,
-    linear-gradient(315deg, rgba(70, 60, 46, 0.75) 10px, transparent 10px) 100% 100% / 18px 18px no-repeat;
+    radial-gradient(2px 2px at 6px 6px, rgba(110, 60, 12, 0.7), rgba(255, 226, 166, 0.3) 60%, transparent 75%),
+    radial-gradient(2px 2px at calc(100% - 6px) 6px, rgba(110, 60, 12, 0.65), rgba(255, 226, 166, 0.28) 60%, transparent 75%),
+    radial-gradient(2px 2px at 6px calc(100% - 6px), rgba(110, 60, 12, 0.6), rgba(255, 226, 166, 0.28) 60%, transparent 75%),
+    radial-gradient(2px 2px at calc(100% - 6px) calc(100% - 6px), rgba(110, 60, 12, 0.6), rgba(255, 226, 166, 0.28) 60%, transparent 75%);
 }
-.dgn-gate--minor .dgn-gate__rune {
-  font-size: 0.72em;
-  letter-spacing: 0.28em;
-}
-.dgn-gate--minor {
-  box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.5) inset,
-    0 0 0 2px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 3px rgba(94, 80, 60, 0.28) inset,
-    0 1px 0 rgba(255, 230, 180, 0.14) inset,
-    0 -8px 16px -10px rgba(0, 0, 0, 0.75) inset,
-    0 3px 0 rgb(12 9 6),
-    0 3px 0 1px rgba(126, 108, 82, 0.3),
-    0 7px 14px -6px rgba(0, 0, 0, 0.7),
-    0 0 20px -10px rgb(var(--energy-ember-rgb) / 0.4);
+.dgn-gate--minor .dgn-gate__label {
+  text-shadow: 0 1px 0 rgba(255, 232, 186, 0.4);
 }
 .dgn-gate--minor:hover:not(:disabled):not([data-loading="true"]) {
   transform: translateY(-1px);
   box-shadow:
-    0 0 0 1px rgba(160, 136, 100, 0.6) inset,
-    0 0 0 2px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 3px rgba(122, 102, 74, 0.36) inset,
-    0 1px 0 rgba(255, 230, 180, 0.18) inset,
-    0 -8px 16px -10px rgba(0, 0, 0, 0.7) inset,
-    0 4px 0 rgb(12 9 6),
-    0 4px 0 1px rgba(160, 136, 100, 0.35),
-    0 9px 16px -6px rgba(0, 0, 0, 0.65),
-    0 0 26px -9px rgb(var(--energy-ember-rgb) / 0.55);
+    0 0 0 1px rgba(255, 236, 186, 0.55) inset,
+    0 0 0 2px rgba(84, 46, 8, 0.5) inset,
+    0 1px 0 rgba(255, 244, 210, 0.6) inset,
+    0 -8px 16px -10px rgba(100, 44, 0, 0.45) inset,
+    0 4px 0 rgb(76 38 6),
+    0 4px 0 1px rgba(44, 21, 3, 0.9),
+    0 9px 16px -6px rgba(0, 0, 0, 0.6),
+    0 0 26px -9px rgb(var(--energy-ember-rgb) / 0.5);
 }
 .dgn-gate--minor:active:not(:disabled):not([data-loading="true"]) {
   transform: translateY(2px);
   box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.45) inset,
-    0 0 0 2px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 3px rgba(94, 80, 60, 0.24) inset,
-    0 2px 4px rgba(0, 0, 0, 0.4) inset,
-    0 -8px 16px -10px rgba(0, 0, 0, 0.8) inset,
-    0 1px 0 rgb(12 9 6),
+    0 0 0 1px rgba(255, 226, 166, 0.35) inset,
+    0 0 0 2px rgba(84, 46, 8, 0.5) inset,
+    0 2px 4px rgba(64, 30, 4, 0.5) inset,
+    0 -8px 16px -10px rgba(100, 44, 0, 0.55) inset,
+    0 1px 0 rgb(76 38 6),
     0 2px 5px -3px rgba(0, 0, 0, 0.6);
 }
 
