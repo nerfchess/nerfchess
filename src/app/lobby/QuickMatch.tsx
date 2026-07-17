@@ -44,6 +44,16 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
   { pool: "15+10", label: "15+10", speed: "rapid" },
 ];
 
+// The picker groups pools under their speed category (Bullet / Blitz / Rapid)
+// as row labels, so each category is named once per row instead of repeated
+// under every tile.
+const QUEUE_POOL_GROUPS: { speed: RatingCategoryId; options: typeof QUEUE_POOL_OPTIONS }[] = (
+  ["bullet", "blitz", "rapid"] as RatingCategoryId[]
+).map((speed) => ({
+  speed,
+  options: QUEUE_POOL_OPTIONS.filter((o) => o.speed === speed),
+}));
+
 const LAST_POOL_KEY = "dc:last-pool";
 
 export function QuickMatch({ active = true }: { active?: boolean } = {}) {
@@ -294,20 +304,13 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
             </div>
           </div>
 
-          {/* Step 2: time control. Desktop shows the balanced 3x3 grid of
+          {/* Step 2: time control. Desktop shows the category-grouped rows of
               engraved stone tokens inline; mobile collapses it to a summary
               tablet that opens a bottom sheet. */}
           <div className="mt-5">
             <EngravedLabel>Time control</EngravedLabel>
-            <div className="mt-2.5 hidden grid-cols-3 gap-2 sm:grid">
-              {QUEUE_POOL_OPTIONS.map((option) => (
-                <TimeCell
-                  key={option.pool}
-                  option={option}
-                  selected={option.pool === pool}
-                  onClick={() => pickPool(option.pool)}
-                />
-              ))}
+            <div className="mt-2.5 hidden sm:block">
+              <TimeGrid pool={pool} onPick={pickPool} />
             </div>
             {/* Mobile: a single summary tablet opens the picker sheet. */}
             <button
@@ -416,19 +419,13 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                       <X size={20} />
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {QUEUE_POOL_OPTIONS.map((option) => (
-                      <TimeCell
-                        key={option.pool}
-                        option={option}
-                        selected={option.pool === pool}
-                        onClick={() => {
-                          pickPool(option.pool);
-                          setSheetOpen(false);
-                        }}
-                      />
-                    ))}
-                  </div>
+                  <TimeGrid
+                    pool={pool}
+                    onPick={(p) => {
+                      pickPool(p);
+                      setSheetOpen(false);
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -502,9 +499,41 @@ function SearchingPanel({
   );
 }
 
-// One time-control cell: speed glyph, clock, and category label. Accessible
-// name resolves to "3+2 blitz" (label + category), which the mode-defaults e2e
-// spec relies on.
+// The time-control picker: one row per speed category with the category named
+// once as a row label (glyph + name), and plain clock tokens in the row. Used
+// by both the inline desktop grid and the mobile bottom sheet.
+function TimeGrid({ pool, onPick }: { pool: string; onPick: (pool: string) => void }) {
+  return (
+    <div className="space-y-2">
+      {QUEUE_POOL_GROUPS.map(({ speed, options }) => {
+        const category = getCategory(speed);
+        const Icon = category.icon;
+        return (
+          <div key={speed} className="grid grid-cols-[minmax(64px,74px)_1fr] items-center gap-x-2.5">
+            <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-parchment-400">
+              <Icon size={13} style={{ color: category.accent }} aria-hidden className="shrink-0" />
+              {category.label}
+            </span>
+            <div className="grid grid-cols-4 gap-2">
+              {options.map((option) => (
+                <TimeCell
+                  key={option.pool}
+                  option={option}
+                  selected={option.pool === pool}
+                  onClick={() => onPick(option.pool)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// One time-control cell: just the clock in mono — the category lives on the
+// row label. The aria-label keeps the accessible name "3+2 blitz" (label +
+// category), which the mode-defaults e2e spec relies on.
 function TimeCell({
   option,
   selected,
@@ -515,27 +544,27 @@ function TimeCell({
   onClick: () => void;
 }) {
   const category = getCategory(option.speed);
-  const Icon = category.icon;
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
+      aria-label={`${option.label} ${category.label}`}
       data-selected={selected || undefined}
-      className="dgn-token press flex min-h-[48px] flex-col items-center justify-center gap-0.5 px-1 py-2"
+      className="dgn-token press flex min-h-[44px] items-center justify-center px-1 py-2"
     >
-      <Icon size={15} style={{ color: category.accent }} aria-hidden />
       <span className="font-mono text-base tabular-nums">{option.label}</span>
-      <span className="text-xs text-parchment-400">{category.label}</span>
     </button>
   );
 }
 
-// One of the two mode cards: equal height, its mode hue on a selected edge, a
-// check badge when chosen, and the rating it stakes (a "?" when unknown, per
-// the player-identity rule for provisional/unrated). Keeps the accessible names
-// the mode-defaults e2e spec matches (buff: "…Recommended…Start with normal
-// chess…"; nerf: "Start with a secret handicap…").
+// One of the two mode cards: equal height, its mode hue on the jamb, and the
+// rating it stakes (a "?" when unknown, per the player-identity rule for
+// provisional/unrated). Selection is carried entirely by the door's border +
+// fill states (dungeon-lobby.css) — no corner checkbox and no "Recommended"
+// badge to fight the selected card for attention. Keeps the accessible names
+// the mode-defaults e2e spec matches (buff: "…Start with normal chess…";
+// nerf: "Start with a secret handicap…").
 function ModeCard({
   mode,
   rating,
@@ -559,31 +588,9 @@ function ModeCard({
         "dgn-door press p-3.5 text-left sm:p-4 " + (isNerf ? "dgn-door--nerf" : "dgn-door--buff")
       }
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className={"font-display text-2xl font-semibold leading-none sm:text-3xl " + title}>
-              {isNerf ? "Nerf" : "Buff"}
-            </span>
-            {!isNerf && (
-              <span className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-xs font-medium text-gold-leaf">
-                Recommended
-              </span>
-            )}
-          </div>
-        </div>
-        {/* Chosen indicator, in normal flow (no overlap): a lit rune housing
-            when chosen, a dim bead when not. */}
-        <span aria-hidden className="dgn-door__mark">
-          {selected ? (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          ) : (
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-          )}
-        </span>
-      </div>
+      <span className={"font-display text-2xl font-semibold leading-none sm:text-3xl " + title}>
+        {isNerf ? "Nerf" : "Buff"}
+      </span>
       <p className="mt-2 text-[13px] leading-snug text-parchment-300">
         {isNerf
           ? "Start with a secret handicap. Draft curses for your opponent."

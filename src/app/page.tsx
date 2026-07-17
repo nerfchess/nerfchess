@@ -60,19 +60,25 @@ export default function HomePage() {
           {/* Eyebrow row, with a quiet onboarding door parked in the upper
               right. It drops brand-new players straight into the built-in
               guided tutorial: a real game against the easiest bot with coach
-              marks over the live board. */}
+              marks over the live board. Signed-in players see their mode
+              rating chips here instead — the profile corner of the hero. */}
           <div className="flex items-start justify-between gap-3">
             <span className="eyebrow">Nerf Chess</span>
-            <NewHereChip />
+            <div className="flex flex-col items-end gap-2">
+              <NewHereChip />
+              <HeroRatings />
+            </div>
           </div>
 
-          {/* The one-breath pitch: what the two words on the tin actually
-              change. Concrete, not marketing air. */}
-          <p className="mt-3 text-[15px] leading-snug text-parchment-300">
-            Every five moves you draft a card. In{" "}
-            <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
-            onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
-            mode you start with a secret handicap and curse your opponent. Capture the king to win.
+          {/* Proper hero hierarchy: the hook first, one line of body text,
+              then the CTA. The headline is the first thing a new visitor
+              reads. */}
+          <h1 className="display-2 mt-3 text-parchment-50">
+            Chess, but you draft <span className="text-mode-nerfGlow">curses</span>.
+          </h1>
+          <p className="mt-2.5 text-[15px] leading-snug text-parchment-300">
+            Every five moves you draft a card — arm your own army or hex your
+            opponent. Capture the king to win.
           </p>
 
           {/* ONE dominant action: the dungeon gate itself. It enters the
@@ -107,28 +113,34 @@ export default function HomePage() {
           </div>
 
           <LiveNowStrip />
-          <HeroRatings />
           <ReturnToGameBanner />
 
-          {/* What the two words on the tin actually mean. Each card is a link
-              into that mode's guide; the titles carry the mode colors and the
-              cards carry mode-hue edges, at equal prominence. */}
+          {/* What the two words on the tin actually mean. Each card is a door
+              straight into the lobby with that mode preselected (?mode= wins
+              over the remembered choice); the titles carry the mode colors and
+              the cards carry mode-hue edges, at equal prominence. */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/guide/buff-mode" className="mode-def-card mode-def-card--buff plate block p-4 no-underline">
+            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate group block p-4 no-underline">
               <span className="font-display text-lg font-bold text-mode-buffGlow">Buff mode</span>
               <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
                 <li>Both armies play fair.</li>
                 <li>Draft powers onto your own pieces.</li>
                 <li>Stack buffs into a war machine.</li>
               </ul>
+              <span className="mt-2.5 block text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
+                Play Buff →
+              </span>
             </Link>
-            <Link href="/guide/nerf-mode" className="mode-def-card mode-def-card--nerf plate block p-4 no-underline">
+            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate group block p-4 no-underline">
               <span className="font-display text-lg font-bold text-mode-nerfGlow">Nerf mode</span>
               <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
                 <li>You start with a secret handicap.</li>
                 <li>Curse your opponent with hexes.</li>
                 <li>Draft boons to dig yourself out.</li>
               </ul>
+              <span className="mt-2.5 block text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
+                Play Nerf →
+              </span>
             </Link>
           </div>
         </div>
@@ -207,19 +219,18 @@ function HeroRatings() {
   if (ratings.buff != null) chips.push({ key: "buff", label: "Buff", value: ratings.buff, tone: "text-mode-buffGlow", edge: "border-mode-buff/40 bg-mode-buff/10" });
   if (chips.length === 0) return null;
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       {chips.map((c) => (
-        <span key={c.key} className={`flex items-center gap-1.5 border px-2.5 py-1 text-[13px] ${c.edge}`}>
+        <Link
+          key={c.key}
+          href={`/u/${encodeURIComponent(user.username)}`}
+          title="Your profile"
+          className={`flex items-center gap-1.5 border px-2.5 py-1 text-[13px] no-underline ${c.edge}`}
+        >
           <span className={c.tone}>{c.label}</span>
           <span className="font-display font-bold tabular-nums text-parchment-50">{c.value}</span>
-        </span>
+        </Link>
       ))}
-      <Link
-        href={`/u/${encodeURIComponent(user.username)}`}
-        className="text-[13px] text-parchment-400 no-underline transition-colors hover:text-parchment-100"
-      >
-        Full profile →
-      </Link>
     </div>
   );
 }

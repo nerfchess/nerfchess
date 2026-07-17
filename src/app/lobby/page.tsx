@@ -13,7 +13,6 @@ import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnl
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
 import { FriendsPanel } from "@/components/FriendsPanel";
-import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { EngravedLabel } from "@/components/dungeon/primitives";
@@ -517,8 +516,11 @@ function LobbyInner() {
               that ride along on desktop scroll. */}
           <aside className="h-fit space-y-5 lg:sticky lg:top-6">
             <div className="dgn-slab dgn-rivets p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="sec-title font-display text-xl text-parchment">Online now</div>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="sec-title font-display text-xl text-parchment">Online now</div>
+                <EngravedLabel className="mt-1.5">Souls in the hall</EngravedLabel>
+              </div>
               {lobby && onlineCount != null && (
                 <span className="font-mono text-xs tabular-nums text-parchment-400">{onlineCount}</span>
               )}
@@ -546,6 +548,8 @@ function LobbyInner() {
                   </p>
                 )}
                 <ul className="mt-3 space-y-1">
+                  {/* Kept deliberately plain: name + rating + status. Tiny
+                      avatars added noise without carrying information. */}
                   {visiblePlayers.map((p) => (
                     <li
                       key={p.name}
@@ -555,11 +559,10 @@ function LobbyInner() {
                         href={`/u/${encodeURIComponent(p.name)}`}
                         className="flex min-h-[44px] min-w-0 items-center gap-2 sm:min-h-0 text-parchment-100 hover:text-gold-leaf transition-colors"
                       >
-                        <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
                         <span className="min-w-0 truncate">{p.name}</span>
                         {p.rating != null && (
                           <span
-                            className="ml-1.5 font-mono text-xs text-parchment-400"
+                            className="font-mono text-xs text-parchment-400"
                             title="Rating (best mode)"
                           >
                             {p.rating}
@@ -603,8 +606,11 @@ function LobbyInner() {
                 exists in the payload, so this panel renders with a designed
                 empty state rather than disappearing. */}
             <div className="dgn-slab dgn-rivets p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
+                  <EngravedLabel className="mt-1.5">Boards under torchlight</EngravedLabel>
+                </div>
                 {lobby && (
                   <span className="font-mono text-xs tabular-nums text-parchment-400">{lobby.games.length}</span>
                 )}
@@ -907,10 +913,7 @@ function SkeletonPlayerRows({ count }: { count: number }) {
     <ul className="mt-3 space-y-2" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
         <li key={i} className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="skeleton h-[22px] w-[22px] shrink-0" />
-            <span className="skeleton block h-3 w-2/5" />
-          </div>
+          <span className="skeleton block h-3 w-2/5" />
           <span className="skeleton h-4 w-14 shrink-0" />
         </li>
       ))}
@@ -1137,11 +1140,14 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
 }
 
 // A compact live game for the right-rail "Games to watch" panel: the whole row
-// is one link into the spectator route, showing both players, mode + clock, and
-// the live-watcher count. Denser than the full LiveGameRow in the Watch tab.
+// is one link into the spectator route, showing both players WITH their
+// ratings, mode + clock, and how deep the game is — so two 5+3 games still
+// read differently at a glance. Denser than the full LiveGameRow in the Watch
+// tab.
 function RailWatchRow({ game }: { game: MPLobbyGame }) {
   const clock =
     game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
+  const moveNumber = Math.ceil(game.moves / 2);
   return (
     <li>
       <Link
@@ -1150,13 +1156,24 @@ function RailWatchRow({ game }: { game: MPLobbyGame }) {
         className={`hall-row ${rowModeClass(game.mode, "hall-row--live")} flex flex-col gap-1 p-2.5`}
       >
         <div className="flex min-w-0 items-center gap-1.5 text-[13px] text-parchment-100">
-          <span className="min-w-0 truncate">{game.players.w.name}</span>
+          <span className="min-w-0 truncate">
+            {game.players.w.name}
+            {game.players.w.rating != null && (
+              <span className="font-mono text-[11px] tabular-nums text-parchment-400"> {game.players.w.rating}</span>
+            )}
+          </span>
           <span className="shrink-0 text-parchment-400">vs</span>
-          <span className="min-w-0 truncate">{game.players.b.name}</span>
+          <span className="min-w-0 truncate">
+            {game.players.b.name}
+            {game.players.b.rating != null && (
+              <span className="font-mono text-[11px] tabular-nums text-parchment-400"> {game.players.b.rating}</span>
+            )}
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-parchment-400">
           <ModeBadge mode={game.mode} compact />
           <span className="font-mono tabular-nums">{clock}</span>
+          {moveNumber > 0 && <span className="tabular-nums">move {moveNumber}</span>}
           {game.watchers > 0 && (
             <span className="tabular-nums">
               {game.watchers} watching

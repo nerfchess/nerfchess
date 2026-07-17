@@ -16,8 +16,9 @@ const findButton = (page: import("@playwright/test").Page) =>
 test("lobby defaults to a 3+2 Buff game", async ({ page }) => {
   await page.goto("/lobby");
   await expect(findButton(page)).toHaveText("Find a 3+2 Buff game", { timeout: 30_000 });
-  // The Buff mode card is selected (and marked recommended); Nerf is not.
-  const buffCard = page.getByRole("button", { name: /buff.*recommended.*start with normal chess/is });
+  // The Buff mode card is selected; Nerf is not. (Selection is shown by the
+  // card's border + fill state — there is no "Recommended" badge.)
+  const buffCard = page.getByRole("button", { name: /buff.*start with normal chess/is });
   await expect(buffCard).toHaveAttribute("aria-pressed", "true");
   const nerfCard = page.getByRole("button", { name: /start with a secret handicap/i });
   await expect(nerfCard).toHaveAttribute("aria-pressed", "false");
