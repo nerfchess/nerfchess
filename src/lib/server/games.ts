@@ -173,6 +173,13 @@ export interface RatingChange {
   provisional: boolean;
 }
 
+// How many times a lost rating compare-and-swap (a concurrent rated result for
+// the same account committing between our read and write) is re-tried before the
+// losing side keeps its pre-write value. Contention is rare (only a bot in two
+// simultaneous rated games), so a small bound clears it in practice while
+// guaranteeing the call always terminates.
+const RATING_CAS_MAX_RETRIES = 5;
+
 export async function recordFinishedGame(
   db: D1Database,
   game: FinishedGameRecord,
@@ -302,30 +309,77 @@ export async function recordFinishedGame(
     );
   }
 
-  if (rated && whiteAfter && blackAfter) {
+  // Indices of the two rating compare-and-swap statements within `statements`,
+  // so the row-change counts can be read back after the batch and a lost CAS
+  // retried below. -1 while the game is not rated.
+  let whiteRatingStmtIdx = -1;
+  let blackRatingStmtIdx = -1;
+  if (rated && whiteAfter && blackAfter && whiteBefore && blackBefore) {
     const winCol = (won: boolean, drew: boolean) =>
       drew ? "draws = draws + 1" : won ? "wins = wins + 1" : "losses = losses + 1";
     const drew = game.winner === "draw";
-    // The category bucket is the rating's single source of truth: only this
-    // time control's rating moves.
+    // COUNTERS (relative, exactly-once): the games/win/loss/draw increments are
+    // guarded by the idempotency nonce ONLY and split OUT of the rating write,
+    // so the rating column can carry a compare-and-swap guard (below) without
+    // also gating the counts on it. Relative += is race-safe on its own; the
+    // nonce keeps it exactly-once across replays/retries.
     statements.push(
       db
         .prepare(
-          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
-             ${winCol(game.winner === "w", drew)}
+          `UPDATE user_ratings SET games = games + 1, ${winCol(game.winner === "w", drew)}
            WHERE user_id = ? AND category = ? ${guardSql}`,
         )
-        .bind(whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, whiteAfter.rating, game.whiteUserId, category, game.id, nonce),
+        .bind(game.whiteUserId, category, game.id, nonce),
       db
         .prepare(
-          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, games = games + 1, peak = MAX(peak, ?),
-             ${winCol(game.winner === "b", drew)}
+          `UPDATE user_ratings SET games = games + 1, ${winCol(game.winner === "b", drew)}
            WHERE user_id = ? AND category = ? ${guardSql}`,
         )
-        .bind(blackAfter.rating, blackAfter.rd, blackAfter.vol, blackAfter.rating, game.blackUserId, category, game.id, nonce),
-      // Aggregate account counters (total rated games / results) still live on
-      // the users row for profiles and the guest-visibility filter; the shared
-      // users.rating column is legacy and no longer written.
+        .bind(game.blackUserId, category, game.id, nonce),
+    );
+    // RATING (absolute) with OPTIMISTIC CONCURRENCY: apply the new rating only
+    // while the row STILL holds the exact (rating, rd, vol) we computed `after`
+    // from. A house bot can be in two rated games AT ONCE — most importantly the
+    // arena service records bot-vs-bot games in a SEPARATE isolate against this
+    // same D1, so its result-writes are NOT serialized with the game server's —
+    // and Glicko-2 is not a simple additive delta, so two results computed from
+    // the same snapshot would otherwise clobber each other (last-writer-wins, a
+    // lost update). The before-value guard turns each write into a CAS; a miss
+    // (the row moved since our read) is retried below from the re-read current
+    // value, so this game's movement lands ON TOP of the other's rather than
+    // overwriting it. The nonce guard still makes the whole thing exactly-once.
+    whiteRatingStmtIdx = statements.length;
+    statements.push(
+      db
+        .prepare(
+          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, peak = MAX(peak, ?)
+           WHERE user_id = ? AND category = ? ${guardSql}
+             AND rating = ? AND rd = ? AND vol = ?`,
+        )
+        .bind(
+          whiteAfter.rating, whiteAfter.rd, whiteAfter.vol, whiteAfter.rating,
+          game.whiteUserId, category, game.id, nonce,
+          whiteBefore.rating, whiteBefore.rd, whiteBefore.vol,
+        ),
+    );
+    blackRatingStmtIdx = statements.length;
+    statements.push(
+      db
+        .prepare(
+          `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, peak = MAX(peak, ?)
+           WHERE user_id = ? AND category = ? ${guardSql}
+             AND rating = ? AND rd = ? AND vol = ?`,
+        )
+        .bind(
+          blackAfter.rating, blackAfter.rd, blackAfter.vol, blackAfter.rating,
+          game.blackUserId, category, game.id, nonce,
+          blackBefore.rating, blackBefore.rd, blackBefore.vol,
+        ),
+    );
+    // Aggregate account counters (total rated games / results) still live on
+    // the users row for profiles and the guest-visibility filter; the shared
+    // users.rating column is legacy and no longer written.
+    statements.push(
       db
         .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "w", drew)} WHERE id = ? ${guardSql}`)
         .bind(game.whiteUserId, game.id, nonce),
@@ -345,6 +399,78 @@ export async function recordFinishedGame(
   if (!firstApplication) {
     whiteChange = null;
     blackChange = null;
+  }
+
+  // Optimistic-concurrency retry: THIS call won the idempotency claim, but if a
+  // rating CAS above matched no row then another rated game for the same account
+  // committed between our snapshot read and our write (see the CAS comment). The
+  // counters already moved exactly once under the nonce and are NOT retried;
+  // here we only re-land the rating movement. Re-read the CURRENT bucket values,
+  // recompute the pair, and CAS again so this game's delta stacks on top of the
+  // other result rather than being lost. Bounded so a pathological hot row can
+  // never spin forever (the losing side just keeps its pre-write value — the
+  // same worst case as before this guard, but now only after real contention).
+  if (firstApplication && rated && whiteBefore && blackBefore) {
+    let whiteRatingApplied = (batchResults[whiteRatingStmtIdx]?.meta?.changes ?? 0) > 0;
+    let blackRatingApplied = (batchResults[blackRatingStmtIdx]?.meta?.changes ?? 0) > 0;
+    const scoreForWhite = game.winner === "w" ? 1 : game.winner === "b" ? 0 : 0.5;
+    for (
+      let attempt = 0;
+      attempt < RATING_CAS_MAX_RETRIES && (!whiteRatingApplied || !blackRatingApplied);
+      attempt++
+    ) {
+      const cur = await loadCategoryRatings(db, [game.whiteUserId!, game.blackUserId!], category);
+      const cw = cur.get(game.whiteUserId!);
+      const cb = cur.get(game.blackUserId!);
+      if (!cw || !cb) break;
+      const cwBefore: GlickoRating = { rating: cw.rating, rd: cw.rd, vol: cw.vol };
+      const cbBefore: GlickoRating = { rating: cb.rating, rd: cb.rd, vol: cb.vol };
+      const redo = glickoUpdatePair(cwBefore, cbBefore, scoreForWhite);
+      const retryStmts: D1PreparedStatement[] = [];
+      if (!whiteRatingApplied) {
+        retryStmts.push(
+          db
+            .prepare(
+              `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, peak = MAX(peak, ?)
+               WHERE user_id = ? AND category = ? AND rating = ? AND rd = ? AND vol = ?`,
+            )
+            .bind(redo.a.rating, redo.a.rd, redo.a.vol, redo.a.rating, game.whiteUserId, category, cwBefore.rating, cwBefore.rd, cwBefore.vol),
+        );
+      }
+      if (!blackRatingApplied) {
+        retryStmts.push(
+          db
+            .prepare(
+              `UPDATE user_ratings SET rating = ?, rd = ?, vol = ?, peak = MAX(peak, ?)
+               WHERE user_id = ? AND category = ? AND rating = ? AND rd = ? AND vol = ?`,
+            )
+            .bind(redo.b.rating, redo.b.rd, redo.b.vol, redo.b.rating, game.blackUserId, category, cbBefore.rating, cbBefore.rd, cbBefore.vol),
+        );
+      }
+      const retryRes = await db.batch(retryStmts);
+      let k = 0;
+      if (!whiteRatingApplied) {
+        if ((retryRes[k]?.meta?.changes ?? 0) > 0) {
+          whiteRatingApplied = true;
+          whiteAfter = redo.a;
+          if (whiteChange) {
+            whiteChange.after = redo.a.rating;
+            whiteChange.provisional = isProvisional(redo.a);
+          }
+        }
+        k++;
+      }
+      if (!blackRatingApplied) {
+        if ((retryRes[k]?.meta?.changes ?? 0) > 0) {
+          blackRatingApplied = true;
+          blackAfter = redo.b;
+          if (blackChange) {
+            blackChange.after = redo.b.rating;
+            blackChange.provisional = isProvisional(redo.b);
+          }
+        }
+      }
+    }
   }
 
   // Evaluate achievements for both seated accounts off the same D1, keyed by
