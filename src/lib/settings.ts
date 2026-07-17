@@ -44,6 +44,7 @@ export type SiteTheme =
   | "void"
   | "abyss"
   | "ember"
+  | "crimson"
   | "moss"
   | "nebula";
 export type SoundTheme = "lichess" | "classic";
@@ -81,6 +82,7 @@ export const SITE_THEMES: Record<
   void:     { label: "Void",     hint: "Pure black, OLED-friendly",     scheme: "dark",  swatch: { bg: "#000000", panel: "#141414", glow: "#9f9f9f" }, accent: { accent: "#8ab4f8", accentHi: "#a5c6fa", rgb: "138 180 248", rgbHi: "165 198 250", rgbDim: "104 138 194" } },
   abyss:    { label: "Abyss",    hint: "Deep-sea teal",                 scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#5ec8b8" }, accent: { accent: "#43b3a0", accentHi: "#5ec8b8", rgb: "67 179 160", rgbHi: "94 200 184", rgbDim: "48 134 120" } },
   ember:    { label: "Ember",    hint: "Smoldering crimson",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#e07a5f" }, accent: { accent: "#d96e50", accentHi: "#e58a6e", rgb: "217 110 80", rgbHi: "229 138 110", rgbDim: "168 84 60" } },
+  crimson:  { label: "Crimson",  hint: "Deep blood red",                scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#e0526e" }, accent: { accent: "#dc2c48", accentHi: "#ec4f68", rgb: "220 44 72", rgbHi: "236 79 104", rgbDim: "172 34 56" } },
   moss:     { label: "Moss",     hint: "Deep forest green",             scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#8fbc6f" }, accent: { accent: "#7bab58", accentHi: "#92c26e", rgb: "123 171 88", rgbHi: "146 194 110", rgbDim: "93 130 66" } },
   nebula:   { label: "Nebula",   hint: "Violet dusk",                   scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#a877d8" }, accent: { accent: "#9d7ad4", accentHi: "#b494e2", rgb: "157 122 212", rgbHi: "180 148 226", rgbDim: "118 91 162" } },
 };
@@ -169,7 +171,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "nebula",
+  siteTheme: "crimson",
   compactMode: false,
   uiScale: 1,
   accentColor: "auto",
