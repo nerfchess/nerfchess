@@ -27,3 +27,15 @@ export const HOUSE_EDITOR_USERNAME = "ilovenewjeans";
 export function isHouseEditor(username: string | null | undefined): boolean {
   return !!username && username.toLowerCase() === HOUSE_EDITOR_USERNAME;
 }
+
+// The single account allowed to overwrite ANY player's rating directly from
+// that player's profile — the "edit button on people's rating" that sets every
+// rating bucket (Nerf, Buff, and any legacy speed rows) plus the legacy shared
+// column to one number at once. Deliberately ONE name (independent of the admin
+// role), per the owner's request. The /api/mod/ratings route re-verifies this;
+// the client gate only decides whether to show the control. Matched
+// case-insensitively so a stored-casing difference can never lock the owner out.
+export const RATING_EDITOR_USERNAME = "ilovenewjeans";
+export function isRatingEditor(username: string | null | undefined): boolean {
+  return !!username && username.toLowerCase() === RATING_EDITOR_USERNAME;
+}

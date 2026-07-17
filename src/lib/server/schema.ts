@@ -38,6 +38,7 @@ export const SCHEMA_STATEMENTS: string[] = [
     losses INTEGER NOT NULL DEFAULT 0,
     draws INTEGER NOT NULL DEFAULT 0,
     peak REAL NOT NULL DEFAULT 1500,
+    hand_set INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (user_id, category)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_user_ratings_leaderboard ON user_ratings(category, rating DESC)`,
@@ -615,6 +616,13 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE users ADD COLUMN friends_visibility TEXT NOT NULL DEFAULT 'public'`,
   `ALTER TABLE users ADD COLUMN show_online INTEGER NOT NULL DEFAULT 1`,
   `ALTER TABLE users ADD COLUMN last_seen_at INTEGER`,
+  // 1 = this rating bucket was set by hand via the rating editor (/api/mod/ratings,
+  // ilovenewjeans only) rather than earned through play. The leaderboard's
+  // population filter normally hides rows with no games (they would all sit at
+  // the 1500 default); a hand-set row carries no games, so this flag lets the
+  // board include an edited player who has never played that mode. Mirrors
+  // migrations/0035_user_ratings_hand_set.sql.
+  `ALTER TABLE user_ratings ADD COLUMN hand_set INTEGER NOT NULL DEFAULT 0`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and
