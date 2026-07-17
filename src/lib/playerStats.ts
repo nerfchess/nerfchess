@@ -49,9 +49,6 @@ export type HeadToHeadEntry = {
   lastPlayed: number;
 };
 
-/** One calendar day (UTC) of results, for the 30-day activity strip. */
-export type DailyBucket = { date: string; wins: number; losses: number; draws: number };
-
 export type SessionInfo = {
   startedAt: number;
   endedAt: number;
@@ -83,8 +80,6 @@ export type PlayerStats = {
   /** The five most-played opponents, with the record against each. */
   headToHead: HeadToHeadEntry[];
   gameLength: { avgPlies: number | null; avgDurationMs: number | null };
-  /** Last 30 UTC days of decided results, oldest first, empty days included. */
-  daily: DailyBucket[];
   /** Play sessions: runs of games separated by less than an hour. */
   sessions: { count: number; longestGames: number; avgGames: number; recent: SessionInfo[] };
   /** Record per rated bucket. The UI shows only the mode buckets (Nerf and
@@ -100,12 +95,6 @@ const MAX_GAME_MS = 4 * 60 * 60 * 1000;
 
 // Games closer together than this belong to the same play session.
 const SESSION_GAP_MS = 60 * 60 * 1000;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function utcDay(at: number): string {
-  return new Date(at).toISOString().slice(0, 10);
-}
 
 function emptyStreak(): StreakInfo {
   return { length: 0, from: null, to: null };
@@ -132,7 +121,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     bestWins: [],
     headToHead: [],
     gameLength: { avgPlies: null, avgDurationMs: null },
-    daily: [],
     sessions: { count: 0, longestGames: 0, avgGames: 0, recent: [] },
     perSpeed,
     firstGameAt: rows.length ? rows[0].completed_at : null,
@@ -147,13 +135,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
   let plySum = 0;
   let plyGames = 0;
   const sessions: SessionInfo[] = [];
-  // The last 30 UTC days, oldest first, so the strip always spans a month.
-  const dailyByDate = new Map<string, DailyBucket>();
-  const now = Date.now();
-  for (let i = 29; i >= 0; i--) {
-    const date = utcDay(now - i * DAY_MS);
-    dailyByDate.set(date, { date, wins: 0, losses: 0, draws: 0 });
-  }
 
   const takeLongest = (run: StreakInfo, longest: StreakInfo) =>
     run.length > longest.length ? { ...run } : longest;
@@ -225,8 +206,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       sessions.push(session);
     }
 
-    const daily = dailyByDate.get(utcDay(row.completed_at));
-
     // Aborted / unresolved games (no winner) count toward totals only.
     if (row.winner !== "w" && row.winner !== "b" && row.winner !== "draw") continue;
 
@@ -235,7 +214,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       speed.draws++;
       h2h.draws++;
       session.draws++;
-      if (daily) daily.draws++;
       runWins = emptyStreak();
       runLosses = emptyStreak();
       continue;
@@ -246,7 +224,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       speed.wins++;
       h2h.wins++;
       session.wins++;
-      if (daily) daily.wins++;
       runWins = {
         length: runWins.length + 1,
         from: runWins.from ?? row.completed_at,
@@ -270,7 +247,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
       speed.losses++;
       h2h.losses++;
       session.losses++;
-      if (daily) daily.losses++;
       if (/ran out of time/i.test(row.reason)) stats.timeoutLosses++;
       runLosses = {
         length: runLosses.length + 1,
@@ -294,7 +270,6 @@ export function computePlayerStats(userId: string, rows: StatsGameRow[]): Player
     avgPlies: plyGames > 0 ? plySum / plyGames : null,
     avgDurationMs: stats.totalGames > 0 ? stats.timePlayedMs / stats.totalGames : null,
   };
-  stats.daily = [...dailyByDate.values()];
   for (const session of sessions) session.durationMs = Math.max(0, session.endedAt - session.startedAt);
   stats.sessions = {
     count: sessions.length,

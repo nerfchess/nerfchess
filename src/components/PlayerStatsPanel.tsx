@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
-import type { DailyBucket, PlayerStats, StreakInfo } from "@/lib/playerStats";
+import type { PlayerStats, StreakInfo } from "@/lib/playerStats";
 
 // Lichess-style detailed statistics block, shared by the own-profile page and
 // public player pages. Everything renders from one PlayerStats payload.
@@ -137,55 +137,6 @@ function ExtremeCard({
   );
 }
 
-// One stacked bar per day: wins on top, then draws, losses at the bottom.
-// Hover (or long-press) a bar for the date and exact counts.
-function DailyStrip({ daily }: { daily: DailyBucket[] }) {
-  const max = daily.reduce((m, d) => Math.max(m, d.wins + d.losses + d.draws), 0);
-  return (
-    <div className="plate p-4 sm:p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="smallcaps text-[10px] text-parchment-400">Last 30 days</div>
-        <span className="text-[10px] text-parchment-400">
-          <span className="text-verdigris-glow">wins</span> · draws ·{" "}
-          <span className="text-oxblood-glow">losses</span>
-        </span>
-      </div>
-      {max === 0 ? (
-        <div className="mt-2 text-sm text-parchment-400">No games in the last 30 days</div>
-      ) : (
-        <div className="mt-3 flex h-16 items-end gap-[3px]">
-          {daily.map((d) => {
-            const total = d.wins + d.losses + d.draws;
-            return (
-              <div
-                key={d.date}
-                title={`${d.date}: ${d.wins} won, ${d.losses} lost, ${d.draws} drawn`}
-                className="flex flex-1 flex-col justify-end self-stretch"
-              >
-                {total === 0 ? (
-                  <div className="h-[2px] bg-white/10" />
-                ) : (
-                  <>
-                    {d.wins > 0 && (
-                      <div className="bg-verdigris-glow/80" style={{ height: `${(d.wins / max) * 100}%` }} />
-                    )}
-                    {d.draws > 0 && (
-                      <div className="bg-parchment-400/60" style={{ height: `${(d.draws / max) * 100}%` }} />
-                    )}
-                    {d.losses > 0 && (
-                      <div className="bg-oxblood-glow/80" style={{ height: `${(d.losses / max) * 100}%` }} />
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
   const decided = stats.wins + stats.draws + stats.losses;
 
@@ -231,9 +182,6 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
           />
         </div>
       </div>
-
-      {/* Daily results, one stacked bar per day. */}
-      <DailyStrip daily={stats.daily} />
 
       {/* Rating extremes, each linking to the game that set it. */}
       <div className="grid gap-3 sm:grid-cols-2">

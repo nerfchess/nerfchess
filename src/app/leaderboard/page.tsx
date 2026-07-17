@@ -2,7 +2,7 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Trophy } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
@@ -194,7 +194,7 @@ export default function LeaderboardPage() {
         {rows && rows.length > 0 && (
           <>
             <div className="mt-6 plate overflow-hidden">
-              <div className="grid grid-cols-[2rem_1fr_4.5rem_5.25rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4">
+              <div className="grid grid-cols-[2.25rem_1fr_4.5rem_5.25rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4">
                 <span className="eyebrow text-[11px]">#</span>
                 <span className="eyebrow text-[11px]">Player</span>
                 <span className="eyebrow text-right text-[11px]">{active.label}</span>
@@ -288,37 +288,62 @@ function LeaderboardRow({
   mine: boolean;
 }) {
   const tier = laurelTier(rank); // champion | gold | silver | null (top 10 only)
-  // Honor bands: the top ten carry the laurel and a faint gold wash; ranks
-  // 11-100 keep a quiet brass left-edge to mark the honored hundred; below
-  // that, plain rows.
+  // Honor bands: the top ten are the elite — the laurel, a gem chip on the
+  // rank numeral, a gold wash fading with rank (champion strongest), a hover
+  // lift, and a gold left edge (thicker for the podium three); ranks 11-100
+  // keep a refined brass hairline to mark the honored hundred; below that,
+  // plain rows.
+  const topTen = tier !== null;
+  const podium = rank <= 3;
   const honored = rank <= 100;
-  const tierWash =
-    tier === "champion" ? "bg-sun/[0.07]" : tier === "gold" ? "bg-sun/[0.04]" : "";
-  const rankTone =
-    tier === "champion"
-      ? "text-sun-glow"
-      : tier === "gold"
-        ? "text-sun"
-        : tier === "silver"
-          ? "text-parchment-200"
-          : rank <= 100
-            ? "text-parchment-300"
-            : "text-parchment-400";
 
   const rowClass =
-    "grid grid-cols-[2rem_1fr_4.5rem_5.25rem] items-center border-b border-[color:var(--edge)] px-3 py-2.5 text-sm transition hover:bg-[var(--surface-hover)] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4 min-h-[44px] " +
-    (mine ? "bg-gold/10" : tierWash);
-  const leftEdge = mine
-    ? undefined
-    : tier
-      ? { borderLeft: "2px solid rgba(244,196,48,0.55)" }
-      : honored
-        ? { borderLeft: "2px solid rgba(244,196,48,0.20)" }
-        : undefined;
+    "grid grid-cols-[2.25rem_1fr_4.5rem_5.25rem] items-center border-b border-[color:var(--edge)] px-3 py-2.5 text-sm transition hover:bg-[var(--surface-hover)] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4 min-h-[44px] " +
+    (mine ? "bg-gold/10" : "") +
+    (topTen ? " hover-lift" : "");
+
+  const style: CSSProperties = {};
+  if (!mine && topTen) {
+    // The elite wash: faint gold bleeding in from the rank column, strongest
+    // at #1 and gone past #10 (0.085 → 0.018).
+    const alpha = (0.085 - (rank - 1) * 0.0075).toFixed(4);
+    style.backgroundImage = `linear-gradient(90deg, rgb(var(--energy-gold-rgb) / ${alpha}), transparent 70%)`;
+  }
+  if (!mine) {
+    if (podium) style.borderLeft = "3px solid rgb(var(--energy-gold-rgb) / 0.7)";
+    else if (topTen) style.borderLeft = "1px solid rgb(var(--energy-gold-rgb) / 0.55)";
+    else if (honored) style.borderLeft = "1px solid rgb(var(--energy-gold-rgb) / 0.3)";
+  }
+
+  // The rank numeral: the top ten wear it in a small gem chip — gold for the
+  // podium, ember for 4-10 — everyone else a plain tabular figure.
+  const chip = podium ? "--energy-gold-rgb" : "--energy-ember-rgb";
+  const rankCell = topTen ? (
+    <span className="font-mono tabular-nums">
+      <span
+        className="inline-grid h-[22px] min-w-[22px] place-items-center border px-1 text-[12px] leading-none"
+        style={{
+          borderColor: `rgb(var(${chip}) / 0.5)`,
+          background: `rgb(var(${chip}) / 0.12)`,
+          color: podium ? "var(--sun-glow)" : `rgb(var(${chip}))`,
+        }}
+      >
+        {rank}
+      </span>
+    </span>
+  ) : (
+    <span
+      className={
+        "font-mono tabular-nums " + (honored ? "text-parchment-300" : "text-parchment-400")
+      }
+    >
+      {rank}
+    </span>
+  );
 
   const content = (
     <>
-      <span className={"font-mono tabular-nums " + rankTone}>{rank}</span>
+      {rankCell}
       <span className="flex min-w-0 items-center gap-2">
         <PlayerAvatar name={row.username} avatar={row.avatar} flair={row.flair} size={24} />
         <span className={"truncate font-medium " + (mine ? "text-gold-leaf" : "text-parchment-100")}>
@@ -351,13 +376,13 @@ function LeaderboardRow({
 
   if (row.guest) {
     return (
-      <div id={`lb-rank-${rank}`} className={rowClass} style={leftEdge}>
+      <div id={`lb-rank-${rank}`} className={rowClass} style={style}>
         {content}
       </div>
     );
   }
   return (
-    <Link id={`lb-rank-${rank}`} href={`/u/${row.username}`} className={rowClass} style={leftEdge}>
+    <Link id={`lb-rank-${rank}`} href={`/u/${row.username}`} className={rowClass} style={style}>
       {content}
     </Link>
   );

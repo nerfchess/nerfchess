@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
+  Crown,
   Flag,
   Gamepad2,
   MessageSquare,
@@ -580,13 +581,38 @@ function ProfileHeader({
     return top;
   }, [ratings]);
 
+  // Recognition dressing, driven by the best current board rank: any podium
+  // (top-3) placement earns the avatar a subtle gold ring, and a reigning #1
+  // a tiny crown floating above it. Derived from the live standings — drop
+  // off the podium and it simply stops rendering.
+  const bestRank = placements[0]?.rank ?? null;
+  const podiumHolder = bestRank != null && bestRank <= 3;
+  const reigning = bestRank === 1;
+
+  const crown = reigning ? (
+    <span
+      title="Reigning #1"
+      role="img"
+      aria-label="Reigning #1"
+      className="absolute -top-2.5 left-1/2 -translate-x-1/2"
+    >
+      {/* The LaurelBadge crown, alone: static and small on purpose. */}
+      <svg viewBox="6.5 1 11 7" width={14} height={9} fill="var(--sun-glow)" aria-hidden="true">
+        <path d="M8.2 7.4 7.4 2.9 9.9 4.5 12 1.6l2.1 2.9 2.5-1.6-.8 4.5C14.6 6.9 13.3 6.6 12 6.6c-1.3 0-2.6.3-3.8.8z" />
+      </svg>
+    </span>
+  ) : null;
+
+  const ring = podiumHolder ? "ring-2 ring-sun/45" : "";
   const avatar = (
     <>
-      <span className="sm:hidden">
-        <PlayerAvatar name={user.username} avatar={user.avatar} size={56} />
+      <span className="relative inline-block sm:hidden">
+        <PlayerAvatar name={user.username} avatar={user.avatar} size={56} className={ring} />
+        {crown}
       </span>
-      <span className="hidden sm:block">
-        <PlayerAvatar name={user.username} avatar={user.avatar} size={72} />
+      <span className="relative hidden sm:block">
+        <PlayerAvatar name={user.username} avatar={user.avatar} size={72} className={ring} />
+        {crown}
       </span>
     </>
   );
@@ -630,10 +656,11 @@ function ProfileHeader({
                 </span>
               )}
               {placements.length > 0 && (
+                // A touch larger for a podium holder, matching the avatar ring.
                 <LaurelBadge
                   rank={placements[0].rank}
                   title={placementTitle(placements[0])}
-                  size={24}
+                  size={podiumHolder ? 28 : 24}
                   className="ml-2"
                 />
               )}
@@ -1368,33 +1395,68 @@ function AchievementsStrip({ username }: { username: string }) {
   );
 }
 
-// The honors shelf: every leaderboard the player currently places top 10 on,
-// each with its rank-tiered laurel, linking to the boards where they were earned.
+// The honors shelf: a carved trophy strip for every leaderboard the player
+// currently places top 10 on. Each placement is a medallion — laurel, rank,
+// board — scaled by rank: podium placements (top 3) read as gold slabs with a
+// crown glyph and the gold rim, 4-10 as quieter brass. Everything derives
+// from the live standings (useTopPlacements); nothing here is stored, so
+// dropping out of the top 10 simply stops the medallion rendering.
 function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
   return (
-    <Link
-      href="/leaderboard"
-      className="mt-2 plate flex flex-wrap items-center justify-between gap-3 p-3 transition hover:border-gold/40"
-    >
-      <span className="flex items-center gap-2 font-display text-parchment-100">
-        <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />
-        Current standings
-      </span>
-      <span className="flex flex-wrap items-center gap-2">
-        {placements.map((p) => (
-          <span
-            key={p.category}
-            title={placementTitle(p)}
-            className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1"
-          >
-            <LaurelBadge rank={p.rank} size={13} />
-            <span className="font-mono text-sm tabular-nums text-parchment-100">#{p.rank}</span>
-            <span className="smallcaps text-[12px] text-parchment-400">{p.label}</span>
-          </span>
-        ))}
-        <span className="smallcaps text-[12px] text-gold-leaf">Leaderboard</span>
-      </span>
-    </Link>
+    <section aria-label="Leaderboard honors" className="mt-2 plate dgn-rivets p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="flex items-center gap-2 font-display text-parchment-100">
+          <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />
+          Leaderboard honors
+        </span>
+        <Link
+          href="/leaderboard"
+          className="smallcaps text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+        >
+          Leaderboard
+        </Link>
+      </div>
+      <div className="mt-3 flex flex-wrap items-stretch gap-2">
+        {placements.map((p) => {
+          const podium = p.rank <= 3;
+          return (
+            <Link
+              key={p.category}
+              href="/leaderboard"
+              title={placementTitle(p)}
+              className={
+                "hover-lift flex items-center gap-2.5 border px-3 py-2 no-underline " +
+                (podium
+                  ? "podium-rim-gold border-transparent bg-sun/[0.07]"
+                  : "bg-white/[0.03]")
+              }
+              style={
+                podium
+                  ? { boxShadow: "0 0 20px -8px rgb(var(--energy-gold-rgb) / 0.45)" }
+                  : { borderColor: "rgba(224, 178, 86, 0.35)" } // brass, matching the 4-10 laurel
+              }
+            >
+              <LaurelBadge rank={p.rank} size={podium ? 22 : 18} />
+              <span className="flex min-w-0 flex-col">
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={
+                      "font-mono text-sm tabular-nums " +
+                      (podium ? "text-sun-glow" : "text-parchment-100")
+                    }
+                  >
+                    #{p.rank}
+                  </span>
+                  <span className="text-[12px] text-parchment-400">· {p.label}</span>
+                  {podium && <Crown size={12} className="shrink-0 text-sun-glow" aria-hidden />}
+                </span>
+                <span className="text-[12px] text-parchment-400">Current standing</span>
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
