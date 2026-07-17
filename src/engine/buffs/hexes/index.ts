@@ -13,9 +13,11 @@ import { HEXES_T6 } from "./tier6";
 import { HEXES_T7 } from "./tier7";
 import { HEXES_T8 } from "./tier8";
 import { HEX_WAVE2 } from "./wave2";
+import { HEX_WAVE3 } from "./wave3";
 
 export const NEW_HEXES: Buff[] = [
   ...HEX_WAVE2,
+  ...HEX_WAVE3,
   ...HEXES_T1,
   ...HEXES_T2,
   ...HEXES_T3,
