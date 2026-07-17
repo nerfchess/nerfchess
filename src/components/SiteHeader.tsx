@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, History, LogIn, LogOut, Mail, Search, Settings, Shield, Swords, Trophy, User, UserPlus } from "lucide-react";
+import "./DungeonMenu.css";
 import { Logo } from "@/components/Logo";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -192,8 +193,28 @@ export function SiteHeader({ active }: { active?: string }) {
   }, []);
 
   const toggle = (m: Exclude<Menu, null>) => {
-    setMenu((cur) => (cur === m ? null : m));
-    if ((m === "bell" || m === "challenges") && user) refreshSocial();
+    const opening = menu !== m;
+    setMenu(opening ? m : null);
+    if ((m === "bell" || m === "challenges") && user) {
+      if (m === "bell" && opening) {
+        // Opening the bell clears everything automatically: refresh first so
+        // the dropdown still shows what was new (rows keep their unread look
+        // for this viewing), then mark all read server-side and drop the badge.
+        void (async () => {
+          await refreshSocial();
+          try {
+            await fetch("/api/notifications", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+            });
+          } catch {}
+          setUnread(0);
+        })();
+      } else {
+        refreshSocial();
+      }
+    }
   };
 
   const openNotification = async (n: HeaderNotification) => {
@@ -284,7 +305,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 {/* No opacity fade: the menu pops in fully solid so the labels
                     never read as half-transparent text mid-transition. */}
                 <div className="invisible absolute left-0 top-full z-40 w-56 group-focus-within:visible group-hover:visible">
-                  <div className="plate dropdown py-1 shadow-2xl">
+                  <div className="plate dropdown dgn-menu py-1 shadow-2xl">
                     {link.menu.map((item) => (
                       <Link
                         key={item.href}
@@ -357,7 +378,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown dgn-menu shadow-2xl">
                 <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[11px] text-parchment-400">
                   Challenges
                 </div>
@@ -403,7 +424,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={unread} />
             </button>
             {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown dgn-menu shadow-2xl">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                   <span className="smallcaps text-[11px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
@@ -482,7 +503,7 @@ export function SiteHeader({ active }: { active?: string }) {
               <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
             </button>
             {menu === "profile" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown py-1 shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown dgn-menu py-1 shadow-2xl">
                 {user.isGuest && (
                   <>
                     <div className="px-4 pb-1 pt-2 text-[11px] leading-snug text-parchment-400">
