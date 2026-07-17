@@ -124,10 +124,6 @@ export default function LeaderboardPage() {
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <span className="eyebrow">Ranked ladder</span>
         <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">Leaderboard</h1>
-        <p className="mt-2 max-w-xl text-sm text-parchment-300">
-          The strongest players in each mode, ranked by rating. Buff and Nerf keep separate
-          ratings, so climb the board in the mode you play best.
-        </p>
 
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
