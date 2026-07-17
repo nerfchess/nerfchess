@@ -6,12 +6,17 @@
 //
 // Every play here is a staged SCENE (bigger than a badge/motif moment, smaller
 // than a god manifestation): a distinct entity / object staged board-wide,
-// ~1.4-2.0s, ONE shockwave, no letterboxing-scale drama. Owner size pass
-// ("animations are too small in general"): the central figure of each scene
-// now sits at ~26-31% of the 14x14 canvas ≈ ~45-55% of the visible board
-// (the crop is the central ~57% of the canvas), supporting props scaled to
-// match. Non-lead ("target") renders are compact per-square hits because
-// zone-fed cards mount one overlay per affected square.
+// ~1.6-2.2s, no letterboxing-scale drama. Flagship pass: the central figure
+// of each scene now sits at ~30-38% of the 14x14 canvas ≈ ~55-65% of the
+// visible board (the crop is the central ~57% of the canvas), every template
+// lands ONE unique physical SIGNATURE BEAT on top of its strike (the circle
+// closing, petrify creep, flash-freeze sheet, hang-time debris, rally horn,
+// root ripple, phantom after-images, tower chime, dealt after-images, fumbled
+// coin, spark fountain, gate surge, hoof-shock), and TIER-6 cards read
+// grander than tier-5: a second shock ring + board-edge glow keyed off the
+// flourish (TIER6 / GrandAccent — tier-5 plays keep ONE shockwave). Non-lead
+// ("target") renders are compact per-square hits because zone-fed cards mount
+// one overlay per affected square.
 //
 // THIRTEEN TEMPLATES, each parameterised by { palette, glyph }:
 //   WitchCircle — a hexwitch's sigil circle settles flat and ignites, candles
@@ -90,7 +95,8 @@ function Wash({ color, delayMs }: { color: string; delayMs: number }) {
   return <span className="grp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />;
 }
 
-/** THE shockwave ring — exactly one per play in this band. */
+/** THE shockwave ring — one per tier-5 play; tier-6 plays earn a second,
+ * later ring through GrandAccent below (flagship tier scaling). */
 function Boom({ delayMs, color, thickness = 3 }: { delayMs: number; color: string; thickness?: number }) {
   return (
     <span
@@ -507,16 +513,75 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   );
 }
 
+/* --- Tier-scaled weight (flagship pass) --------------------------------------
+   Tier-6 cards read GRANDER than tier-5 inside the same template: a second,
+   later shock ring plus a brief board-edge glow around the strike. Templates
+   read the weight off the card's flourish key — every tier-6 card in this
+   module carries one (the config objects stay untouched, so the audit parser
+   sees the same PLAYS table). */
+const TIER6 = new Set([
+  // WitchCircle
+  "eclipse", "sticky", "dominion", "exile", "grounded", "leadcast",
+  // StoneGaze
+  "hammer", "bastion", "pews", "contagion", "stoneshoes", "statue",
+  // ColdFront
+  "creepfrost", "bigchill", "pincer", "whiteout",
+  // SiegeRoll
+  "chain", "threebombs", "maul", "firestorm",
+  // WarBanner
+  "bulwark", "bridge", "gates", "praetorian",
+  // Grove
+  "roots",
+  // PhantomParade
+  "gossamer", "chooser",
+  // ClockSpire
+  "timestop", "rewind", "lostdays",
+  // CardRite
+  "nullseal", "death", "sidegame", "bothcards", "bargain", "riddle",
+  // ThiefHand
+  "siphon", "seize", "voidmaw", "emptypockets",
+  // CrownForge
+  "requeen", "ascension", "secondking", "leadcrown", "wings", "chainbreak",
+  // RiftGate
+  "mirror",
+  // BeastRush
+  "hunt", "dragon",
+]);
+
+/** Tier-6 accent: a board-edge glow frame (the crop is the central ~57% of
+ * the canvas) + a second, later shock ring. Renders nothing for tier-5. */
+function GrandAccent({ flourish, color, delayMs }: { flourish?: string; color: string; delayMs: number }) {
+  if (!flourish || !TIER6.has(flourish)) return null;
+  return (
+    <>
+      <span
+        className="grp-edgeglow absolute block"
+        style={{ left: "21.5%", top: "21.5%", width: "57%", height: "57%", borderRadius: "3%", border: `3px solid ${color}`, animationDelay: `${delayMs}ms` }}
+      />
+      <Boom delayMs={delayMs + 90} color={color} thickness={2} />
+    </>
+  );
+}
+
 /* =============================================================================
    Template 1: WitchCircle — a hexwitch's sigil circle settles flat over the
    board centre and ignites: rune rings, candles popping alight at the compass
    points, the card's glyph burning at its heart.
    ========================================================================== */
 const CANDLES = [
-  { l: 33, t: 30, d: 0 },
-  { l: 64, t: 30, d: 80 },
-  { l: 64, t: 60, d: 160 },
-  { l: 33, t: 60, d: 240 },
+  { l: 30, t: 27, d: 0 },
+  { l: 67, t: 27, d: 80 },
+  { l: 67, t: 62, d: 160 },
+  { l: 30, t: 62, d: 240 },
+];
+/* SIGNATURE: after the candles take, light runs the circle's square — four
+   rim-beams close candle to candle, sealing the working (rotate is the CSS
+   property, composing with the keyframed transform). */
+const CIRCLE_EDGES = [
+  { l: 33, t: 29.5, rot: "0deg", d: 0 },
+  { l: 51.5, t: 46, rot: "90deg", d: 90 },
+  { l: 33, t: 62.5, rot: "180deg", d: 180 },
+  { l: 14.5, t: 46, rot: "270deg", d: 270 },
 ];
 function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -527,8 +592,9 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
       {/* tell: stray hex-light gathers to the point the circle will claim */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.32)} left={40} top={36} w={20} h={18} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.8)} />
-      {/* the sigil circle, settling flat out of the air */}
-      <span className="grp-sigil absolute block" style={{ left: "27%", top: "24%", width: "46%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the sigil circle, settling flat out of the air (flagship pass: it
+          now spans over half the canvas — the working claims the BOARD) */}
+      <span className="grp-sigil absolute block" style={{ left: "23%", top: "20%", width: "54%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <circle cx="20" cy="20" r="17" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1.2" />
           <circle cx="20" cy="20" r="13.4" fill="none" stroke={tint(p2, 0.65)} strokeWidth="0.6" strokeDasharray="2.2 1.6" />
@@ -541,9 +607,26 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
         {/* the card's glyph, burning at the circle's heart */}
         <span className="grp-facein absolute block" style={{ left: "34%", top: "34%", width: "32%", height: "32%", animationDelay: `${delayMs + 460}ms` }}>{glyph}</span>
       </span>
+      {/* the circle CLOSES — rim-light runs candle to candle */}
+      {CIRCLE_EDGES.map((v, i) => (
+        <span
+          key={`e${i}`}
+          className="grp-beam absolute block"
+          style={{
+            left: `${v.l}%`,
+            top: `${v.t}%`,
+            width: "34%",
+            height: "0.9%",
+            rotate: v.rot,
+            background: `linear-gradient(90deg, ${tint(p1, 0.9)}, ${tint(p2, 0.45)})`,
+            transformOrigin: "0% 50%",
+            animationDelay: `${delayMs + 480 + v.d}ms`,
+          }}
+        />
+      ))}
       {/* candles popping alight around the circle */}
       {CANDLES.map((c, i) => (
-        <span key={i} className="grp-candle absolute block" style={{ left: `${c.l}%`, top: `${c.t}%`, width: "4.4%", height: "7.3%", animationDelay: `${delayMs + 320 + c.d}ms` }}>
+        <span key={i} className="grp-candle absolute block" style={{ left: `${c.l}%`, top: `${c.t}%`, width: "5%", height: "8.3%", animationDelay: `${delayMs + 320 + c.d}ms` }}>
           <svg viewBox="0 0 6 10" className="block h-full w-full" aria-hidden="true">
             <path d="M2.2 4.6 H3.8 V9.4 H2.2 Z" fill={tint(p2, 0.9)} />
             <path d="M3 0.6 C4.2 2 4.4 3 3 4.2 C1.6 3 1.8 2 3 0.6 Z" fill={p1} stroke={tint(p0, 0.8)} strokeWidth="0.4" {...SJ} />
@@ -978,10 +1061,11 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
           </span>
         </>
       )}
-      {/* ignition flare + hex sparks + the single curse-wave */}
+      {/* ignition flare + hex sparks + the curse-wave */}
       <Flash delayMs={delayMs + 720} color={tint(p1, 0.6)} left={42} top={41} w={16} h={11} />
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p2} cy={46} />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 960} />
       <Glint delayMs={delayMs + 1150} color={p1} left={48} top={40} />
       {/* settle: candle-smoke embers lift off the guttering circle */}
       <Afterglow delayMs={delayMs + 960} color={tint(p1, 0.28)} left={38} top={34} w={24} h={22} />
@@ -1003,8 +1087,9 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* tell: the boards shadow over and grit shivers where the bust will breach */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={37} top={62} w={26} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={41} top={30} w={18} h={16} />
-      {/* the bust, grinding up out of the boards */}
-      <span className="grp-rise absolute block" style={{ left: "36%", top: "20%", width: "28%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the bust, grinding up out of the boards (flagship pass: a third
+          taller — the gorgon now owns the skyline) */}
+      <span className="grp-rise absolute block" style={{ left: "33%", top: "15%", width: "34%", height: "60%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 24 40" className="block h-full w-full" aria-hidden="true">
           {/* serpent hair */}
           <path
@@ -1032,10 +1117,10 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <span
         className="grp-beam absolute block"
         style={{
-          left: "20%",
-          top: "35.5%",
-          width: "24%",
-          height: "3.6%",
+          left: "16%",
+          top: "33.5%",
+          width: "26%",
+          height: "4%",
           background: `linear-gradient(270deg, ${tint(p1, 0.9)}, transparent)`,
           transformOrigin: "100% 50%",
           animationDelay: `${delayMs + 520}ms`,
@@ -1044,13 +1129,26 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <span
         className="grp-beam absolute block"
         style={{
-          left: "56%",
-          top: "35.5%",
-          width: "24%",
-          height: "3.6%",
+          left: "58%",
+          top: "33.5%",
+          width: "26%",
+          height: "4%",
           background: `linear-gradient(90deg, ${tint(p1, 0.9)}, transparent)`,
           transformOrigin: "0% 50%",
           animationDelay: `${delayMs + 520}ms`,
+        }}
+      />
+      {/* SIGNATURE: the stone TAKES square by square — a grey creep-band
+          clicks across the middle ranks in the gaze's wake */}
+      <span
+        className="grp-creep absolute block"
+        style={{
+          left: "26%",
+          top: "40%",
+          width: "48%",
+          height: "24%",
+          background: `linear-gradient(90deg, transparent, ${tint("#8d8d94", 0.5)} 40%, ${tint(p0, 0.35)} 55%, ${tint("#8d8d94", 0.5)} 60%, transparent)`,
+          animationDelay: `${delayMs + 640}ms`,
         }}
       />
       {/* bespoke: Medusa's Verdict — the queen catches the gaze, stiffens, and
@@ -1101,10 +1199,11 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           <Glint delayMs={delayMs + 1300} color="#7fae5a" left={44} top={57} sizePct={4} />
         </>
       )}
-      {/* spalling stone chips + the single stone-shock */}
+      {/* spalling stone chips + the stone-shock */}
       <Flash delayMs={delayMs + 680} color={tint(p1, 0.55)} left={41} top={50} w={18} h={11} />
       <Sparks delayMs={delayMs + 720} fill={tint(p0, 0.95)} stroke={p2} cy={54} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 920} />
       <Glint delayMs={delayMs + 1120} color={p1} left={48} top={30} />
       {/* settle: masonry dust sifts down off the fresh stone */}
       <Afterglow delayMs={delayMs + 920} color={tint(p0, 0.3)} left={38} top={38} w={24} h={20} />
@@ -1148,8 +1247,9 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           }}
         />
       ))}
-      {/* the ice front itself: a wall of leaning icicles crossing the crop */}
-      <span className="grp-sweep absolute block" style={{ left: "24%", top: "22%", width: "32%", height: "54%", animationDelay: `${delayMs + 100}ms` }}>
+      {/* the ice front itself: a wall of leaning icicles crossing the crop
+          (flagship pass: taller and wider — a weather system, not a fence) */}
+      <span className="grp-sweep absolute block" style={{ left: "22%", top: "17%", width: "38%", height: "62%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 26 44" className="block h-full w-full" aria-hidden="true">
           <path
             d="M4 44 L2 12 L7 20 L8 2 L13 16 L15 6 L19 18 L21 10 L24 24 L24 44 Z"
@@ -1213,10 +1313,25 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           ))}
         </>
       )}
-      {/* rime flare + ice sparks + the single glacial shock */}
+      {/* SIGNATURE: FLASH-FREEZE — behind the front a glassy sheet snaps
+          across the mid-board in one take, catching the light along its edge */}
+      <span
+        className="grp-beam absolute block"
+        style={{
+          left: "22%",
+          top: "30%",
+          width: "56%",
+          height: "38%",
+          background: `linear-gradient(105deg, ${tint(p0, 0.28)}, ${tint("#ffffff", 0.3)} 48%, ${tint(p0, 0.22)} 52%, ${tint(p1, 0.18)})`,
+          transformOrigin: "0% 50%",
+          animationDelay: `${delayMs + 780}ms`,
+        }}
+      />
+      {/* rime flare + ice sparks + the glacial shock */}
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={44} top={42} w={17} h={12} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} />
       <Glint delayMs={delayMs + 1320} color={p1} left={52} top={34} />
       {/* settle: fine snow sifts down in the front's wake */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.26)} left={38} top={36} w={26} h={22} />
@@ -1240,8 +1355,8 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* tell: the ground shadows under the incoming engine's track */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={24} top={64} w={26} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={28} top={36} w={18} h={18} />
-      {/* the engine, rolling in and braking */}
-      <span className="grp-rollin absolute block" style={{ left: "24%", top: "30%", width: "28%", height: "38%", animationDelay: `${delayMs + 80}ms` }}>
+      {/* the engine, rolling in and braking (flagship pass: a quarter bigger) */}
+      <span className="grp-rollin absolute block" style={{ left: "21%", top: "25%", width: "34%", height: "46%", animationDelay: `${delayMs + 80}ms` }}>
         <svg viewBox="0 0 24 32" className="block h-full w-full" aria-hidden="true">
           {/* frame + wheels */}
           <path d="M3 26 L8 14 H16 L21 26 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
@@ -1267,11 +1382,11 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
         style={
           {
             left: "46%",
-            top: "30%",
-            width: "5.5%",
-            height: "5.5%",
-            "--dx": "420%",
-            "--dy": "-170%",
+            top: "28%",
+            width: "7%",
+            height: "7%",
+            "--dx": "360%",
+            "--dy": "-160%",
             animationDelay: `${delayMs + 660 + hold}ms`,
           } as CSSProperties
         }
@@ -1293,10 +1408,28 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           )}
         />
       )}
-      {/* strike flash on the far wing + debris + the single concussion */}
+      {/* SIGNATURE: the hit throws masonry with HANG-TIME — three chunks
+          kicked up over the impact stall mid-air before raining back down */}
+      {[
+        { dx: "-180%", dy: "-300%", d: 0 },
+        { dx: "40%", dy: "-380%", d: 50 },
+        { dx: "220%", dy: "-260%", d: 100 },
+      ].map((v, i) => (
+        <span
+          key={`hg${i}`}
+          className="grp-hang absolute block"
+          style={{ left: "66.5%", top: "42%", width: "3%", height: "3%", "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 1040 + hold + v.d}ms` } as CSSProperties}
+        >
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 6 L1.4 3 L4.5 1.2 L8.4 2.4 L8.8 5.6 L6 8.8 L3 8.2 Z" fill={tint(p2, 0.95)} stroke={p0} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {/* strike flash on the far wing + debris + the concussion */}
       <Flash delayMs={delayMs + 1000 + hold} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
       <Sparks delayMs={delayMs + 1040 + hold} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
       <Boom delayMs={delayMs + 1080 + hold} color={tint(p1, 0.85)} thickness={4} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} />
       <Glint delayMs={delayMs + 1360 + hold} color={p1} left={67} top={33} sizePct={7} />
       {/* settle: powder smoke drifts down off the impact */}
       <Afterglow delayMs={delayMs + 1200 + hold} color={tint(p1, 0.28)} left={56} top={32} w={22} h={18} />
@@ -1321,8 +1454,8 @@ function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={39} top={66} w={22} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={26} w={20} h={18} />
       {/* the flanking shield ranks, rising */}
-      {[24, 61].map((l, i) => (
-        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "46%", width: "15%", height: "20%", animationDelay: `${delayMs + 260 + i * 90}ms` }}>
+      {[21, 61].map((l, i) => (
+        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "44%", width: "18%", height: "24%", animationDelay: `${delayMs + 260 + i * 90}ms` }}>
           <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
             <path
               d="M2 11 V4 C2 2 4 1 6 1 C8 1 10 2 10 4 V11 Z M12 11 V4 C12 2 14 1 16 1 C18 1 20 2 20 4 V11 Z"
@@ -1335,8 +1468,8 @@ function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           </svg>
         </span>
       ))}
-      {/* the great banner, slamming in */}
-      <span className="grp-drop absolute block" style={{ left: "40%", top: "17%", width: "20%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the great banner, slamming in (flagship pass: a third taller) */}
+      <span className="grp-drop absolute block" style={{ left: "37%", top: "12%", width: "26%", height: "60%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 16 44" className="block h-full w-full" aria-hidden="true">
           <path d="M8 44 V1.6" stroke={p2} strokeWidth="1.3" strokeLinecap="round" />
           <circle cx="8" cy="1.6" r="1.1" fill={p1} />
@@ -1513,10 +1646,27 @@ function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           </span>
         </>
       )}
-      {/* the rally: flare + sparks + the single ward-wave */}
+      {/* SIGNATURE: the RALLY HORN — three sound-arcs roll off the standard's
+          finial, each wider and fainter than the last */}
+      {[0, 1, 2].map((i) => (
+        <span
+          key={`horn${i}`}
+          className="grp-tring absolute block rounded-full"
+          style={{
+            left: `${46 - i * 3}%`,
+            top: `${9 - i * 2}%`,
+            width: `${8 + i * 6}%`,
+            height: `${8 + i * 6}%`,
+            border: `${2.5 - i * 0.5}px solid ${tint(p1, 0.85 - i * 0.2)}`,
+            animationDelay: `${delayMs + 620 + i * 130}ms`,
+          }}
+        />
+      ))}
+      {/* the rally: flare + sparks + the ward-wave */}
       <Flash delayMs={delayMs + 760} color={tint(p1, 0.65)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 800} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 860} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1000} />
       <Glint delayMs={delayMs + 1180} color={p1} left={49} top={24} />
       {/* settle: pennant threads and rally-light sift down over the ranks */}
       <Afterglow delayMs={delayMs + 1000} color={tint(p1, 0.26)} left={38} top={34} w={24} h={22} />
@@ -1538,8 +1688,8 @@ function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* tell: the soil bulges and green light seeps up before the trunk breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.5)} left={37} top={64} w={26} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={44} w={20} h={18} />
-      {/* the great tree, heaving up */}
-      <span className="grp-rise absolute block" style={{ left: "31%", top: "18%", width: "38%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the great tree, heaving up (flagship pass: a quarter bigger) */}
+      <span className="grp-rise absolute block" style={{ left: "28%", top: "13%", width: "44%", height: "62%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
           {/* canopy */}
           <path
@@ -1673,10 +1823,33 @@ function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           <Glint delayMs={delayMs + 1280} color={p1} left={50} top={40} sizePct={3.4} />
         </>
       )}
-      {/* root-strike flare + the single verdant wave */}
+      {/* SIGNATURE: the ROOT RIPPLE — three root-runs shoot out from the
+          trunk's foot along the boards, lifting a seam of soil as they go */}
+      {[
+        { rot: "168deg", d: 0 },
+        { rot: "12deg", d: 90 },
+        { rot: "-28deg", d: 180 },
+      ].map((v, i) => (
+        <span
+          key={`rt${i}`}
+          className="grp-beam absolute block"
+          style={{
+            left: "50%",
+            top: "68%",
+            width: "22%",
+            height: "1.4%",
+            rotate: v.rot,
+            background: `linear-gradient(90deg, ${tint(p0, 0.95)}, ${tint(p2, 0.5)} 70%, transparent)`,
+            transformOrigin: "0% 50%",
+            animationDelay: `${delayMs + 560 + v.d}ms`,
+          }}
+        />
+      ))}
+      {/* root-strike flare + the verdant wave */}
       <Flash delayMs={delayMs + 700} color={tint(p1, 0.55)} left={42} top={52} w={16} h={11} />
       <Sparks delayMs={delayMs + 740} fill={p1} stroke={p2} cy={56} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 940} />
       <Glint delayMs={delayMs + 1130} color={p1} left={49} top={24} />
       {/* settle: pollen motes hang and sink in the canopy's shade */}
       <Afterglow delayMs={delayMs + 940} color={tint(p1, 0.26)} left={36} top={30} w={28} h={22} />
@@ -1690,9 +1863,9 @@ function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    behind a floating lantern that carries the card's glyph.
    ========================================================================== */
 const GHOSTS = [
-  { l: 26, t: 32, w: 12, d: 140 },
-  { l: 40, t: 27, w: 14, d: 0 },
-  { l: 58, t: 33, w: 12, d: 220 },
+  { l: 25, t: 31, w: 14, d: 140 },
+  { l: 40, t: 25, w: 17, d: 0 },
+  { l: 59, t: 32, w: 14, d: 220 },
 ];
 function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -1718,8 +1891,19 @@ function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProp
           </svg>
         </span>
       ))}
+      {/* SIGNATURE: each phantom trails an AFTER-IMAGE — a fainter echo of
+          itself gliding half a step behind */}
+      {GHOSTS.map((g, i) => (
+        <span key={`echo${i}`} className="absolute block" style={{ left: `${g.l - 5}%`, top: `${g.t + 1.5}%`, width: `${g.w * 0.85}%`, height: `${g.w * 2}%`, opacity: 0.4 }}>
+          <span className="grp-sweep absolute inset-0 block" style={{ animationDelay: `${delayMs + g.d + 160}ms` }}>
+            <svg viewBox="0 0 12 28" className="block h-full w-full" aria-hidden="true">
+              <path d="M6 1 C9.4 1 11 4 11 8 L11 22 L9 20 L7.5 24 L6 21 L4.5 24 L3 20 L1 22 L1 8 C1 4 2.6 1 6 1 Z" fill={tint(p1, 0.45)} {...SJ} />
+            </svg>
+          </span>
+        </span>
+      ))}
       {/* the leading lantern, the glyph shining inside it */}
-      <span className="grp-sweep absolute block" style={{ left: "66%", top: "26%", width: "10%", height: "22%", animationDelay: `${delayMs + 60}ms` }}>
+      <span className="grp-sweep absolute block" style={{ left: "65%", top: "24%", width: "12%", height: "26%", animationDelay: `${delayMs + 60}ms` }}>
         <svg viewBox="0 0 12 26" className="block h-full w-full" aria-hidden="true">
           <path d="M6 0.6 V4" stroke={tint(p2, 0.9)} strokeWidth="0.8" strokeLinecap="round" />
           <path d="M3 4.6 H9 L10 9 V19 L9 23 H3 L2 19 V9 Z" fill={tint(p1, 0.35)} stroke={tint(p2, 0.9)} strokeWidth="0.8" {...SJ} />
@@ -1855,6 +2039,7 @@ function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProp
       <Flash delayMs={delayMs + 880} color={tint(p1, 0.5)} left={44} top={40} w={15} h={11} />
       <Sparks delayMs={delayMs + 920} fill={p1} stroke={p2} cy={45} />
       <Boom delayMs={delayMs + 980} color={tint(p1, 0.8)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1120} />
       <Glint delayMs={delayMs + 1290} color={p1} left={57} top={30} />
       {/* settle: lantern-light wisps rise off the parade's wake */}
       <Afterglow delayMs={delayMs + 1120} color={tint(p1, 0.24)} left={36} top={32} w={28} h={22} />
@@ -1876,8 +2061,9 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       {/* tell: the tower's shadow stretches over the square before it rises */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={64} w={20} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={42} top={24} w={16} h={16} />
-      {/* the spire, rising */}
-      <span className="grp-rise absolute block" style={{ left: "41%", top: "18%", width: "18%", height: "50%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the spire, rising (flagship pass: it now scrapes the letter of the
+          crop, a proper campanile) */}
+      <span className="grp-rise absolute block" style={{ left: "39%", top: "11%", width: "22%", height: "60%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 18 50" className="block h-full w-full" aria-hidden="true">
           {/* peaked roof + body */}
           <path d="M9 0.8 L15.4 9 H2.6 Z" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="0.9" {...SJ} />
@@ -1918,9 +2104,9 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
           <Wash color={tint(p2, 0.4)} delayMs={delayMs + 780} />
           <span
             className="grp-hold absolute block rounded-full"
-            style={{ left: "44.4%", top: "24.4%", width: "11.2%", height: "5.6%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 700}ms` }}
+            style={{ left: "44.4%", top: "28.2%", width: "11.2%", height: "6.4%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 700}ms` }}
           />
-          <Glint delayMs={delayMs + 1500} color={p1} left={48} top={25} sizePct={5} />
+          <Glint delayMs={delayMs + 1500} color={p1} left={48} top={29} sizePct={5} />
         </>
       )}
       {/* bespoke: Time Rewind — the hours stream back the way they came */}
@@ -2007,9 +2193,19 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
         </>
       )}
       {/* the toll: flare + sparks + the single time-ring */}
+      {/* SIGNATURE: the tower CHIMES — two rings peal off the clock face at
+          the pendulum's extremes */}
+      {[0, 1].map((i) => (
+        <span
+          key={`chime${i}`}
+          className="grp-tring absolute block rounded-full"
+          style={{ left: `${45 - i * 2}%`, top: `${26 - i * 2}%`, width: `${10 + i * 4}%`, height: `${11 + i * 4}%`, border: `${2.5 - i * 0.5}px solid ${tint(p1, 0.85 - i * 0.2)}`, animationDelay: `${delayMs + 720 + i * 240}ms` }}
+        />
+      ))}
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={43} top={32} w={14} h={11} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={38} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} />
       <Glint delayMs={delayMs + 1320} color={p1} left={49} top={18} />
       {/* settle: loosed clock-dust — for Rewind it climbs back UP the hour */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.24)} left={40} top={26} w={20} h={20} />
@@ -2031,8 +2227,22 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* tell: the card's shadow grows on the boards as it falls */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={44} w={20} h={22} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={42} top={30} w={16} h={16} />
-      {/* the great card, dealt down */}
-      <span className="grp-drop absolute block" style={{ left: "39%", top: "24%", width: "22%", height: "46%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* SIGNATURE: the deal leaves AFTER-IMAGES — two fainter echoes of the
+          card chase it down out of the dealer's arc */}
+      {[
+        { l: 33, t: 16, o: 0.35, d: 40 },
+        { l: 30.5, t: 13, o: 0.2, d: 90 },
+      ].map((v, i) => (
+        <span key={`ai${i}`} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "28%", height: "54%", opacity: v.o }}>
+          <span className="grp-drop absolute inset-0 block" style={{ animationDelay: `${delayMs + 120 + v.d}ms` }}>
+            <svg viewBox="0 0 22 46" className="block h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="20" height="44" rx="2.4" fill={tint(p0, 0.6)} stroke={tint(p1, 0.7)} strokeWidth="1" />
+            </svg>
+          </span>
+        </span>
+      ))}
+      {/* the great card, dealt down (flagship pass: a quarter bigger) */}
+      <span className="grp-drop absolute block" style={{ left: "36%", top: "20%", width: "28%", height: "54%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 22 46" className="block h-full w-full" aria-hidden="true">
           <rect x="1" y="1" width="20" height="44" rx="2.4" fill={tint(p0, 0.92)} stroke={p1} strokeWidth="1.1" />
           <rect x="3.4" y="3.6" width="15.2" height="38.8" rx="1.4" fill="none" stroke={tint(p1, 0.55)} strokeWidth="0.6" />
@@ -2416,6 +2626,7 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 780} color={tint(p1, 0.6)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 820} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1020} />
       <Glint delayMs={delayMs + 1200} color={p1} left={54} top={27} />
       {/* settle: paper-fate flecks drift off the deal — Death's rise as souls */}
       <Afterglow delayMs={delayMs + 1020} color={tint(p1, 0.24)} left={40} top={32} w={20} h={22} />
@@ -2443,14 +2654,15 @@ function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <TellGlow delayMs={delayMs} color={tint(p1, 0.35)} left={40} top={34} w={16} h={16} />
       <TellShadow delayMs={delayMs + 60} color={tint(p2, 0.7)} left={58} top={40} w={24} h={12} />
       {/* the prize, gleaming where it sits */}
-      <span className="grp-facein absolute block" style={{ left: "42%", top: "36%", width: "12%", height: "20%", animationDelay: `${delayMs + 120}ms` }}>
+      <span className="grp-facein absolute block" style={{ left: "40%", top: "33%", width: "15%", height: "25%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 12 20" className="absolute inset-0 block h-full w-full" aria-hidden="true">
           <circle cx="6" cy="10" r="5.4" fill={tint(p1, 0.3)} stroke={tint(p1, 0.9)} strokeWidth="0.8" />
         </svg>
         <span className="absolute block" style={{ left: "22%", top: "33%", width: "56%", height: "34%" }}>{glyph}</span>
       </span>
-      {/* the shadow gauntlet, in and out with the goods */}
-      <span className="grp-grab absolute block" style={{ left: "48%", top: "32%", width: "30%", height: "26%", animationDelay: `${delayMs + 420}ms` }}>
+      {/* the shadow gauntlet, in and out with the goods (flagship pass: the
+          arm now spans a third of the canvas) */}
+      <span className="grp-grab absolute block" style={{ left: "45%", top: "28%", width: "37%", height: "33%", animationDelay: `${delayMs + 420}ms` }}>
         <svg viewBox="0 0 32 26" className="block h-full w-full" aria-hidden="true">
           {/* trailing arm, off the right edge */}
           <path d="M14 10 C20 7 26 7 32 9 L32 19 C26 21 20 20 14 18 Z" fill={tint(p2, 0.92)} stroke={tint(p0, 0.8)} strokeWidth="0.8" {...SJ} />
@@ -2659,9 +2871,21 @@ function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
         </>
       )}
       {/* the snap of the theft: flare + sparks + the single dark wave */}
+      {/* SIGNATURE: the thief FUMBLES ONE — a single coin spills from the
+          closing fist and bounces away across the boards */}
+      <span
+        className="grp-arcshot absolute block"
+        style={{ left: "52%", top: "42%", width: "3.2%", height: "3.2%", "--dx": "-260%", "--dy": "-140%", animationDelay: `${delayMs + 820}ms` } as CSSProperties}
+      >
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <circle cx="5" cy="5" r="4.2" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.7" />
+          <path d="M5 2.8 V7.2" stroke="#8a6a3a" strokeWidth="0.6" strokeLinecap="round" />
+        </svg>
+      </span>
       <Flash delayMs={delayMs + 820} color={tint(p1, 0.55)} left={42} top={38} w={15} h={11} />
       <Sparks delayMs={delayMs + 860} fill={p1} stroke={p0} cy={44} />
       <Boom delayMs={delayMs + 920} color={tint(p1, 0.8)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1060} />
       <Glint delayMs={delayMs + 1230} color={p1} left={47} top={36} />
       {/* settle: shadow-smoke curls up where the prize used to sit */}
       <Afterglow delayMs={delayMs + 1060} color={tint(p1, 0.22)} left={38} top={32} w={22} h={20} />
@@ -2683,8 +2907,8 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       {/* tell: forge-heat pools under the boards before the anvil breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={38} top={62} w={24} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.35)} left={40} top={44} w={20} h={16} />
-      {/* the anvil, grinding up */}
-      <span className="grp-rise absolute block" style={{ left: "38%", top: "42%", width: "24%", height: "24%", animationDelay: `${delayMs + 120}ms` }}>
+      {/* the anvil, grinding up (flagship pass: a quarter bigger) */}
+      <span className="grp-rise absolute block" style={{ left: "35%", top: "38%", width: "30%", height: "30%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
           <path d="M2 6 H19 C21.4 6 23 7.4 23 9 C20 10.6 17 10.6 15 9.6 L15.5 13 H8.5 L9 9.6 C7 11 4.6 11.4 2 10 Z" fill={tint(p2, 0.95)} stroke={tint(p0, 0.85)} strokeWidth="0.9" {...SJ} />
           <path d="M7 13 H17 L19 19 H5 Z M4 19 H20 V22.6 H4 Z" fill={tint(p2, 0.9)} stroke={tint(p0, 0.85)} strokeWidth="0.8" {...SJ} />
@@ -2692,7 +2916,7 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
         </svg>
       </span>
       {/* the hammer, falling onto the face */}
-      <span className="grp-swing absolute block" style={{ left: "52%", top: "22%", width: "16%", height: "24%", transformOrigin: "88% 88%", animationDelay: `${delayMs + 460}ms` }}>
+      <span className="grp-swing absolute block" style={{ left: "52%", top: "16%", width: "20%", height: "30%", transformOrigin: "88% 88%", animationDelay: `${delayMs + 460}ms` }}>
         <svg viewBox="0 0 16 24" className="block h-full w-full" aria-hidden="true">
           <path d="M13.4 21.6 L4.6 7.4" stroke={tint(p0, 0.95)} strokeWidth="1.6" strokeLinecap="round" />
           <rect x="0.8" y="2" width="9" height="6.4" rx="1" transform="rotate(-14 5.3 5.2)" fill={tint(p2, 0.95)} stroke={tint(p0, 0.85)} strokeWidth="0.8" />
@@ -2951,7 +3175,22 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
         )
       )}
       {/* the single forge-wave */}
+      {/* SIGNATURE: the stroke fires a FOUNTAIN — four forge sparks straight
+          up off the anvil face, hanging weightless at apex before the fall */}
+      {[
+        { dx: "-220%", dy: "-320%", d: 0 },
+        { dx: "-60%", dy: "-440%", d: 45 },
+        { dx: "100%", dy: "-420%", d: 90 },
+        { dx: "240%", dy: "-300%", d: 135 },
+      ].map((v, i) => (
+        <span
+          key={`ft${i}`}
+          className="grp-hang absolute block rounded-full"
+          style={{ left: "48.9%", top: "44%", width: "2.2%", height: "2.2%", background: i % 2 ? "#fff4d6" : tint(p1, 0.95), "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 760 + v.d}ms` } as CSSProperties}
+        />
+      ))}
       <Boom delayMs={delayMs + 940} color={tint(p1, 0.85)} thickness={4} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1080} />
       <Glint delayMs={delayMs + 1260} color={p1} left={49} top={27} />
       {/* settle: forge embers climb and gutter out over the cooling work */}
       <Afterglow delayMs={delayMs + 1080} color={tint(p1, 0.28)} left={38} top={36} w={24} h={20} />
@@ -2974,9 +3213,9 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={35} top={40} w={10} h={20} />
       <TellGlow delayMs={delayMs + 60} color={tint(p1, 0.3)} left={55} top={40} w={10} h={20} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.7)} />
-      {/* the twin obelisks */}
-      {[36, 58].map((l, i) => (
-        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "26%", width: "6%", height: "40%", animationDelay: `${delayMs + 120 + i * 90}ms` }}>
+      {/* the twin obelisks (flagship pass: taller, set wider apart) */}
+      {[33, 60].map((l, i) => (
+        <span key={i} className="grp-rise absolute block" style={{ left: `${l}%`, top: "21%", width: "7%", height: "46%", animationDelay: `${delayMs + 120 + i * 90}ms` }}>
           <svg viewBox="0 0 8 40" className="block h-full w-full" aria-hidden="true">
             <path d="M4 0.8 L7 6 L6.4 39 H1.6 L1 6 Z" fill={tint(p2, 0.92)} stroke={tint(p0, 0.85)} strokeWidth="0.7" {...SJ} />
             <path d="M4 8 V13 M2.8 17 H5.2 M4 21 V26" stroke={tint(p1, 0.85)} strokeWidth="0.7" strokeLinecap="round" />
@@ -2987,16 +3226,30 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <span
         className="grp-pane absolute block"
         style={{
-          left: "41%",
-          top: "30%",
-          width: "18%",
-          height: "32%",
+          left: "40.5%",
+          top: "25%",
+          width: "19%",
+          height: "42%",
           background: `linear-gradient(180deg, ${tint(p1, 0.6)}, ${tint(p0, 0.35)} 60%, ${tint(p1, 0.5)})`,
           animationDelay: `${delayMs + 420}ms`,
         }}
       />
+      {/* SIGNATURE: the GATE SURGES — a column of aurora light vents straight
+          up out of the pane the instant it seals */}
+      <span
+        className="grp-ray absolute block"
+        style={{
+          left: "46.5%",
+          top: "8%",
+          width: "7%",
+          height: "18%",
+          background: `linear-gradient(0deg, ${tint(p1, 0.85)}, transparent)`,
+          transformOrigin: "50% 100%",
+          animationDelay: `${delayMs + 700}ms`,
+        }}
+      />
       {/* the card's glyph, shining through the gate */}
-      <span className="grp-facein absolute block" style={{ left: "45%", top: "38%", width: "10%", height: "16%", animationDelay: `${delayMs + 620}ms` }}>{glyph}</span>
+      <span className="grp-facein absolute block" style={{ left: "44.5%", top: "36%", width: "11%", height: "19%", animationDelay: `${delayMs + 620}ms` }}>{glyph}</span>
       {/* bespoke: Mirror of Souls — two reflections trade places THROUGH the
           glass, each dimming as it passes the silvered pane */}
       {flourish === "mirror" && (
@@ -3122,6 +3375,7 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 800} color={tint(p1, 0.6)} left={43} top={42} w={14} h={11} />
       <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 900} color={tint(p1, 0.85)} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040} />
       <Glint delayMs={delayMs + 1220} color={p1} left={49} top={31} />
       {/* settle: gate-light motes float up as the pane lets go */}
       <Afterglow delayMs={delayMs + 1040} color={tint(p1, 0.26)} left={39} top={32} w={22} h={24} />
@@ -3162,8 +3416,21 @@ function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           </svg>
         )}
       />
-      {/* the beast, at full gallop */}
-      <span className="grp-sweep-fast absolute block" style={{ left: "32%", top: "34%", width: "30%", height: "26%", animationDelay: `${delayMs + 140}ms` }}>
+      {/* SIGNATURE: HOOF-SHOCK — three dust rings pop along the charge line
+          in the beast's wake, marking every stride */}
+      {[
+        { l: 28, d: 340 },
+        { l: 42, d: 490 },
+        { l: 56, d: 640 },
+      ].map((v, i) => (
+        <span
+          key={`hoof${i}`}
+          className="grp-tring absolute block rounded-full"
+          style={{ left: `${v.l}%`, top: "56%", width: "7%", height: "4%", border: `2px solid ${tint(p2, 0.75)}`, animationDelay: `${delayMs + v.d}ms` }}
+        />
+      ))}
+      {/* the beast, at full gallop (flagship pass: a quarter bigger) */}
+      <span className="grp-sweep-fast absolute block" style={{ left: "29%", top: "29%", width: "38%", height: "33%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 32 26" className="block h-full w-full" aria-hidden="true">
           {/* body low and driving */}
           <path d="M6 16 C8 10 14 8 20 9 L24 7 C26 5.6 28 6 29.4 7.6 L27 10 C28 12 27 15 24.5 16.5 L25.5 21 L22.5 20.5 L21 17.5 L12 18 L11 21.5 L8 21 L8.6 17.6 C7.4 17.2 6.4 16.8 6 16 Z" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="0.9" {...SJ} />
@@ -3253,6 +3520,7 @@ function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 820 + hold} color={tint(p1, 0.7)} left={56} top={38} w={16} h={12} />
       <Sparks delayMs={delayMs + 860 + hold} fill={p1} stroke={p2} cx={63} cy={43} />
       <Boom delayMs={delayMs + 900 + hold} color={tint(p1, 0.85)} thickness={4} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} />
       <Glint delayMs={delayMs + 1220 + hold} color={p1} left={62} top={33} />
       {/* settle: the kicked-up trail dust sinks back to the boards */}
       <Afterglow delayMs={delayMs + 1040 + hold} color={tint(p1, 0.22)} left={44} top={34} w={26} h={18} />

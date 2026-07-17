@@ -12,6 +12,7 @@ import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
+import { FriendsPanel } from "@/components/FriendsPanel";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
@@ -341,20 +342,12 @@ function LobbyInner() {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="space-y-5 min-w-0 stagger-in">
-            {tab === "friends" && (
-            /* Set up a private game with a specific person: pick a clock and
+            {/* Set up a private game with a specific person: pick a clock and
                 mode, create + share the code (or challenge a named friend), or
-                join with a code you were given — all without leaving /lobby. */
-            <div role="tabpanel" id="lobby-panel-friends" aria-labelledby="lobby-tab-friends" className="plate p-5 sm:p-6">
-              <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
-                Play a friend
-              </SectionTitle>
-              <p className="mt-2 mb-5 text-xs text-parchment-400">
-                Create a game and share the code, or enter the one you were given.
-              </p>
-              <FriendGameSetup />
-            </div>
-            )}
+                join with a code you were given — all without leaving /lobby.
+                The friends list lives alongside so one-tap Challenge and the
+                code flow share the tab. */}
+            {tab === "friends" && <FriendsTab />}
 
             {tab === "challenges" && (
             /* Open challenges: players waiting in a quick-pairing pool plus
@@ -579,7 +572,7 @@ function LobbyInner() {
                   <button
                     type="button"
                     onClick={() => setShowAllPlayers((v) => !v)}
-                    className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                    className="mt-2 min-h-[44px] sm:min-h-0 w-full btn-ghost press px-3 py-2 text-xs font-medium text-parchment-300"
                   >
                     {showAllPlayers
                       ? "Show fewer"
@@ -642,7 +635,7 @@ function LobbyInner() {
                     <button
                       type="button"
                       onClick={() => setTab("watch")}
-                      className="mt-2 min-h-[44px] sm:min-h-0 w-full border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-300 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                      className="mt-2 min-h-[44px] sm:min-h-0 w-full btn-ghost press px-3 py-2 text-xs font-medium text-parchment-300"
                     >
                       {`See all ${lobby.games.length} live games`}
                     </button>
@@ -755,6 +748,36 @@ const SECTION_TINTS = {
   sun: "border-sun/30 bg-sun/10 text-sun-glow",
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
+
+// The Friends tab: the one obvious place for playing with friends. The setup
+// flow (clock, mode, create + share a code, join by code) sits left and the
+// friends list with its one-tap Challenge sits right on lg+; below that they
+// stack with setup first. FriendGameSetup's own inline FriendsPanel is
+// suppressed here (showFriends={false}) so the list renders exactly once.
+// On the direct-challenge flow (?challenge=name) the setup panel is already
+// about one opponent, so the list stands down — same as the old inline rule.
+function FriendsTab() {
+  const { challenging } = useFriendGame();
+  return (
+    <div
+      role="tabpanel"
+      id="lobby-panel-friends"
+      aria-labelledby="lobby-tab-friends"
+      className={"min-w-0 " + (challenging ? "" : "grid gap-5 lg:grid-cols-2 lg:items-start")}
+    >
+      <div className="plate dgn-rivets p-5 sm:p-6">
+        <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
+          Play a friend
+        </SectionTitle>
+        <p className="mt-2 mb-5 text-xs text-parchment-400">
+          Challenge a friend directly — share a code or pick from your list.
+        </p>
+        <FriendGameSetup showFriends={false} />
+      </div>
+      {!challenging && <FriendsPanel />}
+    </div>
+  );
+}
 
 function SectionTitle({
   tint,
@@ -903,7 +926,7 @@ function LobbyRailError({ message, onRetry }: { message: string; onRetry: () => 
       <button
         type="button"
         onClick={onRetry}
-        className="min-h-[44px] sm:min-h-0 border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 text-xs font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+        className="min-h-[44px] sm:min-h-0 btn-ghost press px-3 py-2 text-xs font-medium text-parchment-200"
       >
         Retry
       </button>

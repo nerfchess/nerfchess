@@ -1348,6 +1348,21 @@ html[data-anim="off"] .fx-cast-stamp {
 html[data-anim="off"] .fx-cast {
   display: none !important;
 }
+/* Cast escalation chrome (tier 6+ edge pulse / vignette / letterbox bars)
+   lives inside .fx-cast and is hidden with it; the ApexVeil is portaled to
+   document.body, so it needs its own guard (it is ALSO never rendered by
+   ApexVeil's JS gate under data-anim off — this is the belt to that brace). */
+html[data-anim="off"] .fx-cast-veil {
+  display: none !important;
+}
+html[data-anim="off"] .fx-cast-edgepulse,
+html[data-anim="off"] .fx-cast-vignette,
+html[data-anim="off"] .fx-cast-bar,
+html[data-anim="off"] .fx-veil-vig,
+html[data-anim="off"] .fx-veil-mote {
+  animation: none !important;
+  opacity: 0 !important;
+}
 html[data-anim="off"] .fx-board-shake {
   animation: none !important;
 }
@@ -1534,6 +1549,63 @@ html[data-anim="off"] .fx-one-shot {
   100% { opacity: 0; }
 }
 .fx-cast-dim { animation: fx-cast-dim calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- Tier-scaled cast escalation (flagship overhaul, part 2) -----------------
+   Additive chrome per tier rung (CastEscalation in BoardEffects.tsx): the
+   tier-6 board-edge glow pulse, the tier-7 deeper vignette, the tier-9/10
+   letterbox bars over the crop, and the ApexVeil beyond the board (a portal
+   to document.body: full-viewport vignette breath + rising motes). Everything
+   transform/opacity-only, one-shot, --fx-dur scaled; the veil is ALSO gated in
+   JS (never rendered under data-anim off or below FX dial Normal). */
+
+/* Tier 6+: the board's edges catch the card's light — a double glow pulse.
+   The box-shadow is static; only opacity animates. */
+@keyframes fx-cast-edgepulse {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  40% { opacity: 0.35; }
+  62% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.fx-cast-edgepulse { animation: fx-cast-edgepulse calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Tier 7+: the deeper vignette (epic). Darker than the wash, lighter than the
+   marquee dim (board legibility: edge maximum ~0.42, center transparent). */
+@keyframes fx-cast-vignette {
+  0% { opacity: 0; }
+  22% { opacity: 1; }
+  76% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.fx-cast-vignette { animation: fx-cast-vignette calc(1.4s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Tier 9-10: the letterbox moment — the bars slide over the crop for the
+   climax (~1s held), then release. transform-origin set inline per bar. */
+@keyframes fx-cast-bar {
+  0% { opacity: 0; transform: scaleY(0); }
+  14% { opacity: 1; transform: scaleY(1); }
+  76% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0); }
+}
+.fx-cast-bar { animation: fx-cast-bar calc(1.6s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both; }
+
+/* ApexVeil: the full-viewport vignette breathing in from the edges... */
+@keyframes fx-veil-vig {
+  0% { opacity: 0; transform: scale(1.06); }
+  24% { opacity: 1; transform: scale(1); }
+  70% { opacity: 0.7; transform: scale(1.01); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.fx-veil-vig { animation: fx-veil-vig calc(2.2s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+
+/* ...and its motes rising up the viewport flanks (vh units so the climb reads
+   at page scale, not element scale). */
+@keyframes fx-veil-mote {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  14% { opacity: 0.9; transform: translateY(-6vh) scale(1); }
+  100% { opacity: 0; transform: translateY(-44vh) scale(0.8); }
+}
+.fx-veil-mote { animation: fx-veil-mote calc(2.2s * var(--fx-dur, 1)) ease-out both; }
 
 /* Twin light beams raking across the darkened board (marquee). */
 @keyframes fx-cast-beam {

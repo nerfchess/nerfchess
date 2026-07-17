@@ -6,12 +6,18 @@
 //   build-up      — board-wide tinted wash + a fan of god-rays / gathering dark
 //   manifestation — a COLOSSAL central SVG entity enters the board
 //   climax        — touchdown flare + spark burst + shockwave ring(s) that
-//                   sweep past the board edges
-//   aftermath     — a brief hanging glint
-// Total length stays within ~2.5s (the two APEX tier-9 set pieces below may
-// run to ~3.2s). Non-lead ("target") renders are compact
-// per-square hits (glyph pop + ring + sparks) because zone-fed cards mount one
-// overlay per affected square.
+//                   sweep past the board edges, plus ONE physical SIGNATURE
+//                   DEVICE unique to each template (flagship pass: ground
+//                   split, hanging debris, forked bolts, jaw snap, dark tear,
+//                   banner shadows, gyroscoping ring, frost fog, spark
+//                   fountain, petrify scan, board-wide clock ghost)
+//   aftermath     — afterglow + drifting ash + slow embers with hang-time
+// Tier-scaled weight: tier-8 plays add a held rim vignette + one extra
+// shockwave over tier-7 (see T8/heavy below); the APEX set pieces letterbox.
+// Total length: tier 7 ~2.6-2.9s, tier 8 ~3.0s, apex ~3.5s — all fire-and-
+// forget overlays that never block input. Non-lead ("target") renders are
+// compact per-square hits (glyph pop + ring + sparks) because zone-fed cards
+// mount one overlay per affected square.
 //
 // THIRTEEN TEMPLATES, each parameterised by { palette, glyph }:
 //   GodDescent    — haloed robed deity descends in a 5-ray god-fan
@@ -341,15 +347,15 @@ function Tell({ hex, delayMs, cy = 52 }: { hex: string; delayMs: number; cy?: nu
     <>
       <span
         className="gp-dim absolute inset-0 block"
-        style={{ background: "rgba(6,6,12,0.6)", animationDelay: `${delayMs}ms` }}
+        style={{ background: "rgba(6,6,12,0.72)", animationDelay: `${delayMs}ms` }}
       />
       <span
         className="gp-rumble absolute block"
         style={{
-          left: "18%",
+          left: "14%",
           top: `${Math.min(cy + 9, 68)}%`,
-          width: "64%",
-          height: "1.1%",
+          width: "72%",
+          height: "1.3%",
           background: `linear-gradient(90deg, transparent, ${tint(hex, 0.85)} 28%, ${tint(hex, 0.85)} 72%, transparent)`,
           animationDelay: `${delayMs + 40}ms`,
         }}
@@ -429,7 +435,83 @@ function Settle({
           </svg>
         </span>
       ))}
+      {/* flagship pass: three slow embers with hang-time stretch the aftermath
+          another ~0.7s, each stalling mid-climb before winking out */}
+      {EMBER_HANG.map((v, i) => (
+        <span
+          key={`e${i}`}
+          className="gp-emberhang absolute block rounded-full"
+          style={
+            {
+              left: `${cx + v.l}%`,
+              top: `${cy - 2}%`,
+              width: "1.6%",
+              height: "1.6%",
+              background: tint(hex, i % 2 ? 0.9 : 0.65),
+              "--dx": v.dx,
+              animationDelay: `${delayMs + 260 + v.d}ms`,
+            } as CSSProperties
+          }
+        />
+      ))}
     </>
+  );
+}
+
+const EMBER_HANG = [
+  { l: -7, dx: "-90%", d: 0 },
+  { l: 6, dx: "110%", d: 220 },
+  { l: -1, dx: "40%", d: 440 },
+];
+
+/* --- Tier-scaled weight (flagship pass) --------------------------------------
+   Tier-8 plays land HEAVIER than tier-7: a held rim vignette plus one extra
+   shockwave. Shared templates read the weight off the card's flourish key
+   (every tier-8 card in a shared template carries one — see T8 below); the
+   three templates whose keyless baseline card IS the tier-8 card (AbyssMaw /
+   buff_plunder, CelestialRing / total_warp, ChronoLord / endless_turn) treat
+   keyless as heavy. The apex scenes and tier-8 bespoke scenes opt in directly. */
+const T8 = new Set([
+  "aegis_dome", // absolute_aegis
+  "draft_seize", // draft_supremacy
+  "twin_thrall", // mass_mind_control
+  "ascension", // transcendence
+  "triple_rift", // sundering
+  "crown_rain", // queen_storm
+  "double_void", // absolute_nullify
+  "board_reborn", // genesis
+  "matter_rewrite", // reality_warp
+]);
+function heavy(flourish: string | undefined, keylessIsHeavy = false): boolean {
+  return flourish ? T8.has(flourish) : keylessIsHeavy;
+}
+
+/** The tier-8 / apex rim vignette: the board's edges darken and HOLD through
+ * the strike (opacity-only inset radial gradient). */
+function Vignette({ delayMs }: { delayMs: number }) {
+  return (
+    <span
+      className="gp-vignette absolute inset-0 block"
+      style={{ background: "radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(4,4,10,0.85) 82%)", animationDelay: `${delayMs}ms` }}
+    />
+  );
+}
+
+/** The incoming entity's shadow sweeping the board during the tell (also the
+ * banner shadows of HostMarch). Soft skewed band, transform/opacity only. */
+function ShadowPass({ delayMs, top = 40, height = 16, alpha = 0.4 }: { delayMs: number; top?: number; height?: number; alpha?: number }) {
+  return (
+    <span
+      className="gp-shadowpass absolute block rounded-full"
+      style={{
+        left: "24%",
+        top: `${top}%`,
+        width: "52%",
+        height: `${height}%`,
+        background: `rgba(5,5,12,${alpha})`,
+        animationDelay: `${delayMs}ms`,
+      }}
+    />
   );
 }
 
@@ -528,6 +610,9 @@ function GodDescent({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={56} />
+      {/* the deity's shadow falls across the ranks before it breaks the sky */}
+      <ShadowPass delayMs={delayMs + 40} top={46} height={18} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       <RayFan hex={p1} delayMs={delayMs} />
       {/* the colossal deity, descending into the light */}
       <span className="gp-descend absolute block" style={{ left: "33%", top: "16%", width: "34%", height: "56%", animationDelay: `${delayMs + 180}ms` }}>
@@ -557,8 +642,23 @@ function GodDescent({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
         style={{ left: "34%", top: "60%", width: "32%", height: "18%", background: tint(p1, 0.8), animationDelay: `${delayMs + 520}ms` }}
       />
       <Sparks delayMs={delayMs + 560} fill={p1} stroke={p2} sizePct={9} cy={58} />
+      {/* SIGNATURE: the landing splits the ground — a light-crack star tears
+          open under the deity's feet and glows through the settle */}
+      <span className="gp-crack absolute block" style={{ left: "31%", top: "56%", width: "38%", height: "16%", animationDelay: `${delayMs + 540}ms` }}>
+        <svg viewBox="0 0 38 16" className="block h-full w-full" aria-hidden="true">
+          <path
+            d="M19 8 L4 5 M19 8 L2 11 M19 8 L12 15 M19 8 L26 15.5 M19 8 L34 4.5 M19 8 L36 10.5 M19 8 L16 1.5 M19 8 L23 1"
+            fill="none"
+            stroke={tint(p1, 0.95)}
+            strokeWidth="1"
+            {...SJ}
+          />
+          <path d="M19 8 L9 6.4 M19 8 L29 12" stroke="#fff4d6" strokeWidth="0.5" strokeLinecap="round" />
+        </svg>
+      </span>
       <Boom delayMs={delayMs + 600} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 720} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 850} color={tint(p2, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* draft_tyranny: the tyrant's decree — both next card-backs rise beside
           the deity and an iron crown clamps down onto each (the drafts are
@@ -874,8 +974,26 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* rubble kicked up as the ground splits */}
       <Lobs delayMs={delayMs + 120} fill={tint(p0, 0.95)} stroke={p2} />
+      {/* SIGNATURE: three slabs LIFT off the breaking ground, hang a beat
+          weightless in the titan's updraft, then slam back down past the rim */}
+      {[
+        { l: 30, dx: "-110%", d: 0 },
+        { l: 50, dx: "30%", d: 130 },
+        { l: 66, dx: "120%", d: 260 },
+      ].map((v, i) => (
+        <span
+          key={`h${i}`}
+          className="gp-hangdrop absolute block"
+          style={{ left: `${v.l}%`, top: "60%", width: "5.5%", height: "4.5%", "--dx": v.dx, animationDelay: `${delayMs + 420 + v.d}ms` } as CSSProperties}
+        >
+          <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 6.5 L2 2.5 L5.5 1 L9 3 L8.5 6 L5 7.4 Z" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+      ))}
       {/* the titan shouldering up from below */}
       <span className="gp-rise absolute block" style={{ left: "32%", top: "20%", width: "36%", height: "56%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 36 44" className="block h-full w-full" aria-hidden="true">
@@ -900,6 +1018,7 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Sparks delayMs={delayMs + 640} fill={p1} stroke={p2} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 680} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 800} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 930} color={tint(p2, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* great_divide: one full rank turns to a crenellated stone wall that
           rises board-wide and seals with a glowing seam. */}
@@ -1015,6 +1134,9 @@ function SkyWrath({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={60} />
+      {/* the storm front's shadow rolls over the ranks ahead of the bank */}
+      <ShadowPass delayMs={delayMs + 30} top={44} height={20} alpha={0.45} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* the cloud bank + storm-god torso, boiling in at the top */}
       <span className="gp-descend absolute block" style={{ left: "16%", top: "9%", width: "68%", height: "32%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 48 22" className="block h-full w-full" aria-hidden="true">
@@ -1049,6 +1171,24 @@ function SkyWrath({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           />
         </svg>
       </span>
+      {/* SIGNATURE: the bolt FORKS — two jagged afterimage strokes restrike a
+          half-beat behind the main hit, splayed off the same cloud wound */}
+      {[
+        { rot: "-13deg", l: 38, o: 0.55, d: 90 },
+        { rot: "11deg", l: 49, o: 0.4, d: 170 },
+      ].map((v, i) => (
+        <span
+          key={`f${i}`}
+          className="absolute block"
+          style={{ left: `${v.l}%`, top: "30%", width: "11%", height: "32%", opacity: v.o, transform: `rotate(${v.rot})`, transformOrigin: "50% 0%" }}
+        >
+          <span className="gp-bolt absolute inset-0 block" style={{ animationDelay: `${delayMs + 480 + v.d}ms` }}>
+            <svg viewBox="0 0 12 32" className="block h-full w-full" aria-hidden="true">
+              <path d="M7 0 L3 12 L6.4 13 L2 24 L5.5 24.8 L3.4 32 L10 18 L6.4 17 L10.5 6 L7.6 5.4 L9 0 Z" fill={p2} {...SJ} />
+            </svg>
+          </span>
+        </span>
+      ))}
       {/* strike flash + sparks + thunder-shock rings */}
       <span
         className="gp-flash absolute block rounded-full"
@@ -1057,6 +1197,7 @@ function SkyWrath({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Sparks delayMs={delayMs + 660} fill={p2} stroke={p1} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 700} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 820} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 950} color={tint(p1, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* scorched_earth: the strike leaves a burning killing-field — a charred
           band sears across the middle ranks, flame licks stand up out of it,
@@ -1150,6 +1291,9 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* gathering darkness instead of light */}
       <Wash color={tint(p2, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={46} />
+      {/* something vast passes beneath the boards before the rift opens */}
+      <ShadowPass delayMs={delayMs + 30} top={38} height={18} alpha={0.5} />
+      {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
       {/* the vast void maw, yawning open mid-board */}
       <span className="gp-maw absolute block" style={{ left: "29%", top: "32%", width: "42%", height: "29%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 44 26" className="block h-full w-full" aria-hidden="true">
@@ -1189,6 +1333,22 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           }
         />
       ))}
+      {/* SIGNATURE: the maw BITES — two rows of void-teeth close over the rift
+          in two hard snaps before the implosion */}
+      {[
+        { top: 34, origin: "50% 0%", path: "M0 0 H30 V1.5 L27 2 L25.5 6 L23.5 2 L21 2.4 L19.5 7 L17 2.6 L15 3 L13 7.5 L11.5 2.6 L9 2.4 L7 6 L5.5 2 L3 1.8 Z" },
+        { top: 52, origin: "50% 100%", path: "M0 9 H30 V7.5 L27 7 L25.5 3 L23.5 7 L21 6.6 L19.5 2 L17 6.4 L15 6 L13 1.5 L11.5 6.4 L9 6.6 L7 3 L5.5 7 L3 7.2 Z" },
+      ].map((v, i) => (
+        <span
+          key={`j${i}`}
+          className="gp-jawsnap absolute block"
+          style={{ left: "35%", top: `${v.top}%`, width: "30%", height: "7%", transformOrigin: v.origin, animationDelay: `${delayMs + 520 + i * 40}ms` }}
+        >
+          <svg viewBox="0 0 30 9" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d={v.path} fill={tint(p2, 0.95)} stroke={tint(p1, 0.7)} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
+      ))}
       {/* implosion pulse + inverse shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
@@ -1197,6 +1357,7 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Sparks delayMs={delayMs + 740} fill={p0} stroke={p1} sizePct={6.5} cy={47} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 900} color={tint(p0, 0.8)} />
+      {heavy(flourish, true) && <Boom delayMs={delayMs + 1030} color={tint(p1, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* grand_nullify: the opponent's hanging buff-sigils are each slashed
           through, and their dead husks are dragged down into the maw. */}
@@ -1272,6 +1433,9 @@ function ReaperSweep({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
     <Stage>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
+      {/* the reaper's shadow strides the ranks a beat ahead of the reaper */}
+      <ShadowPass delayMs={delayMs + 20} top={50} height={16} alpha={0.5} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* the reaper, striding across the crop */}
       <span className="gp-stride absolute block" style={{ left: "28%", top: "14%", width: "38%", height: "56%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 34 44" className="block h-full w-full" aria-hidden="true">
@@ -1302,6 +1466,14 @@ function ReaperSweep({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
           <path d="M2 26 C14 32 30 32 42 24 C32 28 16 28 6 22 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.8" {...SJ} />
         </svg>
       </span>
+      {/* SIGNATURE: the sweep leaves a WOUND — a dark tear hangs along the
+          scythe's arc, edged in pale light, and only seals as the dust settles */}
+      <span className="gp-tear absolute block" style={{ left: "25%", top: "48%", width: "50%", height: "10%", animationDelay: `${delayMs + 720}ms` }}>
+        <svg viewBox="0 0 50 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 4 C14 9.5 36 9.5 49 3 C37 6.5 15 6.5 1 4 Z" fill="rgba(6,4,12,0.95)" stroke={tint(p1, 0.7)} strokeWidth="0.5" {...SJ} />
+          <path d="M6 5.2 C18 8 34 8 45 4.4" fill="none" stroke={tint(p2, 0.45)} strokeWidth="0.4" />
+        </svg>
+      </span>
       {/* harvest flare + sparks + graven shockwaves */}
       <span
         className="gp-flash absolute block rounded-full"
@@ -1310,6 +1482,7 @@ function ReaperSweep({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p0} sizePct={6.5} cy={61} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 920} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 1050} color={tint(p2, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* peace_of_the_grave: the dead enforce the truce — headstones rise in
           a cordon ring around the king and no blade may pass it. */}
@@ -1431,6 +1604,11 @@ function HostMarch({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={62} />
+      {/* SIGNATURE: the banners' shadows pass over the board FIRST — two long
+          shades sweeping the ranks before the host itself crosses */}
+      <ShadowPass delayMs={delayMs + 20} top={30} height={13} alpha={0.45} />
+      <ShadowPass delayMs={delayMs + 200} top={50} height={13} alpha={0.35} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* the war-host, marching across the board width */}
       <span className="gp-march absolute block" style={{ left: "10%", top: "31%", width: "80%", height: "33%", animationDelay: `${delayMs + 100}ms` }}>
         <svg viewBox="0 0 64 26" className="block h-full w-full" aria-hidden="true">
@@ -1470,6 +1648,7 @@ function HostMarch({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 1130} color={tint(p2, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* grand_retreat: the host does an about-face — knight, bishop and rook
           bob back the way they came while the home rank lights to receive
@@ -1569,6 +1748,15 @@ function CelestialRing({ palette, glyph, lead, delayMs, flourish }: TemplateProp
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={50} />
+      {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
+      {/* SIGNATURE: the ring arrives GYROSCOPING — it tips edge-on out of the
+          sky, precesses in 3D, and locks flat just as the true ring settles */}
+      <span className="gp-gyro absolute block" style={{ left: "20%", top: "20%", width: "60%", height: "60%", animationDelay: `${delayMs + 40}ms` }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17.5" fill="none" stroke={tint(p2, 0.75)} strokeWidth="1" />
+          <circle cx="20" cy="20" r="14" fill="none" stroke={tint(p1, 0.45)} strokeWidth="0.5" strokeDasharray="2.6 1.7" />
+        </svg>
+      </span>
       {/* the vast rune ring, settling flat out of the sky */}
       <span className="gp-ringset absolute block" style={{ left: "20%", top: "20%", width: "60%", height: "60%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -1601,6 +1789,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, flourish }: TemplateProp
       />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 940} color={tint(p2, 0.8)} />
+      {heavy(flourish, true) && <Boom delayMs={delayMs + 1070} color={tint(p0, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* genesis: inside the ring the opening position re-forms — two fresh
           ranks click into place and the first green shoot of the new game
@@ -1810,6 +1999,7 @@ function FrostTitan({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* frost panes wiping across the board */}
       {PANES.map((p, i) => (
         <span
@@ -1854,6 +2044,26 @@ function FrostTitan({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={8} cy={62} />
       <Boom delayMs={delayMs + 720} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 840} color={tint(p0, 0.8)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 970} color={tint(p2, 0.7)} thickness={2} />}
+      {/* SIGNATURE: the colossus EXHALES — two banks of frost fog roll across
+          the ranks in its wake and thin out past the far edge */}
+      {[
+        { t: 50, h: 12, d: 0, a: 0.6 },
+        { t: 60, h: 9, d: 220, a: 0.45 },
+      ].map((v, i) => (
+        <span
+          key={`fog${i}`}
+          className="gp-fog absolute block rounded-full"
+          style={{
+            left: "26%",
+            top: `${v.t}%`,
+            width: "48%",
+            height: `${v.h}%`,
+            background: `radial-gradient(closest-side, ${tint("#eaf6ff", v.a)}, ${tint(p1, v.a * 0.5)} 60%, transparent)`,
+            animationDelay: `${delayMs + 700 + v.d}ms`,
+          }}
+        />
+      ))}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* glacial_tomb: the whole army is sealed standing up — three ice
           sarcophagi grind up out of the rift, each with a piece ghosting
@@ -1925,6 +2135,9 @@ function ForgeColossus({ palette, glyph, lead, delayMs, flourish }: TemplateProp
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={56} />
+      {/* the implement's shadow grows over the anvil-ground before it falls */}
+      <ShadowPass delayMs={delayMs + 40} top={46} height={16} alpha={0.45} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       <RayFan hex={p1} delayMs={delayMs + 40} />
       {/* the colossal implement itself — the glyph, writ huge — slamming down */}
       <span className="gp-slam absolute block" style={{ left: "32%", top: "10%", width: "36%", height: "46%", animationDelay: `${delayMs + 160}ms` }}>
@@ -1936,9 +2149,25 @@ function ForgeColossus({ palette, glyph, lead, delayMs, flourish }: TemplateProp
         style={{ left: "33%", top: "48%", width: "34%", height: "16%", background: tint(p2, 0.85), animationDelay: `${delayMs + 560}ms` }}
       />
       <Sparks delayMs={delayMs + 600} fill={p2} stroke={p1} sizePct={9} cy={58} />
+      {/* SIGNATURE: the strike throws a FOUNTAIN — five forge sparks fired
+          straight up, hanging weightless at apex before raining back down */}
+      {[
+        { dx: "-260%", dy: "-380%", d: 0 },
+        { dx: "-110%", dy: "-520%", d: 40 },
+        { dx: "30%", dy: "-580%", d: 80 },
+        { dx: "170%", dy: "-500%", d: 120 },
+        { dx: "300%", dy: "-360%", d: 160 },
+      ].map((v, i) => (
+        <span
+          key={`ft${i}`}
+          className="gp-fountain absolute block rounded-full"
+          style={{ left: "48.8%", top: "55%", width: "2.4%", height: "2.4%", background: i % 2 ? "#fff4d6" : tint(p2, 0.95), "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 580 + v.d}ms` } as CSSProperties}
+        />
+      ))}
       {/* the judge's-gavel double shockwave */}
       <Boom delayMs={delayMs + 640} color={tint(p2, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 750} color={tint(p0, 0.85)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 880} color={tint(p1, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* world_lock: a border chain is drawn taut across the middle of the
           world and bolts shut with a flash — their half stays theirs. */}
@@ -2029,6 +2258,7 @@ function GorgonIdol({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
+      {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* the idol head, grinding up out of the board */}
       <span className="gp-rise absolute block" style={{ left: "31%", top: "19%", width: "38%", height: "52%", animationDelay: `${delayMs + 150}ms` }}>
         <svg viewBox="0 0 36 40" className="block h-full w-full" aria-hidden="true">
@@ -2078,8 +2308,23 @@ function GorgonIdol({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
           }}
         />
       ))}
+      {/* SIGNATURE: the petrification TAKES the board square by square — a
+          stone-grey scan band clicks across the crop in rank-wide steps,
+          leaving a grey hush behind it */}
+      <span
+        className="gp-petrify absolute block"
+        style={{
+          left: "24%",
+          top: "36%",
+          width: "52%",
+          height: "32%",
+          background: `linear-gradient(90deg, transparent, ${tint("#8d8d94", 0.55)} 35%, ${tint(p1, 0.35)} 55%, ${tint("#8d8d94", 0.55)} 65%, transparent)`,
+          animationDelay: `${delayMs + 640}ms`,
+        }}
+      />
       <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={6.5} cy={52} />
       <Boom delayMs={delayMs + 860} color={tint(p0, 0.85)} />
+      {heavy(flourish) && <Boom delayMs={delayMs + 990} color={tint(p2, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* walnut_court: the whole back rank hardens where it sits — a row of
           walnuts thunks down along the far rank, chuffing dust. */}
@@ -2225,6 +2470,26 @@ function ChronoLord({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={54} />
+      {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
+      {/* SIGNATURE: a ghost clock-face the size of the BOARD fades up beneath
+          everything, and its spectral minute hand sweeps the strike in */}
+      <span className="gp-clockghost absolute block" style={{ left: "13%", top: "13%", width: "74%", height: "74%", animationDelay: `${delayMs + 60}ms` }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="19" fill="none" stroke={tint(p1, 0.4)} strokeWidth="0.5" />
+          <path
+            d="M20 1.6 V4 M20 36 V38.4 M1.6 20 H4 M36 20 H38.4 M7 7 L8.7 8.7 M33 7 L31.3 8.7 M7 33 L8.7 31.3 M33 33 L31.3 31.3"
+            stroke={tint(p1, 0.35)}
+            strokeWidth="0.6"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="absolute block" style={{ left: "49%", top: "14%", width: "2%", height: "36%" }}>
+          <span
+            className="gp-handsweep absolute inset-0 block"
+            style={{ background: `linear-gradient(180deg, ${tint(p1, 0.55)}, transparent)`, transformOrigin: "50% 100%", animationDelay: `${delayMs + 140}ms` }}
+          />
+        </span>
+      </span>
       {/* the great clock ring settles over the board */}
       <span className="gp-ringset absolute block" style={{ left: "21%", top: "22%", width: "58%", height: "58%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -2268,6 +2533,7 @@ function ChronoLord({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} sizePct={6.5} cy={56} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.9)} thickness={4} />
       <Boom delayMs={delayMs + 1000} color={tint(p0, 0.8)} />
+      {heavy(flourish, true) && <Boom delayMs={delayMs + 1130} color={tint(p2, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
       {/* full_rewind: the great hand runs BACKWARD (mirrored sweep) and the
           pieces trail back down the board to a home rank that lights to
@@ -2345,6 +2611,9 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Wash color={tint(p1, 0.4)} delayMs={delayMs} />
       <Tell hex={p0} delayMs={delayMs} cy={48} />
       <Bars delayMs={delayMs} />
+      <Vignette delayMs={delayMs + 160} />
+      {/* the ball's shadow races the lane a beat ahead of the skull itself */}
+      <ShadowPass delayMs={delayMs + 120} top={52} height={9} alpha={0.55} />
       {/* the lane shine, waxed for the occasion */}
       <span
         className="gp-pane absolute block"
@@ -2431,6 +2700,20 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
       <Wash color={tint(p0, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={44} />
       <Bars delayMs={delayMs} />
+      <Vignette delayMs={delayMs + 160} />
+      {/* the syzygy line kindles down the board's spine — the rail the three
+          worlds are being drawn onto */}
+      <span
+        className="gp-seal absolute block"
+        style={{
+          left: "49.4%",
+          top: "20%",
+          width: "1.2%",
+          height: "56%",
+          background: `linear-gradient(180deg, transparent, ${tint(p2, 0.6)} 25%, ${tint(p2, 0.6)} 75%, transparent)`,
+          animationDelay: `${delayMs + 340}ms`,
+        }}
+      />
       {/* the starfield kindles */}
       {SKY_STARS.map((s, i) => (
         <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "4%", height: "4%", animationDelay: `${delayMs + 160 + s.d}ms` }}>
@@ -2560,6 +2843,8 @@ function TotalAtomic(props: TemplateProps) {
     <>
       <SkyWrath {...props} />
       <Stage>
+        {/* tier-8 weight: the rim darkens and holds while the chain runs */}
+        <Vignette delayMs={delayMs + 200} />
         {/* the fallout ramp: the whole sky greens as the chain spreads */}
         <span className="gp-radwash absolute inset-0 block" style={{ background: tint(RAD_GREEN, 0.24), animationDelay: `${delayMs + 640}ms` }} />
         {/* the final blast leaves a small mushroom cloud... */}
@@ -2585,6 +2870,18 @@ function TotalAtomic(props: TemplateProps) {
                 animationDelay: `${delayMs + 1250 + v.d}ms`,
               } as CSSProperties
             }
+          />
+        ))}
+        {/* long settle: three radioactive embers hang in the mushroom's shade */}
+        {[
+          { l: 44, dx: "-80%", d: 0 },
+          { l: 53, dx: "90%", d: 240 },
+          { l: 49, dx: "20%", d: 480 },
+        ].map((v, i) => (
+          <span
+            key={`eh${i}`}
+            className="gp-emberhang absolute block rounded-full"
+            style={{ left: `${v.l}%`, top: "48%", width: "1.5%", height: "1.5%", background: tint(RAD_GREEN, 0.9), "--dx": v.dx, animationDelay: `${delayMs + 1550 + v.d}ms` } as CSSProperties}
           />
         ))}
       </Stage>
@@ -2634,6 +2931,18 @@ function ChainAtomic(props: TemplateProps) {
             <Shroom core={p0} glow={p2} deep={p1} />
           </span>
         ))}
+        {/* long settle: the whole chain-line smoulders after the last pop */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "22%",
+            top: "44%",
+            width: "56%",
+            height: "12%",
+            background: `radial-gradient(closest-side, ${tint(p0, 0.5)}, transparent)`,
+            animationDelay: `${delayMs + 1450}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -2687,6 +2996,12 @@ function EndlessNight(props: TemplateProps) {
             animationDelay: `${delayMs + 80}ms`,
           }}
         />
+        {/* the crescent moon climbs where the sun went down */}
+        <span className="gp-snooze absolute block" style={{ left: "30%", top: "20%", width: "6.5%", height: "8.5%", animationDelay: `${delayMs + 1100}ms` }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M7.8 1.6 C4.4 2.6 2.4 5.4 2.4 8.4 C2.4 9.6 2.7 10.6 3.2 11.4 C1.2 9.8 0.4 7 1.2 4.6 C2 2.2 4.6 0.8 7.8 1.6 Z" fill="#fff4d6" stroke={tint(p1, 0.7)} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
         {/* stars wink on */}
         {NIGHT_STARS.map((s, i) => (
           <span key={i} className="gp-glint absolute block" style={{ left: `${s.l}%`, top: `${s.t}%`, width: "3.4%", height: "3.4%", animationDelay: `${delayMs + 900 + s.d}ms` }}>
@@ -2743,6 +3058,11 @@ function AbsoluteZero(props: TemplateProps) {
     <>
       <FrostTitan {...props} />
       <Stage>
+        {/* the cold closes in from the rim and HOLDS — deep-freeze vignette */}
+        <span
+          className="gp-vignette absolute inset-0 block"
+          style={{ background: `radial-gradient(ellipse at 50% 50%, transparent 44%, ${tint(p2, 0.8)} 84%)`, animationDelay: `${delayMs + 160}ms` }}
+        />
         {/* the frost-line races across the board */}
         <span
           className="gp-frostrace absolute block"
@@ -2826,6 +3146,14 @@ function SabbaticalScene(props: TemplateProps) {
             <path d="M13.5 8.6 C16.5 7.4 19 8 20.5 9.2" fill="none" stroke={p2} strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         </span>
+        {/* the DO-NOT-DISTURB shingle swings from the hammock post */}
+        <span className="gp-sway absolute block" style={{ left: "60.5%", top: "58%", width: "7%", height: "6%", transformOrigin: "50% 0%", animationDelay: `${delayMs + 900}ms` }}>
+          <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.4 V2" stroke={p0} strokeWidth="0.5" strokeLinecap="round" />
+            <rect x="1" y="2" width="8" height="5" rx="0.8" fill="#fff7de" stroke={p0} strokeWidth="0.5" />
+            <path d="M2.4 3.8 H7.6 M2.4 5.2 H6" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </span>
         {/* Z's drift up off the nap */}
         {[0, 1, 2].map((z) => (
           <span key={z} className="gp-zrise absolute block" style={{ left: `${46 + z * 4}%`, top: `${48 - z * 4}%`, width: `${3.4 - z * 0.7}%`, height: `${3.4 - z * 0.7}%`, animationDelay: `${delayMs + 1050 + z * 260}ms` }}>
@@ -2860,6 +3188,14 @@ function BanHammerScene(props: TemplateProps) {
             <path d="M4.4 15.6 L15.6 4.4" stroke="#d6234f" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </span>
+        {/* the verdict ECHOES — two receding rings roll off the seal */}
+        {[0, 1].map((i) => (
+          <span
+            key={`echo${i}`}
+            className="gp-gaze absolute block rounded-full"
+            style={{ left: `${37 - i * 4}%`, top: `${38 - i * 4}%`, width: `${26 + i * 8}%`, height: `${26 + i * 8}%`, border: `${3 - i}px solid ${tint("#d6234f", 0.8 - i * 0.25)}`, animationDelay: `${delayMs + 950 + i * 180}ms` }}
+          />
+        ))}
         {/* the chat scatters */}
         {BUBBLES.map((v, i) => (
           <span
@@ -2924,6 +3260,20 @@ function SaltedEarthScene(props: TemplateProps) {
             }
           />
         ))}
+        {/* the crust TAKES — a pale salt rime creeps out along the furrow and
+            bleaches it dead white */}
+        <span
+          className="gp-pane absolute block"
+          style={{
+            left: "30%",
+            top: "62%",
+            width: "40%",
+            height: "2.6%",
+            background: `linear-gradient(90deg, ${tint("#f2ead2", 0.95)}, ${tint("#f2ead2", 0.55)} 70%, transparent)`,
+            animationDelay: `${delayMs + 950}ms`,
+            animationDuration: "calc(1.2s * var(--fx-dur, 1))",
+          }}
+        />
         {/* the last sprout wilts where the salt lands */}
         <span className="gp-wilt absolute block" style={{ left: "56%", top: "56%", width: "5%", height: "8%", transformOrigin: "20% 100%", animationDelay: `${delayMs + 1050}ms` }}>
           <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
@@ -2982,6 +3332,13 @@ function PhoenixLineScene(props: TemplateProps) {
             }
           />
         ))}
+        {/* the LINE returns — three pawns re-kindle out of the ash where the
+            firebird passed, each popping alight in turn */}
+        {[36, 47, 58].map((l, i) => (
+          <span key={`pw${i}`} className="gp-pop absolute block" style={{ left: `${l}%`, top: "54%", width: "6%", height: "9%", animationDelay: `${delayMs + 1150 + i * 160}ms` }}>
+            <Sil d={SIL.p} fill="#ffd76a" stroke="#d6234f" />
+          </span>
+        ))}
       </Stage>
     </>
   );
@@ -3025,6 +3382,19 @@ function LostFortnightScene(props: TemplateProps) {
             </svg>
           </span>
         ))}
+        {/* the FORTNIGHT itself tears free — one big struck-through leaf sails
+            off last, twice the size of the others */}
+        <span
+          className="gp-flutter absolute block"
+          style={{ left: "44%", top: "34%", width: "9%", height: "10.5%", "--dx": "-300%", "--dy": "-60%", "--rot": "-80deg", animationDelay: `${delayMs + 1250}ms` } as CSSProperties}
+        >
+          <svg viewBox="0 0 9 10" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.6" y="0.6" width="7.8" height="8.8" rx="0.6" fill="#f4f6ff" stroke="#5a6b8f" strokeWidth="0.5" />
+            <path d="M0.6 3 H8.4" stroke="#5a6b8f" strokeWidth="0.5" />
+            <path d="M3 4.4 V7.8 M2.2 5.2 L3 4.4 M4.6 4.6 C6 4.2 6.6 5 6.2 5.8 C5.9 6.5 5 6.9 4.4 7.8 H6.6" fill="none" stroke="#5a6b8f" strokeWidth="0.5" strokeLinecap="round" />
+            <path d="M1.6 3.8 L7.4 8.6 M7.4 3.8 L1.6 8.6" stroke="#c94a3a" strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </span>
       </Stage>
     </>
   );
@@ -3072,6 +3442,16 @@ function NobleRoutScene(props: TemplateProps) {
             }
           />
         ))}
+        {/* panic made visible: a coronet is DROPPED in the scramble, bouncing
+            away behind the rout and left in the dust */}
+        <span
+          className="gp-lob absolute block"
+          style={{ left: "43%", top: "56%", width: "5%", height: "4%", "--dx": "-180%", "--dy": "-120%", "--rot": "-220deg", animationDelay: `${delayMs + 900}ms` } as CSSProperties}
+        >
+          <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.4 7 V1.6 L3.5 3.6 L5 0.8 L6.5 3.6 L8.6 1.6 V7 Z" fill="#e8b04b" stroke={p2} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
       </Stage>
     </>
   );
@@ -3123,6 +3503,15 @@ function TotalPlunderScene(props: TemplateProps) {
           className="gp-flash absolute block rounded-full"
           style={{ left: "44%", top: "42.5%", width: "12%", height: "8%", background: tint("#ffd76a", 0.75), animationDelay: `${delayMs + 1080}ms` }}
         />
+        {/* and the LOOT made flesh: a bulging coin-sack pops up where the maw
+            swallowed, cinched tight and gleaming */}
+        <span className="gp-pop absolute block" style={{ left: "45%", top: "40%", width: "10%", height: "12%", animationDelay: `${delayMs + 1200}ms` }}>
+          <svg viewBox="0 0 12 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M4.6 3.4 C2 5 1 8 1.4 10.4 C1.8 12.6 4 13.4 6 13.4 C8 13.4 10.2 12.6 10.6 10.4 C11 8 10 5 7.4 3.4 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.7" {...SJ} />
+            <path d="M4.2 3.2 C4.2 2 7.8 2 7.8 3.2 M4.6 2 L4 0.8 M7.4 2 L8 0.8" fill="none" stroke="#8a6a3a" strokeWidth="0.6" strokeLinecap="round" />
+            <path d="M4.4 8 C5 9.4 7 9.4 7.6 8" fill="none" stroke="#8a6a3a" strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </span>
       </Stage>
     </>
   );
@@ -3149,6 +3538,15 @@ function LeadenLimbsScene(props: TemplateProps) {
               <path d="M3.4 4 V3 A1.6 1.6 0 0 1 6.6 3 V4" fill="none" stroke="#2c2c32" strokeWidth="1" strokeLinecap="round" />
               <circle cx="5" cy="7.4" r="3.6" fill="#6e6e78" stroke="#2c2c32" strokeWidth="0.6" />
               <path d="M3.4 6 C3.8 5.3 4.6 5 5.3 5.3" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* the boards CRACK under the tonnage — impact fractures flash out
+            beneath each kettlebell and hold while the dust settles */}
+        {WEIGHTS.map((v, i) => (
+          <span key={`c${i}`} className="gp-crack absolute block" style={{ left: `${v.l - 1}%`, top: `${v.t + v.s * 0.95}%`, width: `${v.s + 2}%`, height: "4%", animationDelay: `${delayMs + 800 + v.d}ms` }}>
+            <svg viewBox="0 0 12 4" className="block h-full w-full" aria-hidden="true">
+              <path d="M6 2 L1 0.8 M6 2 L0.6 3 M6 2 L11 1 M6 2 L11.4 3.2 M6 2 L4 3.8 M6 2 L8 0.4" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.5" {...SJ} />
             </svg>
           </span>
         ))}

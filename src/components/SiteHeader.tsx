@@ -491,7 +491,7 @@ export function SiteHeader({ active }: { active?: string }) {
         ) : !user ? (
           <Link
             href="/login"
-            className="ml-1 inline-flex items-center min-h-[44px] border border-gold/40 px-3 py-2 font-display text-sm text-gold-leaf transition hover:bg-gold/10"
+            className="btn-ghost press ml-1 inline-flex items-center min-h-[44px] px-3 py-2 font-display text-sm text-gold-leaf no-underline"
           >
             Sign in
           </Link>

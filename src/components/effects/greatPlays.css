@@ -11,11 +11,18 @@
      state is carried by the card's own zone overlay, never by the play;
    - all grp-* classes are hidden outright when animations are off in Settings
      (guard at the bottom of this file);
-   - ONE shockwave per play, no letterboxing, everything inside ~2.0s: this is
-     the "great" band, one notch below the god-tier set.
+   - ONE shockwave per tier-5 play, no letterboxing, everything inside ~2.2s:
+     this is the "great" band, one notch below the god-tier set. Flagship
+     pass: TIER-6 plays read grander than tier-5 — they add a SECOND, later
+     shock ring plus a brief board-edge glow (grp-edgeglow, keyed off the
+     card's flourish — see TIER6/GrandAccent in the module).
 
    Every play follows the three-beat brief: a ≤300ms TELL (grp-tell*), the
-   strike, then a decaying SETTLE (grp-afterglow / grp-settle).
+   strike — now carrying one template-unique signature beat (circle closing,
+   petrify creep, flash-freeze sheet, hang-time debris, rally horn, root
+   ripple, ghost after-images, tower chime, dealt after-images, dropped coin,
+   spark fountain, gate surge, hoof-shock) — then a decaying SETTLE
+   (grp-afterglow / grp-settle) that breathes ~0.3s longer than it used to.
    ========================================================================= */
 
 /* --- Tell beats (≤300ms anticipation) -------------------------------------- */
@@ -437,13 +444,15 @@
 }
 .grp-glint { animation: grp-glint calc(0.55s * var(--fx-dur, 1)) ease-out both; }
 
-/* The settle afterglow: soft light left where the strike landed, decaying. */
+/* The settle afterglow: soft light left where the strike landed, holding a
+   beat before it decays (flagship pass: ~0.3s longer tail). */
 @keyframes grp-afterglow {
   0% { opacity: 0; transform: scale(0.7); }
-  28% { opacity: 0.5; }
-  100% { opacity: 0; transform: scale(1.18); }
+  22% { opacity: 0.55; }
+  62% { opacity: 0.35; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.2); }
 }
-.grp-afterglow { animation: grp-afterglow calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.grp-afterglow { animation: grp-afterglow calc(1.05s * var(--fx-dur, 1)) ease-out both; }
 
 /* A settle mote decaying away — dust sinks, embers climb (sign of --dy). */
 @keyframes grp-settle {
@@ -451,7 +460,43 @@
   22% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(var(--dx, 20%), var(--dy, 140%)) scale(1) rotate(var(--rot, 90deg)); }
 }
-.grp-settle { animation: grp-settle calc(0.85s * var(--fx-dur, 1)) ease-in both; }
+.grp-settle { animation: grp-settle calc(1.05s * var(--fx-dur, 1)) ease-in both; }
+
+/* === FLAGSHIP ESCALATION BAND (tier-6 accents + signature beats) =============
+   Same discipline as everything above: transform/opacity only, one-shot
+   `both`, every track ends at opacity 0, durations scaled by --fx-dur, all
+   grp-* prefixed so the animations-off guard below applies. */
+
+/* Tier-6 board-edge glow: the crop's rim kindles in the play's colour for a
+   breath around the strike, then releases. */
+@keyframes grp-edgeglow {
+  0% { opacity: 0; transform: scale(1.04); }
+  24% { opacity: 0.85; transform: scale(1); }
+  64% { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.grp-edgeglow { animation: grp-edgeglow calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* A spark / chunk thrown UP with hang-time: fast climb, a stall at apex,
+   then the drop (vars --dx / --dy set the apex). */
+@keyframes grp-hang {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  22% { opacity: 1; transform: translate(calc(var(--dx, 0%) * 0.6), var(--dy, -260%)) scale(1); }
+  44% { transform: translate(calc(var(--dx, 0%) * 0.8), calc(var(--dy, -260%) * 1.1)) scale(0.95); }
+  58% { transform: translate(calc(var(--dx, 0%) * 0.85), calc(var(--dy, -260%) * 1.08)) scale(0.9); }
+  100% { opacity: 0; transform: translate(var(--dx, 0%), 70%) scale(0.6); }
+}
+.grp-hang { animation: grp-hang calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.7, 1) both; }
+
+/* StoneGaze's petrify creep: a stone-grey band takes the rank square by
+   square in stepped clicks. */
+@keyframes grp-creep {
+  0% { opacity: 0; transform: translateX(-52%); }
+  12% { opacity: 0.85; }
+  86% { opacity: 0.8; transform: translateX(52%); }
+  100% { opacity: 0; transform: translateX(60%); }
+}
+.grp-creep { animation: grp-creep calc(0.95s * var(--fx-dur, 1)) steps(6, end) both; }
 
 /* --- Per-square target hits (non-lead renders) --------------------------------- */
 

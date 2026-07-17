@@ -734,7 +734,7 @@ export function GameOver({
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="plate plate-raised gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
+        className="dgn-slab dgn-rivets gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />

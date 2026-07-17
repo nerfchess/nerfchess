@@ -62,7 +62,8 @@ Numbers that update (clocks, ratings, counts) always `tabular-nums`.
 - Crisp 1px corners everywhere (existing global rule). True circles only for avatars and status dots.
 - Elevation by lightness (panel -> raise), shadow only via `shadow-plate` for floating layers. No glassmorphism: `backdrop-blur` is banned outside the two existing board splash moments.
 - `.plate` is the only card. Variants: `.plate-raised`, `.plate-hover`, `.plate-warm`, `.rail-panel`, `.corner-cut`. New surface styles are not invented per page.
-- Glow is an event, not a state: `shadow-leaf/nerf/buff` fire on hover, selection, or celebration, never as a resting style. Constant glow is banned.
+- Dungeon material set (2026-07 full-dungeon pass): `.dgn-slab` (carved stone, for monumental surfaces: modals, podium, chamber panels — never every card), `.dgn-rivets` (iron corner rivets, composable), `.rune-divider` (ornament rule), `.torch-pool` (ambient corner ember). The draft chamber's `dgn-*` vocabulary and `DungeonMenu.css` slabs are the reference implementations; new themed surfaces reuse these instead of inventing parallel treatments.
+- Glow is an event, not a state: `shadow-leaf/nerf/buff` fire on hover, selection, or celebration, never as a resting style. Constant glow is banned. Exception: the faint resting seam/ember accents baked into the dungeon material classes above (they are material, not state).
 
 ## 6. Motion
 
@@ -77,7 +78,7 @@ Rules:
 
 ## 7. Components
 
-- Buttons: `.btn-leaf` primary (one per region), `.btn-ghost` secondary, plain link tertiary. Destructive uses oxblood fill. Min touch target 44x44 mobile, 36px desktop. All buttons `.press`.
+- Buttons: `.btn-leaf` primary (one per region), `.btn-ghost` secondary, plain link tertiary, `.btn-cursed` destructive (Resign/Delete/Leave/Decline/Remove), `.btn-gold` reserved for reward/prestige moments, `.btn-glass` for emotional-peak commits. Loading = `.btn-busy` + a `.rune-loader` in the label. Min touch target 44x44 mobile, 36px desktop. All buttons `.press`. Bespoke one-off button styles are retired: every new button picks from this set.
 - Tabs: underline style (current), 13px+ label, active = parchment-50 + accent underline, inactive = parchment-300. Same component on every route.
 - Chips/badges: 12px, `.tier-bg-*` for tiers, mode chips for Buff/Nerf, `LIVE` badge = pos dot + label, `HOUSE BOT` badge = parchment-400 outline chip. House bots are labeled every single place a name renders.
 - Lists and tables: row hover `--surface-hover`, dividers `--edge`, never zebra. Rank/rating right-aligned tabular.

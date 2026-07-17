@@ -223,7 +223,7 @@ export function QueueButton({
           {/* Elapsed time so the queue never reads as a dead "Connecting…":
               the counter ticking is proof the search is live. */}
           <div
-            className="mt-2.5 flex items-center gap-2 smallcaps text-[10px] text-parchment-400"
+            className="mt-2.5 flex items-center gap-2 smallcaps text-[11px] text-parchment-400"
             aria-live="polite"
           >
             <span>Searching</span>
@@ -261,7 +261,7 @@ export function QueueButton({
           )}
 
           <div className="mt-4">
-            <div className="smallcaps text-[10px] text-parchment-400">Time control</div>
+            <div className="eyebrow">Time control</div>
             <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-5">
               {QUEUE_POOL_OPTIONS.map((option) => {
                 const category = getCategory(option.speed);
@@ -275,15 +275,15 @@ export function QueueButton({
                     title={`${category.label} · ${option.label}`}
                     aria-pressed={isSelected}
                     className={
-                      "flex flex-col items-center gap-0.5 border px-1 py-1.5 transition " +
+                      "press flex flex-col items-center gap-0.5 border px-1 py-1.5 transition " +
                       (isSelected
-                        ? "border-gold bg-gold/15 text-gold-leaf"
-                        : "border-white/10 text-parchment-200 hover:border-white/30 hover:bg-white/5")
+                        ? "border-gold bg-gold/15 text-gold-leaf shadow-[0_0_14px_-8px_rgb(var(--accent-hi-rgb)/0.6)]"
+                        : "border-[color:var(--edge)] bg-black/10 text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-white/5")
                     }
                   >
                     <Icon size={14} style={{ color: category.accent }} aria-hidden />
                     <span className="font-mono text-sm tabular-nums">{option.label}</span>
-                    <span className="smallcaps text-[8px] text-parchment-400">{category.label}</span>
+                    <span className="text-[11px] uppercase tracking-[0.08em] text-parchment-400">{category.label}</span>
                   </button>
                 );
               })}
@@ -295,12 +295,12 @@ export function QueueButton({
               default), so it names the exact game it will find. */}
           <button
             onClick={() => startSearch(mode)}
-            className={
-              "mt-4 w-full border px-8 py-4 font-display text-xl sm:text-2xl font-semibold transition-all duration-150 motion-safe:enabled:hover:-translate-y-0.5 motion-safe:enabled:active:scale-[0.98] " +
-              (mode === "nerf"
-                ? "border-mode-nerf bg-mode-nerf/20 text-mode-nerfGlow hover:bg-mode-nerf/30"
-                : "border-mode-buff bg-mode-buff/20 text-mode-buffGlow hover:bg-mode-buff/30")
-            }
+            // The forged mode slab: the shared .btn-slab physics with the
+            // selected mode's energy core, so the matchmaking primary reads
+            // as part of the dungeon control set while keeping its
+            // Nerf-terracotta / Buff-sky identity.
+            style={{ ["--slab-rgb" as string]: mode === "nerf" ? "196 120 95" : "91 155 212" }}
+            className="btn-slab cta-shine press mt-4 w-full px-8 py-4 font-display text-xl sm:text-2xl font-semibold"
           >
             {`Find a ${selected.label} ${mode === "nerf" ? "Nerf" : "Buff"} Game`}
           </button>

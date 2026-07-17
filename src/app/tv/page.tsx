@@ -16,28 +16,20 @@ import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useLobbySnapshotStatus } from "@/lib/lobbyClient";
-import { MPLobbyGame, MPPlayers } from "@/lib/multiplayer";
+import { MPLobbyGame } from "@/lib/multiplayer";
 import { featuredBoard } from "@/lib/spectate/featuredBoard";
+import { useArchiveReplay } from "@/lib/spectate/useArchiveReplay";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import type { DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 
 // Lichess-TV-style watch page: the top live game streams full-size, with the
 // other running games listed alongside. Picking a game pins it; otherwise the
-// page follows whatever the lobby ranks first. With nothing live it replays
-// the most recently finished game. `?mode=nerf|buff` (the nav's Nerf TV and
-// Buff TV entries) narrows everything shown to that pool's games.
-
-type RecentGame = {
-  id: string;
-  white_name: string;
-  black_name: string;
-  white_rating_before: number | null;
-  black_rating_before: number | null;
-  moves: string;
-  white_avatar: string | null;
-  black_avatar: string | null;
-};
+// page follows whatever the lobby ranks first. With nothing live the channel
+// keeps running: a RANDOM archived game reruns move by move (then the next
+// one), clearly badged as a replay, until a live game appears and takes the
+// board back. `?mode=nerf|buff` (the nav's Nerf TV and Buff TV entries)
+// narrows everything shown to that pool's games.
 
 function clockLabel(timeSec: number, incrementSec: number): string {
   if (timeSec <= 0) return "No clock";
@@ -164,24 +156,17 @@ function TvView() {
 
   const { lobby, failed: lobbyFailed, reload: reloadLobby } = useLobbySnapshotStatus(5000);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
-  const [recent, setRecent] = useState<RecentGame | null>(null);
-  // null = fallback not answered yet; the empty state must not show before this
-  // lookup has resolved ("no games are being played" used to flash while the
-  // replay was still loading). Deliberately NOT gated on the lobby snapshot, so
-  // Buff TV never sits on a spinner while the directory is already available.
-  const [recentChecked, setRecentChecked] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
-  // Switching channels (All / Nerf / Buff) drops the recent fallback so nothing
-  // from the other pool lingers. The featured-tune hook resets its own selection
-  // + retry state off the same `resetKey`. Done on the change during render.
+  // Switching channels (All / Nerf / Buff) clears the pin so nothing from the
+  // other pool lingers. The featured-tune hook resets its own selection + retry
+  // state off the same `resetKey`, and the archive rerun resets itself off the
+  // mode filter. Done on the change during render.
   const channelKey = modeFilter ?? "all";
   const [prevMode, setPrevMode] = useState(modeFilter);
   if (prevMode !== modeFilter) {
     setPrevMode(modeFilter);
     setPinnedId(null);
-    setRecent(null);
-    setRecentChecked(false);
   }
 
   const [sort, setSort] = useState<TvSort>("watched");
@@ -208,51 +193,22 @@ function TvView() {
   const { streamId, live, tuneState, slowTune } = tune;
   const pinnedStillLive = pinnedId != null && liveGames.some((g) => g.id === pinnedId);
 
-  // Pull the latest finished game (of this channel's mode, if one is set) once
-  // for the no-live-games fallback. Runs regardless of the lobby snapshot so the
-  // fallback board is ready fast and the empty state never blocks on the lobby.
-  useEffect(() => {
-    if (recent) return;
-    let cancelled = false;
-    fetch(`/api/games/recent${modeFilter ? `?mode=${modeFilter}` : ""}`)
-      .then((res) => (res.ok ? (res.json() as Promise<{ game: RecentGame | null }>) : null))
-      .then((data) => {
-        if (cancelled) return;
-        if (data?.game) setRecent(data.game);
-        setRecentChecked(true);
-      })
-      .catch(() => {
-        if (!cancelled) setRecentChecked(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [recent, modeFilter]);
-
-  const recentPlayers = useMemo<MPPlayers | null>(() => {
-    if (!recent) return null;
-    return {
-      w: {
-        name: recent.white_name,
-        rating: recent.white_rating_before ? Math.round(recent.white_rating_before) : null,
-        avatar: recent.white_avatar,
-      },
-      b: {
-        name: recent.black_name,
-        rating: recent.black_rating_before ? Math.round(recent.black_rating_before) : null,
-        avatar: recent.black_avatar,
-      },
-    };
-  }, [recent]);
-
-  // Fall back to the recent replay once a live tune has genuinely failed OR is
-  // taking too long (past the short slow-tune threshold) -- not during the first
-  // healthy second of connecting, so a good tune-in doesn't flash the archive.
-  const showRecentFallback = !live && !!recent && (tuneState !== "tuning" || slowTune);
+  // The archive rerun channel: a random recently finished game (of this
+  // channel's mode, if one is set) replayed move by move, then the next one.
+  // It advances only while it actually holds the board (`replayOnAir`) — a
+  // live tune pauses every rerun timer — but the pool fetch itself runs
+  // regardless of the lobby snapshot so the fallback board is ready fast and
+  // the empty state never blocks on the lobby. Falls back once a live tune has
+  // genuinely failed OR is taking too long (past the short slow-tune
+  // threshold) -- not during the first healthy second of connecting, so a good
+  // tune-in doesn't flash the archive.
+  const replayOnAir = !live && (tuneState !== "tuning" || slowTune);
+  const replay = useArchiveReplay(replayOnAir, modeFilter);
+  const showRecentFallback = replayOnAir && !!replay.game;
 
   const shownMoves = useMemo(
-    () => (live ? tune.moves : showRecentFallback && recent ? recent.moves.split(" ").filter(Boolean) : []),
-    [live, tune.moves, showRecentFallback, recent],
+    () => (live ? tune.moves : showRecentFallback ? replay.moves : []),
+    [live, tune.moves, showRecentFallback, replay.moves],
   );
   const { board, history } = useMemo(
     () => featuredBoard(live, shownMoves, tune.draft),
@@ -260,8 +216,8 @@ function TvView() {
   );
   const lastMove = history[history.length - 1] ?? null;
 
-  const shownId = live ? streamId : showRecentFallback ? recent?.id ?? null : null;
-  const shownPlayers = live ? tune.players : showRecentFallback ? recentPlayers : null;
+  const shownId = live ? streamId : showRecentFallback ? replay.game?.id ?? null : null;
+  const shownPlayers = live ? tune.players : showRecentFallback ? replay.players : null;
   const shownLobbyGame = liveGames.find((g) => g.id === shownId);
   const over = tune.over;
   const isFinal = !live || over || showRecentFallback;
@@ -326,11 +282,20 @@ function TvView() {
       Final
     </span>
   );
+  // The rerun marker: the LIVE badge's shape in the ember tint, so an archived
+  // replay can never be mistaken for a running game.
+  const replayBadge = (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[rgb(var(--energy-ember-rgb))]">
+      <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--energy-ember-rgb))]" aria-hidden />
+      Replay
+    </span>
+  );
 
   const metaChips = (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
-      {hasBoard && (isFinal ? finalBadge : liveBadge)}
-      <ModeBadge mode={shownLobbyGame?.mode} />
+      {hasBoard && (showRecentFallback ? replayBadge : isFinal ? finalBadge : liveBadge)}
+      <ModeBadge mode={shownLobbyGame?.mode ?? (showRecentFallback ? replay.mode ?? undefined : undefined)} />
+      {showRecentFallback && <span>from the archive</span>}
       {shownLobbyGame && (
         <span className="tabular-nums">{clockLabel(shownLobbyGame.timeSec, shownLobbyGame.incrementSec)}</span>
       )}
@@ -395,7 +360,7 @@ function TvView() {
         </div>
       </div>
     );
-  } else if (tuneState === "empty" && recentChecked && !recent) {
+  } else if (tuneState === "empty" && replay.checked && !replay.game) {
     boardRegion = (
       <div className="grid aspect-square w-full place-items-center plate p-6">
         <div className="flex max-w-sm flex-col items-center text-center">
@@ -523,7 +488,7 @@ function TvView() {
                       ? "You pinned this game."
                       : live
                         ? `Featuring ${activeSort.reason}.`
-                        : "Latest finished game."}
+                        : "Rerun from the archive — a live game takes over when one starts."}
                   </span>
                   {shownId && (
                     <Link

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import {
@@ -33,6 +33,7 @@ import {
   Swatches,
   Toggle,
 } from "@/components/settings/controls";
+import "./SettingsPanel.css";
 
 interface Props {
   open: boolean;
@@ -173,7 +174,8 @@ export function SettingsPanel({ open, onClose }: Props) {
     }
   };
 
-  // Pickers span a full row; simple controls sit inline on the right.
+  // Pickers span a full row; simple controls sit inline on the right. Sliders
+  // grow into the free row width instead of hugging a fixed size.
   const isStacked = (control: Control) =>
     control.kind === "boardTheme" ||
     control.kind === "pieceTheme" ||
@@ -189,68 +191,113 @@ export function SettingsPanel({ open, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="plate gilt relative flex max-h-[86dvh] w-full max-w-[34rem] flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        className="plate plate-raised dgn-slab settings-slab relative flex max-h-[88dvh] w-full max-w-[40rem] flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5">
-          <div className="font-display text-xl text-parchment">Settings</div>
+        {/* Iron rivets in the slab corners, as an overlay so the carved-stone
+            background layers underneath survive. Decorative only. */}
+        <div aria-hidden className="dgn-rivets pointer-events-none absolute inset-0 z-10" />
+
+        {/* Header: chiselled crown with an ember seam under it. */}
+        <div className="settings-crown flex shrink-0 items-center justify-between border-b border-[color:var(--edge)] py-2.5 pl-5 pr-2.5">
+          <h2 className="settings-title font-display text-xl font-semibold">Settings</h2>
           <button
             onClick={onClose}
-            className="grid min-h-[44px] min-w-[44px] place-items-center rounded text-parchment-400 transition-colors hover:bg-white/5 hover:text-parchment"
-            aria-label="Close"
+            className="nav-icon-btn relative z-20 grid min-h-[44px] min-w-[44px] place-items-center text-parchment-400 hover:text-parchment"
+            aria-label="Close settings"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Tab bar — one tab per section; the active pane renders below. */}
-        <div
-          role="tablist"
-          aria-label="Settings sections"
-          className="flex gap-0.5 overflow-x-auto border-b border-white/10 px-2 pt-2"
-        >
-          {SECTIONS.map((section) => {
-            const selected = section.id === activeTab;
-            return (
-              <button
-                key={section.id}
-                role="tab"
-                aria-selected={selected}
-                onClick={() => setActiveTab(section.id)}
-                className={
-                  "flex shrink-0 items-center gap-1.5 rounded-t border-b-2 px-2 py-2 font-display text-[12.5px] transition-colors " +
-                  (selected
-                    ? "border-gold text-gold-leaf"
-                    : "border-transparent text-parchment-400 hover:bg-white/[0.04] hover:text-parchment")
-                }
-              >
-                <section.icon className="h-3.5 w-3.5" strokeWidth={2} />
-                {section.title}
-              </button>
-            );
-          })}
-        </div>
+        {/* Body: sconce rail (left on desktop, chip row on mobile) + the
+            scrolling content pane. The pane height is fixed per viewport so
+            the slab never jumps between tabs. */}
+        <div className="flex min-h-0 flex-col sm:flex-row">
+          <div
+            role="tablist"
+            aria-label="Settings sections"
+            className="flex shrink-0 gap-1 overflow-x-auto border-b border-[color:var(--edge)] px-2 py-2 sm:w-44 sm:flex-col sm:gap-0.5 sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:border-r sm:py-2.5"
+          >
+            {SECTIONS.map((section) => {
+              const selected = section.id === activeTab;
+              return (
+                <button
+                  key={section.id}
+                  id={`settings-tab-${section.id}`}
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls="settings-tabpanel"
+                  onClick={() => setActiveTab(section.id)}
+                  className="settings-tab flex min-h-[44px] shrink-0 items-center gap-2 px-3 font-display text-[14px] sm:w-full sm:text-[13px]"
+                >
+                  <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  <span className="truncate">{section.title}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Active tab's rows. Fixed height so switching tabs doesn't resize
-            the panel; the pane scrolls when a tab outgrows it. */}
-        <div role="tabpanel" className="h-[24rem] max-h-[60dvh] overflow-y-auto px-5 py-3">
-          <div className="divide-y divide-white/[0.06]">
-            {activeSection.rows.map((row) => (
-              <SettingRow
-                key={row.id}
-                label={row.label}
-                hint={row.hint}
-                stacked={isStacked(row.control)}
-                control={renderControl(row.control, row.label)}
-              />
-            ))}
+          {/* Active tab's rows, grouped under small eyebrow sub-headers where
+              the config declares groups. Fixed height (viewport-aware) so
+              switching tabs doesn't resize the slab; scrolls when a tab
+              outgrows it. Native selects escape no container, so nothing
+              clips. */}
+          <div
+            role="tabpanel"
+            id="settings-tabpanel"
+            aria-labelledby={`settings-tab-${activeSection.id}`}
+            className="h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:px-5"
+          >
+            {activeSection.rows.map((row, i) => {
+              const prevGroup = activeSection.rows[i - 1]?.group;
+              const opensGroup = row.group != null && row.group !== prevGroup;
+              return (
+                <Fragment key={row.id}>
+                  {opensGroup && (
+                    <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
+                      <span className="eyebrow">{row.group}</span>
+                      <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+                    </div>
+                  )}
+                  <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
+                    <SettingRow
+                      label={row.label}
+                      hint={row.hint}
+                      stacked={isStacked(row.control)}
+                      grow={row.control.kind === "slider"}
+                      control={renderControl(row.control, row.label)}
+                    />
+                  </div>
+                </Fragment>
+              );
+            })}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+/** A small gem set into a picker card's corner when it is the chosen one. */
+function SelectedGem() {
+  return (
+    <span
+      aria-hidden
+      className="absolute right-1.5 top-1.5 z-10 h-1.5 w-1.5 rotate-45 bg-gold-leaf shadow-[0_0_6px_1px_rgb(var(--accent-hi-rgb)/0.6)]"
+    />
+  );
+}
+
+/** Shared treasure treatment for picker cards: gold ring + faint glow when
+ *  selected, a firmer edge on hover otherwise. */
+const pickerCardClass = (selected: boolean) =>
+  selected
+    ? "border-gold/80 bg-gold/10 shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
+    : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]";
 
 /** Full-site theme picker: a swatch card per theme showing the page background,
  *  a floating panel chip, and the theme's glow color — so each mood previews at
@@ -273,12 +320,11 @@ function SiteThemePicker({
             onClick={() => onChange(k)}
             aria-pressed={selected}
             className={
-              "group overflow-hidden rounded border text-left transition-colors " +
-              (selected
-                ? "border-gold/70 bg-gold/10"
-                : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+              "group press relative overflow-hidden rounded-[1px] border text-left transition-colors " +
+              pickerCardClass(selected)
             }
           >
+            {selected && <SelectedGem />}
             {/* Miniature page: background wash, a panel chip, a glow dot. */}
             <span
               className="relative block h-12 w-full"
@@ -295,10 +341,10 @@ function SiteThemePicker({
               />
             </span>
             <span className="block px-2 py-1.5">
-              <span className="block font-display text-[12.5px] leading-tight text-parchment">
+              <span className="block font-display text-[13px] leading-tight text-parchment">
                 {t.label}
               </span>
-              <span className="block text-[10px] leading-tight text-parchment-500">{t.hint}</span>
+              <span className="block text-[12px] leading-tight text-parchment-400">{t.hint}</span>
             </span>
           </button>
         );
@@ -361,8 +407,8 @@ function CustomBackgroundControl({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <label className="btn-ghost relative cursor-pointer rounded px-3 py-1.5 font-display text-[12px]">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="btn-ghost press relative min-h-[36px] cursor-pointer rounded-[1px] px-3 py-1.5 font-display text-[13px]">
           {uploading ? "Reading…" : data ? "Replace image" : "Upload image"}
           <input
             type="file"
@@ -380,20 +426,20 @@ function CustomBackgroundControl({
           <>
             <span
               aria-hidden
-              className="h-8 w-12 shrink-0 rounded-[2px] border border-white/15 bg-cover bg-center"
+              className="h-8 w-12 shrink-0 rounded-[2px] border border-[color:var(--edge-strong)] bg-cover bg-center"
               style={{ backgroundImage: `url("${data}")` }}
             />
             <GhostButton label="Remove" onClick={() => onApply({ customBgData: "" })} />
           </>
         )}
       </div>
-      {uploadError && <p className="text-[11px] text-oxblood-glow">{uploadError}</p>}
+      {uploadError && <p className="text-[12px] text-oxblood-glow">{uploadError}</p>}
       {data && (
-        <p className="text-[11px] text-parchment-500">
+        <p className="text-[12px] text-parchment-400">
           Uploaded backgrounds stay on this device and override the URL below.
         </p>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           type="url"
           value={draft}
@@ -407,7 +453,7 @@ function CustomBackgroundControl({
               apply();
             }
           }}
-          className="w-full rounded border border-white/15 bg-ink-900/60 px-2.5 py-1.5 text-[12px] text-parchment placeholder:text-parchment-500 focus:border-gold/60 focus:outline-none"
+          className="input-rune min-h-[36px] w-full min-w-0 flex-1 basis-40 rounded-[1px] px-3 py-1.5 text-[13px]"
         />
         <GhostButton label="Apply" onClick={apply} />
         {url && (
@@ -422,10 +468,10 @@ function CustomBackgroundControl({
         )}
       </div>
       {invalid && (
-        <p className="text-[11px] text-oxblood-glow">Use a direct http(s) image link.</p>
+        <p className="text-[12px] text-oxblood-glow">Use a direct http(s) image link.</p>
       )}
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[11px] text-parchment-500">Dim</span>
+      <div className="flex min-h-[36px] items-center justify-between gap-3">
+        <span className="text-[12px] text-parchment-400">Dim</span>
         <Slider
           label="Background dim"
           value={dim}
@@ -458,13 +504,13 @@ function BoardThemePicker({
           <button
             key={k}
             onClick={() => onChange(k)}
+            aria-pressed={selected}
             className={
-              "flex items-center gap-2.5 rounded border p-2 transition-colors " +
-              (selected
-                ? "border-gold/70 bg-gold/10"
-                : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+              pickerCardClass(selected)
             }
           >
+            {selected && <SelectedGem />}
             <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
               <span style={{ background: t.light }} />
               <span style={{ background: t.dark }} />
@@ -496,13 +542,13 @@ function PieceThemePicker({
           <button
             key={k}
             onClick={() => onChange(k)}
+            aria-pressed={selected}
             className={
-              "flex items-center gap-2.5 rounded border p-2 transition-colors " +
-              (selected
-                ? "border-gold/70 bg-gold/10"
-                : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]")
+              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+              pickerCardClass(selected)
             }
           >
+            {selected && <SelectedGem />}
             <span
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
               style={
@@ -545,12 +591,15 @@ function PieceThemePicker({
 function AccountSettings() {
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3 rounded border border-white/10 bg-white/[0.02] p-2.5">
-        <div>
-          <div className="text-[13px] font-medium text-parchment">Profile</div>
-          <p className="text-[11px] text-parchment-500">Avatar, bio, and game history</p>
+      <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] p-2.5">
+        <div className="min-w-0">
+          <div className="text-[13px] font-medium text-parchment-100">Profile</div>
+          <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
-        <Link href="/profile" className="btn-ghost rounded px-3 py-1.5 text-[12px] font-display">
+        <Link
+          href="/profile"
+          className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 font-display text-[13px]"
+        >
           Edit profile
         </Link>
       </div>
@@ -562,10 +611,13 @@ function AccountSettings() {
       ].map((item) => (
         <div
           key={item.label}
-          className="flex items-center justify-between gap-3 rounded border border-white/5 bg-white/[0.01] p-2.5 opacity-60"
+          className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.01] p-2.5 opacity-70"
         >
           <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
-          <span className="shrink-0 border border-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-parchment-500">
+          <span
+            className="rune-badge shrink-0"
+            style={{ ["--badge-rgb" as string]: "152 145 127" }}
+          >
             {item.hint}
           </span>
         </div>
@@ -573,7 +625,7 @@ function AccountSettings() {
       <form action="/api/auth/logout" method="post">
         <button
           type="submit"
-          className="w-full rounded border border-oxblood/40 bg-oxblood/10 px-3 py-2 text-[12px] font-display font-semibold text-oxblood-glow transition hover:bg-oxblood/20"
+          className="btn-cursed press min-h-[44px] w-full rounded-[1px] px-3 py-2 font-display text-[13px] font-semibold"
         >
           Log out
         </button>

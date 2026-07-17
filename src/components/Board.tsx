@@ -2334,10 +2334,11 @@ export function Board({
       queueMicrotask(doSetCast);
     }
     const intensity = castIntensity(def.tier);
+    const takeover = intensity === "marquee" || intensity === "apex";
     if (!sigOf(signatureCard.id) && intensity !== "sleek") {
-      playCastVoice(def.category, intensity === "marquee");
+      playCastVoice(def.category, takeover);
     }
-    if (intensity === "marquee" && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
+    if (takeover && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
       const el = cropRef.current;
       if (el && !motionOff()) {
         el.classList.remove("fx-board-shake", "fx-board-shake--big");

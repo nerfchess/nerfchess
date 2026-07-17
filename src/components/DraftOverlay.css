@@ -74,6 +74,17 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
    watermark. No gradients. */
 .draft-deal-grid {
   perspective: 1200px;
+  /* Headroom for the "Highest tier" chip (top: -9px) plus the hover lift
+     (-3px): without it the chip clips against the panel edge on the first
+     row and collides with the row above in the stacked mobile layout. */
+  padding-top: 12px;
+}
+@media (max-width: 639px) {
+  /* Stacked cards on phones: open the row gap so a card's floating chip and
+     its neighbor's hover/select ring never share pixels. */
+  .draft-deal-grid {
+    row-gap: 1.5rem;
+  }
 }
 .draft-flip {
   position: relative;
@@ -156,177 +167,10 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
     100% 100%, 0 100%
   );
 }
-
-/* ---------------------------------------------------------------------------
-   Pack opening: every offer arrives as a sealed pack. The wrapper (a plain
-   button) holds a foil packet with a serrated top flap; while sealed it
-   breathes and begs to be torn, and on tear the flap rips up-and-away with a
-   light burst while the body drops out of view, handing off to the card deal.
-   The finish scales with the best card inside: plain ink, gold foil (tier 7+),
-   or mythic shimmer (tier 9/10). */
-.pack-shell {
-  perspective: 900px;
-  -webkit-tap-highlight-color: transparent;
-}
-.pack {
-  position: relative;
-  width: min(240px, 62vw);
-  border-radius: 1px;
-  cursor: pointer;
-  animation: pack-tempt 2.2s ease-in-out 0.4s infinite;
-}
-.pack-body {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 2.4rem 1.5rem 1.7rem;
-  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.4);
-  border-top: 0;
-  background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 45%, rgba(0, 0, 0, 0.25)),
-    #16130f;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 22px 50px -22px rgba(0, 0, 0, 0.9);
-}
-.pack-body::before {
-  /* Hairline inner frame, matching the card backs. */
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.18);
-  pointer-events: none;
-}
-.pack-numeral {
-  font-size: 44px;
-  line-height: 1;
-  font-weight: 700;
-  color: rgb(var(--pack-rgb, 216 181 110) / 0.9);
-}
-.pack-label {
-  font-size: 12px;
-  color: var(--paper-dim);
-}
-.pack-hint {
-  font-size: 12px;
-  color: rgb(var(--pack-rgb, 216 181 110) / 0.75);
-  animation: pack-hint-blink 1.6s ease-in-out infinite;
-}
-@keyframes pack-hint-blink {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.4; }
-}
 /* The serrated flap sealing the top edge. */
-.pack-flap {
-  position: relative;
-  display: block;
-  height: 26px;
-  border: 1px solid rgb(var(--pack-rgb, 216 181 110) / 0.4);
-  border-bottom: 1px dashed rgb(var(--pack-rgb, 216 181 110) / 0.55);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    #1a1712;
-  transform-origin: 50% 0%;
-}
-.pack-flap__zigzag {
-  position: absolute;
-  inset-inline: 0;
-  bottom: -4px;
-  height: 8px;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent 0 4px,
-    rgb(var(--pack-rgb, 216 181 110) / 0.3) 4px 5px
-  );
-}
 /* Idle temptation: a tiny periodic wiggle. */
-@keyframes pack-tempt {
-  0%, 84%, 100% { transform: rotate(0deg) scale(1); }
-  88% { transform: rotate(-1.4deg) scale(1.012); }
-  92% { transform: rotate(1.2deg) scale(1.012); }
-  96% { transform: rotate(-0.6deg) scale(1.005); }
-}
 /* Light burst behind the tear. */
-.pack-burst {
-  position: absolute;
-  inset: -30%;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(50% 50% at 50% 30%, rgb(255 233 170 / 0.5), transparent 70%);
-}
-/* Tier tint: the pack wears the color of the BEST card inside (owner
-   request: "the tier of the box should match what's inside"). Mirrors the
-   tier-bg-N palette in globals.css; data-tier is set by the overlay from
-   the offer's max tier. The finish classes below only scale the glow. */
-.pack[data-tier="1"]  { --pack-rgb: 126 181 154; }
-.pack[data-tier="2"]  { --pack-rgb: 139 169 196; }
-.pack[data-tier="3"]  { --pack-rgb: 216 181 110; }
-.pack[data-tier="4"]  { --pack-rgb: 199 148 104; }
-.pack[data-tier="5"]  { --pack-rgb: 198 104 96; }
-.pack[data-tier="6"]  { --pack-rgb: 198 95 143; }
-.pack[data-tier="7"]  { --pack-rgb: 168 119 216; }
-.pack[data-tier="8"]  { --pack-rgb: 224 82 82; }
-.pack[data-tier="9"]  { --pack-rgb: 244 196 48; }
-.pack[data-tier="10"] { --pack-rgb: 34 211 238; }
-
-/* Finishes: a soft tier-colored halo from tier 5 up, a stronger foil glow
-   for 7+, and the full mythic shimmer for 9/10 — all in the pack's own
-   tier color rather than a fixed gold/cyan. */
-.pack--rare .pack-body,
-.pack--rare .pack-flap {
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 24px -10px rgb(var(--pack-rgb, 216 181 110) / 0.3),
-    0 22px 50px -22px rgba(0, 0, 0, 0.9);
-}
-.pack--gold .pack-body,
-.pack--gold .pack-flap {
-  border-color: rgb(var(--pack-rgb, 244 196 48) / 0.6);
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 30px -8px rgb(var(--pack-rgb, 244 196 48) / 0.35),
-    0 22px 50px -22px rgba(0, 0, 0, 0.9);
-}
-.pack--mythic .pack-body,
-.pack--mythic .pack-flap {
-  border-color: rgb(var(--pack-rgb, 34 211 238) / 0.65);
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 36px -6px rgb(var(--pack-rgb, 34 211 238) / 0.4),
-    0 22px 50px -22px rgba(0, 0, 0, 0.9);
-}
-.pack--mythic .pack-numeral { color: rgb(var(--pack-rgb, 34 211 238)); }
 /* The tear: flap rips up and away, body drops and fades, burst flashes. */
-.pack--tearing {
-  animation: none;
-  cursor: default;
-}
-.pack--tearing .pack-flap {
-  animation: pack-flap-rip 0.5s cubic-bezier(0.3, 0, 0.6, 1) both;
-}
-.pack--tearing .pack-body {
-  animation: pack-body-drop 0.5s cubic-bezier(0.5, 0, 0.8, 0.5) 0.08s both;
-}
-.pack--tearing .pack-burst {
-  animation: pack-burst-flash 0.5s ease-out both;
-}
-@keyframes pack-flap-rip {
-  0% { transform: rotateX(0deg) translateY(0); opacity: 1; }
-  30% { transform: rotateX(-64deg) translateY(-4px); opacity: 1; }
-  100% { transform: rotateX(-140deg) translateY(-56px) rotate(9deg); opacity: 0; }
-}
-@keyframes pack-body-drop {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(46px) scale(0.92); opacity: 0; }
-}
-@keyframes pack-burst-flash {
-  0% { opacity: 0; transform: scale(0.6); }
-  35% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0; transform: scale(1.35); }
-}
 
 /* Holographic foil for tier 7+ card faces: a rainbow band SWEEPING across
    on the compositor (transform-only, no background-position repaints, no
@@ -511,27 +355,22 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
   0%, 100% { opacity: 0.55; transform: scale(0.98); }
   50% { opacity: 1; transform: scale(1.04); }
 }
-
-html[data-anim="off"] .pack,
-html[data-anim="off"] .pack-hint,
-html[data-anim="off"] .pack--tearing .pack-flap,
-html[data-anim="off"] .pack--tearing .pack-body,
-html[data-anim="off"] .pack--tearing .pack-burst,
-html[data-anim="off"] .draft-holo,
-html[data-anim="off"] .draft-shake,
-html[data-anim="off"] .confetti-bit,
-html[data-anim="off"] .draft-pull__flash,
-html[data-anim="off"] .draft-pull__rays,
-html[data-anim="off"] .draft-pull__rays--rev,
-html[data-anim="off"] .draft-pull__mote,
-html[data-anim="off"] .draft-mythic-aura {
-  animation: none !important;
-}
 html[data-anim="off"] .draft-pull__flash,
 html[data-anim="off"] .draft-pull__rays,
 html[data-anim="off"] .draft-pull__rays--rev,
 html[data-anim="off"] .draft-pull__mote {
   opacity: 0;
+}
+html[data-anim="off"] .draft-holo,
+html[data-anim="off"] .draft-shake,
+html[data-anim="off"] .confetti-bit,
+html[data-anim="off"] .draft-mythic-aura,
+html[data-anim="off"] .dgn-torch,
+html[data-anim="off"] .dgn-torch__halo,
+html[data-anim="off"] .dgn-torch__flame,
+html[data-anim="off"] .dgn-torch__flame--inner,
+html[data-anim="off"] .dgn-torch__spark {
+  animation: none !important;
 }
 html[data-anim="off"] .draft-card-front {
   transform: none;
@@ -1226,63 +1065,6 @@ html[data-anim="off"] .draft-stage__stars {
   opacity: 0.3;
 }
 
-/* --- Pack-tear pyrotechnics ---------------------------------------------- */
-/* Mounted only while the pack is tearing: a golden shockwave ring (plus a
-   fainter echo) blooms off the tear line while thin gold filaments fling
-   outward on deterministic angles and burn out. */
-.pack-tear-fx {
-  position: absolute;
-  left: 50%;
-  top: 18%;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  z-index: 5;
-}
-.pack-shockwave {
-  position: absolute;
-  left: -18px;
-  top: -18px;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  border: 2px solid rgb(255 233 170 / 0.85);
-  opacity: 0;
-  animation: pack-shockwave 0.6s cubic-bezier(0.15, 0.7, 0.2, 1) both;
-}
-.pack-shockwave--echo {
-  border-width: 1px;
-  animation-duration: 0.75s;
-  animation-delay: 0.12s;
-}
-@keyframes pack-shockwave {
-  0% { opacity: 0; transform: scale(0.3); }
-  20% { opacity: 1; }
-  100% { opacity: 0; transform: scale(4.4); }
-}
-.pack-filament {
-  position: absolute;
-  left: -1px;
-  top: -8px;
-  width: 2px;
-  height: 16px;
-  border-radius: 1px;
-  background: linear-gradient(180deg, rgb(255 233 170 / 0.95), rgb(216 181 110 / 0));
-  transform-origin: 50% 100%;
-  opacity: 0;
-  animation: pack-filament-fly 0.55s cubic-bezier(0.2, 0.6, 0.3, 1) var(--fdelay, 0ms) both;
-}
-@keyframes pack-filament-fly {
-  0% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateY(4px) scaleY(0.4); }
-  18% { opacity: 1; }
-  100% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateY(calc(var(--fdist, 70px) * -1)) scaleY(1); }
-}
-html[data-anim="off"] .pack-shockwave,
-html[data-anim="off"] .pack-filament {
-  animation: none !important;
-  opacity: 0;
-}
-
 /* --- Rarity-scaled reveals ------------------------------------------------ */
 /* Tier 6+ card: a tier-colored ring blooms once off the face the instant its
    flip completes (--reveal-delay and --tier-rgb come from the wrapper). */
@@ -1672,63 +1454,6 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
 .dgn-brace--br::after { bottom: 0; right: 0; }
 .dgn-brace--br i { bottom: 2px; right: 2px; }
 
-/* --- The rune circle ------------------------------------------------------- */
-/* A slow-turning ring of rune dashes sealed around the unopened pack, in the
-   pack's own tier color, with a counter-rotating inner ring. Tearing the pack
-   breaks the seal. Repeating-conic dashes masked to a ring; rotation only. */
-.pack-rune {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 150%;
-  aspect-ratio: 1;
-  margin: 0;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  pointer-events: none;
-  border-radius: 999px;
-  background: repeating-conic-gradient(
-    from 0deg,
-    rgb(var(--pack-rgb, 216 181 110) / 0.55) 0deg 6deg,
-    transparent 6deg 22deg
-  );
-  -webkit-mask-image: radial-gradient(circle, transparent 62%, #000 64%, #000 70%, transparent 72%);
-  mask-image: radial-gradient(circle, transparent 62%, #000 64%, #000 70%, transparent 72%);
-  animation: dgn-rune-spin 26s linear infinite;
-  opacity: 0.8;
-}
-.pack-rune--inner {
-  width: 122%;
-  background: repeating-conic-gradient(
-    from 11deg,
-    rgb(var(--pack-rgb, 216 181 110) / 0.35) 0deg 3deg,
-    transparent 3deg 14deg
-  );
-  -webkit-mask-image: radial-gradient(circle, transparent 66%, #000 68%, #000 72%, transparent 74%);
-  mask-image: radial-gradient(circle, transparent 66%, #000 68%, #000 72%, transparent 74%);
-  animation: dgn-rune-spin-rev 19s linear infinite;
-  opacity: 0.7;
-}
-@keyframes dgn-rune-spin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-@keyframes dgn-rune-spin-rev {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(-360deg); }
-}
-/* Breaking the seal: the rings flare and burst outward as the pack tears. */
-.pack--tearing .pack-rune {
-  animation: dgn-rune-break 0.55s cubic-bezier(0.3, 0, 0.6, 1) both;
-}
-.pack--tearing .pack-rune--inner {
-  animation: dgn-rune-break 0.45s cubic-bezier(0.3, 0, 0.6, 1) 0.05s both;
-}
-@keyframes dgn-rune-break {
-  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5) rotate(24deg); }
-}
-
 /* --- Carved ember title ---------------------------------------------------- */
 /* The "Choose a ..." heading reads as letters chiselled into the slab with
    embers still glowing in the cuts: a hard dark under-edge plus a warm bloom. */
@@ -1742,63 +1467,6 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
 /* The smallcaps chamber label above it takes a quiet ember tint. */
 .dgn-label {
   color: rgb(255 178 96 / 0.75) !important;
-}
-
-/* --- Pack body: from foil packet to bound reliquary ------------------------ */
-/* The sealed pack sits on stone: darker body, iron-and-ember edging, and the
-   flap reads as the wax-and-iron seal strip. Tier color still tints all of it
-   (the --pack-rgb var is untouched). */
-.pack-body {
-  background:
-    radial-gradient(120% 70% at 50% 112%, rgb(224 92 40 / 0.12), transparent 60%),
-    linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01) 45%, rgba(0, 0, 0, 0.3)),
-    #17110a;
-}
-.pack-flap {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    #1d150c;
-}
-
-/* --- The portal behind the pack --------------------------------------------- */
-/* A slow dimensional swirl the sealed pack hangs in front of: a soft disc of
-   void purple bleeding into teal, turning almost imperceptibly, so the offer
-   reads as arriving from somewhere else. Sits under the rune rings. */
-.pack-portal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 190%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  z-index: -2;
-  pointer-events: none;
-  border-radius: 999px;
-  background:
-    conic-gradient(
-      from 0deg,
-      rgb(168 119 216 / 0.12),
-      rgb(34 211 238 / 0.07) 30%,
-      rgb(168 119 216 / 0.03) 55%,
-      rgb(34 211 238 / 0.1) 78%,
-      rgb(168 119 216 / 0.12)
-    );
-  -webkit-mask-image: radial-gradient(circle, #000 30%, rgb(0 0 0 / 0.5) 55%, transparent 72%);
-  mask-image: radial-gradient(circle, #000 30%, rgb(0 0 0 / 0.5) 55%, transparent 72%);
-  animation: dgn-portal-turn 40s linear infinite;
-  opacity: 0.9;
-}
-@keyframes dgn-portal-turn {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-/* Tearing the pack collapses the portal with the seal. */
-.pack--tearing .pack-portal {
-  animation: dgn-portal-collapse 0.5s cubic-bezier(0.5, 0, 0.8, 0.5) both;
-}
-@keyframes dgn-portal-collapse {
-  from { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
 }
 
 /* --- Comparison chip --------------------------------------------------------- */
@@ -1826,24 +1494,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
 }
 
 /* --- Anim-off gating for the dungeon pass ---------------------------------- */
-html[data-anim="off"] .pack-portal {
-  animation: none !important;
-  opacity: 0.4;
-}
-html[data-anim="off"] .dgn-torch,
-html[data-anim="off"] .dgn-torch__halo,
-html[data-anim="off"] .dgn-torch__flame,
-html[data-anim="off"] .dgn-torch__flame--inner,
-html[data-anim="off"] .dgn-torch__spark,
-html[data-anim="off"] .pack-rune,
-html[data-anim="off"] .pack-rune--inner,
-html[data-anim="off"] .pack--tearing .pack-rune,
-html[data-anim="off"] .pack--tearing .pack-rune--inner {
-  animation: none !important;
-}
 html[data-anim="off"] .dgn-torch__spark { opacity: 0; }
-html[data-anim="off"] .pack-rune,
-html[data-anim="off"] .pack-rune--inner { opacity: 0.35; }
 
 /* ============================================================================
    Draft animation preview (.dpv) — owned by DraftPreview.tsx.

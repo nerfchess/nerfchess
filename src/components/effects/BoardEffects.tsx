@@ -6,6 +6,7 @@
 // a static end state when animations are off in Settings; one-shot flourishes hide.
 
 import React from "react";
+import { createPortal } from "react-dom";
 import {
   Castle,
   Eye,
@@ -22,6 +23,7 @@ import {
 import type { BuffCategory, CardFx } from "@/engine/buff";
 import { CategoryArrival } from "./cardEntrance";
 import { cardFaceIcon } from "@/lib/cardIcon";
+import { fxLevel } from "@/lib/fxToggle";
 import type { PieceType } from "@/engine/types";
 import "./effects.css";
 // NOTE: godPlays.css (the 753-line APEX tier-9/10 stylesheet) is intentionally
@@ -1584,7 +1586,33 @@ export type SigVisual =
   | "sellsword" // ww_mercenary_queen (was summonrift): the hired queen strides in over coin
   | "triplewave" // overwhelm (was blitz): three push-waves roll up the board in a row
   | "warpquad" // warp_storm (was blink): four paired micro-portals hop four pieces at once
-  | "kingsleap"; // god_king (was coronation): the king's ghost takes the L-shaped leap between heartbeats
+  | "kingsleap" // god_king (was coronation): the king's ghost takes the L-shaped leap between heartbeats
+  // --- Batch 16 (tier-6 shared-core splits): every tier-6 card that still
+  // shared a CORE visual with a sibling gets its own three-beat scene; a
+  // tier-5-or-below member keeps the old key as the baseline.
+  | "deadlegion" // army_of_the_dead (was gravehands): tombstones tilt, a pike-rank of skeletons marches up
+  | "schoolbell" // bayview_secondary_school (was deepglacier): the school bell rings the deep-freeze in
+  | "ragefrenzy" // berserker (was warhorn): the rage-horn sounds and a whirling axe rakes the field
+  | "juggleorbit" // wc_juggling_act (was warhorn): three clubs loop a juggling orbit over the board
+  | "brrblizzard" // brr_brr_patapim (was coldsnap): Patapim inhales and exhales the whiteout himself
+  | "starcrown" // celestial_ascension (was wings): a light pillar rises into a crown of stars
+  | "angelward" // guardian_angel (was wings): the winged guardian descends and shields the king
+  | "printpress" // clone_army (was photocopy): the press stamps a whole production run of copies
+  | "heavenseal" // divine_mandate (was mandate): heaven's halo descends and seals the ranks
+  | "twincrown" // double_amazon (was crownrain): twin spear-sisters rise mirrored and cross spears
+  | "magmarift" // fissure (was trench): the ground tears open over magma light
+  | "twintrench" // ww_double_trench (was trench): two earthwork lines dug in sequence
+  | "neondash" // geometry_dash (was strike): a neon cube jumps the spike course across the crop
+  | "glassforge" // glass_cannon (was bladegift): the glass cannon fires once and cracks itself
+  | "idolstage" // i_love_newjeans (was bannerwar): pastel stage lights, a light-stick, heart confetti
+  | "evictnotice" // landlord (was mortgagesign): the fence goes up and the landlord's padlock clamps
+  | "sappersow" // minefield card (was minefield key, shared w/ claymore_line): mines sown one by one, one proofs
+  | "mirrorburst" // wc_double_trouble (was iceshatter): two mirrored ice bursts trade places and shatter
+  | "glacierrise" // we_glacier_wall (was icewall): one calving glacier front heaves up whole
+  | "selfpyre" // we_immolation (was inferno): the self-burning ring closes in on the sacrifice
+  | "bramblecage" // wall_of_thorns hex (was thornwall): brambles creep in and knit a cage
+  | "combinedpush" // ww_combined_arms (was reinforce): infantry, cavalry and siege converge in one push
+  | "watchtower"; // ww_forward_outpost (was reinforce): a watchtower rises and lights its signal fire
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1719,7 +1747,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // --- Batch 2: movement / coronation grants (empower motif zone) ---
   amazon_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
-  double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "twincrown", hasLead: true, sound: "crownrain", source: "empower" },
   triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "triumvirate", hasLead: true, sound: "crownrain", source: "empower" },
   amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownlegion", hasLead: true, sound: "crownrain", source: "empower" },
   colossus: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
@@ -1783,18 +1811,18 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Regalia / movement grants (empower zone).
   excalibur: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
   dragon_form: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
-  celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "wings", hasLead: true, sound: "colossus", source: "empower" },
+  celestial_ascension: { ordering: "sweep", staggerMs: 80, victims: ["b"], visual: "starcrown", hasLead: true, sound: "colossus", source: "empower" },
   god_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "kingsleap", hasLead: true, sound: "coronation", source: "empower" },
   banner_of_war: { ordering: "radial", staggerMs: 60, victims: ["n"], visual: "bannerwar", hasLead: true, sound: "blitz", source: "empower" },
 
   // Barred walls (blindfold zone).
   frost_wall: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "icewall", hasLead: true, sound: "wall", source: "blindfold" },
-  wall_of_thorns: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "thornwall", hasLead: true, sound: "wall", source: "blindfold" },
+  wall_of_thorns: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "bramblecage", hasLead: true, sound: "wall", source: "blindfold" },
 
   // Summons / reinforcements / graves (summon zone).
   summon_dragon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "dragonrise", hasLead: true, sound: "wall", source: "summon" },
   starfall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "meteor", hasLead: true, sound: "wall", source: "summon" },
-  army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "gravehands", hasLead: true, sound: "wall", source: "summon" },
+  army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "deadlegion", hasLead: true, sound: "wall", source: "summon" },
   raise_dead: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
   undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
   hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
@@ -1815,7 +1843,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // flourish (they carry no detonation and already read as a coronation). ---
 
   // FIRE (wild/elemental): big removals and a queen's hellfire beam.
-  we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "inferno", hasLead: true, sound: "atomic" },
+  we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "selfpyre", hasLead: true, sound: "atomic" },
   we_conflagration: { ordering: "sweep", staggerMs: 120, victims: ["p", "n", "b"], visual: "inferno", hasLead: true, sound: "cataclysm" },
   we_flame_lance: { ordering: "line", staggerMs: 95, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
   we_hellfire_beam: { ordering: "line", staggerMs: 70, victims: "all", mover: "q", visual: "hellfire", hasLead: true, sound: "cataclysm" },
@@ -1823,7 +1851,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // ICE (wild/elemental): mass freezes, an ice wall, a whiteout blizzard.
   we_hailstorm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "hailstorm", hasLead: false, sound: "massfreeze", source: "frozen" },
   we_flash_freeze: { ordering: "radial", staggerMs: 40, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
-  we_glacier_wall: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "icewall", hasLead: true, sound: "wall", source: "blindfold" },
+  we_glacier_wall: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "glacierrise", hasLead: true, sound: "wall", source: "blindfold" },
   we_whiteout: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blizzard", hasLead: true, sound: "clockice", source: "stun" },
 
   // EARTH (wild/elemental): petrify, summon, rock walls, a landslide.
@@ -1844,12 +1872,12 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage" },
   ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege" },
   ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "artillery", hasLead: true, sound: "siege" },
-  ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "combinedpush", hasLead: true, sound: "wall", source: "summon" },
   ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
-  ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "watchtower", hasLead: true, sound: "wall", source: "summon" },
   ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
-  ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
+  ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "twintrench", hasLead: true, sound: "wall", source: "blindfold" },
   ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "foxholes", hasLead: true, sound: "aegis", source: "shield" },
 
   // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
@@ -1896,7 +1924,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Freezes (frozen zone): each ice card its own read, varied stagger.
   wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "chainfreeze", hasLead: false, sound: "massfreeze", source: "frozen" },
-  wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mirrorburst", hasLead: true, sound: "massfreeze", source: "frozen" },
   ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
   wa_arrest_time: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
 
@@ -1926,14 +1954,14 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "triplewave", hasLead: true, sound: "blitz", source: "rally" },
   wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
-  wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
-  berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "warhorn", hasLead: true, sound: "blitz", source: "rally" },
+  wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "juggleorbit", hasLead: true, sound: "blitz", source: "rally" },
+  berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "ragefrenzy", hasLead: true, sound: "blitz", source: "rally" },
 
   // Movement grants / veteran upgrades (empower zone).
   ww_command_tent: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   ww_flanking_knights: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "warhorn", hasLead: true, sound: "blitz", source: "empower" },
   ww_dragoons: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "warhorn", hasLead: true, sound: "coronation", source: "empower" },
-  glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
+  glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "glassforge", hasLead: true, sound: "coronation", source: "empower" },
 
   // Summons / reinforcements (summon zone).
   grand_summon: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "pocketpair", hasLead: true, sound: "wall", source: "summon" },
@@ -1943,7 +1971,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Batch 11 upgrade: the clone army rolls out of the same photocopier as its
   // sibling card Clone — a board-wide scan-bar lead instead of the generic
   // reinforcement pop.
-  clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
+  clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "printpress", hasLead: true, sound: "wall", source: "summon" },
   wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   // Batch 11 upgrade: the pizza actually gets DELIVERED — a scooter tears
   // across the whole board trailing steam (was a generic portal pop).
@@ -1961,7 +1989,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Walls / voids / traps (blindfold zone).
   fault_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
-  fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
+  fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "magmarift", hasLead: true, sound: "wall", source: "blindfold" },
   wa_glyph_seal: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
   wa_border_ward: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "borderward", hasLead: true, sound: "wall", source: "blindfold" },
   wc_banana_peel_trail: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "banana", hasLead: false, sound: "wall", source: "blindfold" },
@@ -2061,7 +2089,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   tralalero_dash: { ordering: "line", staggerMs: 0, victims: "all", visual: "sharkdash", hasLead: true, sound: "rampage", source: "rally" },
   bombombini_gusini: { ordering: "radial", staggerMs: 40, victims: "all", visual: "goosebomb", hasLead: true, sound: "siege", source: "stun" },
   lirili_larila: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockelephant", hasLead: true, sound: "clockcage", source: "stun" },
-  brr_brr_patapim: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "coldsnap", hasLead: true, sound: "massfreeze", source: "frozen" },
+  brr_brr_patapim: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "brrblizzard", hasLead: true, sound: "massfreeze", source: "frozen" },
   chimpanzini_bananini: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "bananape", hasLead: true, sound: "rampage", source: "empower" },
   // Boneca's card paints an "anchor" motif; the nearest shipped zone is the
   // movement-constraint "slow" one, so it rides the same inert-until-wired path
@@ -2078,7 +2106,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   regicide: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "regicideblade", hasLead: true, sound: "coronation", source: "empower" },
   divine_right: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "divineright", hasLead: true, sound: "coronation", source: "empower" },
   ascendancy: { ordering: "radial", staggerMs: 60, victims: "all", visual: "ascendancy", hasLead: true, sound: "colossus", source: "empower" },
-  divine_mandate: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], visual: "mandate", hasLead: true, sound: "aegis", source: "shield" },
+  divine_mandate: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], visual: "heavenseal", hasLead: true, sound: "aegis", source: "shield" },
   blackout: { ordering: "radial", staggerMs: 40, victims: "all", visual: "blackout", hasLead: true, sound: "snooze", source: "stun" },
 
   // Beasts / summons / relocations (summon zone: the landing squares gain a piece).
@@ -2224,9 +2252,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   contagion: { ordering: "radial", staggerMs: 55, victims: "all", visual: "contagion", hasLead: true, sound: "massfreeze", source: "frozen" },
   fan_club: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "fanclub", hasLead: true, sound: "aegis", source: "shield" },
   gravity_well: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "gravitywell", hasLead: true, sound: "shades", source: "kingSafe" },
-  guardian_angel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wings", hasLead: true, sound: "aegis", source: "shield" },
+  guardian_angel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "angelward", hasLead: true, sound: "aegis", source: "shield" },
   home_field: { ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
-  landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mortgagesign", hasLead: true, sound: "wall", source: "blindfold" },
+  landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "evictnotice", hasLead: true, sound: "wall", source: "blindfold" },
   magnetism: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "magnetpull", hasLead: true, sound: "colossus", source: "empower" },
   photosynthesis: { ordering: "sweep", staggerMs: 75, victims: ["p"], visual: "photosyn", hasLead: true, sound: "aegis", source: "empower" },
   termites: { ordering: "radial", staggerMs: 50, victims: ["r"], visual: "termitegnaw", hasLead: true, sound: "petrify", source: "slow" },
@@ -2234,7 +2262,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // FUNNY slapstick / summons / transforms.
   cream_pie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "creampie", hasLead: true, sound: "rampage", source: "stun" },
-  minefield: { ordering: "radial", staggerMs: 60, victims: "all", visual: "minefield", hasLead: true, sound: "siege", source: "blindfold" },
+  minefield: { ordering: "radial", staggerMs: 60, victims: "all", visual: "sappersow", hasLead: true, sound: "siege", source: "blindfold" },
   clone: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "photocopy", hasLead: true, sound: "wall", source: "summon" },
   insurance: { ordering: "radial", staggerMs: 0, victims: ["n", "q"], visual: "umbrella", hasLead: false, sound: "aegis", source: "shield" },
   understudy: { ordering: "radial", staggerMs: 0, victims: ["b", "q"], visual: "spotlight", hasLead: true, sound: "coronation", source: "shield" },
@@ -2253,9 +2281,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // /newjeans and /companions portrait art. No core entries: core beats
   // plugins at the resolve site, so entries here would shadow the portraits.
   fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
-  geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
+  geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "neondash", hasLead: true, sound: "lightning" },
   check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "golive", hasLead: true, sound: "massfreeze", source: "frozen" },
-  bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
+  bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "schoolbell", hasLead: true, sound: "massfreeze", source: "frozen" },
   i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "devotion", hasLead: true, sound: "aegis", source: "shield" },
   uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
   // Second batch: summon (piece placement), shield, and freeze cards, each on a
@@ -2272,7 +2300,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // blitzkrieg (rally). Cards without a resolvable zone stay on genSignature.
   waist_25: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
   rgb_keyboard: { ordering: "sweep", staggerMs: 90, victims: ["n", "b", "r"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
-  i_love_newjeans: { ordering: "radial", staggerMs: 40, victims: "all", visual: "bannerwar", hasLead: true, sound: "coronation", source: "empower" },
+  i_love_newjeans: { ordering: "radial", staggerMs: 40, victims: "all", visual: "idolstage", hasLead: true, sound: "coronation", source: "empower" },
   white_monster: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   joseph_leung: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mandate", hasLead: true, sound: "aegis", source: "shield" },
 };
@@ -2496,10 +2524,179 @@ export function SignatureOverlay(props: SignatureVisualProps) {
 // over it. All transform/opacity-only, all one-shot, all hidden when
 // animations are off in Settings (see effects.css).
 
-export type CastIntensity = "sleek" | "grand" | "marquee";
+// Tier-scaled cast escalation (flagship overhaul, part 2): presentation now
+// climbs a five-rung ladder instead of three, so every tier 6+ play reads a
+// notch bigger than the tier below it:
+//   sleek   (1-4)  unchanged.
+//   grand   (5-6)  the mid treatment; tier 6 adds a board-edge tier-tinted
+//                  glow pulse and one shock ring (CastEscalation).
+//   epic    (7)    grand plus a raking beam sweep and a deeper vignette.
+//   marquee (8)    the board takeover, plus a second (board-scale) shock ring
+//                  and the short screen shake (Board.tsx, FX-dial gated).
+//   apex    (9-10) marquee plus a ~1s letterbox moment over the crop and the
+//                  ApexVeil beyond the board (full-viewport breath, portal).
+export type CastIntensity = "sleek" | "grand" | "epic" | "marquee" | "apex";
 
 export function castIntensity(tier: number): CastIntensity {
-  return tier >= 8 ? "marquee" : tier >= 5 ? "grand" : "sleek";
+  return tier >= 9 ? "apex" : tier >= 8 ? "marquee" : tier >= 7 ? "epic" : tier >= 5 ? "grand" : "sleek";
+}
+
+/** True when the animation gate is closed (Settings anim-off, which also
+ * absorbs the OS reduced-motion preference via followSystemMotion). */
+function animOff(): boolean {
+  return typeof document !== "undefined" && document.documentElement.getAttribute("data-anim") === "off";
+}
+
+/**
+ * ApexVeil — the sanctioned "the effect escapes the chessboard" moment, tier
+ * 9-10 only. A fixed, full-viewport, pointer-events-none overlay rendered via
+ * createPortal(document.body): a soft tier-tinted vignette breathes in from
+ * the viewport edges while a handful of motes rise along the flanks. One-shot
+ * (~2.2s, ends at opacity 0), z-index 39 so it sits above page content but
+ * below the site header dropdowns / modals at z-50. Never rendered under
+ * reduced motion (data-anim off) or below FX dial level 2 (Normal); SSR-safe
+ * (portal only mounts client-side after the first effect); createPortal
+ * unmounts its DOM with the component, so cleanup is automatic.
+ */
+const VEIL_MOTES = [
+  { l: "5%", d: 0, s: 7 },
+  { l: "11%", d: 260, s: 5 },
+  { l: "17%", d: 520, s: 6 },
+  { l: "83%", d: 130, s: 6 },
+  { l: "89%", d: 390, s: 7 },
+  { l: "95%", d: 650, s: 5 },
+  { l: "48%", d: 780, s: 4 },
+];
+
+/** SSR-safe hydration flag: false on the server / first server-matched
+ * render, true on the client — without an effect-driven setState. */
+const noopSubscribe = () => () => {};
+function useHydrated(): boolean {
+  return React.useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
+export function ApexVeil({ color, soft }: { color: string; soft: string }) {
+  const mounted = useHydrated();
+  // Gates read client-side only: reduced motion / anim-off never shows the
+  // veil, and the FX dial must be at Normal or higher.
+  if (!mounted || animOff() || fxLevel() < 2) return null;
+  return createPortal(
+    <span
+      className="fx-cast-veil pointer-events-none fixed inset-0 block"
+      style={{ zIndex: 39 }}
+      aria-hidden="true"
+    >
+      {/* the vignette breath: tier-tinted light pressing in from the edges */}
+      <span
+        className="fx-veil-vig absolute inset-0 block"
+        style={{
+          background: `radial-gradient(ellipse at 50% 50%, transparent 52%, ${soft} 82%, ${color}2e 100%)`,
+        }}
+      />
+      {/* rising motes along the flanks (kept off the board's center) */}
+      {VEIL_MOTES.map((m, i) => (
+        <span
+          key={i}
+          className="fx-veil-mote absolute block rounded-full"
+          style={{
+            left: m.l,
+            bottom: "-2%",
+            width: `${m.s}px`,
+            height: `${m.s}px`,
+            background: color,
+            boxShadow: `0 0 ${m.s * 2}px ${m.s / 2}px ${soft}`,
+            animationDelay: `${m.d}ms`,
+          }}
+        />
+      ))}
+    </span>,
+    document.body,
+  );
+}
+
+/**
+ * CastEscalation — the additive tier chrome layered into every CastSpectacle
+ * branch (bespoke included: this is edge dressing, never center-stage art).
+ *   tier >= 6: a board-edge tier-tinted glow pulse + one shock ring.
+ *   tier >= 7: a raking beam sweep + a deeper vignette (skipped via
+ *              `ownBeams` / `ownDim` in the marquee branch, which already
+ *              carries twin beams and the takeover dim).
+ *   tier >= 8: the second, board-scale shock ring.
+ *   tier >= 9: the ~1s letterbox moment + the ApexVeil beyond the board.
+ * Board legibility: the vignette tops out well under the marquee dim's 0.5.
+ */
+function CastEscalation({
+  tier,
+  color,
+  soft,
+  ownBeams = false,
+  ownDim = false,
+}: {
+  tier: number;
+  color: string;
+  soft: string;
+  ownBeams?: boolean;
+  ownDim?: boolean;
+}) {
+  if (tier < 6) return null;
+  return (
+    <>
+      {/* tier 6+: the board's edges catch the card's light... */}
+      <span
+        className="fx-cast-edgepulse absolute inset-0 block rounded-sm"
+        style={{ boxShadow: `inset 0 0 48px ${soft}, inset 0 0 12px ${color}55` }}
+      />
+      {/* ...and one shock ring rolls off the center */}
+      <span
+        className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-21%] mt-[-21%] block h-[42%] w-[42%] rounded-full"
+        style={{ border: `2.5px solid ${color}`, animationDelay: "180ms" }}
+      />
+      {tier >= 7 && !ownDim && (
+        <span
+          className="fx-cast-vignette absolute inset-0 block"
+          style={{
+            background: `radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(6,10,16,0.42) 100%)`,
+          }}
+        />
+      )}
+      {tier >= 7 && !ownBeams && (
+        <span className="absolute inset-0 block overflow-hidden">
+          <span
+            className="fx-cast-beam absolute left-[-30%] top-[-40%] block h-[180%] w-[14%]"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${soft}, ${color}22, transparent)`,
+              "--tilt": "14deg",
+            } as React.CSSProperties}
+          />
+        </span>
+      )}
+      {tier >= 8 && (
+        <span
+          className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-34%] mt-[-34%] block h-[68%] w-[68%] rounded-full"
+          style={{ border: `2px solid ${color}`, animationDelay: "380ms" }}
+        />
+      )}
+      {tier >= 9 && (
+        <>
+          {/* the letterbox moment: bars slide over the crop for the climax,
+              hold ~1s, then release (fx-cast-bar in effects.css) */}
+          <span
+            className="fx-cast-bar absolute inset-x-0 top-0 block h-[9%]"
+            style={{ background: "rgba(8,8,12,0.82)", transformOrigin: "50% 0%" }}
+          />
+          <span
+            className="fx-cast-bar absolute inset-x-0 bottom-0 block h-[9%]"
+            style={{ background: "rgba(8,8,12,0.82)", transformOrigin: "50% 100%" }}
+          />
+          <ApexVeil color={color} soft={soft} />
+        </>
+      )}
+    </>
+  );
 }
 
 /** Per-category theme: a saturated accent and a soft wash of the same hue. */
@@ -2636,10 +2833,11 @@ export function CastSpectacle({
         <span
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{
-            border: `${intensity === "marquee" ? 2.5 : 1.5}px solid ${theme.color}`,
-            boxShadow: `inset 0 0 ${intensity === "marquee" ? 34 : 18}px ${theme.soft}`,
+            border: `${intensity === "marquee" || intensity === "apex" ? 2.5 : 1.5}px solid ${theme.color}`,
+            boxShadow: `inset 0 0 ${intensity === "marquee" || intensity === "apex" ? 34 : 18}px ${theme.soft}`,
           }}
         />
+        <CastEscalation tier={tier} color={theme.color} soft={theme.soft} />
         {banner}
       </span>
     );
@@ -2691,7 +2889,10 @@ export function CastSpectacle({
       </span>
     );
   }
-  if (intensity === "grand") {
+  if (intensity === "grand" || intensity === "epic") {
+    // grand (5-6): the mid treatment; tier 6 layers in the edge pulse + shock
+    // ring. epic (7): the same base plus the beam sweep + deeper vignette,
+    // all via CastEscalation.
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
         <span
@@ -2702,6 +2903,7 @@ export function CastSpectacle({
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
         />
+        <CastEscalation tier={tier} color={theme.color} soft={theme.soft} />
         {/* the card's icon ARRIVES in its category's choreography (comet /
             curse circle / clock sweep / crate drop...) instead of being
             stamped flat over the board */}
@@ -2749,6 +2951,11 @@ export function CastSpectacle({
       <span className="absolute left-1/2 top-1/2 ml-[-6%] mt-[-6%] block h-[12%] w-[12%]">
         <ShardBurst vectors={CAST_SPARKS} fill={theme.color} stroke="#1a222e" delayMs={420} sizePct={85} />
       </span>
+      {/* marquee (8): the second, board-scale shock ring; apex (9-10): the
+          letterbox moment + the ApexVeil beyond the board. The takeover
+          branch already carries twin beams and the vignette dim, so the
+          escalation skips its own. */}
+      <CastEscalation tier={tier} color={theme.color} soft={theme.soft} ownBeams ownDim />
       {banner}
     </span>
   );
