@@ -499,17 +499,22 @@ export const BOON_WAVE3: Buff[] = [
 
   // ===== TIER 4 ==============================================================
 
-  // A behind-gated positional metamorphosis: your spearhead pawn hardens into
-  // a knight. Neighbours: Field Knighting (any advanced pawn, unconditional),
-  // Cornered King (king movement while behind). Distinct: an activated comeback
-  // transform that only bites when you are outnumbered and always takes your
-  // MOST advanced pawn.
+  // A behind-gated positional metamorphosis whose REWARD SCALES with the
+  // deficit: your spearhead pawn hardens into a knight, or a rook when you are
+  // badly outnumbered. Neighbours: Field Knighting (T3: CHOOSE any advanced
+  // pawn, unconditional, always a knight), Cornered King (king movement while
+  // behind). Distinct from Field Knighting on all three axes: it is
+  // behind-GATED, auto-targets your MOST advanced pawn (no choice), and its
+  // payoff scales to a rook at a large deficit, so it is a comeback engine
+  // rather than a proactive tempo upgrade (balance review: the scaling was
+  // added to remove the near-duplication with Field Knighting and to justify
+  // the tier gap).
   boon(
     {
       id: "bw3_battlefield_commission",
       name: "Battlefield Commission",
       description:
-        "The losing side promotes from the ranks: if you have fewer pieces than your opponent (kings aside), your most advanced pawn becomes a knight where it stands. Used while you are not behind, the commission goes unsigned.",
+        "The deeper the hole, the higher the field promotion: if you have fewer pieces than your opponent (kings aside), your most advanced pawn is promoted where it stands - to a knight, or to a rook if you are outnumbered by four pieces or more. Used while you are not behind, the commission goes unsigned.",
       tier: 4,
       category: "pieces",
       icon: "Medal",
@@ -517,14 +522,16 @@ export const BOON_WAVE3: Buff[] = [
       requires: ["p"],
     },
     activatedSimple((_inst, api) => {
-      if (armySize(api.board, api.me) >= armySize(api.board, api.opp)) return;
+      const mine = armySize(api.board, api.me);
+      const theirs = armySize(api.board, api.opp);
+      if (mine >= theirs) return;
       const pawns = mySquares(api.board, api.me, "p");
       if (pawns.length === 0) return;
       let tip = pawns[0];
       for (const sq of pawns) {
         if (relRank(api.me, sq) > relRank(api.me, tip)) tip = sq;
       }
-      api.setPieceType(tip, "n");
+      api.setPieceType(tip, theirs - mine >= 4 ? "r" : "n");
     }),
   ),
 
@@ -1001,25 +1008,38 @@ export const BOON_WAVE3: Buff[] = [
     ),
   ),
 
-  // A draft gamble that fishes for the top of the deck. Neighbours: Ascetic's
-  // Bargain (skip one, then prep + bank), Kingmaker's Pact (persistent lift).
-  // Distinct: the first (and only) boon to arm `bankedTier8`, so a single fat
-  // banked offer of three cards can deal an apex - paid for with two skipped
-  // drafts.
+  // A draft gamble that fishes for the very top of the deck. Neighbours:
+  // Ascetic's Bargain (skip one, then prep + bank), Kingmaker's Pact
+  // (persistent lift). Distinct: the only boon to arm `bankedTier8`, so it
+  // delivers a genuine apex-tier offer (the same two-card apex pull that
+  // banking past a tier-8 grants) at the price of two skipped drafts. Balance
+  // review: retiered T6 -> T7 and the apex bug fixed. As authored it also set
+  // `prepThree`, but rollOffer's apex promotion is gated on `!prepping`
+  // (a prepThree offer is never collapsed into apex), so the advertised apex
+  // could NEVER fire and the card silently degraded to a fat three-card offer
+  // with a dead flag. Dropping prepThree makes the apex real; T7 reflects that
+  // a guaranteed apex pull is a top-end effect, not a T6 draft trick.
   boon(
     {
       id: "bw3_futures_market",
       name: "Futures Market",
       description:
-        "Mortgage two drafts to gamble on one: your next draft shows three cards, rolls one tier higher, and if it would have offered the very top of the deck it may instead deal an apex card. The price is your next two drafts after it, both skipped.",
-      tier: 6,
+        "Mortgage the near future for one shot at the very top: your next 2 drafts are skipped, and the draft that follows them deals a rare apex-tier offer, letting you take one of two apex cards.",
+      tier: 7,
       category: "draft",
       icon: "TrendingUp",
       flavor: "Buy the rumor. Skip the news. Twice.",
     },
     instant((_inst, api) => {
+      // Arm a banked apex pull (bankBonus + bankedTier8: exactly the state the
+      // "bank an offer that held a tier-8" path produces) and pay for it with
+      // two skipped drafts. prepThree is deliberately NOT set - rollOffer only
+      // promotes a banked roll to an apex offer when it is NOT a prepThree
+      // (three-card) offer, so setting it would silently cancel the apex. The
+      // two blockedDrafts are consumed first; the apex offer then rolls on the
+      // next non-skipped draft (bankBonus / bankedTier8 persist unconsumed
+      // across the skips until a real roll reads them).
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-      api.mine.flags.prepThree = true;
       api.mine.flags.bankedTier8 = true;
       api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
     }),

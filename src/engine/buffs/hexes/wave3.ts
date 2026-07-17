@@ -1953,7 +1953,14 @@ const T7: Buff[] = [
   // vs: Compounding Misery / Contagion (spread a status). This is a CHAINED
   // curse: cutting off the marked head spawns two more. Capture the piece and
   // two of their neighbors freeze; isolate it first to starve the spawn.
-  H7(
+  // Balance review: retiered T7 -> T6 (H6). The payload only fires when the
+  // CASTER chooses to capture the branded head - a caster-optional upside that
+  // the victim can largely ignore - so its curse value is well below the T7
+  // band (The Enemy Within's 4-turn major defection, The Long Eclipse's 3-turn
+  // queen+bishop lockout). It is stamped H6 in place; the block is kept in
+  // source order rather than moved, and only its `.tier` field (what the draft
+  // pool reads) changes.
+  H6(
     {
       id: "hw3_hydra_hex",
       name: "Hydra Hex",

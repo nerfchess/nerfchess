@@ -323,3 +323,125 @@ replay parity is generic.
   re-tier flags listed. draft.ts weights untouched.
 - Integrator: `gen:icons`, `check-sig-plugins --write`, passive-composition
   regen, `test:animations` (not run here per instructions).
+
+---
+
+## Balance review (2026-07-17, Balance and Interaction Reviewer)
+
+Adversarial pass over all 40 `hw3_*` hexes against the full pool. One code
+change applied to `wave3.ts`; no `draft.ts` change. Validation re-run clean
+(`tsc`, `server:build`, `test-hexes` OK, `test:desync` OK, eslint clean, pool
+smoke: 40 hexes, 0 new id/name collisions, 0 em/en dashes). Post-change tier
+spread reported by `test-hexes`: `{1:22,2:26,3:36,4:41,5:42,6:33,7:23,8:21,9:3}`
+(wave-3 now 4/5/6/6/6/6/3/4 after the Hydra move).
+
+### Change made
+
+1. **`hw3_hydra_hex` - retier T7 -> T6 (H7 -> H6).** Its payload (freeze the
+   two nearest enemy pieces) fires ONLY when the caster chooses to capture the
+   branded head - a caster-optional, upside-only trigger the victim can largely
+   ignore (don't cluster near the head; the caster captures it anyway when it
+   suits them). Its value as a CURSE is well under the T7 band (The Enemy
+   Within's 4-turn major defection, The Long Eclipse's 3-turn queen+bishop
+   lockout), matching the designer's own "could drop to T6" flag. Stamped H6 in
+   place; only its `.tier` (what the draft pool reads) changes, the source block
+   stays in order.
+
+### Designer re-tier flags: decisions
+
+- **Mutiny (T4) - kept T4.** An enemy-capture-triggered 3-turn knight defection
+  is swingy but doubly conditional: the victim must choose to capture WITH a
+  knight, and the caster cannot pick when/where it fires. That unreliability
+  keeps it below the chooseable T5 defection (Sleeper Cell); the stated
+  counterplay ("capture with anything but a knight; keep knights home") is
+  clean. Kept.
+- **Blood Tithe (T8) - kept T8.** A recurring per-heavy-capture material drain
+  over 6 turns has a genuinely game-warping ceiling in a grind; T8 is right.
+- **The Inverted Crown (T8) - kept T8.** Situational (only bites during an
+  active promotion window) but the ceiling is decisive - denying a queen
+  promotion in a pawn endgame. The ceiling, not the floor, sets the tier.
+- **Pyrrhic Toll (T7) - kept T7.** Unlike Hydra, its bystander-freeze fires on
+  the VICTIM's captures (not caster-optional) and RECURS for the whole 6-turn
+  window, so it bleeds a capture-heavy game meaningfully more than Hydra's
+  one-shot payload. Left at T7.
+
+### COMBO_TAGS - verified, no entry needed (not trusted)
+
+Re-derived from the section-3 duties rather than accepting the designer's note.
+No wave-3 hex qualifies:
+- **Turn theft:** no card writes `bs.skips` or skips a whole opponent turn.
+  Toll Road / the king-move and crossing taxes only restrict the piece CLASS of
+  a single following turn, conditional on the victim's own action - the safe
+  Hollow Crown / Queen's Ransom shape, not turn theft.
+- **Draft denial:** no wave-3 hex touches any draft flag.
+- **Mass freeze:** no card freezes/petrifies the WHOLE army. The largest
+  freezes hit one rank's occupants (Collapsing Floor), the ring around one king
+  (Martyr's Crown), the strongest single piece (The Curse Engine), or one
+  bystander per trigger (Pyrrhic Toll / Coronation Tax). None is army-wide.
+
+### Considered and rejected / accepted-as-is
+
+- **Soft-lock via stacked barred hazards.** Wandering Sentry / Sinking Mire /
+  Roaming Maw / Effigy of Dread / Powder Keg all place small barred footprints
+  in the victim's half. Even layered, they bar only a handful of squares. More
+  importantly the engine's `resolveNoMoves` turns a zero-legal-moves state
+  (with pieces on the board) into a FORCED PASS - effects tick, the turn passes
+  back, and only a genuinely empty pseudo-legal `generateMoves` (bare stalemate)
+  is a loss. So no barred/filter stack in this batch can manufacture an
+  unavoidable loss; worst case is a single ticked-away pass. Accepted. (Every
+  `filterOpponentMoves` in the batch also self-guards: `curse()`/`timedOppFilter`
+  wrap the non-empty fallback, and the raw filters - Toll Road, Binding Oath,
+  Bloodlust, Handed Down, Exile's Mark, Wildfire Rot, Avalanche, Feeding Frenzy,
+  The Long Eclipse - each return the original list when filtering to empty.)
+- **`hw3_effigy_of_dread` places a caster-owned knight.** Verified it refuses
+  any placement that would check the enemy king (no probe soft-lock, no surprise
+  mate) and auto-removes itself `uncounted` on expiry. The victim can capture
+  it (a slider slides over the empty barred ring to land on the centre; the ring
+  bars landing, not passing), which ends the curse - the stated counter. The
+  caster can also manoeuvre the knight offensively, making this a strong T6, but
+  it is capturable and cannot deliver an unavoidable finish. Accepted.
+- **Possession via `setPieceColor` (Fifth Column, Mutiny, Sleeper Cell, The
+  Enemy Within).** A flipped piece can, after reverting, appear as a new attack;
+  all four never touch a king, end the moment the loaned piece is captured, and
+  revert only while it is still the caster's and not a king (`tickDefect`). A
+  defection that then checks the victim's king is avoidable (the trigger is the
+  victim's own capture/over-use, and the curse is announced) - the established
+  `wa_dominate_*` shape. A possessed pawn pushed to promotion by the caster
+  reverts as the VICTIM's piece (a self-punishing edge for the caster), not an
+  exploit. Accepted.
+- **Contagion / hazard termination.** Wildfire Rot spreads at most one piece per
+  turn and is bounded by the 6-turn window and the victim's piece count; Roaming
+  Maw / Wandering Sentry / Sinking Mire move one deterministic step per turn and
+  expire on their fuse. Miasma's sick-count map is remapped across every move and
+  never grows unbounded. No ping-pong or non-terminating loop. Accepted.
+- **`timed_loss` cleanse splices** (Slow Poison, Exile's Mark, Doomed Vow,
+  Forced Pilgrimage) match by square on `move.from`/`move.to`; two marks on the
+  same piece is a caster-chosen edge only. Accepted.
+- **Determinism.** `api.rng` appears ONLY in `onMovePlayed` (Coronation Tax,
+  Pyrrhic Toll, Blood Tithe - single uniform "chosen by the curse" picks),
+  never in `targets()`/`status()`; no `Math.random`/`Date`; the `Math.floor(len/2)`
+  hazard-centre picks are pure functions of the candidate array. Replay-safe.
+  (Note: the hex batch, unlike the boon batch, does use rng - correctly, in
+  replayed hooks only - so "zero rng" applies to boons, not hexes; the three
+  uses are single non-repeated picks, not excessive randomness.)
+
+### Verdict by review dimension (hexes)
+
+1. Duplicates: none within wave 3 or against the pool (turncoat/possession
+   overlap with `wa_dominate_*` is differentiated by trigger + stated cure; 0
+   new name collisions).
+2. Tier placement: one retier (Hydra Hex T7 -> T6); other flagged cards kept
+   with reasoning.
+3. Oppressive combos: none reach a lockout; no COMBO_TAGS needed.
+4. Infinite loops: none (all hazards/contagion are fused and bounded).
+5. Randomness: three deterministic single-pick rng draws, all in replayed
+   hooks; no hidden nondeterminism.
+6. Counterplay/wording: every hex states trigger/target/duration/cleanse; no
+   em/en dashes.
+7. Broken stacking: same-id double-hold impossible; per-piece marks are guarded;
+   overlapping barred footprints are harmless (redundant).
+8. Impossible states/soft-lock: none - non-empty fallbacks present in every
+   opponent-move filter AND the engine forced-pass backstop holds; kings never
+   frozen/possessed/removed; Effigy refuses check-giving placement.
+9. Cross-family: turn-taxes are the safe conditional-on-own-action shape (not
+   turn theft); no wave-3 hex makes an existing nerf's loss unavoidable.

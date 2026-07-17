@@ -361,3 +361,118 @@ coronation_bonus (tempo), eleventh_hour (blessing/summon), deep_position
 underdogs_gambit (strike/empower), forced_march (tempo), royal_caper (empower),
 covenant_of_return (blessing/summon). The remaining cards are instant/activated
 plays.
+
+---
+
+## Balance review (2026-07-17, Balance and Interaction Reviewer)
+
+Adversarial pass over all 44 `bw3_*` boons against the full pool. Two code
+changes applied to `boons3.ts`; no `draft.ts` change. Validation re-run clean
+(`tsc`, `server:build`, `test-hexes`, `test:desync`, eslint on edited files,
+pool smoke: 44 boons, 0 new id/name collisions, 0 em/en dashes).
+
+### Changes made
+
+1. **`bw3_futures_market` - fixed a broken card + retier T6 -> T7.** As
+   authored it set BOTH `prepThree` and `bankedTier8`. `rollOffer`'s apex
+   promotion is `bankedToTop = !prepping && ...`: a prepThree (three-card)
+   offer is deliberately never collapsed into an apex offer (explicit engine
+   comment). So the advertised apex could NEVER fire - the card silently
+   degraded to a fat three-card offer at +1 tier with a dead `bankedTier8`
+   flag and a description that lied about apex. Fix: dropped `prepThree`,
+   kept `bankBonus` + `bankedTier8` + `blockedDrafts += 2`. It now arms exactly
+   the "banked past a tier-8" state and delivers a real two-card apex pull. The
+   two skipped drafts are consumed first (blockedDrafts is checked before
+   rollOffer each cadence tick); `bankBonus`/`bankedTier8` persist unconsumed
+   across the skips, so the apex offer rolls on the next non-skipped draft.
+   Description rewritten to match. Retiered to T7 because a guaranteed apex
+   pull is a top-end effect, not a T6 draft trick (it remains the only
+   apex-fisher in the boon pool, so it keeps a unique identity rather than
+   collapsing into a Double Down variant).
+
+2. **`bw3_battlefield_commission` - differentiated from `bw3_field_knighting`.**
+   Both were "activate -> a pawn becomes a knight," adjacent tiers (T4 vs T3),
+   which read as a near-duplicate with an inverted tier feel. Rather than cut
+   either, the T4 comeback card now SCALES with the deficit: the most advanced
+   pawn is promoted to a knight, or to a rook when outnumbered by four pieces
+   or more. This distinguishes it on all three axes (behind-gated,
+   auto-targets the tip pawn with no choice, scaling payoff) from Field
+   Knighting (choose any advanced pawn, unconditional, always a knight) and
+   justifies the tier gap. Kept activated (not converted to an auto-passive:
+   an auto-transform of your most advanced pawn could destroy a near-promotion
+   pawn against the holder's will).
+
+### draft.ts: COMBO_TAGS and APPEARANCE_MULT (no changes, with reasoning)
+
+- **COMBO_TAGS: no boon needs an entry (verified, not trusted).** No wave-3
+  boon skips/blocks the opponent's turn (no `skipOpponent`, no `bs.skips`
+  writes), nullifies/skips the OPPONENT's drafts (every draft flag set is on
+  `api.mine`: self-cadence and self-cost `blockedDrafts`, the Ascetic's Bargain
+  / Shadow Reserve precedent the content map calls safe), or freezes/petrifies
+  the opponent's whole army. So none touches the turn-theft, draft-denial, or
+  mass-freeze families.
+- **APPEARANCE_MULT: the designer's ~0.7-0.8 suggestions for `bw3_pretender`,
+  `bw3_the_reckoning`, `bw3_futures_market` were REJECTED on technical
+  grounds.** `APPEARANCE_MULT` is implemented as integer draw-multiplicity
+  (`reps *= mult; for (r < reps) weighted.push`). A value below 1 cannot make a
+  card rarer: in buff mode a base-2 card at 0.7 becomes 1 rep (0.5x, not 0.7x),
+  and in nerf mode a base-1 boon at 0.7 becomes `floor(0.7) = 0` reps - the
+  card would NEVER be offered in nerf mode. Sub-1.0 weights are simply not
+  expressible without rewriting the (desync-critical) weighting mechanism,
+  which is out of scope. All three cards are already T7/T8, made rare by the
+  tier curve and top-tier slip gate, so they ride normal tier-pool weights.
+
+### Considered and rejected / accepted-as-is
+
+- **Uncapturable-ward stacking (the flagged oppression case).** A queen could
+  be simultaneously uncapturable via Praetorian (adjacent minor), Watchword
+  (pawn-defended) and Vantage Point (deep rank). This is a strong defensive
+  stack but NOT a lockout: it never removes the opponent's turn or their whole
+  move list (each ward self-guards with `nonEmpty`), and crucially none of the
+  six wards can protect a KING (every one keeps king-capturing moves - Watchword
+  and the relational wards explicitly `p.type === "k" -> keep`), so the game is
+  always winnable by king capture. Requires drafting three specific boons; no
+  COMBO_TAGS warranted (there is no protection family and the effects are
+  conditional). Left as-is.
+- **Wards vs capture-mandate nerfs (e.g. `nw2_killing_spree`).** A ward held by
+  A that makes A's pieces uncapturable can deny B (under killing_spree) the
+  capture B must make, which loses B the game. This is NOT a new unavoidable
+  loss: denying the spree-player their next capture is the fundamental,
+  intended counterplay to killing_spree (an opponent simply retreating pieces
+  already does it), and the spree only begins after B's own capture (B controls
+  whether to start one it cannot sustain, with the ward visible). Same class as
+  the existing "keep pieces defended" counter. Accepted.
+- **Barred boons (`home_guard`, `kings_road`, `hallowed_ground`) soft-lock.**
+  `home_guard` is a full-rank wall; the engine's wall-crossing guard and the
+  king-capture exemption (`m.captured === "k"`) keep it winnable and unable to
+  strand. Even if a barred zone emptied a side's move list, `resolveNoMoves`
+  converts zero-legal-moves-with-pieces into a forced pass (effects tick, turn
+  passes), never a loss - so no barred boon can manufacture an unavoidable
+  loss. Accepted.
+- **`bw3_field_knighting` vs `bw3_battlefield_commission`** - resolved by the
+  scaling change above.
+- **`bw3_castle_in_the_storm`** relocates rook-then-king; verified the king's
+  destination is always the emptied path or the just-cleared rook square, so no
+  overwrite. Castling into check is the holder's stated risk (king capture, not
+  checkmate, decides). Accepted.
+- **`bw3_from_the_ashes` non-termination** - the revive loop has a `safety < 32`
+  cap and breaks when nothing can be placed; provably terminates. Accepted.
+- **Determinism** - grep confirms ZERO `api.rng` / `Math.random` / `Date` in
+  boons3.ts; all ordering is deterministic (VALUE_ORDER, file-order tie-breaks,
+  relRank sorts). Matches the batch's zero-rng claim.
+
+### Verdict by review dimension (boons)
+
+1. Duplicates: one near-duplicate fixed (battlefield_commission); no others
+   found within wave 3 or against the pool (0 new name collisions).
+2. Tier placement: one retier (futures_market T6 -> T7, tied to its bug fix).
+3. Oppressive combos: none reach a lockout; no COMBO_TAGS needed.
+4. Infinite loops: none (from_the_ashes capped; all others single-pass).
+5. Randomness: zero rng in the batch (verified).
+6. Counterplay/wording: boon descriptions are clear; no em/en dashes.
+7. Broken stacking: same-id double-hold is impossible (unspent-held cards are
+   never re-offered; the passive wards never spend); no stacking break.
+8. Impossible states/soft-lock: none (engine forced-pass + king-capture
+   exemptions hold).
+9. Cross-family: ward-vs-mandate and barred-vs-nerf interactions reviewed and
+   found safe (no unavoidable loss introduced).
