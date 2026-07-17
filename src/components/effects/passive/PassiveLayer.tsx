@@ -294,9 +294,12 @@ export function PassiveLayer({
     >
       {metrics && (
         <>
-          {/* Persistent auras (stage 3): information, below the one-shots. */}
+          {/* Persistent auras (stage 3): information, below the one-shots.
+              Motif'd passives (renderAura:false) skip the standing aura — the
+              motif layer already paints their pieces — but still spawn, pulse,
+              and exit through the one-shot band below. */}
           <div className="pfx-aura-band absolute inset-0" style={{ zIndex: 6 }}>
-            {auras.map((a) => (
+            {auras.filter((a) => a.renderAura).map((a) => (
               <PassiveAura
                 key={a.key}
                 cardId={a.cardId}
