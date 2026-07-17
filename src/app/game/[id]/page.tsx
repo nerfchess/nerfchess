@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
@@ -534,15 +535,16 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // held/passive card whose move-hook changed the board), so spectators see
   // the same effects the players do. Bespoke signatures get their choreography
   // and every other card gets the category cast spectacle.
-  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
-  const sigKeyRef = useRef(0);
+  // Watchers get the same serialized play queue as the players: several cards
+  // triggered by one move each step out their own spectacle (R9/R10).
+  const { signatureCard, fire: fireSigQueued } = useSignatureQueue();
   // Deterministic spectator-sync reducer for this watch. Sequenced frames route
   // through it (ordering / dedupe / gap -> resync so one dropped frame can never
   // freeze the board); frames with no envelope (older server) bypass it.
   const syncRef = useRef(createSpectatorSync());
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
-    setSignatureCard({ id, key: ++sigKeyRef.current });
+    fireSigQueued(id);
   };
   // A hook-fired card (summon, transform, revive, fresh board effect) is
   // announced too: the replica sets lastHookMutations after a move.

@@ -302,12 +302,12 @@ for (const b of buffs) {
     mainObject,
     entranceStyle,
     motionPath,
-    particleType: `${vfx.travel}/${vfx.impact}`,
-    boardReaction: vfx.shake ? `shake:${vfx.shake}` : "none",
+    particleType: vfx ? `${vfx.travel}/${vfx.impact}` : "-",
+    boardReaction: vfx?.shake ? `shake:${vfx.shake}` : "none",
     pieceReaction: victims,
     persistentEffect: String(persistent),
     soundFamily: sound,
-    endingEffect: vfx.aftermath ?? "none",
+    endingEffect: vfx?.aftermath ?? "none",
   });
 }
 
