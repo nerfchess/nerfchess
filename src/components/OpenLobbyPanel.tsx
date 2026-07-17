@@ -106,18 +106,20 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
         </ul>
       )}
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <Link
+        <DungeonGateButton
           href="/lobby?tab=friends"
-          className="btn-ghost press flex items-center justify-center px-3 py-2 font-display text-[13px] font-medium no-underline"
+          variant="minor"
+          className="flex items-center justify-center px-3 py-2.5 font-display text-[13px] font-semibold no-underline"
         >
           Play a friend
-        </Link>
-        <Link
+        </DungeonGateButton>
+        <DungeonGateButton
           href="/play"
-          className="btn-ghost press flex items-center justify-center px-3 py-2 font-display text-[13px] font-medium no-underline"
+          variant="minor"
+          className="flex items-center justify-center px-3 py-2.5 font-display text-[13px] font-semibold no-underline"
         >
           Play a bot
-        </Link>
+        </DungeonGateButton>
       </div>
     </section>
   );

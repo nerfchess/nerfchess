@@ -588,8 +588,18 @@ const HOUSE_PFP_ASSIGN: Record<string, string> = {
   omar_23: "desert_dunes",
   lukas_j: "bicycle",
   stefan_bg: "lighthouse",
-  cobrakai: "cat_sunset",
   crushingpawns: "autumn_leaves",
+  // Character/meme-wave picks (third curated wave in lib/avatars.ts), matched
+  // to the persona the subject fits: the baiter gets the troll grin, the dev
+  // gets the rubber duck, the doge pun writes itself.
+  sneakybaitr: "troll_face",
+  e4e5nf3: "speed_cube",
+  lazydodge: "shiba_wow",
+  coldblood_c: "moai_statue",
+  dev_e4: "rubber_ducky",
+  KnightSlayer99: "pixel_knight",
+  chessnoob2012: "nerd_glasses",
+  cobrakai: "cool_cat",
 };
 
 // UNIQUE per-persona pfp assignment. Owner ask: no two bots may share a pfp.

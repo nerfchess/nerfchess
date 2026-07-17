@@ -90,18 +90,20 @@ export default function HomePage() {
               page lets you switch. No third "play online" clone; Open lobby
               already is that. */}
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link
+            <DungeonGateButton
               href="/lobby?tab=friends"
-              className="btn-glass press flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-medium"
+              variant="minor"
+              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
             >
               Play a friend
-            </Link>
-            <Link
+            </DungeonGateButton>
+            <DungeonGateButton
               href="/play"
-              className="btn-glass press flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-medium"
+              variant="minor"
+              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
             >
               Play a bot
-            </Link>
+            </DungeonGateButton>
           </div>
 
           <LiveNowStrip />
@@ -160,7 +162,7 @@ function LiveNowStrip() {
       <span className="dot-live h-2 w-2 shrink-0 bg-verdigris" />
       <span>
         <span className="font-display font-bold tabular-nums text-parchment-50">{online}</span>{" "}
-        playing now
+        online
         <span className="mx-1.5 text-parchment-500">·</span>
         <span className="font-display font-bold tabular-nums text-parchment-50">{games}</span>{" "}
         {games === 1 ? "game" : "games"} live

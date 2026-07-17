@@ -16,7 +16,8 @@ export default function ContactPage() {
       <InfoSection title="Contact channel">
         <p>
           The best place to share feedback, report bugs, or talk strategy is the
-          Nerf Chess Discord server. You can also find updates on Instagram.
+          Nerf Chess Discord server. You can also find updates and clips on
+          Instagram, TikTok, and YouTube.
         </p>
         <div className="pt-2 flex flex-wrap gap-3">
           <a
@@ -33,7 +34,23 @@ export default function ContactPage() {
             rel="noopener noreferrer"
             className="px-5 py-2.5 rounded-sm btn-ghost font-display"
           >
-            @nerfchess on Instagram
+            @officialnerfchess on Instagram
+          </a>
+          <a
+            href="https://tiktok.com/@nerfchess"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+          >
+            @nerfchess on TikTok
+          </a>
+          <a
+            href="https://www.youtube.com/@OfficialNerfChess"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+          >
+            @OfficialNerfChess on YouTube
           </a>
         </div>
       </InfoSection>

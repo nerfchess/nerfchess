@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Rubber duck in a bath">
+  <defs>
+    <linearGradient id="rd-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5aa9e6"/><stop offset="1" stop-color="#1b5a8c"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#rd-bg)"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.12"/>
+  <!-- bubbles -->
+  <g fill="#dff0fb" opacity="0.75">
+    <circle cx="48" cy="52" r="8"/><circle cx="66" cy="38" r="5"/><circle cx="152" cy="58" r="7"/><circle cx="140" cy="40" r="4"/>
+  </g>
+  <!-- duck -->
+  <circle cx="84" cy="84" r="32" fill="#f2c73a"/>
+  <path d="M44 130 q0 -22 26 -22 h50 q34 0 34 -18 q10 40 -22 58 q-30 16 -62 2 q-26 -8 -26 -20z" fill="#f2c73a"/>
+  <path d="M50 82 q-18 -2 -24 8 q6 10 24 8 z" fill="#e8952f"/>
+  <circle cx="90" cy="76" r="6" fill="#20242e"/>
+  <circle cx="92" cy="74" r="2" fill="#fff"/>
+  <path d="M96 118 q20 6 38 -4" stroke="#c9992a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- water line and ripples -->
+  <path d="M20 150 q20 -10 40 0 q20 10 40 0 q20 -10 40 0 q20 10 40 0 v50 h-160z" fill="#8fcaf0" opacity="0.85"/>
+  <g stroke="#dff0fb" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8">
+    <path d="M36 166 q12 -6 24 0 M92 172 q12 -6 24 0 M140 164 q12 -6 24 0"/>
+  </g>
+</svg>

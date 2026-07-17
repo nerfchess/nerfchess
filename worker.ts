@@ -534,7 +534,13 @@ const houseSeededKey = "hp:seeded:v5";
 // syncHouseRatings rewrites every existing account's users.rating and both
 // per-mode buckets on the next cold start (including any deployment that
 // already ran the retracted v7 numbers).
-const houseRatingsSyncedKey = "hp:ratings-synced:rating-v8";
+// identity-5: the pfp overhaul. The 200 generated images were regenerated
+// from sunset landscapes into 50 distinct memorable subjects x 4 variations
+// (same gen_NNN ids, new artwork), the curated catalog gained an 8-image
+// character/meme wave with new thematic HOUSE_PFP_ASSIGN picks, and the
+// catalog growth reshuffles every name-hashed assignment. Re-circulate so
+// users.avatar carries the new ids everywhere (lobby, TV, profiles).
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-5";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set

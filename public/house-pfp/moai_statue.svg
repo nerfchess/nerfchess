@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Moai statue at dusk">
+  <defs>
+    <linearGradient id="ms-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7b5ea7"/><stop offset="1" stop-color="#2d1e4f"/></linearGradient>
+    <linearGradient id="ms-stone" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa2b0"/><stop offset="0.55" stop-color="#8a93a0"/><stop offset="1" stop-color="#6a7280"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#ms-bg)"/>
+  <circle cx="150" cy="46" r="14" fill="#ffd97e" opacity="0.9"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.14"/>
+  <!-- the statue -->
+  <path d="M68 172 q-10 -88 6 -118 q10 -20 26 -20 q16 0 26 20 q16 30 6 118z" fill="url(#ms-stone)"/>
+  <!-- heavy brow -->
+  <path d="M74 76 q13 -11 24 0 M102 76 q13 -11 24 0" stroke="#525a68" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- deep-set eyes -->
+  <rect x="84" y="82" width="10" height="7" rx="2" fill="#454c58"/>
+  <rect x="106" y="82" width="10" height="7" rx="2" fill="#454c58"/>
+  <!-- long nose -->
+  <path d="M97 84 q5 34 -7 46 h22" stroke="#525a68" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- stern mouth -->
+  <path d="M84 150 h32" stroke="#525a68" stroke-width="6" stroke-linecap="round"/>
+  <!-- grass base -->
+  <path d="M28 176 q36 -12 72 0 q36 -12 72 0 v24 h-144z" fill="#2f5c3a"/>
+  <g stroke="#3f7a4c" stroke-width="3" stroke-linecap="round"><path d="M44 172 l-4 -10 M56 174 l2 -10 M140 172 l4 -10 M152 174 l-2 -10"/></g>
+</svg>

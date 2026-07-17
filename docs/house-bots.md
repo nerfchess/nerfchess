@@ -67,10 +67,14 @@ cold start, idempotent):
   players' once they play.
 - Its avatar is one of two house-only looks. **About half** the roster
   (`HOUSE_PFP_ASSIGN` in `bots.ts`) gets a "real uploaded-looking" profile
-  picture: a hand-authored scenic/object SVG (a beach, a coffee mug, a
-  houseplant, a night skyline, ...) stored as `house_pfp:<name>` and served from
-  `public/house-pfp/<name>.svg`, so the crowd reads like real users who uploaded
-  a random photo. The rest keep a **flower** preset (`FLOWER_AVATARS`): the
+  picture: an original SVG (a scenic/object image — a coffee mug, a night
+  skyline — or one of the memorable character/meme-style subjects: a troll
+  grin, a puzzle cube, a shiba, a moai, ...) stored as `house_pfp:<name>` and
+  served from `public/house-pfp/<name>.svg`, so the crowd reads like real
+  users who uploaded a random photo. Thematic names get thematic images
+  (`teatimechess -> tea_set`, `lazydodge -> shiba_wow`), and the generated
+  pool (`scripts/gen-house-pfps.mjs`) covers the rest with 50 distinct
+  subjects x 4 palette variations. The rest keep a **flower** preset (`FLOWER_AVATARS`): the
   normal piece-on-plate look plus a small flower mark. Real accounts can never
   pick either kind (`isAvatarId` and the avatar upload route reject them, and
   `isHousePfp` only matches house-held ids), so both stay house-only. The

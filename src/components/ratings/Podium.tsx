@@ -41,40 +41,65 @@ const MEDALS: Record<
     metal: string;
     chip: string;
     label: string;
+    /** Ceremony epithet under the place chip: each step gets its own word. */
+    epithet: string;
     avatar: number;
     avatarNarrow: number;
     riser: string;
     wash: string;
+    /** How many rising motes this place burns (champion the most). */
+    motes: number;
+    /** Spotlight strength for .podium-beam (--beam-a). */
+    beamA: number;
+    /** Petal hues for the ceremony bouquet laid at this place. */
+    petals: [string, string];
   }
 > = {
   1: {
     metal: "#ffd97e",
     chip: "244 196 48",
     label: "1st",
+    epithet: "Champion",
     avatar: 72,
     avatarNarrow: 52,
     riser: "min-h-14 sm:min-h-20 md:min-h-24",
     wash: "bg-sun/[0.08]",
+    motes: 7,
+    beamA: 0.16,
+    petals: ["#ffd97e", "#e4674f"],
   },
   2: {
     metal: "#cac6bd",
     chip: "202 198 189",
     label: "2nd",
+    epithet: "Runner-up",
     avatar: 56,
     avatarNarrow: 42,
     riser: "min-h-8 sm:min-h-12",
     wash: "bg-white/[0.03]",
+    motes: 3,
+    beamA: 0.1,
+    petals: ["#e8e4da", "#9fb4cf"],
   },
   3: {
     metal: "#c98a5e",
     chip: "201 138 94",
     label: "3rd",
+    epithet: "Third place",
     avatar: 56,
     avatarNarrow: 42,
     riser: "min-h-6 sm:min-h-9",
     wash: "bg-white/[0.02]",
+    motes: 2,
+    beamA: 0.09,
+    petals: ["#e0a06a", "#b8653e"],
   },
 };
+
+/** The metal's rgb triple (for --rim-rgb / --mote-rgb / --beam-rgb). */
+function metalRgb(rank: 1 | 2 | 3): string {
+  return MEDALS[rank].chip;
+}
 
 // DOM order is [2nd, 1st, 3rd] so the champion sits center on the dais at
 // every width — the phone keeps the same silhouette instead of restacking.
@@ -108,6 +133,13 @@ const MOTES = [
   { mx: "70%", mdelay: "4.1s", mdur: "5.9s" },
 ];
 
+// Four-point camera-flash glints near the champion's avatar (see .podium-glint):
+// two only, phased apart, so it reads as ceremony sparkle rather than confetti.
+const GLINTS = [
+  { gx: "16%", gy: "24%", gdelay: "0s" },
+  { gx: "78%", gy: "36%", gdelay: "2.3s" },
+];
+
 // The laurel arc behind an avatar: the LaurelBadge leaf swept around a wider
 // circle, leaving the classical opening at the top. Static tint — the
 // champion's is gold and brighter, second and third wear their own metal
@@ -132,6 +164,52 @@ function WreathArc({ color, size, opacity }: { color: string; size: number; opac
           />
         )),
       )}
+    </svg>
+  );
+}
+
+// The ceremony bouquet: a small bunch of flowers laid at the front of each
+// riser, the kind handed out on a track-and-field podium — three stems fanned
+// out of a paper wrap, blossoms in the place's petal hues. Decoration only.
+function CeremonyBouquet({ petals, size }: { petals: [string, string]; size: number }) {
+  const [a, b] = petals;
+  const blossoms = [
+    { x: 14, y: 11, c: a },
+    { x: 24, y: 7, c: b },
+    { x: 34, y: 11, c: a },
+  ];
+  return (
+    <svg
+      viewBox="0 0 48 34"
+      width={size}
+      height={Math.round((size * 34) / 48)}
+      aria-hidden="true"
+      className="pointer-events-none"
+    >
+      <g stroke="#5f7a4a" strokeWidth="1.6" fill="none" strokeLinecap="round">
+        <path d="M24 32 L14 13" />
+        <path d="M24 32 L24 9" />
+        <path d="M24 32 L34 13" />
+      </g>
+      <path d="M20 23 q-6 -2 -8 3 q6 2 8 -3z" fill="#6d8a54" />
+      <path d="M28 21 q6 -2 8 3 q-6 2 -8 -3z" fill="#6d8a54" />
+      {blossoms.map((f, i) => (
+        <g key={i}>
+          {[0, 72, 144, 216, 288].map((deg) => (
+            <ellipse
+              key={deg}
+              cx={f.x}
+              cy={f.y - 3.2}
+              rx="2.4"
+              ry="3.4"
+              fill={f.c}
+              transform={`rotate(${deg} ${f.x} ${f.y})`}
+            />
+          ))}
+          <circle cx={f.x} cy={f.y} r="2.1" fill="#f4e8c8" />
+        </g>
+      ))}
+      <path d="M18.5 24 L29.5 24 L26 33 L22 33 Z" fill="#d9c9a8" stroke="#b9a67f" strokeWidth="0.8" />
     </svg>
   );
 }
@@ -163,14 +241,15 @@ export function Podium({
       className="dgn-slab dgn-rivets relative mt-6 overflow-hidden px-3 pb-0 pt-4 sm:px-6"
       style={{ borderColor: accent.border }}
     >
-      {/* A soft gold underglow pool beneath the dais: treasure light rising
-          from the vault floor. Material, not state — faint on purpose. */}
+      {/* The gold underglow pool beneath the dais: treasure light rising from
+          the vault floor, turned up a notch for the ceremony so the whole
+          dais reads lit from below as well as from the beams above. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
         style={{
           background:
-            "radial-gradient(58% 95% at 50% 100%, rgb(var(--energy-gold-rgb) / 0.1), transparent 70%)",
+            "radial-gradient(58% 95% at 50% 100%, rgb(var(--energy-gold-rgb) / 0.16), transparent 72%)",
         }}
       />
 
@@ -192,38 +271,72 @@ export function Podium({
           const card = (
             <div
               className={
-                "relative flex flex-col items-center rounded-md rounded-b-none border border-b-0 px-1 pt-3 pb-2 text-center motion-safe:transition sm:px-3 sm:pt-4 sm:pb-3 " +
-                (champion ? "podium-rim-gold " : "") +
+                "relative flex flex-col items-center rounded-md rounded-b-none border border-b-0 px-1 pt-3 pb-2 text-center motion-safe:transition sm:px-3 sm:pt-4 sm:pb-3 podium-rim-gold " +
                 (mine ? "bg-gold/10 border-gold/40" : medal.wash)
               }
-              style={{
-                // Every place wears its metal: a 3px cap plus a faint tinted
-                // frame, so 1 / 2 / 3 each read distinct at a glance.
-                borderColor: mine ? undefined : medal.metal + "3d",
-                borderTopColor: medal.metal,
-                borderTopWidth: 3,
-              }}
+              style={
+                {
+                  // Every place wears its metal: a 3px cap plus a faint tinted
+                  // frame and a masked metal rim (tinted via --rim-rgb), so
+                  // 1 / 2 / 3 each read distinct at a glance.
+                  borderColor: mine ? undefined : medal.metal + "3d",
+                  borderTopColor: medal.metal,
+                  borderTopWidth: 3,
+                  "--rim-rgb": metalRgb(rank),
+                } as CSSProperties
+              }
             >
-              {champion && (
-                // Rising gold motes over the champion only; the CSS parks them
-                // under html[data-anim="off"].
-                <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-                  {MOTES.map((m, i) => (
+              {/* The ceremony spotlight: every place stands in its own cone of
+                  light, tinted to its metal and strongest over the champion. */}
+              <span
+                aria-hidden="true"
+                className="podium-beam"
+                style={
+                  { "--beam-rgb": metalRgb(rank), "--beam-a": medal.beamA } as CSSProperties
+                }
+              />
+              {/* Rising metal motes over every place — a full handful of gold
+                  for the champion, a quieter few in silver and bronze; the CSS
+                  parks them all under html[data-anim="off"]. */}
+              <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                {MOTES.slice(0, medal.motes).map((m, i) => (
+                  <span
+                    key={i}
+                    className="podium-mote"
+                    style={
+                      {
+                        "--mx": m.mx,
+                        "--mdelay": m.mdelay,
+                        "--mdur": m.mdur,
+                        "--mote-rgb": metalRgb(rank),
+                      } as CSSProperties
+                    }
+                  />
+                ))}
+                {champion &&
+                  GLINTS.map((g, i) => (
                     <span
-                      key={i}
-                      className="podium-mote"
+                      key={`g${i}`}
+                      className="podium-glint"
                       style={
-                        { "--mx": m.mx, "--mdelay": m.mdelay, "--mdur": m.mdur } as CSSProperties
+                        { "--gx": g.gx, "--gy": g.gy, "--gdelay": g.gdelay } as CSSProperties
                       }
                     />
                   ))}
-                </span>
-              )}
+              </span>
               <span
-                className="rune-badge mb-2"
+                className="rune-badge"
                 style={{ "--badge-rgb": medal.chip } as CSSProperties}
               >
                 {medal.label}
+              </span>
+              {/* Each step's own word, in its metal: unique recognition per
+                  placement, like the announcer's call at a medal ceremony. */}
+              <span
+                className="smallcaps mb-2 mt-1 text-[10px] tracking-widest"
+                style={{ color: medal.metal }}
+              >
+                {medal.epithet}
               </span>
               <div className="relative">
                 {/* The laurel arc behind the avatar: radiant for the champion,
@@ -285,6 +398,11 @@ export function Podium({
               </span>
               <span className="smallcaps text-[11px] text-parchment-400">
                 {row.games} {row.games === 1 ? "game" : "games"}
+              </span>
+              {/* The ceremony bouquet laid at the front edge of the riser,
+                  overlapping it slightly so the flowers rest ON the stone. */}
+              <span aria-hidden="true" className="relative z-[1] -mb-3 mt-1.5">
+                <CeremonyBouquet petals={medal.petals} size={narrow ? 30 : 40} />
               </span>
               {/* The dais riser: a carved stone block, tallest under the
                   champion so the center rides high when the three align at

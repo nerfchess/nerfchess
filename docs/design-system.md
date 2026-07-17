@@ -112,7 +112,7 @@ Rules:
 
 - Sentence case everywhere, including buttons ("Find a match", not "FIND A MATCH"). Allcaps survive only in `.eyebrow` section labels and the LIVE/HOUSE BOT badges.
 - Copy is confident and concrete: "A draft lands every 5 moves", never marketing fluff.
-- Numbers are shown, not narrated: "312 playing now", not "lots of players online".
+- Numbers are shown, not narrated: "312 online", not "lots of players online".
 
 ## 12. Route-level contracts
 

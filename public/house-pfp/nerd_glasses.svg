@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Grinning face with taped glasses">
+  <defs>
+    <radialGradient id="ng-bg" cx="0.5" cy="0.42" r="0.75"><stop offset="0" stop-color="#62c99d"/><stop offset="1" stop-color="#1f5c46"/></radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#ng-bg)"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.14"/>
+  <!-- face -->
+  <circle cx="100" cy="102" r="58" fill="#f2c73a"/>
+  <!-- taped glasses -->
+  <g stroke="#20242e" stroke-width="5" fill="#ffffff" fill-opacity="0.35">
+    <circle cx="76" cy="92" r="20"/>
+    <circle cx="124" cy="92" r="20"/>
+  </g>
+  <path d="M96 92 h8" stroke="#20242e" stroke-width="5"/>
+  <rect x="96" y="84" width="8" height="9" fill="#f2f2ee" stroke="#20242e" stroke-width="2"/>
+  <path d="M56 90 h-12 M144 90 h12" stroke="#20242e" stroke-width="5" stroke-linecap="round"/>
+  <!-- happy squint behind lenses -->
+  <path d="M68 92 q8 -8 16 0 M116 92 q8 -8 16 0" stroke="#20242e" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- buck-tooth grin -->
+  <path d="M74 126 q26 20 52 0 z" fill="#20242e"/>
+  <rect x="90" y="126" width="9" height="11" rx="2" fill="#fff"/>
+  <rect x="101" y="126" width="9" height="11" rx="2" fill="#fff"/>
+</svg>

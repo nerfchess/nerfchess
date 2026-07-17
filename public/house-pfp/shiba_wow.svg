@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Surprised shiba dog">
+  <defs>
+    <linearGradient id="sw-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4a259"/><stop offset="1" stop-color="#8c4a1f"/></linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#sw-bg)"/>
+  <circle cx="100" cy="102" r="76" fill="#000" opacity="0.14"/>
+  <!-- ears -->
+  <path d="M52 84 L56 38 L92 62 Z" fill="#e0a35c" stroke="#b57f3f" stroke-width="3"/>
+  <path d="M148 84 L144 38 L108 62 Z" fill="#e0a35c" stroke="#b57f3f" stroke-width="3"/>
+  <path d="M60 48 L64 62 L80 60 Z" fill="#f6d5c0"/>
+  <path d="M140 48 L136 62 L120 60 Z" fill="#f6d5c0"/>
+  <!-- head -->
+  <circle cx="100" cy="110" r="54" fill="#e0a35c"/>
+  <path d="M100 164 a54 54 0 0 0 44 -84 q-22 6 -44 40 q-22 -34 -44 -40 a54 54 0 0 0 44 84z" fill="#f6e5c8"/>
+  <!-- raised skeptical brows -->
+  <path d="M68 86 q10 -8 20 -4 M112 82 q10 -4 20 4" stroke="#8a5c2e" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="78" cy="98" r="6" fill="#20242e"/>
+  <circle cx="122" cy="98" r="6" fill="#20242e"/>
+  <circle cx="80" cy="96" r="2" fill="#fff"/>
+  <circle cx="124" cy="96" r="2" fill="#fff"/>
+  <!-- small o mouth: much wow -->
+  <ellipse cx="100" cy="126" rx="9" ry="7" fill="#3a2c1e"/>
+  <ellipse cx="100" cy="140" rx="7" ry="8" fill="#3a2c1e"/>
+  <ellipse cx="100" cy="140" rx="4" ry="5" fill="#b56a5c"/>
+  <circle cx="64" cy="118" r="9" fill="#e88f6a" opacity="0.5"/>
+  <circle cx="136" cy="118" r="9" fill="#e88f6a" opacity="0.5"/>
+</svg>
