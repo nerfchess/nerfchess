@@ -1971,6 +1971,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   >
                     <NerfCard
                       nerf={n}
+                      preview
                       ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"}
                     />
                   </button>

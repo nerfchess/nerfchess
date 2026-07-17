@@ -1426,7 +1426,7 @@ function GamePage() {
                       : "")
                   }
                 >
-                  <NerfCard nerf={n} ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
+                  <NerfCard nerf={n} preview ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
                 </button>
               ))}
             </div>

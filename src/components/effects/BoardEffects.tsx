@@ -1557,7 +1557,26 @@ export type SigVisual =
   | "gamblewheel" // gamble: red/gold double-or-nothing wedges
   | "zodiacwheel" // zodiac_wheel: midnight star-chart houses
   | "dicewheel" // wa_high_roll: die-pip wedges
-  | "runewheel"; // wa_arcane_reroll: rune-etched reroll wheel
+  | "runewheel" // wa_arcane_reroll: rune-etched reroll wheel
+  // --- Batch 15 (tier 7/8 flagship splits): every remaining tier 7-8 card
+  // that still shared a CORE signature visual with another card gets its own
+  // structurally distinct choreography (the lower-tier sharers keep the
+  // original key as the baseline).
+  | "rocperch" // roost_of_rocs (was summonrift): three rocs perch on the rim
+  | "fourstrike" // blitzkrieg (was blitz): the four moves rake the crop as four counted strikes
+  | "permafrost" // eternal_freeze (was iceshatter): the glacier stratum entombs, nothing shatters
+  | "golive" // check_out_our_socials (was iceshatter): the stream's ring-light flash-freezes the board
+  | "stonecreep" // hex_of_stone (was greyhex): the hex creeps in from the flanks, walnuts snap shut
+  | "triumvirate" // triple_amazon (was crownrain): three spear-sisters rise in phalanx
+  | "coldfront" // deep_freeze (was deepglacier): the polar front slams onto their half only
+  | "queensweep" // queens_rampage (was pin): the queen charges flat across the line
+  | "clockseal" // time_lock (was clockcage; time_prison keeps the baseline): the hour is padlocked
+  | "titanforge" // titan (was colossus): the chosen piece is reforged at the god-anvil
+  | "tribolt" // heavens_wrath (was smite): three named wrath-bolts, no arbiter
+  | "devotion" // i_love_my_gf (was aegis): two locket-halves clasp with a heartbeat shock
+  | "holyrampart" // divine_fortress (was cathedral): the frontier wall consecrates the near half
+  | "foxholes" // ww_dug_in_defense (was dugin): three foxholes blown open one by one
+  | "wishlamp"; // wc_genie_wish (was geniepoof): the wish splits gold/green over the fine print
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -1685,7 +1704,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   cataclysm: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "trapdoor", hasLead: true, sound: "cataclysm" },
   extinction: { ordering: "sweep", staggerMs: 65, victims: ["p", "n", "b"], visual: "stone", hasLead: true, sound: "extinction" },
   lightning_strike: { ordering: "sweep", staggerMs: 165, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
-  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "pin", hasLead: true, sound: "rampage" },
+  queens_rampage: { ordering: "line", staggerMs: 105, victims: "all", mover: "q", visual: "queensweep", hasLead: true, sound: "rampage" },
   queens_wrath: { ordering: "line", staggerMs: 110, victims: "all", mover: "q", visual: "pin", hasLead: true, sound: "rampage" },
   siege_rook: { ordering: "line", staggerMs: 85, victims: "all", mover: "r", visual: "siege", hasLead: true, sound: "siege" },
 
@@ -1693,22 +1712,22 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   amazon_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
   double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
-  triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
+  triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "triumvirate", hasLead: true, sound: "crownrain", source: "empower" },
   amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownlegion", hasLead: true, sound: "crownrain", source: "empower" },
   colossus: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
-  titan: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "colossus", hasLead: true, sound: "colossus", source: "empower" },
+  titan: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], visual: "titanforge", hasLead: true, sound: "colossus", source: "empower" },
 
   // --- Batch 2: time / tempo (skip -> stun zone; blitz -> rally zone) ---
   time_skip: { ordering: "radial", staggerMs: 0, victims: "all", visual: "snooze", hasLead: true, sound: "snooze", source: "stun" },
   time_prison: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockcage", hasLead: true, sound: "clockcage", source: "stun" },
   time_freeze: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockice", hasLead: true, sound: "clockice", source: "stun" },
-  blitzkrieg: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  blitzkrieg: { ordering: "radial", staggerMs: 70, victims: "all", visual: "fourstrike", hasLead: true, sound: "blitz", source: "rally" },
 
   // --- Batch 2: freeze spectacles (frozen zone) --- now each its own read:
   // a quick spike-frost snap, a slab of deep glacier, an eternal ice shatter.
   mass_freeze: { ordering: "radial", staggerMs: 45, victims: ["p", "n", "b", "r", "q"], visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
-  deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
-  eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  deep_freeze: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], visual: "coldfront", hasLead: true, sound: "massfreeze", source: "frozen" },
+  eternal_freeze: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "permafrost", hasLead: true, sound: "massfreeze", source: "frozen" },
 
   // --- Batch 2: petrify / curse (walnut zone) --- gorgon beam vs snake-hair
   // wash, so the two Medusa cards no longer read the same.
@@ -1719,7 +1738,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // --- Batch 2: protection ---
   aegis: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
   immortal_king: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "shades", hasLead: true, sound: "shades", source: "kingSafe" },
-  divine_fortress: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
+  divine_fortress: { ordering: "radial", staggerMs: 40, victims: "all", visual: "holyrampart", hasLead: true, sound: "cathedral", source: "shield" },
   rampart: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "wallbuild", hasLead: true, sound: "wall", source: "summon" },
   great_wall: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "greatwall", hasLead: true, sound: "wall", source: "blindfold" },
 
@@ -1733,7 +1752,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: true, sound: "rampage" },
   chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
   judgment_day: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
-  heavens_wrath: { ordering: "sweep", staggerMs: 150, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning" },
+  heavens_wrath: { ordering: "sweep", staggerMs: 150, victims: ["n", "b", "r", "q"], visual: "tribolt", hasLead: true, sound: "lightning" },
 
   // Freeze / stasis (frozen zone).
   staff_of_stasis: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
@@ -1744,7 +1763,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   serpent_brood: { ordering: "sweep", staggerMs: 60, victims: ["b"], visual: "serpentstone", hasLead: false, sound: "petrify", source: "walnut" },
   withering_touch: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wither", hasLead: true, sound: "petrify", source: "walnut" },
   chains_of_binding: { ordering: "sweep", staggerMs: 70, victims: ["r"], visual: "stonechain", hasLead: true, sound: "petrify", source: "walnut" },
-  hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "greyhex", hasLead: true, sound: "petrify", source: "walnut" },
+  hex_of_stone: { ordering: "sweep", staggerMs: 55, victims: ["n", "b"], visual: "stonecreep", hasLead: true, sound: "petrify", source: "walnut" },
 
   // Divine / protection (shield + kingSafe zones).
   aegis_of_ages: { ordering: "radial", staggerMs: 35, victims: "all", visual: "agesward", hasLead: true, sound: "aegis", source: "shield" },
@@ -1774,7 +1793,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "chalkcircle", hasLead: true, sound: "wall", source: "summon" },
   horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
-  roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "rocperch", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
   direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
@@ -1823,7 +1842,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
   ww_double_trench: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: true, sound: "wall", source: "blindfold" },
-  ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
+  ww_dug_in_defense: { ordering: "radial", staggerMs: 30, victims: "all", visual: "foxholes", hasLead: true, sound: "aegis", source: "shield" },
 
   // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
   wa_time_stop: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timestop", hasLead: true, sound: "clockcage", source: "walnut" },
@@ -1836,7 +1855,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // CHAOS (wild/chaos): wrecking ball, pinata, genie, hot seat.
   wc_wrecking_ball: { ordering: "line", staggerMs: 85, victims: "all", mover: "q", visual: "wreckingball", hasLead: true, sound: "rampage" },
   wc_pinata: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pinata", hasLead: true, sound: "rampage" },
-  wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
+  wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wishlamp", hasLead: true, sound: "wall", source: "summon" },
   wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "decree", hasLead: true, sound: "snooze", source: "stun" },
 
   // FUNNY (funny/clock): the Computer Virus corrupts the opponent's clock. No
@@ -1890,7 +1909,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Skips + clock theft (stun zone: opponent's stalled ranks / clock area).
   tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "snooze", hasLead: true, sound: "snooze", source: "stun" },
-  time_lock: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockcage", hasLead: true, sound: "clockcage", source: "stun" },
+  time_lock: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockseal", hasLead: true, sound: "clockcage", source: "stun" },
   time_thief: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
   wa_chrono_siphon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
 
@@ -2227,9 +2246,9 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // plugins at the resolve site, so entries here would shadow the portraits.
   fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
   geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "strike", hasLead: true, sound: "lightning" },
-  check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "iceshatter", hasLead: true, sound: "massfreeze", source: "frozen" },
+  check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "golive", hasLead: true, sound: "massfreeze", source: "frozen" },
   bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
-  i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "aegis", hasLead: true, sound: "aegis", source: "shield" },
+  i_love_my_gf: { ordering: "radial", staggerMs: 35, victims: "all", visual: "devotion", hasLead: true, sound: "aegis", source: "shield" },
   uniqlo_warrior: { ordering: "radial", staggerMs: 40, victims: "all", visual: "cathedral", hasLead: true, sound: "cathedral", source: "shield" },
   // Second batch: summon (piece placement), shield, and freeze cards, each on a
   // distinct shipped visual so they do not read the same.
