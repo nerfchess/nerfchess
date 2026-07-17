@@ -786,9 +786,9 @@ html[data-anim="off"] .draft-timer--urgent { animation: none; }
   background: linear-gradient(
     120deg,
     rgb(255 138 52 / 0.6),
-    rgb(122 110 96 / 0.35) 34%,
+    rgb(168 119 216 / 0.35) 34%,
     rgb(255 190 110 / 0.4) 52%,
-    rgb(122 110 96 / 0.35) 70%,
+    rgb(34 211 238 / 0.3) 70%,
     rgb(224 92 40 / 0.55)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -916,8 +916,9 @@ html[data-anim="off"] .dock-pocket-flash { animation: none; }
 }
 
 /* Keep the real card above the tier edge but below the shine. The pick
-   dissolve layer is excluded: it positions itself absolutely over the card. */
-.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve) {
+   dissolve layer and the top-tier chip are excluded: they position
+   themselves absolutely over the card. */
+.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve):not(.dgn-top-tier) {
   position: relative;
   z-index: 1;
 }
@@ -1027,10 +1028,11 @@ html[data-anim="off"] .draft-frame::after {
   overflow: hidden;
   pointer-events: none;
 }
-/* Dungeon vignette: torchlight pooling up from the crypt floor, cold stone
-   dark pressing in from the corners and ceiling. Static — the drama here is
-   the layering. Kept light enough that the board still reads behind the 20%
-   scrim. */
+/* Dungeon vignette: torchlight pooling up from the crypt floor, cold void
+   dark pressing in from the corners and ceiling. Static, but it CLOSES IN
+   once as the chamber opens (a 0.7s scale-down breath), selling "the walls
+   seal around you" without delaying the cards. Kept light enough that the
+   board still reads behind the 20% scrim. */
 .draft-stage__vignette {
   position: absolute;
   inset: 0;
@@ -1040,6 +1042,62 @@ html[data-anim="off"] .draft-frame::after {
     radial-gradient(90% 60% at 92% 100%, rgb(224 92 40 / 0.08), transparent 55%),
     radial-gradient(120% 80% at 50% 0%, rgba(0, 0, 0, 0.3), transparent 55%),
     radial-gradient(85% 65% at 50% 46%, transparent 55%, rgba(0, 0, 0, 0.26) 100%);
+  animation: dgn-chamber-in 0.7s var(--ease-out, ease-out) both;
+}
+@keyframes dgn-chamber-in {
+  from { opacity: 0; transform: scale(1.12); }
+  to { opacity: 1; transform: scale(1); }
+}
+/* The void beyond the chamber: two layers of pin-prick stars showing through
+   the broken ceiling. Tiled radial gradients (one paint each), drifting so
+   slowly they read as parallax depth, not motion. */
+.draft-stage__stars {
+  position: absolute;
+  inset: -12%;
+  background-image:
+    radial-gradient(1px 1px at 22px 34px, rgb(214 224 255 / 0.7), transparent 100%),
+    radial-gradient(1px 1px at 118px 92px, rgb(190 205 255 / 0.5), transparent 100%),
+    radial-gradient(1.5px 1.5px at 74px 150px, rgb(255 240 214 / 0.6), transparent 100%),
+    radial-gradient(1px 1px at 166px 42px, rgb(168 200 255 / 0.45), transparent 100%);
+  background-size: 190px 190px;
+  opacity: 0.5;
+  will-change: transform;
+  animation: dgn-star-drift 90s linear infinite alternate;
+}
+.draft-stage__stars--far {
+  background-size: 120px 120px;
+  opacity: 0.3;
+  animation-duration: 140s;
+  animation-direction: alternate-reverse;
+}
+@keyframes dgn-star-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(2%, -2%, 0); }
+}
+/* Nebula: two vast soft energy clouds (void purple, abyssal teal) breathing
+   behind the chamber. Oversized radial blobs moved by transform only. */
+.draft-stage__nebula {
+  position: absolute;
+  width: 70vmax;
+  height: 55vmax;
+  top: -18%;
+  left: -16%;
+  background: radial-gradient(50% 50% at 50% 50%, rgb(168 119 216 / 0.1), rgb(168 119 216 / 0.03) 55%, transparent 75%);
+  will-change: transform, opacity;
+  animation: dgn-nebula-drift 34s ease-in-out infinite alternate;
+}
+.draft-stage__nebula--teal {
+  top: auto;
+  left: auto;
+  right: -20%;
+  bottom: -22%;
+  background: radial-gradient(50% 50% at 50% 50%, rgb(34 211 238 / 0.08), rgb(34 211 238 / 0.02) 55%, transparent 75%);
+  animation-duration: 42s;
+  animation-direction: alternate-reverse;
+}
+@keyframes dgn-nebula-drift {
+  from { transform: translate3d(-3%, 2%, 0) scale(1); opacity: 0.8; }
+  to { transform: translate3d(4%, -3%, 0) scale(1.08); opacity: 1; }
 }
 /* Torchlight aurora: one broad band of warm firelight gliding diagonally
    behind the cards, as if a flame were guttering somewhere off-stage. An
@@ -1145,9 +1203,17 @@ html[data-anim="off"] .draft-frame::after {
 html[data-anim="off"] .draft-stage__aurora,
 html[data-anim="off"] .draft-stage__torch,
 html[data-anim="off"] .draft-stage__fog,
+html[data-anim="off"] .draft-stage__nebula,
 html[data-anim="off"] .draft-stage__mote {
   animation: none !important;
   opacity: 0;
+}
+html[data-anim="off"] .draft-stage__vignette {
+  animation: none !important;
+}
+html[data-anim="off"] .draft-stage__stars {
+  animation: none !important;
+  opacity: 0.3;
 }
 
 /* --- Pack-tear pyrotechnics ---------------------------------------------- */
@@ -1684,7 +1750,76 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
     #1d150c;
 }
 
+/* --- The portal behind the pack --------------------------------------------- */
+/* A slow dimensional swirl the sealed pack hangs in front of: a soft disc of
+   void purple bleeding into teal, turning almost imperceptibly, so the offer
+   reads as arriving from somewhere else. Sits under the rune rings. */
+.pack-portal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  z-index: -2;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    conic-gradient(
+      from 0deg,
+      rgb(168 119 216 / 0.12),
+      rgb(34 211 238 / 0.07) 30%,
+      rgb(168 119 216 / 0.03) 55%,
+      rgb(34 211 238 / 0.1) 78%,
+      rgb(168 119 216 / 0.12)
+    );
+  -webkit-mask-image: radial-gradient(circle, #000 30%, rgb(0 0 0 / 0.5) 55%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 30%, rgb(0 0 0 / 0.5) 55%, transparent 72%);
+  animation: dgn-portal-turn 40s linear infinite;
+  opacity: 0.9;
+}
+@keyframes dgn-portal-turn {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+/* Tearing the pack collapses the portal with the seal. */
+.pack--tearing .pack-portal {
+  animation: dgn-portal-collapse 0.5s cubic-bezier(0.5, 0, 0.8, 0.5) both;
+}
+@keyframes dgn-portal-collapse {
+  from { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.55); }
+}
+
+/* --- Comparison chip --------------------------------------------------------- */
+/* When the offer's tiers differ, the strongest card wears a small gold rune
+   chip so the tier comparison is one glance, not a scan. Data only (tier is
+   already public on both cards); no judgement about which card is BETTER. */
+.dgn-top-tier {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  white-space: nowrap;
+  pointer-events: none;
+  padding: 0.1rem 0.55rem;
+  border-radius: 1px;
+  border: 1px solid rgb(244 196 48 / 0.65);
+  background: linear-gradient(165deg, #2a2110, #1c1608);
+  color: rgb(255 224 140);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 14px -6px rgb(244 196 48 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
 /* --- Anim-off gating for the dungeon pass ---------------------------------- */
+html[data-anim="off"] .pack-portal {
+  animation: none !important;
+  opacity: 0.4;
+}
 html[data-anim="off"] .dgn-torch,
 html[data-anim="off"] .dgn-torch__halo,
 html[data-anim="off"] .dgn-torch__flame,
