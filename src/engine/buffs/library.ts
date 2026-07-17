@@ -1,5 +1,6 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
+import { BOON_WAVE2 } from "./boons2";
 import { FUNNY_CARDS } from "./funny";
 import { FANTASY_CARDS } from "./fantasy";
 import { MYSTIC_CARDS } from "./mystic";
@@ -4573,6 +4574,7 @@ export const ALL_BUFFS: Buff[] = [
   ...TIER8,
   ...HEXES,
   ...NEW_HEXES,
+  ...BOON_WAVE2,
   ...FUNNY_CARDS,
   ...FANTASY_CARDS,
   ...MYSTIC_CARDS,

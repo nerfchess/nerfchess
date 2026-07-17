@@ -1,0 +1,3 @@
+/* Keyframes and dressing for cursePlays.tsx (the hex-wave flagships).
+   Transform/opacity only; everything parks under html[data-anim="off"] via
+   the global animation kill switch. */
