@@ -49,6 +49,7 @@ import { BoardSplashHost } from "@/components/BoardSplash";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
 import {
@@ -520,15 +521,13 @@ function GamePage() {
   // Fires for BOTH the bot's plays and my own. My own activations run inside
   // the (un-owned) targeting hook, so the id is snapshotted at "Use" time
   // (pendingSigIdRef) and fired from onChanged once the activation lands.
-  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
-  const sigKeyRef = useRef(0);
   const pendingSigIdRef = useRef<string | null>(null);
   // Every known card fires: cards with a bespoke SIGNATURES entry get their
   // choreography, and every other card gets the category cast spectacle the
   // Board synthesizes from its category + tier (no card plays silently).
-  // HOLD-AND-REPLAY: see OnlineMatch - plays that land while my full-screen
-  // draft overlay covers the board queue and replay once it is visible.
-  const heldPlaysRef = useRef<string[]>([]);
+  // HOLD-AND-REPLAY + serialization live in the shared queue: plays that land
+  // while my full-screen draft overlay covers the board (or while another
+  // spectacle is mid-play) queue and step out one by one.
   const draftCovered =
     !!game?.buffs?.players[myColor]?.offer &&
     offerOnClockIndex !== game.buffs.players[myColor].offer!.index &&
@@ -537,33 +536,18 @@ function GamePage() {
   useEffect(() => {
     draftCoveredRef.current = draftCovered;
   });
+  const { signatureCard, fire: fireSigQueued, notifyGateOpen } = useSignatureQueue(draftCoveredRef);
   // Signature plays keyed by the ply they landed on (history length at fire
   // time), so the clip renderer can splash the card name over that segment.
   const sigPlyRef = useRef<Map<number, string>>(new Map());
   const fireSignature = (id: string) => {
     if (!BUFF_BY_ID[id]) return;
     sigPlyRef.current.set(gameRef.current?.board.history.length ?? 0, id);
-    if (draftCoveredRef.current) {
-      heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
-      return;
-    }
-    setSignatureCard({ id, key: ++sigKeyRef.current });
+    fireSigQueued(id);
   };
   useEffect(() => {
-    if (draftCovered || heldPlaysRef.current.length === 0) return;
-    let timer: number | null = null;
-    const step = () => {
-      const id = heldPlaysRef.current.shift();
-      if (!id) return;
-      setSignatureCard({ id, key: ++sigKeyRef.current });
-      if (heldPlaysRef.current.length > 0) timer = window.setTimeout(step, 2600);
-    };
-    step();
-    return () => {
-      if (timer != null) window.clearTimeout(timer);
-    };
-     
-  }, [draftCovered]);
+    if (!draftCovered) notifyGateOpen();
+  }, [draftCovered, notifyGateOpen]);
   // Snapshot the id of a card I am about to use (dock "Use" entry point) so
   // onChanged can fire its signature once the activation resolves.
   const snapshotMySignature = (buffIndex: number) => {
@@ -1442,7 +1426,7 @@ function GamePage() {
                       : "")
                   }
                 >
-                  <NerfCard nerf={n} ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
+                  <NerfCard nerf={n} preview ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"} />
                 </button>
               ))}
             </div>

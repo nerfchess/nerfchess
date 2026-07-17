@@ -282,6 +282,12 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "reducedMotion" },
       },
       {
+        id: "followSystemMotion",
+        label: "Follow system motion",
+        hint: "Honor the OS reduced-motion preference automatically",
+        control: { kind: "toggle", setting: "followSystemMotion" },
+      },
+      {
         id: "perfMode",
         label: "Performance mode",
         hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
@@ -328,6 +334,12 @@ export const SECTIONS: SectionConfig[] = [
         id: "reducedMotionA11y",
         label: "Reduced motion",
         control: { kind: "toggle", setting: "reducedMotion" },
+      },
+      {
+        id: "followSystemMotionA11y",
+        label: "Follow system motion",
+        hint: "Honor the OS reduced-motion preference automatically",
+        control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
   },

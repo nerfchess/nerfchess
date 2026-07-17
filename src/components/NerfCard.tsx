@@ -3,6 +3,7 @@
 import { createElement } from "react";
 import { Nerf } from "@/engine/nerf";
 import { motion } from "framer-motion";
+import { DraftPreview } from "@/components/DraftPreview";
 import { GlossaryText } from "@/components/GlossaryText";
 import { NERF_TURN_COST } from "@/engine/buff";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
@@ -19,11 +20,16 @@ interface Props {
   dense?: boolean;
   ownerLabel?: string;
   progress?: { value: number; max: number; label: string } | null;
+  /** Draft surfaces only (the opening nerf pick): wear the small looping
+   * animation-preview medallion (DraftPreview) keyed off the card's passive
+   * composition, so its effect style reads before its name. Off by default;
+   * codex / in-game surfaces stay unchanged. */
+  preview?: boolean;
 }
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
-export function NerfCard({ nerf, revealed = true, compact = false, dense = false, ownerLabel, progress }: Props) {
+export function NerfCard({ nerf, revealed = true, compact = false, dense = false, ownerLabel, progress, preview }: Props) {
   if (!revealed) {
     return (
       <div className="relative plate p-5 overflow-hidden">
@@ -66,6 +72,13 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
         size: dense ? 84 : 92,
         strokeWidth: 1.2,
       })}
+      {/* Animation preview (nerf draft pick only): a small looping medallion
+          in the card's passive-family motif, anchored over the watermark
+          corner so nothing in the existing layout moves. Static tinted
+          medallion under reduced motion / animations-off (see DraftPreview). */}
+      {preview && (
+        <DraftPreview kind="nerf" id={nerf.id} icon={faceIcon} className="bottom-2.5 right-2.5" />
+      )}
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">

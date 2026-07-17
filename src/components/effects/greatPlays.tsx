@@ -411,6 +411,24 @@ function Mote({ color }: { color: string }) {
   );
 }
 
+/** Tiny flat chessman silhouettes — the supporting actors of the per-card
+ * flourishes (a hexed queen, a shackled pawn, a puppeted knight...). */
+const CHESSMAN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+function Man({ kind, fill, stroke }: { kind: keyof typeof CHESSMAN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={CHESSMAN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
 /** Compact per-square hit for non-lead ("target") renders: glyph pop + a small
  * ring + three palette sparks. Zone-fed cards mount one per square, so this
  * must NOT be board-wide. */
@@ -500,7 +518,7 @@ const CANDLES = [
   { l: 64, t: 60, d: 160 },
   { l: 33, t: 60, d: 240 },
 ];
-function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
+function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
@@ -532,6 +550,434 @@ function WitchCircle({ palette, glyph, lead, delayMs }: TemplateProps) {
           </svg>
         </span>
       ))}
+      {/* bespoke: Ball and Chain — the iron ball thuds down, the chain snaps
+          taut, and the shackled pawn is yanked back to heel mid-bolt */}
+      {flourish === "shackle" && (
+        <>
+          <span className="grp-bonk absolute block" style={{ left: "42%", top: "50%", width: "6.5%", height: "6.5%", animationDelay: `${delayMs + 540}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5.4" r="4.2" fill="#3a3a40" stroke="#8a94a8" strokeWidth="0.6" />
+              <circle cx="5" cy="1.6" r="0.9" fill="none" stroke="#8a94a8" strokeWidth="0.5" />
+            </svg>
+          </span>
+          <span className="absolute block" style={{ left: "47%", top: "48.5%", width: "12%", height: "1.1%", rotate: "-16deg" }}>
+            <span
+              className="grp-beam absolute inset-0 block"
+              style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.9)} 0 5px, transparent 5px 9px)`, transformOrigin: "0% 50%", animationDelay: `${delayMs + 640}ms` }}
+            />
+          </span>
+          <span className="grp-snapback absolute block" style={{ left: "57%", top: "40%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 620}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.92)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Royal Summons — the writ unrolls overhead and the king is
+          dragged to the circle in jerky, protesting steps */}
+      {flourish === "summons" && (
+        <>
+          <span className="grp-flip absolute block" style={{ left: "42%", top: "16%", width: "16%", height: "5.5%", animationDelay: `${delayMs + 500}ms` }}>
+            <svg viewBox="0 0 16 6" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="1" width="14.8" height="4" rx="1.8" fill="#ffe9b0" stroke="#8a6a3a" strokeWidth="0.5" />
+              <path d="M3 3 H13" stroke="#8a6a3a" strokeWidth="0.5" strokeDasharray="1.6 1" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span
+            className="grp-tug absolute block"
+            style={{ left: "27%", top: "39%", width: "6.5%", height: "10%", "--dx": "260%", "--dy": "-6%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}
+          >
+            <Man kind="k" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1120} color="#ffe9b0" left={42} top={18} sizePct={4} />
+        </>
+      )}
+      {/* bespoke: Palsied Hands — sword and axe rock loose from shaking grips,
+          slip, and clatter onto the boards */}
+      {flourish === "palsy" && (
+        <>
+          <span className="grp-slip absolute block" style={{ left: "38%", top: "30%", width: "4.5%", height: "11%", animationDelay: `${delayMs + 520}ms` }}>
+            <svg viewBox="0 0 6 14" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 0.8 L4 2 L3.6 9 H2.4 L2 2 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+              <path d="M1 9.6 H5 M3 9.6 V12.6" stroke="#8a6a3a" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-slip absolute block" style={{ left: "57%", top: "31%", width: "5%", height: "10%", animationDelay: `${delayMs + 640}ms` }}>
+            <svg viewBox="0 0 7 13" className="block h-full w-full" aria-hidden="true">
+              <path d="M3.2 1 H4 V12.2 H3.2 Z" fill="#8a6a3a" stroke="#4a3a22" strokeWidth="0.35" />
+              <path d="M4 1.4 C6 1.8 6.6 3.6 5.8 5.2 L4 4.6 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1180} color={p1} left={39} top={44} sizePct={3.4} />
+          <Glint delayMs={delayMs + 1280} color={p1} left={59} top={44} sizePct={3} />
+        </>
+      )}
+      {/* bespoke: Throne Bound — the queen bolts for the open board and the
+          leash of hex-light snaps her back to her king's side */}
+      {flourish === "tether" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "38%", top: "39%", width: "6%", height: "9%", animationDelay: `${delayMs + 540}ms` }}>
+            <Man kind="k" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="absolute block" style={{ left: "44%", top: "42.5%", width: "13%", height: "1%" }}>
+            <span
+              className="grp-beam absolute inset-0 block"
+              style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.85)} 0 4px, transparent 4px 7px)`, transformOrigin: "0% 50%", animationDelay: `${delayMs + 700}ms` }}
+            />
+          </span>
+          <span className="grp-snapback absolute block" style={{ left: "46%", top: "38%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 620}ms` }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Lone Sovereign — hex-pins nail the court to its squares while
+          one knight alone hops free of the stillness */}
+      {flourish === "sovereign" && (
+        <>
+          {[
+            { k: "r", l: 35, t: 37, d: 0 },
+            { k: "q", l: 47, t: 33, d: 90 },
+            { k: "b", l: 59, t: 38, d: 180 },
+          ].map((v, i) => (
+            <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%" }}>
+              <span className="grp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 540 + v.d}ms` }}>
+                <Man kind={v.k as keyof typeof CHESSMAN} fill={tint(p2, 0.95)} stroke={p1} />
+              </span>
+              <span className="grp-drop absolute block" style={{ left: "28%", top: "-46%", width: "44%", height: "70%", animationDelay: `${delayMs + 640 + v.d}ms` }}>
+                <svg viewBox="0 0 5 8" className="block h-full w-full" aria-hidden="true">
+                  <circle cx="2.5" cy="1.4" r="1.2" fill={p1} />
+                  <path d="M2.5 2.6 V7.4" stroke={tint(p1, 0.95)} strokeWidth="0.7" strokeLinecap="round" />
+                </svg>
+              </span>
+            </span>
+          ))}
+          <span
+            className="grp-arcshot absolute block"
+            style={{ left: "38%", top: "48%", width: "5.5%", height: "8%", "--dx": "180%", "--dy": "-90%", animationDelay: `${delayMs + 980}ms` } as CSSProperties}
+          >
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Peasant Levy — a pitchfork fence plants itself along the
+          frontier; the piece stranded beyond it can only rattle */}
+      {flourish === "levy" && (
+        <>
+          {[34, 45, 56].map((l, i) => (
+            <span key={l} className="grp-rise absolute block" style={{ left: `${l}%`, top: "44%", width: "4%", height: "10%", animationDelay: `${delayMs + 560 + i * 90}ms` }}>
+              <svg viewBox="0 0 5 12" className="block h-full w-full" aria-hidden="true">
+                <path d="M2.5 3.4 V11.4 M0.8 0.8 V3.4 H4.2 V0.8 M2.5 0.8 V3.4" fill="none" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-shiver absolute block" style={{ left: "63%", top: "30%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 880}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Court in Exile — the court files off the board's western
+          edge, the queen trailing last and slowest of all */}
+      {flourish === "exile" && (
+        <>
+          {[
+            { k: "b", l: 42, d: 0 },
+            { k: "r", l: 49, d: 160 },
+            { k: "q", l: 57, d: 460 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-cross absolute block"
+              style={{ left: `${v.l}%`, top: "37%", width: "6%", height: "9%", "--dx": "-380%", animationDelay: `${delayMs + 560 + v.d}ms` } as CSSProperties}
+            >
+              <Man kind={v.k as keyof typeof CHESSMAN} fill={tint(p1, 0.9)} stroke={p2} />
+            </span>
+          ))}
+          <span className="grp-hold absolute block" style={{ left: "62%", top: "37%", width: "6%", height: "9%", animationDelay: `${delayMs + 700}ms` }}>
+            <Man kind="k" fill={tint(p2, 0.95)} stroke={p1} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Royal Handicap — the king's compass rose loses its diagonal
+          arms: they crack off and scatter, the orthogonal cross held intact */}
+      {flourish === "nodiag" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "44%", top: "33%", width: "12%", height: "12%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M6 1 L7 3.4 H5 Z M6 11 L5 8.6 H7 Z M1 6 L3.4 5 V7 Z M11 6 L8.6 7 V5 Z" fill={tint(p1, 0.95)} />
+              <circle cx="6" cy="6" r="1.5" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.6" />
+            </svg>
+          </span>
+          {[
+            { dx: "170%", dy: "-170%", rot: "80deg", l: 53, t: 32 },
+            { dx: "-170%", dy: "-170%", rot: "-80deg", l: 45, t: 32 },
+            { dx: "170%", dy: "170%", rot: "-70deg", l: 53, t: 41 },
+            { dx: "-170%", dy: "170%", rot: "70deg", l: 45, t: 41 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.6%", height: "2.6%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 820 + i * 40}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0.8 L8.6 8 H1.4 Z" fill={tint(p2, 0.95)} stroke={p1} strokeWidth="0.6" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Queen's Handicap — the proud queen is walked over to lean on
+          a pawn escort, a binding ring sealing the arrangement */}
+      {flourish === "escort" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "54%", top: "40.5%", width: "5%", height: "7.5%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="p" fill={tint(p2, 0.95)} stroke={p1} />
+          </span>
+          <span
+            className="grp-tug absolute block"
+            style={{ left: "39%", top: "38%", width: "6.5%", height: "10%", "--dx": "150%", "--dy": "3%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}
+          >
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span
+            className="grp-tring absolute block rounded-full"
+            style={{ left: "45%", top: "36%", width: "15%", height: "13%", border: `2px solid ${tint(p1, 0.85)}`, animationDelay: `${delayMs + 1060}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Grounded Command — barrier bolts hammer down along the
+          frontier and a heavy rook bounces straight off the line */}
+      {flourish === "grounded" && (
+        <>
+          {[36, 48, 60].map((l, i) => (
+            <span key={l} className="grp-drop absolute block" style={{ left: `${l}%`, top: "44%", width: "3.6%", height: "9%", animationDelay: `${delayMs + 560 + i * 80}ms` }}>
+              <svg viewBox="0 0 5 12" className="block h-full w-full" aria-hidden="true">
+                <path d="M1.4 0.8 H3.6 V6.4 H4.8 L2.5 11 L0.2 6.4 H1.4 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-bonk absolute block" style={{ left: "47%", top: "34%", width: "6%", height: "8.5%", animationDelay: `${delayMs + 920}ms` }}>
+            <Man kind="r" fill={tint(p2, 0.95)} stroke={p1} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Lunar Eclipse — the moon climbs over the circle and the
+          shadow disc slides across it, dimming the whole board */}
+      {flourish === "eclipse" && (
+        <>
+          <span className="grp-riseslow absolute block" style={{ left: "44%", top: "24%", width: "12%", height: "12%", animationDelay: `${delayMs + 480}ms` }}>
+            <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+              <circle cx="6" cy="6" r="5.2" fill="#ffe9b0" stroke={tint(p1, 0.8)} strokeWidth="0.5" />
+              <circle cx="4.4" cy="4.6" r="0.9" fill={tint(p2, 0.25)} />
+              <circle cx="7.6" cy="7.4" r="1.2" fill={tint(p2, 0.2)} />
+            </svg>
+          </span>
+          <span className="grp-sweep absolute block" style={{ left: "39%", top: "22%", width: "12%", height: "12%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+              <circle cx="6" cy="6" r="5.2" fill={tint(p2, 0.96)} />
+            </svg>
+          </span>
+          <Wash color={tint(p2, 0.42)} delayMs={delayMs + 960} />
+        </>
+      )}
+      {/* bespoke: Hexed Satchel — the cursed bag gulps down the incoming cards
+          and the null-stitch stamps them worthless inside */}
+      {flourish === "satchel" && (
+        <>
+          <span className="grp-pop absolute block" style={{ left: "45%", top: "35%", width: "9%", height: "11%", animationDelay: `${delayMs + 540}ms` }}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 5 C2 3.4 3.2 2.6 5 2.6 C6.8 2.6 8 3.4 8 5 L8.6 10.4 C8.6 11.4 1.4 11.4 1.4 10.4 Z" fill="#8a6a3a" stroke="#4a3a22" strokeWidth="0.6" {...SJ} />
+              <path d="M3.2 2.8 C3.2 1 6.8 1 6.8 2.8" fill="none" stroke="#4a3a22" strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          {[
+            { l: 33, t: 27, dx: "230%", dy: "-50%", d: 0 },
+            { l: 62, t: 25, dx: "-220%", dy: "-60%", d: 130 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-arcshot absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "4.5%", height: "6.5%", "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 700 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 7 10" className="block h-full w-full" aria-hidden="true">
+                <rect x="0.6" y="0.6" width="5.8" height="8.8" rx="0.9" fill="#ffe9b0" stroke={p2} strokeWidth="0.5" />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-bonk absolute block" style={{ left: "47%", top: "38%", width: "5%", height: "5%", animationDelay: `${delayMs + 1120}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 2 L8 8 M8 2 L2 8" stroke={tint(p1, 0.95)} strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Iron Furrow — spikes hammer up one after another along the
+          sown rank, and a pawn is caught fast on the last of them */}
+      {flourish === "furrow" && (
+        <>
+          {[33, 41, 49, 57, 65].map((l, i) => (
+            <span key={l} className="grp-rise absolute block" style={{ left: `${l}%`, top: "48%", width: "3.2%", height: "7%", animationDelay: `${delayMs + 540 + i * 70}ms` }}>
+              <svg viewBox="0 0 4 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 0.6 L3.4 7.4 H0.6 Z" fill="#8a94a8" stroke="#3a3a40" strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-shiver absolute block" style={{ left: "44%", top: "41%", width: "5%", height: "7.5%", animationDelay: `${delayMs + 980}ms` }}>
+            <Man kind="p" fill={tint(p2, 0.95)} stroke={p1} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Leaden Fields — the plumb weight drops, and the grey-cast
+          pawns sink together back into the boards */}
+      {flourish === "leadcast" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "47%", top: "26%", width: "5%", height: "7%", animationDelay: `${delayMs + 520}ms` }}>
+            <svg viewBox="0 0 6 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 0.6 L5.4 4.6 L3 7.4 L0.6 4.6 Z" fill="#6e6e78" stroke="#2a2a30" strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+          {[37, 47, 57].map((l) => (
+            <span key={l} className="grp-sink absolute block" style={{ left: `${l}%`, top: "38%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 780}ms` }}>
+              <Man kind="p" fill="#6e6e78" stroke="#2a2a30" />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Voodoo Doll — the little stitched double takes the pin, and
+          the sympathy lands as a jolt on the far side of the board */}
+      {flourish === "voodoo" && (
+        <>
+          <span className="grp-pop absolute block" style={{ left: "43%", top: "31%", width: "7.5%", height: "12%", animationDelay: `${delayMs + 520}ms` }}>
+            <svg viewBox="0 0 8 13" className="block h-full w-full" aria-hidden="true">
+              <circle cx="4" cy="2.6" r="2" fill="#c9b89a" stroke="#4a3a22" strokeWidth="0.5" />
+              <path d="M2.6 4.6 H5.4 L6 10.6 H2 Z M2.6 6 L0.8 8 M5.4 6 L7.2 8 M2.8 10.6 L2.4 12.4 M5.2 10.6 L5.6 12.4" fill="#c9b89a" stroke="#4a3a22" strokeWidth="0.5" {...SJ} />
+              <path d="M3.2 2.2 L3.8 2.8 M4.6 2.2 L5.2 2.8" stroke="#4a3a22" strokeWidth="0.4" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-drop absolute block" style={{ left: "48%", top: "23%", width: "3.4%", height: "8%", animationDelay: `${delayMs + 800}ms` }}>
+            <svg viewBox="0 0 4 9" className="block h-full w-full" aria-hidden="true">
+              <circle cx="2" cy="1.2" r="1" fill={p1} />
+              <path d="M2 2.2 L2 8.4" stroke="#c9cdd6" strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          <Flash delayMs={delayMs + 1060} color={tint(p1, 0.55)} left={65} top={51} w={9} h={7} />
+          <span
+            className="grp-tring absolute block rounded-full"
+            style={{ left: "64%", top: "49%", width: "11%", height: "10%", border: `2px solid ${tint(p1, 0.85)}`, animationDelay: `${delayMs + 1120}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Sticky Floor — golden glue strands stretch up from the
+          boards and the straining piece can only rattle in place */}
+      {flourish === "sticky" && (
+        <>
+          <span className="grp-shiver absolute block" style={{ left: "46%", top: "33%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="n" fill={tint(p2, 0.95)} stroke={p1} />
+          </span>
+          {[44, 49, 54].map((l, i) => (
+            <span
+              key={l}
+              className="grp-ray absolute block"
+              style={{
+                left: `${l}%`,
+                top: "40%",
+                width: "1%",
+                height: "7%",
+                background: `linear-gradient(0deg, ${tint(p1, 0.9)}, transparent)`,
+                transformOrigin: "50% 100%",
+                animationDelay: `${delayMs + 700 + i * 90}ms`,
+              }}
+            />
+          ))}
+          <Drifts delayMs={delayMs + 900} sizePct={2} render={() => <Mote color={tint(p1, 0.8)} />} />
+        </>
+      )}
+      {/* bespoke: Threads of Fate — the loom strings its warp across the
+          circle, the shuttle crosses, and one thread is snipped glinting */}
+      {flourish === "loom" && (
+        <>
+          {[35, 41, 47].map((t, i) => (
+            <span
+              key={t}
+              className="grp-beam absolute block"
+              style={{
+                left: "32%",
+                top: `${t}%`,
+                width: "36%",
+                height: "0.8%",
+                background: `linear-gradient(90deg, transparent, ${tint(p1, 0.85)} 20%, ${tint(p1, 0.85)} 80%, transparent)`,
+                transformOrigin: "0% 50%",
+                animationDelay: `${delayMs + 520 + i * 70}ms`,
+              }}
+            />
+          ))}
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "33%", top: "39%", width: "6%", height: "4%", "--dx": "480%", animationDelay: `${delayMs + 760}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 2.5 C2 0.8 6 0.8 7.2 2.5 C6 4.2 2 4.2 0.8 2.5 Z" fill="#8a6a3a" stroke="#4a3a22" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1180} color={p1} left={62} top={38} sizePct={4} />
+        </>
+      )}
+      {/* bespoke: Mind Control — the control bar descends, strings hook the
+          knight, and it is yanked upright into its new master's colour */}
+      {flourish === "puppet" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "42%", top: "15%", width: "16%", height: "4%", animationDelay: `${delayMs + 520}ms` }}>
+            <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 2 H15 M8 0.6 V3.4" stroke="#8a6a3a" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+          {[45, 49, 53, 56].map((l, i) => (
+            <span
+              key={l}
+              className="grp-ray absolute block"
+              style={{
+                left: `${l}%`,
+                top: "19%",
+                width: "0.7%",
+                height: "15%",
+                background: `linear-gradient(180deg, ${tint(p1, 0.9)}, transparent)`,
+                transformOrigin: "50% 0%",
+                animationDelay: `${delayMs + 680 + i * 50}ms`,
+              }}
+            />
+          ))}
+          <span className="grp-yank absolute block" style={{ left: "46.5%", top: "35%", width: "7%", height: "10.5%", animationDelay: `${delayMs + 760}ms` }}>
+            <span className="absolute inset-0 block">
+              <Man kind="n" fill={tint(p2, 0.95)} stroke={p1} />
+            </span>
+            <span className="grp-facein absolute inset-0 block" style={{ animationDelay: `${delayMs + 1200}ms` }}>
+              <Man kind="n" fill={p1} stroke={p2} />
+            </span>
+          </span>
+        </>
+      )}
+      {/* bespoke: Mind Dominion — the iron crown of command descends onto the
+          rook and its colours turn beneath it */}
+      {flourish === "dominion" && (
+        <>
+          <span className="absolute block" style={{ left: "37%", top: "37%", width: "7%", height: "10.5%" }}>
+            <span className="grp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 560}ms` }}>
+              <Man kind="r" fill={tint(p2, 0.95)} stroke={p1} />
+            </span>
+            <span className="grp-facein absolute inset-0 block" style={{ animationDelay: `${delayMs + 1100}ms` }}>
+              <Man kind="r" fill={p1} stroke={p2} />
+            </span>
+          </span>
+          <span className="grp-drop absolute block" style={{ left: "37.5%", top: "30%", width: "6%", height: "5%", animationDelay: `${delayMs + 680}ms` }}>
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 4.4 L1.2 1 L2.8 2.6 L4 0.6 L5.2 2.6 L6.8 1 L7.2 4.4 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span className="absolute block" style={{ left: "44%", top: "42%", width: "9%", height: "0.9%", rotate: "8deg" }}>
+            <span
+              className="grp-beam absolute inset-0 block"
+              style={{ background: `linear-gradient(270deg, ${tint(p1, 0.9)}, transparent)`, transformOrigin: "100% 50%", animationDelay: `${delayMs + 560}ms` }}
+            />
+          </span>
+        </>
+      )}
       {/* ignition flare + hex sparks + the single curse-wave */}
       <Flash delayMs={delayMs + 720} color={tint(p1, 0.6)} left={42} top={41} w={16} h={11} />
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p2} cy={46} />
@@ -865,7 +1311,7 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 5: WarBanner — a great command banner slams in mid-board while two
    shield-wall ranks rise at its flanks; a rally flare rolls out.
    ========================================================================== */
-function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
+function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
@@ -900,6 +1346,173 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
         {/* the card's glyph, borne on the cloth */}
         <span className="grp-facein absolute block" style={{ left: "22%", top: "18%", width: "56%", height: "28%", animationDelay: `${delayMs + 520}ms` }}>{glyph}</span>
       </span>
+      {/* bespoke: Checkmate Immunity — the assassin's blade sweeps in, meets
+          the aegis disc, and shatters into flying shards */}
+      {flourish === "parry" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "66%", top: "40%", width: "12%", height: "4%", "--dx": "-120%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 14 4" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 2 L9 1.2 V2.8 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+              <path d="M9 0.6 V3.4 M9.8 2 H12.6" stroke="#8a6a3a" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "52%", top: "36%", width: "9%", height: "11%", animationDelay: `${delayMs + 900}ms` }}>
+            <svg viewBox="0 0 9 11" className="block h-full w-full" aria-hidden="true">
+              <path d="M4.5 0.8 C6.4 1.8 7.8 2 8.2 2 C8.2 6.4 6.8 8.8 4.5 10.2 C2.2 8.8 0.8 6.4 0.8 2 C1.2 2 2.6 1.8 4.5 0.8 Z" fill={tint(p1, 0.5)} stroke={tint(p1, 0.95)} strokeWidth="0.6" {...SJ} />
+            </svg>
+          </span>
+          {[
+            { dx: "180%", dy: "-140%", rot: "150deg" },
+            { dx: "150%", dy: "120%", rot: "-130deg" },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: "58%", top: "40%", width: "3%", height: "3%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 1000 + i * 60}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 5 L8 3 L7 7 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Ironclad — an armour plate slams down over the home ranks
+          and rivets pop tight along its length one by one */}
+      {flourish === "plate" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "29%", top: "54%", width: "42%", height: "10%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 42 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="1" width="40.4" height="8" rx="1.4" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.7" />
+              <path d="M14 1 V9 M28 1 V9" stroke={tint(p2, 0.7)} strokeWidth="0.5" />
+            </svg>
+          </span>
+          {[33, 42, 51, 60, 67].map((l, i) => (
+            <span key={l} className="grp-glint absolute block" style={{ left: `${l}%`, top: "58%", width: "2.4%", height: "2.4%", animationDelay: `${delayMs + 980 + i * 80}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <circle cx="5" cy="5" r="3.4" fill={tint(p1, 0.95)} stroke={p2} strokeWidth="0.8" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Iron Bulwark — the tower shield plants itself, a suppression
+          ring holds around it, and the enemy blade beside it simply wilts */}
+      {flourish === "bulwark" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "30%", top: "36%", width: "9%", height: "16%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 9 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 1 H8 V11 C8 13 6.6 14.6 4.5 15.2 C2.4 14.6 1 13 1 11 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.7" {...SJ} />
+              <path d="M4.5 3 V12.6 M2.4 6 H6.6" stroke={tint(p1, 0.8)} strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "26%", top: "34%", width: "17%", height: "21%", border: `2px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 880}ms` }}
+          />
+          <span className="grp-topple absolute block" style={{ left: "22%", top: "38%", width: "3.4%", height: "10%", transformOrigin: "50% 92%", animationDelay: `${delayMs + 960}ms` }}>
+            <svg viewBox="0 0 4 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 0.8 L2.8 8 H1.2 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+              <path d="M0.6 8.6 H3.4 M2 8.6 V11.2" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Praetorian Guard — two guard spears sweep in and cross in
+          front of the ward, sealing it behind an X of iron */}
+      {flourish === "praetorian" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "32%", top: "34%", width: "15%", height: "18%", "--dx": "40%", animationDelay: `${delayMs + 640}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 15 18" className="block h-full w-full" aria-hidden="true">
+              <path d="M13.4 1.6 L2 16.4" stroke="#8a6a3a" strokeWidth="1" strokeLinecap="round" />
+              <path d="M13 0.8 L14.6 2.2 L12.6 3.6 L12 2 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "53%", top: "34%", width: "15%", height: "18%", "--dx": "-40%", animationDelay: `${delayMs + 640}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 15 18" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.6 1.6 L13 16.4" stroke="#8a6a3a" strokeWidth="1" strokeLinecap="round" />
+              <path d="M2 0.8 L0.4 2.2 L2.4 3.6 L3 2 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1160} color={p1} left={48} top={41} sizePct={5} />
+        </>
+      )}
+      {/* bespoke: The Round Table — the table itself rises mid-muster and the
+          two sworn helms take their seats at its rim */}
+      {flourish === "roundtable" && (
+        <>
+          <span className="grp-rise absolute block" style={{ left: "38%", top: "46%", width: "24%", height: "12%", animationDelay: `${delayMs + 600}ms` }}>
+            <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+              <ellipse cx="12" cy="4.6" rx="11" ry="3.8" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.7" />
+              <ellipse cx="12" cy="4.6" rx="7" ry="2.2" fill="none" stroke={tint(p1, 0.7)} strokeWidth="0.5" />
+              <path d="M3 7.4 L2.4 11 M21 7.4 L21.6 11" stroke={p2} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+          {[36, 58].map((l, i) => (
+            <span key={l} className="grp-pop absolute block" style={{ left: `${l}%`, top: "42%", width: "6%", height: "8.5%", animationDelay: `${delayMs + 980 + i * 120}ms` }}>
+              <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Bridgehead — the pontoon planks itself square by square into
+          enemy ground, and a knight and pawn step off at the far end */}
+      {flourish === "bridge" && (
+        <>
+          <span className="absolute block" style={{ left: "46%", top: "22%", width: "8%", height: "26%" }}>
+            <span className="grp-ray absolute inset-0 block" style={{ transformOrigin: "50% 100%", animationDelay: `${delayMs + 620}ms` }}>
+              <svg viewBox="0 0 8 26" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+                <rect x="0.8" y="0.5" width="6.4" height="25" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.5" />
+                <path d="M1 5 H7 M1 10 H7 M1 15 H7 M1 20 H7" stroke={tint(p2, 0.8)} strokeWidth="0.5" />
+              </svg>
+            </span>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "44%", top: "16%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 1060}ms` }}>
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "51%", top: "17%", width: "5%", height: "7%", animationDelay: `${delayMs + 1180}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Sealed Avenues — the two centre-file gates roll shut and the
+          great bar drops across them with a clang */}
+      {flourish === "gates" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "36%", top: "28%", width: "7%", height: "34%", "--dx": "60%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 7 34" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.8" width="5.8" height="32.4" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.6" />
+              <path d="M2 4 V30 M5 4 V30" stroke={tint(p2, 0.7)} strokeWidth="0.5" />
+            </svg>
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "57%", top: "28%", width: "7%", height: "34%", "--dx": "-60%", animationDelay: `${delayMs + 620}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 7 34" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.8" width="5.8" height="32.4" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.6" />
+              <path d="M2 4 V30 M5 4 V30" stroke={tint(p2, 0.7)} strokeWidth="0.5" />
+            </svg>
+          </span>
+          <span className="grp-drop absolute block" style={{ left: "40%", top: "42%", width: "20%", height: "3%", animationDelay: `${delayMs + 1040}ms` }}>
+            <svg viewBox="0 0 20 3" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.5" y="0.6" width="19" height="1.8" rx="0.9" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.4" />
+            </svg>
+          </span>
+        </>
+      )}
       {/* the rally: flare + sparks + the single ward-wave */}
       <Flash delayMs={delayMs + 760} color={tint(p1, 0.65)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 800} fill={p1} stroke={p2} cy={49} />
@@ -916,7 +1529,7 @@ function WarBanner({ palette, glyph, lead, delayMs }: TemplateProps) {
    Template 6: Grove — a great tree bursts up through the board's heart, its
    canopy unfurling while petals drift down; the glyph glows in a trunk knot.
    ========================================================================== */
-function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
+function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
@@ -955,6 +1568,111 @@ function Grove({ palette, glyph, lead, delayMs }: TemplateProps) {
           </svg>
         )}
       />
+      {/* bespoke: Overgrowth — beside the great tree a bud shoots up, bursts
+          its petals, and a queen's crown glows at its heart */}
+      {flourish === "bloom" && (
+        <>
+          <span className="grp-rise absolute block" style={{ left: "64%", top: "42%", width: "7%", height: "16%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 7 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M3.5 6 V15.4 M3.5 10 C2 9.4 1.2 8.4 1.2 7.2 M3.5 12 C5 11.4 5.8 10.4 5.8 9.2" fill="none" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+              <path d="M3.5 0.8 C5.6 2 6.2 4.2 3.5 6.4 C0.8 4.2 1.4 2 3.5 0.8 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+          {[
+            { dx: "150%", dy: "-130%", rot: "140deg" },
+            { dx: "-140%", dy: "-120%", rot: "-150deg" },
+            { dx: "170%", dy: "40%", rot: "170deg" },
+            { dx: "-160%", dy: "60%", rot: "-170deg" },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: "65.5%", top: "42%", width: "3%", height: "3%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 1020 + i * 50}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 1 C8 2.4 8 6 5 9 C2 6 2 2.4 5 1 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-facein absolute block" style={{ left: "64.5%", top: "41%", width: "6%", height: "5%", animationDelay: `${delayMs + 1140}ms` }}>
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 4.4 L1.2 1 L2.8 2.6 L4 0.6 L5.2 2.6 L6.8 1 L7.2 4.4 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Rooted — root tendrils burst up around the heavy rook and
+          lash it in place; it can only rattle against the grip */}
+      {flourish === "roots" && (
+        <>
+          <span className="grp-shiver absolute block" style={{ left: "27%", top: "38%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 780}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.55)} stroke={p2} />
+          </span>
+          {[
+            { l: 25, r: "-14deg", d: 0 },
+            { l: 29.5, r: "4deg", d: 110 },
+            { l: 33, r: "16deg", d: 220 },
+          ].map((v, i) => (
+            <span key={i} className="grp-rise absolute block" style={{ left: `${v.l}%`, top: "42%", width: "3%", height: "8%", rotate: v.r, animationDelay: `${delayMs + 620 + v.d}ms` }}>
+              <svg viewBox="0 0 4 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 9.6 C1 7 3 6 2 3.6 C1.4 2.4 2 1.4 2.8 0.8" fill="none" stroke={tint(p0, 0.95)} strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Quagmire — two mud mouths open on the boards, bubbles pop,
+          and a straying pawn is sucked slowly under */}
+      {flourish === "quagmire" && (
+        <>
+          {[
+            { l: 32, t: 54, w: 13 },
+            { l: 58, t: 50, w: 11 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-hold absolute block rounded-full"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.w}%`, height: `${v.w * 0.45}%`, background: tint(p2, 0.85), animationDelay: `${delayMs + 620 + i * 130}ms` }}
+            />
+          ))}
+          <span className="grp-sink absolute block" style={{ left: "35.5%", top: "48%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 880}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.75)} stroke={p2} />
+          </span>
+          {[
+            { l: 60, t: 51, d: 0 },
+            { l: 64, t: 52.5, d: 160 },
+            { l: 34, t: 55, d: 320 },
+          ].map((v, i) => (
+            <span key={i} className="grp-pop absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", animationDelay: `${delayMs + 940 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <circle cx="5" cy="5" r="3.6" fill="none" stroke={tint(p1, 0.8)} strokeWidth="1" />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Thorn Hedge — the briar wall drags itself up across the
+          realm's border and the trespassing bishop recoils pricked */}
+      {flourish === "briar" && (
+        <>
+          <span className="grp-rise absolute block" style={{ left: "27%", top: "48%", width: "46%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
+            <svg viewBox="0 0 46 9" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path
+                d="M0.5 8.6 C4 4 8 8 12 3.4 C16 7.6 20 2.6 24 6.8 C28 2.2 32 7.4 36 3 C40 7.2 43 4 45.5 8.6"
+                fill="none"
+                stroke={tint(p0, 0.95)}
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+              <path d="M8 5.6 L8.8 3.8 M18 4.6 L17 3 M30 4.6 L31 2.8 M39 5 L38 3.4" stroke={tint(p2, 0.95)} strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-bonk absolute block" style={{ left: "47%", top: "38%", width: "6%", height: "9%", animationDelay: `${delayMs + 1020}ms` }}>
+            <Man kind="b" fill={tint(p1, 0.6)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1280} color={p1} left={50} top={40} sizePct={3.4} />
+        </>
+      )}
       {/* root-strike flare + the single verdant wave */}
       <Flash delayMs={delayMs + 700} color={tint(p1, 0.55)} left={42} top={52} w={16} h={11} />
       <Sparks delayMs={delayMs + 740} fill={p1} stroke={p2} cy={56} />
@@ -976,7 +1694,7 @@ const GHOSTS = [
   { l: 40, t: 27, w: 14, d: 0 },
   { l: 58, t: 33, w: 12, d: 220 },
 ];
-function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
+function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
@@ -1022,6 +1740,117 @@ function PhantomParade({ palette, glyph, lead, delayMs }: TemplateProps) {
           animationDelay: `${delayMs + 420}ms`,
         }}
       />
+      {/* bespoke: Gossamer Veil — the great web drapes down, and the long
+          blade that dives at it sticks fast in the silk */}
+      {flourish === "gossamer" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "38%", top: "30%", width: "22%", height: "22%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 22 22" className="block h-full w-full" aria-hidden="true">
+              <path d="M11 1 V21 M1 11 H21 M4 4 L18 18 M18 4 L4 18" stroke={tint(p1, 0.7)} strokeWidth="0.4" />
+              <path d="M11 4.4 L15.6 6.4 L17.6 11 L15.6 15.6 L11 17.6 L6.4 15.6 L4.4 11 L6.4 6.4 Z M11 8 L13.2 8.9 L14 11 L13.2 13.1 L11 14 L8.8 13.1 L8 11 L8.8 8.9 Z" fill="none" stroke={tint(p1, 0.85)} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-tug absolute block"
+            style={{ left: "62%", top: "38%", width: "10%", height: "3.4%", "--dx": "-140%", "--dy": "20%", animationDelay: `${delayMs + 880}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 12 4" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 2 L8 1.2 V2.8 Z" fill="#c9cdd6" stroke="#5a6b8f" strokeWidth="0.4" {...SJ} />
+              <path d="M8 0.6 V3.4 M8.8 2 H11.4" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1360} color={p1} left={49} top={39} sizePct={3.6} />
+        </>
+      )}
+      {/* bespoke: Starlight Ward — stars kindle one by one in a ring around
+          the king and the pooled light holds as a dome */}
+      {flourish === "starward" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "45%", top: "37%", width: "7%", height: "10%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="k" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          {[
+            { l: 44, t: 30, d: 0 },
+            { l: 53, t: 34, d: 110 },
+            { l: 54, t: 44, d: 220 },
+            { l: 46, t: 49, d: 330 },
+            { l: 39, t: 40, d: 440 },
+          ].map((v, i) => (
+            <span key={i} className="grp-glint absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.8%", height: "2.8%", animationDelay: `${delayMs + 700 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill="#fff4d6" />
+              </svg>
+            </span>
+          ))}
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "39%", top: "29%", width: "18%", height: "22%", border: `1.6px solid ${tint(p1, 0.65)}`, animationDelay: `${delayMs + 1080}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Phase Army — the rook ghosts straight THROUGH its own pawn,
+          thinning to mist at the pass and firming up beyond */}
+      {flourish === "phase" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "47%", top: "40%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "33%", top: "39%", width: "6.5%", height: "10%", "--dx": "260%", animationDelay: `${delayMs + 680}ms` } as CSSProperties}
+          >
+            <Man kind="r" fill={tint(p1, 0.85)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Ghost Legion — the pale pawns take running leaps clean over
+          their blocker, one after the other */}
+      {flourish === "leapfrog" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "47%", top: "42%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
+            <Man kind="b" fill={tint(p2, 0.9)} stroke={p1} />
+          </span>
+          {[0, 1].map((i) => (
+            <span
+              key={i}
+              className="grp-arcshot absolute block"
+              style={{ left: "39%", top: "44%", width: "5%", height: "7.5%", "--dx": "260%", "--dy": "-120%", animationDelay: `${delayMs + 700 + i * 260}ms` } as CSSProperties}
+            >
+              <Man kind="p" fill={tint(p1, 0.85)} stroke={p2} />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Valkyrie — the chooser of the slain stoops out of the sky
+          and the fallen knight is borne up and away with her */}
+      {flourish === "chooser" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "50%", top: "22%", width: "13%", height: "15%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 13 15" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 8 C2.6 4 4.6 2.6 6.5 2.6 C8.4 2.6 10.4 4 12 8 C10 6.8 8.4 6.4 6.5 6.4 C4.6 6.4 3 6.8 1 8 Z" fill={tint(p1, 0.8)} stroke={p2} strokeWidth="0.5" {...SJ} />
+              <circle cx="6.5" cy="4.4" r="1.4" fill="#ffd76a" stroke={p2} strokeWidth="0.4" />
+              <path d="M5.4 6 L5 12 H8 L7.6 6" fill={tint(p1, 0.7)} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span className="grp-riseslow absolute block" style={{ left: "53.5%", top: "40%", width: "6%", height: "9%", animationDelay: `${delayMs + 940}ms` }}>
+            <Man kind="n" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          {[
+            { l: 48, t: 34, d: 0 },
+            { l: 60, t: 36, d: 140 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-drift absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.4%", height: "2.4%", "--dx": `${i % 2 ? -50 : 60}%`, "--dy": "170%", "--rot": "150deg", animationDelay: `${delayMs + 1080 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 8 C2 4 5 1.6 8.4 1.6 C7.6 5.6 5.4 7.6 2 8 Z" fill="#fff4d6" stroke={tint(p2, 0.6)} strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
       {/* passing flare + pale sparks + the single spirit-wave */}
       <Flash delayMs={delayMs + 880} color={tint(p1, 0.5)} left={44} top={40} w={15} h={11} />
       <Sparks delayMs={delayMs + 920} fill={p1} stroke={p2} cy={45} />
@@ -1111,6 +1940,69 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
                 animationDelay: `${delayMs + 700 + i * 110}ms`,
               }}
             />
+          ))}
+        </>
+      )}
+      {/* bespoke: Lost Days — two calendar leaves tear off the tower and blow
+          away while the struck days are crossed off the face */}
+      {flourish === "lostdays" && (
+        <>
+          {[
+            { l: 46, t: 25, dx: "260%", dy: "-60%", rot: "170deg", d: 0 },
+            { l: 49, t: 27, dx: "300%", dy: "30%", rot: "220deg", d: 180 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "4%", height: "4.6%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 700 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 8 9" className="block h-full w-full" aria-hidden="true">
+                <rect x="0.8" y="1" width="6.4" height="7" rx="0.7" fill="#ffe9b0" stroke="#8a6a3a" strokeWidth="0.4" />
+                <path d="M2 3 H6 M2 4.6 H6 M2 6.2 H4.6" stroke="#8a6a3a" strokeWidth="0.4" strokeLinecap="round" />
+              </svg>
+            </span>
+          ))}
+          {["24deg", "-24deg"].map((rot, i) => (
+            <span key={rot} className="absolute block" style={{ left: "45%", top: "26.6%", width: "10%", height: "1%", rotate: rot }}>
+              <span
+                className="grp-beam absolute inset-0 block"
+                style={{ background: tint(p1, 0.9), transformOrigin: "0% 50%", animationDelay: `${delayMs + 1040 + i * 140}ms` }}
+              />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Stolen Hours — a thieving hand slips across the face, makes
+          off with the minute hand itself, and loose seconds spill behind */}
+      {flourish === "stealhours" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "40%", top: "24%", width: "8%", height: "5%", "--dx": "180%", animationDelay: `${delayMs + 640}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 3 C3 1.6 5 1.6 6.6 2.4 C7.6 1.6 8.6 1.6 9.2 2.2 C8.8 3 7.8 3.4 7 3.2 C5.6 4.4 3 4.4 0.8 3 Z" fill={tint(p2, 0.95)} stroke={tint(p1, 0.7)} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-spark absolute block"
+            style={{ left: "48%", top: "25%", width: "4%", height: "2%", "--dx": "260%", "--dy": "-30%", "--rot": "140deg", animationDelay: `${delayMs + 940}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 3" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 1.5 H8 L9.2 1.5 L8 2.4 Z" fill={p1} stroke={p2} strokeWidth="0.3" {...SJ} />
+            </svg>
+          </span>
+          {[
+            { l: 50, t: 30, d: 0 },
+            { l: 54, t: 28, d: 130 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-drift absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": "40%", "--dy": "190%", "--rot": "120deg", animationDelay: `${delayMs + 1060 + v.d}ms` } as CSSProperties}
+            >
+              <Mote color={tint("#e8c97a", 0.9)} />
+            </span>
           ))}
         </>
       )}
@@ -1214,6 +2106,312 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           </svg>
         </span>
       )}
+      {/* bespoke: Draft Domination — the press bar slams onto the card's
+          crown and its tier stars are squeezed off the face, falling */}
+      {flourish === "downgrade" && (
+        <>
+          <span className="grp-drop absolute block" style={{ left: "37%", top: "20%", width: "26%", height: "4%", animationDelay: `${delayMs + 720}ms` }}>
+            <svg viewBox="0 0 26 4" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.8" width="24.8" height="2.6" rx="1.2" fill={tint(p2, 0.95)} stroke={p1} strokeWidth="0.5" />
+            </svg>
+          </span>
+          {[
+            { l: 44, d: 0 },
+            { l: 49, d: 110 },
+            { l: 54, d: 220 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-drift absolute block"
+              style={{ left: `${v.l}%`, top: "30%", width: "2.6%", height: "2.6%", "--dx": `${i % 2 ? -60 : 70}%`, "--dy": "260%", "--rot": "170deg", animationDelay: `${delayMs + 960 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0.8 L6.2 3.8 L9.4 4 L7 6.2 L7.8 9.2 L5 7.6 L2.2 9.2 L3 6.2 L0.6 4 L3.8 3.8 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Total Nullify — the null seal comes down on the face with a
+          thud and the card's magic falls away as dead grey flecks */}
+      {flourish === "nullseal" && (
+        <>
+          <span className="grp-bonk absolute block" style={{ left: "43%", top: "34%", width: "14%", height: "16%", animationDelay: `${delayMs + 780}ms` }}>
+            <svg viewBox="0 0 14 16" className="block h-full w-full" aria-hidden="true">
+              <circle cx="7" cy="8" r="5.8" fill="none" stroke={p1} strokeWidth="1.4" />
+              <path d="M2.9 11.9 L11.1 4.1" stroke={p1} strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </span>
+          {[
+            { l: 44, t: 48, d: 0 },
+            { l: 52, t: 46, d: 120 },
+            { l: 48, t: 52, d: 240 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-drift absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2%", height: "2%", "--dx": `${i % 2 ? -40 : 50}%`, "--dy": "200%", "--rot": "130deg", animationDelay: `${delayMs + 1080 + v.d}ms` } as CSSProperties}
+            >
+              <Mote color="#6e6e78" />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Favorable Stars — the houses swing into line: five stars
+          kindle in an arc over the deal and the alignment strokes between them */}
+      {flourish === "constellation" && (
+        <>
+          {[
+            { l: 34, t: 26, d: 0 },
+            { l: 41, t: 20, d: 110 },
+            { l: 49, t: 18, d: 220 },
+            { l: 57, t: 20, d: 330 },
+            { l: 64, t: 26, d: 440 },
+          ].map((v, i) => (
+            <span key={i} className="grp-glint absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.8%", height: "2.8%", animationDelay: `${delayMs + 620 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill="#fff4d6" />
+              </svg>
+            </span>
+          ))}
+          {[
+            { l: 36, t: 25, w: 7, rot: "-32deg", d: 0 },
+            { l: 43, t: 20.4, w: 7.4, rot: "-8deg", d: 120 },
+            { l: 51, t: 19.6, w: 7.4, rot: "10deg", d: 240 },
+            { l: 58, t: 22, w: 7, rot: "34deg", d: 360 },
+          ].map((v, i) => (
+            <span key={`b${i}`} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.w}%`, height: "0.7%", rotate: v.rot }}>
+              <span
+                className="grp-beam absolute inset-0 block"
+                style={{ background: `linear-gradient(90deg, transparent, ${tint(p1, 0.85)}, transparent)`, transformOrigin: "0% 50%", animationDelay: `${delayMs + 900 + v.d}ms` }}
+              />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Greed — a SECOND card slides out from behind the first, and
+          the taker's hand sweeps up to claim the pair whole */}
+      {flourish === "bothcards" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "41%", top: "27%", width: "20%", height: "42%", "--dx": "42%", animationDelay: `${delayMs + 760}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 20 42" className="block h-full w-full" aria-hidden="true">
+              <rect x="1" y="1" width="18" height="40" rx="2.2" fill={tint(p0, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="1" />
+              <path d="M5 6 L6 8.4 L5 10.8 L4 8.4 Z" fill={tint(p1, 0.9)} />
+            </svg>
+          </span>
+          <span
+            className="grp-tug absolute block"
+            style={{ left: "46%", top: "62%", width: "9%", height: "7%", "--dx": "0%", "--dy": "-90%", animationDelay: `${delayMs + 1060}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 7" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 6.4 C1 4 2 2.6 3.2 2.6 L3.6 1 L4.6 2.4 L5.6 0.8 L6.6 2.4 L7.6 1.2 L8 2.8 C8.8 3.4 9 4.6 9 6.4 Z" fill="#e8c97a" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Riddle Game — the burning question hangs on the face, then
+          the whole wager flips face-down before it answers */}
+      {flourish === "riddle" && (
+        <>
+          <span className="grp-facein absolute block" style={{ left: "45%", top: "34%", width: "10%", height: "18%", animationDelay: `${delayMs + 700}ms` }}>
+            <svg viewBox="0 0 10 18" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 5 C2 2 8 2 8 5 C8 7.4 5.4 7.6 5.4 10.4" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.6" strokeLinecap="round" />
+              <circle cx="5.4" cy="14.6" r="1.1" fill={p1} />
+            </svg>
+          </span>
+          <span className="grp-flip absolute block" style={{ left: "40%", top: "25%", width: "20%", height: "44%", animationDelay: `${delayMs + 1200}ms` }}>
+            <svg viewBox="0 0 20 44" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="0.8" width="18.4" height="42.4" rx="2.2" fill={tint(p2, 0.96)} stroke={tint(p1, 0.7)} strokeWidth="0.7" />
+              <path d="M4 8 L16 36 M16 8 L4 36" stroke={tint(p1, 0.45)} strokeWidth="0.6" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Rehab — the manacle chain across the card SNAPS, its halves
+          spring away, and clean light climbs off the break */}
+      {flourish === "unshackle" && (
+        <>
+          <span className="grp-split-l absolute block" style={{ left: "39%", top: "42%", width: "10%", height: "5%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 12 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 3 H4 M5 3 H8 M9 3 H10.8" stroke={tint(p2, 0.95)} strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 1.2" />
+              <circle cx="11" cy="3" r="1" fill="none" stroke={tint(p2, 0.95)} strokeWidth="0.7" />
+            </svg>
+          </span>
+          <span className="grp-split-r absolute block" style={{ left: "51%", top: "42%", width: "10%", height: "5%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 12 6" className="block h-full w-full" aria-hidden="true">
+              <circle cx="1" cy="3" r="1" fill="none" stroke={tint(p2, 0.95)} strokeWidth="0.7" />
+              <path d="M1.2 3 H4 M5 3 H8 M9 3 H11" stroke={tint(p2, 0.95)} strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.4 1.2" />
+            </svg>
+          </span>
+          <span
+            className="grp-ray absolute block"
+            style={{ left: "48.5%", top: "32%", width: "3%", height: "12%", background: `linear-gradient(0deg, ${tint(p1, 0.85)}, transparent)`, transformOrigin: "50% 100%", animationDelay: `${delayMs + 1020}ms` }}
+          />
+          <Glint delayMs={delayMs + 1240} color={p1} left={49} top={30} sizePct={4} />
+        </>
+      )}
+      {/* bespoke: Parole — the barred cell door on the face swings open and
+          the freed pawn steps out into the light */}
+      {flourish === "celldoor" && (
+        <>
+          <span className="grp-topple absolute block" style={{ left: "43%", top: "32%", width: "12%", height: "22%", transformOrigin: "4% 50%", animationDelay: `${delayMs + 780}ms` }}>
+            <svg viewBox="0 0 12 22" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.6" width="10.8" height="20.8" rx="1" fill={tint(p2, 0.6)} stroke={p1} strokeWidth="0.6" />
+              <path d="M3.2 1 V21 M6 1 V21 M8.8 1 V21 M0.6 11 H11.4" stroke={p1} strokeWidth="0.6" />
+            </svg>
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "45%", top: "42%", width: "5%", height: "8%", "--dx": "170%", animationDelay: `${delayMs + 1100}ms` } as CSSProperties}
+          >
+            <Man kind="p" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Warden's Bribe — a fistful of coins arcs across the deal
+          into the warden's ledger, and the cell key drops in trade */}
+      {flourish === "bribe" && (
+        <>
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="grp-arcshot absolute block"
+              style={{ left: "36%", top: "36%", width: "2.8%", height: "2.8%", "--dx": `${520 + i * 90}%`, "--dy": `${-90 - i * 30}%`, animationDelay: `${delayMs + 700 + i * 120}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <circle cx="5" cy="5" r="4" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.8" />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-drop absolute block" style={{ left: "46%", top: "34%", width: "4%", height: "9%", animationDelay: `${delayMs + 1120}ms` }}>
+            <svg viewBox="0 0 5 11" className="block h-full w-full" aria-hidden="true">
+              <circle cx="2.5" cy="2.4" r="1.7" fill="none" stroke="#e8c97a" strokeWidth="0.8" />
+              <path d="M2.5 4.1 V9.6 M2.5 7.6 H4 M2.5 9.2 H3.6" stroke="#e8c97a" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Iron Will — the mace lands square on the deal and the card
+          only rattles: unbowed, unbroken, still standing */}
+      {flourish === "unbowed" && (
+        <>
+          <span className="grp-bonk absolute block" style={{ left: "50%", top: "26%", width: "7%", height: "12%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 7 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M3.5 4.6 V11.4" stroke="#8a6a3a" strokeWidth="1" strokeLinecap="round" />
+              <circle cx="3.5" cy="3" r="2.4" fill={tint(p2, 0.95)} stroke={p1} strokeWidth="0.5" />
+              <path d="M3.5 0.2 V1 M3.5 5 V5.8 M0.7 3 H1.5 M5.5 3 H6.3" stroke={p1} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-shiver absolute block" style={{ left: "39.5%", top: "24.5%", width: "21%", height: "45%", animationDelay: `${delayMs + 940}ms` }}>
+            <svg viewBox="0 0 21 45" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="0.8" width="19.4" height="43.4" rx="2.2" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1" />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1320} color={p1} left={53} top={26} sizePct={4} />
+        </>
+      )}
+      {/* bespoke: Wrong Way — the signpost spins its arrows backwards and the
+          pawn marches nose-first into the unseen wall */}
+      {flourish === "wrongway" && (
+        <>
+          <span className="grp-pop absolute block" style={{ left: "44%", top: "30%", width: "12%", height: "14%", animationDelay: `${delayMs + 680}ms` }}>
+            <svg viewBox="0 0 12 14" className="block h-full w-full" aria-hidden="true">
+              <path d="M6 3 V13.4" stroke="#8a6a3a" strokeWidth="0.9" strokeLinecap="round" />
+            </svg>
+            <span className="grp-spinback absolute block" style={{ left: "8%", top: "6%", width: "84%", height: "40%", animationDelay: `${delayMs + 940}ms` }}>
+              <svg viewBox="0 0 10 5" className="block h-full w-full" aria-hidden="true">
+                <path d="M0.8 2.5 L2.6 1 V2 H9.2 V3 H2.6 V4 Z" fill={p1} stroke={p2} strokeWidth="0.35" {...SJ} />
+              </svg>
+            </span>
+          </span>
+          <span className="grp-bonk absolute block" style={{ left: "48%", top: "50%", width: "5%", height: "7.5%", animationDelay: `${delayMs + 1180}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Broken Elevator — the cable pays out, the car judders to a
+          dead stop between floors, and the fault sparks at the sheave */}
+      {flourish === "elevator" && (
+        <>
+          <span
+            className="grp-ray absolute block"
+            style={{ left: "49.4%", top: "22%", width: "1.2%", height: "14%", background: tint(p1, 0.85), transformOrigin: "50% 0%", animationDelay: `${delayMs + 640}ms` }}
+          />
+          <span className="grp-drop absolute block" style={{ left: "44%", top: "34%", width: "12%", height: "13%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 12 13" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="0.8" width="10.4" height="11.4" rx="1" fill={tint(p0, 0.9)} stroke={p1} strokeWidth="0.7" />
+              <path d="M6 1 V12 M2.4 3 H4.4 M7.6 3 H9.6" stroke={tint(p1, 0.7)} strokeWidth="0.5" />
+            </svg>
+          </span>
+          {[
+            { dx: "130%", dy: "-90%", rot: "150deg" },
+            { dx: "-120%", dy: "-100%", rot: "-140deg" },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: "49%", top: "23%", width: "2.2%", height: "2.2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 1060 + i * 70}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 0.6 L9 5 L5 9.4 L1 5 Z" fill="#ffd166" stroke={p2} strokeWidth="0.7" {...SJ} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Unseelie Bargain — mortal and fae hands meet over the deal;
+          two quick boons flare, then the hollow price hangs dark */}
+      {flourish === "bargain" && (
+        <>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "34%", top: "40%", width: "9%", height: "5%", "--dx": "80%", animationDelay: `${delayMs + 680}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 3 C3 1.8 5.4 1.8 7 2.6 L9.2 3 L7 3.6 C5.4 4.4 3 4.4 0.8 3 Z" fill="#e8c97a" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-cross absolute block"
+            style={{ left: "57%", top: "40%", width: "9%", height: "5%", "--dx": "-80%", animationDelay: `${delayMs + 680}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M9.2 3 C7 1.8 4.6 1.8 3 2.6 L0.8 3 L3 3.6 C4.6 4.4 7 4.4 9.2 3 Z" fill={tint(p1, 0.85)} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <Glint delayMs={delayMs + 1120} color={p1} left={46} top={37} sizePct={4} />
+          <Glint delayMs={delayMs + 1240} color={p1} left={52} top={38} sizePct={4} />
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "46%", top: "48%", width: "8%", height: "6%", background: tint(p2, 0.9), animationDelay: `${delayMs + 1320}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Chess Diff — a clean little board unrolls over the deal and
+          the two bare kings square up for the sidegame */}
+      {flourish === "sidegame" && (
+        <>
+          <span className="grp-facein absolute block" style={{ left: "42%", top: "34%", width: "16%", height: "16%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 16 16" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.6" y="0.6" width="14.8" height="14.8" fill="#eef1f7" stroke={p2} strokeWidth="0.7" />
+              {[0, 1, 2, 3].map((r) =>
+                [0, 1, 2, 3].map((c) =>
+                  (r + c) % 2 ? <rect key={`${r}${c}`} x={0.6 + c * 3.7} y={0.6 + r * 3.7} width="3.7" height="3.7" fill={tint(p2, 0.8)} /> : null,
+                ),
+              )}
+            </svg>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "37%", top: "38%", width: "4.5%", height: "7%", animationDelay: `${delayMs + 1080}ms` }}>
+            <Man kind="k" fill="#eef1f7" stroke={p2} />
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "58.5%", top: "38%", width: "4.5%", height: "7%", animationDelay: `${delayMs + 1180}ms` }}>
+            <Man kind="k" fill={tint(p2, 0.95)} stroke="#eef1f7" />
+          </span>
+        </>
+      )}
       {/* the deal lands: flare + sparks + the single fate-wave */}
       <Flash delayMs={delayMs + 780} color={tint(p1, 0.6)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 820} fill={p1} stroke={p2} cy={49} />
@@ -1235,7 +2433,7 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 10: ThiefHand — the prize gleams at mid-board, then a shadow
    gauntlet sweeps in from the right wing and drags it off the board.
    ========================================================================== */
-function ThiefHand({ palette, glyph, lead, delayMs }: TemplateProps) {
+function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
@@ -1277,6 +2475,189 @@ function ThiefHand({ palette, glyph, lead, delayMs }: TemplateProps) {
           </svg>
         )}
       />
+      {/* bespoke: Buff Siphon — not one prize but TWO, drawn off in single
+          file down the same dark throat */}
+      {flourish === "siphon" && (
+        <>
+          {[
+            { l: 36, t: 33, d: 0 },
+            { l: 33, t: 44, d: 200 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-cross absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "8%", "--dx": "420%", animationDelay: `${delayMs + 640 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <circle cx="5" cy="5" r="3.8" fill={tint(p1, 0.45)} stroke={tint(p1, 0.95)} strokeWidth="0.8" />
+              </svg>
+            </span>
+          ))}
+          <span
+            className="grp-beam absolute block"
+            style={{
+              left: "38%",
+              top: "41%",
+              width: "30%",
+              height: "2.4%",
+              background: `linear-gradient(90deg, transparent, ${tint(p1, 0.6)})`,
+              transformOrigin: "100% 50%",
+              animationDelay: `${delayMs + 700}ms`,
+            }}
+          />
+        </>
+      )}
+      {/* bespoke: Spelltheft — a trade, technically: the prize goes right and
+          a dull lowly bauble is lobbed back the other way */}
+      {flourish === "trade" && (
+        <>
+          <span
+            className="grp-arcshot absolute block"
+            style={{ left: "58%", top: "40%", width: "4%", height: "4%", "--dx": "-560%", "--dy": "-120%", animationDelay: `${delayMs + 900}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5" r="3.6" fill="#6e6e78" stroke="#2a2a30" strokeWidth="0.7" />
+              <path d="M3.4 4 L6.6 6 M6.6 4 L3.4 6" stroke="#2a2a30" strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "34%", top: "42%", width: "5%", height: "7%", animationDelay: `${delayMs + 1240}ms` }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5" r="3.6" fill="#6e6e78" stroke="#2a2a30" strokeWidth="0.7" />
+              <path d="M3.4 4 L6.6 6 M6.6 4 L3.4 6" stroke="#2a2a30" strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Draft Seize — both dealt cards are swept off in the fist,
+          and the consolation die tumbles back across the table */}
+      {flourish === "seize" && (
+        <>
+          {[
+            { l: 34, t: 33, rot: "-10deg", d: 0 },
+            { l: 39, t: 32, rot: "9deg", d: 120 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-cross absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "11%", rotate: v.rot, "--dx": "360%", animationDelay: `${delayMs + 640 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 7 12" className="block h-full w-full" aria-hidden="true">
+                <rect x="0.6" y="0.6" width="5.8" height="10.8" rx="1" fill={tint(p0, 0.8)} stroke={tint(p1, 0.9)} strokeWidth="0.6" />
+              </svg>
+            </span>
+          ))}
+          <span
+            className="grp-arcshot absolute block"
+            style={{ left: "60%", top: "42%", width: "3.6%", height: "3.6%", "--dx": "-620%", "--dy": "-140%", animationDelay: `${delayMs + 1060}ms` } as CSSProperties}
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="1.4" y="1.4" width="7.2" height="7.2" rx="1.4" fill="#eef1f7" stroke={p2} strokeWidth="0.6" />
+              <circle cx="3.6" cy="3.6" r="0.7" fill={p2} />
+              <circle cx="6.4" cy="6.4" r="0.7" fill={p2} />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Collapse — the whole line is hauled one square homeward in a
+          single synchronised shove */}
+      {flourish === "undertow" && (
+        <>
+          {[
+            { k: "p", l: 34, t: 36 },
+            { k: "n", l: 46, t: 32 },
+            { k: "b", l: 58, t: 37 },
+          ].map((v, i) => (
+            <span key={i} className="grp-shove absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%", animationDelay: `${delayMs + 700}ms` }}>
+              <Man kind={v.k as keyof typeof CHESSMAN} fill={tint(p2, 0.95)} stroke={p1} />
+            </span>
+          ))}
+          <span
+            className="grp-beam absolute block"
+            style={{
+              left: "30%",
+              top: "27%",
+              width: "38%",
+              height: "1.4%",
+              background: `linear-gradient(90deg, transparent, ${tint(p1, 0.8)} 30%, ${tint(p1, 0.8)} 70%, transparent)`,
+              transformOrigin: "50% 50%",
+              animationDelay: `${delayMs + 1060}ms`,
+            }}
+          />
+        </>
+      )}
+      {/* bespoke: Void — the black mouth dilates on the boards, swallows the
+          piece whole, and does not close */}
+      {flourish === "voidmaw" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "44%", top: "42%", width: "11%", height: "9%", animationDelay: `${delayMs + 640}ms` }}>
+            <svg viewBox="0 0 11 9" className="block h-full w-full" aria-hidden="true">
+              <ellipse cx="5.5" cy="4.5" rx="5" ry="3.8" fill="#0d0618" stroke={tint(p1, 0.85)} strokeWidth="0.6" />
+              <ellipse cx="5.5" cy="4.5" rx="3" ry="2.2" fill="none" stroke={tint(p1, 0.4)} strokeWidth="0.4" />
+            </svg>
+          </span>
+          <span className="grp-sink absolute block" style={{ left: "47%", top: "36%", width: "5.5%", height: "8%", animationDelay: `${delayMs + 820}ms` }}>
+            <Man kind="p" fill={tint(p1, 0.85)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1300} color={p1} left={52} top={42} sizePct={3.4} />
+        </>
+      )}
+      {/* bespoke: Sabotage — the war-room gears are turning until the thrown
+          wrench drops in and the whole works judders dead */}
+      {flourish === "sabotage" && (
+        <>
+          {[
+            { l: 41, t: 32, w: 7, d: 0 },
+            { l: 48, t: 37, w: 5.5, d: 90 },
+          ].map((v, i) => (
+            <span key={i} className={`${i === 0 ? "grp-shiver" : "grp-hold"} absolute block`} style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.w}%`, height: `${v.w}%`, animationDelay: `${delayMs + 620 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path
+                  d="M5 1 L5.8 2.2 L7.4 1.8 L7.6 3.4 L9 4.2 L8.2 5.6 L9 7 L7.6 7.6 L7.4 9.2 L5.8 8.8 L5 10 L4.2 8.8 L2.6 9.2 L2.4 7.6 L1 7 L1.8 5.6 L1 4.2 L2.4 3.4 L2.6 1.8 L4.2 2.2 Z"
+                  fill={tint(p0, 0.9)}
+                  stroke={p1}
+                  strokeWidth="0.4"
+                  {...SJ}
+                />
+                <circle cx="5" cy="5.5" r="1.4" fill={tint(p2, 0.95)} />
+              </svg>
+            </span>
+          ))}
+          <span className="grp-drop absolute block" style={{ left: "44.5%", top: "28%", width: "4.5%", height: "8%", animationDelay: `${delayMs + 880}ms` }}>
+            <svg viewBox="0 0 5 9" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 1 C0.4 1.8 0.4 2.8 1.2 3.4 L2 3 L2.6 8.2 H3.4 L3.6 3 L4.4 3.4 C5 2.6 5 1.6 4.4 1 L3.6 2 H2 Z" fill="#8a94a8" stroke="#3a3a40" strokeWidth="0.35" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Empty Handed — the pocket is pulled clean inside out; all
+          that leaves it is dust and one indignant moth */}
+      {flourish === "emptypockets" && (
+        <>
+          <span className="grp-flip absolute block" style={{ left: "43%", top: "38%", width: "9%", height: "10%", animationDelay: `${delayMs + 780}ms` }}>
+            <svg viewBox="0 0 9 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 1 H8 L7.4 6 C7.2 8 6 9.2 4.5 9.2 C3 9.2 1.8 8 1.6 6 Z" fill={tint(p2, 0.9)} stroke={tint(p1, 0.8)} strokeWidth="0.6" {...SJ} />
+              <path d="M2.2 2.4 L6.8 2.4" stroke={tint(p1, 0.6)} strokeWidth="0.4" strokeDasharray="0.9 0.7" />
+            </svg>
+          </span>
+          {[
+            { l: 45, t: 36, d: 0 },
+            { l: 50, t: 34, d: 140 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-settle absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": `${i % 2 ? -40 : 50}%`, "--dy": "-160%", "--rot": "130deg", animationDelay: `${delayMs + 1040 + v.d}ms` } as CSSProperties}
+            >
+              <Mote color={tint(p1, 0.7)} />
+            </span>
+          ))}
+          <span className="grp-riseslow absolute block" style={{ left: "47%", top: "31%", width: "3%", height: "2.6%", animationDelay: `${delayMs + 1100}ms` }}>
+            <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 4 C3 1 0.8 1.6 1.4 4 C0.8 6.4 3 7 5 4 Z M5 4 C7 1 9.2 1.6 8.6 4 C9.2 6.4 7 7 5 4 Z" fill={tint(p1, 0.8)} stroke={p2} strokeWidth="0.3" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
       {/* the snap of the theft: flare + sparks + the single dark wave */}
       <Flash delayMs={delayMs + 820} color={tint(p1, 0.55)} left={42} top={38} w={15} h={11} />
       <Sparks delayMs={delayMs + 860} fill={p1} stroke={p0} cy={44} />
@@ -1331,6 +2712,214 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
           <span className="grp-pop absolute block" style={{ left: "38%", top: "29%", width: "9%", height: "9%", animationDelay: `${delayMs + 1000}ms` }}>{glyph}</span>
           <span className="grp-pop absolute block" style={{ left: "53%", top: "29%", width: "9%", height: "9%", animationDelay: `${delayMs + 1280}ms` }}>{glyph}</span>
           <Glint delayMs={delayMs + 1480} color={p1} left={56} top={27} sizePct={5} />
+        </>
+      )}
+      {/* bespoke: Twin Queens — two pawns stand the anvil together and ONE
+          stroke crowns them both at once */}
+      {flourish === "twincrowns" && (
+        <>
+          {[40, 53].map((l, i) => (
+            <span key={l} className="absolute block" style={{ left: `${l}%`, top: "34%", width: "6%", height: "9%" }}>
+              <span className="grp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 520}ms` }}>
+                <Man kind="p" fill={tint(p0, 0.95)} stroke={p2} />
+              </span>
+              <span className="grp-drop absolute block" style={{ left: "10%", top: "-38%", width: "80%", height: "42%", animationDelay: `${delayMs + 880 + i * 60}ms` }}>
+                <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+                  <path d="M0.8 4.4 L1.2 1 L2.8 2.6 L4 0.6 L5.2 2.6 L6.8 1 L7.2 4.4 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+                </svg>
+              </span>
+            </span>
+          ))}
+          <span
+            className="grp-beam absolute block"
+            style={{
+              left: "43%",
+              top: "37%",
+              width: "13%",
+              height: "0.9%",
+              background: `linear-gradient(90deg, transparent, ${tint(p1, 0.9)}, transparent)`,
+              transformOrigin: "50% 50%",
+              animationDelay: `${delayMs + 1160}ms`,
+            }}
+          />
+        </>
+      )}
+      {/* bespoke: Promotion Storm — knight helms rain out of the forge sky
+          all along the fifth rank */}
+      {flourish === "helmrain" && (
+        <>
+          {[
+            { l: 33, t: 30, d: 0 },
+            { l: 43, t: 26, d: 110 },
+            { l: 54, t: 27, d: 220 },
+            { l: 64, t: 31, d: 330 },
+          ].map((v, i) => (
+            <span key={i} className="grp-drop absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%", animationDelay: `${delayMs + 640 + v.d}ms` }}>
+              <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Resurrect Queen — she climbs whole out of the forge fire,
+          embers streaming, and the ward ring seals around her */}
+      {flourish === "requeen" && (
+        <>
+          <span className="grp-riseslow absolute block" style={{ left: "45%", top: "30%", width: "9%", height: "13%", animationDelay: `${delayMs + 700}ms` }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          {[
+            { l: 44, t: 40, d: 0 },
+            { l: 54, t: 38, d: 150 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-settle absolute block"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": `${i % 2 ? -50 : 60}%`, "--dy": "-190%", "--rot": "140deg", animationDelay: `${delayMs + 880 + v.d}ms` } as CSSProperties}
+            >
+              <Mote color="#ff9d3d" />
+            </span>
+          ))}
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "41%", top: "24%", width: "17%", height: "17%", border: `2px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 1180}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Legendary Forge — the broken knight is laid on the face and
+          comes back seamed with gold where the cracks were */}
+      {flourish === "reforge" && (
+        <>
+          <span className="absolute block" style={{ left: "44%", top: "31%", width: "8%", height: "12%" }}>
+            <span className="grp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 520}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d={CHESSMAN.n} fill={tint(p2, 0.95)} stroke={p0} strokeWidth="0.45" {...SJ} />
+                <path d="M4 4 L5.6 6.4 M6.2 5 L5 7.6" stroke={p0} strokeWidth="0.35" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="grp-facein absolute inset-0 block" style={{ animationDelay: `${delayMs + 1080}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d={CHESSMAN.n} fill={tint(p2, 0.95)} stroke={p1} strokeWidth="0.45" {...SJ} />
+                <path d="M4 4 L5.6 6.4 M6.2 5 L5 7.6" stroke="#ffd166" strokeWidth="0.5" strokeLinecap="round" />
+              </svg>
+            </span>
+          </span>
+          <Glint delayMs={delayMs + 1400} color="#ffd166" left={50} top={31} sizePct={4} />
+        </>
+      )}
+      {/* bespoke: Second King — the crown comes down on a common pawn, and
+          then there are two crowns burning side by side */}
+      {flourish === "secondking" && (
+        <>
+          <span className="grp-hold absolute block" style={{ left: "39%", top: "31%", width: "6%", height: "9%", animationDelay: `${delayMs + 520}ms` }}>
+            <Man kind="p" fill={tint(p0, 0.95)} stroke={p2} />
+          </span>
+          <span className="grp-drop absolute block" style={{ left: "39.5%", top: "26%", width: "5%", height: "4%", animationDelay: `${delayMs + 840}ms` }}>
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 4.4 L1.2 1 L2.8 2.6 L4 0.6 L5.2 2.6 L6.8 1 L7.2 4.4 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "54%", top: "30%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 1120}ms` }}>
+            <Man kind="k" fill={tint(p0, 0.95)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1420} color={p1} left={42} top={28} sizePct={3.6} />
+          <Glint delayMs={delayMs + 1500} color={p1} left={57} top={28} sizePct={3.6} />
+        </>
+      )}
+      {/* bespoke: Leaden Crown — the grey crown lands with a THUD; the new
+          queen buckles under the weight but nothing can touch her */}
+      {flourish === "leadcrown" && (
+        <>
+          <span className="grp-sink absolute block" style={{ left: "45%", top: "31%", width: "7%", height: "10%", animationDelay: `${delayMs + 980}ms` }}>
+            <Man kind="q" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="grp-bonk absolute block" style={{ left: "45.5%", top: "27%", width: "6%", height: "5%", animationDelay: `${delayMs + 760}ms` }}>
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 4.4 L1.2 1 L2.8 2.6 L4 0.6 L5.2 2.6 L6.8 1 L7.2 4.4 Z" fill="#6e6e78" stroke="#2a2a30" strokeWidth="0.4" {...SJ} />
+            </svg>
+          </span>
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "41%", top: "26%", width: "15%", height: "16%", border: `2px solid ${tint(p0, 0.6)}`, animationDelay: `${delayMs + 1160}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Overclock Major — the forge gauge redlines: the needle slams
+          to full and stray voltage strobes off the anvil */}
+      {flourish === "overclock" && (
+        <>
+          <span className="grp-pop absolute block" style={{ left: "42%", top: "24%", width: "12%", height: "8%", animationDelay: `${delayMs + 560}ms` }}>
+            <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 7.4 C1 3.4 3.2 1 6 1 C8.8 1 11 3.4 11 7.4 Z" fill={tint(p2, 0.9)} stroke={p1} strokeWidth="0.6" {...SJ} />
+              <path d="M2.6 5.4 L3.4 4.6 M6 3 V4 M9.4 5.4 L8.6 4.6" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+            <span className="grp-swing absolute block" style={{ left: "44%", top: "20%", width: "12%", height: "68%", transformOrigin: "50% 92%", animationDelay: `${delayMs + 760}ms` }}>
+              <svg viewBox="0 0 2 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M1 0.6 V9" stroke={p0} strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </span>
+          </span>
+          <span className="grp-bolt absolute block" style={{ left: "56%", top: "30%", width: "5%", height: "10%", animationDelay: `${delayMs + 1060}ms` }}>
+            <svg viewBox="0 0 10 18" className="block h-full w-full" aria-hidden="true">
+              <path d="M6.4 0.6 L3 8 H5.2 L2.6 15 L8.4 6.6 H5.8 L8 0.6 Z" fill={p0} stroke={p2} strokeWidth="0.6" {...SJ} />
+            </svg>
+          </span>
+        </>
+      )}
+      {/* bespoke: Ascendant Knight — wings snap open at the knight's shoulders
+          and he lifts off the anvil inside the ward light */}
+      {flourish === "wings" && (
+        <>
+          <span className="grp-riseslow absolute block" style={{ left: "45%", top: "28%", width: "9%", height: "13%", animationDelay: `${delayMs + 780}ms` }}>
+            <span className="absolute block" style={{ left: "14%", top: "8%", width: "72%", height: "84%" }}>
+              <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+            </span>
+            <span className="grp-flip absolute block" style={{ left: "-36%", top: "22%", width: "44%", height: "40%", animationDelay: `${delayMs + 1060}ms` }}>
+              <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M7.4 6.6 C4 6.6 1.6 4.6 0.8 1 C3.6 1.8 6 3.6 7.4 6.6 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+            <span className="grp-flip absolute block" style={{ left: "92%", top: "22%", width: "44%", height: "40%", animationDelay: `${delayMs + 1060}ms` }}>
+              <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M0.6 6.6 C4 6.6 6.4 4.6 7.2 1 C4.4 1.8 2 3.6 0.6 6.6 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          </span>
+          <span
+            className="grp-hold absolute block rounded-full"
+            style={{ left: "41%", top: "23%", width: "17%", height: "19%", border: `2px solid ${tint(p0, 0.6)}`, animationDelay: `${delayMs + 1240}ms` }}
+          />
+        </>
+      )}
+      {/* bespoke: Nerf Breaker — the shackle is laid across the anvil and the
+          stroke bursts it: halves spring apart, links flying */}
+      {flourish === "chainbreak" && (
+        <>
+          <span className="grp-split-l absolute block" style={{ left: "40%", top: "36%", width: "9%", height: "4.5%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 10 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 2.5 H8.6" stroke="#8a94a8" strokeWidth="1.7" strokeLinecap="round" strokeDasharray="2.2 1.1" />
+              <circle cx="9" cy="2.5" r="0.9" fill="none" stroke="#8a94a8" strokeWidth="0.7" />
+            </svg>
+          </span>
+          <span className="grp-split-r absolute block" style={{ left: "51%", top: "36%", width: "9%", height: "4.5%", animationDelay: `${delayMs + 820}ms` }}>
+            <svg viewBox="0 0 10 5" className="block h-full w-full" aria-hidden="true">
+              <circle cx="1" cy="2.5" r="0.9" fill="none" stroke="#8a94a8" strokeWidth="0.7" />
+              <path d="M1.4 2.5 H9" stroke="#8a94a8" strokeWidth="1.7" strokeLinecap="round" strokeDasharray="2.2 1.1" />
+            </svg>
+          </span>
+          {[
+            { dx: "170%", dy: "-160%", rot: "160deg" },
+            { dx: "-160%", dy: "-140%", rot: "-150deg" },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-spark absolute block"
+              style={{ left: "49%", top: "37%", width: "2.2%", height: "2.2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 920 + i * 60}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <circle cx="5" cy="5" r="3" fill="none" stroke="#8a94a8" strokeWidth="1.4" />
+              </svg>
+            </span>
+          ))}
         </>
       )}
       {/* strike sparks fanning off the anvil face */}
@@ -1428,6 +3017,105 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
               <path d="M2 15 C2 10.6 3 8.6 5.4 8.2 L6.6 10 L5.4 11.2 C5.4 13 4.4 15 3.2 15 Z" fill={tint(p2, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="0.6" {...SJ} />
             </svg>
           </span>
+        </>
+      )}
+      {/* bespoke: Fey Step — leaves bud along the gateposts, the knight slips
+          into the hedge and pops out already behind the far lines */}
+      {flourish === "hedgerow" && (
+        <>
+          {[
+            { l: 38, t: 32, d: 0 },
+            { l: 60, t: 36, d: 120 },
+            { l: 39, t: 52, d: 240 },
+          ].map((v, i) => (
+            <span key={i} className="grp-pop absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.8%", height: "2.8%", animationDelay: `${delayMs + 560 + v.d}ms` }}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 8 C2 4 5 1.6 8.4 1.6 C7.6 5.6 5.4 7.6 2 8 Z" fill="#a8e07f" stroke="#1c4a1c" strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+          ))}
+          <span
+            className="grp-tug absolute block"
+            style={{ left: "30%", top: "42%", width: "6%", height: "9%", "--dx": "260%", "--dy": "-10%", animationDelay: `${delayMs + 700}ms` } as CSSProperties}
+          >
+            <Man kind="n" fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+          <span className="grp-pop absolute block" style={{ left: "62%", top: "24%", width: "6%", height: "9%", animationDelay: `${delayMs + 1240}ms` }}>
+            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1420} color={p1} left={66} top={23} sizePct={3.4} />
+        </>
+      )}
+      {/* bespoke: Conjured Rook — stray motes are drawn into the pane and a
+          spectral rook stands assembled where they met */}
+      {flourish === "conjure" && (
+        <>
+          {[
+            { l: 36, t: 30, dx: "220%", dy: "160%", d: 0 },
+            { l: 62, t: 34, dx: "-200%", dy: "120%", d: 70 },
+            { l: 48, t: 62, dx: "20%", dy: "-240%", d: 140 },
+          ].map((v, i) => (
+            <span
+              key={i}
+              className="grp-tellray absolute block rounded-full"
+              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.2%", height: "2.2%", background: tint(p1, 0.9), "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 620 + v.d}ms` } as CSSProperties}
+            />
+          ))}
+          <span className="grp-facein absolute block" style={{ left: "44.5%", top: "34%", width: "11%", height: "17%", animationDelay: `${delayMs + 940}ms` }}>
+            <Man kind="r" fill={tint(p1, 0.6)} stroke={p2} />
+          </span>
+        </>
+      )}
+      {/* bespoke: Twin Familiars — two little winged wisps dart out of the
+          gate and perch, one on each waiting bishop */}
+      {flourish === "familiars" && (
+        <>
+          {[
+            { l: 28, t: 44 },
+            { l: 65, t: 44 },
+          ].map((v, i) => (
+            <span key={i} className="grp-hold absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6.5%", height: "10%", animationDelay: `${delayMs + 560}ms` }}>
+              <Man kind="b" fill={tint(p2, 0.9)} stroke={p1} />
+            </span>
+          ))}
+          {[
+            { l: 46, dx: "-320%", d: 0 },
+            { l: 52, dx: "300%", d: 130 },
+          ].map((v, i) => (
+            <span
+              key={`w${i}`}
+              className="grp-cross absolute block"
+              style={{ left: `${v.l}%`, top: "38%", width: "4%", height: "3.4%", "--dx": v.dx, animationDelay: `${delayMs + 760 + v.d}ms` } as CSSProperties}
+            >
+              <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M5 4 C3 1 0.8 1.6 1.4 4 C0.8 6.4 3 7 5 4 Z M5 4 C7 1 9.2 1.6 8.6 4 C9.2 6.4 7 7 5 4 Z" fill={tint(p1, 0.85)} stroke={p2} strokeWidth="0.3" {...SJ} />
+                <circle cx="5" cy="4" r="0.8" fill={p1} />
+              </svg>
+            </span>
+          ))}
+        </>
+      )}
+      {/* bespoke: Ley Line — the old current wakes under one file and the
+          piece rides the surge straight up the board through the gate */}
+      {flourish === "leyline" && (
+        <>
+          <span
+            className="grp-ray absolute block"
+            style={{
+              left: "48%",
+              top: "20%",
+              width: "4%",
+              height: "48%",
+              background: `linear-gradient(0deg, ${tint(p1, 0.85)}, ${tint(p0, 0.4)}, transparent)`,
+              transformOrigin: "50% 100%",
+              animationDelay: `${delayMs + 620}ms`,
+            }}
+          />
+          <span className="grp-riseslow absolute block" style={{ left: "47%", top: "46%", width: "6%", height: "9%", animationDelay: `${delayMs + 780}ms` }}>
+            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
+          </span>
+          <Glint delayMs={delayMs + 1220} color={p1} left={49} top={26} sizePct={3.6} />
+          <Glint delayMs={delayMs + 1340} color={p1} left={51} top={38} sizePct={3} />
         </>
       )}
       {/* crossing flare + sparks + the single rift-wave */}
@@ -2600,64 +4288,64 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- WitchCircle (the hex pool) ---------------------------------------- */
   ball_and_chain: G(WitchCircle, ["#6b4a8f", "#c9b0e8", "#2a1030"], GLYPH.ball_and_chain, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "shackle"),
   royal_summons: G(WitchCircle, ["#8f2bbf", "#ffd76a", "#2a1030"], GLYPH.royal_summons, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades",
-  }),
+  }, "summons"),
   palsied_hands: G(WitchCircle, ["#6b4a8f", "#8faf4a", "#2f3a26"], GLYPH.palsied_hands, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "palsy"),
   throne_bound: G(WitchCircle, ["#5b2b8f", "#c94ad1", "#1c0f18"], GLYPH.throne_bound, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades",
-  }),
+  }, "tether"),
   lone_sovereign: G(WitchCircle, ["#5a6b8f", "#cdd6ff", "#1c1c2a"], GLYPH.lone_sovereign, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "sovereign"),
   peasant_levy: G(WitchCircle, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.peasant_levy, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "levy"),
   court_in_exile: G(WitchCircle, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.court_in_exile, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "exile"),
   cast_a_nerf: G(WitchCircle, ["#8f6bff", "#ff9d3d", "#2a1030"], GLYPH.cast_a_nerf, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
   }),
   royal_handicap: G(WitchCircle, ["#8f2bbf", "#e3d0ff", "#1c0f18"], GLYPH.royal_handicap, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades",
-  }),
+  }, "nodiag"),
   queens_handicap: G(WitchCircle, ["#c94ad1", "#e3d0ff", "#2a1030"], GLYPH.queens_handicap, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades",
-  }),
+  }, "escort"),
   grounded_command: G(WitchCircle, ["#6b4a8f", "#ffd76a", "#1c1c2a"], GLYPH.grounded_command, {
     ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades",
-  }),
+  }, "grounded"),
   lunar_eclipse: G(WitchCircle, ["#2c3e6b", "#cdd6ff", "#0d1326"], GLYPH.lunar_eclipse, {
     ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades",
-  }),
+  }, "eclipse"),
   hexed_satchel: G(WitchCircle, ["#8a6a3a", "#a8e07f", "#2f3a26"], GLYPH.hexed_satchel, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "satchel"),
   iron_furrow: G(WitchCircle, ["#8faf4a", "#c9a84c", "#2f3a26"], GLYPH.iron_furrow, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
-  }),
+  }, "furrow"),
   leaden_fields: G(WitchCircle, ["#6e6e78", "#e8dcc0", "#2a2a30"], GLYPH.leaden_fields, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "petrify",
-  }),
+  }, "leadcast"),
   wc_voodoo_doll: G(WitchCircle, ["#6b4a8f", "#c94a5a", "#1c0f18"], GLYPH.wc_voodoo_doll, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "voodoo"),
   wc_sticky_floor: G(WitchCircle, ["#c9a84c", "#ffd23f", "#4a3a22"], GLYPH.wc_sticky_floor, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze",
-  }),
+  }, "sticky"),
   threads_of_fate: G(WitchCircle, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.threads_of_fate, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "stun",
-  }),
+  }, "loom"),
   mind_control: G(WitchCircle, ["#8f2bbf", "#c94ad1", "#12081f"], GLYPH.mind_control, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
-  }),
+  }, "puppet"),
   mind_dominion: G(WitchCircle, ["#5b2b8f", "#8f6bff", "#12081f"], GLYPH.mind_dominion, {
     ordering: "radial", staggerMs: 0, victims: ["r", "b"], hasLead: true, sound: "shades",
-  }),
+  }, "dominion"),
 
   /* --- StoneGaze (the walnut / petrify pool) -------------------------------- */
   medusas_verdict: G(StoneGaze, ["#8d8d94", "#7fae5a", "#4c4c53"], GLYPH.medusas_verdict, {
@@ -2665,31 +4353,31 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "medusa"),
   granite_ramparts: G(StoneGaze, ["#8a8478", "#c9b89a", "#4a4036"], GLYPH.granite_ramparts, {
     ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
-  }),
+  }, "rampart"),
   stone_menagerie: G(StoneGaze, ["#8d8d94", "#c9c9cf", "#3a3a40"], GLYPH.stone_menagerie, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut",
-  }),
+  }, "menagerie"),
   stone_curse: G(StoneGaze, ["#8a6a4a", "#c9b89a", "#4a3a2a"], GLYPH.stone_curse, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut",
   }),
   stone_riders: G(StoneGaze, ["#8d8d94", "#b58a5a", "#4c4c53"], GLYPH.stone_riders, {
     ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut",
-  }),
+  }, "contagion"),
   stone_prelates: G(StoneGaze, ["#9a9a9a", "#e8dcc0", "#5c5c63"], GLYPH.stone_prelates, {
     ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut",
-  }),
+  }, "pews"),
   stone_bastions: G(StoneGaze, ["#8a94a8", "#c9b89a", "#3a3a40"], GLYPH.stone_bastions, {
     ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
-  }),
+  }, "bastion"),
   queen_of_stone: G(StoneGaze, ["#8d8d94", "#ffd76a", "#4c4c53"], GLYPH.queen_of_stone, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "petrify", source: "walnut",
-  }),
+  }, "stoneshoes"),
   eternal_statue: G(StoneGaze, ["#c9c9cf", "#7fae5a", "#6e6e74"], GLYPH.eternal_statue, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut",
   }, "statue"),
   nerf_hammer: G(StoneGaze, ["#8a6a4a", "#ff9d3d", "#4a3a2a"], GLYPH.nerf_hammer, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "petrify", source: "walnut",
-  }),
+  }, "hammer"),
 
   /* --- ColdFront (the freeze pool) --------------------------------------------- */
   the_big_chill: G(ColdFront, ["#9fd8ff", "#e8f8ff", "#3f7fb5"], GLYPH.the_big_chill, {
@@ -2697,16 +4385,16 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "bigchill"),
   frozen_moment: G(ColdFront, ["#bfe6ff", "#ffffff", "#4f8fd1"], GLYPH.frozen_moment, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice",
-  }),
+  }, "midmove"),
   creeping_frost: G(ColdFront, ["#7fd8d8", "#dff7f7", "#3f6f9f"], GLYPH.creeping_frost, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
-  }),
+  }, "creepfrost"),
   glacial_flanks: G(ColdFront, ["#9fd8ff", "#c9cdd6", "#4f8fd1"], GLYPH.glacial_flanks, {
     ordering: "sweep", staggerMs: 50, victims: ["n", "b"], hasLead: true, sound: "massfreeze", source: "frozen",
-  }),
+  }, "pincer"),
   total_whiteout: G(ColdFront, ["#e8f8ff", "#ffffff", "#6fb5e8"], GLYPH.total_whiteout, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
-  }),
+  }, "whiteout"),
   we_frostbite_curse: G(ColdFront, ["#9fd8ff", "#eef8ff", "#5a8fc0"], GLYPH.we_frostbite_curse, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice",
   }),
@@ -2717,13 +4405,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- SiegeRoll (bombs / demolitions / barrages) --------------------------------- */
   atomic_captures: G(SiegeRoll, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.atomic_captures, {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
-  }),
+  }, "mushroom"),
   atomic_reaction: G(SiegeRoll, ["#e6432c", "#ffd166", "#3a1c12"], GLYPH.atomic_reaction, {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
-  }),
+  }, "chain"),
   detonation_field: G(SiegeRoll, ["#c94a3a", "#ff9d3d", "#2b1218"], GLYPH.detonation_field, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm",
-  }),
+  }, "threebombs"),
   ww_demolition_charge: G(SiegeRoll, ["#7c8a4a", "#ffd166", "#3a3526"], GLYPH.ww_demolition_charge, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
   }),
@@ -2732,39 +4420,39 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "confetti"),
   we_firestorm: G(SiegeRoll, ["#ff7a29", "#ffd166", "#3a1c12"], GLYPH.we_firestorm, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm",
-  }),
+  }, "firestorm"),
   giants_maul: G(SiegeRoll, ["#8a94a8", "#ffd166", "#3a3a40"], GLYPH.giants_maul, {
     ordering: "line", staggerMs: 70, victims: "all", mover: "r", hasLead: true, sound: "siege",
-  }),
+  }, "maul"),
   scorched_middle: G(SiegeRoll, ["#ff7a29", "#ffb454", "#3a1c12"], GLYPH.scorched_middle, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "cataclysm",
-  }),
+  }, "scorch"),
 
   /* --- WarBanner (protection / musters / holds) -------------------------------------- */
   checkmate_immunity: G(WarBanner, ["#5a8fc0", "#dfe8ff", "#2c3e6b"], GLYPH.checkmate_immunity, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis",
-  }),
+  }, "parry"),
   iron_reign: G(WarBanner, ["#8a94a8", "#ffd76a", "#3a3a40"], GLYPH.iron_reign, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe",
   }),
   ironclad: G(WarBanner, ["#aab6c8", "#e3e9f2", "#3a4556"], GLYPH.ironclad, {
     ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield",
-  }),
+  }, "plate"),
   ww_iron_bulwark: G(WarBanner, ["#8a94a8", "#c94a3a", "#3a3a40"], GLYPH.ww_iron_bulwark, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield",
-  }),
+  }, "bulwark"),
   ww_praetorian_guard: G(WarBanner, ["#c9a84c", "#c94a3a", "#4a3a22"], GLYPH.ww_praetorian_guard, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield",
-  }),
+  }, "praetorian"),
   round_table: G(WarBanner, ["#c9b89a", "#ffd76a", "#5a4a36"], GLYPH.round_table, {
     ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation",
-  }),
+  }, "roundtable"),
   ww_bridgehead: G(WarBanner, ["#7c8a4a", "#c94a3a", "#3a3526"], GLYPH.ww_bridgehead, {
     ordering: "radial", staggerMs: 60, victims: ["n", "p"], hasLead: true, sound: "wall", source: "summon",
-  }),
+  }, "bridge"),
   sealed_avenues: G(WarBanner, ["#8a94a8", "#ffd76a", "#5c5c63"], GLYPH.sealed_avenues, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
-  }),
+  }, "gates"),
 
   /* --- Grove (nature / roots / blooms) --------------------------------------------------- */
   dryad_grove: G(Grove, ["#8a6a3a", "#a8e07f", "#3f8f3f"], GLYPH.dryad_grove, {
@@ -2772,36 +4460,36 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   we_overgrowth: G(Grove, ["#3f8f3f", "#ffd76a", "#1c4a1c"], GLYPH.we_overgrowth, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
-  }),
+  }, "bloom"),
   we_rooted: G(Grove, ["#4a3a22", "#a8e07f", "#2f3a26"], GLYPH.we_rooted, {
     ordering: "sweep", staggerMs: 55, victims: ["r", "q"], hasLead: true, sound: "petrifiedforest",
-  }),
+  }, "roots"),
   we_quagmire: G(Grove, ["#5c5348", "#8faf4a", "#3a3026"], GLYPH.we_quagmire, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
-  }),
+  }, "quagmire"),
   thorn_hedge: G(Grove, ["#1c4a1c", "#a8e07f", "#0f2a0f"], GLYPH.thorn_hedge, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
-  }),
+  }, "briar"),
 
   /* --- PhantomParade (spirits / veils / phasings) ------------------------------------------- */
   gossamer_veil: G(PhantomParade, ["#8f6bff", "#e3d0ff", "#3b1a5e"], GLYPH.gossamer_veil, {
     ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield",
-  }),
+  }, "gossamer"),
   starlight_ward: G(PhantomParade, ["#2c3e6b", "#cdd6ff", "#12122a"], GLYPH.starlight_ward, {
     ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
-  }),
+  }, "starward"),
   spirit_guide: G(PhantomParade, ["#4a6b8f", "#7fd8d8", "#12303a"], GLYPH.spirit_guide, {
     ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", source: "summon",
   }),
   phase_army: G(PhantomParade, ["#5b2b8f", "#e3d0ff", "#2a1030"], GLYPH.phase_army, {
     ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
-  }),
+  }, "phase"),
   ghost_legion: G(PhantomParade, ["#5a6b8f", "#eef8ff", "#2c3e6b"], GLYPH.ghost_legion, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
-  }),
+  }, "leapfrog"),
   valkyrie: G(PhantomParade, ["#5a6b8f", "#ffd76a", "#2c3e6b"], GLYPH.valkyrie, {
     ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true, sound: "coronation", source: "summon",
-  }),
+  }, "chooser"),
 
   /* --- ClockSpire (tempo / stolen hours / lost days) -------------------------------------------- */
   extra_move_repeat: G(ClockSpire, ["#6fe3ff", "#ffd76a", "#1c3a4a"], GLYPH.extra_move_repeat, {
@@ -2815,10 +4503,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "rewind"),
   lost_days: G(ClockSpire, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.lost_days, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun",
-  }),
+  }, "lostdays"),
   wa_stolen_hours: G(ClockSpire, ["#e8c97a", "#6fe3ff", "#4a3a22"], GLYPH.wa_stolen_hours, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockcage",
-  }),
+  }, "stealhours"),
 
   /* --- CardRite (drafts / fates / contracts / paperwork) -------------------------------------------- */
   sever: G(CardRite, ["#6b4a8f", "#c94a5a", "#2a1030"], GLYPH.sever, {
@@ -2826,13 +4514,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "sever"),
   draft_domination: G(CardRite, ["#3a3a45", "#c94a5a", "#1c1c22"], GLYPH.draft_domination, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "downgrade"),
   total_nullify: G(CardRite, ["#5c5c63", "#c94a5a", "#2a2a30"], GLYPH.total_nullify, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "nullseal"),
   favorable_stars: G(CardRite, ["#2c3e6b", "#ffd76a", "#12122a"], GLYPH.favorable_stars, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
-  }),
+  }, "constellation"),
   the_tower: G(CardRite, ["#2c3e6b", "#c94a3a", "#12122a"], GLYPH.the_tower, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cataclysm",
   }, "tower"),
@@ -2841,37 +4529,37 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "death"),
   chess_diff: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.chess_diff, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation",
-  }),
+  }, "sidegame"),
   wa_greed: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wa_greed, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
-  }),
+  }, "bothcards"),
   riddle_game: G(CardRite, ["#8a6a3a", "#e8dcc0", "#4a3a22"], GLYPH.riddle_game, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun",
-  }),
+  }, "riddle"),
   rehab: G(CardRite, ["#5fc9b0", "#eef1f7", "#1c4a3a"], GLYPH.rehab, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
-  }),
+  }, "unshackle"),
   parole: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.parole, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
-  }),
+  }, "celldoor"),
   long_leash: G(CardRite, ["#b58a5a", "#e8dcc0", "#5a4a36"], GLYPH.long_leash, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
   }),
   wardens_bribe: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wardens_bribe, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
-  }),
+  }, "bribe"),
   iron_will: G(CardRite, ["#8a94a8", "#c9cdd6", "#3a3a40"], GLYPH.iron_will, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
-  }),
+  }, "unbowed"),
   wc_wrong_way: G(CardRite, ["#c94a5a", "#e8dcc0", "#5a1512"], GLYPH.wc_wrong_way, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "wrongway"),
   wc_broken_elevator: G(CardRite, ["#8a94a8", "#ffe9b0", "#3a3a40"], GLYPH.wc_broken_elevator, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall",
-  }),
+  }, "elevator"),
   unseelie_bargain: G(CardRite, ["#2a1030", "#8f6bff", "#12081f"], GLYPH.unseelie_bargain, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "bargain"),
 
   /* --- ThiefHand (steals / seizures / nullifies) --------------------------------------------------- */
   buff_thief: G(ThiefHand, ["#8f6bff", "#ffd76a", "#2a2a38"], GLYPH.buff_thief, {
@@ -2879,25 +4567,25 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   buff_siphon: G(ThiefHand, ["#c94ad1", "#ffd76a", "#1c0f18"], GLYPH.buff_siphon, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
-  }),
+  }, "siphon"),
   wa_spelltheft: G(ThiefHand, ["#5b2b8f", "#e3d0ff", "#1c0f2a"], GLYPH.wa_spelltheft, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "trade"),
   draft_seize: G(ThiefHand, ["#6b4a8f", "#cdd6ff", "#2a1030"], GLYPH.draft_seize, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
-  }),
+  }, "seize"),
   collapse: G(ThiefHand, ["#8f6bff", "#c9cdd6", "#1c1c2a"], GLYPH.collapse, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "undertow"),
   void: G(ThiefHand, ["#5b2b8f", "#b98cff", "#0d0618"], GLYPH.void, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "voidmaw"),
   wa_sabotage: G(ThiefHand, ["#5a6b8f", "#cdd6ff", "#1c1c2a"], GLYPH.wa_sabotage, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "sabotage"),
   empty_handed: G(ThiefHand, ["#8a94a8", "#c94a5a", "#2a2a30"], GLYPH.empty_handed, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "emptypockets"),
 
   /* --- CrownForge (promotions / reforgings) --------------------------------------------------------- */
   double_queen: G(CrownForge, ["#ffd76a", "#fff2c9", "#8a6414"], GLYPH.double_queen, {
@@ -2905,42 +4593,42 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "doublequeen"),
   twin_queens: G(CrownForge, ["#ffd76a", "#ffe9b0", "#7a5b23"], GLYPH.twin_queens, {
     ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain",
-  }),
+  }, "twincrowns"),
   promotion_storm: G(CrownForge, ["#c9cdd6", "#ffd76a", "#5a6b8f"], GLYPH.promotion_storm, {
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain",
-  }),
+  }, "helmrain"),
   mass_promote_minor: G(CrownForge, ["#b58a5a", "#ffd76a", "#5a4a36"], GLYPH.mass_promote_minor, {
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation",
   }),
   resurrect_queen: G(CrownForge, ["#6b1a2a", "#ffd76a", "#3a0e1a"], GLYPH.resurrect_queen, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", source: "summon",
-  }),
+  }, "requeen"),
   legendary_forge: G(CrownForge, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.legendary_forge, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "colossus",
-  }),
+  }, "reforge"),
   royal_ascension: G(CrownForge, ["#b98cff", "#ffd76a", "#3b1a5e"], GLYPH.royal_ascension, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation",
   }, "ascension"),
   second_king: G(CrownForge, ["#ffd76a", "#ffe9b0", "#8a6a3a"], GLYPH.second_king, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
-  }),
+  }, "secondking"),
   wa_leaden_crown: G(CrownForge, ["#6e6e78", "#c9a84c", "#2a2a30"], GLYPH.wa_leaden_crown, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "shield",
-  }),
+  }, "leadcrown"),
   overclock_major: G(CrownForge, ["#6fe3ff", "#ffd76a", "#1c3a4a"], GLYPH.overclock_major, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz",
-  }),
+  }, "overclock"),
   ascendant_knight: G(CrownForge, ["#b98cff", "#e3d0ff", "#3b1a5e"], GLYPH.ascendant_knight, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", source: "shield",
-  }),
+  }, "wings"),
   nerf_breaker: G(CrownForge, ["#8a94a8", "#ffd166", "#3a3a40"], GLYPH.nerf_breaker, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "colossus",
-  }),
+  }, "chainbreak"),
 
   /* --- RiftGate (teleports / conjurings / mirrors) ---------------------------------------------------- */
   fey_step: G(RiftGate, ["#3f8f3f", "#a8e07f", "#1c4a1c"], GLYPH.fey_step, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
-  }),
+  }, "hedgerow"),
   rift_walker: G(RiftGate, ["#5b2b8f", "#6fe3ff", "#12081f"], GLYPH.rift_walker, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage",
   }),
@@ -2949,13 +4637,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "mirror"),
   wa_conjure_rook: G(RiftGate, ["#8f6bff", "#e3d0ff", "#2a1030"], GLYPH.wa_conjure_rook, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockcage", source: "summon",
-  }),
+  }, "conjure"),
   wa_twin_familiars: G(RiftGate, ["#7fd8d8", "#e3d0ff", "#12303a"], GLYPH.wa_twin_familiars, {
     ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades",
-  }),
+  }, "familiars"),
   ley_line: G(RiftGate, ["#5fc9b0", "#a8e07f", "#1c4a3a"], GLYPH.ley_line, {
     ordering: "file", staggerMs: 50, victims: "all", hasLead: true, sound: "wall",
-  }),
+  }, "leyline"),
 
   /* --- BeastRush (hunts / mounts / charges) ------------------------------------------------------------- */
   wild_hunt: G(BeastRush, ["#3b1a5e", "#b98cff", "#12081f"], GLYPH.wild_hunt, {

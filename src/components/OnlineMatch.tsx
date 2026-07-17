@@ -68,6 +68,7 @@ import {
   revealHeldBuffs,
 } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { isGodPanelUser } from "@/lib/godPanel";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
@@ -381,26 +382,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Fired for BOTH sides' plays (the server echoes every activation), so both
   // players see the identical animation. Set alongside the board update so the
   // two batch into one render and the signature claims exactly that diff.
-  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
-  const sigKeyRef = useRef(0);
   // HOLD-AND-REPLAY (owner: "animations must happen when the opponent is
   // watching"): while MY full-screen draft overlay covers the board, incoming
   // play animations would fire to nobody - the single biggest reason plays
-  // went unseen. They queue here instead and replay one by one (2.6s apart,
-  // newest 6 kept) the moment the board is visible again. A replayed play has
-  // lost its removal diff, so it renders through the board-wide lead fallback
-  // (full art + name label, no per-square hits) - the right trade.
-  const heldPlaysRef = useRef<string[]>([]);
+  // went unseen. They queue in the shared signature queue instead and replay
+  // one by one (2.6s apart, newest 6 kept) the moment the board is visible
+  // again. A replayed play has lost its removal diff, so it renders through
+  // the board-wide lead fallback (full art + name label, no per-square hits) -
+  // the right trade. The queue also serializes SIMULTANEOUS plays (several
+  // passives triggered by one move) so each is seen instead of only the last.
   const draftCoveredRef = useRef(false);
+  const { signatureCard, fire: fireSigQueued, notifyGateOpen } = useSignatureQueue(draftCoveredRef);
   const fireSignature = (id: string) => {
     // Every known card fires: bespoke signatures get their choreography and
     // every other card gets the Board's category cast spectacle.
     if (!BUFF_BY_ID[id]) return;
-    if (draftCoveredRef.current) {
-      heldPlaysRef.current = [...heldPlaysRef.current, id].slice(-6);
-      return;
-    }
-    setSignatureCard({ id, key: ++sigKeyRef.current });
+    fireSigQueued(id);
   };
   // A held/passive buff whose onMovePlayed hook observably changed the board
   // (a summon, relocate, transform, revive, pawn-push, or a fresh board
@@ -537,20 +534,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     draftCoveredRef.current = draftCovered;
   });
   useEffect(() => {
-    if (draftCovered || heldPlaysRef.current.length === 0) return;
-    let timer: number | null = null;
-    const step = () => {
-      const id = heldPlaysRef.current.shift();
-      if (!id) return;
-      setSignatureCard({ id, key: ++sigKeyRef.current });
-      if (heldPlaysRef.current.length > 0) timer = window.setTimeout(step, 2600);
-    };
-    step();
-    return () => {
-      if (timer != null) window.clearTimeout(timer);
-    };
-     
-  }, [draftCovered]);
+    if (!draftCovered) notifyGateOpen();
+  }, [draftCovered, notifyGateOpen]);
   useEffect(() => {
     const left = draftDeadline == null ? -1 : draftDeadline - Date.now();
     if (left <= 0) {
@@ -1986,6 +1971,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   >
                     <NerfCard
                       nerf={n}
+                      preview
                       ownerLabel={nerfSelected === i ? "Selected" : "Pick this nerf"}
                     />
                   </button>

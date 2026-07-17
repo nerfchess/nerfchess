@@ -2674,13 +2674,14 @@ html[data-anim="off"] .extra-turns-banner {
     linear-gradient(180deg, rgba(9, 10, 14, 0.55), rgba(9, 10, 14, 0.32) 45%, rgba(9, 10, 14, 0.55));
   animation: nerf-reveal-wash 2s ease-out both;
 }
+/* The caption is a supporting label: it slips in AFTER the reveal
+   composition has landed (≈30% in) and stays quiet — no big stamp scale. */
 @keyframes nerf-reveal-stamp {
-  0% { opacity: 0; transform: scale(1.5) rotate(-1.2deg); }
-  13% { opacity: 1; transform: scale(0.97) rotate(-1.2deg); }
-  19% { transform: scale(1.03) rotate(-1.2deg); }
-  25% { transform: scale(1) rotate(-1.2deg); }
-  80% { opacity: 1; transform: scale(1) rotate(-1.2deg); }
-  100% { opacity: 0; transform: scale(0.98) rotate(-1.2deg); }
+  0% { opacity: 0; transform: translateY(6px); }
+  28% { opacity: 0; transform: translateY(6px); }
+  38% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(2px); }
 }
 .nerf-reveal-stamp {
   border-radius: 1px;

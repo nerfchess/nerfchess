@@ -17,6 +17,7 @@
     "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs && node scripts/check-sig-plugins.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
     "test:passive-registry": "npx -y tsx scripts/test-passive-registry.ts",
+    "test:animations": "npx -y tsx scripts/audit-animations.ts",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",

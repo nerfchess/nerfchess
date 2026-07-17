@@ -121,6 +121,11 @@ export interface Settings {
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
   highContrast: boolean;
   reducedMotion: boolean;
+  // Honor the OS "prefers-reduced-motion" flag automatically (on by default):
+  // when the system asks for calm, animations stand down exactly as if
+  // reducedMotion were on. Turning this off restores the old app-authoritative
+  // behavior for players who reduce motion system-wide but still want plays.
+  followSystemMotion: boolean;
   fpsCounter: boolean;
   customBgUrl: string; // full-page background image URL; empty string = none
   customBgDim: number; // 0..0.6 dark overlay over the custom background
@@ -172,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   uiSounds: true,
   highContrast: false,
   reducedMotion: false,
+  followSystemMotion: true,
   fpsCounter: false,
   customBgUrl: "",
   customBgDim: 0.3,
@@ -328,6 +334,7 @@ export function loadSettings(): Settings {
       uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
       highContrast: bool(parsed.highContrast, DEFAULT.highContrast),
       reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
+      followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
       fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
       customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
       customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
@@ -455,7 +462,12 @@ export function applyUiPrefs(s: Settings) {
   html.style.setProperty("--accent-rgb", accent.rgb);
   html.style.setProperty("--accent-hi-rgb", accent.rgbHi);
   html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
-  html.dataset.anim = s.reducedMotion ? "off" : s.animationSpeed;
+  // The OS prefers-reduced-motion flag is honored automatically (new default);
+  // the in-app toggles still work, and followSystemMotion:false restores the
+  // old app-authoritative behavior for users who want plays regardless.
+  const osReducedMotion =
+    s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
   html.dataset.contrast = s.highContrast ? "high" : "normal";
   // Performance mode: gates the heaviest decorative paint in globals.css.
   if (s.perfMode) html.dataset.perf = "low";
@@ -488,10 +500,11 @@ export function fxDurationScale(): number {
   return Number.isFinite(v) && v > 0 ? Math.max(0.5, Math.min(2, v)) : 1;
 }
 
-/** True when the user turned animations off in Settings (reduced motion or
- *  animation speed "off"). The app setting is authoritative — the OS
- *  prefers-reduced-motion flag is NOT consulted, so battery-saver devices
- *  still get full plays unless the user opts out. SSR-safe (false). */
+/** True when animations are off: the user turned them off in Settings
+ *  (reduced motion or animation speed "off"), or the OS asked for reduced
+ *  motion and "Follow system motion" (default on) is honoring it — applyUiPrefs
+ *  folds both into data-anim, so this single read stays authoritative.
+ *  SSR-safe (false). */
 export function motionOff(): boolean {
   if (typeof document === "undefined") return true;
   return document.documentElement.dataset.anim === "off";

@@ -330,11 +330,13 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
 }
 
 /** One-shot "the rule descends" splash for a newly-known nerf: a brief ink
- * wash over the crop, the rule's name stamped big (the PlayAnnouncement
- * banner family), and a pulse of the hostile NerfAura styling on every square
- * the rule affects, all over ~2.5s. Decorative but informative; the caller
- * gates it behind the fx-hidden switch and the CSS drops every animation
- * when animations are off in Settings (the elements then hold at opacity 0). */
+ * wash over the crop and a pulse of the hostile NerfAura styling on every
+ * square the rule affects, all over ~2.5s. The mechanic-matched entrance is
+ * the PassiveSpawn reveal composition (PassiveLayer) — this splash only
+ * supports it, so the name is a SMALL caption near the board's foot rather
+ * than the old full-width stamp (text must never be the main effect). The
+ * caller gates it behind the fx-hidden switch and the CSS drops every
+ * animation when animations are off in Settings (elements hold at opacity 0). */
 function NerfRevealSplash({
   id,
   name,
@@ -375,21 +377,18 @@ function NerfRevealSplash({
           </div>
         );
       })}
-      {/* the rule stamps in big (PlayAnnouncement styling family) */}
-      <div className="absolute inset-x-0 top-[9%] flex justify-center">
-        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border-2 border-white/25 bg-ink-950/85 px-6 py-3 text-center shadow-plate backdrop-blur-[2px]">
-          <div className="flex items-center gap-2">
-            <span className={`font-display text-2xl font-bold tracking-wide sm:text-3xl tier-${tier}`}>
-              {name}
-            </span>
-            <span
-              className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[11px] font-bold tier-bg-${tier} tier-${tier}`}
-            >
-              {TIER_ROMAN[tier as 1]}
-            </span>
-          </div>
-          <span className="smallcaps text-[11px] font-semibold tracking-wider text-parchment-300">
-            {mine ? "your rule takes the board" : "opponent's rule revealed"}
+      {/* small supporting caption: the reveal composition is the show, the
+          name is a footnote (bottom edge, one compact line) */}
+      <div className="absolute inset-x-0 bottom-[4%] flex justify-center">
+        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/80 px-3 py-1.5 shadow-plate backdrop-blur-[2px]">
+          <span className={`font-display text-sm font-bold tracking-wide tier-${tier}`}>{name}</span>
+          <span
+            className={`shrink-0 rounded-[1px] border px-1 py-px font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
+          >
+            {TIER_ROMAN[tier as 1]}
+          </span>
+          <span className="smallcaps text-[10px] font-semibold tracking-wider text-parchment-300">
+            {mine ? "your rule" : "their rule"}
           </span>
         </div>
       </div>

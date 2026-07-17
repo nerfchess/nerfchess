@@ -10,7 +10,7 @@ import { TIER_ROMAN } from "@/lib/tiers";
 import { playCardUse } from "@/lib/sounds";
 import { motion, useReducedMotion } from "framer-motion";
 import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
 // Shares the dock pocket flash keyframes (and nothing else) with the overlay.
@@ -73,6 +73,7 @@ export function useBuffTargeting({
   onUse?: (buffIndex: number, picks: BuffPick[]) => void;
 }) {
   const [targeting, setTargeting] = useState<BuffTargeting | null>(null);
+  const finishRef = useRef<(() => void) | null>(null);
 
   // Deactivating cancels any in-progress targeting; adjust during render rather
   // than in an effect so the panel never shows a stale targeting frame.
@@ -82,6 +83,16 @@ export function useBuffTargeting({
     if (!targeting) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setTargeting(null);
+      // Enter mirrors the Done button on a finishable step (keyboard parity
+      // with the banner controls; ignored while typing in an input).
+      if (
+        e.key === "Enter" &&
+        targeting.target.kind === "square" &&
+        targeting.target.finishable &&
+        !(e.target instanceof HTMLElement && /^(input|textarea|select)$/i.test(e.target.tagName))
+      ) {
+        finishRef.current?.();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -140,6 +151,13 @@ export function useBuffTargeting({
   };
 
   const cancel = () => setTargeting(null);
+
+  // Keep the keydown handler's Enter shortcut pointed at the CURRENT finish
+  // closure without re-subscribing the listener on every pick. Written from
+  // an effect (never during render) per the react-hooks refs rule.
+  useEffect(() => {
+    finishRef.current = finish;
+  });
 
   return { targeting, start, pick, cancel, finish };
 }
