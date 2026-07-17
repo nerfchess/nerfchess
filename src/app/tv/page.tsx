@@ -488,7 +488,7 @@ function TvView() {
                       ? "You pinned this game."
                       : live
                         ? `Featuring ${activeSort.reason}.`
-                        : "Rerun from the archive — a live game takes over when one starts."}
+                        : "Rerun from the archive. A live game takes over when one starts."}
                   </span>
                   {shownId && (
                     <Link

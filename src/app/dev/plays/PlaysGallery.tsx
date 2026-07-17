@@ -51,7 +51,7 @@ function Cell({ row }: { row: Row }) {
       <button
         type="button"
         onClick={() => setRunKey((k) => k + 1)}
-        title={`${row.id} — click to replay`}
+        title={`${row.id}: click to replay`}
         className="relative h-36 w-36 overflow-hidden border border-white/15 bg-[#3f3a33]"
         style={{
           backgroundImage:
@@ -123,7 +123,7 @@ export function PlaysGallery() {
         </div>
       )}
       {shown.length > 120 && (
-        <p className="mt-3 text-xs text-parchment-400">Showing the first 120 — narrow the filter for more.</p>
+        <p className="mt-3 text-xs text-parchment-400">Showing the first 120. Narrow the filter for more.</p>
       )}
     </main>
   );

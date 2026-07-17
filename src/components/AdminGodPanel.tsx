@@ -297,7 +297,7 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
         )}
         {recordingMode && recorder.state !== "recording" && (
           <p className="text-[9px] leading-snug text-parchment-500">
-            board is framed 9:16 — hit record, then crop to the frame.
+            board is framed 9:16; hit record, then crop to the frame.
           </p>
         )}
       </div>

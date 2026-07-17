@@ -476,7 +476,7 @@ function FeedbackTable({
               <tr key={row.id}>
                 <td className="px-4 py-2 text-parchment-100">{row.name}</td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-300">
-                  {row.tier ?? "—"}
+                  {row.tier ?? "-"}
                 </td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
                 <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
@@ -592,7 +592,7 @@ interface GamesStats {
 }
 
 function fmtDuration(ms: number | null): string {
-  if (ms === null || !Number.isFinite(ms) || ms < 0) return "—";
+  if (ms === null || !Number.isFinite(ms) || ms < 0) return "-";
   const totalSec = Math.round(ms / 1000);
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -607,7 +607,7 @@ function tcLabel(baseSec: number, incSec: number): string {
 }
 
 function resultLabel(winner: ModGame["winner"]): string {
-  return winner === "w" ? "1–0" : winner === "b" ? "0–1" : winner === "draw" ? "½–½" : "—";
+  return winner === "w" ? "1–0" : winner === "b" ? "0–1" : winner === "draw" ? "½–½" : "-";
 }
 
 function ratingDelta(seat: ModGameSeat): string | null {
@@ -714,12 +714,12 @@ function GamesTab() {
           />
           <GameStatCard
             label="Avg. game (7d)"
-            value={stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "—"}
+            value={stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-"}
             sub={fmtDuration(stats.averageGame.durationMs)}
           />
           <GameStatCard
             label="Most played mode (7d)"
-            value={stats.topMode ? stats.topMode.label : "—"}
+            value={stats.topMode ? stats.topMode.label : "-"}
             sub={stats.topMode ? `${stats.topMode.games} games` : undefined}
           />
           <GameStatCard
