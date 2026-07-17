@@ -38,6 +38,9 @@ export interface RowConfig {
   id: string;
   label: string;
   hint?: string;
+  /** Optional sub-header: consecutive rows sharing a group render under one
+   *  small eyebrow label, so long sections stay scannable. */
+  group?: string;
   control: Control;
 }
 
@@ -60,54 +63,63 @@ export const SECTIONS: SectionConfig[] = [
         id: "premovesEnabled",
         label: "Premoves",
         hint: "Queue your next move during the opponent's turn",
+        group: "Moves",
         control: { kind: "toggle", setting: "premovesEnabled" },
       },
       {
         id: "confirmMove",
         label: "Move confirmation",
         hint: "Require a confirm tap before each move is sent, for slower time controls",
+        group: "Moves",
         control: { kind: "toggle", setting: "confirmMove" },
       },
       {
         id: "showLegalMoves",
         label: "Show legal moves",
         hint: "Mark the squares a selected piece can move to",
+        group: "Moves",
         control: { kind: "toggle", setting: "showLegalMoves" },
       },
       {
         id: "moveRiskWarnings",
         label: "Move risk warnings",
         hint: "Tint move dots yellow (self-loss) or red (into check)",
+        group: "Moves",
         control: { kind: "toggle", setting: "moveRiskWarnings" },
       },
       {
         id: "autoQueen",
         label: "Auto-queen promotions",
         hint: "Skip the piece picker and always promote to queen",
+        group: "Moves",
         control: { kind: "toggle", setting: "autoQueen" },
       },
       {
         id: "confirmResign",
         label: "Confirm resign",
         hint: "Ask before resigning a game",
+        group: "Confirmations",
         control: { kind: "toggle", setting: "confirmResign" },
       },
       {
         id: "confirmDrawOffer",
         label: "Confirm draw offers",
         hint: "Ask before sending a draw offer",
+        group: "Confirmations",
         control: { kind: "toggle", setting: "confirmDrawOffer" },
       },
       {
         id: "hideOpponentReveal",
         label: "Keep opponent's rule hidden",
         hint: "Never reveal their rule to you: no mid-game peek, no reveal at the end",
+        group: "Opponent",
         control: { kind: "toggle", setting: "hideOpponentReveal" },
       },
       {
         id: "muteChat",
         label: "Mute chat",
         hint: "Hide in-game chat messages from opponents",
+        group: "Opponent",
         control: { kind: "toggle", setting: "muteChat" },
       },
     ],
@@ -120,49 +132,58 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "boardTheme",
         label: "Board theme",
+        group: "Themes",
         control: { kind: "boardTheme" },
       },
       {
         id: "pieceTheme",
         label: "Piece set",
+        group: "Themes",
         control: { kind: "pieceTheme" },
       },
       {
         id: "boardSize",
         label: "Board size",
+        group: "Layout",
         control: { kind: "slider", setting: "boardSize", min: 0.8, max: 1.1, step: 0.05, format: pct },
       },
       {
         id: "largerPieces",
         label: "Larger pieces",
         hint: "Draw pieces bigger inside their squares",
+        group: "Layout",
         control: { kind: "toggle", setting: "largerPieces" },
       },
       {
         id: "flipBoard",
         label: "Flip board",
         hint: "View the board from the opponent's side",
+        group: "Layout",
         control: { kind: "toggle", setting: "flipBoard" },
       },
       {
         id: "showCoordinates",
         label: "Show coordinates",
+        group: "Layout",
         control: { kind: "toggle", setting: "showCoordinates" },
       },
       {
         id: "highlightLastMove",
         label: "Highlight last move",
+        group: "Highlights",
         control: { kind: "toggle", setting: "highlightLastMove" },
       },
       {
         id: "checkHighlight",
         label: "Check highlight",
         hint: "Tint the checked king's square red",
+        group: "Highlights",
         control: { kind: "toggle", setting: "checkHighlight" },
       },
       {
         id: "animationSpeed",
         label: "Move animations",
+        group: "Motion",
         control: {
           kind: "animationSpeed",
           options: [
@@ -176,6 +197,7 @@ export const SECTIONS: SectionConfig[] = [
         id: "fxDuration",
         label: "Card effect duration",
         hint: "How long card-use animations play, from snappy to lingering",
+        group: "Motion",
         control: { kind: "slider", setting: "fxDuration", min: 0.5, max: 2, step: 0.1, format: pct },
       },
     ],
@@ -189,17 +211,20 @@ export const SECTIONS: SectionConfig[] = [
         id: "soundEnabled",
         label: "All sounds",
         hint: "Master switch for every game sound",
+        group: "Master",
         control: { kind: "toggle", setting: "soundEnabled" },
       },
       {
         id: "volume",
         label: "Volume",
+        group: "Master",
         control: { kind: "slider", setting: "volume", min: 0, max: 1, step: 0.05, format: pct },
       },
       {
         id: "soundTheme",
         label: "Sound set",
         hint: "Lichess standard sounds, or the classic synth clicks",
+        group: "Master",
         control: {
           kind: "soundTheme",
           options: [
@@ -211,33 +236,39 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "moveSound",
         label: "Move sound",
+        group: "Game sounds",
         control: { kind: "toggle", setting: "moveSound" },
       },
       {
         id: "captureSound",
         label: "Capture sound",
+        group: "Game sounds",
         control: { kind: "toggle", setting: "captureSound" },
       },
       {
         id: "checkSound",
         label: "Check sound",
+        group: "Game sounds",
         control: { kind: "toggle", setting: "checkSound" },
       },
       {
         id: "gameEndSound",
         label: "Game end sound",
+        group: "Game sounds",
         control: { kind: "toggle", setting: "gameEndSound" },
       },
       {
         id: "uiSounds",
         label: "UI sounds",
         hint: "Interface blips like piece selection",
+        group: "Interface",
         control: { kind: "toggle", setting: "uiSounds" },
       },
       {
         id: "lowTimeWarning",
         label: "Low-time warning",
         hint: "Ticking alert when your clock runs low",
+        group: "Interface",
         control: { kind: "toggle", setting: "lowTimeWarning" },
       },
     ],
@@ -251,47 +282,55 @@ export const SECTIONS: SectionConfig[] = [
         id: "siteTheme",
         label: "Theme",
         hint: "Full site palettes: pick a mood",
+        group: "Theme",
         control: { kind: "siteTheme" },
       },
       {
         id: "accentColor",
         label: "Accent color",
+        group: "Theme",
         control: { kind: "accentColor" },
       },
       {
         id: "customBg",
         label: "Custom background",
         hint: "Upload an image or paste an http(s) URL, with an adjustable dim",
+        group: "Background",
         control: { kind: "customBg" },
       },
       {
         id: "uiScale",
         label: "UI scale",
+        group: "Interface",
         control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
       },
       {
         id: "compactMode",
         label: "Compact mode",
         hint: "Tighter interface density",
+        group: "Interface",
         control: { kind: "toggle", setting: "compactMode" },
+      },
+      {
+        id: "perfMode",
+        label: "Performance mode",
+        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
+        group: "Interface",
+        control: { kind: "toggle", setting: "perfMode" },
       },
       {
         id: "reducedMotion",
         label: "Reduced motion",
         hint: "Minimize animations and transitions",
+        group: "Motion",
         control: { kind: "toggle", setting: "reducedMotion" },
       },
       {
         id: "followSystemMotion",
         label: "Follow system motion",
         hint: "Honor the OS reduced-motion preference automatically",
+        group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
-      },
-      {
-        id: "perfMode",
-        label: "Performance mode",
-        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
-        control: { kind: "toggle", setting: "perfMode" },
       },
     ],
   },

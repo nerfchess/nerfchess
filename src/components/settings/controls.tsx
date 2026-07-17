@@ -1,11 +1,14 @@
 "use client";
 
 // Reusable, presentational controls for the settings menu. None of these hold
-// application state — they take a value and an onChange.
+// application state — they take a value and an onChange. The carved-recess
+// styling (tracks, thumbs, hit areas) lives in SettingsPanel.css.
 
 import { ChevronDown } from "lucide-react";
 
-/** Modern pill toggle switch with a sliding, animated knob. */
+/** Forged toggle: a carved recess in the stone with a gem thumb that lights
+ *  with the accent energy when on. The visual stays 44x24; the CSS ::before
+ *  pads the touch target to 44px tall. */
 export function Toggle({
   checked,
   onChange,
@@ -25,25 +28,15 @@ export function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange?.(!checked)}
-      className={
-        "relative inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors duration-200 ease-out " +
-        (disabled ? "cursor-not-allowed opacity-40 " : "cursor-pointer ") +
-        (checked
-          ? "bg-gold/70 border-gold/60"
-          : "bg-white/[0.06] border-white/15 hover:border-white/25")
-      }
+      className="settings-toggle"
     >
-      <span
-        className={
-          "inline-block h-3 w-3 rounded-full bg-parchment shadow-sm transition-transform duration-200 ease-out " +
-          (checked ? "translate-x-[15px]" : "translate-x-[2px]")
-        }
-      />
+      <span aria-hidden className="settings-toggle__thumb" />
     </button>
   );
 }
 
-/** Compact range slider with a monospace readout on the right. */
+/** Range slider in a carved stone channel with a monospace readout on the
+ *  right. Fills the space its row offers (the row caps the width). */
 export function Slider({
   value,
   min,
@@ -64,7 +57,12 @@ export function Slider({
   label?: string;
 }) {
   return (
-    <div className={"flex items-center gap-2 w-[9.5rem] " + (disabled ? "opacity-40" : "")}>
+    <div
+      className={
+        "flex w-full min-w-[8.5rem] max-w-[16rem] items-center gap-2.5 " +
+        (disabled ? "opacity-40" : "")
+      }
+    >
       <input
         type="range"
         min={min}
@@ -74,18 +72,16 @@ export function Slider({
         disabled={disabled}
         aria-label={label}
         onChange={(e) => onChange?.(parseFloat(e.target.value))}
-        className={
-          "w-full accent-gold-leaf h-1 " + (disabled ? "cursor-not-allowed" : "cursor-pointer")
-        }
+        className="settings-range w-full accent-gold-leaf"
       />
-      <span className="font-mono text-[10px] text-parchment-400 w-8 text-right tabular-nums">
+      <span className="w-10 shrink-0 text-right font-mono text-[12px] tabular-nums text-parchment-400">
         {format ? format(value) : value}
       </span>
     </div>
   );
 }
 
-/** Compact native select styled to match the panel. */
+/** Native select carved into the stone (the shared .input-rune recess). */
 export function Select<T extends string>({
   value,
   options,
@@ -103,7 +99,7 @@ export function Select<T extends string>({
         value={value}
         aria-label={label}
         onChange={(e) => onChange(e.target.value as T)}
-        className="cursor-pointer appearance-none rounded border border-white/10 bg-white/[0.03] py-1 pl-2 pr-6 text-[11px] text-parchment-300 transition-colors hover:border-white/25 focus:border-gold/60 focus:outline-none [&>option]:bg-ink-800"
+        className="input-rune min-h-[36px] cursor-pointer appearance-none py-1.5 pl-3 pr-8 text-[13px] font-medium text-parchment-200 [&>option]:bg-ink-800"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -111,12 +107,13 @@ export function Select<T extends string>({
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-parchment-400" />
+      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-parchment-400" />
     </div>
   );
 }
 
-/** Row of accent color swatches; the selected swatch gets a bright ring. */
+/** Row of accent color swatches; the selected gem gets the accent ring and a
+ *  faint glow. Each dot carries an invisible 44px hit pad (CSS ::after). */
 export function Swatches({
   colors,
   selected,
@@ -127,7 +124,7 @@ export function Swatches({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {colors.map((c) => (
         <button
           key={c.id}
@@ -137,25 +134,25 @@ export function Swatches({
           aria-pressed={selected === c.id}
           onClick={() => onSelect(c.id)}
           className={
-            "h-4.5 w-4.5 rounded-full border transition " +
+            "settings-swatch h-6 w-6 shrink-0 rounded-full border transition " +
             (selected === c.id
-              ? "border-parchment ring-1 ring-parchment/60"
-              : "border-white/15 hover:border-white/40")
+              ? "border-gold ring-1 ring-gold/70 shadow-[0_0_10px_-2px_rgb(var(--accent-hi-rgb)/0.6)]"
+              : "border-[color:var(--edge-strong)] hover:border-parchment-400/70")
           }
-          style={{ background: c.color, width: 18, height: 18 }}
+          style={{ background: c.color }}
         />
       ))}
     </div>
   );
 }
 
-/** Small secondary action button (e.g. Reset). */
+/** Small secondary action button (e.g. Reset, Apply, Remove). */
 export function GhostButton({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded border border-white/12 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-parchment-300 transition-colors hover:border-white/25 hover:text-parchment"
+      className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 text-[13px] font-medium"
     >
       {label}
     </button>
