@@ -1442,6 +1442,9 @@ export function DraftOverlay({
                       buff={def}
                       tier={card.tier}
                       onClick={chosen == null && !banking ? () => choose(i, Date.now()) : undefined}
+                      // Draft picker only: the looping animation-preview
+                      // medallion, so a card's effect style reads at a glance.
+                      preview
                     />
                     {/* Foil finish: tier 7+ faces carry a slow holographic
                         sheen that drifts across the card, TCG-rare style. */}

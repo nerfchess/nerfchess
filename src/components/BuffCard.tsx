@@ -5,6 +5,7 @@ import { Buff, turnCost } from "@/engine/buff";
 import { Tier } from "@/engine/nerf";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { DraftPreview } from "@/components/DraftPreview";
 import { GlossaryText } from "@/components/GlossaryText";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
 import {
@@ -64,9 +65,14 @@ interface Props {
   /** Draft picker only: stagger this card's entrance by the given delay (ms).
    * Omit to skip the entrance animation (dock / modal contexts). */
   enterDelayMs?: number;
+  /** Draft surfaces only: wear the small looping animation-preview medallion
+   * (DraftPreview) so the card's effect style reads before its name. Off by
+   * default; codex / dock / modal surfaces stay unchanged. Ignored on compact
+   * rows, where the medallion would swamp the layout. */
+  preview?: boolean;
 }
 
-export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs }: Props) {
+export function BuffCard({ buff, tier, status, spent, nullified, onClick, compact, glow, enterDelayMs, preview }: Props) {
   const t = tier ?? buff.tier;
   const dead = spent || nullified;
   // Per-card icon: every buff in the library gets a GLOBALLY UNIQUE lucide
@@ -113,6 +119,20 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           size: 84,
           strokeWidth: 1.2,
         })}
+      {/* Animation preview (draft picker only): a small looping medallion in
+          the card's own effect-family motif, anchored over the watermark
+          corner so nothing in the existing layout moves. Static tinted
+          medallion under reduced motion / animations-off (see DraftPreview). */}
+      {preview && !compact && (
+        <DraftPreview
+          kind="buff"
+          id={buff.id}
+          category={buff.category}
+          tier={t}
+          icon={catIcon}
+          className="bottom-2 right-2"
+        />
+      )}
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className={`font-display leading-tight tier-${t} ${compact ? "text-sm" : "text-lg"}`}>

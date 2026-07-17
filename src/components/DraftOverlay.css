@@ -1844,3 +1844,332 @@ html[data-anim="off"] .pack--tearing .pack-rune--inner {
 html[data-anim="off"] .dgn-torch__spark { opacity: 0; }
 html[data-anim="off"] .pack-rune,
 html[data-anim="off"] .pack-rune--inner { opacity: 0.35; }
+
+/* ============================================================================
+   Draft animation preview (.dpv) — owned by DraftPreview.tsx.
+
+   A ~2.75rem medallion on the draft card face that loops a tiny "family
+   motif" vignette so an upgrade's effect style reads before its name does.
+   14 motifs (.dpv--<motif>); families map onto them in DraftPreview.tsx.
+
+   Rules (same law as the rest of this file):
+   - transform/opacity-only keyframes; no blur, no filter, no animated
+     box-shadow; <= 6 animated nodes per medallion.
+   - data-paused (stamped by the shared IntersectionObserver +
+     visibilitychange plumbing in DraftPreview.tsx) freezes the loop.
+   - html[data-anim="off"] kills every loop outright (the component also
+     stops rendering the animated nodes; this gate covers live flips).
+   ============================================================================ */
+
+.dpv {
+  position: absolute;
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  pointer-events: none;
+}
+
+/* Backing disc: near-opaque ink so the medallion reads cleanly over any text
+   it overlaps, rimmed and inner-washed in the card's own effect tint. The
+   shadow/border are static (never animated). */
+.dpv__disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 38% 30%, rgb(30 26 19 / 0.94), rgb(12 10 8 / 0.97));
+  border: 1px solid color-mix(in srgb, var(--dpv-main) 55%, transparent);
+  box-shadow: inset 0 0 10px -4px var(--dpv-main);
+}
+
+/* The card's face glyph, stamped in the family glow tint at the center. */
+.dpv .dpv__icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: var(--dpv-glow);
+  opacity: 0.95;
+}
+
+/* Decorative motif nodes. */
+.dpv i {
+  position: absolute;
+  display: block;
+}
+
+/* Pause plumbing: offscreen or hidden-tab medallions freeze in place. */
+.dpv[data-paused="true"] * {
+  animation-play-state: paused !important;
+}
+
+/* Animations-off setting (in-app / OS reduced motion folded into data-anim):
+   the component renders the static medallion, and this gate also stops any
+   loop already running when the setting flips live. */
+html[data-anim="off"] .dpv * {
+  animation: none !important;
+}
+
+/* --- Shared keyframes -------------------------------------------------------- */
+@keyframes dpv-rot {
+  to { transform: rotate(360deg); }
+}
+@keyframes dpv-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes dpv-breathe {
+  0%, 100% { opacity: 0.72; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* --- shimmer: crystalline glints on a slow orbit (frost / mirror / prism) --- */
+.dpv--shimmer .dpv__spin {
+  position: absolute;
+  inset: 6%;
+  animation: dpv-rot 9s linear infinite;
+}
+.dpv--shimmer .dpv__spin i {
+  width: 10%;
+  height: 10%;
+  border-radius: 9999px;
+  background: var(--dpv-glow);
+  animation: dpv-twinkle 1.8s ease-in-out infinite;
+}
+.dpv--shimmer .dpv__spin i:nth-child(1) { left: 45%; top: 2%; }
+.dpv--shimmer .dpv__spin i:nth-child(2) { left: 8%; top: 66%; animation-delay: 0.6s; background: var(--dpv-accent); }
+.dpv--shimmer .dpv__spin i:nth-child(3) { left: 80%; top: 60%; animation-delay: 1.2s; }
+
+/* --- embers: motes rising off the floor (fire / lantern / potion / summon) -- */
+.dpv--embers i {
+  width: 9%;
+  height: 9%;
+  border-radius: 9999px;
+  background: var(--dpv-glow);
+  bottom: 18%;
+  opacity: 0;
+  animation: dpv-ember 2.2s ease-out infinite;
+}
+.dpv--embers i:nth-child(1) { left: 30%; }
+.dpv--embers i:nth-child(2) { left: 48%; animation-delay: 0.7s; background: var(--dpv-accent); }
+.dpv--embers i:nth-child(3) { left: 64%; animation-delay: 1.4s; }
+@keyframes dpv-ember {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  18% { opacity: 0.95; }
+  70% { opacity: 0.5; }
+  100% { opacity: 0; transform: translateY(-14px) scale(1); }
+}
+
+/* --- gear: a dashed ring ticking hard quarter turns (clockwork / tempo) ----- */
+.dpv--gear .dpv__ring {
+  position: absolute;
+  inset: 9%;
+  border-radius: 9999px;
+  border: 1.5px dashed var(--dpv-main);
+  animation: dpv-tick 3.2s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+}
+.dpv--gear .dpv__ring--inner {
+  inset: 24%;
+  border-color: var(--dpv-accent);
+  opacity: 0.55;
+  animation: dpv-rot 8s linear infinite reverse;
+}
+@keyframes dpv-tick {
+  0%, 18% { transform: rotate(0deg); }
+  25%, 43% { transform: rotate(90deg); }
+  50%, 68% { transform: rotate(180deg); }
+  75%, 93% { transform: rotate(270deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- curse: an inscribing sigil ring, glyph breathing (hex / veil / runes) -- */
+.dpv--curse .dpv__ring {
+  position: absolute;
+  inset: 9%;
+  border-radius: 9999px;
+  border: 1.5px dashed var(--dpv-main);
+  animation: dpv-rot 7s linear infinite;
+}
+.dpv--curse .dpv__icon {
+  animation: dpv-breathe 2.6s ease-in-out infinite;
+}
+
+/* --- dome: shield ribs breathing in counterphase (shield / thorn ring) ------ */
+.dpv--dome i {
+  border-radius: 9999px;
+  border: 1.5px solid var(--dpv-main);
+  animation: dpv-dome 2.4s ease-in-out infinite;
+}
+.dpv--dome i:nth-child(1) { inset: 11%; }
+.dpv--dome i:nth-child(2) { inset: 24%; animation-delay: 1.2s; border-color: var(--dpv-accent); }
+@keyframes dpv-dome {
+  0%, 100% { opacity: 0.22; transform: scale(0.92); }
+  50% { opacity: 0.85; transform: scale(1); }
+}
+
+/* --- gleam: a light bar sweeping the disc (crown / decree / coin / queen) --- */
+.dpv__clip {
+  position: absolute;
+  inset: 4%;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.dpv--gleam .dpv__clip i {
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 26%;
+  background: linear-gradient(90deg, transparent, var(--dpv-glow), transparent);
+  opacity: 0.8;
+  transform: translateX(-140%) rotate(18deg);
+  animation: dpv-gleam 2.8s ease-in-out infinite;
+}
+@keyframes dpv-gleam {
+  0% { transform: translateX(-140%) rotate(18deg); }
+  55%, 100% { transform: translateX(440%) rotate(18deg); }
+}
+
+/* --- links: chain links tugging taut (chain / bind) ------------------------- */
+.dpv--links i {
+  top: 71%;
+  height: 8%;
+  width: 21%;
+  border-radius: 2px;
+  background: var(--dpv-main);
+}
+.dpv--links i:nth-child(1) { left: 16%; animation: dpv-tug-l 2s ease-in-out infinite; }
+.dpv--links i:nth-child(2) { left: 62%; background: var(--dpv-accent); animation: dpv-tug-r 2s ease-in-out infinite; }
+@keyframes dpv-tug-l {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(3px); }
+  55% { transform: translateX(2px); }
+}
+@keyframes dpv-tug-r {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(-3px); }
+  55% { transform: translateX(-2px); }
+}
+
+/* --- wave: crests sweeping across low water (tide / gust / feather) --------- */
+.dpv--wave .dpv__clip i {
+  height: 14%;
+  border-radius: 9999px;
+  background: var(--dpv-main);
+  opacity: 0.7;
+  animation: dpv-wave 2.6s linear infinite;
+}
+.dpv--wave .dpv__clip i:nth-child(1) { width: 60%; top: 62%; left: -70%; }
+.dpv--wave .dpv__clip i:nth-child(2) { width: 44%; top: 74%; left: -60%; background: var(--dpv-accent); animation-delay: 1.3s; }
+@keyframes dpv-wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(330%); }
+}
+
+/* --- arc: spark flicker in hard steps (lightning / strike / bishop cross) --- */
+.dpv--arc .dpv__icon {
+  animation: dpv-flicker 2.4s steps(1, end) infinite;
+}
+.dpv--arc i {
+  width: 11%;
+  height: 11%;
+  border-radius: 1px;
+  background: var(--dpv-glow);
+  transform: rotate(45deg);
+  animation: dpv-flicker 1.7s steps(1, end) infinite;
+}
+.dpv--arc i:nth-child(1) { left: 18%; top: 24%; }
+.dpv--arc i:nth-child(2) { left: 70%; top: 60%; animation-delay: 0.9s; background: var(--dpv-accent); }
+@keyframes dpv-flicker {
+  0% { opacity: 0.25; }
+  6% { opacity: 1; }
+  10% { opacity: 0.35; }
+  14% { opacity: 1; }
+  18% { opacity: 0.25; }
+  52% { opacity: 0.25; }
+  58% { opacity: 1; }
+  64% { opacity: 0.3; }
+  100% { opacity: 0.3; }
+}
+
+/* --- unfurl: a written line rolling open under the glyph (scroll / quill) --- */
+.dpv--unfurl i {
+  left: 22%;
+  right: 22%;
+  top: 74%;
+  height: 5%;
+  border-radius: 1px;
+  background: var(--dpv-main);
+  transform-origin: left center;
+  animation: dpv-unfurl 2.6s ease-in-out infinite;
+}
+@keyframes dpv-unfurl {
+  0% { transform: scaleX(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  45%, 70% { transform: scaleX(1); opacity: 0.9; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* --- twinkle: star points around the rim (star chart / info / blessing) ----- */
+.dpv--twinkle i {
+  width: 11%;
+  height: 11%;
+  border-radius: 1px;
+  background: var(--dpv-glow);
+  transform: rotate(45deg);
+  animation: dpv-twinkle 2s ease-in-out infinite;
+}
+.dpv--twinkle i:nth-child(1) { left: 22%; top: 18%; }
+.dpv--twinkle i:nth-child(2) { left: 72%; top: 34%; animation-delay: 0.66s; background: var(--dpv-accent); }
+.dpv--twinkle i:nth-child(3) { left: 36%; top: 72%; animation-delay: 1.33s; }
+
+/* --- blink: a rift slit snapping shut and open (teleport / swap) ------------ */
+.dpv--blink i {
+  left: 48%;
+  top: 22%;
+  bottom: 22%;
+  width: 4.5%;
+  border-radius: 9999px;
+  background: var(--dpv-glow);
+  animation: dpv-blink 2.4s ease-in-out infinite;
+}
+.dpv--blink .dpv__icon {
+  animation: dpv-breathe 2.4s ease-in-out infinite;
+}
+@keyframes dpv-blink {
+  0%, 38%, 100% { transform: scaleY(1); opacity: 0.9; }
+  46%, 54% { transform: scaleY(0.06); opacity: 0.45; }
+  62% { transform: scaleY(1); opacity: 0.9; }
+}
+
+/* --- march: chevrons climbing the disc (pawn tide / rampart / banner) ------- */
+.dpv--march i {
+  left: 33%;
+  top: 58%;
+  width: 34%;
+  height: 17%;
+  background: var(--dpv-main);
+  clip-path: polygon(0 100%, 50% 30%, 100% 100%, 100% 70%, 50% 0, 0 70%);
+  opacity: 0;
+  animation: dpv-march 2.1s ease-out infinite;
+}
+.dpv--march i:nth-child(2) { animation-delay: 0.7s; background: var(--dpv-accent); }
+.dpv--march i:nth-child(3) { animation-delay: 1.4s; }
+@keyframes dpv-march {
+  0% { transform: translateY(6px); opacity: 0; }
+  20% { opacity: 0.9; }
+  70% { opacity: 0.45; }
+  100% { transform: translateY(-12px); opacity: 0; }
+}
+
+/* --- pulse: shock rings rolling outward (drum / gravity / bell / fracture) -- */
+.dpv--pulse i {
+  inset: 13%;
+  border-radius: 9999px;
+  border: 1.5px solid var(--dpv-main);
+  opacity: 0;
+  animation: dpv-pulse 2s ease-out infinite;
+}
+.dpv--pulse i:nth-child(2) { animation-delay: 1s; border-color: var(--dpv-accent); }
+@keyframes dpv-pulse {
+  0% { transform: scale(0.35); opacity: 0.9; }
+  70% { opacity: 0.25; }
+  100% { transform: scale(1.05); opacity: 0; }
+}
