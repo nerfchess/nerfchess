@@ -51,9 +51,11 @@ const sq = (name) => (name.charCodeAt(1) - 49) * 8 + (name.charCodeAt(0) - 97);
 // compare equal.
 function stableBuffs(buffs) {
   if (!buffs) return null;
-  const { mutations, lastHookMutations, clockFx, ...rest } = buffs;
+  const { mutations, lastHookMutations, lastEventMutations, mutationBy, clockFx, ...rest } = buffs;
   void mutations;
   void lastHookMutations;
+  void lastEventMutations;
+  void mutationBy;
   void clockFx;
   return rest;
 }

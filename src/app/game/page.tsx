@@ -73,6 +73,7 @@ import { loadRatings } from "@/lib/ratings";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
+import type { TimelineEvent } from "@/lib/timeline";
 import { clipPliesAvailable } from "@/components/clip/clipReplay";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
 import { TOUR_STATE_EVENT, type TourGameState } from "@/components/tutorial/tourState";
@@ -387,6 +388,9 @@ function GamePage() {
   }, []);
 
   function bootstrapGame() {
+    // Fresh game: clear the move-timeline event log (it is rebuilt as play
+    // resumes; a restored save simply starts logging from where it reloads).
+    setTimeline([]);
     try {
       const saved = loadSavedAiGame(querySignature);
       if (saved) {
@@ -504,6 +508,19 @@ function GamePage() {
   // unreadable.
   const [oppLog, setOppLog] = useState<OppPlay[]>([]);
   const oppKeyRef = useRef(0);
+  // Move-timeline events: draft resolutions and card plays, positioned by the
+  // ply they fired at, interleaved beside the moves in MoveList. Accumulated as
+  // the game happens (the engine keeps only current state), and reset per game.
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const pushTimeline = (ev: Omit<TimelineEvent, "cursor">) => {
+    setTimeline((prev) => [...prev, { ...ev, cursor: prev.filter((e) => e.ply === ev.ply).length }]);
+  };
+  // A card play's board effects live on the transient lastEventMutations right
+  // after the pick/activation runs; copy them (never keep the live reference).
+  const takeFx = (): TimelineEvent["fx"] => {
+    const m = game?.buffs?.lastEventMutations;
+    return m && m.length ? m.map((x) => ({ ...x })) : undefined;
+  };
   // Which held-buff hook mutations have already been announced to the feed,
   // keyed by owner:index (buff slots are append-only), so a passive that fires
   // once is never re-announced on a later re-render.
@@ -621,10 +638,29 @@ function GamePage() {
     const botColor: Color = myColor === "w" ? "b" : "w";
     if (game.buffs.players[botColor].offer) {
       const before = game.buffs.players[botColor].buffs.length;
+      const atPly = game.board.history.length;
       aiResolveDraft(game, botColor);
       // Instants show on the board the moment the bot picks them; surface
       // what the card did, matching the online reveal-at-pick rule.
       const gained = game.buffs.players[botColor].buffs.slice(before);
+      // Timeline: the bot's resolution as chips (+ instant fx), same as mine.
+      const botFx = game.buffs?.lastEventMutations;
+      const botFxCopy = botFx && botFx.length ? botFx.map((x) => ({ ...x })) : undefined;
+      if (gained.length === 0) {
+        pushTimeline({ ply: atPly, color: botColor, kind: "bank" });
+      } else {
+        for (const b of gained) {
+          const isInstant = BUFF_BY_ID[b.id]?.kind === "instant";
+          pushTimeline({
+            ply: atPly,
+            color: botColor,
+            kind: isInstant ? "instant" : "pick",
+            cardId: b.id,
+            tier: b.tier,
+            ...(isInstant && botFxCopy ? { fx: botFxCopy } : {}),
+          });
+        }
+      }
       const instant = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant" && !b.nullified);
       if (instant) {
         showOppUsedCard(
@@ -1376,6 +1412,14 @@ function GamePage() {
       const sigId = pendingSigIdRef.current;
       pendingSigIdRef.current = null;
       if (sigId) fireSignature(sigId);
+      // Timeline: record the activation with whatever it did to the board.
+      pushTimeline({
+        ply: game.board.history.length,
+        color: myColor,
+        kind: "use",
+        cardId: sigId ?? undefined,
+        fx: takeFx(),
+      });
       setGame({ ...game });
     },
   });
@@ -2159,6 +2203,7 @@ function GamePage() {
               )}
               <MoveList
                 moves={game.board.history}
+                events={timeline}
                 currentPly={currentHistoryPly}
                 onPlyChange={handleHistoryPlyChange}
                 minPly={reviewFloor}
@@ -2262,6 +2307,7 @@ function GamePage() {
           }}
           onPick={(i) => {
             const before = game.buffs?.players[myColor].buffs.length ?? 0;
+            const atPly = game.board.history.length;
             pickDraftCard(game, myColor, i);
             // My own cards are mine to see: the reveal names them all
             // (take-both offers can land more than one).
@@ -2270,6 +2316,20 @@ function GamePage() {
               banked: false,
               cards: gained.map((b) => ({ id: b.id, tier: b.tier })),
             });
+            // Timeline: a chip per gained card; an instant that resolved at
+            // pick time also carries its board notation (fx).
+            const fx = takeFx();
+            for (const b of gained) {
+              const isInstant = BUFF_BY_ID[b.id]?.kind === "instant";
+              pushTimeline({
+                ply: atPly,
+                color: myColor,
+                kind: isInstant ? "instant" : "pick",
+                cardId: b.id,
+                tier: b.tier,
+                ...(isInstant && fx ? { fx } : {}),
+              });
+            }
             // My own instant spectacle (Cataclysm, Extinction, and now every
             // instant via the category cast layer) resolves at pick time;
             // dress that resolution as the card's signature.
@@ -2278,15 +2338,19 @@ function GamePage() {
             setGame({ ...game });
           }}
           onBank={() => {
+            const atPly = game.board.history.length;
             bankDraft(game, myColor);
             recordMyDraftResolution({ banked: true, cards: [] });
+            pushTimeline({ ply: atPly, color: myColor, kind: "bank" });
             setGame({ ...game });
           }}
           rerollsLeft={bsMine?.rerollsLeft ?? 0}
           onReroll={() => {
             // Local game: reroll on the real engine, fresh cards at the same
             // tiers. The bumped `rerolled` counter replays the deal animation.
+            const atPly = game.board.history.length;
             rerollDraft(game, myColor);
+            pushTimeline({ ply: atPly, color: myColor, kind: "reroll" });
             setGame({ ...game });
           }}
           opponent={{

@@ -293,10 +293,7 @@ function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
       for (let i = 0; i + 1 < picks.length; i += 2) {
         const a = picks[i]?.square, b = picks[i + 1]?.square;
         if (a == null || b == null) continue;
-        const pa = api.board.pieces[a];
-        api.board.pieces[a] = api.board.pieces[b];
-        api.board.pieces[b] = pa;
-        api.bs.historyDiverged = true;
+        api.swap(a, b);
       }
     },
   );
@@ -710,10 +707,7 @@ const TIER1: Buff[] = [
         const pawnSq = picks[0]?.square;
         const kingSq = mySquares(api.board, api.me, "k")[0];
         if (pawnSq == null || kingSq == null) return;
-        const pawn = api.board.pieces[pawnSq];
-        api.board.pieces[pawnSq] = api.board.pieces[kingSq];
-        api.board.pieces[kingSq] = pawn;
-        api.bs.historyDiverged = true;
+        api.swap(pawnSq, kingSq);
       },
     ),
   ),
@@ -1800,10 +1794,7 @@ const TIER3: Buff[] = [
         const rookSq = picks[0]?.square;
         const kingSq = mySquares(api.board, api.me, "k")[0];
         if (rookSq == null || kingSq == null) return;
-        const rook = api.board.pieces[rookSq];
-        api.board.pieces[rookSq] = api.board.pieces[kingSq];
-        api.board.pieces[kingSq] = rook;
-        api.bs.historyDiverged = true;
+        api.swap(rookSq, kingSq);
       },
     ),
   ),
@@ -3074,10 +3065,7 @@ const TIER6: Buff[] = [
         const qSq = picks[0]?.square;
         const kSq = mySquares(api.board, api.me, "k")[0];
         if (qSq == null || kSq == null || qSq === kSq) return;
-        const q = api.board.pieces[qSq];
-        api.board.pieces[qSq] = api.board.pieces[kSq];
-        api.board.pieces[kSq] = q;
-        api.bs.historyDiverged = true;
+        api.swap(qSq, kSq);
         // After the swap the king stands on qSq and the queen on kSq. A square
         // shield never protects the king (legalMoves), so ward the king with
         // king_safe and shield the queen's square. Both are made during a
@@ -3573,9 +3561,7 @@ const TIER7: Buff[] = [
         if (x != null && y != null && x !== y) {
           const px = api.board.pieces[x], py = api.board.pieces[y];
           if (px && py && px.color === api.opp && py.color === api.opp) {
-            api.board.pieces[x] = py;
-            api.board.pieces[y] = px;
-            api.bs.historyDiverged = true;
+            api.swap(x, y);
           }
         }
       },

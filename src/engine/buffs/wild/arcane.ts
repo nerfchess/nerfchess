@@ -298,10 +298,7 @@ function swapOwnPieces(types?: PieceType[], pairs = 1): Mech {
       for (let i = 0; i + 1 < picks.length; i += 2) {
         const a = picks[i]?.square, b = picks[i + 1]?.square;
         if (a == null || b == null) continue;
-        const pa = api.board.pieces[a];
-        api.board.pieces[a] = api.board.pieces[b];
-        api.board.pieces[b] = pa;
-        api.bs.historyDiverged = true;
+        api.swap(a, b);
       }
     },
   );

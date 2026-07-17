@@ -316,6 +316,29 @@ export interface PlayerBuffState {
   nerfDeclines?: number;
 }
 
+/**
+ * One observable board change performed by a card, in a form that carries no
+ * hidden information (square indices, piece types, and colors only — never a
+ * card's identity beyond the optional `by` id, which apply paths omit for
+ * masked cards). Emitted by the BuffApi mutation primitives as they run and
+ * collected on `BuffMatchState.lastEventMutations`, so a timeline/notation
+ * layer can name what a card did without diffing boards or re-running engine
+ * code. Purely descriptive: nothing in the engine reads it back.
+ *
+ * `swap` is its own op (not two teleports) because a pair exchange is
+ * inexpressible as sequential single-piece moves without an intermediate
+ * overwrite. `castling` is NOT emitted here — castling-right changes are plain
+ * field writes no primitive intercepts; the capture layer derives them by
+ * diffing `board.castling` across an event.
+ */
+export type PublicMutation =
+  | { op: "summon"; sq: Square; type: PieceType; color: Color; by?: string }
+  | { op: "remove"; sq: Square; by?: string }
+  | { op: "teleport"; from: Square; to: Square; by?: string }
+  | { op: "transform"; sq: Square; into: PieceType; by?: string }
+  | { op: "convert"; sq: Square; by?: string }
+  | { op: "swap"; a: Square; b: Square; by?: string };
+
 export interface BuffMatchState {
   /** Game section this draft game runs under; absent = legacy merged rules. */
   mode?: DraftMode;
@@ -359,6 +382,22 @@ export interface BuffMatchState {
    * a permanent desync (dtState never carries the board).
    */
   lastHookMutations?: { color: Color; index: number }[];
+  /**
+   * Transient: the board mutations performed during the current committed
+   * event (one move-and-its-hooks, or one activation/instant), in the order
+   * they happened. Reset at the start of each event by the apply paths and
+   * read after it settles by the capture/notation layer. Never persisted
+   * (dropped by serializeGame alongside the other transients) and never sent
+   * raw to clients. See PublicMutation.
+   */
+  lastEventMutations?: PublicMutation[];
+  /**
+   * Transient: the id of the card whose hook/effect is running right now, set
+   * by the apply paths around each hook call so the mutation primitives can
+   * stamp `by` onto what they record. Cleared between cards. Left undefined
+   * for masked cards (owner grants), so their mutations record no identity.
+   */
+  mutationBy?: string;
   /**
    * Transient: match-clock adjustments buffs requested during the current
    * apply cycle (see ClockRequest). Never persisted and never sent to clients;
@@ -445,6 +484,12 @@ export interface BuffApi {
    * lost and the revive pools must stay untouched. */
   removePiece: (sq: Square, opts?: { uncounted?: boolean }) => void;
   relocate: (from: Square, to: Square) => void;
+  /** Exchange the two pieces standing on `a` and `b` in one step (either may
+   * be empty). The single primitive for a pair swap: records one `swap`
+   * mutation instead of the ambiguous two-teleport sequence a hand-written
+   * `pieces[]` exchange would produce, and centralizes the historyDiverged /
+   * counter bookkeeping every swap card previously duplicated. */
+  swap: (a: Square, b: Square) => void;
   setPieceType: (sq: Square, type: PieceType) => void;
   setPieceColor: (sq: Square, color: Color) => void;
   /** Restore my castling rights (Castle Early). */

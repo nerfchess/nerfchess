@@ -2,11 +2,13 @@
 
 import { moveToSAN } from "@/engine/board";
 import { Move } from "@/engine/types";
+import { eventsByPly, formatPlay, cardLabel, type TimelineEvent } from "@/lib/timeline";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { type MutableRefObject, type ReactNode, useCallback, useEffect, useRef } from "react";
 
 export function MoveList({
   moves,
+  events,
   currentPly = moves.length,
   onPlyChange,
   minPly = 0,
@@ -15,6 +17,9 @@ export function MoveList({
   footer,
 }: {
   moves: Move[];
+  /** Draft/card events interleaved between move rows (draft games). Absent for
+   * classic games and legacy callers, which then render exactly as before. */
+  events?: TimelineEvent[];
   currentPly?: number;
   onPlyChange?: (ply: number) => void;
   /** Earliest ply navigation may reach. Cards can rewrite the board outside
@@ -55,6 +60,10 @@ export function MoveList({
     }
     if (cur.w || cur.b) rows.push(cur);
   }
+  // Draft/card events grouped by the ply they fired at. A group at ply N is
+  // rendered right after the move at ply N (group 0 before the first move), so
+  // picks and card plays sit exactly where they happened in the game.
+  const byPly = events && events.length ? eventsByPly(events) : null;
   const maxPly = moves.length;
   // The reachable floor: never past the head (a fully locked history passes
   // minPly === maxPly, which disables every control below).
@@ -148,38 +157,46 @@ export function MoveList({
           (compact ? "min-h-0 flex-1 text-[12px]" : "max-h-72 text-[13px]")
         }
       >
+        {byPly && <EventStrip group={byPly.get(0)} onSelect={onPlyChange ? jumpTo : undefined} />}
         {rows.map((row, i) => (
-          <div
-            key={i}
-            className={
-              "grid gap-1 " +
-              (compact ? "grid-cols-[1.6rem_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[2.2rem_1fr_1fr]")
-            }
-          >
-            <span className="text-parchment-400/70">{row.num}.</span>
-            {row.w ? (
-              <MoveCell
-                ply={row.w.ply}
-                selected={currentPly === row.w.ply}
-                onSelect={onPlyChange ? jumpTo : undefined}
-                selectedRef={selectedMoveRef}
-              >
-                {row.w.san}
-              </MoveCell>
-            ) : (
-              <span className="px-1 py-0.5 text-parchment-400/50 select-none">...</span>
+          <div key={i}>
+            <div
+              className={
+                "grid gap-1 " +
+                (compact ? "grid-cols-[1.6rem_minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-[2.2rem_1fr_1fr]")
+              }
+            >
+              <span className="text-parchment-400/70">{row.num}.</span>
+              {row.w ? (
+                <MoveCell
+                  ply={row.w.ply}
+                  selected={currentPly === row.w.ply}
+                  onSelect={onPlyChange ? jumpTo : undefined}
+                  selectedRef={selectedMoveRef}
+                >
+                  {row.w.san}
+                </MoveCell>
+              ) : (
+                <span className="px-1 py-0.5 text-parchment-400/50 select-none">...</span>
+              )}
+              {row.b ? (
+                <MoveCell
+                  ply={row.b.ply}
+                  selected={currentPly === row.b.ply}
+                  onSelect={onPlyChange ? jumpTo : undefined}
+                  selectedRef={selectedMoveRef}
+                >
+                  {row.b.san}
+                </MoveCell>
+              ) : (
+                <span />
+              )}
+            </div>
+            {byPly && row.w && (
+              <EventStrip group={byPly.get(row.w.ply)} onSelect={onPlyChange ? jumpTo : undefined} />
             )}
-            {row.b ? (
-              <MoveCell
-                ply={row.b.ply}
-                selected={currentPly === row.b.ply}
-                onSelect={onPlyChange ? jumpTo : undefined}
-                selectedRef={selectedMoveRef}
-              >
-                {row.b.san}
-              </MoveCell>
-            ) : (
-              <span />
+            {byPly && row.b && (
+              <EventStrip group={byPly.get(row.b.ply)} onSelect={onPlyChange ? jumpTo : undefined} />
             )}
           </div>
         ))}
@@ -241,6 +258,88 @@ function MoveCell({
       }
     >
       {children}
+    </button>
+  );
+}
+
+// A group of draft/card events that fired at one ply. Draft resolutions
+// (pick/bank/reroll) render as compact chips on a strip; card plays render as
+// selectable card-notation rows below them.
+function EventStrip({
+  group,
+  onSelect,
+}: {
+  group?: TimelineEvent[];
+  onSelect?: (ply: number) => void;
+}) {
+  if (!group || group.length === 0) return null;
+  const chips = group.filter((e) => e.kind === "pick" || e.kind === "bank" || e.kind === "reroll");
+  const plays = group.filter((e) => e.kind === "use" || e.kind === "instant" || e.kind === "grant");
+  return (
+    <div className="my-0.5 space-y-0.5">
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-1 px-1 py-0.5">
+          {chips.map((e, i) => (
+            <DraftChip key={i} ev={e} />
+          ))}
+        </div>
+      )}
+      {plays.map((e, i) => (
+        <CardPlayRow key={i} ev={e} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+}
+
+// White uses a hollow dot, black a filled one, so a chip/row reads as "whose"
+// at a glance without a full name column.
+function SideDot({ color }: { color: "w" | "b" }) {
+  return <span className="opacity-60">{color === "w" ? "○" : "●"}</span>;
+}
+
+function DraftChip({ ev }: { ev: TimelineEvent }) {
+  const side =
+    ev.color === "w"
+      ? "border-parchment-100/25 text-parchment-100"
+      : "border-gold/30 text-gold-leaf";
+  const label =
+    ev.kind === "bank"
+      ? "banked"
+      : ev.kind === "reroll"
+        ? "↻ reroll"
+        : cardLabel(ev.cardId) + (ev.tier ? ` ·${ev.tier}` : "");
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] leading-none bg-white/[0.03] " +
+        side
+      }
+    >
+      <SideDot color={ev.color} />
+      {label}
+    </span>
+  );
+}
+
+function CardPlayRow({
+  ev,
+  onSelect,
+}: {
+  ev: TimelineEvent;
+  onSelect?: (ply: number) => void;
+}) {
+  const side = ev.color === "w" ? "text-parchment-100" : "text-gold-leaf";
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect?.(ev.ply)}
+      title={formatPlay(ev)}
+      className={
+        "w-full min-w-0 truncate text-left font-mono text-[11px] px-1 py-0.5 rounded-sm bg-gold/[0.06] hover:bg-gold/[0.12] transition " +
+        side
+      }
+    >
+      <SideDot color={ev.color} /> {formatPlay(ev)}
     </button>
   );
 }
