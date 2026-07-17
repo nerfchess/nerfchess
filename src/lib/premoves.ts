@@ -1,5 +1,5 @@
 import { cloneBoard, generateMoves, makeMove } from "@/engine/board";
-import { gameInCheck, legalMoves, type NerfGame } from "@/engine/game";
+import { gameInCheck, legalMoves, UNRESTRICTED_NERF, type NerfGame } from "@/engine/game";
 import type { Nerf, NerfState, GameContext } from "@/engine/nerf";
 import { FILE, inBoard, RANK, SQ, type BoardState, type Color, type Move, type PieceType } from "@/engine/types";
 
@@ -150,13 +150,27 @@ export function premoveOptionsFor(
  * full legal-move pipeline (buff-granted movement, freezes, and walls all
  * included) on a turn-flipped shallow clone. Powers the enemy-piece
  * inspection preview — click an opponent's piece, see where it can go.
+ *
+ * The previewed side's NERF is deliberately masked out. Their rule is secret
+ * information: in a bot game the opponent slot holds the bot's real rule, so
+ * filtering the preview by it would leak the handicap (a rule-bound rook
+ * showing no moves). Online replicas hold a NOOP for the opponent, which made
+ * the preview silently nerf-free there but nerf-shaped against bots. Masking
+ * on every surface shows the same thing — the piece's unnerfed moves — and
+ * only the rule's owner ever sees its restrictions on their own board.
+ *
  * Fail-soft: any engine hiccup returns [] because a preview must never crash
  * the board. */
 export function previewMovesFor(game: NerfGame, color: Color): Move[] {
   if (game.result) return [];
   try {
-    if (game.board.turn === color) return legalMoves(game);
-    return legalMoves({ ...game, board: { ...cloneBoard(game.board), turn: color } });
+    const slot = { nerf: UNRESTRICTED_NERF, state: {} };
+    const masked: NerfGame =
+      color === "w"
+        ? { ...game, white: { ...game.white, ...slot } }
+        : { ...game, black: { ...game.black, ...slot } };
+    if (masked.board.turn === color) return legalMoves(masked);
+    return legalMoves({ ...masked, board: { ...cloneBoard(masked.board), turn: color } });
   } catch {
     return [];
   }
