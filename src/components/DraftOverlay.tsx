@@ -1378,23 +1378,6 @@ export function DraftOverlay({
                 }}
               >
                 <span aria-hidden className="draft-fx__glow" />
-                {/* Comparison chip: when the tiers differ, the strongest card
-                    wears a small gold rune chip (pure tier fact, no judgement
-                    about which pick is better). Hidden until the flip lands
-                    via the same reveal delay the sheen uses. */}
-                {packStage === "open" &&
-                  card.tier === maxTier &&
-                  offer.cards.filter((c) => c.tier === maxTier).length === 1 &&
-                  offer.cards.length > 1 && (
-                    <motion.span
-                      className="dgn-top-tier"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: reduceMotion ? 0 : (flipDelay + FLIP_MS) / 1000 }}
-                    >
-                      Highest tier
-                    </motion.span>
-                  )}
                 {/* 3D flip: the back faces the viewer while dealing, then the
                     wrapper rotates to reveal the face (higher tier flips a
                     touch later). Banking rotates it face-down again. */}
