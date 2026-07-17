@@ -77,8 +77,21 @@ shrink-only, enforced by `npm run test:animations`).
   `docs/2026-07-17-nerf-wave2-and-rebalance.md`): T1/T2/T7/T8 fill plus a
   surgical audit of tier 6–8 nerfs against forced-loss/randomness/
   counterplay criteria; every change documented.
-- Post-wave counts are recorded in the design notes for each batch and in
-  the PR summary.
+## Post-wave counts (after this PR)
+
+| Family | Before → After | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Boons | 60 → **88** (+28) | 10 | 14 | 15 | 13 | 12 | 8 | 10 | 6 |
+| Hexes | 180 → **207** (+27) | 18 | 21 | 30 | 35 | 36 | 27 | 20 | 17 |
+| Nerfs | 342 → **358** (+16) | 26 | 35 | 60 | 66 | 61 | 57 | 31 | 22 |
+| Pure buffs | 609 (deliberately unchanged — already 2× target share) | | | | | | | | |
+
+(Nerf T6 dropped by one because death_wish moved T6 → T8 in the rebalance;
+T8 = 17 + 4 new + 1 re-tiered.) Animation registry after the wave: 1264
+tier-1–8 upgrades, keep 883 / polish 336 / partial 45 / full 0; shared-
+flagship debt unchanged at the 381/45 baseline — every new card ships a
+bespoke flagship (template + unique flourish dressing, or a fully bespoke
+tier 7–8 scene). Passive-effect registry: 639 unique compositions.
 
 ## Roadmap to the ~350-per-family scale target
 

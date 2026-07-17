@@ -154,3 +154,21 @@ Moderator change history:
 - upsertCardOverride/deleteCardOverride now read-before-write and record one row per changed field (best effort: an audit failure never fails the override). Events (plus a synthetic "adjusted" event for pre-audit overrides) are served by the insights endpoint and rendered as "Moderator changes" on the card page.
 
 Verified: tsc clean (only pre-existing stale .next/types artifacts), server:build green, dev-server walkthrough of hex/boon/nerf pages including a seeded 36-game fixture (win rates, ranks, tier average, bot split, tier-move banner, and audit events all correct, then cleaned up). buildVersion bumped to codex-card-insights-1.
+
+---
+
+## 2026-07-17 13:30 ET (dungeon gate lobby CTA, chest reveal ledger, nerf-mode wave 2)
+
+UI:
+- The Open Lobby CTA (desktop hero + mobile OpenLobbyPanel) is now a full dungeon gate (new DungeonGateButton + CSS): carved granite courses, iron corner braces with rivets, an Elder-Futhark rune lintel that ignites on hover, torch-pooled jambs, and a clipped four-ember file. Complete default/hover/pressed/focus-visible/loading/disabled states; transform/filter-only state changes (no layout shift), decorations clipped inside the button, gated under data-anim=off and data-perf=low.
+- Leaderboard podium keeps the same three-across treasure-dais silhouette on phones (smaller avatars via a matchMedia hook, tightened columns, risers keep mobile min-heights, bios hidden below sm) instead of the squished vertical stack.
+
+Draft chest:
+- New reveal-state ledger (src/lib/draftReveal.ts, localStorage): the treasure chest plays exactly once per unique offer version (scope game id + offer index + reroll count). Fixes the asymmetry where a NEW draft arriving while the panel was minimized skipped the chest (the initial packStage honored `minimized`) while a reroll always played it (the dealKey reset path ignored it). Chest now fires for first/scheduled/banked/apex/reroll drafts and unrevealed reconnect restores; never for rerenders, StrictMode double-mounts, re-delivered draft states, or refresh after the reveal was watched. The draft chime rides the same ledger; a Skip control under the sealed chest jumps straight to the deal. Online scope start.id; local AI games scope ai:<game.startedAt> (survives the save/restore round-trip).
+
+Nerf-mode wave 2 (audit: docs/2026-07-17-card-library-audit.md):
+- Combination guard: COMBO_TAGS exclusive families in draft.ts — turn-theft (8 cards), draft-denial (14), mass-freeze (2). The draft never offers a card from a family the caster already holds unspent; deterministic pool filter over synced state (desync/replay-safe); BuffCard prints the exclusivity rule on the card face.
+- +28 boons (bw2_*, boons2.ts; T6:5 T7:4 T8:4 of the batch), +27 hexes (hw2_*, hexes/wave2.ts, curse-structured: marks, transfers, delayed dooms, spreading ground, escalation contracts), +16 nerfs (nw2_*, nerfs/wave2.ts, filling T1/T2/T7/T8). Family totals: boons 60->88, hexes 180->207, nerfs 342->358.
+- Tier 6-8 nerf rebalance (12 cards, all documented in docs/2026-07-17-nerf-wave2-and-rebalance.md): after-my-move grace + warning hints for the instant-execution loss cards (boastful, wn_glass_queen, wn_pin_cushion, wn_house_of_cards), narrowed trigger zones (hold_them_back, abstinence, helicopter_parent, closed_book), announced windows (glorious_battle), capped requirements (inching_forward), budget raise (war_footing), death_wish re-tiered 6->8.
+- Animation coverage: five boon templates + five curse templates, 41 unique per-card flourish dressings, 14 fully bespoke tier 7-8 scenes (boonPlays.tsx/cursePlays.tsx); shared-flagship ratchet unchanged at 381/45 — every new card has a bespoke flagship. Passive-effect registry regenerated: 639 unique compositions covering all 16 new nerfs.
+- Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:animations, test:desync, test:snapshot all green.
