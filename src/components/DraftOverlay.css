@@ -1109,9 +1109,9 @@ html[data-anim="off"] .draft-frame::after {
   background: linear-gradient(
     100deg,
     transparent 34%,
-    rgb(255 138 52 / 0.05) 44%,
+    rgb(var(--mood-rgb, 255 138 52) / 0.05) 44%,
     rgb(255 200 120 / 0.1) 50%,
-    rgb(224 92 40 / 0.05) 56%,
+    rgb(var(--mood-rgb, 224 92 40) / 0.05) 56%,
     transparent 66%
   );
   transform: translateX(-22%);
@@ -1133,13 +1133,23 @@ html[data-anim="off"] .draft-frame::after {
   border-radius: 999px;
   background: radial-gradient(
     circle,
-    rgb(255 154 60 / 0.16),
-    rgb(224 92 40 / 0.08) 42%,
+    rgb(var(--mood-rgb, 255 154 60) / 0.16),
+    rgb(var(--mood-rgb, 224 92 40) / 0.08) 42%,
     transparent 68%
   );
   will-change: transform, opacity;
   animation: dgn-gutter 3.4s ease-in-out infinite;
+  transition: background 600ms ease;
 }
+/* The chamber answers the offer: once the pack is open, the strongest card's
+   category re-tints the torch light and aurora. Attack cards burn blood red,
+   hexes go void purple, protection cools to teal, tempo turns astral blue;
+   everything else keeps the ember default. Data only becomes visible when the
+   cards are already face-up, so nothing about a sealed offer leaks. */
+.draft-stage[data-mood="blood"] { --mood-rgb: 224 82 82; }
+.draft-stage[data-mood="void"] { --mood-rgb: 168 119 216; }
+.draft-stage[data-mood="teal"] { --mood-rgb: 34 211 238; }
+.draft-stage[data-mood="astral"] { --mood-rgb: 91 155 212; }
 .draft-stage__torch--l { left: -18vmax; }
 .draft-stage__torch--r { right: -18vmax; animation-delay: -1.7s; animation-duration: 2.9s; }
 @keyframes dgn-gutter {

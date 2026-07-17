@@ -12,6 +12,7 @@ import { BuffInstance, type DraftMode } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { gameToPGN } from "@/lib/pgn";
 import { playGameOver } from "@/lib/sounds";
+import { haptic } from "@/lib/haptics";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
@@ -29,11 +30,12 @@ export interface TimelineCardEvent {
 }
 
 // A linked player profile shown in the actions area. `href` points at
-// /u/[username]; house bots carry `isBot` so the row can be dropped or labeled.
+// /u/[username]. Every account links the same way: house accounts have real
+// seeded profiles, and skipping their link would be a tell (owner request:
+// no bot trace anywhere on the site).
 export interface ProfileLink {
   name: string;
   href: string;
-  isBot?: boolean;
 }
 
 interface Props {
@@ -659,8 +661,8 @@ export function GameOver({
     return `/analysis?moves=${moves.map(moveToUCI).join(",")}`;
   }, [moves]);
 
-  // Real profiles only (house bots have no profile page).
-  const linkedProfiles = useMemo(() => (profiles ?? []).filter((p) => !p.isBot && p.href), [profiles]);
+  // Every seat links to its profile; house accounts have real profile pages.
+  const linkedProfiles = useMemo(() => (profiles ?? []).filter((p) => p.href), [profiles]);
 
   useEffect(() => {
     const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
@@ -669,6 +671,8 @@ export function GameOver({
       playedGameOverKeys.add(key);
     }
     playGameOver();
+    // Victory earns a short success pulse on devices that support haptics.
+    if (won && !spectator) haptic("success");
     // Mount-only by design: the key identifies the game, not a render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -701,6 +705,31 @@ export function GameOver({
       className="fixed inset-0 z-50 grid place-items-center bg-[#0f0d0a]/68 px-4 py-6 backdrop-blur-sm"
       onMouseDown={dismiss}
     >
+      {/* Level-3 victory beat: one energy ring blooms behind the panel while
+          sparks in the four energy hues climb and die. Winners only, one
+          shot, never under reduced motion. */}
+      {won && !spectator && !draw && !reduceMotion && (
+        <span aria-hidden className="victory-burst">
+          <i className="victory-burst__ring" />
+          <i className="victory-burst__ring victory-burst__ring--echo" />
+          {Array.from({ length: 12 }).map((_, i) => (
+            <i
+              key={i}
+              style={{
+                ["--vx" as string]: `${8 + ((i * 61) % 84)}%`,
+                ["--vdelay" as string]: `${(i % 6) * 90}ms`,
+                ["--spark-rgb" as string]: [
+                  "244 196 48",
+                  "168 119 216",
+                  "34 211 238",
+                  "255 138 52",
+                ][i % 4],
+              }}
+              className="victory-burst__spark"
+            />
+          ))}
+        </span>
+      )}
       <motion.div
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}

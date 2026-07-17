@@ -56,8 +56,6 @@ export type MPPlayers = Record<
     rating: number | null;
     avatar?: string | null;
     provisional?: boolean;
-    /** House-bot seat (server-stamped); consumers render the HOUSE BOT chip. */
-    house?: boolean;
   }
 >;
 
@@ -284,7 +282,6 @@ export type MPLobbySeek = {
   // server pairs with exactly this person (or house bot) and never a random
   // pool waiter. Optional so snapshots from an older server still parse.
   userId?: string;
-  house?: boolean;
 };
 export type MPLobby = {
   players: MPLobbyPlayer[];

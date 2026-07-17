@@ -3272,7 +3272,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   {
                     name: oppName,
                     href: `/u/${encodeURIComponent(oppName)}`,
-                    isBot: !!start.players[oppColor]!.house,
                   },
                 ]
               : []),
