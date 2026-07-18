@@ -902,6 +902,9 @@ export type HouseIdentityOverride = {
   username: string | null;
   avatar: string | null;
   bio: string | null;
+  // A hand-set rating (both modes and the legacy column) that survives resyncs;
+  // null = no override, so the bot keeps its roster seed. See syncHouseRatings.
+  rating: number | null;
 };
 
 /** All stored identity overrides, keyed by persona user id. Never throws: a
@@ -912,8 +915,14 @@ export async function loadHouseIdentityOverrides(
 ): Promise<Map<string, HouseIdentityOverride>> {
   try {
     const rows = await db
-      .prepare(`SELECT user_id, username, avatar, bio FROM house_identity_overrides`)
-      .all<{ user_id: string; username: string | null; avatar: string | null; bio: string | null }>();
+      .prepare(`SELECT user_id, username, avatar, bio, rating FROM house_identity_overrides`)
+      .all<{
+        user_id: string;
+        username: string | null;
+        avatar: string | null;
+        bio: string | null;
+        rating: number | null;
+      }>();
     const map = new Map<string, HouseIdentityOverride>();
     for (const row of rows.results) {
       if (!HOUSE_USER_IDS.has(row.user_id)) continue;
@@ -921,6 +930,7 @@ export async function loadHouseIdentityOverrides(
         username: row.username ?? null,
         avatar: row.avatar ?? null,
         bio: row.bio ?? null,
+        rating: typeof row.rating === "number" ? row.rating : null,
       });
     }
     return map;
@@ -1105,8 +1115,12 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
   const now = Date.now();
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
-    const base = houseSeedRating(persona);
-    const identity = houseIdentity(persona, overrides.get(persona.userId));
+    const override = overrides.get(persona.userId);
+    // A hand-set rating override (rare here — the account usually predates any
+    // edit) wins over the seed, so a rating saved before the row existed still
+    // lands, mirroring how the identity override is applied.
+    const base = override?.rating ?? houseSeedRating(persona);
+    const identity = houseIdentity(persona, override);
     return [
       db
         .prepare(
@@ -1115,9 +1129,10 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
         )
         .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, base, identity.avatar, identity.bio),
       // Nerf and Buff seed at DIFFERENT numbers (houseSeedRatingForMode), so a bot
-      // reads like a real player who is stronger in one mode than the other.
+      // reads like a real player who is stronger in one mode than the other — but
+      // a hand-set override collapses both modes to that one number.
       ...(["nerf", "buff"] as const).map((mode) => {
-        const r = houseSeedRatingForMode(persona, mode);
+        const r = override?.rating ?? houseSeedRatingForMode(persona, mode);
         return db
           .prepare(
             `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
@@ -1172,8 +1187,12 @@ export async function countSeededHouseUsers(db: D1Database): Promise<number> {
 export async function syncHouseRatings(db: D1Database): Promise<void> {
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
-    const base = houseSeedRating(persona);
-    const identity = houseIdentity(persona, overrides.get(persona.userId));
+    const override = overrides.get(persona.userId);
+    // A hand-set rating override wins over the roster seed for BOTH the legacy
+    // users.rating and each mode bucket, so a rating edited from the House bot
+    // menu is not reverted here on the next roster revision. No override = seed.
+    const base = override?.rating ?? houseSeedRating(persona);
+    const identity = houseIdentity(persona, override);
     return [
       // With a bio (staff override or the baked blurb), write it; otherwise clear
       // any leftover location-as-bio (older seed) and leave a real bio alone.
@@ -1191,9 +1210,10 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
               `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
             )
             .bind(base, identity.avatar, persona.location, persona.userId),
-      // Re-point each mode bucket at its own per-mode number (peak only ratchets up).
+      // Re-point each mode bucket at its own per-mode number — or the hand-set
+      // override, which collapses both modes to one number (peak only ratchets up).
       ...(["nerf", "buff"] as const).map((mode) => {
-        const r = houseSeedRatingForMode(persona, mode);
+        const r = override?.rating ?? houseSeedRatingForMode(persona, mode);
         return db
           .prepare(
             `UPDATE user_ratings SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), peak = MAX(peak, ?) WHERE user_id = ? AND category = ?`,
