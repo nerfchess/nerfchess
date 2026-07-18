@@ -1,9 +1,14 @@
 // Branded route skeleton for /lobby: mirrors the lobby layout (masthead over
 // the flat brass hairline, flat bordered rows, sticky player column) so the
 // page chunk swaps in without anything jumping.
+import "@/components/dungeon/dungeon-lobby.css";
+
 export default function Loading() {
   return (
     <main className="min-h-screen pb-16">
+      {/* Same fixed torchlit wash as the loaded page, so the backdrop doesn't
+          jump from flat black to warm stone when the chunk swaps in. */}
+      <div className="dgn-hall-ambience" aria-hidden />
       <div className="flex items-center justify-between border-b border-white/5 px-5 py-3 sm:px-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.svg" alt="Loading" width={26} height={26} className="animate-pulse" />
@@ -34,7 +39,7 @@ export default function Loading() {
           <div className="min-w-0 space-y-5">
             {/* Quick Match chamber: mode doors, balanced 3x3 time-control grid,
                 one gate button. */}
-            <div className="dgn-slab dgn-rivets p-5">
+            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
               <div className="skeleton h-6 w-36" />
               <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <div className="skeleton h-28" />
@@ -55,7 +60,7 @@ export default function Loading() {
             </div>
           </div>
           <div className="h-fit space-y-5">
-            <div className="dgn-slab dgn-rivets p-5">
+            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
               <div className="skeleton h-5 w-28" />
               <div className="mt-4 space-y-2.5">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -63,7 +68,7 @@ export default function Loading() {
                 ))}
               </div>
             </div>
-            <div className="dgn-slab dgn-rivets p-5">
+            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
               <div className="skeleton h-5 w-32" />
               <div className="mt-4 space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (

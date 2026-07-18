@@ -18,11 +18,12 @@ import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { EngravedLabel } from "@/components/dungeon/primitives";
 import "@/components/dungeon/dungeon-lobby.css";
 
-// The lobby: the central place to find a game, styled to match the home
-// page's dark starry identity. The shared StarField drifts behind flat solid
-// ink panels with hairline borders; each row wears its mode color as a plain
-// left border — no gradients, washes, or glows. Same data, same handlers,
-// same navigation as before — only the presentation changed.
+// The lobby: the central place to find a game, dressed edge to edge in the
+// dungeon material set (dungeon-lobby.css): a torchlit wash over the shared
+// StarField, warm carved-stone slabs and rows, and the matchmaking chamber as
+// the centerpiece — one hall, not one themed panel on a flat page. Each row
+// still wears its mode color as a plain left border. Same data, same
+// handlers, same navigation as before — only the presentation changed.
 // The four lobby tabs. Quick Play is the default: mode, clock, one button.
 const LOBBY_TABS = [
   { id: "quick", label: "Quick Play" },
@@ -257,6 +258,10 @@ function LobbyInner() {
     // is needed here.
     <main className="min-h-screen pb-16">
       <StarField />
+      {/* Fixed warm wash over the star field so the whole viewport reads as
+          one torchlit hall (dungeon-lobby.css), not one themed chamber on a
+          flat black page. */}
+      <div className="dgn-hall-ambience" aria-hidden />
       <SiteHeader active="/lobby" />
 
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
@@ -354,7 +359,7 @@ function LobbyInner() {
             /* Open challenges: players waiting in a quick-pairing pool plus
                 friend games waiting for an opponent, each on its own flat row
                 wearing its mode color as a plain left border. */
-            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="dgn-slab dgn-rivets p-5 sm:p-6">
+            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
                   Open challenges
@@ -414,7 +419,7 @@ function LobbyInner() {
 
             {tab === "watch" && (
             /* Watch a game that's happening right now. */
-            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="dgn-slab dgn-rivets p-5 sm:p-6">
+            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                   Live games
@@ -515,7 +520,7 @@ function LobbyInner() {
           {/* Who's here right now, plus boards to watch: a stack of rail panels
               that ride along on desktop scroll. */}
           <aside className="h-fit space-y-5 lg:sticky lg:top-6">
-            <div className="dgn-slab dgn-rivets p-5">
+            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="sec-title font-display text-xl text-parchment">Online now</div>
               {lobby && onlineCount != null && (
@@ -602,7 +607,7 @@ function LobbyInner() {
                 into the spectator route. The data source (lobby.games) always
                 exists in the payload, so this panel renders with a designed
                 empty state rather than disappearing. */}
-            <div className="dgn-slab dgn-rivets p-5">
+            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
                 {lobby && (
@@ -769,7 +774,7 @@ function FriendsTab() {
       aria-labelledby="lobby-tab-friends"
       className={"min-w-0 " + (challenging ? "" : "grid gap-5 lg:grid-cols-2 lg:items-start")}
     >
-      <div className="dgn-slab dgn-rivets p-5 sm:p-6">
+      <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
         <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
           Play a friend
         </SectionTitle>
