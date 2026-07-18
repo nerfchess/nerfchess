@@ -205,4 +205,4 @@ Rule content:
 - Left the deliberately retired rules retired (RETIRED_NERFS: resolvable by id for old replays, out of the Codex by design): Foot Soldiers Only (verified exact mechanical duplicate of the live Serf Labor, identical move filter), Number of the Beast, and Hand and Gigabrain.
 - Regenerated derived registries: cardIconMap.gen.ts (1355 to 1357 cards: the two new ids plus the deterministic open-address probe cascade through the generic File-icon cluster, curated tier 7+ overrides untouched) and passive compositions.ts (675 to 677: two new nerf tuples plus deterministic sentence-uniqueness disambiguation).
 
-Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:desync, test:apex, test:snapshot all green; both new nerfs prerender their /codex/nerf/[id] pages and never soft-lock from the opening. PR #TBD. OPEN.
+Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:desync, test:apex, test:snapshot all green; both new nerfs prerender their /codex/nerf/[id] pages and never soft-lock from the opening. PR #425. OPEN.
