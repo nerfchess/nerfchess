@@ -70,15 +70,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Proper hero hierarchy: the hook first, one line of body text,
-              then the CTA. The headline is the first thing a new visitor
-              reads. */}
-          <h1 className="display-2 mt-3 text-parchment-50">
-            Chess, but you draft <span className="text-mode-nerfGlow">curses</span>.
-          </h1>
-          <p className="mt-2.5 text-[15px] leading-snug text-parchment-300">
-            Every five moves you draft a card — arm your own army or hex your
-            opponent. Capture the king to win.
+          {/* The one-breath pitch: what the two words on the tin actually
+              change. Concrete, not marketing air. */}
+          <p className="mt-3 text-[15px] leading-snug text-parchment-300">
+            Every five moves you draft a card. In{" "}
+            <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
+            onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
+            mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
 
           {/* ONE dominant action: the dungeon gate itself. It enters the

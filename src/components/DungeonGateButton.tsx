@@ -2,9 +2,9 @@
 
 // The Open Lobby gate button: the one dungeon-dressed entrance into the
 // matchmaking chamber. Full treatment lives in DungeonGateButton.css —
-// a molten-gold slab in a forged frame, torchlight, a clipped ember file —
-// this component just assembles the flat DOM the stylesheet dresses, and
-// picks <Link> vs <button> per call site.
+// carved granite, iron corner braces, rune lintel, torchlight, a clipped
+// ember file — this component just assembles the flat DOM the stylesheet
+// dresses, and picks <Link> vs <button> per call site.
 //
 // The label stays plain text on top of everything (z-3) for contrast; all
 // dressing spans are aria-hidden. Ember positions/phases are fixed inline so
@@ -23,6 +23,11 @@ const EMBERS = [
 
 // The minor doors burn fewer sparks: same file, half the count.
 const EMBERS_MINOR = [EMBERS[1], EMBERS[3]];
+
+// The rune carvings flanking the label: real Elder Futhark glyphs, purely
+// decorative (aria-hidden), reading as the gate's old inscription.
+const RUNES_L = "ᚦᛟᚱ";
+const RUNES_R = "ᚷᚨᛏ";
 
 function GateDressing({ minor = false }: { minor?: boolean }) {
   return (
@@ -51,11 +56,11 @@ export function DungeonGateButton({
   /** Renders a Next <Link> when set (and not disabled/loading). */
   href?: string;
   onClick?: () => void;
-  /** The gate is unbarring: label pulses, input ignored. */
+  /** The gate is unbarring: runes cycle, input ignored. */
   loading?: boolean;
   /** Torches out: cold gray stone, no glow, no input. */
   disabled?: boolean;
-  /** "gate" is the full-size entrance; "minor" is the same forged-gold
+  /** "gate" is the full-size entrance; "minor" is the same carved-stone
    *  material at postern-door scale, for secondary actions beside it. */
   variant?: "gate" | "minor";
   className?: string;
@@ -63,7 +68,20 @@ export function DungeonGateButton({
 }) {
   const minor = variant === "minor";
   const cls = "dgn-gate " + (minor ? "dgn-gate--minor " : "") + className;
-  const label = <span className="dgn-gate__label">{children}</span>;
+  const label = (
+    <span className="dgn-gate__label">
+      {/* Runes render via CSS content so the button's textContent stays the
+          plain label (screen readers, copy/paste, and text assertions all see
+          only the real text). */}
+      <span aria-hidden="true" className="dgn-gate__rune" data-runes={RUNES_L} />
+      {children}
+      <span
+        aria-hidden="true"
+        className="dgn-gate__rune dgn-gate__rune--r"
+        data-runes={RUNES_R}
+      />
+    </span>
+  );
 
   if (href && !disabled && !loading) {
     return (
