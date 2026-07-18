@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   applyBoardTheme,
+  applyForcedDefaults,
   applyPieceTheme,
   applyUiPrefs,
   loadSettings,
@@ -16,6 +17,10 @@ export function SettingsBootstrap() {
   const [fps, setFps] = useState(false);
 
   useEffect(() => {
+    // One-time forced-default rollouts (e.g. the rose accent + Classic theme):
+    // run before the first read so we apply and push the forced values, and the
+    // server pull below can't clobber them (the force bumps updated-at to now).
+    applyForcedDefaults();
     const apply = () => {
       const s = loadSettings();
       applyBoardTheme(s.boardTheme);

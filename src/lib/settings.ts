@@ -401,6 +401,49 @@ export function saveSettings(s: Settings) {
   schedulePushToServer();
 }
 
+// ---- One-time forced defaults ----
+// Most default changes only affect new users; occasionally we want one pushed
+// onto *existing* users too (e.g. a visual refresh everyone should land on).
+// Listing a force here applies it to each device exactly once: on the next load
+// the device adopts the new values and saves them — the bumped updated-at wins
+// over the account's server copy (PUT only moves forward), so the change also
+// follows the user across devices. Afterwards the user is free to change the
+// value again and it sticks; the force never repeats on that device.
+//
+// To roll out a new forced default, append an entry with a fresh `id` (never
+// reuse one) so it fires once even on devices that already ran earlier forces.
+const FORCED_DEFAULTS_KEY = "dc:forced-defaults";
+
+const FORCED_DEFAULTS: ReadonlyArray<{ id: string; apply: (s: Settings) => Settings }> = [
+  // 2026-07: land every existing user on the new out-of-the-box look — the rose
+  // accent and the Classic (dark) theme. One-time; a later re-pick sticks.
+  { id: "accent-theme-rose-classic-v1", apply: (s) => ({ ...s, accentColor: "rose", siteTheme: "dark" }) },
+];
+
+/** Apply any forced-default rollouts this device has not run yet (see
+ *  FORCED_DEFAULTS). Runs before the first settings read on load; no-op on the
+ *  server and once every listed force has been applied on this device. */
+export function applyForcedDefaults(): void {
+  if (typeof window === "undefined") return;
+  let done: string[];
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(FORCED_DEFAULTS_KEY) ?? "[]");
+    done = Array.isArray(raw) ? (raw as string[]) : [];
+  } catch {
+    done = [];
+  }
+  const pending = FORCED_DEFAULTS.filter((f) => !done.includes(f.id));
+  if (pending.length === 0) return;
+  // Fold every pending force over the current settings, then save once. The
+  // save stamps updated-at with now, so the immediate server pull can't clobber
+  // the forced values and the next push carries them to the account.
+  const forced = pending.reduce((s, f) => f.apply(s), loadSettings());
+  saveSettings(forced);
+  try {
+    window.localStorage.setItem(FORCED_DEFAULTS_KEY, JSON.stringify([...done, ...pending.map((f) => f.id)]));
+  } catch {}
+}
+
 // ---- Per-account settings sync ----
 // Settings are saved locally first (they must work signed out), then pushed
 // to the account so they follow the user across devices. On page load,

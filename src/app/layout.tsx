@@ -161,9 +161,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // data-theme matches DEFAULT_SETTINGS.siteTheme so first paint is already
-    // the default (Crimson) instead of flashing classic; SettingsBootstrap then
-    // applies whatever the user actually chose.
-    <html lang="en" data-theme="crimson">
+    // the default (Classic) instead of flashing another theme; SettingsBootstrap
+    // then applies whatever the user actually chose.
+    <html lang="en" data-theme="dark">
       <head>
         <script
           type="application/ld+json"
