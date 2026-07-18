@@ -195,7 +195,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "crimson",
+  siteTheme: "dark",
   compactMode: false,
   uiScale: 1,
   accentColor: "rose",
