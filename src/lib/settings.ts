@@ -404,14 +404,18 @@ export function saveSettings(s: Settings) {
 // ---- One-time forced defaults ----
 // Most default changes only affect new users; occasionally we want one pushed
 // onto *existing* users too (e.g. a visual refresh everyone should land on).
-// Listing a force here applies it to each device exactly once: on the next load
-// the device adopts the new values and saves them — the bumped updated-at wins
-// over the account's server copy (PUT only moves forward), so the change also
-// follows the user across devices. Afterwards the user is free to change the
-// value again and it sticks; the force never repeats on that device.
+// Each force is applied exactly once per ACCOUNT: /api/users/forced-defaults
+// records which forces an account has been through, so the first device to load
+// applies them (and saves — the bumped updated-at carries the change to the
+// account and every other device) while later devices see them as done and
+// leave the user's own choices alone. Signed-out visitors have no account to
+// gate on, so they fall back to a per-device record and are forced once per
+// browser (device-locally, without syncing, so a later sign-in can't let the
+// fallback overwrite the account). Either way a user's later re-pick sticks;
+// the force never repeats.
 //
 // To roll out a new forced default, append an entry with a fresh `id` (never
-// reuse one) so it fires once even on devices that already ran earlier forces.
+// reuse one) so it fires once even where earlier forces already ran.
 const FORCED_DEFAULTS_KEY = "dc:forced-defaults";
 
 const FORCED_DEFAULTS: ReadonlyArray<{ id: string; apply: (s: Settings) => Settings }> = [
@@ -420,28 +424,81 @@ const FORCED_DEFAULTS: ReadonlyArray<{ id: string; apply: (s: Settings) => Setti
   { id: "accent-theme-rose-classic-v1", apply: (s) => ({ ...s, accentColor: "rose", siteTheme: "dark" }) },
 ];
 
-/** Apply any forced-default rollouts this device has not run yet (see
- *  FORCED_DEFAULTS). Runs before the first settings read on load; no-op on the
- *  server and once every listed force has been applied on this device. */
-export function applyForcedDefaults(): void {
-  if (typeof window === "undefined") return;
-  let done: string[];
+/** The forced-default ids this device has already run — the signed-out gate and
+ *  the offline fallback. */
+function deviceForcedIds(): string[] {
   try {
     const raw = JSON.parse(window.localStorage.getItem(FORCED_DEFAULTS_KEY) ?? "[]");
-    done = Array.isArray(raw) ? (raw as string[]) : [];
+    return Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string") : [];
   } catch {
-    done = [];
+    return [];
   }
-  const pending = FORCED_DEFAULTS.filter((f) => !done.includes(f.id));
-  if (pending.length === 0) return;
-  // Fold every pending force over the current settings, then save once. The
-  // save stamps updated-at with now, so the immediate server pull can't clobber
-  // the forced values and the next push carries them to the account.
-  const forced = pending.reduce((s, f) => f.apply(s), loadSettings());
-  saveSettings(forced);
+}
+
+/** Ask the account which of these forces it has not been through yet. The
+ *  endpoint records them as applied in the same call, so only the first device
+ *  to ask for a given account gets them back — that is what makes a force fire
+ *  once per account rather than once per browser. Returns null when there is no
+ *  account to gate on (signed out) or the request fails, so the caller falls
+ *  back to the per-device record. */
+async function accountPendingForces(ids: string[]): Promise<string[] | null> {
   try {
-    window.localStorage.setItem(FORCED_DEFAULTS_KEY, JSON.stringify([...done, ...pending.map((f) => f.id)]));
+    const res = await fetch("/api/users/forced-defaults", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) return null; // 401 signed out, or a transient error: fall back
+    const data = (await res.json()) as { pending?: unknown };
+    return Array.isArray(data.pending) ? (data.pending as unknown[]).filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return null;
+  }
+}
+
+/** Write settings on this device only — local storage + DOM — without touching
+ *  the account sync: the updated-at stamp is left as-is and nothing is pushed.
+ *  Used for the signed-out forced-default fallback so signing in later can't let
+ *  a device-local force overwrite the account's own settings. */
+function saveSettingsDeviceOnly(s: Settings) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
   } catch {}
+  applyBoardTheme(s.boardTheme);
+  applyPieceTheme(s.pieceTheme);
+  applyUiPrefs(s);
+  window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
+}
+
+/** Apply any forced-default rollout that still needs to run, gated per account
+ *  (with a per-device fallback when signed out). Call *after* pulling the
+ *  account's settings so a force lands on the user's real current values. */
+export async function applyForcedDefaults(): Promise<void> {
+  if (typeof window === "undefined") return;
+  const allIds = FORCED_DEFAULTS.map((f) => f.id);
+  const deviceDone = deviceForcedIds();
+  const serverPending = await accountPendingForces(allIds);
+
+  // Record every id on this device so the signed-out fallback never repeats here
+  // (the account gate governs signed-in devices regardless of this record).
+  try {
+    window.localStorage.setItem(FORCED_DEFAULTS_KEY, JSON.stringify([...new Set([...deviceDone, ...allIds])]));
+  } catch {}
+
+  if (serverPending !== null) {
+    // Signed in: apply exactly what the account has not had, and sync it so the
+    // change reaches the account and the user's other devices (once per account).
+    const pending = FORCED_DEFAULTS.filter((f) => serverPending.includes(f.id));
+    if (pending.length === 0) return;
+    saveSettings(pending.reduce((s, f) => f.apply(s), loadSettings()));
+  } else {
+    // Signed out / offline: no account to gate on. Force once per browser, but
+    // device-locally only — never synced — so it can't clobber the account when
+    // the user signs in; the account gate handles the force there.
+    const pending = FORCED_DEFAULTS.filter((f) => !deviceDone.includes(f.id));
+    if (pending.length === 0) return;
+    saveSettingsDeviceOnly(pending.reduce((s, f) => f.apply(s), loadSettings()));
+  }
 }
 
 // ---- Per-account settings sync ----
