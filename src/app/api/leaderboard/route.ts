@@ -43,9 +43,14 @@ export async function GET(request: Request) {
   const requested = url.searchParams.get("category");
   const category: ModeCategory = isModeCategory(requested) ? requested : DEFAULT_CATEGORY;
 
-  // Bots always count toward the board; the same clause is reused verbatim by
-  // the viewer-rank subquery below (each use binds one HOUSE_ID_MATCH).
-  const houseFilter = `(r.games > 0 OR r.user_id LIKE ? ESCAPE '\\')`;
+  // Who appears on the board: anyone with a rated game in this category, plus
+  // house bots (always), plus any player whose rating in this category was set
+  // by hand via the rating editor (hand_set = 1) — that edit carries no games,
+  // so without this clause an edited-but-never-played player would show the set
+  // number on their profile yet be absent from the board. The same clause is
+  // reused verbatim by the viewer-rank subquery below (each use binds one
+  // HOUSE_ID_MATCH).
+  const houseFilter = `(r.games > 0 OR r.hand_set = 1 OR r.user_id LIKE ? ESCAPE '\\')`;
 
   const db = await getDb();
   const rows = await db
@@ -70,7 +75,7 @@ export async function GET(request: Request) {
       const mine = await db
         .prepare(
           `SELECT rating, rd, games, wins, losses, draws FROM user_ratings
-           WHERE user_id = ? AND category = ? AND games > 0`,
+           WHERE user_id = ? AND category = ? AND (games > 0 OR hand_set = 1)`,
         )
         .bind(viewer.id, category)
         .first<{ rating: number; rd: number; games: number; wins: number; losses: number; draws: number }>();

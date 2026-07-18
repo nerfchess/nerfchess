@@ -42,7 +42,7 @@ import { ACTIVE_RATING_CATEGORIES, MODE_RATING_CATEGORIES } from "@/lib/ratingCa
 import { clockLabel } from "@/lib/tournaments";
 import { placementTitle, type LaurelPlacement } from "@/lib/laurels";
 import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
-import { isHouseEditor } from "@/lib/godPanel";
+import { isHouseEditor, isRatingEditor } from "@/lib/godPanel";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
 
@@ -410,6 +410,48 @@ function ProfileContent() {
             }
           }}
           onBio={(bio) => setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))}
+        />
+      )}
+
+      {/* Rating editor (ilovenewjeans only): overwrite every rating bucket for
+          this player at once. Server re-verifies the gate; this is UX only.
+          Hidden on house-bot profiles (houseEdit is set only there): bot ratings
+          are engine-managed, so the route rejects them — the HouseBotEditor
+          above is the right tool for those accounts. */}
+      {isRatingEditor(me?.username) && !houseEdit && (
+        <RatingEditor
+          key={user.username}
+          username={user.username}
+          current={
+            profile.ratings?.nerf?.rating ??
+            profile.ratings?.buff?.rating ??
+            (user.rating || null)
+          }
+          onApplied={(appliedUsername, rating) => {
+            setProfile((p) => {
+              // Ignore a stale save that resolved after the viewer navigated to a
+              // different profile (the callback still targets the old username).
+              if (!p || p.user.username.toLowerCase() !== appliedUsername.toLowerCase()) return p;
+              const next: Record<string, CategoryRatingRow> = { ...(p.ratings ?? {}) };
+              // Overwrite every bucket the player already has (Nerf, Buff, legacy).
+              for (const key of Object.keys(next)) {
+                next[key] = {
+                  ...next[key],
+                  rating,
+                  rd: Math.min(next[key].rd ?? 90, 90),
+                  peak: Math.max(next[key].peak ?? rating, rating),
+                };
+              }
+              // Ensure the two visible mode cards render the value even if the
+              // player was previously Unrated in that mode.
+              for (const c of MODE_RATING_CATEGORIES) {
+                if (!next[c.id]) {
+                  next[c.id] = { rating, rd: 90, games: 0, wins: 0, losses: 0, draws: 0, peak: rating };
+                }
+              }
+              return { ...p, user: { ...p.user, rating }, ratings: next };
+            });
+          }}
         />
       )}
 
@@ -1594,6 +1636,123 @@ function BioSection({
           )}
         </p>
       )}
+    </div>
+  );
+}
+
+// Inline rating editor, shown on ANY profile ONLY to the designated rating
+// editor (ilovenewjeans). Types a number and sets every rating bucket for the
+// account to it in one save (via /api/mod/ratings), so the value updates
+// identically across the profile cards, the header chip, the leaderboard, the
+// lobby, and player search. The server re-verifies the ilovenewjeans gate; this
+// control is a UX affordance only.
+function RatingEditor({
+  username,
+  current,
+  onApplied,
+}: {
+  username: string;
+  current: number | null;
+  onApplied: (username: string, rating: number) => void;
+}) {
+  const [value, setValue] = useState(current != null ? String(Math.round(current)) : "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+
+  // Navigating profile->profile unmounts this editor (the parent falls back to
+  // the skeleton while the next profile loads). An in-flight save must not touch
+  // state or call back after that, or a slow save started on player A could land
+  // on player B's now-mounted profile. Flipped false on unmount.
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  const save = async () => {
+    // Re-entrancy guard: the Save button is disabled while saving, but Enter in
+    // the input is not — without this a double-press fires duplicate POSTs.
+    if (saving) return;
+    const trimmed = value.trim();
+    if (trimmed === "") return;
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      setError("Enter a number.");
+      return;
+    }
+    const rating = Math.round(parsed);
+    setSaving(true);
+    setError(null);
+    setNote(null);
+    try {
+      const res = await fetch("/api/mod/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, rating }),
+      });
+      const data = (await res.json().catch(() => null)) as { error?: string; rating?: number } | null;
+      if (!alive.current) return;
+      setSaving(false);
+      if (!res.ok) {
+        setError(data?.error ?? "Could not save. Try again.");
+        return;
+      }
+      const applied = data?.rating ?? rating;
+      setValue(String(applied));
+      setNote(`All ratings set to ${applied}.`);
+      // Pass the username this save targeted so the parent can ignore a stale
+      // callback that resolved after the viewer moved to a different profile.
+      onApplied(username, applied);
+    } catch {
+      if (!alive.current) return;
+      setSaving(false);
+      setError("Could not save. Try again.");
+    }
+  };
+
+  return (
+    <div className="mt-5 plate border border-gold/25 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+          Rating editor
+        </span>
+        <span className="text-xs text-parchment-400">
+          Set this player&rsquo;s rating in every category at once.
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label htmlFor="rating-edit" className="w-16 text-xs text-parchment-400">
+          Rating
+        </label>
+        <input
+          id="rating-edit"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={4000}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void save();
+          }}
+          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
+        />
+        <button
+          type="button"
+          disabled={saving || value.trim() === ""}
+          onClick={() => void save()}
+          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
+        >
+          {saving ? "Saving..." : "Set all ratings"}
+        </button>
+      </div>
+
+      {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
+      {note && !error && <p className="mt-2 text-xs text-verdigris-glow">{note}</p>}
     </div>
   );
 }
