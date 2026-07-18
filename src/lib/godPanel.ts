@@ -17,6 +17,15 @@ export function isGodPanelUser(username: string | null | undefined): boolean {
   return GOD_PANEL_USERNAMES.some((name) => name === u);
 }
 
+// Sentinel reroll count for the god-panel "infinite rerolls" tool. When an
+// owner flips the toggle on, the server reports THIS value as their own seat's
+// rerollsLeft (draftStateFor) so the Reroll control always shows, and the
+// draft-reroll handler tops the real count back up so it never actually drains
+// — a video-scripting aid for the god-panel accounts. The client shows "∞"
+// instead of the raw number when rerollsLeft reaches it. Shared here so the
+// game server (worker.ts) and the draft UI (DraftOverlay) agree on the value.
+export const INFINITE_REROLLS = 999;
+
 // The single account allowed to edit a house bot's identity (username, avatar,
 // bio) directly from that bot's profile — "click a house bot and edit it".
 // Deliberately ONE name (narrower than the god-panel set and independent of the

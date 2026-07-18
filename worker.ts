@@ -94,7 +94,7 @@ import { ensureSchema } from "./src/lib/server/schema";
 import { loadCategoryRatings, recordFinishedGame, RatingChange, type DraftRecord } from "./src/lib/server/games";
 import { categoryForTimeControl, isModeCategory, type RatingCategory } from "./src/lib/speed";
 import { censorText, findProfanity } from "./src/lib/profanity";
-import { isGodPanelUser } from "./src/lib/godPanel";
+import { isGodPanelUser, INFINITE_REROLLS } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
 
 type Result = NerfGame["result"];
@@ -359,6 +359,13 @@ type SessionAttachment = {
   // held-buff identities. Per-socket and in-memory, so it resets on reconnect and never
   // affects any other viewer's masking.
   seeOppBuffs?: boolean;
+  // Owner "infinite rerolls" toggle (god-panel accounts only, re-verified on
+  // use): when set, this socket's own seat's rerollsLeft is reported as the
+  // INFINITE_REROLLS sentinel (so the Reroll control always shows) and the
+  // draft-reroll handler tops the real count back up so it never drains. A
+  // video-scripting aid; the opponent's dtState still carries the seat's real
+  // count, so nothing is leaked. Per-socket and in-memory (resets on reconnect).
+  godRerolls?: boolean;
 };
 type QueueEntry = {
   attachmentId: string;
@@ -411,6 +418,9 @@ type ClientFrame =
   | { t: "adjustOppClock"; d?: { delta?: unknown } }
   | { t: "adminGrant"; d?: { id?: unknown } }
   | { t: "seeOppBuffs"; d?: { on?: unknown } }
+  // Owner "infinite rerolls": flip a per-socket flag that keeps the owner's own
+  // draft Reroll control endlessly available (see the godRerolls handler).
+  | { t: "godRerolls"; d?: { on?: unknown } }
   | { t: "p" };
 
 export interface Env {
@@ -1516,6 +1526,8 @@ export class GameServer extends DurableObject<Env> {
         return this.adminGrant(ws, frame.d);
       case "seeOppBuffs":
         return this.seeOppBuffs(ws, frame.d);
+      case "godRerolls":
+        return this.godRerolls(ws, frame.d);
       case "p":
         return this.sendClocks(ws);
       default:
@@ -6271,6 +6283,13 @@ export class GameServer extends DurableObject<Env> {
     // so this reveals already-synced state without changing the authoritative
     // game or any other viewer's view.
     revealOpp = false,
+    // Owner "infinite rerolls": when true, report THIS viewer's OWN seat's
+    // rerollsLeft as the INFINITE_REROLLS sentinel so their Reroll control never
+    // greys out. Set solely for a god-panel owner's own dtState (server-verified
+    // in sendDraftState). The real stored count is untouched (draftReroll tops
+    // it up), and the opponent's frame still carries the real value, so this
+    // changes nothing authoritative and leaks nothing.
+    godRerolls = false,
   ) {
     const bs = game.buffs;
     if (!bs) return null;
@@ -6291,7 +6310,10 @@ export class GameServer extends DurableObject<Env> {
         buffs: showBuffs ? ps.buffs : ps.buffs.map((b) => (this.isBuffRevealed(b) ? b : this.maskBuff(b))),
         draftsTaken: ps.draftsTaken,
         nextDraftAt: ps.nextDraftAt,
-        rerollsLeft: ps.rerollsLeft,
+        // Owner "infinite rerolls": inflate ONLY the requesting owner's own seat
+        // so their Reroll control always shows; every other viewer (and the
+        // opponent) sees the real count.
+        rerollsLeft: self && godRerolls ? Math.max(ps.rerollsLeft ?? 0, INFINITE_REROLLS) : ps.rerollsLeft,
         offer: open ? ps.offer : null,
         ...(seat !== "spectator" && !open && ps.offer ? { offerPending: true } : {}),
         ...(open ? { flags: ps.flags } : {}),
@@ -6326,7 +6348,10 @@ export class GameServer extends DurableObject<Env> {
       // draft change so the reveal stays live as the opponent drafts.
       const seatSession = this.session(seatWs);
       const revealOpp = !!seatSession.seeOppBuffs && isGodPanelUser(seatSession.username);
-      const state = this.draftStateFor(game, match, color, revealOpp);
+      // Owner "infinite rerolls": re-verified per socket, applied to this seat's
+      // own frame only so the Reroll control stays lit for the owner.
+      const godRerolls = !!seatSession.godRerolls && isGodPanelUser(seatSession.username);
+      const state = this.draftStateFor(game, match, color, revealOpp, godRerolls);
       if (state) send(seatWs, "dtState", { state });
     }
   }
@@ -6580,6 +6605,13 @@ export class GameServer extends DurableObject<Env> {
     const color = session.color!;
     const ps = game.buffs!.players[color];
     if (!ps.offer) return error(ws, "no_offer", "You have no pending buff draft.");
+    // Owner "infinite rerolls" (god-panel accounts only, re-verified here): top
+    // the real count up by one so rerollOffer's own spend nets to zero and the
+    // seat never runs dry. The stored count is otherwise untouched, so toggling
+    // the tool off restores normal draining immediately.
+    if (!!session.godRerolls && isGodPanelUser(session.username)) {
+      ps.rerollsLeft = (ps.rerollsLeft ?? 0) + 1;
+    }
     if ((ps.rerollsLeft ?? 0) <= 0) return error(ws, "no_reroll", "You have no rerolls left.");
     if (!rerollDraft(game, color)) return error(ws, "no_reroll", "That draft cannot be rerolled.");
     match.draftActions = [
@@ -6795,6 +6827,38 @@ export class GameServer extends DurableObject<Env> {
     // it back off is not a fresh "use").
     if (session.seeOppBuffs && !wasOn) {
       this.announceGodPanel(match, this.seatName(match, session.color!), "peeked at hidden cards");
+    }
+  }
+
+  // Owner "infinite rerolls": god-panel-only per-socket flag. When on, the
+  // owner's own dtState reports their rerollsLeft as INFINITE_REROLLS (so the
+  // Reroll control never greys out) and draftReroll tops the real count back up
+  // on every use, so a god-panel account can reroll a draft offer endlessly —
+  // handy for scripting videos. SERVER-verifies the account (the client gate is
+  // only UX). Only the owner's OWN frame changes; the opponent's dtState still
+  // carries the seat's real count, so nothing authoritative changes and nothing
+  // leaks. Announced to the table on the off -> on edge, like the other tools.
+  private async godRerolls(ws: WebSocket, data: unknown) {
+    const ctx = await this.draftContext(ws);
+    if (!ctx) return;
+    const { session, match, game } = ctx;
+    if (!isGodPanelUser(session.username)) {
+      return error(ws, "forbidden", "That tool is not available on this account.");
+    }
+    const wasOn = !!session.godRerolls;
+    session.godRerolls = Boolean((data as { on?: unknown } | undefined)?.on);
+    // Refresh only this socket's dtState so the inflated rerollsLeft (or the real
+    // count once toggled off) reaches the owner's Reroll control immediately.
+    const state = this.draftStateFor(
+      game,
+      match,
+      session.color!,
+      !!session.seeOppBuffs && isGodPanelUser(session.username),
+      session.godRerolls,
+    );
+    if (state) send(ws, "dtState", { state });
+    if (session.godRerolls && !wasOn) {
+      this.announceGodPanel(match, this.seatName(match, session.color!), "unlocked infinite rerolls");
     }
   }
 

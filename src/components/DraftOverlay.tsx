@@ -9,6 +9,7 @@ import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftRe
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
+import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
 import { DraftChest } from "./DraftChest";
 import "./DraftOverlay.css";
@@ -756,6 +757,9 @@ export function DraftOverlay({
   // offer stays open (no commit), so this never touches committedRef. The
   // `rerolling` guard blocks a double-fire until the new cards deal in.
   const canReroll = rerollsLeft > 0 && !!onReroll && chosen == null && !banking && !committed;
+  // The god-panel "infinite rerolls" tool reports the count as a large sentinel;
+  // show it as "∞" rather than a meaningless big number.
+  const rerollBadge = rerollsLeft >= INFINITE_REROLLS ? "∞" : String(rerollsLeft);
   const rerollTimer = useRef<number | null>(null);
   const handleReroll = () => {
     if (!canReroll || rerolling) return;
@@ -926,7 +930,7 @@ export function DraftOverlay({
                 className="flex min-w-[6rem] min-h-[44px] flex-1 touch-manipulation items-center justify-center gap-1 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 font-display text-[14px] sm:text-[13px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40"
                 title="Roll fresh cards at the same tier"
               >
-                <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} /> Reroll ({rerollsLeft})
+                <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} /> Reroll ({rerollBadge})
               </button>
             )}
             <button
@@ -1476,7 +1480,7 @@ export function DraftOverlay({
               title="Discard this offer and roll fresh cards at the same tier"
             >
               <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} />
-              Reroll <span className="text-parchment-400">({rerollsLeft})</span>
+              Reroll <span className="text-parchment-400">({rerollBadge})</span>
             </button>
           )}
           <div className="relative flex w-full items-center gap-2 sm:w-auto">
