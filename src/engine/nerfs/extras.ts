@@ -953,4 +953,5 @@ export const EXTRA_NERFS: Nerf[] = [
   ARMORY,
   COUNTING_SHEEP,
   FAMINE,
+  CLERGY,
 ];
