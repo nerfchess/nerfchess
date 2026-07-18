@@ -4423,16 +4423,23 @@ export function Board({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            // Click the dark backdrop (outside the picker) to cancel. The inner
-            // panel stops propagation so choosing a piece never counts as a
-            // click-away.
-            onClick={cancelPromotion}
+            // Press the dark backdrop (outside the picker) to cancel. This is a
+            // pointer-DOWN handler, not a click: the tap that OPENS the picker
+            // (tryPlay runs on pointerdown) also fires a trailing synthesized
+            // "ghost" click at the same spot on touch, which — landing on the
+            // freshly-mounted full-bleed backdrop — used to cancel the picker
+            // the instant it appeared ("tapping the promotion square cancels
+            // itself"; dragging was unaffected because a drag suppresses the
+            // ghost click). Dismissing on pointerdown ignores that ghost click
+            // (a genuine tap-outside is a new pointerdown). The inner panel
+            // stops propagation so choosing a piece never counts as a press-away.
+            onPointerDown={cancelPromotion}
             role="dialog"
             aria-label="Choose a promotion piece"
             className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-md z-20"
           >
             <div
-              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
               className="plate gilt flex flex-col items-center gap-2 p-3 sm:p-4"
             >
               <div className="flex gap-2">

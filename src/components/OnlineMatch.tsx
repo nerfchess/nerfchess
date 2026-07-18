@@ -69,7 +69,7 @@ import {
 } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
-import { isGodPanelUser } from "@/lib/godPanel";
+import { isGodPanelUser, INFINITE_REROLLS } from "@/lib/godPanel";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import {
@@ -3193,7 +3193,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               // (new cards + bumped rerolled counter). Decrement locally too so
               // the control reflects the spend at once: the replica's
               // mergeDraftState does not carry rerollsLeft back.
-              if (bsMine) {
+              // God-panel "infinite rerolls" reports a large sentinel count the
+              // server keeps topped up; skip the optimistic drain so the control
+              // never flickers from ∞ to a number between reroll and dtState.
+              if (bsMine && (bsMine.rerollsLeft ?? 0) < INFINITE_REROLLS) {
                 // Mutable engine replica advanced in place then re-rendered via
                 // applyGame({ ...game }) — the app-wide model, so
                 // react-hooks/immutability is suppressed rather than rewritten.

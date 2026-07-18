@@ -625,13 +625,38 @@ export interface ExplodeOpts {
   chain?: boolean;
   /** Blast radius in squares (default 1). */
   radius?: number;
+  /** Also destroy an enemy piece sitting ON the center square, not just its
+   * neighbours. For a capture BY the owner the center holds the owner's own
+   * piece (never enemy, so it survives); for a capture AGAINST the owner it
+   * holds the enemy piece that just captured, so this makes the blast take the
+   * capturer too — the classic atomic "the capturer dies" that makes an
+   * against-your-pieces detonation actually punish the opponent. */
+  includeCenter?: boolean;
 }
 
 /** Clear enemy pieces around `center`. Kings always survive; shielded enemy
- * pieces resist the blast. */
+ * pieces resist the blast. With `includeCenter`, an enemy piece ON the center
+ * square is destroyed too (see ExplodeOpts.includeCenter). */
 export function explodeAt(api: BuffApi, center: Square, opts: ExplodeOpts = {}) {
   const isShielded = shieldedFor(api, api.opp);
   const radius = opts.radius ?? 1;
+  // Take the enemy piece sitting on the center square first (the capturer, in an
+  // against-your-pieces blast). Same survivor rules as the neighbourhood: kings
+  // live, shielded pieces resist, and pawns live when sparePawns is set. It
+  // still seeds the chain from `center` below, so a removed capturer detonates
+  // its own neighbourhood exactly like any other blast origin.
+  if (opts.includeCenter) {
+    const p = api.board.pieces[center];
+    if (
+      p &&
+      p.color === api.opp &&
+      p.type !== "k" &&
+      !(opts.sparePawns && p.type === "p") &&
+      !isShielded(center)
+    ) {
+      api.removePiece(center);
+    }
+  }
   const queue: Square[] = [center];
   const seen = new Set<Square>([center]);
   while (queue.length) {

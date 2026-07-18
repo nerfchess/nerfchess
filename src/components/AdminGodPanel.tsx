@@ -143,6 +143,13 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
   const [seeOpp, setSeeOpp] = useState(false);
   const [oppBuffs, setOppBuffs] = useState<HeldBuff[]>([]);
 
+  // Owner "infinite rerolls": a per-session draft cheat. When on, the server
+  // keeps this owner's draft Reroll control endlessly available (it tops the
+  // real count back up on every reroll), so an offer can be rerolled until the
+  // exact cards a video needs come up. Local UX state only; the server verifies
+  // the account and owns the reroll count. Defaults off every session.
+  const [infRerolls, setInfRerolls] = useState(false);
+
   // Screen recorder for capturing a clip of the game. Independent of the
   // recording-mode LAYOUT toggle above it: the layout rearranges the board for
   // a 9:16 crop; this actually records the screen and hands back a download.
@@ -166,6 +173,12 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
     // Clear immediately when hiding; the re-masked dtState follows from the
     // server but the list should vanish on click.
     if (!next) setOppBuffs([]);
+  }
+
+  function toggleInfRerolls() {
+    const next = !infRerolls;
+    session.godRerolls(next);
+    setInfRerolls(next);
   }
 
   // Groups filtered by the search box; a group with no matches drops out.
@@ -329,6 +342,20 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
             -15s clock
           </button>
         </div>
+        <button
+          type="button"
+          onClick={toggleInfRerolls}
+          aria-pressed={infRerolls}
+          title="Reroll your draft offer as many times as you like (keeps the Reroll button lit)"
+          className={
+            "w-full rounded-[1px] border px-2 py-1 text-[10px] font-semibold transition-colors " +
+            (infRerolls
+              ? "border-sun/60 bg-sun/15 text-sun-glow"
+              : "border-white/12 text-parchment-400 hover:border-sun/45 hover:text-sun-glow")
+          }
+        >
+          {infRerolls ? "infinite rerolls: on" : "infinite rerolls"}
+        </button>
         {seeOpp && (
           <div className="space-y-1 pt-0.5">
             {revealedOpp.length === 0 ? (

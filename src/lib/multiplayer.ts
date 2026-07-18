@@ -1362,6 +1362,14 @@ export class MPSession {
     return this.sendFrame("seeOppBuffs", { on });
   }
 
+  // Owner "infinite rerolls": toggle the per-socket flag that keeps my own draft
+  // Reroll control endlessly available (the server tops the count back up on
+  // every reroll). The server verifies the account and answers with a fresh
+  // dtState carrying the inflated (or, when off, the real) reroll count.
+  godRerolls(on: boolean): boolean {
+    return this.sendFrame("godRerolls", { on });
+  }
+
   // Nudge the opponent's clock by 15 seconds. `subtract` false adds time (the
   // courtesy +15s any player may send in a casual game); true subtracts it (the
   // owner-only -15s). The server owns the magnitude and re-verifies the account
