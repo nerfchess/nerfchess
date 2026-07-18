@@ -117,6 +117,10 @@ type Props = {
   recordingMode: boolean;
   /** Toggle the recording-mode layout (purely visual; see OnlineMatch). */
   onToggleRecordingMode: () => void;
+  /** Whether the recording-mode clock + player-name bar is hidden. */
+  cleanFrame: boolean;
+  /** Toggle the "clean frame" (hide clock + names in recording mode). */
+  onToggleCleanFrame: () => void;
 };
 
 // mm:ss for the live recording timer.
@@ -127,7 +131,13 @@ function fmtElapsed(ms: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }: Props) {
+export function AdminGodPanel({
+  session,
+  recordingMode,
+  onToggleRecordingMode,
+  cleanFrame,
+  onToggleCleanFrame,
+}: Props) {
   const [query, setQuery] = useState("");
   // Start tucked away as a thin edge tab so the panel never overlaps the board
   // on load; the owner clicks the tab to open it.
@@ -286,6 +296,25 @@ export function AdminGodPanel({ session, recordingMode, onToggleRecordingMode }:
             </button>
           )}
         </div>
+        {/* Clean frame: hide the clock + player-name bar under the board so the
+            recording captures the board alone. Only meaningful in recording
+            mode, so it appears with it. */}
+        {recordingMode && (
+          <button
+            type="button"
+            onClick={onToggleCleanFrame}
+            aria-pressed={cleanFrame}
+            title="Hide the clock and player names beneath the board for a board-only capture"
+            className={
+              "w-full rounded-[1px] border px-2 py-1 text-[10px] font-semibold transition-colors " +
+              (cleanFrame
+                ? "border-sun/60 bg-sun/15 text-sun-glow"
+                : "border-white/12 text-parchment-400 hover:border-sun/45 hover:text-sun-glow")
+            }
+          >
+            {cleanFrame ? "clock & names: hidden" : "hide clock & names"}
+          </button>
+        )}
         {recorder.state === "stopped" && recorder.downloadUrl && (
           <div className="flex gap-1 pt-0.5">
             <button

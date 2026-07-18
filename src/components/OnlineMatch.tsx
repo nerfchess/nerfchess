@@ -312,6 +312,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // (YouTube Shorts / Instagram Reels). Toggled from the god panel; changes
   // nothing about the game itself. Off for everyone but the owner account.
   const [recordingMode, setRecordingMode] = useState(false);
+  // Owner "clean frame" for recording: hide the clock + player-name bar that
+  // rides beneath the board in recording mode, for a board-only capture (a
+  // scripted-video aid). Purely visual and owner-only, like recording mode.
+  const [recCleanFrame, setRecCleanFrame] = useState(false);
   const [uiSettings, setUiSettings] = useState(() => loadSettings());
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [confirmingDraw, setConfirmingDraw] = useState(false);
@@ -2873,8 +2877,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {/* Recording mode: both clocks (with names) flow directly beneath
                   the board, inside the board shell, so they hug the board's
                   bottom edge in the 9:16 frame instead of being pinned near the
-                  frame floor. Owner-only layout; purely presentational. */}
-              {recordingLayout && clockEnabled && (
+                  frame floor. Owner-only layout; purely presentational. The
+                  "clean frame" toggle hides this whole bar (clock + names) for a
+                  board-only capture. */}
+              {recordingLayout && clockEnabled && !recCleanFrame && (
                 <div className="rec-clock-bar">
                   <div className="flex min-w-0 items-center gap-2">
                     <span
@@ -2987,6 +2993,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           session={session}
           recordingMode={recordingMode}
           onToggleRecordingMode={() => setRecordingMode((v) => !v)}
+          cleanFrame={recCleanFrame}
+          onToggleCleanFrame={() => setRecCleanFrame((v) => !v)}
         />
       )}
 
