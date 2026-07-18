@@ -257,11 +257,17 @@ export async function POST(request: Request) {
   // The rating to write when touched: the override when set, else the roster
   // seed (so a clear/reset restores the seeded number).
   const effectiveRating = next.rating ?? houseSeedRating(persona);
-  try {
-    if (next.username === null && next.avatar === null && next.bio === null && next.rating === null) {
-      await db.prepare("DELETE FROM house_identity_overrides WHERE user_id = ?").bind(persona.userId).run();
-    } else {
-      await db
+
+  // Everything below applies as ONE atomic db.batch (D1 wraps a batch in an
+  // implicit transaction), so the override row, the identity columns, and the
+  // rating stores can never be left disagreeing by a mid-sequence failure —
+  // matching the player rating editor. Order is preserved within the batch.
+  const writes: D1PreparedStatement[] = [];
+  if (next.username === null && next.avatar === null && next.bio === null && next.rating === null) {
+    writes.push(db.prepare("DELETE FROM house_identity_overrides WHERE user_id = ?").bind(persona.userId));
+  } else {
+    writes.push(
+      db
         .prepare(
           `INSERT INTO house_identity_overrides (user_id, username, avatar, bio, rating, updated_at)
            VALUES (?, ?, ?, ?, ?, ?)
@@ -269,43 +275,47 @@ export async function POST(request: Request) {
              username = excluded.username, avatar = excluded.avatar, bio = excluded.bio,
              rating = excluded.rating, updated_at = excluded.updated_at`,
         )
-        .bind(persona.userId, next.username, next.avatar, next.bio, next.rating, Date.now())
-        .run();
-    }
-    // The users row is what every live surface reads for identity. A unique-index
-    // collision on a restored baked name maps to 409.
-    await db
+        .bind(persona.userId, next.username, next.avatar, next.bio, next.rating, Date.now()),
+    );
+  }
+  // The users row is what every live surface reads for identity.
+  writes.push(
+    db
       .prepare("UPDATE users SET username = ?, username_lower = ?, avatar = ?, bio = ? WHERE id = ?")
-      .bind(effective.name, effective.name.toLowerCase(), effective.avatar, effective.bio, persona.userId)
-      .run();
-    if (ratingTouched) {
-      // Legacy shared column, then both mode buckets. A rating edit shows
-      // immediately (the DO's house-ratings cache still refreshes it within
-      // ~60s). rd settles to the house seed (non-provisional) and peak only
-      // ratchets up, matching syncHouseRatings.
-      await db
+      .bind(effective.name, effective.name.toLowerCase(), effective.avatar, effective.bio, persona.userId),
+  );
+  if (ratingTouched) {
+    // Legacy shared column, then both mode buckets. A rating edit shows
+    // immediately (the DO's house-ratings cache still refreshes it within ~60s).
+    // rd settles to the house seed (non-provisional) and peak only ratchets up,
+    // matching syncHouseRatings.
+    writes.push(
+      db
         .prepare("UPDATE users SET rating = ?, rd = MIN(rd, ?) WHERE id = ?")
-        .bind(effectiveRating, HOUSE_SEED_RD, persona.userId)
-        .run();
-      for (const mode of ["nerf", "buff"] as const) {
-        // The override collapses both modes to one number; a clear restores each
-        // mode's own seed. INSERT-OR-IGNORE guards the rare missing-row case.
-        const r = next.rating ?? houseSeedRatingForMode(persona, mode);
-        await db
+        .bind(effectiveRating, HOUSE_SEED_RD, persona.userId),
+    );
+    for (const mode of ["nerf", "buff"] as const) {
+      // The override collapses both modes to one number; a clear restores each
+      // mode's own seed. INSERT-OR-IGNORE guards the rare missing-row case.
+      const r = next.rating ?? houseSeedRatingForMode(persona, mode);
+      writes.push(
+        db
           .prepare(
             `INSERT OR IGNORE INTO user_ratings (user_id, category, rating, rd, vol, peak)
              VALUES (?, ?, ?, ?, 0.09, ?)`,
           )
-          .bind(persona.userId, mode, r, HOUSE_SEED_RD, r)
-          .run();
-        await db
+          .bind(persona.userId, mode, r, HOUSE_SEED_RD, r),
+        db
           .prepare(
             "UPDATE user_ratings SET rating = ?, rd = MIN(rd, ?), peak = MAX(peak, ?) WHERE user_id = ? AND category = ?",
           )
-          .bind(r, HOUSE_SEED_RD, r, persona.userId, mode)
-          .run();
-      }
+          .bind(r, HOUSE_SEED_RD, r, persona.userId, mode),
+      );
     }
+  }
+  try {
+    // A unique-index collision on a restored baked name surfaces here as 409.
+    await db.batch(writes);
   } catch {
     return NextResponse.json(
       { error: "Could not save. That username may already be in use." },
