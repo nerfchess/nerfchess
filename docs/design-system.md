@@ -6,7 +6,7 @@ The single visual and interaction contract for every route. Written during the 2
 
 - Dark nebula atmosphere: warm near-black ink surfaces with a faint top-warm, bottom-cool wash. Never flat gray, never pure black outside the "void" theme.
 - Parchment text: the warm off-white ramp (`--paper`, `parchment-*`). Never neutral gray text on warm surfaces.
-- Gold highlights: gold is the color of reward, rank, and emphasis (tier brass, achievements, podium, "featured"). The configurable `--accent` (default sky blue) owns "act here".
+- Gold highlights: gold is the color of reward, rank, and emphasis (tier brass, achievements, podium, "featured"). The configurable `--accent` (default rose) owns "act here".
 - Mode duality as structure: Buff sky blue vs Nerf terracotta coral meeting at the seam. Every surface that is mode-specific carries its mode hue; nothing else may use those hues.
 - Chess-piece artwork and the competitive-fantasy voice: pieces, sigils, and card tiers are the decoration. No stock illustration, no emoji as UI.
 - Dramatic game effects that never cost readability: the board stays legible through every animation.
