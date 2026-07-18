@@ -55,8 +55,8 @@ export type SoundTheme = "lichess" | "classic";
 // style, so only the palette shifts — no per-component work). `swatch` feeds
 // the settings picker preview; `scheme` is the value for CSS color-scheme.
 // Each theme also names its own ACCENT (the color of primary buttons, links,
-// and "act here" chrome). It applies while the accent setting sits on "auto"
-// (the default); picking an explicit accent color overrides every theme.
+// and "act here" chrome). It applies while the accent setting sits on "auto";
+// picking an explicit accent color (the default is "rose") overrides every theme.
 export interface AccentDef {
   accent: string;
   accentHi: string;
@@ -195,10 +195,10 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "crimson",
+  siteTheme: "dark",
   compactMode: false,
   uiScale: 1,
-  accentColor: "auto",
+  accentColor: "rose",
   animationSpeed: "normal",
   uiSounds: true,
   highContrast: false,
