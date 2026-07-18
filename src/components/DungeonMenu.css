@@ -14,8 +14,17 @@
 
 /* --- The slab --------------------------------------------------------------- */
 /* Hewn stone: warm dark umber with faint block-joint courses, torchlight
-   breathing up from the foot, iron-and-ember edging. The !importants beat
-   .plate's background/border shorthands (same trick the draft panel uses). */
+   breathing up from the foot, iron-and-ember edging.
+
+   SOLIDITY: the base fill is built on the design system's RAISED surface
+   (--surface-raise), not a hardcoded near-black, so the panel always sits a
+   clear rung ABOVE the page it floats over and reads as a solid menu in every
+   theme (a fixed dark stone was so close to the dark page behind it that the
+   opaque menu looked half-transparent; on the light theme it also trapped dark
+   text on a dark slab). The warm/shade tint is layered ON TOP of that raised
+   base as a small color-mix, so the torchlit-stone character survives while the
+   surface retints with the active theme. The !importants beat .plate's
+   background/border shorthands (same trick the draft panel uses). */
 .dgn-menu {
   background:
     /* Pin-prick stars showing through the stone: the void beyond the wall. */
@@ -24,11 +33,19 @@
     radial-gradient(1px 1px at 148px 27px, rgb(255 240 214 / 0.3), transparent 100%),
     radial-gradient(120% 50% at 50% 108%, rgb(255 138 52 / 0.08), transparent 60%),
     radial-gradient(90% 40% at 85% -6%, rgb(168 119 216 / 0.09), transparent 60%),
-    radial-gradient(140% 40% at 50% -6%, rgba(0, 0, 0, 0.32), transparent 60%),
-    repeating-linear-gradient(0deg, transparent 0 56px, rgba(0, 0, 0, 0.15) 56px 57px),
-    linear-gradient(170deg, #241c12, #1a140e 50%, #16110b 100%) !important;
+    radial-gradient(140% 40% at 50% -6%, rgba(0, 0, 0, 0.22), transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 56px, rgba(0, 0, 0, 0.12) 56px 57px),
+    /* Opaque, theme-aware raised base: lit-warm crown, raised mid lifted a hair
+       above the page, shadowed foot. Every stop is opaque, so the panel never
+       shows the page through it. */
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--surface-raise) 84%, #ffb060 16%),
+      color-mix(in srgb, var(--surface-raise) 92%, #ffffff 8%) 52%,
+      color-mix(in srgb, var(--surface-raise) 86%, #000000 14%) 100%
+    ) !important;
   background-size: 190px 190px, 190px 190px, 190px 190px, auto, auto, auto, auto, auto !important;
-  border-color: rgb(122 96 58 / 0.55) !important;
+  border-color: rgb(150 118 72 / 0.6) !important;
   box-shadow:
     inset 0 1px 0 rgb(255 178 96 / 0.14),
     inset 0 0 0 1px rgba(0, 0, 0, 0.55),
