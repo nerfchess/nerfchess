@@ -753,11 +753,14 @@ type RightClickMark = 1 | 2 | 3 | 4;
 // right-click for a square mark. Modifier keys pick the colour.
 type BoardArrow = { from: Square; to: Square; mark: RightClickMark };
 
+// Annotation colours, mirroring the .sq-rmb-mark-* classes in globals.css so a
+// drawn arrow and its square mark always match. SVG strokes resolve CSS vars,
+// so these ride the design tokens (gold / positive-green / bruise / nerf-red).
 const MARK_COLORS: Record<RightClickMark, string> = {
-  1: "rgb(216,181,110)",
-  2: "rgb(90,155,122)",
-  3: "rgb(124,122,163)",
-  4: "rgb(181,70,65)",
+  1: "rgb(var(--accent-gold-rgb))",
+  2: "rgb(var(--accent-positive-rgb))",
+  3: "rgb(var(--bruise-rgb))",
+  4: "rgb(var(--accent-nerf-rgb))",
 };
 
 // Empowerment marks paint on the owner's pieces; everything else is a

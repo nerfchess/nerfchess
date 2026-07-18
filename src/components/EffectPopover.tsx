@@ -49,9 +49,9 @@ const TONE_LABEL: Record<NonNullable<EffectPopoverContent["tone"]>, string> = {
 };
 
 const TONE_ACCENT: Record<NonNullable<EffectPopoverContent["tone"]>, string> = {
-  buff: "#7eb59a",
-  hex: "#c66860",
-  neutral: "#c9b990",
+  buff: "var(--accent-buff)",
+  hex: "var(--accent-nerf)",
+  neutral: "var(--text-secondary)",
 };
 
 export function EffectPopover({

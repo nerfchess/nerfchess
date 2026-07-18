@@ -65,6 +65,30 @@ export interface AccentDef {
   rgbDim: string;
 }
 
+// The one shared accent: gold. Every dark theme uses it (accents stay identical
+// across themes so the game reads consistently); mirrors --accent-gold in
+// globals.css. The Nerf-red / Buff-blue / positive-green accents are fixed in
+// CSS and never vary by theme, so they need no entry here.
+const GOLD_ACCENT: AccentDef = {
+  accent: "#d4a017",
+  accentHi: "#e6b52e",
+  rgb: "212 160 23",
+  rgbHi: "230 181 46",
+  rgbDim: "168 126 18",
+};
+
+// Light theme needs a DARKER gold so gold text/links clear WCAG AA on the light
+// background (the bright gold above is only ~1.9:1 there). Mirrors the light
+// override block in globals.css; paired with --text-on-accent:#fff so gold
+// button fills stay legible with white type.
+const LIGHT_GOLD_ACCENT: AccentDef = {
+  accent: "#806310",
+  accentHi: "#96751a",
+  rgb: "128 99 16",
+  rgbHi: "150 117 26",
+  rgbDim: "96 74 12",
+};
+
 export const SITE_THEMES: Record<
   SiteTheme,
   {
@@ -75,16 +99,16 @@ export const SITE_THEMES: Record<
     accent: AccentDef;
   }
 > = {
-  dark:     { label: "Classic",  hint: "Warm charcoal, the original",   scheme: "dark",  swatch: { bg: "#191713", panel: "#2b2823", glow: "#d8b56e" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
-  light:    { label: "Light",    hint: "Paper and ink",                 scheme: "light", swatch: { bg: "#e9e5da", panel: "#f4f1ea", glow: "#8a6d3b" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
-  system:   { label: "System",   hint: "Follow your device",            scheme: "dark",  swatch: { bg: "#191713", panel: "#e9e5da", glow: "#3692e7" }, accent: { accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231", rgbHi: "74 159 238", rgbDim: "42 111 176" } },
-  midnight: { label: "Midnight", hint: "Blue-black steel",              scheme: "dark",  swatch: { bg: "#101318", panel: "#1a1f27", glow: "#7ba1c0" }, accent: { accent: "#6f9fc9", accentHi: "#8ab4da", rgb: "111 159 201", rgbHi: "138 180 218", rgbDim: "82 120 156" } },
-  void:     { label: "Void",     hint: "Pure black, OLED-friendly",     scheme: "dark",  swatch: { bg: "#000000", panel: "#141414", glow: "#9f9f9f" }, accent: { accent: "#8ab4f8", accentHi: "#a5c6fa", rgb: "138 180 248", rgbHi: "165 198 250", rgbDim: "104 138 194" } },
-  abyss:    { label: "Abyss",    hint: "Deep-sea teal",                 scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#5ec8b8" }, accent: { accent: "#43b3a0", accentHi: "#5ec8b8", rgb: "67 179 160", rgbHi: "94 200 184", rgbDim: "48 134 120" } },
-  ember:    { label: "Ember",    hint: "Smoldering crimson",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#e07a5f" }, accent: { accent: "#d96e50", accentHi: "#e58a6e", rgb: "217 110 80", rgbHi: "229 138 110", rgbDim: "168 84 60" } },
-  crimson:  { label: "Crimson",  hint: "Deep blood red",                scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#e0526e" }, accent: { accent: "#dc2c48", accentHi: "#ec4f68", rgb: "220 44 72", rgbHi: "236 79 104", rgbDim: "172 34 56" } },
-  moss:     { label: "Moss",     hint: "Deep forest green",             scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#8fbc6f" }, accent: { accent: "#7bab58", accentHi: "#92c26e", rgb: "123 171 88", rgbHi: "146 194 110", rgbDim: "93 130 66" } },
-  nebula:   { label: "Nebula",   hint: "Violet dusk",                   scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#a877d8" }, accent: { accent: "#9d7ad4", accentHi: "#b494e2", rgb: "157 122 212", rgbHi: "180 148 226", rgbDim: "118 91 162" } },
+  dark:     { label: "Classic",  hint: "Warm charcoal, the base palette", scheme: "dark",  swatch: { bg: "#1a1512", panel: "#241d18", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  light:    { label: "Light",    hint: "Paper and ink",                   scheme: "light", swatch: { bg: "#e9e6de", panel: "#f4f1ea", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
+  system:   { label: "System",   hint: "Follow your device",              scheme: "dark",  swatch: { bg: "#1a1512", panel: "#e9e6de", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  midnight: { label: "Midnight", hint: "Blue-grey steel",                 scheme: "dark",  swatch: { bg: "#101318", panel: "#1a1f27", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  void:     { label: "Void",     hint: "Crushed near-black, OLED-friendly", scheme: "dark", swatch: { bg: "#0d0b0a", panel: "#141210", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  abyss:    { label: "Abyss",    hint: "Deep-sea teal",                   scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  ember:    { label: "Ember",    hint: "Smoldering red-brown",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  crimson:  { label: "Crimson",  hint: "Deep blood red",                  scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  moss:     { label: "Moss",     hint: "Deep forest green",               scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
 };
 
 export interface Settings {
@@ -200,6 +224,9 @@ export const ACCENT_THEMES: Record<
 };
 
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
+  // The default board: parchment light / walnut dark, matching --board-light /
+  // --board-dark in globals.css so the board reads as part of the warm site
+  // palette (never the old blue-grey squares).
   wood:       { light: "#ecd9ae", dark: "#8a5a38", label: "Wood" },
   brown:      { light: "#f0d9b5", dark: "#b58863", label: "Brown" },
   walnut:     { light: "#e0c39a", dark: "#7a5230", label: "Walnut" },

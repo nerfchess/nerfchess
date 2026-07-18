@@ -11,40 +11,99 @@ body {
 }
 
 :root {
-  /* Primary text is a WARM off-white, not neutral gray. A warm-ink surface
-     under R=G=B gray type is the classic "cold/bland" tell; nudging red above
-     blue makes the whole page read as one temperature. Stays AA on #161512
-     (contrast ~8:1). Never pure #fff (halation on warm dark). */
-  --paper: #d6d0c3;
-  --paper-dim: #98917f;
-  --ink-deep: #12100e;
-  --ink-warm: #201d19;
-  /* Elevation by lightness, not shadow: the ink ladder already exists in
-     tailwind.config; --surface-raise is the one rung up (ink-600) that floating
-     and hovered surfaces step onto so menus/modals/hover-rows read "closer". */
-  --surface-panel: #2b2823; /* base card, one warm step up from the page */
-  --surface-raise: #363229; /* floating / hovered */
-  --surface-hover: #322e27; /* subtle row hover on a panel */
-  /* Warm hairline: a warm edge one step lighter than the panel, brightening on
-     hover. Replaces the cool white-alpha border that read generic/cold. */
-  --edge: #443c31;
-  --edge-strong: #574b3d;
-  /* accent = Lichess blue (Lichess has no signature green) */
-  --gold: #3692e7;
-  --gold-leaf: #4a9fee;
-  --oxblood: #c0413b;
-  --verdigris: #629924;
+  /* =========================================================================
+     DESIGN TOKENS — the single base palette every theme derives from.
+     ------------------------------------------------------------------------
+     These canonical tokens are the source of truth for the whole site. The
+     "Classic" (warm charcoal) values live here; each named theme overrides
+     only the background + border group below (and text where a tint needs it
+     for contrast). Accents and board colors stay identical across every dark
+     theme so the game always reads consistently. Every legacy token further
+     down (--paper, --surface-*, --edge, --gold, --oxblood, --sq-*, …) is now
+     just an ALIAS onto these, so thousands of existing consumers pick up the
+     palette with zero per-component work.
+     ========================================================================= */
+
+  /* Backgrounds — warm charcoal, brown undertone, never blue. */
+  --bg-base: #1a1512;
+  --bg-panel: #241d18;
+  --bg-raised: #2e2620;
+  --border-subtle: #3d332a;
+
+  /* Board — parchment light, walnut dark, gold last-move/selection highlight
+     (stored as an rgb triple so it can be laid down at 40% opacity). */
+  --board-light: #ecd9ae;
+  --board-dark: #8a5a38;
+  --board-highlight: 201 162 39; /* #c9a227 — last move / selected square */
+  --board-highlight-a: 0.4; /* highlight opacity (Light lifts this for contrast) */
+
+  /* Text. */
+  --text-primary: #f2e8dc;
+  --text-secondary: #a89684;
+  --text-muted: #6e5f52;
+  --text-primary-rgb: 242 232 220;
+  --text-secondary-rgb: 168 150 132;
+
+  /* Accents — the four semantic colors. Fixed across all dark themes.
+     Gold = primary CTAs / selection / your own rating.
+     Nerf red = Nerf mode / curses / resign / danger.
+     Buff blue = Buff mode / powers / boons.
+     Positive green = online dots / wins / positive rating change only. */
+  --accent-gold: #d4a017;
+  --accent-gold-hi: #e6b52e; /* lit gold (hover / leaf) */
+  --accent-gold-rgb: 212 160 23;
+  --accent-gold-hi-rgb: 230 181 46;
+  --accent-gold-dim-rgb: 168 126 18;
+  --accent-nerf: #e05252;
+  --accent-nerf-hi: #ec6f6f;
+  --accent-nerf-rgb: 224 82 82;
+  --accent-nerf-hi-rgb: 236 111 111;
+  --accent-nerf-deep-rgb: 138 46 44; /* scorched red for deep backings */
+  --accent-buff: #5b9bd5;
+  --accent-buff-hi: #84b7e2;
+  --accent-buff-rgb: 91 155 213;
+  --accent-buff-hi-rgb: 132 183 226;
+  --accent-positive: #6faa5e;
+  --accent-positive-hi: #86c074;
+  --accent-positive-rgb: 111 170 94;
+  --accent-positive-hi-rgb: 134 192 116;
+  /* Foreground for text/icons sitting ON a gold (or other accent) fill. Deep
+     warm ink — white on gold is only ~2.4:1, this is ~7.4:1 (WCAG AA). */
+  --text-on-accent: #241a05;
+
+  /* -------------------------------------------------------------------------
+     LEGACY ALIASES — every name below resolves to a token above. Themes and
+     components keep using these; the palette flows through automatically.
+     ------------------------------------------------------------------------- */
+  --paper: var(--text-primary);
+  --paper-dim: var(--text-secondary);
+  /* The remaining surface/edge rungs are COMPUTED from the four background +
+     border tokens above, so a theme only has to override those four and the
+     whole ladder (plus the page wash) retints with it. */
+  --ink-deep: color-mix(in srgb, var(--bg-base) 82%, #000); /* deepest backing */
+  --ink-warm: color-mix(in srgb, var(--bg-base) 55%, var(--bg-panel)); /* base→panel */
+  --surface-panel: var(--bg-panel);
+  --surface-raise: var(--bg-raised);
+  --surface-hover: color-mix(in srgb, var(--bg-panel) 55%, var(--bg-raised)); /* panel→raised */
+  --edge: var(--border-subtle);
+  --edge-strong: color-mix(in srgb, var(--border-subtle) 82%, #fff); /* firmer border */
+  /* accent = gold (primary CTAs / links / "act here"). */
+  --gold: var(--accent-gold);
+  --gold-leaf: var(--accent-gold-hi);
+  --oxblood: var(--accent-nerf);
+  --verdigris: var(--accent-positive);
   --bruise: #8a88a8;
+  --bruise-rgb: 138 136 168;
   /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
      Headings are Inter, body text Noto Sans (the UI font Lichess ships).
      next/font in layout.tsx self-hosts BOTH and defines --font-display and
      --font-body on <body>; only the mono stack lives here. No serifs. */
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
-  --accent: #3692e7;
-  --accent-hi: #4a9fee;
-  --accent-rgb: 54 146 231;
-  --accent-hi-rgb: 74 159 238;
-  --accent-dim-rgb: 42 111 176;
+  --accent: var(--accent-gold);
+  --accent-hi: var(--accent-gold-hi);
+  --accent-rgb: var(--accent-gold-rgb);
+  --accent-hi-rgb: var(--accent-gold-hi-rgb);
+  --accent-dim-rgb: var(--accent-gold-dim-rgb);
 
   /* --- Signature: the mode seam ---------------------------------------------
      NerfChess is one game with two opposed modes. The seam makes that duality
@@ -52,8 +111,8 @@ body {
      single hairline. These two role colors drive every seam divider, the header
      edge, and the hero field. They are the mode identities from tailwind.config,
      kept as rgb triples so seams can fade in and out at any opacity. */
-  --seam-warm-rgb: 196 120 95;   /* Nerf terracotta */
-  --seam-cool-rgb: 91 155 212;   /* Buff sky */
+  --seam-warm-rgb: var(--accent-nerf-rgb);   /* Nerf side of the seam (red) */
+  --seam-cool-rgb: var(--accent-buff-rgb);   /* Buff side of the seam (blue) */
 
   /* --- Fun kit: the playful accent trio ---------------------------------------
      Three saturated, kid-friendly accents that live BESIDE the core blue:
@@ -68,14 +127,13 @@ body {
   --sun-glow: #ffd97e;
 
   /* --- Governed status + celebration colors ----------------------------------
-     Warmth needs somewhere to LAND without adding a second brand accent. The
-     two mode hues are reclaimed here as a disciplined status pair, reusing the
-     seam triples so no new colors enter the system: blue --accent still means
-     "act here", while --pos (Buff sky) marks positive/good and --warm
-     (Nerf terracotta) marks celebration/your-turn/streak. Celebration proper
-     uses BOTH as the seam gradient, never a single loud hue. */
-  --pos-rgb: var(--seam-cool-rgb);
-  --warm-rgb: var(--seam-warm-rgb);
+     The semantic status pair, drawn straight from the accent tokens so no new
+     colors enter the system: --pos (green) marks positive/good/wins, and
+     --warm (gold) marks celebration / your-turn / streak — attention that is
+     the player's own, which is exactly what gold owns. Danger stays red
+     (--accent-nerf) and never leaks in here. */
+  --pos-rgb: var(--accent-positive-rgb);
+  --warm-rgb: var(--accent-gold-rgb);
   --pos: rgb(var(--pos-rgb));
   --warm: rgb(var(--warm-rgb));
 
@@ -86,9 +144,9 @@ body {
      hues. Ember and blood come from the dungeon; void, astral, and teal from
      the space layer; gold is the shared treasure hue. */
   --energy-ember-rgb: 255 138 52;
-  --energy-blood-rgb: 224 82 82;
+  --energy-blood-rgb: var(--accent-nerf-rgb); /* danger energy = Nerf red */
   --energy-void-rgb: 168 119 216;
-  --energy-astral-rgb: 91 155 212;
+  --energy-astral-rgb: var(--accent-buff-rgb); /* astral energy = Buff blue */
   --energy-teal-rgb: 34 211 238;
   --energy-gold-rgb: 244 196 48;
   /* Dungeon materials: the three stone values every carved surface layers
@@ -142,125 +200,88 @@ html[data-anim="fast"] *::after {
   transition-duration: 80ms !important;
 }
 
-/* Site theme (Settings > Appearance): the site is dark-first; "light" remaps
-   the core surfaces and text ramps like the high-contrast block below. The
-   named dark variants (midnight, void, abyss, ember, crimson, moss, nebula — see
-   SITE_THEMES in src/lib/settings.ts) inherit every dark style and remap only
-   the surface variables plus the page wash, so each reads as a full palette
-   shift with zero per-component work. */
-html[data-theme="midnight"] {
-  --paper: #ccd2dc;
-  --paper-dim: #8d95a4;
-  --ink-deep: #0b0e12;
-  --ink-warm: #171b22;
-  --surface-panel: #1a1f27;
-  --surface-raise: #242b36;
-  --surface-hover: #1f2530;
-  --edge: #2d3542;
-  --edge-strong: #3e4a5c;
+/* Site theme (Settings > Appearance): the site is dark-first. Every named dark
+   theme is now a TINT of the one base palette — each overrides ONLY the four
+   background + border tokens below. Text stays the shared warm cream, and the
+   accents + board colors are never touched here, so the game reads identically
+   in every theme (Step 4). The surface/edge ladder and the page wash are
+   computed from these four tokens (see :root), so nothing else is needed. */
+html[data-theme="midnight"] { /* blue-grey steel */
+  --bg-base: #101318;
+  --bg-panel: #1a1f27;
+  --bg-raised: #242b36;
+  --border-subtle: #2d3542;
 }
-html[data-theme="midnight"], html[data-theme="midnight"] body {
-  background-color: #101318;
-  background-image: linear-gradient(180deg, #1b2028 0%, #14181e 46%, #101318 100%);
+html[data-theme="void"] { /* crushed near-black, OLED-friendly */
+  --bg-base: #0d0b0a;
+  --bg-panel: #141210;
+  --bg-raised: #1d1a16;
+  --border-subtle: #2a251f;
 }
-html[data-theme="void"] {
-  --paper: #d4d4d4;
-  --paper-dim: #8f8f8f;
-  --ink-deep: #000000;
-  --ink-warm: #101010;
-  --surface-panel: #141414;
-  --surface-raise: #1e1e1f;
-  --surface-hover: #191919;
-  --edge: #272727;
-  --edge-strong: #3b3b3b;
+html[data-theme="abyss"] { /* deep-sea teal */
+  --bg-base: #0c1517;
+  --bg-panel: #152327;
+  --bg-raised: #1e3036;
+  --border-subtle: #24383d;
 }
-html[data-theme="void"], html[data-theme="void"] body {
-  background-color: #000000;
-  background-image: linear-gradient(180deg, #0a0a0a 0%, #030303 46%, #000000 100%);
+html[data-theme="ember"] { /* smoldering red-brown */
+  --bg-base: #170f0e;
+  --bg-panel: #261815;
+  --bg-raised: #33211c;
+  --border-subtle: #432c25;
 }
-html[data-theme="abyss"] {
-  --paper: #c9d6d3;
-  --paper-dim: #869a96;
-  --ink-deep: #070e10;
-  --ink-warm: #121d20;
-  --surface-panel: #152327;
-  --surface-raise: #1e3036;
-  --surface-hover: #1a2a2f;
-  --edge: #24383d;
-  --edge-strong: #315057;
+html[data-theme="crimson"] { /* deep blood red */
+  --bg-base: #150a0c;
+  --bg-panel: #291015;
+  --bg-raised: #38181f;
+  --border-subtle: #48222b;
 }
-html[data-theme="abyss"], html[data-theme="abyss"] body {
-  background-color: #0c1517;
-  background-image: linear-gradient(180deg, #142225 0%, #0f1a1c 46%, #0c1517 100%);
+html[data-theme="moss"] { /* deep forest green */
+  --bg-base: #0f140e;
+  --bg-panel: #1a2318;
+  --bg-raised: #253021;
+  --border-subtle: #2d3c27;
 }
-html[data-theme="ember"] {
-  --paper: #dcccc4;
-  --paper-dim: #a08a80;
-  --ink-deep: #100908;
-  --ink-warm: #1f1512;
-  --surface-panel: #261815;
-  --surface-raise: #33211c;
-  --surface-hover: #2c1c18;
-  --edge: #432c25;
-  --edge-strong: #5c3c31;
+html[data-theme="nebula"] { /* violet dusk */
+  --bg-base: #131019;
+  --bg-panel: #1f1929;
+  --bg-raised: #2b2238;
+  --border-subtle: #362c48;
 }
-html[data-theme="ember"], html[data-theme="ember"] body {
-  background-color: #170f0e;
-  background-image: linear-gradient(180deg, #251715 0%, #1d1210 46%, #170f0e 100%);
+/* Light: the one non-dark theme. It overrides the bg + border tokens (paper
+   and ink) and the text tokens (dark ink on paper for contrast), and lifts the
+   board-highlight opacity so the gold read stays visible on the light board.
+   Accents and board colors are otherwise the shared set. */
+html[data-theme="light"] {
+  --bg-base: #e9e6de;
+  --bg-panel: #f4f1ea;
+  --bg-raised: #fbf9f4;
+  --border-subtle: #d8d2c6;
+  --text-primary: #2b2822;
+  --text-secondary: #5c584f;
+  --text-muted: #86816f;
+  --board-highlight-a: 0.5;
+  /* Darker accents for the light background: the bright dark-theme accents are
+     too light to pass AA as text on paper (gold was ~1.9:1). These clear AA as
+     text AND, paired with --text-on-accent:#fff below, keep accent-filled
+     buttons legible with white type. (applyUiPrefs sets --accent/--gold from
+     SITE_THEMES.light.accent = LIGHT_GOLD_ACCENT, matching --accent-gold here.) */
+  --accent-gold: #806310;
+  --accent-gold-hi: #96751a;
+  --accent-gold-rgb: 128 99 16;
+  --accent-gold-hi-rgb: 150 117 26;
+  --accent-gold-dim-rgb: 96 74 12;
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
 }
-html[data-theme="crimson"] {
-  --paper: #e6cbd1;
-  --paper-dim: #ab8790;
-  --ink-deep: #0d0507;
-  --ink-warm: #1e0f13;
-  --surface-panel: #291015;
-  --surface-raise: #38181f;
-  --surface-hover: #31141a;
-  --edge: #48222b;
-  --edge-strong: #612e39;
-}
-html[data-theme="crimson"], html[data-theme="crimson"] body {
-  background-color: #150a0c;
-  background-image: linear-gradient(180deg, #241217 0%, #1b0e12 46%, #150a0c 100%);
-}
-html[data-theme="moss"] {
-  --paper: #ced6c6;
-  --paper-dim: #909a85;
-  --ink-deep: #0a0e08;
-  --ink-warm: #171f13;
-  --surface-panel: #1a2318;
-  --surface-raise: #253021;
-  --surface-hover: #1f2a1c;
-  --edge: #2d3c27;
-  --edge-strong: #405537;
-}
-html[data-theme="moss"], html[data-theme="moss"] body {
-  background-color: #0f140e;
-  background-image: linear-gradient(180deg, #1a2217 0%, #131a11 46%, #0f140e 100%);
-}
-html[data-theme="nebula"] {
-  --paper: #d2cbde;
-  --paper-dim: #948ba4;
-  --ink-deep: #0d0a12;
-  --ink-warm: #1a1523;
-  --surface-panel: #1f1929;
-  --surface-raise: #2b2238;
-  --surface-hover: #251e31;
-  --edge: #362c48;
-  --edge-strong: #4b3d64;
-}
-html[data-theme="nebula"], html[data-theme="nebula"] body {
-  background-color: #131019;
-  background-image: linear-gradient(180deg, #1e1927 0%, #17131f 46%, #131019 100%);
-}
-html[data-theme="light"] body {
-  background-color: #e9e6de;
-  color: #2b2822;
-}
-html[data-theme="light"]::before {
-  background: linear-gradient(180deg, #efece5 0%, #e4e0d6 100%);
-}
-html[data-theme="light"] { --paper: #2b2822; --paper-dim: #5c584f; }
 html[data-theme="light"] .plate {
   background: rgba(255, 255, 255, 0.55);
   border-color: rgba(0, 0, 0, 0.14);
@@ -286,7 +307,7 @@ html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
    and warmed a step: dark, but never dim, with a faint color wash (warm
    top-left, cool bottom-right) so the page has weather. */
 html, body {
-  background-color: #191713;
+  background-color: var(--bg-base);
   /* The page gradient lives on the html::before fixed pseudo-element below
      (painted once, only translated on scroll) instead of a body
      background-image. This supersedes the earlier `background-attachment:
@@ -307,7 +328,10 @@ html::before {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(180deg, #282420 0%, #1e1b17 46%, #191713 100%);
+  /* Token-derived page wash: lifts from the raised surface at the top down to
+     the base. Because it reads the bg ladder, every theme retints it for free
+     just by overriding the background tokens — no per-theme gradient needed. */
+  background: linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-panel) 46%, var(--bg-base) 100%);
 }
 
 /* Geometry: crisp 1px corners everywhere. Owner verdict: soft rounding read
@@ -655,7 +679,7 @@ html[data-theme="light"] .rail-panel {
 /* Hairline accent edge */
 .gilt {
   box-shadow:
-    0 0 0 1px rgba(54,146,231,0.45),
+    0 0 0 1px rgb(var(--accent-rgb) / 0.45),
     0 14px 50px -22px rgba(0,0,0,0.6);
 }
 
@@ -727,9 +751,10 @@ html[data-theme="light"] .rail-panel {
    iron rim, an accent-energy body whose light pools up from the base (the
    reactor under the stone), corner glints where the energy leaks at the
    rivets, and a firm inset foot so the slab has physical weight. Hover feeds
-   the core; active presses the slab into its housing. Text stays #fff on the
-   accent body (AA), and the whole treatment is background/box-shadow layers,
-   never extra DOM. */
+   the core; active presses the slab into its housing. The body is now GOLD, so
+   text is a deep ink (--text-on-accent): white on gold is only ~2.4:1, dark ink
+   is ~7.4:1 — well past AA. The whole treatment is background/box-shadow
+   layers, never extra DOM. */
 .btn-leaf {
   background:
     /* Corner glints: energy leaking at two rivet points. */
@@ -738,7 +763,7 @@ html[data-theme="light"] .rail-panel {
     /* The cosmic core: light pooling up from beneath the slab. */
     radial-gradient(120% 95% at 50% 118%, rgb(var(--accent-hi-rgb) / 0.55), transparent 58%),
     linear-gradient(to bottom, var(--accent-hi), var(--accent) 55%, color-mix(in srgb, var(--accent) 70%, #0a1017));
-  color: #fff;
+  color: var(--text-on-accent);
   border: 1px solid rgba(0, 0, 0, 0.5);
   border-radius: 1px;
   box-shadow:
@@ -837,17 +862,19 @@ html[data-theme="light"] .rail-panel {
 .btn-glass:active:not(:disabled) { transform: translateY(1px); }
 .btn-glass:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-glass--primary {
-  color: #fff;
-  border-color: rgba(74, 159, 238, 0.55);
-  background: rgba(64, 152, 234, 0.22);
+  /* Primary commit (draft confirm / lock-in): gold accent, not blue — blue is
+     reserved for Buff. Deep-ink text keeps AA over the lit gold pane. */
+  color: var(--text-on-accent);
+  border-color: rgb(var(--accent-hi-rgb) / 0.6);
+  background: rgb(var(--accent-rgb) / 0.85);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 0 30px -10px rgba(54, 146, 231, 0.6),
+    0 0 30px -10px rgb(var(--accent-rgb) / 0.6),
     0 10px 30px -16px rgba(0, 0, 0, 0.8);
 }
 .btn-glass--primary:hover:not(:disabled) {
-  border-color: rgba(74, 159, 238, 0.85);
-  background: rgba(64, 152, 234, 0.3);
+  border-color: rgb(var(--accent-hi-rgb) / 0.9);
+  background: rgb(var(--accent-rgb) / 0.95);
 }
 
 /* Secondary controls: DARK IRON. A quiet forged plate with a warm hairline
@@ -1459,7 +1486,7 @@ html[data-theme="light"] .masthead {
   pointer-events: none;
   background:
     radial-gradient(46% 52% at 24% 28%, rgb(var(--accent-rgb) / 0.1), transparent 72%),
-    radial-gradient(38% 48% at 84% 74%, rgba(196, 120, 95, 0.06), transparent 70%);
+    radial-gradient(38% 48% at 84% 74%, rgb(var(--seam-warm-rgb) / 0.06), transparent 70%);
 }
 
 /* A very slow opacity pulse gives the ambient washes a sense of life without
@@ -1662,7 +1689,7 @@ html[data-theme="nebula"] .mode-def-card {
    unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
    sibling. */
 .btn-cyan {
-  background: linear-gradient(to bottom, #4a9fee, #2f7ecb);
+  background: linear-gradient(to bottom, var(--accent-buff-hi), var(--accent-buff));
   color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.32);
   border-radius: 1px;
@@ -1946,12 +1973,16 @@ html[data-theme="nebula"] .mode-def-card {
 /* .nav-icon-btn: relic housing treatment lives with the cosmic dungeon
    shared components (see the buttons section above). */
 
-/* --- Board treatments: warm wood-tone, less candy than chess.com green --- */
+/* --- Board treatments: parchment light / walnut dark, from the board tokens.
+   These are the DEFAULT squares; a user's board-theme choice (settings.ts)
+   overrides --sq-light / --sq-dark at runtime. --- */
 :root {
   /* Default board: warm parchment cream over walnut, so the board reads as
-     native to the site's warm brown/red tavern palette (never cold grey). */
-  --sq-light: #ecd9ae;
-  --sq-dark: #8a5a38;
+     native to the site's warm brown/red tavern palette (never cold grey).
+     Sourced from the --board-* tokens; a user's board-theme choice overrides
+     --sq-light / --sq-dark at runtime (settings.ts). */
+  --sq-light: var(--board-light);
+  --sq-dark: var(--board-dark);
   /* Piece palette (recolored per piece theme; see lib/settings) */
   --piece-w-fill: #f5f5f5;
   --piece-w-stroke: #1a1a22;
@@ -2030,8 +2061,8 @@ html[data-anim="off"] .sq-check::after {
    The soft ring swells and settles so candidates read instantly without
    strobing the whole board. Static ring when animations are off in Settings. */
 .sq-pickable {
-  background: radial-gradient(circle, rgba(216, 181, 110, 0.28), rgba(216, 181, 110, 0.10) 68%, transparent 78%);
-  box-shadow: inset 0 0 0 2px rgba(232, 202, 138, 0.95);
+  background: radial-gradient(circle, rgb(var(--accent-gold-rgb) / 0.28), rgb(var(--accent-gold-rgb) / 0.10) 68%, transparent 78%);
+  box-shadow: inset 0 0 0 2px rgb(var(--accent-gold-hi-rgb) / 0.95);
   animation: sq-pick-breathe 1.4s ease-in-out infinite;
 }
 @keyframes sq-pick-breathe {
@@ -2128,11 +2159,11 @@ html[data-anim="off"] .sq-pickable {
     drop-shadow(0 0 8px rgba(122, 176, 224, 0.5));
 }
 .piece-doomed {
-  filter: saturate(0.6) contrast(1.05) drop-shadow(0 0 3px rgba(224, 82, 82, 0.9))
+  filter: saturate(0.6) contrast(1.05) drop-shadow(0 0 3px rgb(var(--accent-nerf-rgb) / 0.9))
     drop-shadow(0 1px 7px rgba(122, 20, 16, 0.7));
 }
 .piece-shielded {
-  filter: drop-shadow(0 0 3px rgba(255, 217, 126, 0.9)) drop-shadow(0 0 9px rgba(216, 181, 110, 0.55));
+  filter: drop-shadow(0 0 3px rgb(var(--accent-gold-hi-rgb) / 0.9)) drop-shadow(0 0 9px rgb(var(--accent-gold-rgb) / 0.55));
 }
 
 /* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
@@ -2266,34 +2297,37 @@ html[data-anim="off"] .sq-pickable {
   50% { opacity: 1; }
 }
 
-/* Selection: thick brass ring + light wash, so the piece stays readable on top */
+/* Selection + last move: the gold board-highlight token. The ring is the token
+   at full strength; the square wash is the token at its themed opacity
+   (--board-highlight-a, 40% dark / 50% light). One token drives both the
+   last-move tint and the selected-square ring so they always read as a pair. */
 .sq-sel {
   box-shadow:
-    inset 0 0 0 4px rgba(232,196,118,0.95),
-    inset 0 0 0 9999px rgba(232,196,118,0.18);
+    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
+    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
 }
 .sq-last {
-  box-shadow: inset 0 0 0 9999px rgba(232,196,118,0.24);
+  box-shadow: inset 0 0 0 9999px rgb(var(--board-highlight) / var(--board-highlight-a));
 }
 .sq-sel.sq-last {
   box-shadow:
-    inset 0 0 0 4px rgba(232,196,118,0.95),
-    inset 0 0 0 9999px rgba(232,196,118,0.22);
+    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
+    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.55));
 }
 /* Drag-over a valid target: thicker, brighter ring */
 .sq-hover {
   box-shadow:
-    inset 0 0 0 5px rgba(245,210,130,1),
-    inset 0 0 0 9999px rgba(232,196,118,0.18);
+    inset 0 0 0 5px rgb(var(--board-highlight) / 1),
+    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
 }
 .sq-rmb-mark {
   box-shadow: inset 0 0 0 4px currentColor;
   background: color-mix(in srgb, currentColor 24%, transparent);
 }
-.sq-rmb-mark-1 { color: rgba(216, 181, 110, 0.95); }
-.sq-rmb-mark-2 { color: rgba(90, 155, 122, 0.95); }
-.sq-rmb-mark-3 { color: rgba(124, 122, 163, 0.95); }
-.sq-rmb-mark-4 { color: rgba(181, 70, 65, 0.95); }
+.sq-rmb-mark-1 { color: rgb(var(--accent-gold-rgb) / 0.95); }
+.sq-rmb-mark-2 { color: rgb(var(--accent-positive-rgb) / 0.95); }
+.sq-rmb-mark-3 { color: rgb(var(--bruise-rgb) / 0.95); }
+.sq-rmb-mark-4 { color: rgb(var(--accent-nerf-rgb) / 0.95); }
 
 /* Move-target dot */
 .dot-target {
@@ -2306,7 +2340,7 @@ html[data-anim="off"] .sq-pickable {
   position: absolute;
   inset: 6%;
   border-radius: 9999px;
-  border: 4px solid rgba(181,70,65,0.7);
+  border: 4px solid rgb(var(--accent-nerf-rgb) / 0.7);
 }
 
 /* Risk-tinted move indicators: yellow warns of a self-inflicted nerf loss,
@@ -2581,7 +2615,7 @@ nav, header { position: relative; z-index: 30; }
 
 /* Accessibility */
 :focus-visible {
-  outline: 1.5px solid rgba(216,181,110,0.85);
+  outline: 1.5px solid rgb(var(--accent-gold-rgb) / 0.85);
   outline-offset: 3px;
   /* No border-radius override here: it rounded every focused element's corners
      to 2px on click, fighting the 1px-corner design (and making square cards
@@ -2621,7 +2655,7 @@ html[data-anim="off"] * { transition: none !important; }
   .btn-glass, .btn-cta { min-height: 44px; }
 }
 
-::selection { background: rgba(216,181,110,0.4); color: #1a1206; }
+::selection { background: rgb(var(--accent-gold-rgb) / 0.4); color: var(--text-on-accent); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(236,231,214,0.10); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(236,231,214,0.22); }
@@ -2684,7 +2718,7 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
   position: absolute;
   width: 14px;
   height: 14px;
-  border-color: rgba(216,181,110,0.4);
+  border-color: rgb(var(--accent-gold-rgb) / 0.4);
   pointer-events: none;
 }
 .card-corner.tl { top: 8px; left: 8px; border-top: 1px solid; border-left: 1px solid; }
@@ -2695,7 +2729,7 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 /* Replace the old colorful sigil ring with a soft static brass aura */
 .sigil {
   background:
-    radial-gradient(circle at 50% 50%, rgba(216,181,110,0.06), transparent 62%);
+    radial-gradient(circle at 50% 50%, rgb(var(--accent-gold-rgb) / 0.06), transparent 62%);
   border-radius: 9999px;
 }
 
@@ -3029,7 +3063,7 @@ html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
   100% { opacity: 0; }
 }
 .sq-invalid-ring {
-  box-shadow: inset 0 0 0 3px rgba(192, 65, 59, 0.85), inset 0 0 14px rgba(192, 65, 59, 0.35);
+  box-shadow: inset 0 0 0 3px rgb(var(--accent-nerf-rgb) / 0.85), inset 0 0 14px rgb(var(--accent-nerf-rgb) / 0.35);
   animation: sq-invalid-ring 360ms ease-out both;
 }
 @keyframes sq-invalid-shake {
@@ -3058,7 +3092,7 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
     radial-gradient(120% 55% at 0% 0%, rgb(var(--seam-warm-rgb) / 0.05), transparent 55%),
     radial-gradient(120% 55% at 100% 100%, rgb(var(--seam-cool-rgb) / 0.05), transparent 55%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px),
-    linear-gradient(345deg, rgba(216, 181, 110, 0.03), transparent 42%),
+    linear-gradient(345deg, rgb(var(--accent-gold-rgb) / 0.03), transparent 42%),
     var(--surface-panel);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),

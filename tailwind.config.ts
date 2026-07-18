@@ -40,16 +40,18 @@ export default {
           leaf: "rgb(var(--accent-hi-rgb) / <alpha-value>)",
           dim: "rgb(var(--accent-dim-rgb) / <alpha-value>)",
         },
-        // oxblood = alert / danger
+        // oxblood = alert / danger → the Nerf-red accent token (red always
+        // means Nerf / curses / danger).
         oxblood: {
-          DEFAULT: "#c0413b",
-          glow: "#dc5a54",
-          deep: "#7e2c28",
+          DEFAULT: "rgb(var(--accent-nerf-rgb) / <alpha-value>)",
+          glow: "rgb(var(--accent-nerf-hi-rgb) / <alpha-value>)",
+          deep: "rgb(var(--accent-nerf-deep-rgb) / <alpha-value>)",
         },
-        // verdigris = positive / success (used sparingly, not as primary)
+        // verdigris = positive / success → the positive-green accent token
+        // (green means online / wins / positive rating change only).
         verdigris: {
-          DEFAULT: "#629924",
-          glow: "#7bb52f",
+          DEFAULT: "rgb(var(--accent-positive-rgb) / <alpha-value>)",
+          glow: "rgb(var(--accent-positive-hi-rgb) / <alpha-value>)",
         },
         // bruise = dusty slate violet (secondary accent)
         bruise: {
@@ -69,23 +71,22 @@ export default {
           DEFAULT: "#eec25e",
           glow: "#ffd97e",
         },
-        // mode identities: Nerf mode reads warm rose/terracotta (welcoming,
-        // deliberately softer than the oxblood alert red), Buff mode a gentle
-        // sky blue. Fixed hex on purpose so the identity survives
-        // accent-color settings swaps.
+        // mode identities: Nerf mode is red, Buff mode is blue — the same two
+        // semantic accent tokens used for curses/danger (red) and powers/boons
+        // (blue), so a mode always reads the same color everywhere.
         mode: {
-          nerf: "#c4785f",
-          nerfGlow: "#dd9b82",
-          buff: "#5b9bd4",
-          buffGlow: "#84b7e2",
+          nerf: "rgb(var(--accent-nerf-rgb) / <alpha-value>)",
+          nerfGlow: "rgb(var(--accent-nerf-hi-rgb) / <alpha-value>)",
+          buff: "rgb(var(--accent-buff-rgb) / <alpha-value>)",
+          buffGlow: "rgb(var(--accent-buff-hi-rgb) / <alpha-value>)",
         },
       },
       boxShadow: {
-        leaf: "0 0 24px -10px rgba(54,146,231,0.4)",
-        oxblood: "0 0 32px -14px rgba(192,65,59,0.4)",
+        leaf: "0 0 24px -10px rgb(var(--accent-gold-rgb) / 0.4)",
+        oxblood: "0 0 32px -14px rgb(var(--accent-nerf-rgb) / 0.4)",
         // Mode glows, softer than the alert shadows above.
-        nerf: "0 0 24px -12px rgba(196,120,95,0.35)",
-        buff: "0 0 24px -12px rgba(91,155,212,0.35)",
+        nerf: "0 0 24px -12px rgb(var(--accent-nerf-rgb) / 0.35)",
+        buff: "0 0 24px -12px rgb(var(--accent-buff-rgb) / 0.35)",
         plate:
           "0 12px 40px -24px rgba(0,0,0,0.7), 0 1px 0 0 rgba(255,255,255,0.03) inset",
       },

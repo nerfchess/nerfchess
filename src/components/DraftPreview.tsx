@@ -290,7 +290,7 @@ export function DraftPreview({ kind, id, category, tier, icon, className }: Prop
       };
     }
     const pv = getPassiveVisual(id, "nerf");
-    const color = pv?.color ?? "#d8b56e";
+    const color = pv?.color ?? "var(--accent-gold)";
     return { motif: pv ? PASSIVE_MOTIF[pv.family] : ("pulse" as Motif), main: color, glow: color, accent: color };
   }, [kind, id, category, tier]);
 
