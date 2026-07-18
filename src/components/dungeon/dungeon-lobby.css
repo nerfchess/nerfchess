@@ -21,6 +21,28 @@
    defines (--stone*, --energy-*-rgb, --edge, --surface-panel, --paper*).
    ============================================================================ */
 
+/* ---- Hall ambience: the whole screen wears the theme -----------------------
+   A fixed, pointer-less warm wash over the star field so the ENTIRE lobby
+   viewport reads as one torchlit hall — not one themed chamber floating on a
+   flat black page. Two torch pools burn down from the top corners, a faint
+   warm stone cast covers the middle, and the foot falls into shadow. All
+   translucent, so the gold-dust star field still reads through it. Static
+   (no animation nodes), so nothing to park under data-anim/perf. */
+.dgn-hall-ambience {
+  position: fixed;
+  inset: 0;
+  z-index: -1; /* same layer as .starfield; later in the DOM, so it washes over it */
+  pointer-events: none;
+  background:
+    radial-gradient(46% 38% at 8% -6%, rgb(var(--energy-ember-rgb) / 0.09), transparent 70%),
+    radial-gradient(46% 38% at 92% -6%, rgb(var(--energy-ember-rgb) / 0.08), transparent 70%),
+    radial-gradient(70% 46% at 50% 112%, rgba(0, 0, 0, 0.5), transparent 68%),
+    linear-gradient(180deg, rgb(42 33 22 / 0.42), rgb(30 24 16 / 0.2) 38%, rgb(22 17 10 / 0.38));
+}
+html[data-theme="light"] .dgn-hall-ambience {
+  display: none;
+}
+
 /* ---- Tab rail: scroll without a native bar, never clip the active tab ------
    The four lobby tabs scroll sideways on a narrow phone. Hide the ugly native
    scrollbar on every engine and fade only the RIGHT end, so an overflowing
@@ -203,19 +225,22 @@ html[data-perf="low"] .dgn-chamber::after {
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  /* Unchosen doors stay QUIET: a neutral dark edge and a faint jamb tint.
-     The mode hue at full strength is reserved for the selected door, so the
-     selection is always the loudest thing in the row. */
-  border: 1px solid rgba(0, 0, 0, 0.45);
+  /* Unchosen doors stay QUIET but still read as carved stone: a warm iron
+     edge and a faint jamb tint over lamplit granite — never a flat black
+     rectangle against the chamber. The mode hue at full strength is reserved
+     for the selected door, so the selection is always the loudest thing in
+     the row. */
+  border: 1px solid rgb(122 96 58 / 0.3);
   border-left: 3px solid rgb(var(--door-rgb) / 0.35);
   border-radius: 2px;
   color: var(--paper);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%, rgba(0, 0, 0, 0.14)),
+    radial-gradient(80% 46% at 50% -8%, rgb(var(--energy-ember-rgb) / 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(255, 235, 200, 0.045), transparent 34%, rgba(0, 0, 0, 0.12)),
     repeating-linear-gradient(180deg, transparent 0 34px, rgba(0, 0, 0, 0.14) 34px 35px),
-    linear-gradient(180deg, var(--stone-hi), var(--stone) 55%, var(--stone-deep));
+    linear-gradient(180deg, #322818, var(--stone-hi) 55%, var(--stone));
   box-shadow:
-    inset 0 1px 0 rgba(255, 230, 180, 0.06),
+    inset 0 1px 0 rgba(255, 230, 180, 0.08),
     inset 0 0 0 1px rgba(0, 0, 0, 0.35),
     0 10px 30px -22px rgba(0, 0, 0, 0.7);
   transition:
@@ -262,18 +287,21 @@ html[data-theme="light"] .dgn-door {
    with a gold rune sill. Feed nothing — gold is the fixed "selected" energy. */
 .dgn-token {
   position: relative;
-  /* Containers are defined by background contrast, not accent borders: the
-     resting tablet wears a neutral dark edge instead of the theme's tinted
-     one, keeping the red/pink accent for interactive and selected states. */
-  border: 1px solid rgba(0, 0, 0, 0.45);
+  /* The tablet is carved from the SAME lamplit granite as the chamber wall it
+     sits on: a warm iron edge, a torch-kissed top face, and a shadowed foot —
+     never a flat black rectangle. Gold stays reserved for the selected
+     tablet, so selection is still the loudest thing in the grid. */
+  border: 1px solid rgb(122 96 58 / 0.32);
   border-radius: 2px;
   color: var(--paper);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.14)),
-    linear-gradient(180deg, var(--stone-hi), var(--stone-deep));
+    radial-gradient(90% 52% at 50% -10%, rgb(var(--energy-ember-rgb) / 0.08), transparent 72%),
+    linear-gradient(180deg, rgba(255, 235, 200, 0.05), transparent 45%, rgba(0, 0, 0, 0.14)),
+    linear-gradient(180deg, #322818, var(--stone-hi) 55%, var(--stone));
   box-shadow:
-    inset 0 1px 0 rgba(255, 230, 180, 0.05),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.32);
+    inset 0 1px 0 rgba(255, 230, 180, 0.09),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32),
+    inset 0 -8px 12px -10px rgba(0, 0, 0, 0.55);
   transition: border-color 160ms ease, box-shadow 180ms ease, filter 140ms ease;
 }
 html[data-theme="light"] .dgn-token {
@@ -282,8 +310,8 @@ html[data-theme="light"] .dgn-token {
 }
 @media (hover: hover) {
   .dgn-token:hover {
-    border-color: var(--edge-strong);
-    filter: brightness(1.07);
+    border-color: rgb(var(--energy-ember-rgb) / 0.5);
+    filter: brightness(1.08);
   }
 }
 .dgn-token[data-selected="true"] {
@@ -354,6 +382,25 @@ html[data-theme="light"] .dgn-seg {
 html[data-theme="light"] .dgn-ctabar {
   background: rgba(246, 242, 234, 0.96);
   border-top-color: rgba(0, 0, 0, 0.16);
+}
+
+/* ---- Hall panel: lobby slabs in the chamber's iron ------------------------
+   Companion class layered onto .dgn-slab by the lobby panels (tab panels and
+   the right rail) so they wear the same warm forged-iron edge and torchlit
+   lip as the matchmaking chamber, instead of a neutral black seam that reads
+   as a flat unthemed box next to it. Border + shadow only; the slab keeps
+   its own stone fill. */
+.dgn-hallpanel {
+  border-color: rgb(122 96 58 / 0.3);
+  box-shadow:
+    inset 0 1px 0 rgb(255 178 96 / 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 -14px 24px -18px rgba(0, 0, 0, 0.7),
+    0 24px 60px -28px rgba(0, 0, 0, 0.85);
+}
+html[data-theme="light"] .dgn-hallpanel {
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 24px 60px -36px rgba(43, 40, 34, 0.5);
 }
 
 /* A gate button stretched to fill a bar / column: the gate keeps its dressing

@@ -3367,19 +3367,23 @@ html[data-theme="light"] .hall-hairline {
    Hover only firms the borders — no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
-  /* Rows are a raised ink step over the panel — background contrast, not a
-     bordered box. Only the mode's left bar carries color at rest; the full
-     edge lights on hover (interactive feedback). */
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid transparent;
+  /* Rows are a raised warm-stone step over the panel — the same lamplit
+     granite as the dungeon tokens, not a neutral white-alpha ink that reads
+     unthemed beside them. Only the mode's left bar carries color at rest;
+     the full edge lights on hover (interactive feedback). */
+  background:
+    linear-gradient(180deg, rgba(255, 235, 200, 0.04), transparent 50%, rgba(0, 0, 0, 0.1)),
+    linear-gradient(180deg, #2e2517, var(--stone-hi));
+  border: 1px solid rgb(122 96 58 / 0.22);
   border-left: 2px solid rgb(var(--row-rgb) / 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 230, 180, 0.06);
   transition:
     border-color var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out);
+    filter var(--dur-2) var(--ease-out);
 }
 @media (hover: hover) {
   .hall-row:hover {
-    background: rgba(255, 255, 255, 0.045);
+    filter: brightness(1.06);
     border-color: rgb(var(--row-rgb) / 0.4);
     border-left-color: rgb(var(--row-rgb) / 0.95);
   }
