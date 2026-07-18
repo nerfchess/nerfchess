@@ -353,6 +353,7 @@ export const SCHEMA_STATEMENTS: string[] = [
     username TEXT,
     avatar TEXT,
     bio TEXT,
+    rating REAL,
     updated_at INTEGER NOT NULL DEFAULT 0
   )`,
   // Tiny key/value ledger for schema bookkeeping (see ADDITIVE_VERSION below).
@@ -623,6 +624,12 @@ const ADDITIVE_COLUMNS: string[] = [
   // board include an edited player who has never played that mode. Mirrors
   // migrations/0035_user_ratings_hand_set.sql.
   `ALTER TABLE user_ratings ADD COLUMN hand_set INTEGER NOT NULL DEFAULT 0`,
+  // A hand-set rating override for a house bot, applied from its profile's House
+  // bot editor (/api/mod/house/personas). NULL = no override (the bot keeps its
+  // roster seed). When set, syncHouseRatings writes this number instead of the
+  // seed on every resync, so a hand-edit is not reverted on the next roster
+  // version bump. Mirrors migrations/0036_house_rating_override.sql.
+  `ALTER TABLE house_identity_overrides ADD COLUMN rating REAL`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

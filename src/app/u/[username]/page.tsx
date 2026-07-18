@@ -402,6 +402,11 @@ function ProfileContent() {
           username={user.username}
           avatar={user.avatar ?? null}
           bio={user.bio}
+          rating={
+            profile.ratings?.nerf?.rating ??
+            profile.ratings?.buff?.rating ??
+            (user.rating || null)
+          }
           onIdentity={(nextName, nextAvatar) => {
             if (nextName.toLowerCase() !== user.username.toLowerCase()) {
               router.push(`/u/${encodeURIComponent(nextName)}`);
@@ -410,14 +415,19 @@ function ProfileContent() {
             }
           }}
           onBio={(bio) => setProfile((p) => (p ? { ...p, user: { ...p.user, bio } } : p))}
+          onRating={(rating) =>
+            setProfile((p) =>
+              p ? { ...p, user: { ...p.user, rating }, ratings: ratingsWithAllSet(p.ratings, rating) } : p,
+            )
+          }
         />
       )}
 
       {/* Rating editor (ilovenewjeans only): overwrite every rating bucket for
           this player at once. Server re-verifies the gate; this is UX only.
-          Hidden on house-bot profiles (houseEdit is set only there): bot ratings
-          are engine-managed, so the route rejects them — the HouseBotEditor
-          above is the right tool for those accounts. */}
+          Hidden on house-bot profiles (houseEdit is set only there): a bot's
+          rating is edited from the House bot menu above instead, which persists
+          it as an override the engine resync respects. */}
       {isRatingEditor(me?.username) && !houseEdit && (
         <RatingEditor
           key={user.username}
@@ -432,24 +442,7 @@ function ProfileContent() {
               // Ignore a stale save that resolved after the viewer navigated to a
               // different profile (the callback still targets the old username).
               if (!p || p.user.username.toLowerCase() !== appliedUsername.toLowerCase()) return p;
-              const next: Record<string, CategoryRatingRow> = { ...(p.ratings ?? {}) };
-              // Overwrite every bucket the player already has (Nerf, Buff, legacy).
-              for (const key of Object.keys(next)) {
-                next[key] = {
-                  ...next[key],
-                  rating,
-                  rd: Math.min(next[key].rd ?? 90, 90),
-                  peak: Math.max(next[key].peak ?? rating, rating),
-                };
-              }
-              // Ensure the two visible mode cards render the value even if the
-              // player was previously Unrated in that mode.
-              for (const c of MODE_RATING_CATEGORIES) {
-                if (!next[c.id]) {
-                  next[c.id] = { rating, rd: 90, games: 0, wins: 0, losses: 0, draws: 0, peak: rating };
-                }
-              }
-              return { ...p, user: { ...p.user, rating }, ratings: next };
+              return { ...p, user: { ...p.user, rating }, ratings: ratingsWithAllSet(p.ratings, rating) };
             });
           }}
         />
@@ -1640,12 +1633,40 @@ function BioSection({
   );
 }
 
-// Inline rating editor, shown on ANY profile ONLY to the designated rating
-// editor (ilovenewjeans). Types a number and sets every rating bucket for the
-// account to it in one save (via /api/mod/ratings), so the value updates
+// Optimistic ratings map after a hand-set edit: overwrite every bucket the
+// player already has to `rating`, and ensure both visible mode cards (Nerf,
+// Buff) render it even if the player was previously Unrated there. Shared by the
+// standalone rating editor (real players) and the House bot menu (bots), which
+// both set every category to one number. rd 90 is non-provisional (< 110), so
+// the display matches the server's settled value with no "?" flicker.
+function ratingsWithAllSet(
+  ratings: Record<string, CategoryRatingRow> | undefined,
+  rating: number,
+): Record<string, CategoryRatingRow> {
+  const next: Record<string, CategoryRatingRow> = { ...(ratings ?? {}) };
+  for (const key of Object.keys(next)) {
+    next[key] = {
+      ...next[key],
+      rating,
+      rd: Math.min(next[key].rd ?? 90, 90),
+      peak: Math.max(next[key].peak ?? rating, rating),
+    };
+  }
+  for (const c of MODE_RATING_CATEGORIES) {
+    if (!next[c.id]) {
+      next[c.id] = { rating, rd: 90, games: 0, wins: 0, losses: 0, draws: 0, peak: rating };
+    }
+  }
+  return next;
+}
+
+// Inline rating editor, shown on ANY non-bot profile ONLY to the designated
+// rating editor (ilovenewjeans). Types a number and sets every rating bucket for
+// the account to it in one save (via /api/mod/ratings), so the value updates
 // identically across the profile cards, the header chip, the leaderboard, the
 // lobby, and player search. The server re-verifies the ilovenewjeans gate; this
-// control is a UX affordance only.
+// control is a UX affordance only. (For house bots the same control is folded
+// into the House bot menu — see HouseBotEditor.)
 function RatingEditor({
   username,
   current,
@@ -1758,30 +1779,38 @@ function RatingEditor({
 }
 
 // Inline editor for a house-bot account, shown on its profile ONLY to the
-// designated house editor (ilovenewjeans). Renames it, swaps its picture, or
-// sets its bio through the house-persona route.
+// designated house editor (ilovenewjeans). Renames it, swaps its picture, sets
+// its bio, or sets its rating through the house-persona route. The rating field
+// is the bot-side of the player rating editor, folded in here (bots are edited
+// through this one menu); it persists as an override the engine resync respects.
 function HouseBotEditor({
   userId,
   avatars,
   username,
   avatar,
   bio,
+  rating,
   onIdentity,
   onBio,
+  onRating,
 }: {
   userId: string;
   avatars: string[];
   username: string;
   avatar: string | null;
   bio: string | null;
+  rating: number | null;
   onIdentity: (username: string, avatar: string | null) => void;
   onBio: (bio: string | null) => void;
+  onRating: (rating: number) => void;
 }) {
   const [name, setName] = useState(username);
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // The rating field, seeded from the bot's current effective rating.
+  const [ratingValue, setRatingValue] = useState(rating != null ? String(Math.round(rating)) : "");
   // Custom-upload flow: `preparing` covers the client-side decode/downscale;
   // `preview` holds the compressed square data URL awaiting confirmation, so the
   // editor can show it before committing (preview-before-save). The hidden file
@@ -1816,6 +1845,7 @@ function HouseBotEditor({
   };
 
   const dirty = name.trim() !== username;
+  const ratingDirty = ratingValue.trim() !== (rating != null ? String(Math.round(rating)) : "");
 
   const saveName = async () => {
     const next = name.trim();
@@ -1823,6 +1853,26 @@ function HouseBotEditor({
     if (await post({ username: next })) {
       setNote("Saved");
       onIdentity(next, avatar);
+    }
+  };
+
+  // Set the bot's rating across every category. Persisted as a house override so
+  // the engine resync never reverts it (unlike a plain user rating edit, which
+  // is why this lives in the house menu rather than the standalone editor).
+  const saveRating = async () => {
+    if (saving) return;
+    const trimmed = ratingValue.trim();
+    if (trimmed === "") return;
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) {
+      setError("Enter a number.");
+      return;
+    }
+    const next = Math.round(parsed);
+    if (await post({ rating: next })) {
+      setRatingValue(String(next));
+      setNote(`Rating set to ${next}.`);
+      onRating(next);
     }
   };
 
@@ -1890,7 +1940,7 @@ function HouseBotEditor({
           House bot
         </span>
         <span className="text-xs text-parchment-400">
-          You can edit this account&rsquo;s name, picture, and bio.
+          You can edit this account&rsquo;s name, picture, bio, and rating.
         </span>
       </div>
 
@@ -1916,6 +1966,34 @@ function HouseBotEditor({
         >
           {saving ? "Saving..." : "Save"}
         </button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label htmlFor="house-rating" className="w-16 text-xs text-parchment-400">
+          Rating
+        </label>
+        <input
+          id="house-rating"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={4000}
+          value={ratingValue}
+          onChange={(e) => setRatingValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && ratingDirty) void saveRating();
+          }}
+          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
+        />
+        <button
+          type="button"
+          disabled={saving || ratingValue.trim() === "" || !ratingDirty}
+          onClick={() => void saveRating()}
+          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
+        >
+          {saving ? "Saving..." : "Set rating"}
+        </button>
+        <span className="text-[11px] text-parchment-500">Both modes, engine-safe.</span>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
