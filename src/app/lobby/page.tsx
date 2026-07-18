@@ -516,11 +516,8 @@ function LobbyInner() {
               that ride along on desktop scroll. */}
           <aside className="h-fit space-y-5 lg:sticky lg:top-6">
             <div className="dgn-slab dgn-rivets p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="sec-title font-display text-xl text-parchment">Online now</div>
-                <EngravedLabel className="mt-1.5">Souls in the hall</EngravedLabel>
-              </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="sec-title font-display text-xl text-parchment">Online now</div>
               {lobby && onlineCount != null && (
                 <span className="font-mono text-xs tabular-nums text-parchment-400">{onlineCount}</span>
               )}
@@ -606,11 +603,8 @@ function LobbyInner() {
                 exists in the payload, so this panel renders with a designed
                 empty state rather than disappearing. */}
             <div className="dgn-slab dgn-rivets p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
-                  <EngravedLabel className="mt-1.5">Boards under torchlight</EngravedLabel>
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
                 {lobby && (
                   <span className="font-mono text-xs tabular-nums text-parchment-400">{lobby.games.length}</span>
                 )}

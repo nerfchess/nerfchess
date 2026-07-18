@@ -263,8 +263,8 @@ html[data-theme="light"] .dgn-door {
 .dgn-token {
   position: relative;
   /* Containers are defined by background contrast, not accent borders: the
-     resting tablet wears a neutral dark edge, and the accent hues stay
-     reserved for hover (gold hint) and selected (full gold sill). */
+     resting tablet wears a neutral dark edge instead of the theme's tinted
+     one, keeping the red/pink accent for interactive and selected states. */
   border: 1px solid rgba(0, 0, 0, 0.45);
   border-radius: 2px;
   color: var(--paper);
@@ -274,18 +274,16 @@ html[data-theme="light"] .dgn-door {
   box-shadow:
     inset 0 1px 0 rgba(255, 230, 180, 0.05),
     inset 0 0 0 1px rgba(0, 0, 0, 0.32);
-  transition: border-color 160ms ease, box-shadow 180ms ease, filter 140ms ease, background-color 140ms ease;
+  transition: border-color 160ms ease, box-shadow 180ms ease, filter 140ms ease;
 }
 html[data-theme="light"] .dgn-token {
   background: rgba(255, 255, 255, 0.5);
   border-color: rgba(0, 0, 0, 0.14);
 }
 @media (hover: hover) {
-  /* Hover is clearly distinct from rest: the tablet brightens AND takes a
-     visible gold-tinged edge, well short of the selected state's full sill. */
   .dgn-token:hover {
-    border-color: rgb(var(--energy-gold-rgb) / 0.4);
-    filter: brightness(1.14);
+    border-color: var(--edge-strong);
+    filter: brightness(1.07);
   }
 }
 .dgn-token[data-selected="true"] {
