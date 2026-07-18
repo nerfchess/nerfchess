@@ -17,10 +17,6 @@ export function SettingsBootstrap() {
   const [fps, setFps] = useState(false);
 
   useEffect(() => {
-    // One-time forced-default rollouts (e.g. the rose accent + Classic theme):
-    // run before the first read so we apply and push the forced values, and the
-    // server pull below can't clobber them (the force bumps updated-at to now).
-    applyForcedDefaults();
     const apply = () => {
       const s = loadSettings();
       applyBoardTheme(s.boardTheme);
@@ -42,7 +38,10 @@ export function SettingsBootstrap() {
     apply();
     // Signed-in accounts sync settings across devices: adopt the server copy
     // when it is newer than this device's (writes re-fire the changed event).
-    void pullSettingsFromServer();
+    // Then apply any one-time forced-default rollout the account has not been
+    // through — after the pull so the force lands on the user's real current
+    // settings, and account-gated so it fires once per account, not per device.
+    void pullSettingsFromServer().then(() => applyForcedDefaults());
     window.addEventListener(SETTINGS_CHANGED_EVENT, apply);
     // "System" theme follows the OS live.
     const media = window.matchMedia?.("(prefers-color-scheme: light)");

@@ -623,6 +623,13 @@ const ADDITIVE_COLUMNS: string[] = [
   // board include an edited player who has never played that mode. Mirrors
   // migrations/0035_user_ratings_hand_set.sql.
   `ALTER TABLE user_ratings ADD COLUMN hand_set INTEGER NOT NULL DEFAULT 0`,
+  // Per-account record (JSON array of ids) of which one-time forced-default
+  // rollouts have already been applied to this account, so a force applies once
+  // per ACCOUNT across devices rather than once per browser. The first device
+  // to load claims the pending forces here; later devices see them as applied
+  // and leave the user's current settings alone. See /api/users/forced-defaults.
+  // Mirrors migrations/0036_forced_defaults.sql.
+  `ALTER TABLE users ADD COLUMN forced_defaults TEXT`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and
