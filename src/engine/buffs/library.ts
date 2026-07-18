@@ -3274,8 +3274,8 @@ const TIER6: Buff[] = [
 
 const TIER7: Buff[] = [
   def(
-    { id: "chain_atomic", name: "Chain Atomic", description: "Every capture by or against your pieces explodes and chains, clearing adjacent enemy pieces, for the game.", tier: 7, category: "attack" },
-    captureExplosion({ chain: true, onMyLosses: true }),
+    { id: "chain_atomic", name: "Chain Atomic", description: "Every capture by or against your pieces sets off an atomic blast that clears enemy pieces around it and chains, for the game. When an enemy captures one of your pieces, the capturing piece is destroyed too.", tier: 7, category: "attack" },
+    captureExplosion({ chain: true, onMyLosses: true, includeCenter: true }),
   ),
   def(
     { id: "triple_amazon", requires: ["n"], name: "Triple Amazon", description: "All your knights become amazons for the game, and each may also pass through one friendly piece per move.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
