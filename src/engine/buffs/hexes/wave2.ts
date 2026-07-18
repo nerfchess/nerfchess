@@ -335,8 +335,8 @@ export const HEX_WAVE2: Buff[] = [
       onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
       status: (inst) =>
         turnsLeft(inst) % 2 === 0
-          ? `the bell tolls this turn — ${turnsLeft(inst)} of their turns left`
-          : `quiet turn — ${turnsLeft(inst)} of their turns left`,
+          ? `the bell tolls this turn, ${turnsLeft(inst)} of their turns left`
+          : `quiet turn, ${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -650,7 +650,7 @@ export const HEX_WAVE2: Buff[] = [
         const a = inst.state.a as Square | null | undefined;
         const b = inst.state.b as Square | null | undefined;
         if (a == null && b == null) return "activate to bind two pieces";
-        return `bound ${a != null ? sqName(a) : "—"} & ${b != null ? sqName(b) : "—"}, ${turnsLeft(inst)} of their turns left`;
+        return `bound ${a != null ? sqName(a) : "?"} & ${b != null ? sqName(b) : "?"}, ${turnsLeft(inst)} of their turns left`;
       },
     },
   ),
@@ -886,7 +886,7 @@ export const HEX_WAVE2: Buff[] = [
         }
         tickTurns(inst, move, api.opp);
       },
-      status: (inst) => `${turnsLeft(inst)} of their turns left — their king can unlock it at the center`,
+      status: (inst) => `${turnsLeft(inst)} of their turns left; their king can unlock it at the center`,
     },
   ),
 
@@ -1088,7 +1088,7 @@ export const HEX_WAVE2: Buff[] = [
       status: (inst) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return "activate to toll the bell";
-        return `${sqName(sq)} crumbles in ${turnsLeft(inst)} of their turns — a capture by it breaks the curse`;
+        return `${sqName(sq)} crumbles in ${turnsLeft(inst)} of their turns; a capture by it breaks the curse`;
       },
     },
   ),
@@ -1278,7 +1278,7 @@ export const HEX_WAVE2: Buff[] = [
       status: (inst) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return "activate to humble their queen";
-        return `humbled at ${sqName(sq)}, crowned again in ${turnsLeft(inst)} of their turns — or on her next capture`;
+        return `humbled at ${sqName(sq)}, crowned again in ${turnsLeft(inst)} of their turns (or on her next capture)`;
       },
     },
   ),
@@ -1340,7 +1340,7 @@ export const HEX_WAVE2: Buff[] = [
       status: (inst) => {
         const sq = inst.state.sq as Square | null | undefined;
         if (sq == null) return "activate to light the beacon";
-        return `beacon at ${sqName(sq)}, strikes in ${turnsLeft(inst)} of their turns — dies if the bearer falls`;
+        return `beacon at ${sqName(sq)}, strikes in ${turnsLeft(inst)} of their turns, but dies if the bearer falls`;
       },
     },
   ),

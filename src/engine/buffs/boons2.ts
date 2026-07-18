@@ -422,7 +422,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_masquerade",
       name: "Masquerade",
       description:
-        "Two of your pieces trade masks: choose two of your knights, bishops, rooks or queens of different kinds, and they swap types where they stand. Your material never changes — only where the powers live.",
+        "Two of your pieces trade masks: choose two of your knights, bishops, rooks or queens of different kinds, and they swap types where they stand. Your material never changes, only where the powers live.",
       tier: 4,
       category: "pieces",
       icon: "VenetianMask",
@@ -745,7 +745,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_prisoner_exchange",
       name: "Prisoner Exchange",
       description:
-        "Envoys meet at the river: the finest captured piece of EACH side returns to the board at once, each placed on the empty square nearest its own home rank (queens first, then rooks, bishops, knights, pawns). Your opponent's piece comes back too — trade wisely.",
+        "Envoys meet at the river: the finest captured piece of EACH side returns to the board at once, each placed on the empty square nearest its own home rank (queens first, then rooks, bishops, knights, pawns). Your opponent's piece comes back too, so trade wisely.",
       tier: 6,
       category: "pieces",
       icon: "Scale",
@@ -825,7 +825,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_alchemists_trade",
       name: "Alchemist's Trade",
       description:
-        "Equivalent exchange: one of your knights, bishops or rooks is transmuted into a queen — and in payment, another of your knights, bishops, rooks or queens crumbles into a pawn where it stands (it cannot be standing on a first or last rank).",
+        "Equivalent exchange: one of your knights, bishops or rooks is transmuted into a queen; in payment, another of your knights, bishops, rooks or queens crumbles into a pawn where it stands (it cannot be standing on a first or last rank).",
       tier: 6,
       category: "pieces",
       icon: "Gem",
@@ -877,7 +877,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_standard_bearer",
       name: "Standard Bearer",
       description:
-        "One of your pawns takes up the army's standard: for the rest of the game it may also move like a queen — but never capture that way, and never onto a first or last rank. Its humble pawn captures remain.",
+        "One of your pawns takes up the army's standard: for the rest of the game it may also move like a queen, but never capture that way, and never onto a first or last rank. Its humble pawn captures remain.",
       tier: 6,
       category: "movement",
       icon: "FlagTriangleRight",
@@ -899,7 +899,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_kingmakers_pact",
       name: "Kingmaker's Pact",
       description:
-        "Sign with the power behind every throne: every one of your future drafts rolls one tier higher, for the rest of the game. In exchange you forfeit ALL of your draft rerolls, now and forever — the hand you are dealt is the hand you play.",
+        "Sign with the power behind every throne: every one of your future drafts rolls one tier higher, for the rest of the game. In exchange you forfeit ALL of your draft rerolls, now and forever. The hand you are dealt is the hand you play.",
       tier: 7,
       category: "draft",
       icon: "ScrollText",
@@ -922,7 +922,7 @@ export const BOON_WAVE2: Buff[] = [
       tier: 7,
       category: "movement",
       icon: "DoorOpen",
-      flavor: "Every throne room has a second door. Ask the architect — you can't, he was walled in.",
+      flavor: "Every throne room has a second door. Ask the architect. You can't; he was walled in.",
       fx: { motif: "empower", pieces: ["k"], self: true },
     },
     augment((_moves, inst, api) => {
@@ -946,7 +946,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_carnival_of_masks",
       name: "Carnival of Masks",
       description:
-        "Ring the carnival bell: every one of your pieces except your king puts on another's mask — their types are shuffled among their squares at random. The army keeps exactly the same pieces, but nobody is where their powers say they are. Pawns never land on a first or last rank.",
+        "Ring the carnival bell: every one of your pieces except your king puts on another's mask. Their types are shuffled among their squares at random. The army keeps exactly the same pieces, but nobody is where their powers say they are. Pawns never land on a first or last rank.",
       tier: 7,
       category: "pieces",
       icon: "PartyPopper",
@@ -1013,7 +1013,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_long_truce",
       name: "The Long Truce",
       description:
-        "Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured — kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 4 turns.",
+        "Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured, kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 4 turns.",
       tier: 8,
       category: "tempo",
       icon: "HeartHandshake",

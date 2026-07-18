@@ -191,7 +191,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           rule must be readable on the card face, never silent. */}
       {!compact && (COMBO_TAGS[buff.id]?.length ?? 0) > 0 && (
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
-          Exclusive: {COMBO_TAGS[buff.id]!.map((t) => COMBO_TAG_LABELS[t] ?? t).join(", ")} — while
+          Exclusive: {COMBO_TAGS[buff.id]!.map((t) => COMBO_TAG_LABELS[t] ?? t).join(", ")}. While
           you hold this unspent, no other card of the same family is offered to you.
         </p>
       )}

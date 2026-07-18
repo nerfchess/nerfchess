@@ -780,7 +780,7 @@ function FriendsTab() {
           Play a friend
         </SectionTitle>
         <p className="mt-2 mb-5 text-xs text-parchment-400">
-          Challenge a friend directly — share a code or pick from your list.
+          Challenge a friend directly. Share a code or pick from your list.
         </p>
         <FriendGameSetup showFriends={false} />
       </div>
