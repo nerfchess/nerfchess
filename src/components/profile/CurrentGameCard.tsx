@@ -197,8 +197,8 @@ export function CurrentGameCard({
             <span className="text-parchment-300">Final</span>
           ) : (
             <>
-              <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
-              <span className="text-oxblood-glow">Playing right now</span>
+              <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-verdigris-glow" />
+              <span className="text-verdigris-glow">Playing right now</span>
             </>
           )}
           {shownMode ? (

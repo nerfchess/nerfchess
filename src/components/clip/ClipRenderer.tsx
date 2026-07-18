@@ -165,7 +165,7 @@ export const ClipRenderer = forwardRef<ClipRendererHandle, Props>(function ClipR
   const { fonts, accent } = useMemo(() => {
     const fallback = {
       fonts: { display: "system-ui, sans-serif", body: "system-ui, sans-serif" },
-      accent: "#d8b56e",
+      accent: "#d4a017", // gold literal, mirrors --accent-gold (canvas fallback can't read CSS vars)
     };
     if (typeof document === "undefined") return fallback;
     const read = (name: string) =>
@@ -397,14 +397,14 @@ export const ClipRenderer = forwardRef<ClipRendererHandle, Props>(function ClipR
         const t = clamp01((u - 0.3) / 0.45);
         const { x, y } = sqXY(v.sq);
         if (t < 1) drawPiece(v.piece, x, y, 1 - t, 1 - t * 0.35);
-        if (u > 0.3 && u < 1) ring(v.sq, t, "#dc5a54");
+        if (u > 0.3 && u < 1) ring(v.sq, t, "#e05252"); // nerf red literal, mirrors --accent-nerf (canvas can't read CSS vars)
       }
       // Spawns: fade/scale in with a green-glow ring.
       for (const s of seg.spawns) {
         const t = clamp01((u - 0.35) / 0.5);
         const { x, y } = sqXY(s.sq);
         if (t > 0) drawPiece(s.piece, x, y, t, 0.55 + 0.45 * easeOutCubic(t));
-        if (t > 0 && u < 1) ring(s.sq, t, "#7bb52f");
+        if (t > 0 && u < 1) ring(s.sq, t, "#6faa5e"); // positive green literal, mirrors --accent-positive (canvas can't read CSS vars)
       }
       // Sliding pieces (captures flash under the arriving piece).
       for (const pair of seg.pairs) {
@@ -413,7 +413,7 @@ export const ClipRenderer = forwardRef<ClipRendererHandle, Props>(function ClipR
         if (pair.captured) {
           const capT = clamp01((u - 0.55) / 0.35);
           if (capT < 1) drawPiece(pair.captured, b.x, b.y, 1 - capT, 1 - capT * 0.4);
-          if (u > 0.55) ring(pair.to, capT, "#dc5a54");
+          if (u > 0.55) ring(pair.to, capT, "#e05252"); // nerf red literal, mirrors --accent-nerf (canvas can't read CSS vars)
         }
         const x = a.x + (b.x - a.x) * moveT;
         const y = a.y + (b.y - a.y) * moveT;

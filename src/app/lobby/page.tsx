@@ -816,11 +816,12 @@ function ModeFilter({
   label: string;
 }) {
   // Each segment lights in its own hue when pressed: All in vault gold (the
-  // CSS default), Buff sky-blue, Nerf terracotta. Fed via --seg-rgb.
+  // CSS default), Buff blue, Nerf red — sourced from the mode tokens so the
+  // filter reads the same colors as the mode everywhere else. Fed via --seg-rgb.
   const options = [
     { id: "all", label: "All", rgb: null },
-    { id: "buff", label: "Buff", rgb: "91 155 212" },
-    { id: "nerf", label: "Nerf", rgb: "196 120 95" },
+    { id: "buff", label: "Buff", rgb: "var(--accent-buff-rgb)" },
+    { id: "nerf", label: "Nerf", rgb: "var(--accent-nerf-rgb)" },
   ] as const;
   return (
     <div role="group" aria-label={label} className="dgn-seg mt-3">

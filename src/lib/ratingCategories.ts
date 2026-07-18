@@ -42,17 +42,24 @@ export interface RatingCategory {
 // moved to the per-mode buckets below, so speed ratings only move for games
 // recorded before the switch.
 export const RATING_CATEGORIES: RatingCategory[] = [
+  // Retired speed buckets (see below). Their accents are DISTINCT non-mode hues:
+  // red is reserved for Nerf and blue for Buff, so bullet (was rose) and blitz
+  // (was blue) use coral and slate instead, keeping the four speeds apart
+  // without impersonating a mode colour.
   { id: "ultrabullet", label: "UltraBullet", icon: UltraBulletIcon, accent: "#b78fd6", blurb: "Pure reflexes: 15 seconds" },
-  { id: "bullet",      label: "Bullet",      icon: BulletIcon,      accent: "#c66860", blurb: "Lightning-fast games" },
-  { id: "blitz",       label: "Blitz",       icon: BlitzIcon,       accent: "#4a9fee", blurb: "Fast, tactical games" },
+  { id: "bullet",      label: "Bullet",      icon: BulletIcon,      accent: "#ef8a5f", blurb: "Lightning-fast games" },
+  { id: "blitz",       label: "Blitz",       icon: BlitzIcon,       accent: "#8a88a8", blurb: "Fast, tactical games" },
   { id: "rapid",       label: "Rapid",       icon: RapidIcon,       accent: "#7eb59a", blurb: "Room to think it through" },
 ];
 
 // The two mode buckets. Queue games are rated here, one bucket per pool,
 // wearing the mode color identity (Nerf red, Buff blue) from PR #129.
 export const MODE_RATING_CATEGORIES: RatingCategory[] = [
-  { id: "nerf", label: "Nerf", icon: ShieldOff, accent: "#dc5a54", blurb: "Secret handicaps, hidden until the end" },
-  { id: "buff", label: "Buff", icon: Sparkles,  accent: "#4a9fee", blurb: "No nerfs: draft buffs and outplay them" },
+  // Mode accents mirror the design tokens: #e05252 = --accent-nerf (red),
+  // #5b9bd5 = --accent-buff (blue). Kept as literal hex (not var()) because
+  // this string is consumed directly in inline style / canvas contexts.
+  { id: "nerf", label: "Nerf", icon: ShieldOff, accent: "#e05252", blurb: "Secret handicaps, hidden until the end" },
+  { id: "buff", label: "Buff", icon: Sparkles,  accent: "#5b9bd5", blurb: "No nerfs: draft buffs and outplay them" },
 ];
 
 // Every bucket, for id lookups across old and new games. Keep

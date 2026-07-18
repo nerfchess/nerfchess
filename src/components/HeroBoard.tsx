@@ -98,7 +98,10 @@ export function HeroBoard({ board, lastMove }: HeroBoardProps = {}) {
                 <span
                   className={
                     "absolute top-0.5 left-1 text-[10px] font-mono font-semibold pointer-events-none " +
-                    (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85")
+                    // Coord tint = the OPPOSITE square colour (board tokens via
+                    // --sq-light/--sq-dark), so labels always contrast with the
+                    // active board theme instead of using fixed hexes.
+                    (isLight ? "text-[color:var(--sq-dark)]" : "text-[color:var(--sq-light)]")
                   }
                 >
                   {rank}
@@ -108,7 +111,10 @@ export function HeroBoard({ board, lastMove }: HeroBoardProps = {}) {
                 <span
                   className={
                     "absolute bottom-0.5 right-1 text-[10px] font-mono font-semibold pointer-events-none " +
-                    (isLight ? "text-[#4a3826]" : "text-[#eeeed2]/85")
+                    // Coord tint = the OPPOSITE square colour (board tokens via
+                    // --sq-light/--sq-dark), so labels always contrast with the
+                    // active board theme instead of using fixed hexes.
+                    (isLight ? "text-[color:var(--sq-dark)]" : "text-[color:var(--sq-light)]")
                   }
                 >
                   {file}

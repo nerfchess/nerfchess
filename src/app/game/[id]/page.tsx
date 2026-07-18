@@ -975,7 +975,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
                     title={`Hidden buff · power tier ${inst.tier} of 8`}
                     className={
                       "relative flex h-9 w-7 items-center justify-center rounded-[3px] border border-gold/35 " +
-                      "bg-[linear-gradient(135deg,rgba(216,181,110,0.14),rgba(14,12,9,0.95))] " +
+                      "bg-[linear-gradient(135deg,rgb(var(--accent-gold-rgb)/0.14),rgba(14,12,9,0.95))] " +
                       (inst.spent || inst.nullified ? "opacity-40" : "")
                     }
                   >

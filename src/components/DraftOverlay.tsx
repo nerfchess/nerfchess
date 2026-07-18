@@ -151,17 +151,20 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
     <div role="timer" aria-label="Draft lock-in timer" className="pointer-events-none shrink-0">
       <div className={"draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
         <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
-          {/* Outer hairline: a second, decorative gold ring framing the dial. */}
-          <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(216,181,110,0.22)" strokeWidth="1" />
+          {/* Outer hairline: a second, decorative gold ring framing the dial.
+              Literal mirrors --accent-gold (SVG stroke attrs can't read a CSS var). */}
+          <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(212,160,23,0.22)" strokeWidth="1" />
           <circle cx="20" cy="20" r="15.5" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2.5" />
           {/* Soft glow trail riding under the crisp arc (same geometry, wide
-              blurred stroke): pure decoration, shares the exact fraction. */}
+              blurred stroke): pure decoration, shares the exact fraction. The
+              stroke literals below mirror --accent-nerf (#e05252, urgent) and
+              --accent-gold (#d4a017, normal); SVG stroke attrs can't read a CSS var. */}
           <circle
             cx="20"
             cy="20"
             r="15.5"
             fill="none"
-            stroke={urgent ? "#dc5a54" : "#4a9fee"}
+            stroke={urgent ? "#e05252" : "#d4a017"}
             strokeWidth="6"
             strokeLinecap="round"
             strokeDasharray={CIRC}
@@ -174,7 +177,7 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
             cy="20"
             r="15.5"
             fill="none"
-            stroke={urgent ? "#dc5a54" : "#4a9fee"}
+            stroke={urgent ? "#e05252" : "#d4a017"}
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeDasharray={CIRC}

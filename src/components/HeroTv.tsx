@@ -185,11 +185,11 @@ export function HeroTv() {
             className={
               "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
               (!over
-                ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
+                ? "border-verdigris-glow/40 bg-verdigris/10 text-verdigris-glow"
                 : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300")
             }
           >
-            {!over ? <span className="dot-live h-2 w-2 bg-oxblood-glow" /> : null}
+            {!over ? <span className="dot-live h-2 w-2 bg-verdigris-glow" /> : null}
             {over ? "Just finished" : "LIVE"}
           </span>
           {shownMode ? (

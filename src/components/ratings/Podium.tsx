@@ -232,8 +232,8 @@ export function Podium({
   // frame border is set inline because .dgn-slab carries its own brass edge.
   const accent =
     category === "buff"
-      ? { text: "text-mode-buffGlow", rule: "bg-mode-buff/40", border: "rgba(91, 155, 212, 0.3)" }
-      : { text: "text-mode-nerfGlow", rule: "bg-mode-nerf/40", border: "rgba(196, 120, 95, 0.3)" };
+      ? { text: "text-mode-buffGlow", rule: "bg-mode-buff/40", border: "rgb(var(--accent-buff-rgb) / 0.3)" }
+      : { text: "text-mode-nerfGlow", rule: "bg-mode-nerf/40", border: "rgb(var(--accent-nerf-rgb) / 0.3)" };
 
   return (
     <section

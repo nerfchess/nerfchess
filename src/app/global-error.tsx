@@ -90,9 +90,11 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
               onClick={reset}
               style={{
                 ...buttonBase,
-                background: "rgba(54,146,231,0.1)",
-                border: "1px solid rgba(54,146,231,0.4)",
-                color: "#4a9fee",
+                // Gold accent literals (mirror --accent-gold #d4a017): globals.css
+                // is not loaded in this boundary, so CSS vars can't resolve here.
+                background: "rgba(212,160,23,0.1)",
+                border: "1px solid rgba(212,160,23,0.4)",
+                color: "#d4a017",
               }}
             >
               Reload

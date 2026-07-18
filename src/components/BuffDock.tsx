@@ -204,12 +204,12 @@ export function TargetingBanner({
       {/* Your card is mid-use: a frosted glass chip with the card name, the
           current step, a picked-so-far counter, and clear Done / Cancel. Sits
           just BELOW the board's bottom edge so it never hides the squares the
-          player is aiming at. Mint marks the active card (yours), coral the
-          back-out. */}
-      <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mint/40 px-3.5 py-2">
-        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint-glow" />
+          player is aiming at. Blue marks the active card (yours — your buff),
+          coral the back-out. */}
+      <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mode-buff/40 px-3.5 py-2">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mode-buffGlow" />
         <span className="min-w-0 truncate font-display text-xs font-semibold text-parchment">
-          <span className="text-mint-glow">{name}</span>
+          <span className="text-mode-buffGlow">{name}</span>
           <span className="text-parchment-400"> · </span>
           {empty ? "no valid targets right now" : targeting.target.label}
         </span>
@@ -224,7 +224,7 @@ export function TargetingBanner({
         {finishable && onFinish && (
           <button
             onClick={onFinish}
-            className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-mint/60 bg-mint/20 px-3 py-1 font-display text-[14px] sm:text-[13px] font-bold tracking-wide text-mint-glow transition hover:bg-mint/30"
+            className="shrink-0 touch-manipulation inline-flex items-center justify-center min-h-[44px] sm:min-h-0 rounded-full border border-mode-buff/60 bg-mode-buff/20 px-3 py-1 font-display text-[14px] sm:text-[13px] font-bold tracking-wide text-mode-buffGlow transition hover:bg-mode-buff/30"
             title="Fire now with the targets picked so far (the rest are forfeited)"
           >
             Done
@@ -318,15 +318,17 @@ export function EnemyBuffModal({
 }
 
 // Each dock section carries its own colour identity so the eye sorts them
-// without reading: your arsenal is mint (yours, positive), the opponent's is
-// coral (theirs), and the "against you" constraints stay in the oxblood alert
-// family. The tint rides a small icon chip and the label; the count chip stays
-// neutral so it never competes for attention. Class strings are literal (not
-// built from variables) so Tailwind's JIT keeps them.
+// without reading: your arsenal (your buffs) is BLUE — the semantic power/boon
+// colour — the opponent's is coral (theirs, a distinct non-reserved hue), and
+// the "against you" constraints stay in the Nerf-red alert family. (Green is
+// reserved for online / wins / rating, so your arsenal reads blue, not mint.)
+// The tint rides a small icon chip and the label; the count chip stays neutral
+// so it never competes for attention. Class strings are literal (not built from
+// variables) so Tailwind's JIT keeps them.
 type SectionAccent = "mine" | "opponent" | "against";
 
 const SECTION_ACCENT: Record<SectionAccent, { chip: string; label: string }> = {
-  mine: { chip: "border-mint/45 bg-mint/10 text-mint-glow", label: "text-mint-glow" },
+  mine: { chip: "border-mode-buff/45 bg-mode-buff/10 text-mode-buffGlow", label: "text-mode-buffGlow" },
   opponent: { chip: "border-coral/45 bg-coral/10 text-coral-glow", label: "text-coral-glow" },
   against: { chip: "border-oxblood-glow/45 bg-oxblood/15 text-oxblood-glow", label: "text-oxblood-glow" },
 };
@@ -459,12 +461,13 @@ function DraftProgressRing({ fraction, blocked }: { fraction: number; blocked: b
     <span aria-hidden className="ml-auto shrink-0">
       <svg width="18" height="18" viewBox="0 0 18 18" className="-rotate-90 block">
         <circle cx="9" cy="9" r={R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+        {/* Blocked stroke mirrors the --accent-nerf token (#e05252); the gilt gold is decorative draft progress. */}
         <circle
           cx="9"
           cy="9"
           r={R}
           fill="none"
-          stroke={blocked ? "rgb(220 90 84 / 0.85)" : "rgb(216 181 110 / 0.9)"}
+          stroke={blocked ? "rgb(224 82 82 / 0.85)" : "rgb(216 181 110 / 0.9)"}
           strokeWidth="2"
           strokeLinecap="round"
           strokeDasharray={CIRC}
@@ -1113,12 +1116,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). */}
         {mine.length === 0 && <p className="text-[12px] text-parchment-400">None yet.</p>}
-        {/* A thin mint spine brackets your arsenal so "these are mine" is
-            unmistakable next to the opponent's coral rows. Live cards sit up
-            top; your spent ones gather under a "Used" rule at the foot of the
-            same section (tier descending), so used cards stay clearly YOURS. */}
+        {/* A thin blue spine brackets your arsenal so "these are mine" is
+            unmistakable next to the opponent's coral rows (blue = your buffs).
+            Live cards sit up top; your spent ones gather under a "Used" rule at
+            the foot of the same section (tier descending), so used cards stay
+            clearly YOURS. */}
         {mine.length > 0 && (
-          <div className="space-y-1 border-l border-mint/30 pl-2">
+          <div className="space-y-1 border-l border-mode-buff/30 pl-2">
             {mineLive.map(myRow)}
             {mineDead.length > 0 && (
               <>

@@ -197,7 +197,7 @@ html[data-perf="low"] .dgn-chamber::after {
    hot, an inset ember ring lights) — a clear selected state with NO floating
    checkbox and no layout shift. Feed the hue via --door-rgb. */
 .dgn-door {
-  --door-rgb: 91 155 212;
+  --door-rgb: var(--accent-buff-rgb);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -223,8 +223,8 @@ html[data-perf="low"] .dgn-chamber::after {
     box-shadow 200ms ease,
     filter 160ms ease;
 }
-.dgn-door--buff { --door-rgb: 91 155 212; }
-.dgn-door--nerf { --door-rgb: 196 120 95; }
+.dgn-door--buff { --door-rgb: var(--accent-buff-rgb); }
+.dgn-door--nerf { --door-rgb: var(--accent-nerf-rgb); }
 html[data-theme="light"] .dgn-door {
   background: rgba(255, 255, 255, 0.5);
   border-color: rgba(0, 0, 0, 0.14);
