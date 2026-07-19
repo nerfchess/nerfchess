@@ -58,6 +58,7 @@ import {
   onlineHouseRoster,
   HOUSE_ONLINE_COUNT,
   clampHouseCount,
+  clampHouseGames,
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
@@ -69,6 +70,8 @@ import {
   nameHash,
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
+  HOUSE_GAMES_MAX,
+  HOUSE_GAMES_DEFAULT,
   HOUSE_FILLER_THINK_MULTIPLIER,
   syncHouseRatings,
   resolveSkillProfile,
@@ -641,11 +644,13 @@ const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
 // Spawns are staggered (houseFillerSpawnDelayMs: ~1.5-3s apart during ramp-up,
 // 8-15s at steady state), so a cold start climbs to the 40-game floor over a
 // couple of minutes instead of bursting 40 game creations at once.
-const houseVsHouseCapMax = HOUSE_VS_HOUSE_CAP;
-// Filler cap + headroom for human-vs-bot pickups and /play bot games.
-const houseTotalGamesCapMax = HOUSE_VS_HOUSE_CAP + 15;
-const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
-const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);
+// The house-vs-house FILLER count is now a moderator-tunable target
+// (app_settings.house_games, /mod "Active games" slider): houseTick reads it per
+// tick (houseGamesTarget) and clamps it against the live seat budget (2 bots per
+// game), so the EFFECTIVE per-tick concurrency caps are computed there, not here.
+// This module ceiling exists only to size the lobby's live-games slice so a busy
+// site is never clipped — the max pinnable filler count plus the pickup headroom.
+const houseTotalGamesCapMax = HOUSE_GAMES_MAX + 15;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -1188,6 +1193,38 @@ export class GameServer extends DurableObject<Env> {
       }
     } catch {}
     this.houseCountCache = { value, at: now };
+    return value;
+  }
+
+  // Moderator concurrent-games target (app_settings.house_games): how many
+  // house-vs-house FILLER games to keep live at once, pinned from the /mod
+  // "Active games" slider (0..HOUSE_GAMES_MAX). An unset/blank/garbage value
+  // falls back to HOUSE_GAMES_DEFAULT (the historical band ceiling), so out of
+  // the box nothing changes. Cached on the same ~15s TTL as the other house
+  // settings, so a change reaches the spawner within a tick without a redeploy;
+  // houseTick clamps this against the live seat budget before using it.
+  private houseGamesCache: { value: number; at: number } | null = null;
+  private async houseGamesTarget(): Promise<number> {
+    const now = Date.now();
+    if (this.houseGamesCache && now - this.houseGamesCache.at < houseEnabledTtlMs) {
+      return this.houseGamesCache.value;
+    }
+    let value = HOUSE_GAMES_DEFAULT;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_games")
+          .first<{ value: string }>();
+        // Only a non-empty stored value overrides the default; an absent or blank
+        // row leaves the historical band in place.
+        if (row && row.value != null && String(row.value).trim() !== "") {
+          value = clampHouseGames(Number(row.value));
+        }
+      }
+    } catch {}
+    this.houseGamesCache = { value, at: now };
     return value;
   }
 
@@ -4058,6 +4095,17 @@ export class GameServer extends DurableObject<Env> {
       liveHouseMatches.push(match);
       if (ids.length === 2) houseVsHouse++;
     }
+
+    // Concurrent house-game caps for THIS tick. The house-vs-house filler target
+    // is the moderator "Active games" pin (app_settings.house_games, cached),
+    // clamped here against the live seat budget — 2 bots per filler game — so a
+    // pin can never oversubscribe the roster. The +15 headroom above it is kept
+    // for human-vs-bot pickups and /play games, so even a 0 filler target still
+    // lets a waiting human be seated with a bot. Lowering the target just stops
+    // new filler spawns; the extra games drain out naturally within a few minutes.
+    const gamesTarget = await this.houseGamesTarget();
+    const houseVsHouseCap = Math.min(gamesTarget, Math.max(0, Math.floor(houseGameSeats / 2)));
+    const houseTotalGamesCap = Math.min(gamesTarget + 15, houseGameSeats - houseVsHouseCap);
 
     // Due house actions. A human waiting on their bot's move is the single most
     // latency-critical thing in this whole method (the reported "accepted a bot
@@ -7642,7 +7690,7 @@ export class GameServer extends DurableObject<Env> {
       // reach 40+ via its own uncapped arena union — the source of the cross-tab
       // desync. Keep it >= the filler ceiling so a true 40+ situation reads 40+
       // from the DO alone, identically for every viewer.
-      games: liveGames.slice(0, Math.max(60, houseTotalGamesCap)),
+      games: liveGames.slice(0, Math.max(60, houseTotalGamesCapMax)),
       challenges: challenges.slice(0, 25),
       seeks: seeks.slice(0, 25),
     };

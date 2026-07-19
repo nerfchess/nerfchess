@@ -8,9 +8,17 @@ import type { D1Database } from "@cloudflare/workers-types";
 // are active. Absent row = on by default.
 export const HOUSE_ENABLED_KEY = "house_enabled";
 
-// How many house bots are active (the first N of the roster). A moderator
-// slider between 30 and 60; an absent row means the default (30).
+// How many house bots are active. Now always the whole roster (see
+// HOUSE_COUNT_MIN == HOUSE_COUNT_MAX in bots.ts); this key is retained only as a
+// historical override the game server still reads, and clamps to the roster size.
 export const HOUSE_COUNT_KEY = "house_count";
+
+// How many house-vs-house FILLER games to keep live at once: the moderator
+// "Active games" slider (/mod), in [HOUSE_GAMES_MIN, HOUSE_GAMES_MAX] from
+// bots.ts. Read by the game-server DO per tick (houseGamesTarget) and clamped
+// against the live seat budget; an absent row means the default
+// (HOUSE_GAMES_DEFAULT). 0 means no filler games.
+export const HOUSE_GAMES_KEY = "house_games";
 
 // Per-tier house-bot strength overrides: a JSON map
 // `{ "<skill>": { <field>: <value>, ... }, ... }` a moderator edits from /mod to
