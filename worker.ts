@@ -7256,6 +7256,16 @@ export class GameServer extends DurableObject<Env> {
     // every lobby poll, the most frequent human-driven path into the DO.
     const matches = await this.loadLiveMatches();
 
+    // House-bot presence is gated on the runtime on/off switch. When a moderator
+    // turns the house bots OFF they must vanish from the lobby entirely — no
+    // seeking bots, no idle "online" filler, and no presence-padded player count —
+    // not merely stop starting new games. houseTick separately winds down active
+    // seeks/games; gating the three presence injections below on this flag makes
+    // the online list and the shown count agree with the switch immediately
+    // (cached ~15s, so this adds no per-poll D1 work). Previously the presence
+    // block ignored the flag, so ~210 bots stayed "online" after the off switch.
+    const houseOn = await this.houseEnabled();
+
     const liveGames: Array<{
       id: string;
       origin?: "arena";
@@ -7387,7 +7397,10 @@ export class GameServer extends DurableObject<Env> {
     // rows come from DO storage (no D1), and failures here degrade to "no
     // house seeks" without touching the human lobby.
     let houseSeeks: HouseSeekEntry[] = [];
-    try {
+    // Skip house seeks entirely when the bots are off, so none show as searching
+    // in the lobby (houseTick also clears the stored rows, but gating here makes
+    // the switch immediate rather than waiting a tick).
+    if (houseOn) try {
       houseSeeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
       for (const seek of houseSeeks) {
         const pool = QUEUE_POOLS[seek.pool];
@@ -7513,7 +7526,11 @@ export class GameServer extends DurableObject<Env> {
       // window: the active bots already added above keep their real
       // playing/searching status; the extra online-only personas fill in as idle
       // "online" so the list is fuller than the set that actually plays.
-      const idlePersonas = onlineHouseRoster(this.houseDayIndex()).filter((p) => !seen.has(p.userId));
+      // Idle house presence fills out the lobby ONLY while the bots are enabled;
+      // turned off, no persona is injected as "online".
+      const idlePersonas = houseOn
+        ? onlineHouseRoster(this.houseDayIndex()).filter((p) => !seen.has(p.userId))
+        : [];
       // Idle bots get a placeholder seed here; the canonical most-played-bucket
       // query below (now shared with human rows) overwrites it for any bot that
       // has a rated bucket, so an idle bot shows the SAME number as its profile,
@@ -7601,7 +7618,10 @@ export class GameServer extends DurableObject<Env> {
     // within a bucket, at most a small step at the boundary, identical for every
     // viewer. Padding only ever ADDS to the anonymous count, so the shown total
     // can never fall below the real humans plus seated bots counted above.
-    {
+    // The house-presence baseline applies ONLY while the bots are enabled; with
+    // them off the shown count reflects just real humans + anonymous (no padding),
+    // so the off switch actually empties the lobby count too.
+    if (houseOn) {
       const shownReal = players.length + anonymous;
       const bucket = Math.floor(now / (10 * 60 * 1000)); // hour + 10-min bucket
       const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 13) - 6; // -6..+6

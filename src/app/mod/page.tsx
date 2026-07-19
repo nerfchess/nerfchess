@@ -1010,7 +1010,7 @@ type HouseState = {
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [count, setCount] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 60, max: 120 });
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 110, max: 210 });
   const [strength, setStrength] = useState<Pick<
     HouseState,
     "clamp" | "presets" | "skillTiers"
@@ -1099,15 +1099,16 @@ function HouseBotsToggle() {
           {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
         </button>
       </div>
-      {/* Active-bot count: how many of the 210-deep roster actually seek and play
-          at once (up to ~150 more idle "online" for presence). By default this
-          varies daily (60-120) and the active window rotates so the crowd cycles
-          through the whole roster over time; moving this slider PINS a fixed count
-          instead. Commits on release. */}
+      {/* Active-bot count: how many of the roster actually seek and play at once
+          (the rest still show idle "online" for presence). Unpinned it varies daily
+          within the min..max range the API returns, and the active window rotates so
+          the crowd cycles through the whole roster over time; moving this slider PINS
+          a fixed count instead. Commits on release. Turning the bots off (above)
+          hides them from the lobby entirely. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-center justify-between">
           <label htmlFor="house-count" className="smallcaps text-[11px] text-parchment-400">
-            Active bots playing (pins the daily 60-120)
+            Active bots playing (pin {bounds.min}–{bounds.max})
           </label>
           <span className="font-mono text-sm text-gold-leaf tabular-nums">{count ?? "…"}</span>
         </div>

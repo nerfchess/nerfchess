@@ -811,9 +811,10 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
 // of the full 210-deep roster (same day offset, so the smaller set is always a
 // prefix of the larger — no persona is "playing" without also being "online"):
-//   • ACTIVE (60-120, varies daily): the bots that actually seek, get picked up,
-//     and play filler. dailyHouseCount picks the day's count; a moderator may
-//     still pin an explicit one from /mod (worker.ts houseCount honours it).
+//   • ACTIVE (a count in [HOUSE_COUNT_MIN, HOUSE_COUNT_MAX], varies daily): the
+//     bots that actually seek, get picked up, and play filler. dailyHouseCount
+//     picks the day's count; a moderator may still pin an explicit one from /mod
+//     with the active-bots slider (worker.ts houseCount honours it).
 //   • ONLINE (up to 150): how many bots SHOW in the lobby's online list at once.
 //     The active ones among them read as playing/searching; the rest just idle
 //     "online" for a fuller lobby (they don't seek or play).
@@ -821,11 +822,20 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-// Owner target: EVERY persona active at once. Min == Max == roster size, so the
-// daily window is always the whole roster (houseWindow returns the full roster
-// when size >= length) and every bot seeks / gets picked up / plays filler.
-export const HOUSE_COUNT_MIN = HOUSE_ROSTER.length;
+// The ACTIVE count is a moderator-controllable slider (/mod, read by worker.ts
+// houseCount). MAX is the whole roster (every persona can be active at once); MIN
+// is a real floor BELOW max so the slider actually has a range to drag — a
+// previous "every bot always on" change set MIN == MAX == roster size, which
+// collapsed the slider to a single point (min === max is an undraggable range)
+// and made clampHouseCount pin every value to the roster size. The floor is kept
+// high enough that even the smallest pinned crowd still sustains the concurrent
+// house-vs-house game floor: sim-house-bots.ts asserts
+// HOUSE_COUNT_MIN - seekReserve >= 2 * (HOUSE_VS_HOUSE_FLOOR + spawn buffer),
+// i.e. MIN must stay >= ~106, so 110 is the smallest safe floor. Unpinned, the
+// count still varies daily in [MIN, MAX] (dailyHouseCount) so the population
+// breathes; a moderator pins any value in that range instead.
 export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
+export const HOUSE_COUNT_MIN = Math.min(110, HOUSE_COUNT_MAX);
 // Every bot also shows "online" for presence — the whole roster.
 export const HOUSE_ONLINE_COUNT = HOUSE_ROSTER.length;
 

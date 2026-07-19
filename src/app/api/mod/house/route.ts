@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/settings";
 import {
   clampHouseCount,
+  dailyHouseCount,
   HOUSE_COUNT_MIN,
   HOUSE_COUNT_MAX,
   HOUSE_SKILLS,
@@ -24,8 +25,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// When nothing is pinned, report the same day-varying default the game server
+// uses (dailyHouseCount), so the slider opens on the value that actually plays
+// rather than always sitting at the floor.
 function readCount(value: string | null): number {
-  return value == null ? HOUSE_COUNT_MIN : clampHouseCount(Number(value));
+  return value == null
+    ? dailyHouseCount(Math.floor(Date.now() / 86_400_000))
+    : clampHouseCount(Number(value));
 }
 
 // Per-tier strength state for the dashboard: baked default, the stored override
