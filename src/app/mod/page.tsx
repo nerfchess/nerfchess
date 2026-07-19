@@ -997,20 +997,70 @@ type SkillTier = {
   effective: ResolvedProfile;
 };
 type PresetMap = Record<string, Record<string, number | boolean>>;
+type RangeState = { value: number; min: number; max: number };
 type HouseState = {
   enabled: boolean;
-  games: number;
-  min: number;
-  max: number;
+  games: RangeState;
+  seeks: RangeState;
   clamp: Record<string, [number, number]>;
   presets: { weakened: PresetMap; veryWeak: PresetMap };
   skillTiers: SkillTier[];
 };
 
+// One labelled range slider (commits on release). Shared by the "Active games"
+// and "Active queues" house controls, which differ only in label/hint/bounds.
+function HouseRangeRow({
+  id,
+  label,
+  hint,
+  state,
+  dim,
+  saving,
+  onChange,
+  onCommit,
+}: {
+  id: string;
+  label: string;
+  hint: string;
+  state: { value: number | null; min: number; max: number };
+  dim: boolean;
+  saving: boolean;
+  onChange: (n: number) => void;
+  onCommit: (n: number) => void;
+}) {
+  const { value, min, max } = state;
+  return (
+    <div className={"border-t border-white/10 pt-3 " + (dim ? "opacity-50" : "")}>
+      <div className="flex items-center justify-between">
+        <label htmlFor={id} className="smallcaps text-[11px] text-parchment-400">
+          {label} ({min}–{max})
+        </label>
+        <span className="font-mono text-sm text-gold-leaf tabular-nums">{value ?? "…"}</span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={1}
+        value={value ?? min}
+        disabled={value === null || saving}
+        onChange={(e) => onChange(Number(e.target.value))}
+        onPointerUp={(e) => onCommit(Number((e.target as HTMLInputElement).value))}
+        onKeyUp={(e) => onCommit(Number((e.target as HTMLInputElement).value))}
+        className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
+      />
+      <p className="mt-1 text-[10px] leading-snug text-parchment-500">{hint}</p>
+    </div>
+  );
+}
+
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [games, setGames] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 0, max: 70 });
+  const [gamesBounds, setGamesBounds] = useState<{ min: number; max: number }>({ min: 0, max: 70 });
+  const [seeks, setSeeks] = useState<number | null>(null);
+  const [seeksBounds, setSeeksBounds] = useState<{ min: number; max: number }>({ min: 0, max: 20 });
   const [strength, setStrength] = useState<Pick<
     HouseState,
     "clamp" | "presets" | "skillTiers"
@@ -1020,8 +1070,10 @@ function HouseBotsToggle() {
 
   const ingest = (data: HouseState) => {
     setEnabled(data.enabled);
-    setGames(data.games);
-    setBounds({ min: data.min, max: data.max });
+    setGames(data.games.value);
+    setGamesBounds({ min: data.games.min, max: data.games.max });
+    setSeeks(data.seeks.value);
+    setSeeksBounds({ min: data.seeks.min, max: data.seeks.max });
     setStrength({ clamp: data.clamp, presets: data.presets, skillTiers: data.skillTiers });
   };
 
@@ -1062,6 +1114,9 @@ function HouseBotsToggle() {
   const commitGames = (n: number) => {
     if (!saving && Number.isFinite(n)) post({ games: n });
   };
+  const commitSeeks = (n: number) => {
+    if (!saving && Number.isFinite(n)) post({ seeks: n });
+  };
 
   return (
     <div className="mt-4 plate space-y-4 p-4">
@@ -1099,33 +1154,29 @@ function HouseBotsToggle() {
           {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
         </button>
       </div>
-      {/* Active games: how many house-vs-house filler games run at once — the
-          games that keep the Watch tab / lobby looking busy. The slider pins a
-          target in the min..max range the API returns (0 = no filler games;
-          human-vs-bot pickups still work). Lowering it lets the extra games drain
-          out over a few minutes. Commits on release. Turning the bots off (above)
-          clears them from the lobby entirely. */}
-      <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
-        <div className="flex items-center justify-between">
-          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
-            Active games playing ({bounds.min}–{bounds.max})
-          </label>
-          <span className="font-mono text-sm text-gold-leaf tabular-nums">{games ?? "…"}</span>
-        </div>
-        <input
-          id="house-games"
-          type="range"
-          min={bounds.min}
-          max={bounds.max}
-          step={1}
-          value={games ?? bounds.min}
-          disabled={games === null || saving}
-          onChange={(e) => setGames(Number(e.target.value))}
-          onPointerUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
-          onKeyUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
-          className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
-        />
-      </div>
+      {/* Two moderator dials for how busy the lobby looks. Both commit on release
+          and take effect within ~15s; turning the bots off (above) clears the
+          lobby entirely regardless. */}
+      <HouseRangeRow
+        id="house-games"
+        label="Active games playing"
+        hint="House-vs-house games that keep the lobby & Watch busy. 0 stops filler (humans can still get picked up); lowering it drains the extras over a few minutes."
+        state={{ value: games, min: gamesBounds.min, max: gamesBounds.max }}
+        dim={enabled === false}
+        saving={saving}
+        onChange={setGames}
+        onCommit={commitGames}
+      />
+      <HouseRangeRow
+        id="house-seeks"
+        label="Active queues in lobby"
+        hint="House bots waiting in the queue for a human to join. 0 = none queued (they still play each other and still pick up a human already waiting)."
+        state={{ value: seeks, min: seeksBounds.min, max: seeksBounds.max }}
+        dim={enabled === false}
+        saving={saving}
+        onChange={setSeeks}
+        onCommit={commitSeeks}
+      />
       {strength && (
         <HouseStrengthEditor
           state={strength}

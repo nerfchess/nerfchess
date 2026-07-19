@@ -3,6 +3,7 @@ import { requireMod } from "@/lib/server/mod";
 import {
   HOUSE_ENABLED_KEY,
   HOUSE_GAMES_KEY,
+  HOUSE_SEEKS_KEY,
   HOUSE_SKILL_OVERRIDES_KEY,
   getAppSetting,
   setAppSetting,
@@ -13,6 +14,10 @@ import {
   HOUSE_GAMES_MIN,
   HOUSE_GAMES_MAX,
   HOUSE_GAMES_DEFAULT,
+  clampHouseSeeks,
+  HOUSE_SEEKS_MIN,
+  HOUSE_SEEKS_MAX,
+  HOUSE_SEEKS_DEFAULT,
   HOUSE_SKILLS,
   bakedResolvedProfile,
   resolveSkillProfile,
@@ -25,10 +30,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// When nothing is pinned, report the same default the game server falls back to
-// (HOUSE_GAMES_DEFAULT), so the slider opens on the value that actually plays.
+// When nothing is pinned, report the same default the game server falls back to,
+// so each slider opens on the value that actually plays.
 function readGames(value: string | null): number {
   return value == null ? HOUSE_GAMES_DEFAULT : clampHouseGames(Number(value));
+}
+function readSeeks(value: string | null): number {
+  return value == null ? HOUSE_SEEKS_DEFAULT : clampHouseSeeks(Number(value));
 }
 
 // Per-tier strength state for the dashboard: baked default, the stored override
@@ -45,16 +53,18 @@ function skillTiers(overridesRaw: string | null) {
 }
 
 async function state(db: Parameters<typeof getAppSetting>[0]) {
-  const [enabled, games, overrides] = await Promise.all([
+  const [enabled, games, seeks, overrides] = await Promise.all([
     getAppSetting(db, HOUSE_ENABLED_KEY),
     getAppSetting(db, HOUSE_GAMES_KEY),
+    getAppSetting(db, HOUSE_SEEKS_KEY),
     getAppSetting(db, HOUSE_SKILL_OVERRIDES_KEY),
   ]);
   return {
     enabled: settingIsOn(enabled),
-    games: readGames(games),
-    min: HOUSE_GAMES_MIN,
-    max: HOUSE_GAMES_MAX,
+    // Two moderator sliders, each with its own bounds: how many house-vs-house
+    // filler games run at once, and how many house bots sit seeking in the queue.
+    games: { value: readGames(games), min: HOUSE_GAMES_MIN, max: HOUSE_GAMES_MAX },
+    seeks: { value: readSeeks(seeks), min: HOUSE_SEEKS_MIN, max: HOUSE_SEEKS_MAX },
     // Strength tuning (docs/bot-weakening-spec.md §5).
     clamp: WEAKEN_CLAMP,
     presets: { weakened: WEAKENED_PRESET, veryWeak: VERY_WEAK_PRESET },
@@ -93,10 +103,12 @@ function mergeOverrides(
   return next;
 }
 
-// POST { enabled?, games?, skillOverrides?, resetSkillOverrides? }:
+// POST { enabled?, games?, seeks?, skillOverrides?, resetSkillOverrides? }:
 // - enabled: turn the house bots on/off.
-// - games: PIN how many house-vs-house filler games run at once (0..HOUSE_GAMES_MAX,
-//   clamped), overriding the default band the DO uses when nothing is stored.
+// - games: PIN how many house-vs-house filler games run at once
+//   (0..HOUSE_GAMES_MAX, clamped).
+// - seeks: PIN how many house bots sit seeking in the lobby queue
+//   (0..HOUSE_SEEKS_MAX, clamped).
 // - skillOverrides: a { "<tier>": patch | null } map, merged into the stored
 //   overrides (per-tier patch, or null to clear a tier). Values are clamped.
 // - resetSkillOverrides: clear ALL strength overrides (back to baked).
@@ -108,6 +120,7 @@ export async function POST(request: Request) {
   let body: {
     enabled?: unknown;
     games?: unknown;
+    seeks?: unknown;
     skillOverrides?: unknown;
     resetSkillOverrides?: unknown;
   };
@@ -118,16 +131,20 @@ export async function POST(request: Request) {
   }
   const hasEnabled = typeof body.enabled === "boolean";
   const hasGames = body.games != null;
+  const hasSeeks = body.seeks != null;
   const hasOverrides = body.skillOverrides != null;
   const hasReset = body.resetSkillOverrides === true;
-  if (!hasEnabled && !hasGames && !hasOverrides && !hasReset) {
+  if (!hasEnabled && !hasGames && !hasSeeks && !hasOverrides && !hasReset) {
     return NextResponse.json(
-      { error: "Provide `enabled`, `games`, `skillOverrides`, and/or `resetSkillOverrides`." },
+      { error: "Provide `enabled`, `games`, `seeks`, `skillOverrides`, and/or `resetSkillOverrides`." },
       { status: 400 },
     );
   }
   if (hasGames && (typeof body.games !== "number" || !Number.isFinite(body.games))) {
     return NextResponse.json({ error: "`games` must be a number." }, { status: 400 });
+  }
+  if (hasSeeks && (typeof body.seeks !== "number" || !Number.isFinite(body.seeks))) {
+    return NextResponse.json({ error: "`seeks` must be a number." }, { status: 400 });
   }
   if (hasOverrides && (typeof body.skillOverrides !== "object" || Array.isArray(body.skillOverrides))) {
     return NextResponse.json({ error: "`skillOverrides` must be an object." }, { status: 400 });
@@ -138,6 +155,9 @@ export async function POST(request: Request) {
   }
   if (hasGames) {
     await setAppSetting(guard.db, HOUSE_GAMES_KEY, String(clampHouseGames(body.games as number)));
+  }
+  if (hasSeeks) {
+    await setAppSetting(guard.db, HOUSE_SEEKS_KEY, String(clampHouseSeeks(body.seeks as number)));
   }
   if (hasReset) {
     // "{}" (not an absent row) is the explicit "no overrides" value; the DO

@@ -59,6 +59,7 @@ import {
   HOUSE_ONLINE_COUNT,
   clampHouseCount,
   clampHouseGames,
+  clampHouseSeeks,
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
@@ -72,6 +73,7 @@ import {
   HOUSE_VS_HOUSE_CAP,
   HOUSE_GAMES_MAX,
   HOUSE_GAMES_DEFAULT,
+  HOUSE_SEEKS_DEFAULT,
   HOUSE_FILLER_THINK_MULTIPLIER,
   syncHouseRatings,
   resolveSkillProfile,
@@ -1225,6 +1227,35 @@ export class GameServer extends DurableObject<Env> {
       }
     } catch {}
     this.houseGamesCache = { value, at: now };
+    return value;
+  }
+
+  // Moderator active-queues target (app_settings.house_seeks): how many house
+  // bots sit seeking in the lobby queue at once, pinned from the /mod "Active
+  // queues" slider (0..HOUSE_SEEKS_MAX). An unset/blank/garbage value falls back
+  // to HOUSE_SEEKS_DEFAULT (the historical band top). Cached on the same ~15s TTL
+  // as the other house settings; the seek loop fills up to this as free personas
+  // allow, and trims surplus when it is lowered.
+  private houseSeeksCache: { value: number; at: number } | null = null;
+  private async houseSeeksTarget(): Promise<number> {
+    const now = Date.now();
+    if (this.houseSeeksCache && now - this.houseSeeksCache.at < houseEnabledTtlMs) {
+      return this.houseSeeksCache.value;
+    }
+    let value = HOUSE_SEEKS_DEFAULT;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_seeks")
+          .first<{ value: string }>();
+        if (row && row.value != null && String(row.value).trim() !== "") {
+          value = clampHouseSeeks(Number(row.value));
+        }
+      }
+    } catch {}
+    this.houseSeeksCache = { value, at: now };
     return value;
   }
 
@@ -4107,6 +4138,12 @@ export class GameServer extends DurableObject<Env> {
     const houseVsHouseCap = Math.min(gamesTarget, Math.max(0, Math.floor(houseGameSeats / 2)));
     const houseTotalGamesCap = Math.min(gamesTarget + 15, houseGameSeats - houseVsHouseCap);
 
+    // How many house bots to keep SEEKING in the lobby queue this tick — the
+    // moderator "Active queues" pin (app_settings.house_seeks, cached). seekFloor
+    // is filled instantly; the rest trickle in one per tick. 0 = no queued bots.
+    const seekTarget = await this.houseSeeksTarget();
+    const seekFloor = Math.min(houseSeekMin, seekTarget);
+
     // Due house actions. A human waiting on their bot's move is the single most
     // latency-critical thing in this whole method (the reported "accepted a bot
     // game, the bot never moves, then cant connect to game servers"), so
@@ -4415,9 +4452,10 @@ export class GameServer extends DurableObject<Env> {
       }
     }
 
-    // Keep 2-3 personas seeking across the two pools at all times (a mix of
-    // Nerf and Buff, rotating which personas via random draw). Seeks carry
-    // the persona's LIVE rating (cached, one bounded query per TTL window).
+    // Keep the moderator-set number of personas seeking across the two pools (a
+    // mix of Nerf and Buff, rotating which personas via random draw; default
+    // 2-4). Seeks carry the persona's LIVE rating (cached, one bounded query per
+    // TTL window).
     const liveInfo = await this.houseLiveInfo(db);
     // Heal identity + rating on RETAINED seeks from the live (cached) roster
     // info. A seek row is created once (newHouseSeek) with the name/avatar/rating
@@ -4437,24 +4475,29 @@ export class GameServer extends DurableObject<Env> {
       const liveRating = liveInfo.byId.get(seek.userId)?.[seek.mode];
       if (typeof liveRating === "number") seek.rating = liveRating;
     }
-    while (seeks.length < houseSeekMin && free.length) {
+    while (seeks.length < seekFloor && free.length) {
       const persona = free.splice(randomInt(free.length), 1)[0];
       seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
-    if (seeks.length >= houseSeekMin && seeks.length < houseSeekMax && free.length && randomInt(100) < 5) {
+    if (seeks.length >= seekFloor && seeks.length < seekTarget && free.length && randomInt(100) < 5) {
       const persona = free.splice(randomInt(free.length), 1)[0];
       seeks.push(this.newHouseSeek(persona, now, liveInfo));
     }
     // Per-mode floor: guarantee at least one seek in each pool so neither the
     // Nerf nor the Buff lobby is ever left without a house seeker (the random
     // per-seek mode roll alone can leave one mode empty). Forces the mode but
-    // keeps the random pool from newHouseSeek.
+    // keeps the random pool from newHouseSeek. Never exceeds the queues target
+    // (so at target 0 or 1 it does not over-fill).
     for (const mode of QUEUE_MODES) {
       if (!free.length) break;
+      if (seeks.length >= seekTarget) break;
       if (seeks.some((seek) => seek.mode === mode)) continue;
       const persona = free.splice(randomInt(free.length), 1)[0];
       seeks.push({ ...this.newHouseSeek(persona, now, liveInfo), mode });
     }
+    // If the moderator lowered the queues target, drop surplus seeks so the queue
+    // shrinks to it promptly instead of waiting for pickup/TTL.
+    if (seeks.length > seekTarget) seeks.length = seekTarget;
     await this.ctx.storage.put(houseSeeksKey, seeks);
 
     // House-vs-house filler so the lobby and TV always look busy: maintain a
@@ -4476,7 +4519,7 @@ export class GameServer extends DurableObject<Env> {
       !arenaOwnsFiller &&
       houseVsHouse < houseVsHouseCap &&
       houseGames + 1 < houseTotalGamesCap &&
-      freeAfterFiller >= houseSeekMin
+      freeAfterFiller >= seekFloor
     ) {
       try {
         const nextAt = (await this.ctx.storage.get<number>(houseNextFillerKey)) ?? 0;

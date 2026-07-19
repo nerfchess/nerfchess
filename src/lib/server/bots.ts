@@ -1602,6 +1602,32 @@ export function clampHouseGames(n: number): number {
     : HOUSE_GAMES_DEFAULT;
 }
 
+// ---------------------------------------------------------------------------
+// Moderator "Active queues" target (app_settings.house_seeks).
+//
+// How many house bots sit SEEKING in the lobby queue at once — the joinable
+// "waiting for a game" rows a human sees and can answer — pinned from the /mod
+// slider in [HOUSE_SEEKS_MIN, HOUSE_SEEKS_MAX]. Read per tick by the DO
+// (houseSeeksTarget, cached ~15s). An unset/blank/garbage value falls back to
+// HOUSE_SEEKS_DEFAULT (the historical seek band's top), so out of the box nothing
+// changes. 0 means no house bots wait in the queue (they still play each other as
+// filler and still pick up a human already waiting). The DO fills up to the
+// target as free personas allow, so a very high pin is best-effort while the
+// roster is busy with games.
+// ---------------------------------------------------------------------------
+export const HOUSE_SEEKS_MIN = 0;
+export const HOUSE_SEEKS_MAX = 20;
+/** The default number of seeking house bots when a moderator has not pinned one:
+ * the historical seek-band top, so unpinned behaviour is the familiar 2-4. */
+export const HOUSE_SEEKS_DEFAULT = 4;
+/** Clamp a raw queues target into [HOUSE_SEEKS_MIN, HOUSE_SEEKS_MAX]; a
+ * non-finite value reads as the default. */
+export function clampHouseSeeks(n: number): number {
+  return Number.isFinite(n)
+    ? Math.max(HOUSE_SEEKS_MIN, Math.min(HOUSE_SEEKS_MAX, Math.floor(n)))
+    : HOUSE_SEEKS_DEFAULT;
+}
+
 /** How many times slower a bot-vs-bot filler game paces its moves than a bot
  * facing a human (passed to houseThinkMs as thinkMultiplier). Filler is
  * lobby/TV decoration; slowing it keeps 40+ concurrent games affordable on the

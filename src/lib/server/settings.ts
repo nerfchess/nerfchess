@@ -20,6 +20,12 @@ export const HOUSE_COUNT_KEY = "house_count";
 // (HOUSE_GAMES_DEFAULT). 0 means no filler games.
 export const HOUSE_GAMES_KEY = "house_games";
 
+// How many house bots sit seeking in the lobby queue at once: the moderator
+// "Active queues" slider (/mod), in [HOUSE_SEEKS_MIN, HOUSE_SEEKS_MAX] from
+// bots.ts. Read by the game-server DO per tick (houseSeeksTarget); an absent row
+// means the default (HOUSE_SEEKS_DEFAULT). 0 means no queued house bots.
+export const HOUSE_SEEKS_KEY = "house_seeks";
+
 // Per-tier house-bot strength overrides: a JSON map
 // `{ "<skill>": { <field>: <value>, ... }, ... }` a moderator edits from /mod to
 // weaken (or restore) the bots live. Read by the game-server DO (cached ~15s)
