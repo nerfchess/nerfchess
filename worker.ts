@@ -58,6 +58,7 @@ import {
   onlineHouseRoster,
   HOUSE_ONLINE_COUNT,
   clampHouseCount,
+  clampHouseGames,
   dailyHouseCount,
   pickHouseMove,
   pickHouseSeek,
@@ -69,6 +70,8 @@ import {
   nameHash,
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
+  HOUSE_GAMES_MAX,
+  HOUSE_GAMES_DEFAULT,
   HOUSE_FILLER_THINK_MULTIPLIER,
   syncHouseRatings,
   resolveSkillProfile,
@@ -641,11 +644,13 @@ const houseGameSeats = Math.max(4, HOUSE_ROSTER.length - houseSeekReserve);
 // Spawns are staggered (houseFillerSpawnDelayMs: ~1.5-3s apart during ramp-up,
 // 8-15s at steady state), so a cold start climbs to the 40-game floor over a
 // couple of minutes instead of bursting 40 game creations at once.
-const houseVsHouseCapMax = HOUSE_VS_HOUSE_CAP;
-// Filler cap + headroom for human-vs-bot pickups and /play bot games.
-const houseTotalGamesCapMax = HOUSE_VS_HOUSE_CAP + 15;
-const houseVsHouseCap = Math.min(houseVsHouseCapMax, Math.max(1, Math.floor(houseGameSeats / 3)));
-const houseTotalGamesCap = Math.min(houseTotalGamesCapMax, houseGameSeats - houseVsHouseCap);
+// The house-vs-house FILLER count is now a moderator-tunable target
+// (app_settings.house_games, /mod "Active games" slider): houseTick reads it per
+// tick (houseGamesTarget) and clamps it against the live seat budget (2 bots per
+// game), so the EFFECTIVE per-tick concurrency caps are computed there, not here.
+// This module ceiling exists only to size the lobby's live-games slice so a busy
+// site is never clipped — the max pinnable filler count plus the pickup headroom.
+const houseTotalGamesCapMax = HOUSE_GAMES_MAX + 15;
 // Per-alarm ceiling on house engine actions (moves and draft resolves), across
 // all live house games. Human-facing actions used to ALL run in one tick, so
 // after any stall every overdue game became due at once and one alarm ran a
@@ -1188,6 +1193,38 @@ export class GameServer extends DurableObject<Env> {
       }
     } catch {}
     this.houseCountCache = { value, at: now };
+    return value;
+  }
+
+  // Moderator concurrent-games target (app_settings.house_games): how many
+  // house-vs-house FILLER games to keep live at once, pinned from the /mod
+  // "Active games" slider (0..HOUSE_GAMES_MAX). An unset/blank/garbage value
+  // falls back to HOUSE_GAMES_DEFAULT (the historical band ceiling), so out of
+  // the box nothing changes. Cached on the same ~15s TTL as the other house
+  // settings, so a change reaches the spawner within a tick without a redeploy;
+  // houseTick clamps this against the live seat budget before using it.
+  private houseGamesCache: { value: number; at: number } | null = null;
+  private async houseGamesTarget(): Promise<number> {
+    const now = Date.now();
+    if (this.houseGamesCache && now - this.houseGamesCache.at < houseEnabledTtlMs) {
+      return this.houseGamesCache.value;
+    }
+    let value = HOUSE_GAMES_DEFAULT;
+    try {
+      const db = await this.db();
+      if (db) {
+        const row = await db
+          .prepare("SELECT value FROM app_settings WHERE key = ?")
+          .bind("house_games")
+          .first<{ value: string }>();
+        // Only a non-empty stored value overrides the default; an absent or blank
+        // row leaves the historical band in place.
+        if (row && row.value != null && String(row.value).trim() !== "") {
+          value = clampHouseGames(Number(row.value));
+        }
+      }
+    } catch {}
+    this.houseGamesCache = { value, at: now };
     return value;
   }
 
@@ -4058,6 +4095,17 @@ export class GameServer extends DurableObject<Env> {
       liveHouseMatches.push(match);
       if (ids.length === 2) houseVsHouse++;
     }
+
+    // Concurrent house-game caps for THIS tick. The house-vs-house filler target
+    // is the moderator "Active games" pin (app_settings.house_games, cached),
+    // clamped here against the live seat budget — 2 bots per filler game — so a
+    // pin can never oversubscribe the roster. The +15 headroom above it is kept
+    // for human-vs-bot pickups and /play games, so even a 0 filler target still
+    // lets a waiting human be seated with a bot. Lowering the target just stops
+    // new filler spawns; the extra games drain out naturally within a few minutes.
+    const gamesTarget = await this.houseGamesTarget();
+    const houseVsHouseCap = Math.min(gamesTarget, Math.max(0, Math.floor(houseGameSeats / 2)));
+    const houseTotalGamesCap = Math.min(gamesTarget + 15, houseGameSeats - houseVsHouseCap);
 
     // Due house actions. A human waiting on their bot's move is the single most
     // latency-critical thing in this whole method (the reported "accepted a bot
@@ -7256,6 +7304,16 @@ export class GameServer extends DurableObject<Env> {
     // every lobby poll, the most frequent human-driven path into the DO.
     const matches = await this.loadLiveMatches();
 
+    // House-bot presence is gated on the runtime on/off switch. When a moderator
+    // turns the house bots OFF they must vanish from the lobby entirely — no
+    // seeking bots, no idle "online" filler, and no presence-padded player count —
+    // not merely stop starting new games. houseTick separately winds down active
+    // seeks/games; gating the three presence injections below on this flag makes
+    // the online list and the shown count agree with the switch immediately
+    // (cached ~15s, so this adds no per-poll D1 work). Previously the presence
+    // block ignored the flag, so ~210 bots stayed "online" after the off switch.
+    const houseOn = await this.houseEnabled();
+
     const liveGames: Array<{
       id: string;
       origin?: "arena";
@@ -7387,7 +7445,10 @@ export class GameServer extends DurableObject<Env> {
     // rows come from DO storage (no D1), and failures here degrade to "no
     // house seeks" without touching the human lobby.
     let houseSeeks: HouseSeekEntry[] = [];
-    try {
+    // Skip house seeks entirely when the bots are off, so none show as searching
+    // in the lobby (houseTick also clears the stored rows, but gating here makes
+    // the switch immediate rather than waiting a tick).
+    if (houseOn) try {
       houseSeeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
       for (const seek of houseSeeks) {
         const pool = QUEUE_POOLS[seek.pool];
@@ -7513,7 +7574,11 @@ export class GameServer extends DurableObject<Env> {
       // window: the active bots already added above keep their real
       // playing/searching status; the extra online-only personas fill in as idle
       // "online" so the list is fuller than the set that actually plays.
-      const idlePersonas = onlineHouseRoster(this.houseDayIndex()).filter((p) => !seen.has(p.userId));
+      // Idle house presence fills out the lobby ONLY while the bots are enabled;
+      // turned off, no persona is injected as "online".
+      const idlePersonas = houseOn
+        ? onlineHouseRoster(this.houseDayIndex()).filter((p) => !seen.has(p.userId))
+        : [];
       // Idle bots get a placeholder seed here; the canonical most-played-bucket
       // query below (now shared with human rows) overwrites it for any bot that
       // has a rated bucket, so an idle bot shows the SAME number as its profile,
@@ -7601,7 +7666,10 @@ export class GameServer extends DurableObject<Env> {
     // within a bucket, at most a small step at the boundary, identical for every
     // viewer. Padding only ever ADDS to the anonymous count, so the shown total
     // can never fall below the real humans plus seated bots counted above.
-    {
+    // The house-presence baseline applies ONLY while the bots are enabled; with
+    // them off the shown count reflects just real humans + anonymous (no padding),
+    // so the off switch actually empties the lobby count too.
+    if (houseOn) {
       const shownReal = players.length + anonymous;
       const bucket = Math.floor(now / (10 * 60 * 1000)); // hour + 10-min bucket
       const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 13) - 6; // -6..+6
@@ -7622,7 +7690,7 @@ export class GameServer extends DurableObject<Env> {
       // reach 40+ via its own uncapped arena union — the source of the cross-tab
       // desync. Keep it >= the filler ceiling so a true 40+ situation reads 40+
       // from the DO alone, identically for every viewer.
-      games: liveGames.slice(0, Math.max(60, houseTotalGamesCap)),
+      games: liveGames.slice(0, Math.max(60, houseTotalGamesCapMax)),
       challenges: challenges.slice(0, 25),
       seeks: seeks.slice(0, 25),
     };

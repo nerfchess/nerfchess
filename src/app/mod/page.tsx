@@ -999,7 +999,7 @@ type SkillTier = {
 type PresetMap = Record<string, Record<string, number | boolean>>;
 type HouseState = {
   enabled: boolean;
-  count: number;
+  games: number;
   min: number;
   max: number;
   clamp: Record<string, [number, number]>;
@@ -1009,8 +1009,8 @@ type HouseState = {
 
 function HouseBotsToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [count, setCount] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 60, max: 120 });
+  const [games, setGames] = useState<number | null>(null);
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 0, max: 70 });
   const [strength, setStrength] = useState<Pick<
     HouseState,
     "clamp" | "presets" | "skillTiers"
@@ -1020,7 +1020,7 @@ function HouseBotsToggle() {
 
   const ingest = (data: HouseState) => {
     setEnabled(data.enabled);
-    setCount(data.count);
+    setGames(data.games);
     setBounds({ min: data.min, max: data.max });
     setStrength({ clamp: data.clamp, presets: data.presets, skillTiers: data.skillTiers });
   };
@@ -1059,8 +1059,8 @@ function HouseBotsToggle() {
   const toggle = () => {
     if (enabled !== null && !saving) post({ enabled: !enabled });
   };
-  const commitCount = (n: number) => {
-    if (!saving && Number.isFinite(n)) post({ count: n });
+  const commitGames = (n: number) => {
+    if (!saving && Number.isFinite(n)) post({ games: n });
   };
 
   return (
@@ -1099,29 +1099,30 @@ function HouseBotsToggle() {
           {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
         </button>
       </div>
-      {/* Active-bot count: how many of the 210-deep roster actually seek and play
-          at once (up to ~150 more idle "online" for presence). By default this
-          varies daily (60-120) and the active window rotates so the crowd cycles
-          through the whole roster over time; moving this slider PINS a fixed count
-          instead. Commits on release. */}
+      {/* Active games: how many house-vs-house filler games run at once — the
+          games that keep the Watch tab / lobby looking busy. The slider pins a
+          target in the min..max range the API returns (0 = no filler games;
+          human-vs-bot pickups still work). Lowering it lets the extra games drain
+          out over a few minutes. Commits on release. Turning the bots off (above)
+          clears them from the lobby entirely. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-center justify-between">
-          <label htmlFor="house-count" className="smallcaps text-[11px] text-parchment-400">
-            Active bots playing (pins the daily 60-120)
+          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
+            Active games playing ({bounds.min}–{bounds.max})
           </label>
-          <span className="font-mono text-sm text-gold-leaf tabular-nums">{count ?? "…"}</span>
+          <span className="font-mono text-sm text-gold-leaf tabular-nums">{games ?? "…"}</span>
         </div>
         <input
-          id="house-count"
+          id="house-games"
           type="range"
           min={bounds.min}
           max={bounds.max}
           step={1}
-          value={count ?? bounds.min}
-          disabled={count === null || saving}
-          onChange={(e) => setCount(Number(e.target.value))}
-          onPointerUp={(e) => commitCount(Number((e.target as HTMLInputElement).value))}
-          onKeyUp={(e) => commitCount(Number((e.target as HTMLInputElement).value))}
+          value={games ?? bounds.min}
+          disabled={games === null || saving}
+          onChange={(e) => setGames(Number(e.target.value))}
+          onPointerUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
+          onKeyUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
           className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
         />
       </div>

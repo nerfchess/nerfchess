@@ -811,9 +811,9 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
 // of the full 210-deep roster (same day offset, so the smaller set is always a
 // prefix of the larger — no persona is "playing" without also being "online"):
-//   • ACTIVE (60-120, varies daily): the bots that actually seek, get picked up,
-//     and play filler. dailyHouseCount picks the day's count; a moderator may
-//     still pin an explicit one from /mod (worker.ts houseCount honours it).
+//   • ACTIVE (the whole roster): the bots that actually seek, get picked up, and
+//     play filler. The moderator does not thin this set; lobby load is tuned via
+//     the concurrent house-GAMES target instead (HOUSE_GAMES_* / house_games).
 //   • ONLINE (up to 150): how many bots SHOW in the lobby's online list at once.
 //     The active ones among them read as playing/searching; the rest just idle
 //     "online" for a fuller lobby (they don't seek or play).
@@ -821,9 +821,12 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-// Owner target: EVERY persona active at once. Min == Max == roster size, so the
-// daily window is always the whole roster (houseWindow returns the full roster
-// when size >= length) and every bot seeks / gets picked up / plays filler.
+// The ACTIVE bot count is the whole roster — every persona can seek, get picked
+// up by a human, and play filler at once (Min == Max, so activeHouseRoster always
+// returns the full roster). Lobby liveliness is tuned NOT by thinning this
+// seeking crowd but by the concurrent-GAMES target (HOUSE_GAMES_* below, the /mod
+// "Active games" slider); sustaining up to HOUSE_GAMES_MAX filler games needs the
+// full roster seated anyway (2 bots per game).
 export const HOUSE_COUNT_MIN = HOUSE_ROSTER.length;
 export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
 // Every bot also shows "online" for presence — the whole roster.
@@ -1572,6 +1575,32 @@ export const HOUSE_VS_HOUSE_CAP = 55;
  * same time), so the steady band must sit high enough that a whole burst ending
  * still leaves the count above 40. */
 export const HOUSE_FILLER_SPAWN_BUFFER = 10;
+
+// ---------------------------------------------------------------------------
+// Moderator "Active games" target (app_settings.house_games).
+//
+// How many house-vs-house FILLER games to keep live at once — the games that
+// make the Watch tab / lobby look busy — pinned from the /mod slider in
+// [HOUSE_GAMES_MIN, HOUSE_GAMES_MAX]. The game-server DO reads it per tick
+// (houseGamesTarget, cached ~15s) and clamps it against the live seat budget
+// (2 bots per filler game) before spawning, so a pin can never oversubscribe the
+// roster. An unset / blank / garbage value falls back to HOUSE_GAMES_DEFAULT (the
+// long-standing 40-55 band's ceiling), so out of the box nothing changes. 0 is a
+// valid pin: no filler games at all (human-vs-bot pickups still work, since the
+// spawner keeps separate headroom for them).
+// ---------------------------------------------------------------------------
+export const HOUSE_GAMES_MIN = 0;
+export const HOUSE_GAMES_MAX = 70;
+/** The default concurrent-filler target when a moderator has not pinned one: the
+ * historical cap, so unpinned behaviour stays the familiar 40-55 band. */
+export const HOUSE_GAMES_DEFAULT = HOUSE_VS_HOUSE_CAP;
+/** Clamp a raw games target into [HOUSE_GAMES_MIN, HOUSE_GAMES_MAX]; a non-finite
+ * value reads as the default. */
+export function clampHouseGames(n: number): number {
+  return Number.isFinite(n)
+    ? Math.max(HOUSE_GAMES_MIN, Math.min(HOUSE_GAMES_MAX, Math.floor(n)))
+    : HOUSE_GAMES_DEFAULT;
+}
 
 /** How many times slower a bot-vs-bot filler game paces its moves than a bot
  * facing a human (passed to houseThinkMs as thinkMultiplier). Filler is
