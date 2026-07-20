@@ -209,6 +209,35 @@ Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:ne
 
 ---
 
+## 2026-07-20 03:20 ET (autonomous overhaul pass: bot-profile routing, draft preview, knight/bishop overlap, em-dash guard, rule accuracy, friends skeleton)
+
+Delivered from a seven-subagent read-only investigation (bot routing, effect duplication, em-dash enumeration, skeleton coverage, mobile layout, sound coverage, rule text) plus hands-on integration. Every change verified with the existing harnesses; no worker.ts / DO change, so buildVersion is untouched.
+
+Bot profile routing after rename (the "old link opens Account not found" bug):
+- Root cause: a NEW username resolves fine (rename writes username_lower, the profile lookup is case-insensitive), but OLD names dead-ended forever. Player identity was denormalized only for display in two spots that no rename backfilled: the frozen game-archive names (games.white_name/black_name) and any previously shared /u/oldName URL, with no old-to-current redirect anywhere. Live, id-joined surfaces (leaderboard, Online Now, notifications, lobby/TV) already tracked renames correctly.
+- Fix (single mechanism repairs history links, recent-games links, and old shared URLs at once): new username_history(old_username_lower to user_id) table (migrations/0037 + schema.ts, idempotent). Both rename paths now record the outgoing name in the same write (flagged-user rename in /api/auth/rename; House-bot editor in /api/mod/house/personas, folded into its atomic batch). Renaming back clears the prior redirect (no loops). The profile API (/api/users/[username]) resolves a missed lookup through username_history and returns the current username; the profile page forwards with router.replace. Usernames were already never the permanent id (games/ratings/leaderboard key on account id); this only repairs the denormalized display name.
+
+Opponent draft preview (bottom of the draft overlay):
+- Replaced the single-line text summary ("Opponent's draft: Name (T3)...") with a new compact, dungeon-styled OpponentDraftPanel: small tier-tinted cards with the card face icon, name, tier chip, category, and a tap-to-expand short description; face-down backs (tier numeral) for tier-only and hidden states. Deliberately smaller than your own cards so your choices stay the visual priority; wraps without horizontal overflow; tapping toggles detail only (never touches the draft). Information permissions are unchanged: it renders only what the caller already deemed visible (showCards / showTier / reveal / lastPick), so nothing hidden can leak.
+
+Knight-to-bishop overlap (Tier 3 vs Tier 7):
+- Confirmed the pair: wa_spectral_minors (Spectral Retinue, T3 buff-mode instant) and bw3_mummers_dance (Mummers' Dance, T7 nerf-mode activated) had byte-identical effect bodies (swap every knight to bishop and back). Resolved by differentiating the T7 boon rather than deleting either: Mummers' Dance now also shields the whole re-tasked minor corps from capture for the opponent's next turn, so the army-wide re-task cannot be punished mid-costume-change. That protective rider is what earns the higher tier; the bare swap alone is a T3 effect. Distinction documented in-code.
+
+Em dashes (static guard for the standing "no em dashes in user-facing text" rule):
+- New scripts/check-emdash.ts (npm run test:emdash): a TypeScript-AST scanner that flags em dashes only inside rendered nodes (string literals, template literals, JSX text; className and other non-rendered attributes excluded) and never inside comments or SVG path data. Confirmed the convention is honored essentially perfectly: of ~1600 em-dash occurrences in src, all but one were in code comments. Fixed the lone rendered case (a cardIcon dev console message). Wired as a first-class check.
+
+Rule-description accuracy (displayed text vs implemented behavior):
+- Fixed three nerf descriptions that misdescribed their own code (the accurate text existed only in dead library.ts stubs that the implemented cards shadow): Thunderdome now says a piece in the center 16 can never leave the zone (the code makes it impossible, not "rarely"); Quicksand now describes the correct cumulative "second landing on the same 4th/5th-rank square, ever" rule (not "twice in a row"); Ichthyophobe no longer claims "Stockfish" (the engine is a one-ply greedy heuristic).
+
+Friends panel loading (skeleton + error separation):
+- FriendsPanel rendered nothing while its first fetch was in flight and hung on a blank panel if that fetch 5xx'd or went offline. Added a themed roster skeleton (pulse rows matching the final layout, motion-reduce aware) for the loading state and a separate "Try again" retry for the failed-load state.
+
+Investigation findings recorded for follow-up (not changed this pass, to avoid registry churn / risky content surgery): several same-tier nerf mirror pairs (oddball/even_keeled, remorseful/one_bite_at_a_time) and tier inversions (onward_only T7 weaker than forward_march T5) where every alternative mechanic collides with an existing nerf (punching_down, theocracy), so re-theming would trade one duplicate for another; the persistent passive-aura sound layer is intentionally silent (effect activations already voice through sounds.ts, and continuous ambient passives are undesirable); a handful of low-severity mobile polish items (rating-chart tooltip edge clamp, a couple of username truncations, one wrapping button row).
+
+Verified: tsc --noEmit clean, eslint clean (2 pre-existing warnings, both unrelated in game/page.tsx), and test:rules, test:nerfs, test:passive-registry, test:animations, test:desync, test:apex, test:snapshot, test:emdash all green. Visual/audio changes want a preview-deploy eyeball (the build env cannot render them). PR OPEN.
+
+---
+
 ## 2026-07-20 04:29 ET (sound for every effect, complete card registry, whole-library card review)
 
 Exhaustive card + sound pass (PR #428). Delivered with a 59-agent workflow (one auditor per card-source file, every one of the 1366 cards) whose findings were each verified against the engine before any fix.

@@ -142,6 +142,45 @@ export async function deleteSession(db: D1Database, token: string): Promise<void
   await db.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(await sha256Hex(token)).run();
 }
 
+/** Prepared statements that record a rename in username_history so an old
+ * /u/<oldName> link redirects to the account's current profile. Returned as
+ * statements (not run) so a caller can fold them into an existing db.batch and
+ * keep the rename atomic. The newest owner of a name wins, and any history row
+ * that used the NEW name is cleared so renaming back (A -> B -> A) does not
+ * leave a redirect loop. Records nothing when the name is unchanged. */
+export function usernameChangeStatements(
+  db: D1Database,
+  userId: string,
+  oldLower: string,
+  newLower: string,
+): D1PreparedStatement[] {
+  if (oldLower === newLower) return [];
+  return [
+    db.prepare("DELETE FROM username_history WHERE old_username_lower = ?").bind(newLower),
+    db
+      .prepare(
+        `INSERT INTO username_history (old_username_lower, user_id, changed_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(old_username_lower) DO UPDATE SET
+           user_id = excluded.user_id, changed_at = excluded.changed_at`,
+      )
+      .bind(oldLower, userId, Date.now()),
+  ];
+}
+
+/** Convenience wrapper: run usernameChangeStatements as their own batch.
+ * Best-effort by contract (callers treat a failure as non-fatal to the rename,
+ * which has already committed). */
+export async function recordUsernameChange(
+  db: D1Database,
+  userId: string,
+  oldLower: string,
+  newLower: string,
+): Promise<void> {
+  const stmts = usernameChangeStatements(db, userId, oldLower, newLower);
+  if (stmts.length) await db.batch(stmts);
+}
+
 export async function userForSession(db: D1Database, token: string | null): Promise<SessionUser | null> {
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const row = await db

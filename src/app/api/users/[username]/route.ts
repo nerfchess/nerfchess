@@ -44,7 +44,24 @@ export async function GET(request: Request, props: { params: Promise<{ username:
       show_online: number | null;
       last_seen_at: number | null;
     }>();
-  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!user) {
+    // Renamed account: an old /u/<oldName> link should still land on the
+    // current profile. Resolve the old name through username_history to the
+    // stable account id, then hand the client the account's current username to
+    // forward to. Only the display name was ever denormalized; the id is stable.
+    const renamed = await db
+      .prepare(
+        `SELECT u.username AS username FROM username_history h
+         JOIN users u ON u.id = h.user_id
+         WHERE h.old_username_lower = ?`,
+      )
+      .bind(username)
+      .first<{ username: string }>();
+    if (renamed?.username && renamed.username.toLowerCase() !== username) {
+      return NextResponse.json({ redirectTo: renamed.username }, { status: 200 });
+    }
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
+  }
 
   // The signed-in viewer (if any), resolved with the same helpers /api/friends
   // uses, drives the relationship state and mutual-friends disclosure below.

@@ -1502,7 +1502,8 @@ function bestHeuristicMove(moves: Move[]): Move | null {
 
 export const ICHTHYOPHOBE: Nerf = db({
   id: "ichthyophobe", name: "Ichthyophobe", tier: 3, implemented: true,
-  description: "Can't make the move Stockfish would make.",
+  description:
+    "Each turn you can't play the move a simple greedy engine would pick (its single best move by a one ply look: the most valuable safe capture, or a basic developing move when there is no capture). Every other legal move is fine; if that one move is your only legal move, you may still play it.",
   filterMoves: (moves) => {
     const best = bestHeuristicMove(moves);
     if (!best) return moves;
@@ -1841,7 +1842,8 @@ export const ABSOLUTION: Nerf = db({
 
 export const QUICKSAND: Nerf = db({
   id: "quicksand", name: "Quicksand", tier: 4, implemented: true,
-  description: "Middle ranks are quicksand. A piece that ends on the same middle-rank square twice in a row is stuck.",
+  description:
+    "The 4th and 5th ranks are quicksand. If one of your pieces lands on the same 4th or 5th rank square for the second time in the game (tracing that piece's own path, not necessarily on consecutive moves), it is stuck and can never move from that square again.",
   filterMoves: (moves, _s, ctx) => {
     // A piece is stuck if that SAME piece has ended on this middle-rank square
     // (rank 3 or 4) at least twice. Follow the current piece's own move chain
@@ -1958,7 +1960,8 @@ export const SECRET_GARDEN: Nerf = db({
 
 export const THUNDERDOME: Nerf = db({
   id: "thunderdome", name: "Thunderdome", tier: 6, implemented: true,
-  description: "Center 16 squares are the thunderdome. Pieces enter; pieces rarely leave.",
+  description:
+    "The center 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is on those squares it can never move out of the zone for the rest of the game (it may still move within the zone). Pieces enter; pieces do not leave.",
   filterMoves: (moves) => {
     const inDome = (sq: number) => {
       const f = FILE(sq), r = RANK(sq);
