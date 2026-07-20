@@ -52,6 +52,10 @@ export function FriendsPanel() {
   const [data, setData] = useState<FriendsData | null>(null);
   // undefined = still checking, false = signed out, true = signed in.
   const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+  // Distinguishes "initial load in flight" (show a skeleton) from "initial load
+  // failed" (show a retry), so a 5xx / offline first fetch never hangs on a
+  // blank panel or an endless skeleton.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [addName, setAddName] = useState("");
   const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,6 +63,7 @@ export function FriendsPanel() {
   const lobby = useLobbyFeed();
 
   const load = useCallback(async () => {
+    setLoadFailed(false);
     try {
       const res = await fetch("/api/friends");
       if (res.status === 401) {
@@ -68,9 +73,14 @@ export function FriendsPanel() {
       if (res.ok) {
         setSignedIn(true);
         setData((await res.json()) as FriendsData);
+        return;
       }
+      // Non-401 error (e.g. 5xx) on the initial load: surface a retry instead
+      // of leaving signedIn undefined (which would render an endless skeleton).
+      setLoadFailed(true);
     } catch {
-      /* offline: leave the last snapshot */
+      // Offline: keep any last snapshot, but if we have none yet, show a retry.
+      setLoadFailed(true);
     }
   }, []);
 
@@ -109,7 +119,43 @@ export function FriendsPanel() {
     }
   };
 
-  if (signedIn === undefined) return null; // still checking; render nothing
+  if (signedIn === undefined) {
+    // Initial load. A network/5xx failure gets a retry; otherwise a themed
+    // skeleton that mirrors the roster rows (no blank panel, no spinner text).
+    return (
+      <div className="plate dgn-rivets p-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-lg text-parchment">Friends</h2>
+        </div>
+        {loadFailed ? (
+          <div className="mt-4 text-sm text-parchment-300">
+            <p>Could not load your friends.</p>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="btn-ghost mt-2 inline-flex min-h-[40px] items-center px-3 font-display text-sm"
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2" aria-hidden>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-white/10 motion-reduce:animate-none" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-white/10 motion-reduce:animate-none" />
+                  <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
+                </div>
+                <div className="ml-auto h-8 w-16 shrink-0 animate-pulse rounded-sm bg-white/10 motion-reduce:animate-none" />
+              </div>
+            ))}
+            <span className="sr-only">Loading friends</span>
+          </div>
+        )}
+      </div>
+    );
+  }
   if (!signedIn) {
     return (
       <div className="plate dgn-rivets p-4">

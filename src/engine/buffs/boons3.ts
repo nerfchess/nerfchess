@@ -1217,15 +1217,26 @@ export const BOON_WAVE3: Buff[] = [
 
   // An army-wide transformation with no material change: every knight and
   // bishop trades roles. Neighbours: Masquerade (exactly two chosen pieces),
-  // Carnival of Masks (random shuffle including rooks and queens). Distinct: a
-  // deterministic, global knight-for-bishop swap of your whole minor corps, so
-  // you re-task every minor to the other color complex at once.
+  // Carnival of Masks (random shuffle including rooks and queens).
+  //
+  // Deliberately distinct from Spectral Retinue (wa_spectral_minors, a Tier 3
+  // BUFF-mode instant that performs the bare same knight-for-bishop swap the
+  // moment it is drafted). The two share the swap flavour but sit in different
+  // draft pools and are separated on three axes so neither is a copy of the
+  // other:
+  //   - trigger: Spectral Retinue fires instantly on draft; Mummers' Dance is
+  //     an activated ability you hold and fire on the turn of your choosing.
+  //   - tier / mode: T3 buff vs T7 nerf-mode boon.
+  //   - power: Mummers' Dance also MASKS the whole re-tasked minor corps from
+  //     capture for the opponent's next turn, so the army-wide re-task can't be
+  //     punished mid-costume-change. That protective rider is what earns the
+  //     higher tier; the bare swap alone would be a T3 effect.
   boon(
     {
       id: "bw3_mummers_dance",
       name: "Mummers' Dance",
       description:
-        "The masks come round and everyone swaps: every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged; the whole board is re-tasked.",
+        "The masks come round and everyone swaps: every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged, only re-tasked. While the troupe is changing costume, none of the re-tasked minors can be captured on your opponent's next turn.",
       tier: 7,
       category: "pieces",
       icon: "VenetianMask",
@@ -1235,8 +1246,18 @@ export const BOON_WAVE3: Buff[] = [
     activatedSimple((_inst, api) => {
       const knights = mySquares(api.board, api.me, "n");
       const bishops = mySquares(api.board, api.me, "b");
+      // Pieces swap type in place, so the squares that hold a minor before the
+      // swap are exactly the squares that hold the re-tasked minor after it.
+      const masked = [...knights, ...bishops];
       for (const sq of knights) api.setPieceType(sq, "b");
       for (const sq of bishops) api.setPieceType(sq, "n");
+      // T7 rider: mask the whole re-tasked corps for one enemy turn. turns:1 on
+      // a turn-consuming activation is auto-extended to cover the opponent's
+      // immediate reply (see game.ts activateBuff), so this reads as exactly
+      // "your opponent's next turn".
+      if (masked.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: masked, turns: 1 });
+      }
     }),
   ),
 

@@ -315,7 +315,7 @@ export function cardFaceIcon(
   }
   if (DEV_LIBRARY_IDS?.has(id)) {
     console.error(
-      `[cardIcon] library card "${id}" has no generated face icon — run: npm run gen:icons`,
+      `[cardIcon] library card "${id}" has no generated face icon. Run: npm run gen:icons`,
     );
   }
   const own = resolveLucideIcon(icon);

@@ -134,7 +134,7 @@ const STUBS: Stub[] = [
   { id: "leaps_and_bounds", name: "Leaps and Bounds", description: "Can't move a piece to a square adjacent to where it just was.", tier: 6 },
   { id: "colorblind", name: "Colorblind", description: "Can't move to one random color of squares, re-randomized each turn.", tier: 5 },
   { id: "inching_forward", name: "Inching Forward", description: "From your 6th move on, you lose if your king has not advanced far enough: it must be at least on your 2nd rank by move 6, your 3rd rank by move 12, and one rank further for every additional 6 of your moves.", tier: 6 },
-  { id: "ichthyophobe", name: "Ichthyophobe", description: "Can't make the move Stockfish would make.", tier: 3 },
+  { id: "ichthyophobe", name: "Ichthyophobe", description: "Can't play the move a simple greedy engine would pick (its single best one-ply move).", tier: 3 },
   { id: "left_to_right", name: "Left to Right", description: "Unless you just moved to the rightmost file, must move right of your last move's destination.", tier: 6 },
   { id: "friendly_fire", name: "Friendly Fire", description: "Can only move to squares defended by another of your pieces.", tier: 6 },
   { id: "going_the_distance", name: "Going the Distance", description: "Must move at least as far as opponent's last move, if able.", tier: 6 },

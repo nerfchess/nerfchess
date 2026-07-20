@@ -166,7 +166,15 @@ function ProfileContent() {
           return;
         }
         if (!res.ok) throw new Error(String(res.status));
-        data = (await res.json()) as ProfileData;
+        const payload = (await res.json()) as ProfileData & { redirectTo?: string };
+        // Renamed account: the API resolved this old name to a current profile.
+        // Forward to the canonical /u/<currentName> (replace, so Back does not
+        // bounce through the dead old name).
+        if (payload.redirectTo && payload.redirectTo.toLowerCase() !== username.toLowerCase()) {
+          router.replace(`/u/${encodeURIComponent(payload.redirectTo)}`);
+          return;
+        }
+        data = payload;
       } catch {
         // Network drop or 5xx: show a retryable error instead of an endless
         // skeleton. A 404 is handled above as "not found".
@@ -212,8 +220,9 @@ function ProfileContent() {
     // reloadTick re-runs the primary fetch when the user taps Retry after a
     // load error. Every other value the body touches (setState updaters,
     // fetchMe, isHouseEditor) is a stable import or setter, so the two reactive
-    // inputs below are the complete dependency set.
-  }, [username, reloadTick]);
+    // inputs below are the complete dependency set. router is Next's stable
+    // App Router instance (used only for the renamed-account redirect).
+  }, [username, reloadTick, router]);
 
   // Newest finished game (limit 1, no filters) for the recent-game module. Kept
   // separate from the Games tab feed so a finished live game can refetch it.
