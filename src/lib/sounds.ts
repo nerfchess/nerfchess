@@ -787,3 +787,126 @@ export function playWall(count = 5) {
     knock({ filterFreq: 360, filterQ: 2, dur: 0.06, gain: 0.34, bodyFreq: 120 + i * 6, bodyGain: 0.28, bodyDur: 0.07, delay: i * 0.075 });
   }
 }
+
+// --- Passive effect family cues --------------------------------------------
+// Every card's persistent effect (a nerf reveal, a buff/boon/hex acquisition)
+// carries one of nine sound families in its passive composition
+// (compositions.ts `soundCue`). PassiveSpawn plays it ONCE when the effect's
+// aura first appears, so every effect in the game has a recognizable voice
+// tied to its family, and NOT a continuous ambient loop. These are deliberately
+// subtler than the marquee attack voices above (they fire on every reveal), and
+// dispatched through the rate-limited playPassiveCue so a burst of reveals on
+// game load or reconnect can never stack into a painful chord. All gated by the
+// effects pref + mute via fx(). tone() does not self-apply the volume setting
+// (only knock() does), so tone masters below are scaled by getVolume().
+
+/** Decree: rules of authority (movement bans, compulsions, most nerfs). A
+ * dry stone gavel knock capped by a short, low authoritative fifth. */
+export function playCueDecree() {
+  if (!fx()) return;
+  const v = getVolume();
+  knock({ filterFreq: 340, filterQ: 2.4, dur: 0.09, gain: 0.34, bodyFreq: 132, bodyGain: 0.3, bodyDur: 0.1, master: 0.8 });
+  tone({ freq: 196, dur: 0.14, type: "triangle", gain: 0.06, sweep: 147, release: 0.12, delay: 0.03, master: 0.8 * v });
+}
+
+/** Strike: instant punishment / a hit lands. A sharp electric crack. */
+export function playCueStrike() {
+  if (!fx()) return;
+  const v = getVolume();
+  knock({ filterFreq: 2200, filterQ: 1.2, dur: 0.05, gain: 0.36, master: 0.8 });
+  tone({ freq: 1400, dur: 0.1, type: "sawtooth", gain: 0.05, sweep: 300, release: 0.08, master: 0.75 * v });
+}
+
+/** Bind: chains, freezes, locks, leashes. A metallic clink into a lock thunk. */
+export function playCueBind() {
+  if (!fx()) return;
+  knock({ filterFreq: 2500, filterQ: 8, dur: 0.05, gain: 0.26, master: 0.8 });
+  knock({ filterFreq: 700, filterQ: 3, dur: 0.06, gain: 0.3, bodyFreq: 150, bodyGain: 0.24, bodyDur: 0.08, delay: 0.07, master: 0.8 });
+}
+
+/** Territory: zones, walls, forbidden ground. A low airy sweep. */
+export function playCueTerritory() {
+  if (!fx()) return;
+  const v = getVolume();
+  tone({ freq: 220, dur: 0.28, type: "sine", gain: 0.08, sweep: 130, release: 0.14, master: 0.8 * v });
+  tone({ freq: 330, dur: 0.2, type: "sine", gain: 0.035, sweep: 180, release: 0.12, delay: 0.05, master: 0.7 * v });
+}
+
+/** Tempo: clocks, turn timing, cadence. A crisp clock tick into a soft chime. */
+export function playCueTempo() {
+  if (!fx()) return;
+  const v = getVolume();
+  knock({ filterFreq: 3200, filterQ: 10, dur: 0.02, gain: 0.22, master: 0.8 });
+  tone({ freq: 1046, dur: 0.14, type: "sine", gain: 0.05, release: 0.14, delay: 0.06, master: 0.8 * v });
+}
+
+/** Blessing: boons, wards, buffs that help you. A warm rising chime. */
+export function playCueBlessing() {
+  if (!fx()) return;
+  const v = getVolume();
+  tone({ freq: 523, dur: 0.16, type: "triangle", gain: 0.08, sweep: 784, release: 0.14, master: 0.8 * v });
+  tone({ freq: 1046, dur: 0.16, type: "sine", gain: 0.045, attack: 0.01, release: 0.2, delay: 0.08, master: 0.8 * v });
+}
+
+/** Summon: pieces, spawns, portals. A soft rising whoosh into a poof. */
+export function playCueSummon() {
+  if (!fx()) return;
+  const v = getVolume();
+  tone({ freq: 300, dur: 0.16, type: "sine", gain: 0.06, sweep: 620, release: 0.08, master: 0.8 * v });
+  knock({ filterFreq: 850, filterQ: 1, dur: 0.1, gain: 0.24, bodyFreq: 150, bodyGain: 0.2, bodyDur: 0.1, delay: 0.1, master: 0.8 });
+}
+
+/** Fracture: breaks, shatters, decay, losses. A glassy double crack. */
+export function playCueFracture() {
+  if (!fx()) return;
+  const v = getVolume();
+  knock({ filterFreq: 3400, filterQ: 6, dur: 0.04, gain: 0.3, master: 0.8 });
+  knock({ filterFreq: 1800, filterQ: 5, dur: 0.05, gain: 0.2, delay: 0.03, master: 0.7 });
+  tone({ freq: 900, dur: 0.12, type: "sawtooth", gain: 0.03, sweep: 400, release: 0.1, delay: 0.02, master: 0.6 * v });
+}
+
+/** Veil: shadow, hidden information, visibility effects. A muffled low hush. */
+export function playCueVeil() {
+  if (!fx()) return;
+  const v = getVolume();
+  tone({ freq: 180, dur: 0.24, type: "sine", gain: 0.07, sweep: 120, release: 0.16, master: 0.8 * v });
+  knock({ filterFreq: 500, filterQ: 0.7, dur: 0.16, gain: 0.12, master: 0.6 });
+}
+
+const CUE_FN: Record<string, () => void> = {
+  decree: playCueDecree,
+  strike: playCueStrike,
+  bind: playCueBind,
+  territory: playCueTerritory,
+  tempo: playCueTempo,
+  blessing: playCueBlessing,
+  summon: playCueSummon,
+  fracture: playCueFracture,
+  veil: playCueVeil,
+};
+
+// Passive spawns can arrive in bursts (initial game load, reconnect re-derives,
+// a multi-target reveal), so cap how many family cues sound within a short
+// window. Extra cues in the window are dropped, never queued, so the audio can
+// never fall behind the board or stack into a wall.
+let recentCueTimes: number[] = [];
+const CUE_WINDOW_S = 0.5;
+const CUE_MAX_IN_WINDOW = 4;
+
+/** Play a passive effect's family cue once, keyed by its composition soundCue
+ * ("passive/<family>"). No-op for an unknown or absent cue. Rate-limited and
+ * fully gated by the effects pref + mute; it reads (never resumes) the audio
+ * clock, so it cannot autoplay before the first user gesture. */
+export function playPassiveCue(cue: string | undefined) {
+  if (!cue || !fx()) return;
+  const fam = cue.startsWith("passive/") ? cue.slice("passive/".length) : cue;
+  const fn = CUE_FN[fam];
+  if (!fn) return;
+  const a = audio();
+  if (!a) return;
+  const now = a.currentTime;
+  recentCueTimes = recentCueTimes.filter((t) => now - t < CUE_WINDOW_S);
+  if (recentCueTimes.length >= CUE_MAX_IN_WINDOW) return;
+  recentCueTimes.push(now);
+  fn();
+}

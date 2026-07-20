@@ -448,7 +448,11 @@ function mireSquares(count: number, freezeTurns: number): Mech {
       const squares = inst.state.squares as Square[] | undefined;
       if (!squares?.length) return;
       if (move.color === api.opp && squares.includes(move.to) && move.piece !== "k") {
-        addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: freezeTurns, skin: "quicksand" });
+        // Fired on the opponent's own move, so the shared post-move tick eats
+        // one turn immediately. +1 keeps freezeTurns the number of turns the
+        // victim is actually stuck (the description's count); without it the
+        // piece is stuck one turn fewer than promised.
+        addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: freezeTurns + 1, skin: "quicksand" });
       }
     },
     status: (inst) => {
@@ -885,7 +889,11 @@ export const WILD_ELEMENTAL: Buff[] = [
               return inBoard(f, r) && SQ(f, r) === move.to;
             })
           ) {
-            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1, skin: "ice" });
+            // Added during the opponent's own move, so the shared post-move
+            // tick eats one turn immediately: 2 here leaves 1 of their turns
+            // frozen (the described "frozen for 1 turn"). turns:1 would tick to
+            // 0 on this same move and never hold.
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "ice" });
             addEffect(api, { kind: "bonk", squares: [move.to], owner: api.me, turns: 1 });
           }
         }

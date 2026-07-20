@@ -19,6 +19,8 @@
     "test:passive-registry": "npx -y tsx scripts/test-passive-registry.ts",
     "test:animations": "npx -y tsx scripts/audit-animations.ts",
     "test:emdash": "npx -y tsx scripts/check-emdash.ts",
+    "test:sound": "node scripts/check-sound-coverage.cjs",
+    "test:card-registry": "npx -y tsx scripts/gen-card-registry.ts --check",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",

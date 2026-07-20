@@ -52,7 +52,7 @@ export const MYSTIC_OCCULT: Buff[] = [
       id: "seance",
       name: "Seance",
       description:
-        "The circle trades places with the beyond: send one of your knights or bishops across, and one of your captured rooks returns on the very square it left from.",
+        "The circle trades places with the beyond: send one of your knights or bishops across to the other side, and one of your captured rooks returns in its place, on the square that knight or bishop just vacated.",
       tier: 3,
       category: "pieces",
       requires: ["n", "b"],

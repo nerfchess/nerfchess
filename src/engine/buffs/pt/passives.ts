@@ -245,7 +245,10 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return;
         if (move.color === api.opp && move.piece !== "k" && squares.includes(move.to)) {
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1, skin: "cement" });
+          // Fired on the opponent's own move, so the shared post-move tick eats
+          // one turn immediately: 2 here leaves 1 of their turns frozen.
+          // turns:1 would tick to 0 on this same move and never hold.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "cement" });
         }
       },
       status: (inst) => {
