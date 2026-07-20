@@ -27,6 +27,17 @@ export const SCHEMA_STATEMENTS: string[] = [
     is_guest INTEGER NOT NULL DEFAULT 0
   )`,
   `CREATE INDEX IF NOT EXISTS idx_users_rating ON users(rating DESC)`,
+  // Old-name -> account map, written whenever an account (player or house bot)
+  // is renamed, so a stale /u/<oldName> link redirects to the current profile
+  // instead of dead-ending on "Player not found". Keyed by the OLD lowercase
+  // name; user_id is the stable account id (usernames are never the permanent
+  // identity). Mirrored in migrations/0037_username_history.sql.
+  `CREATE TABLE IF NOT EXISTS username_history (
+    old_username_lower TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    changed_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_username_history_user ON username_history(user_id)`,
   `CREATE TABLE IF NOT EXISTS user_ratings (
     user_id TEXT NOT NULL REFERENCES users(id),
     category TEXT NOT NULL,

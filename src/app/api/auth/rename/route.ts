@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import {
+  recordUsernameChange,
   RESERVED_USERNAMES,
   sessionTokenFromCookieHeader,
   userForSession,
@@ -63,6 +64,13 @@ export async function POST(request: Request) {
     // Unique-constraint race with a concurrent registration.
     return NextResponse.json({ error: "That username is taken." }, { status: 409 });
   }
+
+  // Keep the old name resolvable: any /u/<oldName> link now redirects to the
+  // renamed profile. Best-effort; the rename above has already committed, so a
+  // history-write failure must not fail the request.
+  try {
+    await recordUsernameChange(db, user.id, user.username.toLowerCase(), username.toLowerCase());
+  } catch {}
 
   return NextResponse.json({ ok: true, username });
 }

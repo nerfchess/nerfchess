@@ -7,6 +7,7 @@ import {
   RESERVED_USERNAMES,
   sessionTokenFromCookieHeader,
   userForSession,
+  usernameChangeStatements,
   validUsername,
   type SessionUser,
 } from "@/lib/server/auth";
@@ -283,6 +284,13 @@ export async function POST(request: Request) {
     db
       .prepare("UPDATE users SET username = ?, username_lower = ?, avatar = ?, bio = ? WHERE id = ?")
       .bind(effective.name, effective.name.toLowerCase(), effective.avatar, effective.bio, persona.userId),
+  );
+  // A rename here freezes the bot's OLD name into any game archived under it and
+  // breaks old /u/<oldName> links, so map the outgoing name to this account in
+  // the SAME atomic batch. Renaming back to a prior name clears its redirect.
+  const prevName = houseIdentity(persona, current).name.toLowerCase();
+  writes.push(
+    ...usernameChangeStatements(db, persona.userId, prevName, effective.name.toLowerCase()),
   );
   if (ratingTouched) {
     // Legacy shared column, then both mode buckets. A rating edit shows

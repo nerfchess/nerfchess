@@ -12,6 +12,7 @@ import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
 import { DraftChest } from "./DraftChest";
+import { OpponentDraftPanel } from "./OpponentDraftPanel";
 import "./DraftOverlay.css";
 
 interface Props {
@@ -403,7 +404,6 @@ export function DraftOverlay({
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
-  const oppOffer = opponent?.offer ?? null;
   const reduceMotion = useReducedMotion();
   // The board-effects dial also governs the draft spectacle: Off/Calm strips
   // the chest's particle/ray layers and stands down the shake + confetti.
@@ -1570,41 +1570,7 @@ export function DraftOverlay({
           </div>
         </div>
 
-        {opponent && (
-          <div className="mt-4 border-t border-[color:var(--edge)] pt-3 text-center text-[12px] leading-snug text-parchment-400">
-            {oppOffer && opponent.showCards ? (
-              <span>
-                Opponent&apos;s draft:{" "}
-                {oppOffer.cards
-                  .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
-                  .join(" · ")}
-              </span>
-            ) : oppOffer && opponent.showTier ? (
-              <span>
-                Opponent is drafting at tier{" "}
-                {Math.max(...oppOffer.cards.map((c) => c.tier))}
-              </span>
-            ) : opponent.reveal?.cards ? (
-              <span>
-                Revealed draft #{opponent.reveal.index}:{" "}
-                {opponent.reveal.cards
-                  .map((c) => `${BUFF_BY_ID[c.id]?.name ?? c.id} (T${c.tier})`)
-                  .join(" · ")}
-              </span>
-            ) : opponent.reveal?.tier != null ? (
-              <span>
-                Revealed draft #{opponent.reveal.index} rolled tier {opponent.reveal.tier}
-              </span>
-            ) : opponent.lastPick && BUFF_BY_ID[opponent.lastPick.id] ? (
-              <span>
-                Opponent last drafted:{" "}
-                {BUFF_BY_ID[opponent.lastPick.id]?.name}
-              </span>
-            ) : (
-              <span>Opponent&apos;s draft is hidden</span>
-            )}
-          </div>
-        )}
+        {opponent && <OpponentDraftPanel opponent={opponent} />}
           </div>
         </motion.div>
         </div>
