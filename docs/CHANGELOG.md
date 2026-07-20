@@ -206,3 +206,25 @@ Rule content:
 - Regenerated derived registries: cardIconMap.gen.ts (1355 to 1357 cards: the two new ids plus the deterministic open-address probe cascade through the generic File-icon cluster, curated tier 7+ overrides untouched) and passive compositions.ts (675 to 677: two new nerf tuples plus deterministic sentence-uniqueness disambiguation).
 
 Verified: tsc clean, eslint clean (2 pre-existing warnings), test:rules, test:nerfs, test:passive-registry, test:desync, test:apex, test:snapshot all green; both new nerfs prerender their /codex/nerf/[id] pages and never soft-lock from the opening. PR #425. OPEN.
+
+---
+
+## 2026-07-20 04:29 ET (sound for every effect, complete card registry, whole-library card review)
+
+Exhaustive card + sound pass (PR #428). Delivered with a 59-agent workflow (one auditor per card-source file, every one of the 1366 cards) whose findings were each verified against the engine before any fix.
+
+Sound coverage for every effect:
+- Every card's persistent effect (a nerf reveal, a buff/boon/hex acquisition) already carried a sound family in its passive composition (compositions.ts soundCue) that nothing ever played. Wired end to end: nine procedural Web Audio family voices in sounds.ts (decree, strike, bind, territory, tempo, blessing, summon, fracture, veil), each short and distinct, subtler than the marquee attack voices, gated by the effects pref + mute via fx(), and volume-scaled (tone() does not self-apply the volume setting).
+- playPassiveCue dispatches "passive/<family>" to its voice, rate-limited (max 4 cues per 0.5s, extras dropped never queued) so a burst of reveals on load/reconnect cannot stack into a wall, and it only reads the audio clock so it can never autoplay before a user gesture. PassiveSpawn fires the cue exactly once per activation (ref-guarded against the re-renders that recreate the visual), one shot on spawn, never a continuous ambient loop.
+- Result: all 677 passive effects (360 nerfs + 317 passive buffs) are voiced; the other 689 buffs are instant/activated and already voice through the cast/signature system. scripts/check-sound-coverage.cjs (npm run test:sound) asserts every composition carries a cue and every family has a wired dispatcher voice.
+
+Complete card registry:
+- scripts/gen-card-registry.ts (npm run test:card-registry) generates docs/card-registry.json, one derived row per card (all 1366: id, name, kind, category, tier, mechanic, description, animation family/primitives, sound cue/source, target). Everything is read from ALL_NERFS + ALL_BUFFS + PASSIVE_COMPOSITIONS, so it cannot drift; 0 empty descriptions.
+
+Card review fixes (each verified; several plausible soft-lock reports were confirmed FALSE POSITIVES and left untouched, protected by the nerf filter safety net at game.ts:1130 and timedOppFilter's built-in fallback: cowardly, slowpoke, wa_jinx; understudy is guarded by heldBuffs dropping spent):
+- Five reactive freezes added during the OPPONENT's own move with turns:1 never held: the shared post-move tick (game.ts:1505) decrements an opp-owned effect on that same move, so turns:1 ticked to 0 and the effect silently did nothing. Bumped to turns:2 (one effective frozen turn, the +1 the correct cards already use): we_frost_ward, wc_banana_peel_trail, kraken, the pt claimed-square freeze, the wa void-rift freeze.
+- we_quagmire stuck a piece 2 turns while promising 3 (same tick convention inside mireSquares, its one caller); added the +1 there. wc_quicksand_patch reworded from "cannot move" to "can only crawl one square at a time" (the effect is a walnut, which the engine lets shuffle one square).
+
+Recorded for follow-up (verified real but not changed this pass): a handful of description-count / placement mismatches (bw2_early_coronation promotable-rank range, hyein blocker-skipping wording, hw3_jammed_castle "two turns" timing, reinforcements back-rank exclusion, seance return-square, promotion_phobia back-rank reachability, castle_curfew move-20 off-by-one). ww_counter_charge and wa_stone_pawns were reported but are CORRECT once the tick convention and walnut semantics are accounted for.
+
+Verified: tsc --noEmit clean, eslint clean (2 pre-existing warnings), and test:rules, test:desync, test:snapshot, test:apex, test:passive-registry, test:sound, test:card-registry all green. Audio and visuals want a preview-deploy eyeball (the build env has no audio). PR #428. OPEN.
