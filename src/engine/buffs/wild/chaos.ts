@@ -384,7 +384,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_quicksand_patch",
       name: "Quicksand Patch",
-      description: "Every one of your opponent's pawns sinks into quicksand and cannot move for their next 2 turns.",
+      description: "Every one of your opponent's pawns sinks into quicksand and can only crawl one square at a time for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Do not struggle, it only makes it worse.",
@@ -1191,7 +1191,10 @@ export const WILD_CHAOS: Buff[] = [
             land = back;
           }
         }
-        addEffect(api, { kind: "freeze", sq: land, owner: api.opp, turns: 1, skin: "slime" });
+        // Added during the opponent's own move (they stepped onto the peel),
+        // so the shared post-move tick eats one turn immediately: 2 here leaves
+        // 1 of their turns dazed. turns:1 would tick to 0 and never hold.
+        addEffect(api, { kind: "freeze", sq: land, owner: api.opp, turns: 2, skin: "slime" });
         addEffect(api, { kind: "bonk", squares: [land], owner: api.me, turns: 1 });
         inst.spent = true;
       },

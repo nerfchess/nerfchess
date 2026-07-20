@@ -1124,7 +1124,10 @@ export const WILD_ARCANE: Buff[] = [
           p && p.color === api.opp && p.type !== "k" &&
           Math.max(Math.abs(FILE(move.to) - FILE(rift)), Math.abs(RANK(move.to) - RANK(rift))) === 1
         ) {
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1 });
+          // Fired on the opponent's own move, so the shared post-move tick eats
+          // one turn immediately: 2 here leaves 1 of their turns frozen.
+          // turns:1 would tick to 0 on this same move and never hold.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
         }
       },
       status: (inst) => {

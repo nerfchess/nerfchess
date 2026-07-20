@@ -243,7 +243,10 @@ export const FUNNY_CHAOS: Buff[] = [
             const sq = SQ(f, r);
             const p = api.board.pieces[sq];
             if (p && p.color === api.opp && p.type !== "k") {
-              addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "vines" });
+              // The grip runs on the opponent's move, so the shared post-move
+              // tick eats one turn immediately: 2 here leaves 1 of their turns
+              // seized. turns:1 would tick to 0 and the grip would never hold.
+              addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "vines" });
             }
           }
           left -= 1;
