@@ -19,6 +19,7 @@ import { squareCenter } from "./contract";
 import { getPassiveVisual } from "./registry";
 import { CompositionLayers } from "./primitives";
 import { activationId, hasPlayedActivation, markActivationPlayed, useReducedMotion } from "./runtime";
+import { playPassiveCue } from "@/lib/sounds";
 
 export interface PassiveSpawnProps extends PassiveLifecycleProps {
   /** Ply at which this activation happened; stamps the dedupe key. */
@@ -54,6 +55,18 @@ export function PassiveSpawn({
     onDoneRef.current = onDone;
   });
   const duration = visual?.spawnDurationMs ?? 0;
+
+  // Play the effect's family sound cue exactly once, when its aura first
+  // appears. `play` already gates on the per-activation dedupe, and the ref
+  // guard makes this immune to the re-renders that recreate `visual`'s
+  // identity, so a card is voiced once per activation and never on a replay,
+  // reconnect, or hover-driven rerender. One shot on spawn, never a loop.
+  const cuePlayedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!play || !visual || cuePlayedRef.current) return;
+    cuePlayedRef.current = true;
+    playPassiveCue(visual.soundCue);
+  }, [play, visual]);
 
   React.useEffect(() => {
     if (!play || !visual) return;
