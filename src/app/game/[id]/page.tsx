@@ -1383,7 +1383,7 @@ function cardEventsFromDtActions(actions: MPDraftAction[]): TimelineCardEvent[] 
 
 function describeResult(result: { winner: Color | "draw" | null; reason: string }): string {
   const head =
-    result.winner === "draw" ? "Draw" : result.winner === "w" ? "White wins" : result.winner === "b" ? "Black wins" : "Over";
+    result.winner === "draw" ? "Draw" : result.winner === "w" ? "White wins" : result.winner === "b" ? "Black wins" : "Aborted";
   return `${head} · ${result.reason}`;
 }
 

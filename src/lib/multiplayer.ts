@@ -333,6 +333,10 @@ export type MPEvent =
   | { type: "move"; move: MPAcceptedMove; env?: SpectatorEnvelope }
   | { type: "end"; end: MPEnd; env?: SpectatorEnvelope }
   | { type: "draw-offer"; color: Color }
+  // Abort-abuse notice for the player who just aborted: "warning" = at the
+  // threshold (one more abort brings a cooldown), "timeout" = blocked from
+  // starting new games until `until` (epoch ms).
+  | { type: "abort-warning"; level: "warning" | "timeout"; until?: number }
   | { type: "draw-declined"; color: Color }
   | { type: "takeback-offer"; color: Color }
   | { type: "takeback-declined"; color: Color }
@@ -370,6 +374,7 @@ type ServerFrame =
   | { t: "move"; d: MPAcceptedMove }
   | { t: "end"; d: MPEnd }
   | { t: "drawOffer"; d: { color: Color } }
+  | { t: "abortWarning"; d: { level: "warning" | "timeout"; until?: number } }
   | { t: "drawDeclined"; d: { color: Color } }
   | { t: "takebackOffer"; d: { color: Color } }
   | { t: "takebackDeclined"; d: { color: Color } }
@@ -904,6 +909,9 @@ export class MPSession {
       case "drawOffer":
         this.emit({ type: "draw-offer", color: frame.d.color });
         break;
+      case "abortWarning":
+        this.emit({ type: "abort-warning", level: frame.d.level, until: frame.d.until });
+        break;
       case "drawDeclined":
         this.emit({ type: "draw-declined", color: frame.d.color });
         break;
@@ -1277,6 +1285,12 @@ export class MPSession {
 
   resign(): boolean {
     return this.sendFrame("resign");
+  }
+
+  // Abort: end the game without a result. Server-guarded to the opening (no
+  // whole turn played yet) and throttled per account against abuse.
+  abort(): boolean {
+    return this.sendFrame("abort");
   }
 
   // Abandonment claims: end a started game once the opponent has been

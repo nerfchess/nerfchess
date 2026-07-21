@@ -65,6 +65,9 @@ export interface FinishedGameRecord {
   winner: "w" | "b" | "draw" | null;
   reason: string;
   rated: boolean;
+  /** Seat that aborted the game (winner is null, reason "aborted"); feeds the
+   *  per-user recent_aborts ring buffer. Absent for every other ending. */
+  abortedBy?: "w" | "b" | null;
   /** Rules variant the game was played under; omitted means classic. */
   ruleset?: string;
   /** Which rating bucket the game counts toward. Mode games (Draft nerf/buff)
@@ -386,6 +389,25 @@ export async function recordFinishedGame(
       db
         .prepare(`UPDATE users SET games = games + 1, ${winCol(game.winner === "b", drew)} WHERE id = ? ${guardSql}`)
         .bind(game.blackUserId, game.id, nonce),
+    );
+  }
+
+  // recent_aborts ring buffer: every recorded game (rated or casual) appends
+  // one flag per seated account — '1' for the seat that aborted, '0' otherwise
+  // — keeping only the last six via substr. Runs under the same nonce guard,
+  // so a replayed end frame cannot double-append.
+  for (const [userId, flag] of [
+    [game.whiteUserId, game.abortedBy === "w"],
+    [game.blackUserId, game.abortedBy === "b"],
+  ] as const) {
+    if (!userId) continue;
+    statements.push(
+      db
+        .prepare(
+          `UPDATE users SET recent_aborts = substr(COALESCE(recent_aborts, '') || ?, -6)
+           WHERE id = ? ${guardSql}`,
+        )
+        .bind(flag ? "1" : "0", userId, game.id, nonce),
     );
   }
 

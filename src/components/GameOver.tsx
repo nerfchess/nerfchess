@@ -532,15 +532,20 @@ export function GameOver({
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const reduceMotion = useReducedMotion();
   const draw = result.winner === "draw";
+  // An aborted game has no winner at all (null, not "draw"): nobody scores
+  // and no rating moved, so the screen stays neutral for everyone.
+  const aborted = result.winner === null;
   const won = result.winner === myColor;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const names = playerNames ?? { w: "White", b: "Black" };
   const sideLabel = (c: Color) => (c === "w" ? "White" : "Black");
-  const winnerColor = draw ? null : (result.winner as Color);
+  const winnerColor = draw || aborted ? null : (result.winner as Color);
   // A spectator has no seat, so the headline is neutral: name the winning side
   // rather than reading it as the viewer's Victory/Defeat. Players keep the
   // seat-relative wording.
-  const outcome = spectator
+  const outcome = aborted
+    ? "Aborted"
+    : spectator
     ? draw
       ? "Draw"
       : `${sideLabel(winnerColor as Color)} wins`
@@ -551,7 +556,9 @@ export function GameOver({
     : "Defeat";
   // Draws carry their cause in the reason ("draw by agreement", "draw by
   // threefold repetition", ...); surface it instead of assuming agreement.
-  const headline = spectator
+  const headline = aborted
+    ? "The game ended before it began"
+    : spectator
     ? draw
       ? `${names.w} (White) and ${names.b} (Black) share the point`
       : `${names[winnerColor as Color]} (${sideLabel(winnerColor as Color)}) defeated ${
@@ -564,7 +571,8 @@ export function GameOver({
     : "Black wins";
   // The winner's side always reads celebratory (gold); the losing tone only
   // applies to a seated player who actually lost.
-  const tone = draw ? "text-bruise-glow" : spectator || won ? "text-gold-leaf" : "text-oxblood-glow";
+  const tone =
+    draw || aborted ? "text-bruise-glow" : spectator || won ? "text-gold-leaf" : "text-oxblood-glow";
   const { nerfName, cause } = useMemo(() => splitReason(result.reason), [result.reason]);
   // One reason sentence, consistent by construction with the outcome above it:
   // a rule-caused ending keeps the rule name inline ("Lucky: checkmate"), never

@@ -1286,7 +1286,8 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
   const opponent = viewerIsWhite ? game.black_name : game.white_name;
   const oppRating = viewerIsWhite ? game.black_rating_before : game.white_rating_before;
 
-  const outcome = game.winner === "draw" ? "Draw" : game.winner === myColor ? "Won" : "Lost";
+  const outcome =
+    game.winner === "draw" ? "Draw" : game.winner == null ? "Aborted" : game.winner === myColor ? "Won" : "Lost";
   const tone =
     outcome === "Won" ? "text-gold-leaf" : outcome === "Lost" ? "text-oxblood-glow" : "text-bruise-glow";
 

@@ -82,7 +82,13 @@ export function ClipModal({
     if (!result || !timeline || timeline.startPly + timeline.segments.length < moves.length) {
       return null;
     }
-    return result.winner === "draw" ? "Draw" : result.winner === "w" ? "White wins" : "Black wins";
+    return result.winner === "draw"
+      ? "Draw"
+      : result.winner === "w"
+      ? "White wins"
+      : result.winner === "b"
+      ? "Black wins"
+      : "Game aborted";
   }, [result, timeline, moves.length]);
 
   const discardClip = useCallback(() => {
