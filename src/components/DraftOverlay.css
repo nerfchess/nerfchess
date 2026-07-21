@@ -1494,11 +1494,17 @@ html[data-anim="off"] .dgn-torch__spark { opacity: 0; }
   width: 2.75rem;
   height: 2.75rem;
   pointer-events: none;
+  /* Transparent-ish so the card text underneath stays readable where the
+     medallion overlaps it in the bottom-right corner. Fading the whole
+     medallion (disc + motif + glyph together) rather than just the backing
+     keeps the glyph from floating over bare text, and the loop still reads. */
+  opacity: 0.72;
 }
 
-/* Backing disc: near-opaque ink so the medallion reads cleanly over any text
-   it overlaps, rimmed and inner-washed in the card's own effect tint. The
-   shadow/border are static (never animated). */
+/* Backing disc: dark ink giving the medallion body so its motif and glyph read
+   against it, rimmed and inner-washed in the card's own effect tint. The parent
+   .dpv fades the whole medallion (see its opacity) so text it overlaps still
+   shows through. The shadow/border are static (never animated). */
 .dpv__disc {
   position: absolute;
   inset: 0;
