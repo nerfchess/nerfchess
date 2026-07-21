@@ -21,6 +21,7 @@ import {
   LockInCountdown,
   type DraftRevealSide,
 } from "@/components/DraftOverlay";
+import { OpponentDraftViewer } from "@/components/OpponentDraftViewer";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -471,6 +472,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [myDraftResolved, setMyDraftResolved] = useState(false);
   // Player clicked the post-draft waiting card away (collapses to the banner).
   const [waitingMinimized, setWaitingMinimized] = useState(false);
+  // Enlarged view of the opponent's open offer while I wait for them to finish
+  // drafting (their offer is public data — see the DraftOverlay opponent prop).
+  const [oppDraftEnlarged, setOppDraftEnlarged] = useState(false);
   const [oppDrafting, setOppDrafting] = useState(() => {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
     return !!opp?.offerPending || !!opp?.offer;
@@ -481,7 +485,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [prevOppDrafting, setPrevOppDrafting] = useState(oppDrafting);
   if (prevOppDrafting !== oppDrafting) {
     setPrevOppDrafting(oppDrafting);
-    if (!oppDrafting) setWaitingMinimized(false);
+    if (!oppDrafting) {
+      setWaitingMinimized(false);
+      // The enlarged opponent-draft view has nothing to show once they lock
+      // in; close it so the next waiting period starts fresh.
+      setOppDraftEnlarged(false);
+    }
   }
   // Lock-in window for the current buff offers; the server auto-resolves at
   // the deadline while both clocks stay paused.
@@ -3108,6 +3117,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   {draftGraceOver ? "on their clock now" : "clocks paused"}
                 </span>
               </span>
+              {/* Their offer is public: one click enlarges it to full cards.
+                  pointer-events-auto re-enables just this control inside the
+                  otherwise click-through banner. */}
+              {bsTheirs?.offer && (
+                <button
+                  type="button"
+                  onClick={() => setOppDraftEnlarged(true)}
+                  className="pointer-events-auto shrink-0 touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 font-display text-[12px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf"
+                  title="See the cards your opponent is choosing between"
+                >
+                  View their cards
+                </button>
+              )}
             </motion.div>
           </div>
         ) : (
@@ -3155,12 +3177,42 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {draftDeadline != null && (
                 <LockInCountdown deadline={draftDeadline} className="mt-3" />
               )}
+              {/* Their offer is public data (same source as the mini panel in
+                  your own draft): enlarge it to full cards to study what they
+                  are thinking about. stopPropagation so the card's own
+                  tap-to-minimize does not swallow the click. */}
+              {bsTheirs?.offer && !oppLockedIn && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOppDraftEnlarged(true);
+                  }}
+                  className="mt-3 w-full touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 font-display text-[13px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf"
+                  title="See the cards your opponent is choosing between"
+                >
+                  View their cards
+                </button>
+              )}
               <p className="mt-2 text-[12px] leading-snug text-parchment-400">
                 Both clocks stay paused until the pick window runs out. Tap to minimize (a banner stays up).
               </p>
             </motion.div>
           </div>
         ))}
+
+      {/* Enlarged, read-only look at the opponent's open offer while you wait:
+          full-size cards instead of the tiny summary, so you can plan around
+          whatever they end up taking. Closes itself the moment they lock in
+          (oppDrafting flips false and resets the flag above). */}
+      {showWaitingOverlay && oppDraftEnlarged && bsTheirs?.offer && (
+        <OpponentDraftViewer
+          offer={bsTheirs.offer}
+          oppName={oppName}
+          cardNoun={draftCardNoun(start.mode)}
+          onClose={() => setOppDraftEnlarged(false)}
+        />
+      )}
 
       {isDraft && myOffer && !draftSubmitted && !game.result && (
         <DraftOverlay
