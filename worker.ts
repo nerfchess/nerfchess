@@ -452,8 +452,11 @@ export interface Env {
   ARENA_LOBBY_ENABLED?: string;
   // Tier 2 / M4 cutover, reversible. When "true", the DO stops spawning its own
   // house-vs-house filler (the arena owns bot-vs-bot); bot-vs-human pickup and
-  // house seeks stay on the DO. Off = the DO runs filler itself, as before, so
-  // there is always bot-vs-bot even if the arena is down. Flip, don't delete.
+  // house seeks stay on the DO. Off = the DO runs filler itself, as before.
+  // Ownership only holds while the arena is actually checking in: if no
+  // /arena/games sync lands for ARENA_FILLER_FALLBACK_MS the DO resumes its
+  // own filler until the arena returns, so there is always bot-vs-bot even if
+  // the arena is down. Flip, don't delete.
   ARENA_OWNS_FILLER?: string;
 }
 
@@ -883,6 +886,13 @@ const HOUSE_ENGINE_TIMEOUT_MS = 3000;
 // DO holds these only in memory and expires them if the arena stops syncing, so
 // a crashed/paused arena drops out of the lobby on its own.
 const EXTERNAL_GAME_TTL_MS = 20 * 1000;
+// How long ARENA_OWNS_FILLER is honored without an /arena/games sync landing
+// (the arena polls every ~4s, so this is ~15 missed polls). Past it the DO
+// resumes spawning its own filler, making the documented promise real: the
+// arena being down never means a lobby with no bot-vs-bot games. When the
+// arena comes back its next sync re-stamps lastArenaSyncAt and the DO stops
+// spawning new filler on the next tick; any DO-run games just play out.
+const ARENA_FILLER_FALLBACK_MS = 60 * 1000;
 type ExternalSeat = { userId: string; name: string; rating: number };
 type ExternalGameMeta = {
   id: string;
@@ -1017,6 +1027,14 @@ export class GameServer extends DurableObject<Env> {
   // cache-miss fetch, so at worst the house roster lags one alarm cycle behind a
   // cold start — invisible to viewers.
   private lastLobbyHttpAt = 0;
+  // When the arena last POSTed an authenticated /arena/games sync — proof the
+  // arena process is alive. houseTick uses it to honor ARENA_OWNS_FILLER only
+  // while the arena is actually checking in, and to resume DO-run filler when
+  // it goes dark (see ARENA_FILLER_FALLBACK_MS). In-memory: after an eviction the
+  // isolate's boot time stands in as the reference, so a live arena gets one
+  // fallback window to re-sync (it polls every ~4s) before the DO steps in.
+  private lastArenaSyncAt = 0;
+  private readonly bootedAt = Date.now();
   // Cached LIVE per-mode ratings for the house roster, read from user_ratings
   // (the same buckets recordFinishedGame moves after every rated game). The
   // lobby's online list and the house seeks display from this, so a bot's
@@ -4464,9 +4482,17 @@ export class GameServer extends DurableObject<Env> {
     // Tier 2 / M4 cutover (reversible): when the arena owns bot-vs-bot, the DO
     // stops spawning its own filler and lets the arena supply it (streamed in
     // via /arena). Flip ARENA_OWNS_FILLER back off and the DO resumes filler on
-    // the next tick — no code change, so the arena being down never means an
-    // empty lobby. Bot-vs-human pickup + house seeks above are unaffected.
-    const arenaOwnsFiller = this.env.ARENA_OWNS_FILLER === "true" && this.env.ARENA_INGEST_ENABLED === "true";
+    // the next tick. Ownership additionally requires the arena to be ALIVE: it
+    // must have synced /arena/games within ARENA_FILLER_FALLBACK_MS (from boot,
+    // on a fresh isolate). A dark arena therefore hands filler back to the DO
+    // automatically, so the arena being down never means an empty lobby — the
+    // env flag alone used to be trusted blindly, and an arena outage (or its
+    // presence-gated pause) left zero bot-vs-bot games with no fallback.
+    // Bot-vs-human pickup + house seeks above are unaffected.
+    const arenaOwnsFiller =
+      this.env.ARENA_OWNS_FILLER === "true" &&
+      this.env.ARENA_INGEST_ENABLED === "true" &&
+      now - (this.lastArenaSyncAt || this.bootedAt) < ARENA_FILLER_FALLBACK_MS;
     // Never let a filler spawn dip into the seek reserve: after taking its two
     // personas the roster must still hold enough free personas to top the seek
     // floor back up on the next tick. Together with the roster-sized caps above
@@ -5518,10 +5544,19 @@ export class GameServer extends DurableObject<Env> {
     const ingest = this.env.ARENA_INGEST_ENABLED === "true";
     // The arena should spawn only when ingestion is on AND a human is present to
     // see the lobby (mirror the DO's own stand-down). Told to the arena so it
-    // pauses otherwise.
-    const enabled = ingest && this.humanSocketCount() > 0;
+    // pauses otherwise. MUST be sitePresence(), the same signal houseTick
+    // stands down on: lobby browsers no longer hold a WebSocket, so the old
+    // bare humanSocketCount() check told the arena to pause exactly while
+    // people were looking at the lobby — with ARENA_OWNS_FILLER on, that meant
+    // no bot-vs-bot games ever showed for a browsing viewer (the DO's own
+    // seeks/pickup kept working off sitePresence, which is why bots still
+    // accepted queued humans while the "TV" sat empty).
+    const enabled = ingest && this.sitePresence();
 
     if (url.pathname === "/arena/games") {
+      // Liveness stamp for the filler-ownership fallback (houseTick): an
+      // authenticated sync proves the arena process is up, whatever it carries.
+      this.lastArenaSyncAt = Date.now();
       let body: { games?: ExternalGameMeta[] };
       try {
         body = (await request.json()) as { games?: ExternalGameMeta[] };
