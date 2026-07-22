@@ -354,7 +354,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_squeaky_shoes",
       name: "Squeaky Shoes",
       description:
-        "For 5 of your turns, any enemy piece that ends a move next to your king squeaks and is marked.",
+        "For 5 of your turns, any enemy piece that ends a move next to your king squeaks and is marked. The first time one squeaks, gain one draft reroll.",
       tier: 1,
       category: "info",
       icon: "Footprints",
@@ -371,7 +371,14 @@ export const OVERHAUL_T1: Buff[] = [
           if (k != null) {
             const df = Math.abs(FILE(move.to) - FILE(k));
             const dr = Math.abs(RANK(move.to) - RANK(k));
-            if (df <= 1 && dr <= 1) flashSquares(api, [move.to], true);
+            if (df <= 1 && dr <= 1) {
+              flashSquares(api, [move.to], true);
+              // Reroll paid once, the first time the shoes squeak.
+              if (!inst.state.rewarded) {
+                api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+                inst.state.rewarded = true;
+              }
+            }
           }
         }
         tickTurns(inst, move, api.me);
@@ -480,13 +487,13 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_nightlight",
       name: "Nightlight",
       description:
-        "A little lamp clicks on: enemy knights cannot end a move next to your king for your opponent's next 2 turns.",
+        "A little lamp clicks on: enemy knights cannot end a move next to your king for your opponent's next turn.",
       tier: 1,
       category: "protection",
       icon: "Lamp",
       flavor: "Knights are basically monsters under the bed.",
     },
-    timedOppFilter(2, (moves, _inst, api) => {
+    timedOppFilter(1, (moves, _inst, api) => {
       const k = kingSquare(api.board, api.me);
       if (k == null) return moves;
       return moves.filter((m) => {
@@ -549,7 +556,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_rain_check",
       name: "Rain Check",
-      description: "In 5 of your turns, the cloud pays out: gain 15 seconds on your clock.",
+      description:
+        "In 5 of your turns, the cloud pays out: gain 20 seconds on your clock, one draft reroll, and a look at the tier of your opponent's next draft. In untimed games only the reroll and the reveal arrive.",
       tier: 1,
       category: "tempo",
       icon: "CloudRain",
@@ -565,7 +573,11 @@ export const OVERHAUL_T1: Buff[] = [
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t <= 0) {
-          api.adjustClock({ addSelfSec: 15 });
+          api.adjustClock({ addSelfSec: 20 });
+          // The clock payout is a no-op in an untimed game, so always land the
+          // reroll and the tier reveal too.
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          api.mine.flags.seeOppTier = true;
           inst.spent = true;
         }
       },
