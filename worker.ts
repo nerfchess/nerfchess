@@ -76,6 +76,7 @@ import {
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
+  chunkIds,
   type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
@@ -5153,30 +5154,46 @@ export class GameServer extends DurableObject<Env> {
     const gamesById = new Map<string, number>();
     if (db) {
       try {
-        const ids = HOUSE_ROSTER.map((p) => p.userId);
-        const placeholders = ids.map(() => "?").join(",");
-        const [rows, users] = await Promise.all([
-          db
-            .prepare(
-              `SELECT user_id, category, rating, games FROM user_ratings
-               WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
-            )
-            .bind(...ids)
-            .all<{ user_id: string; category: string; rating: number; games: number }>(),
-          db
-            .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
-            .bind(...ids)
-            .all<{ id: string; username: string; avatar: string | null }>(),
+        // Chunked (chunkIds): the 210-id roster exceeds D1's 100-bound-params
+        // cap in one IN(), which made BOTH queries throw on every call — the
+        // catch below then silently pinned every seek and filler seat to its
+        // baked name and seed rating forever (the reported "renamed a bot but
+        // the lobby never updates").
+        const chunks = chunkIds(HOUSE_ROSTER.map((p) => p.userId));
+        const [ratingChunks, userChunks] = await Promise.all([
+          Promise.all(
+            chunks.map((chunk) =>
+              db
+                .prepare(
+                  `SELECT user_id, category, rating, games FROM user_ratings
+                   WHERE category IN ('nerf','buff') AND user_id IN (${chunk.map(() => "?").join(",")})`,
+                )
+                .bind(...chunk)
+                .all<{ user_id: string; category: string; rating: number; games: number }>(),
+            ),
+          ),
+          Promise.all(
+            chunks.map((chunk) =>
+              db
+                .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${chunk.map(() => "?").join(",")})`)
+                .bind(...chunk)
+                .all<{ id: string; username: string; avatar: string | null }>(),
+            ),
+          ),
         ]);
-        for (const row of rows.results) {
-          if (row.category !== "nerf" && row.category !== "buff") continue;
-          const entry = byId.get(row.user_id) ?? {};
-          entry[row.category as DraftMode] = Math.round(row.rating);
-          byId.set(row.user_id, entry);
-          gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
+        for (const rows of ratingChunks) {
+          for (const row of rows.results) {
+            if (row.category !== "nerf" && row.category !== "buff") continue;
+            const entry = byId.get(row.user_id) ?? {};
+            entry[row.category as DraftMode] = Math.round(row.rating);
+            byId.set(row.user_id, entry);
+            gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
+          }
         }
-        for (const row of users.results) {
-          identity.set(row.id, { username: row.username, avatar: row.avatar });
+        for (const users of userChunks) {
+          for (const row of users.results) {
+            identity.set(row.id, { username: row.username, avatar: row.avatar });
+          }
         }
       } catch {
         // Fall back to seed ratings / baked identity; retry after the TTL.
@@ -5848,12 +5865,61 @@ export class GameServer extends DurableObject<Env> {
       // Spectators (if any) see the game end with the revealed nerfs + held
       // buffs, then the replica is dropped (Tier 2 / M3).
       this.endExternalForWatchers(rec);
-      // Bot-vs-bot is never recorded (owner rule): arena games end for their
-      // watchers above and that is ALL — no games row (D1 or Postgres), no
-      // recorded_games claim, no Glicko movement on the house accounts. The
-      // arena's POST stays (it is what delivers the end frame to spectators);
-      // it just no longer triggers any database work.
       if (body.aborted) return Response.json({ ok: true, aborted: true });
+      // Archive + RATE the finished bot-vs-bot game, exactly like the Tier 3
+      // /api/arena/end route (owner directive 2026-07-22: bot games ARE
+      // rated). In production the arena normally posts ends to that route
+      // (ARENA_END_URL), so this path is the fallback for an arena configured
+      // without it — without recording here, losing that one env var made bot
+      // ratings silently freeze. recordFinishedGame is idempotent per game id
+      // (recorded_games ledger), so even a double-post through both paths
+      // applies the rating exactly once. A malformed record from an older
+      // arena bundle skips recording but still delivers the end frame above.
+      if (rec.setup && Array.isArray(rec.moves) && rec.result) {
+        const db = await this.db();
+        if (db) {
+          try {
+            await recordFinishedGame(
+              db,
+              {
+                id: rec.id,
+                whiteUserId: rec.bots.w,
+                blackUserId: rec.bots.b,
+                whiteName: rec.seats?.w?.name ?? "Anonymous",
+                blackName: rec.seats?.b?.name ?? "Anonymous",
+                whiteNerfId: rec.setup.whiteNerfId,
+                blackNerfId: rec.setup.blackNerfId,
+                seed: rec.setup.seed,
+                timeSec: rec.setup.timeSec,
+                incrementSec: rec.setup.incrementSec,
+                moves: rec.moves,
+                winner: rec.result.winner,
+                reason: rec.result.reason,
+                rated: true,
+                ruleset: "draft",
+                ratingCategory: rec.mode,
+                ...(rec.draftSeed !== undefined && rec.draftActions
+                  ? {
+                      draftRecord: {
+                        mode: rec.mode,
+                        draftSeed: rec.draftSeed,
+                        ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                        draftActions: rec.draftActions,
+                      },
+                    }
+                  : {}),
+                replayVersion: rec.replayVersion,
+                startedAt: rec.startedAt,
+                completedAt: rec.completedAt,
+              },
+              this.env.HYPERDRIVE?.connectionString,
+            );
+          } catch (err) {
+            console.error("arena end record failed", rec.id, err);
+            return Response.json({ ok: false, reason: "record_failed" });
+          }
+        }
+      }
       return Response.json({ ok: true });
     }
 
@@ -7863,37 +7929,49 @@ export class GameServer extends DurableObject<Env> {
     const ratedIds = [...seen.keys()];
     if (db && ratedIds.length > 0) {
       try {
-        const placeholders = ratedIds.map(() => "?").join(",");
+        // Chunked (chunkIds): with the full ~210-bot presence set online, one
+        // IN() over every id exceeds D1's 100-bound-params cap, so this whole
+        // canonicalization pass threw on EVERY lobby build and the catch below
+        // swallowed it — the online list then showed baked usernames and seed
+        // ratings forever (the reported "renamed an account / rating moved but
+        // the online panel never updates, inconsistent with profiles").
+        //
         // The player's ACTIVE bucket (most games played; ties broken by the
         // higher number), not MAX(nerf, buff): the max rule meant a player who
         // only plays one mode and loses kept displaying the other bucket's
         // untouched 1500 seed forever — the "online list shows the wrong elo
         // and never updates" report. Falls back to the legacy users.rating
         // only when neither mode bucket exists yet.
-        const rows = await db
-          .prepare(
-            `SELECT u.id, u.username,
-                    COALESCE(
-                      (SELECT r.rating FROM user_ratings r
-                        WHERE r.user_id = u.id AND r.category IN ('nerf','buff')
-                        ORDER BY r.games DESC, r.rating DESC LIMIT 1),
-                      u.rating
-                    ) AS rating,
-                    u.avatar
-             FROM users u WHERE u.id IN (${placeholders})`,
-          )
-          .bind(...ratedIds)
-          .all<{ id: string; username: string; rating: number; avatar: string | null }>();
-        for (const row of rows.results) {
-          const entry = seen.get(row.id);
-          if (entry) {
-            // The users row wins for the whole identity, not just rating and
-            // avatar: for humans it's the same string the session carries, and
-            // for house personas it's where an admin rename from /mod/house
-            // lands — so an idle renamed bot never shows its baked name.
-            entry.name = row.username;
-            entry.rating = Math.round(row.rating);
-            entry.avatar = row.avatar;
+        const rowChunks = await Promise.all(
+          chunkIds(ratedIds).map((chunk) =>
+            db
+              .prepare(
+                `SELECT u.id, u.username,
+                        COALESCE(
+                          (SELECT r.rating FROM user_ratings r
+                            WHERE r.user_id = u.id AND r.category IN ('nerf','buff')
+                            ORDER BY r.games DESC, r.rating DESC LIMIT 1),
+                          u.rating
+                        ) AS rating,
+                        u.avatar
+                 FROM users u WHERE u.id IN (${chunk.map(() => "?").join(",")})`,
+              )
+              .bind(...chunk)
+              .all<{ id: string; username: string; rating: number; avatar: string | null }>(),
+          ),
+        );
+        for (const rows of rowChunks) {
+          for (const row of rows.results) {
+            const entry = seen.get(row.id);
+            if (entry) {
+              // The users row wins for the whole identity, not just rating and
+              // avatar: for humans it's the same string the session carries, and
+              // for house personas it's where an admin rename from /mod/house
+              // lands — so an idle renamed bot never shows its baked name.
+              entry.name = row.username;
+              entry.rating = Math.round(row.rating);
+              entry.avatar = row.avatar;
+            }
           }
         }
       } catch {}
@@ -8195,17 +8273,50 @@ export class GameServer extends DurableObject<Env> {
 
 // Edge-cached lobby snapshot. The payload is public and identical for every
 // viewer, so one cached copy per colo serves the whole browsing crowd and the DO
-// sees ~1 request per cache window (s-maxage) instead of a WebSocket poll per
-// viewer. A FIXED cache key (query stripped) stops a cache-busting query string
-// from stampeding the DO. Fails soft: a stale cached copy on DO error, then the
-// DO's own error response, so the client keeps its last snapshot either way.
+// sees ~1 request per cache window instead of a WebSocket poll per viewer.
+// Fails soft: the DO's own error response passes through, so the client keeps
+// its last snapshot either way.
+//
+// STALENESS IS BOUNDED BY THE CACHE KEY, NOT BY TTL HEADERS. The first cut
+// stored one FIXED key with `s-maxage=3` and trusted expiry — and production
+// served a DAYS-old copy of that key while the DO underneath held 70+ live
+// games (verified side by side: /healthz `lobby.games: 72` vs an /api/lobby
+// body whose ratings matched a screenshot from days earlier, with the DO's
+// /lobby handler never invoked — `lastLobbyHttpAgoMs: null` across a 5-minute
+// isolate while a browser polled every 10s). Whatever layer pinned it (an
+// ambient Cache API TTL quirk, a zone-level cache rule in front of the
+// worker), the lesson is the same: never let a cache's expiry policy be the
+// only thing standing between viewers and a frozen lobby. So:
+//   • The stored key rotates every LOBBY_EDGE_BUCKET_MS: once the bucket
+//     rolls, the old entry is UNREACHABLE regardless of how long some layer
+//     keeps it, so staleness is capped at one bucket even if TTLs are ignored.
+//   • The response served to the client is `no-store`: browsers and any
+//     CDN/zone cache in FRONT of the worker are told to never keep a copy, so
+//     the only shared cache is the one under our key control right here.
+const LOBBY_EDGE_BUCKET_MS = 3000;
 async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promise<Response> {
   // `caches.default` is a Workers-runtime global not present on the DOM
   // CacheStorage type this file is compiled against; cast to reach it.
   const cache = (caches as unknown as { default: Cache }).default;
-  const cacheKey = new Request(`${url.origin}/api/lobby`, { method: "GET" });
+  // Time-bucketed key: bounds staleness by construction (see header comment).
+  // The bucket also absorbs client cache-busting query strings — whatever the
+  // browser appends, every request in the same window maps to this one key,
+  // so a crowd still costs the DO ~1 hit per bucket.
+  const bucket = Math.floor(Date.now() / LOBBY_EDGE_BUCKET_MS);
+  const cacheKey = new Request(`${url.origin}/api/lobby?bucket=${bucket}`, { method: "GET" });
+  const clientHeaders = {
+    "content-type": "application/json",
+    // Downstream caches (browser, CDN, any zone rule in front of the worker)
+    // must never hold this: the shared caching happens above, under our
+    // rotating key, where staleness is provably bounded.
+    "cache-control": "no-store",
+  };
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // Re-wrap: the stored copy carries the cacheable header set; the client
+    // must receive the no-store set.
+    return new Response(await cached.arrayBuffer(), { status: 200, headers: clientHeaders });
+  }
   let doResp: Response;
   try {
     const id = env.GAME_SERVER.idFromName(globalServerName);
@@ -8215,31 +8326,17 @@ async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promi
     return new Response("lobby unavailable", { status: 503 });
   }
   if (!doResp.ok) return doResp;
-  // Re-wrap with cache headers; s-maxage bounds how often the DO is hit,
-  // stale-while-revalidate lets the edge serve the old copy during a refresh.
-  // s-maxage=3 caps DO lobby load at ~1 hit / 3s TOTAL (shared across every
-  // viewer, independent of viewer count) while keeping a freshly-posted or
-  // just-answered challenge no more than ~3s + the client poll interval stale.
-  //
-  // Tradeoff: the edge cache is what protects the single global lobby DO, so we
-  // keep it (dropping s-maxage would expose the DO to every poll from every
-  // client and risk overload). But two clients in different colos can be served
-  // snapshots up to (s-maxage + stale-while-revalidate) apart, so we keep SWR
-  // small: s-maxage=3 + swr=1 caps cross-colo snapshot-age skew at ~4s instead
-  // of the ~9s a larger SWR window would allow. The lobby count is intentionally
-  // eventually-consistent (all colos converge within ~4s) rather than
-  // per-request random — the payload is deterministic, so every colo that hits
-  // the DO in a given window serves the identical snapshot.
   const body = await doResp.arrayBuffer();
-  const resp = new Response(body, {
+  // Stored copy: cacheable so cache.put accepts it. The TTL is hygiene (lets
+  // the runtime evict rolled-over buckets promptly); correctness comes from
+  // the key rotation, which caps effective staleness at one bucket no matter
+  // how long this entry actually lives.
+  const stored = new Response(body, {
     status: 200,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "public, s-maxage=3, stale-while-revalidate=1",
-    },
+    headers: { "content-type": "application/json", "cache-control": "public, s-maxage=5" },
   });
-  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
-  return resp;
+  ctx.waitUntil(cache.put(cacheKey, stored));
+  return new Response(body, { status: 200, headers: clientHeaders });
 }
 
 export default {
