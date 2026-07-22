@@ -50,20 +50,22 @@ export const TIMID: Nerf = db({
 export const KINGFISHER: Nerf = db({
   id: "kingfisher",
   name: "Kingfisher",
-  description: "When your king can capture, it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
+  description: "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
   flavor: "The kingfisher always dives for the biggest fish.",
   tier: 4,
   icon: "crown",
   implemented: true,
   // Distinct from escort_mission (king must take, any target): the kingfisher
   // is forced onto the HIGHEST-value king capture available.
-  filterMoves: (moves) => {
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // activation delayed until after move 3
     const kingCaps = moves.filter((m) => m.piece === "k" && m.captured);
     if (!kingCaps.length) return moves;
     const best = Math.max(...kingCaps.map((m) => (m.captured ? PIECE_VAL[m.captured] : 0)));
     return kingCaps.filter((m) => (m.captured ? PIECE_VAL[m.captured] : 0) === best);
   },
-  hint: (_s, _c, legal) => {
+  hint: (_s, ctx, legal) => {
+    if (ctx.moveNumber < 3) return null;
     const kc = legal.filter((m) => m.piece === "k" && m.captured);
     if (!kc.length) return null;
     return {

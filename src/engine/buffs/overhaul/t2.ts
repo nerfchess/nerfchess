@@ -467,7 +467,8 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_molting_season",
       name: "Molting Season",
-      description: "One of your bishops sheds its robes and permanently becomes a knight.",
+      description:
+        "One of your bishops sheds its robes and permanently becomes a knight. Using it consumes your next unused draft reroll, if any.",
       tier: 2,
       category: "pieces",
       icon: "Feather",
@@ -485,6 +486,7 @@ export const OVERHAUL_T2: Buff[] = [
             },
       (_inst, api, picks) => {
         if (picks[0]?.square != null) api.setPieceType(picks[0].square, "n");
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       { freeAction: true },
     ),
@@ -576,7 +578,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_overdue_library_book",
       name: "Overdue Library Book",
       description:
-        "Stamp an enemy knight or bishop. In 6 of your turns, if it still lives, the librarian drags it back to an empty home square of its type on the enemy back rank (or any free back-rank square).",
+        "Stamp an enemy knight or bishop. In 6 of your turns, if it still lives, then after your opponent's next move the librarian drags it back to an empty home square of its type on the enemy back rank (or any free back-rank square).",
       tier: 2,
       category: "attack",
       icon: "BookOpen",

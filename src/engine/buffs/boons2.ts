@@ -330,17 +330,37 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_ascetics_bargain",
       name: "Ascetic's Bargain",
       description:
-        "Take a vow of refusal: your next draft is skipped outright. The draft after that shows three cards to pick from and rolls one tier higher.",
+        "Take a vow of refusal: your next draft is skipped outright. The draft after that shows three cards to pick from and rolls one tier higher. If it is not claimed within two of your drafts, the vow lapses.",
       tier: 3,
       category: "draft",
       icon: "HandHeart",
       flavor: "Hunger is a seasoning.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
-      api.mine.flags.prepThree = true;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+        api.mine.flags.prepThree = true;
+        api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+        inst.state.baseDrafts = api.mine.draftsTaken;
+      },
+      // The fattened offer is claimed the moment prepThree is consumed by a real
+      // roll; if two of your drafts pass without that happening (both blocked,
+      // say), the vow lapses and the banked reward is dropped.
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        if (!api.mine.flags.prepThree) {
+          inst.spent = true;
+          return;
+        }
+        if (api.mine.draftsTaken - ((inst.state.baseDrafts as number) ?? 0) >= 2) {
+          api.mine.flags.prepThree = false;
+          api.mine.flags.bankBonus = Math.max(0, (api.mine.flags.bankBonus ?? 0) - 1);
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "vow spent" : "vow held"),
+    },
   ),
 
   // A strategic exception on the CAPTURE PATTERN itself: repetition is barred.
@@ -372,7 +392,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_hit_and_run",
       name: "Hit and Run",
       description:
-        "The next time one of your pieces makes a capture, it strikes and slips straight back to the square it came from, dodging any reprisal. Once.",
+        "After your opponent's next move, the next time one of your pieces makes a capture, it strikes and slips straight back to the square it came from, dodging any reprisal. Once.",
       tier: 3,
       category: "attack",
       icon: "Footprints",
@@ -380,14 +400,25 @@ export const BOON_WAVE2: Buff[] = [
     },
     {
       kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+      },
       onMovePlayed: (inst, move, api) => {
-        if (inst.spent || move.color !== api.me) return;
+        if (inst.spent) return;
+        // Delayed activation: the effect only arms once the opponent has
+        // replied at least once after this card was drafted.
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        if (move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
         if (move.from === move.to || api.board.pieces[move.from]) return;
         api.relocate(move.to, move.from);
         inst.spent = true;
       },
-      status: () => "waiting on your next capture",
+      status: (inst) =>
+        inst.state.armed ? "waiting on your next capture" : "arming after your opponent replies",
     },
   ),
 
@@ -400,14 +431,14 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_cornered_king",
       name: "Cornered King",
       description:
-        "Desperation teaches strange footwork: while you have fewer pieces than your opponent (kings aside), your king may also move like a knight. Lasts the rest of the game.",
+        "Desperation teaches strange footwork: once, while you have fewer pieces than your opponent (kings aside), your king may move like a knight.",
       tier: 4,
       category: "movement",
       icon: "Swords",
       flavor: "An old king remembers being a soldier.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true },
     },
-    permanentAugment((_moves, inst, api) => {
+    augment((_moves, inst, api) => {
       if (armySize(api.board, api.me) >= armySize(api.board, api.opp)) return [];
       const ks = mySquares(api.board, api.me, "k")[0];
       if (ks == null) return [];

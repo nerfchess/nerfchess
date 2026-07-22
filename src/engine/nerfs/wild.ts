@@ -84,21 +84,31 @@ export const WALLFLOWER: Nerf = db({
 
 export const SABBATH: Nerf = db({
   id: "wn_sabbath", name: "Sabbath", tier: 2, icon: "calendar", implemented: true,
-  description: "On every 7th turn of yours, you can't capture.",
+  description: "On every 7th turn of yours, you can't capture, except a capture that gets your king out of check is always legal.",
   flavor: "One day of rest in seven.",
   filterMoves: (moves, _s, ctx) => {
     const turn = ctx.moveNumber + 1;
     if (turn % 7 !== 0) return moves;
-    return moves.filter((m) => !m.captured);
+    const inCheck = isInCheck(ctx.board, ctx.me);
+    return moves.filter((m) => {
+      if (!m.captured) return true;
+      // Capturing the checking piece (a capture that resolves the check) is
+      // always allowed, even on the sabbath turn.
+      return inCheck && !isInCheck(makeMove(ctx.board, m), ctx.me);
+    });
   },
 });
 
 export const GENTLE_GIANT: Nerf = db({
   id: "wn_gentle_giant", name: "Gentle Giant", tier: 2, icon: "crown", implemented: true,
-  description: "Your queen can't capture pawns.",
+  description: "Your queen can't capture pawns, unless your king is in check.",
   flavor: "She won't stoop to swatting foot soldiers.",
-  filterMoves: (moves) =>
-    moves.filter((m) => !(m.piece === "q" && m.captured === "p")),
+  filterMoves: (moves, _s, ctx) => {
+    // The restriction pauses while your king is in check: on the turn you must
+    // answer a check, the queen may take pawns freely.
+    if (isInCheck(ctx.board, ctx.me)) return moves;
+    return moves.filter((m) => !(m.piece === "q" && m.captured === "p"));
+  },
 });
 
 export const NO_GOING_HOME: Nerf = db({
@@ -228,7 +238,7 @@ export const WEIGH_STATION: Nerf = db({
 
 export const QUARANTINE_ZONE: Nerf = db({
   id: "wn_quarantine_zone", name: "Quarantine Zone", tier: 4, icon: "biohazard", implemented: true,
-  description: "A random 2x2 block of squares is sealed off at game start; you can't move any piece onto it.",
+  description: "A random 2x2 block of squares is sealed off, shown from the first turn; you can't move any piece onto it, unless the seal would leave you fewer than three legal moves.",
   flavor: "Do not cross the tape.",
   init: (rng) => {
     const f = rng.int(7); // 0..6, so f+1 <= 7
@@ -238,30 +248,47 @@ export const QUARANTINE_ZONE: Nerf = db({
   filterMoves: (moves, state) => {
     const s = state as { zone: number[] };
     const set = new Set(s.zone);
-    return moves.filter((m) => !set.has(m.to));
+    const ok = moves.filter((m) => !set.has(m.to));
+    // Guarantee at least three legal moves: if the seal is too constraining,
+    // drop it for the turn rather than choke the position.
+    return ok.length >= 3 ? ok : moves;
   },
   visual: (state) => ({ bannedSquares: (state as { zone: number[] }).zone }),
+  hint: (state) => {
+    const s = state as { zone: number[] };
+    const corner = Math.min(...s.zone);
+    return { text: `A 2x2 block is sealed off (corner ${"abcdefgh"[FILE(corner)]}${RANK(corner) + 1}).`, tone: "info" };
+  },
 });
 
 export const SHIFTING_SANDS: Nerf = db({
   id: "wn_shifting_sands", name: "Shifting Sands", tier: 4, icon: "wind", implemented: true,
-  description: "Each turn, a random file is closed; you can't move any piece onto it this turn.",
+  description: "Each turn, a random file is closed; you can't move any piece onto it this turn, unless the closure would leave you fewer than three legal moves. Next turn's closed file is revealed a turn early.",
   flavor: "The dunes move overnight.",
-  init: () => ({ file: 0 }),
-  onTurnStart: (_s, _ctx, rng) => ({ file: rng.int(8) }),
+  init: (rng) => ({ file: rng.int(8), next: rng.int(8) }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { file: number; next: number };
+    return { file: s.next, next: rng.int(8) };
+  },
   filterMoves: (moves, state) => {
     const s = state as { file: number };
-    return moves.filter((m) => FILE(m.to) !== s.file);
+    const ok = moves.filter((m) => FILE(m.to) !== s.file);
+    return ok.length >= 3 ? ok : moves;
   },
   visual: (state) => {
-    const s = state as { file: number };
-    const sqs: number[] = [];
-    for (let r = 0; r < 8; r++) sqs.push(SQ(s.file, r));
-    return { bannedSquares: sqs };
+    const s = state as { file: number; next: number };
+    const banned: number[] = [];
+    for (let r = 0; r < 8; r++) banned.push(SQ(s.file, r));
+    const highlight: number[] = [];
+    for (let r = 0; r < 8; r++) highlight.push(SQ(s.next, r));
+    return { bannedSquares: banned, highlightSquares: highlight };
   },
   hint: (state) => {
-    const s = state as { file: number };
-    return { text: `The ${"abcdefgh"[s.file]}-file is buried in sand this turn.`, tone: "info" };
+    const s = state as { file: number; next: number };
+    return {
+      text: `The ${"abcdefgh"[s.file]}-file is buried in sand this turn; the ${"abcdefgh"[s.next]}-file closes next turn.`,
+      tone: "info",
+    };
   },
 });
 

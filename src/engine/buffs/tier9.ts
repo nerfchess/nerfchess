@@ -114,68 +114,129 @@ const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
 export const TIER9: Buff[] = [
   // --- Game-winning boons ---------------------------------------------------
 
-  // Ice Age: the whole enemy army (kings excepted) freezes solid for 3 of the
-  // opponent's turns. They can only shuffle their king while it thaws - trimmed
-  // from 4 turns in the apex soft-nerf pass; three is still back-breaking.
+  // Ice Age: narrowed in the apex soft-nerf pass from the whole enemy army to
+  // three chosen pieces - still a three-turn deep-freeze, but the caster now
+  // picks exactly which enemy pieces (kings excepted) go solid.
   apex(
     {
       id: "ice_age",
       icon: "Snowflake",
       name: "Ice Age",
       description:
-        "Every enemy piece other than the king freezes solid and cannot move for your opponent's next 3 turns.",
+        "Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns.",
       category: "tempo",
       flavor: "The board holds its breath.",
       fx: { motif: "jail", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 3, skin: "ice" });
+          }
+        }
+      },
+    ),
   ),
 
   // Regicide: your queen appears right next to the enemy king, then locks in the
   // execution. She cannot be captured for the opponent's next 2 turns, and every
   // enemy piece touching the king (kings excepted) freezes for the same 2 turns,
   // so nothing can block or trade off the threat. The king itself stays free to
-  // run, so the opponent is never stranded.
-  apex(
-    {
-      id: "regicide",
-      icon: "Crown",
-      name: "Regicide",
-      description:
-        "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns. Every enemy piece beside the king freezes for those 2 turns.",
-      category: "attack",
-      requires: ["q"],
-      flavor: "The court has reached a verdict.",
-      fx: { motif: "empower", pieces: ["q"], self: true },
+  // run, so the opponent is never stranded. Retiered 9 -> 8 in the apex pass and
+  // given a second relocation, but the moved pieces are chain-guarded off the
+  // king until the opponent replies, so it sets up the kill rather than landing
+  // it outright. Built explicitly (not via apex()) so it can carry tier 8 while
+  // staying grant-only in the apex pool.
+  {
+    id: "regicide",
+    icon: "Crown",
+    name: "Regicide",
+    description:
+      "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
+    category: "attack",
+    tier: 8,
+    special: true,
+    implemented: true,
+    requires: ["q"],
+    flavor: "The court has reached a verdict.",
+    fx: { motif: "empower", pieces: ["q"], self: true },
+    kind: "activated",
+    targets: (_inst, api, picks) => {
+      const queen = mySquares(api.board, api.me, "q")[0];
+      if (picks.length === 0) {
+        return {
+          kind: "square",
+          label: "Choose one more piece to move (optional)",
+          squares: mySquares(api.board, api.me).filter(
+            (sq) => api.board.pieces[sq]!.type !== "k" && sq !== queen,
+          ),
+          finishable: true,
+        };
+      }
+      if (picks.length === 1 && picks[0].square != null) {
+        const from = picks[0].square;
+        return {
+          kind: "square",
+          label: "Choose its destination",
+          squares: emptySquares(api.board).filter(
+            (sq) => api.board.pieces[from]?.type !== "p" || pawnRankOk(sq),
+          ),
+        };
+      }
+      return null;
     },
-    activatedSimple((_inst, api) => {
+    effect: (_inst, api, picks) => {
       const queen = mySquares(api.board, api.me, "q")[0];
       const king = mySquares(api.board, api.opp, "k")[0];
-      if (queen == null || king == null) return;
-      const empties = emptySquares(api.board).filter((sq) => sq !== queen);
-      if (empties.length === 0) return;
-      const adjacent = empties.filter((sq) => cheb(sq, king) === 1);
-      const pool = adjacent.length > 0 ? adjacent : empties;
-      // Deterministic: closest to the king, ties broken by lowest square index.
-      const dest = pool.sort((a, b) => cheb(a, king) - cheb(b, king) || a - b)[0];
-      if (dest == null) return;
-      api.relocate(queen, dest);
-      // The landed queen is untouchable for two of the opponent's turns.
-      addEffect(api, { kind: "shield", owner: api.me, squares: [dest], turns: 2 });
-      // Freeze the king's escort (never the king), so it cannot be defended.
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        if (cheb(sq, king) === 1) {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+      if (queen != null && king != null) {
+        const empties = emptySquares(api.board).filter((sq) => sq !== queen);
+        if (empties.length > 0) {
+          const adjacent = empties.filter((sq) => cheb(sq, king) === 1);
+          const pool = adjacent.length > 0 ? adjacent : empties;
+          // Deterministic: closest to the king, ties broken by lowest square index.
+          const dest = pool.sort((a, b) => cheb(a, king) - cheb(b, king) || a - b)[0];
+          if (dest != null) {
+            api.relocate(queen, dest);
+            // The landed queen is untouchable for two of the opponent's turns.
+            addEffect(api, { kind: "shield", owner: api.me, squares: [dest], turns: 2 });
+            // Freeze the king's escort (never the king), so it cannot be defended.
+            for (const sq of mySquares(api.board, api.opp)) {
+              if (api.board.pieces[sq]!.type === "k") continue;
+              if (cheb(sq, king) === 1) {
+                addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+              }
+            }
+          }
         }
       }
-    }),
-  ),
+      // Move one additional friendly piece to a chosen empty square.
+      const from = picks[0]?.square, to = picks[1]?.square;
+      if (
+        from != null &&
+        to != null &&
+        api.board.pieces[from]?.color === api.me &&
+        api.board.pieces[from]?.type !== "k" &&
+        !api.board.pieces[to] &&
+        (api.board.pieces[from]?.type !== "p" || pawnRankOk(to))
+      ) {
+        api.relocate(from, to);
+      }
+      // The moved pieces cannot land the killing blow until the opponent replies.
+      api.bs.chainKingGuard = api.me;
+    },
+  },
 
   // Resurrection: your whole graveyard marches back. Every captured piece
   // (queen first, pawns last) returns to the board, filling your half from the
@@ -188,12 +249,53 @@ export const TIER9: Buff[] = [
       icon: "Sparkles",
       name: "Resurrection",
       description:
-        "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward and spilling into the rest of the board if your half runs out of room.",
+        "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward and spilling into the rest of the board if your half runs out of room. One of your pieces may first take a free non-capturing king-step to an empty square beside it.",
       category: "pieces",
       flavor: "Rise, and rise again.",
     },
-    activatedSimple((_inst, api) => {
-      const spots = backfillSpots(api);
+    activated(
+      (_inst, api, picks) => {
+        // Optional free king-step: choose the piece, then an empty neighbour.
+        const openSteps = (from: Square) =>
+          ALL_DIRS.flatMap(([df, dr]) => {
+            const f = FILE(from) + df, r = RANK(from) + dr;
+            if (!inBoard(f, r)) return [];
+            const d = SQ(f, r);
+            return !api.board.pieces[d] && (api.board.pieces[from]?.type !== "p" || pawnRankOk(d))
+              ? [d]
+              : [];
+          });
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose a piece to take a free step (optional)",
+            squares: mySquares(api.board, api.me).filter((sq) => openSteps(sq).length > 0),
+            finishable: true,
+          };
+        }
+        if (picks.length === 1 && picks[0].square != null) {
+          return {
+            kind: "square",
+            label: "Step one square to an empty square beside it",
+            squares: openSteps(picks[0].square),
+          };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        // The free step first: its destination was empty at pick time, so it is
+        // taken before the revive floods the empty squares.
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (
+          from != null &&
+          to != null &&
+          api.board.pieces[from]?.color === api.me &&
+          !api.board.pieces[to] &&
+          (api.board.pieces[from]?.type !== "p" || pawnRankOk(to))
+        ) {
+          api.relocate(from, to);
+        }
+        const spots = backfillSpots(api);
       // Overflow: a graveyard larger than my half spills into every remaining
       // empty square, still ordered from my side outward, so a full revive is
       // never capped by how much room my own half happens to have.
