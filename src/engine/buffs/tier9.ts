@@ -529,33 +529,55 @@ export const TIER9: Buff[] = [
     }),
   ),
 
-  // Promoted from tier 8 (owner call): one queen deleting the entire enemy
-  // army is apex-grade, not a normal draft pull.
+  // Queen's Apocalypse: trimmed in the apex pass from a board-wide wipe to a
+  // focused strike. Choose a queen and remove up to four enemy pieces it can see
+  // along its rays (the first piece on each ray, kings never targeted); the queen
+  // is then frozen for your next turn, so the blow comes at a cost.
   apex(
     {
       id: "queens_apocalypse",
       icon: "Siren",
       name: "Queen's Apocalypse",
       description:
-        "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.",
+        "Choose one of your queens and remove up to four enemy pieces it can see along its lines. That queen is then frozen for your next turn. Requires a queen.",
       category: "attack",
       requires: ["q"],
       flavor: "She knocks once.",
     },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the queen who brings the apocalypse",
-              squares: mySquares(api.board, api.me, "q"),
-            },
       (_inst, api, picks) => {
-        if (picks[0]?.square == null) return;
-        for (const sq of mySquares(api.board, api.opp)) {
-          const t = api.board.pieces[sq]!.type;
-          if (t !== "k" && t !== "q") api.removePiece(sq);
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the queen who brings the apocalypse",
+            squares: mySquares(api.board, api.me, "q"),
+          };
+        }
+        if (picks.length >= 5) return null;
+        const queen = picks[0].square;
+        if (queen == null) return null;
+        const visible = queenVisibleEnemies(api, queen).filter(
+          (sq) => !picks.slice(1).some((k) => k.square === sq),
+        );
+        if (visible.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Choose an enemy piece to remove (${picks.length}/4)`,
+          squares: visible,
+          finishable: true,
+        };
+      },
+      (_inst, api, picks) => {
+        const queen = picks[0]?.square;
+        if (queen == null) return;
+        for (const k of picks.slice(1)) {
+          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
+            api.removePiece(k.square);
+          }
+        }
+        // The queen who unleashed it is frozen for your next turn.
+        if (api.board.pieces[queen]?.color === api.me) {
+          addEffect(api, { kind: "freeze", sq: queen, owner: api.me, turns: 1, skin: "ice" });
         }
       },
     ),

@@ -319,7 +319,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_tar_pit",
       name: "Tar Pit",
-      description: "Every one of your opponent's bishops is stuck fast and cannot move for their next 2 turns.",
+      description: "Every one of your opponent's bishops is stuck fast and cannot move or capture for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "The diagonals go nowhere today.",
@@ -571,12 +571,12 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_attack_goose",
       name: "Attack Goose",
-      description: "An attack goose invades your opponent's half as a knight for 3 of your turns, then honks off.",
+      description: "An attack goose invades your opponent's half as a knight for 2 of your turns, then honks off.",
       tier: 5,
       category: "pieces",
       flavor: "It has your bread and it has your king.",
     },
-    summonTemp("n", 3, oppHalfZone),
+    summonTemp("n", 2, oppHalfZone),
   ),
   card(
     {
@@ -636,7 +636,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_conga_line",
       name: "Conga Line",
-      description: "The whole line dances one step to the side: every one of your pawns shifts one square toward the board edge you pick (pawns with no room sit the song out).",
+      description: "The whole line dances one step to the side: every one of your pawns shifts one square toward the board edge you pick, onto an empty square only, never a capture (pawns with no room sit the song out).",
       tier: 5,
       category: "movement",
       requires: ["p"],
@@ -846,7 +846,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_chaos_reigns",
       name: "Chaos Reigns",
-      description: "Fairness goes out the window: take two extra moves right now, but your opponent also takes two extra moves on their next turn.",
+      description: "Fairness goes out the window: take one extra move right now, but your opponent also takes one extra move on their next turn.",
       tier: 4,
       category: "tempo",
       flavor: "If everyone breaks the rules, is anyone.",
@@ -854,8 +854,8 @@ export const WILD_CHAOS: Buff[] = [
     },
     {
       ...activatedSimple((_inst, api) => {
-        api.bs.extraMoves[api.me] += 2;
-        api.bs.extraMoves[api.opp] += 2;
+        api.bs.extraMoves[api.me] += 1;
+        api.bs.extraMoves[api.opp] += 1;
       }),
       freeAction: true,
     },
@@ -1097,7 +1097,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_moonwalk",
       name: "Moonwalk",
-      description: "Teach your pawns to moonwalk: for your next 3 turns each of your pawns may also step one square straight backward onto an empty square.",
+      description: "Teach your pawns to moonwalk: for your next 3 turns each of your pawns may also step one square straight backward onto an empty square. The backstep is never a capture.",
       tier: 3,
       category: "movement",
       requires: ["p"],
@@ -1222,12 +1222,12 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_confetti_cannon",
       name: "Confetti Cannon",
-      description: "Your next capture goes off like a confetti cannon: every enemy piece other than a king within two squares of the captured square is blown off the board.",
+      description: "Your next capture goes off like a confetti cannon: every enemy piece other than a king within one square of the captured square is blown off the board.",
       tier: 5,
       category: "attack",
       flavor: "Cleanup is going to be a nightmare.",
     },
-    captureExplosion({ radius: 2, charges: 1 }),
+    captureExplosion({ radius: 1, charges: 1 }),
   ),
   card(
     {
