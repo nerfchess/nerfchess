@@ -34,6 +34,51 @@ function pieceSquares(board: { pieces: ({ type: PieceType; color: Color } | null
   return out;
 }
 
+// Squares of the opponent pieces currently giving check to `me`'s king.
+// Rays are cast outward from the king so each slider ray stops at its first
+// blocker (no x-raying). Used by Battle Fatigue to always allow capturing a
+// checker.
+function checkingSquares(board: BoardState, me: Color): Set<number> {
+  const out = new Set<number>();
+  const ks = findKing(board, me);
+  if (ks == null) return out;
+  const opp: Color = me === "w" ? "b" : "w";
+  const kf = FILE(ks), kr = RANK(ks);
+  const KNIGHT = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]];
+  for (const [df, dr] of KNIGHT) {
+    const f = kf + df, r = kr + dr;
+    if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+    const p = board.pieces[SQ(f, r)];
+    if (p && p.color === opp && p.type === "n") out.add(SQ(f, r));
+  }
+  const oppDir = opp === "w" ? 1 : -1;
+  for (const df of [-1, 1]) {
+    const f = kf + df, r = kr - oppDir;
+    if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+    const p = board.pieces[SQ(f, r)];
+    if (p && p.color === opp && p.type === "p") out.add(SQ(f, r));
+  }
+  const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (const [df, dr] of DIAG) {
+    let f = kf + df, r = kr + dr;
+    while (f >= 0 && f < 8 && r >= 0 && r < 8) {
+      const p = board.pieces[SQ(f, r)];
+      if (p) { if (p.color === opp && (p.type === "b" || p.type === "q")) out.add(SQ(f, r)); break; }
+      f += df; r += dr;
+    }
+  }
+  for (const [df, dr] of ORTH) {
+    let f = kf + df, r = kr + dr;
+    while (f >= 0 && f < 8 && r >= 0 && r < 8) {
+      const p = board.pieces[SQ(f, r)];
+      if (p) { if (p.color === opp && (p.type === "r" || p.type === "q")) out.add(SQ(f, r)); break; }
+      f += df; r += dr;
+    }
+  }
+  return out;
+}
+
 // ------------------------- NERFS -------------------------
 
 export const ROOK_BUDDIES: Nerf = db({
@@ -184,8 +229,9 @@ export const SEPARATION_CHURCH_STATE: Nerf = db({
 
 export const ESCORT_MISSION: Nerf = db({
   id: "escort_mission", name: "Escort Mission", tier: 1, implemented: true,
-  description: "If your king can capture, it must.",
-  filterMoves: (moves) => {
+  description: "If your king can capture, it must. This activates only after your move 3.",
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
     const kingCaps = moves.filter((m) => m.piece === "k" && m.captured);
     return kingCaps.length ? kingCaps : moves;
   },

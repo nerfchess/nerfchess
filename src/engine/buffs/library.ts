@@ -938,7 +938,7 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "sentinel_pawn", requires: ["p"], name: "Sentinel Pawn", description: "One pawn may capture an enemy piece two squares diagonally ahead, once.", tier: 1, category: "attack" },
+    { id: "sentinel_pawn", requires: ["p"], name: "Sentinel Pawn", description: "One pawn may capture an enemy piece two squares diagonally ahead, twice.", tier: 1, category: "attack" },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -951,7 +951,7 @@ const TIER1: Buff[] = [
         }
       }
       return out;
-    }),
+    }, 2),
   ),
   def(
     // Reworked for the full-transparency era (offer tiers are public): one
@@ -963,7 +963,7 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "nudge", name: "Nudge", description: "Push one enemy pawn back one square if empty behind, once.", tier: 1, category: "attack" },
+    { id: "nudge", name: "Nudge", description: "Push one enemy pawn back one square if empty behind, once. Using it spends your next unused reroll, if any.", tier: 1, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -981,6 +981,7 @@ const TIER1: Buff[] = [
         if (sq == null) return;
         const back = sq + fwdOf(api.me);
         if (!api.board.pieces[back] && pawnRankOk(back)) api.relocate(sq, back);
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     ),
   ),

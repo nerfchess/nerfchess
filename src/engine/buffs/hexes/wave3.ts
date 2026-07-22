@@ -332,7 +332,7 @@ const T2: Buff[] = [
       id: "hw3_binding_oath",
       name: "Binding Oath",
       description:
-        "Swear two enemy pieces to a pact of restraint: for your opponent's next 6 turns, so long as both still stand, neither of the pair may capture anything. The oath breaks the instant one of them leaves the board, freeing the survivor. They can trade one away to release the other, or simply attack with their other pieces. Kings cannot be sworn.",
+        "Swear two enemy pieces to a pact of restraint: for your opponent's next 6 turns, so long as both still stand, neither of the pair may capture anything, save that the first of the two to strike is allowed one capture before the pact takes hold. The oath breaks the instant one of them leaves the board, freeing the survivor. They can trade one away to release the other, or simply attack with their other pieces. Kings cannot be sworn.",
       flavor: "Two blades crossed and bound: draw one and both must still.",
       fx: { motif: "muzzle" },
     },
@@ -357,17 +357,29 @@ const T2: Buff[] = [
         inst.state.a = a;
         inst.state.b = b;
         inst.state.turns = 6;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const a = inst.state.a as Square | undefined;
         const b = inst.state.b as Square | undefined;
         if (a == null || b == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if (!inst.state.escaped) return moves; // the first of the pair keeps one free capture
         const kept = moves.filter((m) => !m.captured || (m.from !== a && m.from !== b));
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
-        const a = followSq((inst.state.a as Square | null | undefined) ?? null, move);
-        const b = followSq((inst.state.b as Square | null | undefined) ?? null, move);
+        const a0 = (inst.state.a as Square | null | undefined) ?? null;
+        const b0 = (inst.state.b as Square | null | undefined) ?? null;
+        if (
+          !inst.state.escaped &&
+          move.color === api.opp &&
+          move.captured &&
+          (move.from === a0 || move.from === b0)
+        ) {
+          inst.state.escaped = true; // the first affected piece spent its one escape capture
+        }
+        const a = followSq(a0, move);
+        const b = followSq(b0, move);
         inst.state.a = a;
         inst.state.b = b;
         if (a == null || b == null) {
