@@ -269,7 +269,7 @@ export const GOLDFISH: Nerf = db({
 export const ASCETIC: Nerf = db({
   id: "ascetic",
   name: "Ascetic",
-  description: "You can capture at most one piece per piece type.",
+  description: "You can capture at most one piece per piece type. If no move complies, your king may move instead.",
   flavor: "One vice each.",
   tier: 6,
   icon: "ban",
@@ -279,7 +279,11 @@ export const ASCETIC: Nerf = db({
     for (const m of ctx.board.history) {
       if (m.color === ctx.me && m.captured) eaten.add(m.captured);
     }
-    return moves.filter((m) => !m.captured || m.captured === "k" || !eaten.has(m.captured));
+    const compliant = moves.filter((m) => !m.captured || m.captured === "k" || !eaten.has(m.captured));
+    if (compliant.length) return compliant;
+    // no compliant move exists: fall back to a king move so you are not stuck
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -331,7 +335,7 @@ export const HONEY_TRAP: Nerf = db({
 export const TIDY_DESK: Nerf = db({
   id: "tidy_desk",
   name: "Tidy Desk",
-  description: "By move 25, you must have at least one piece on each rank of your half.",
+  description: "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
   flavor: "Everything in its place.",
   tier: 5,
   icon: "layout-grid",
@@ -339,14 +343,17 @@ export const TIDY_DESK: Nerf = db({
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 25) return null;
     const ranks = ctx.me === "w" ? [0, 1, 2, 3] : [4, 5, 6, 7];
+    const empty: number[] = [];
     for (const r of ranks) {
       let has = false;
       for (let f = 0; f < 8; f++) {
         const p = ctx.board.pieces[SQ(f, r)];
         if (p && p.color === ctx.me) { has = true; break; }
       }
-      if (!has) return { reason: `rank ${r + 1} empty` };
+      if (!has) empty.push(r);
     }
+    // one rank of your choosing may be left open: you only lose once two or more are empty
+    if (empty.length >= 2) return { reason: `ranks ${empty.map((r) => r + 1).join(", ")} empty` };
     return null;
   },
 });

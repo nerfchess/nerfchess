@@ -556,15 +556,17 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_spoils_of_war",
       name: "Spoils of War",
       description:
-        "The finest piece you have captured from your opponent defects to your colors: place it on an empty square on your home rank. It leaves your opponent's revival pool for good. Queens defect first, then rooks, bishops, knights, pawns.",
+        "The finest piece you have captured from your opponent defects to your colors: place it on an empty square on your home rank. It leaves your opponent's revival pool for eighteen of your turns, then rejoins it, and you gain one draft reroll. Queens defect first, then rooks, bishops, knights, pawns.",
       tier: 4,
       category: "pieces",
       icon: "Handshake",
       flavor: "Everyone has a price. Yours was room and board.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length > 0) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.type != null) return null;
         const t = bestDefector(api);
         return {
           kind: "square",
@@ -580,15 +582,34 @@ export const BOON_WAVE2: Buff[] = [
                 ),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
         const t = bestDefector(api);
-        if (sq == null || t == null || api.board.pieces[sq]) return;
+        if (sq == null || t == null || api.board.pieces[sq] || inst.state.type != null) return;
         if (t === "p" && !pawnRankOk(sq)) return;
         api.place(sq, t, api.me);
+        // Suspend the piece from their revival pool rather than removing it for
+        // good; the countdown below returns it after eighteen of your turns.
         api.theirs.revived[t] = (api.theirs.revived[t] ?? 0) + 1;
+        inst.state.type = t;
+        inst.state.turns = 18;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.type == null || inst.spent || move.color !== api.me) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          const t = inst.state.type as PieceType;
+          api.theirs.revived[t] = Math.max(0, (api.theirs.revived[t] ?? 0) - 1);
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.type == null
+          ? "activate to recruit a defector"
+          : `suspension: ${(inst.state.turns as number) ?? 18} of your turns left`,
+    },
   ),
 
   // ===== TIER 5 ==============================================================

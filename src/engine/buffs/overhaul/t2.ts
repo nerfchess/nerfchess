@@ -726,7 +726,8 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_encore",
       name: "Encore",
-      description: "If your next move puts the enemy king in danger, you immediately move again.",
+      description:
+        "If your next move puts the enemy king in danger, you immediately move again. That bonus move cannot capture.",
       tier: 2,
       category: "tempo",
       icon: "Drama",
@@ -739,6 +740,14 @@ export const OVERHAUL_T2: Buff[] = [
         const k = kingSquare(api.board, api.opp);
         if (k != null && attackersOf(api.board, api.me, k).length > 0) {
           api.bs.extraMoves[api.me] += 1;
+          // The bonus move must not capture (balance pass). The only way to
+          // strip captures from a whole free move the player picks is to shield
+          // the enemy army for the single move it covers: turns 2 so it
+          // survives this move's own timer tick and is still active on the
+          // bonus move, then expires. King capture is already barred during a
+          // chained move (chainKingGuard), and if every bonus move would be a
+          // capture the turn is simply passed (resolveNoMoves), never a loss.
+          addEffect(api, { kind: "shield", owner: api.opp, squares: null, turns: 2 });
         }
         inst.spent = true;
       },
@@ -750,7 +759,7 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_compost_heap",
       name: "Compost Heap",
-      description: "For your next 5 turns, gain 8 seconds whenever one of your pawns is captured.",
+      description: "For your next 5 turns, gain 13 seconds whenever one of your pawns is captured.",
       tier: 2,
       category: "tempo",
       icon: "Recycle",
@@ -764,7 +773,7 @@ export const OVERHAUL_T2: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && move.captured === "p") {
-          api.adjustClock({ addSelfSec: 8 });
+          api.adjustClock({ addSelfSec: 13 });
         }
         tickTurns(inst, move, api.me);
       },

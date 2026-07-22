@@ -495,13 +495,13 @@ export const REGICIDE_CLOCK: Nerf = db({
   },
   filterMoves: (moves, state, ctx) => {
     const s = state as { sinceCheck: number };
-    if (s.sinceCheck < 7) return moves;
+    if (s.sinceCheck < 5) return moves;
     const opp = other(ctx.me);
     const checks = moves.filter((m) => isInCheck(makeMove(ctx.board, m), opp));
     return checks.length ? checks : moves;
   },
   checkLoss: (_state, ctx) => {
-    if (ctx.moveNumber < 8) return null;
+    if (ctx.moveNumber < 6) return null;
     // Recompute the streak fresh from history rather than reading the
     // onTurnStart-maintained state, which is one move stale at loss-check time
     // and would let the player dodge the loss (and steal a king capture) for an
@@ -515,17 +515,17 @@ export const REGICIDE_CLOCK: Nerf = db({
         streak = isInCheck(board, opp) ? 0 : streak + 1;
       }
     }
-    return streak >= 8 ? { reason: "the pressure lapsed for too long" } : null;
+    return streak >= 6 ? { reason: "the pressure lapsed for too long" } : null;
   },
   progress: (state) => {
     const s = state as { sinceCheck: number };
-    return { value: Math.min(s.sinceCheck, 8), max: 8, label: `${s.sinceCheck}/8 turns since check` };
+    return { value: Math.min(s.sinceCheck, 6), max: 6, label: `${s.sinceCheck}/6 turns since check` };
   },
 });
 
 export const EQUALIZER: Nerf = db({
   id: "wn_equalizer", name: "Equalizer", tier: 6, icon: "scale", implemented: true,
-  description: "You lose if your piece count ever differs from your opponent's by more than 3, in either direction.",
+  description: "You lose if your piece count ever differs from your opponent's by more than 3, in either direction. Every piece on the board counts, including any created or spawned mid-game.",
   flavor: "The scales must stay level.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -538,7 +538,7 @@ export const EQUALIZER: Nerf = db({
 
 export const DEADLINE_QUEEN: Nerf = db({
   id: "wn_deadline_queen", name: "Deadline", tier: 6, icon: "sword", implemented: true,
-  description: "You must capture the enemy queen by your 25th move, or you lose.",
+  description: "You must capture an enemy queen by your 25th move, or you lose. Any enemy queen counts, including one created or spawned mid-game.",
   flavor: "Her head, before the bell.",
   progress: (_s, ctx) => ({
     value: Math.min(ctx.capturedByMe.q, 1),
