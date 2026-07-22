@@ -175,7 +175,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_moat_digger",
       name: "Moat Digger",
       description:
-        "Dig a moat on two adjacent empty squares in your half: enemy pieces cannot end a move on them for your opponent's next 3 turns.",
+        "Dig a moat on two adjacent empty squares in your half: enemy pieces cannot end a move on them for your opponent's next 3 turns. Use it before your next move, or the charge is spent unused.",
       tier: 2,
       category: "protection",
       icon: "Shovel",
@@ -214,6 +214,16 @@ export const OVERHAUL_T2: Buff[] = [
       (_inst, api, picks) => {
         const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
         if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+      },
+      {
+        freeAction: true,
+        // The activation is only offered when the moat can be dug, so a failed
+        // attempt cannot occur; instead the charge expires the moment you next
+        // move without having used it (glossary: a failed or illegal attempt
+        // still spends the charge).
+        onMovePlayed: (inst, move, api) => {
+          if (move.color === api.me && !inst.usedActivation) inst.spent = true;
+        },
       },
     ),
   ),

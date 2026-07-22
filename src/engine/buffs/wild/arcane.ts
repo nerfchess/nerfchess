@@ -611,13 +611,22 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_transmute",
       icon: "TestTube",
       name: "Transmute",
-      description: "Turn one of your pawns into a knight, once.",
+      description:
+        "Turn one of your pawns into a knight, once. Using it also spends one of your draft rerolls, if you have any.",
       tier: 3,
       category: "pieces",
       requires: ["p"],
       flavor: "A little more shape to it now.",
     },
-    transformOwn(1, ["p"], "n", "Choose a pawn to transmute into a knight"),
+    // Balance: the transmutation now costs a reroll. Reuse transformOwn's
+    // targeting, but override the effect to consume the next unused reroll.
+    {
+      ...transformOwn(1, ["p"], "n", "Choose a pawn to transmute into a knight"),
+      effect: (_inst, api, picks) => {
+        for (const k of picks) if (k.square != null) api.setPieceType(k.square, "n");
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+      },
+    },
   ),
   card(
     {
@@ -656,7 +665,7 @@ export const WILD_ARCANE: Buff[] = [
     {
       id: "wa_dominate_minor",
       name: "Dominate",
-      description: "Take control of one enemy knight or bishop for your next 3 turns. When the time is up it reverts to your opponent.",
+      description: "Take control of one enemy knight or bishop for your next 2 turns. When the time is up it reverts to your opponent.",
       tier: 4,
       category: "pieces",
       flavor: "Its allegiance was always negotiable, and only ever a loan.",
@@ -680,7 +689,7 @@ export const WILD_ARCANE: Buff[] = [
         if (sq == null || inst.state.sq != null) return;
         api.setPieceColor(sq, api.me);
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         let sq = inst.state.sq as Square | undefined;
@@ -934,7 +943,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_borrowed_minute",
       name: "Borrowed Minute",
       description:
-        "Borrow one enemy knight for a minute: it fights for you for your next 2 turns, then walks back to their side. If it dies meanwhile, the loan is settled.",
+        "Borrow one enemy knight for a minute: it fights for you for your next 2 turns, then walks back to their side, or returns the moment it makes a capture. If it dies meanwhile, the loan is settled.",
       tier: 4,
       category: "pieces",
       flavor: "A knight here, a knight there. Receipts available.",

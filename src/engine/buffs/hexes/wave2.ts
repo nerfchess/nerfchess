@@ -753,10 +753,13 @@ export const HEX_WAVE2: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 8;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // One legal escape move: the holder's first move slips the coin's grip.
+        if (!inst.state.escaped) return moves;
         const kept = moves.filter(
           (m) => m.from !== sq || (!m.captured && cheb(m.from, m.to) <= 2),
         );
@@ -766,6 +769,10 @@ export const HEX_WAVE2: Buff[] = [
         let sq = (inst.state.sq as Square | null | undefined) ?? null;
         if (sq == null) return;
         const heldMoved = move.from === sq && move.to !== sq;
+        if (heldMoved && move.color === api.opp && !inst.state.escaped) {
+          // The one escape is spent the first time the holder moves.
+          inst.state.escaped = true;
+        }
         sq = followSq(sq, move);
         if (sq == null) {
           // The holder was captured: the coin is destroyed with it.
@@ -810,7 +817,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_creeping_blight",
       name: "Creeping Blight",
       description:
-        "Blight one square in your opponent's half of the board: no enemy piece may move onto blighted ground (pieces already standing there may still leave). On each of their next turns the blight creeps to one more adjacent square in their half, for 5 of their turns, then the whole patch withers away. Play around the spread, or stay out of its half entirely.",
+        "Blight one square in your opponent's half of the board: their next move may still cross it, one last time, then the ground closes and no enemy piece may move onto blighted ground (pieces already standing there may still leave). On each of their following turns the blight creeps to one more adjacent square in their half, for 5 of their turns, then the whole patch withers away. Play around the spread, or stay out of its half entirely.",
       flavor: "First one flagstone went grey. By Friday, the courtyard.",
       fx: { motif: "blindfold" },
     },
@@ -825,34 +832,46 @@ export const HEX_WAVE2: Buff[] = [
               label: "Choose the square where the blight takes root",
               squares: emptySquares(api.board, (sq) => relRank(api.opp, sq) <= 4),
             },
-      effect: (inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         if (inst.state.squares != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.squares = [sq] as Square[];
         inst.state.turns = 5;
-        addEffect(api, { kind: "barred", squares: [sq], against: api.opp, turns: 5 });
+        inst.state.rooted = false;
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return;
         if (move.color === api.opp && turnsLeft(inst) > 0) {
-          const frontier: Square[] = [];
-          for (let sq = 0; sq < 64; sq++) {
-            if (relRank(api.opp, sq) > 4 || squares.includes(sq)) continue;
-            if (squares.some((b) => cheb(b, sq) === 1)) frontier.push(sq);
-          }
-          if (frontier.length) {
-            const next = frontier[api.rng.int(frontier.length)];
-            squares.push(next);
-            // Added during their move (ticked once immediately), so the fresh
-            // patch expires together with the original blight.
+          if (!inst.state.rooted) {
+            // One legal escape move: the opponent's first move may still cross
+            // the chosen square; the ground only closes once they have moved.
+            inst.state.rooted = true;
             addEffect(api, {
               kind: "barred",
-              squares: [next],
+              squares: [squares[0]],
               against: api.opp,
               turns: turnsLeft(inst),
             });
+          } else {
+            const frontier: Square[] = [];
+            for (let sq = 0; sq < 64; sq++) {
+              if (relRank(api.opp, sq) > 4 || squares.includes(sq)) continue;
+              if (squares.some((b) => cheb(b, sq) === 1)) frontier.push(sq);
+            }
+            if (frontier.length) {
+              const next = frontier[api.rng.int(frontier.length)];
+              squares.push(next);
+              // Added during their move (ticked once immediately), so the fresh
+              // patch expires together with the original blight.
+              addEffect(api, {
+                kind: "barred",
+                squares: [next],
+                against: api.opp,
+                turns: turnsLeft(inst),
+              });
+            }
           }
         }
         tickTurns(inst, move, api.opp);
