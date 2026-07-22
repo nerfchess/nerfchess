@@ -1532,25 +1532,43 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_regrow",
       name: "Regrow",
       description:
-        "One of your captured pawns sprouts back on your 4th rank, or the nearest rank with room, already pointed at promotion.",
+        "One of your captured pawns takes root on your 4th rank, or the nearest rank with room, and sprouts after your opponent's next move, already pointed at promotion.",
       tier: 2,
       category: "pieces",
       flavor: "It came up facing the right way this time.",
     },
+    // The revive is claimed now (aim it), but the pawn only breaks ground after
+    // the opponent's next move; if that square is taken by then it surfaces on
+    // the nearest free 4th-rank square instead.
     {
       kind: "activated",
-      spendOnUse: true,
-      targets: (_inst, api, picks) => {
-        if (picks.length > 0) return null;
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.armed === true) return null;
         const squares = revivable(api, "p") > 0 ? fourthRankSquares(api) : [];
-        return { kind: "square", label: "Choose where the pawn sprouts", squares };
+        return { kind: "square", label: "Choose where the pawn will sprout", squares };
       },
-      effect: (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || revivable(api, "p") <= 0 || api.board.pieces[sq] || !pawnRankOk(sq)) return;
-        api.place(sq, "p", api.me);
+        if (sq == null || inst.state.armed === true || revivable(api, "p") <= 0) return;
         markRevived(api, "p");
+        inst.state.sq = sq;
+        inst.state.armed = true;
       },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        let target = inst.state.sq as Square | undefined;
+        if (target == null || api.board.pieces[target] || !pawnRankOk(target)) {
+          target = fourthRankSquares(api)[0];
+        }
+        if (target != null && !api.board.pieces[target] && pawnRankOk(target)) {
+          api.place(target, "p", api.me);
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "sprouts after your opponent moves" : "activate to plant",
     },
   ),
   card(
@@ -1559,19 +1577,57 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "TreePine",
       name: "Ancient Grove",
       description:
-        "Old roots give one piece back: return a captured rook, knight, or bishop to an empty square on your back rank, once.",
+        "Old roots give one piece back: return a captured rook, knight, or bishop to an empty square on your back rank; it returns after your opponent's next move, once.",
       tier: 4,
       category: "pieces",
       flavor: "The forest remembers its own.",
     },
-    reviveOne(["r", "n", "b"], backRankZone),
+    // Everything here is already one (one piece, once), so the balance pass
+    // delays the effect: the piece is claimed now but only reappears after the
+    // opponent's next move (on the nearest free back-rank square if aimed one
+    // is taken by then).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.armed === true) return null;
+        const type = (["r", "n", "b"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        return {
+          kind: "square",
+          label: "Choose where the revived piece will return",
+          squares: type == null ? [] : emptySquares(api.board, backRankZone(api)),
+        };
+      },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        const type = (["r", "n", "b"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        if (sq == null || type == null || inst.state.armed === true) return;
+        markRevived(api, type);
+        inst.state.type = type;
+        inst.state.sq = sq;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        const type = inst.state.type as PieceType;
+        let target = inst.state.sq as Square | undefined;
+        if (target == null || api.board.pieces[target]) {
+          target = emptySquares(api.board, backRankZone(api))[0];
+        }
+        if (target != null && !api.board.pieces[target]) api.place(target, type, api.me);
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "returns after your opponent moves" : "activate to call one back",
+    },
   ),
   card(
     {
       id: "we_seedlings",
       icon: "Sprout",
       name: "Seedlings",
-      description: "Plant two seeds on empty squares in your half: after 3 of your turns, a pawn sprouts on each square that is still empty.",
+      description: "Plant two seeds on empty squares in your half: they take root after your opponent's next move, and 3 of your turns later a pawn sprouts on each square that is still empty.",
       tier: 3,
       category: "pieces",
       flavor: "Give it a season.",
@@ -1593,11 +1649,20 @@ export const WILD_ELEMENTAL: Buff[] = [
       effect: (inst, _api, picks) => {
         if (inst.state.squares != null) return;
         inst.state.squares = picks.map((k) => k.square).filter((v): v is Square => v != null);
-        inst.state.turns = 3;
+        inst.state.started = false;
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
-        if (!squares?.length || move.color !== api.me) return;
+        if (!squares?.length) return;
+        if (inst.state.started !== true) {
+          // The seeds only begin their countdown after the opponent's next move.
+          if (move.color === api.opp) {
+            inst.state.started = true;
+            inst.state.turns = 3;
+          }
+          return;
+        }
+        if (move.color !== api.me) return;
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t > 0) return;
@@ -1609,6 +1674,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       status: (inst) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return "activate to plant";
+        if (inst.state.started !== true) return "rooting after your opponent moves";
         return `sprouting in ${(inst.state.turns as number) ?? 0} of your turns`;
       },
     },
@@ -1695,7 +1761,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "Flower2",
       name: "Verdant Shield",
       description:
-        "A canopy of bark: all of your pawns cannot be captured for your opponent's next 2 turns. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
+        "A canopy of bark: all of your pawns cannot be captured for your opponent's next turn. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
       tier: 4,
       category: "protection",
       requires: ["p"],

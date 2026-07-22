@@ -583,75 +583,87 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
       ? mySquares(api.board, api.me, entry.piece)
       : mySquares(api.board, api.me, "p").filter((sq) => FILE(sq) === entry.file);
 
+  // The shared "shield" board effect is pruned on the very turn it is added
+  // (its timer ticks on the attacker's move, which is the move that installs
+  // it), so the three retiered guardians below enforce their protection with a
+  // move filter that reliably survives into the opponent's turn instead.
+  // `delay` postpones the guard until after the opponent's next move;
+  // `exceptPawns` lets enemy pawn captures through.
+  const filterGuard = (opts: { delay?: boolean; exceptPawns?: boolean }): Parameters<typeof card>[1] => ({
+    kind: "passive",
+    onMovePlayed: (inst, move, api) => {
+      if (inst.spent) return;
+      if (inst.state.armed) {
+        // The guarded square follows the piece if I reposition it, and the
+        // guard ends the moment that piece is captured or the turn passes.
+        if (move.from === (inst.state.sq as number)) inst.state.sq = move.to;
+        if (captureSquare(move) === (inst.state.sq as number) && move.from !== (inst.state.sq as number)) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp) {
+          inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
+          if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
+        }
+        return;
+      }
+      if (move.color !== api.opp) return;
+      const arm = (sq: number) => {
+        inst.state.armed = true;
+        inst.state.sq = sq;
+        inst.state.turns = 1;
+        inst.state.pending = false;
+      };
+      if (opts.delay && inst.state.pending) {
+        // The opponent has now replied: begin the guard on the current piece.
+        const sq = getTargets(api)[0];
+        if (sq != null) arm(sq);
+        else inst.state.pending = false;
+        return;
+      }
+      const hit = getTargets(api).find((sq) => attackersOf(api.board, api.opp, sq).length > 0);
+      if (hit == null) return;
+      if (opts.delay) {
+        inst.state.pending = true;
+        return;
+      }
+      arm(hit);
+    },
+    filterOpponentMoves: (moves, inst) => {
+      if (!inst.state.armed || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+      const sq = inst.state.sq as number;
+      return moves.filter((m) => !(captureSquare(m) === sq && (!opts.exceptPawns || m.piece !== "p")));
+    },
+    status: (inst) =>
+      inst.state.armed ? "warded" : inst.state.pending ? "arming after the reply" : "standing guard",
+  });
+
   if (entry.id === "alley_cat") {
     // Retier + delay: the protection now begins only after the opponent's next
     // move (template: delay activation until after the opponent replies).
     return opener(
       entry,
-      `One use: the first time an enemy piece attacks ${what}, it gains a one-turn shield, but only after your opponent's next move.`,
-      {
-        kind: "passive",
-        onMovePlayed: (inst, move, api) => {
-          if (inst.spent || move.color !== api.opp) return;
-          if (inst.state.pending) {
-            for (const sq of getTargets(api)) {
-              addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
-            }
-            inst.spent = true;
-            return;
-          }
-          for (const sq of getTargets(api)) {
-            if (attackersOf(api.board, api.opp, sq).length > 0) {
-              inst.state.pending = true;
-              return;
-            }
-          }
-        },
-        status: (inst) => (inst.state.pending ? "shielding after the reply" : "standing guard"),
-      },
+      `One use: the first time an enemy piece attacks ${what}, that pawn cannot be captured for one turn, but the guard begins only after your opponent's next move.`,
+      filterGuard({ delay: true }),
     );
   }
 
   if (entry.id === "chapel_warden") {
-    // Retier + the shield does not stop pawn captures. A custom opponent-move
-    // filter (rather than the central shield) so the "except pawns" carve-out
-    // can be expressed.
+    // Retier + the shield does not stop pawn captures.
     return opener(
       entry,
       `The first time an enemy piece attacks ${what}, that bishop cannot be captured during your opponent's next turn, except by a pawn. One use.`,
-      {
-        kind: "passive",
-        onMovePlayed: (inst, move, api) => {
-          if (inst.spent) return;
-          if (inst.state.armed) {
-            if (move.from === (inst.state.sq as number)) inst.state.sq = move.to;
-            if (captureSquare(move) === (inst.state.sq as number) && move.from !== (inst.state.sq as number)) {
-              inst.spent = true;
-              return;
-            }
-            if (move.color === api.opp) {
-              inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
-              if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
-            }
-            return;
-          }
-          if (move.color !== api.opp) return;
-          for (const sq of getTargets(api)) {
-            if (attackersOf(api.board, api.opp, sq).length > 0) {
-              inst.state.armed = true;
-              inst.state.sq = sq;
-              inst.state.turns = 1;
-              return;
-            }
-          }
-        },
-        filterOpponentMoves: (moves, inst) => {
-          if (!inst.state.armed || ((inst.state.turns as number) ?? 0) <= 0) return moves;
-          const sq = inst.state.sq as number;
-          return moves.filter((m) => !(captureSquare(m) === sq && m.piece !== "p"));
-        },
-        status: (inst) => (inst.state.armed ? "warded, pawns excepted" : "standing guard"),
-      },
+      filterGuard({ exceptPawns: true }),
+    );
+  }
+
+  if (entry.id === "cloister_bell") {
+    // Retier + "ends after preventing one capture": the one-turn guard lasts
+    // through the opponent's single reply, turning that capture aside, then ends.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
+      filterGuard({}),
     );
   }
 
@@ -669,17 +681,6 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
     },
     status: () => "standing guard",
   };
-
-  if (entry.id === "cloister_bell") {
-    // Retier + "ends after preventing one capture": the one-turn shield already
-    // lasts exactly through the opponent's single reply, so it turns aside that
-    // turn's capture and is then spent.
-    return opener(
-      entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
-      standardMech,
-    );
-  }
 
   return opener(
     entry,

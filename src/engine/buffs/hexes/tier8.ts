@@ -11,8 +11,8 @@
 import { Buff } from "./shared";
 import {
   tierHexes,
+  hex,
   curse,
-  permaOppFilter,
   walnutAll,
   instant,
   activated,
@@ -35,30 +35,46 @@ const H = tierHexes(8);
 const STATUE_TURNS = 999;
 
 export const HEXES_T8: Buff[] = [
-  // --- skip 2 turns, then a delayed mass freeze the moment they return ----
-  // The skip and the freeze are queued together, but a freeze only ticks on
+  // --- skip 1 turn, then a delayed targeted freeze the moment they return --
+  // The skip and the freezes are queued together, but a freeze only ticks on
   // the owner's OWN completed moves. The opponent completes none during the
-  // two skips, so the 1-turn freeze survives untouched and bites on exactly
-  // the turn they finally move again: that turn only their king is free.
+  // skip, so the 1-turn freezes survive untouched and bite on exactly the turn
+  // they finally move again: up to four pieces the caster chose stay locked
+  // that turn while everything else is free.
   H(
     {
       id: "endless_night",
       name: "Endless Night",
-      description: "Your opponent skips their next 2 turns. On the turn they finally return, every enemy piece except their king is frozen for that one turn, so only their king may move.",
+      description: "Your opponent skips their next turn. On the turn they return, up to four non-king enemy pieces you choose are frozen for that one turn.",
       flavor: "The sun forgets to rise, and the whole court is still asleep when the dark lifts.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 2;
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        api.bs.skips[api.opp] += 1;
+        for (const k of picks) {
+          if (k.square != null) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1, skin: "sleep" });
+          }
+        }
+      },
+    ),
   ),
 
   // --- petrify all: the whole royal battery, queen AND both rooks ----------
-  H(
+  hex(
     {
       id: "crown_and_castle",
       name: "Crown and Castle",
@@ -66,6 +82,9 @@ export const HEXES_T8: Buff[] = [
       flavor: "The heaviest pieces set like mortar overnight.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q", "r"] },
+      // Retiered 8 -> 6: a narrow queen-and-rooks petrify does not fill an
+      // Unhinged slot without a second board impact.
+      tier: 6,
     },
     walnutAll(["q", "r"], 2),
   ),
