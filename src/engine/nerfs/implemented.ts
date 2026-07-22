@@ -504,18 +504,12 @@ export const COWARDLY: Nerf = db({
     return violations >= 2 ? { reason: "failed to retreat twice after a capture" } : null;
   },
   hint: (_s, ctx, legal) => {
-    const violations = retreatViolations(ctx.board, ctx.me);
-    if (violations >= 1 && !ctx.opponentLastMove?.captured) {
-      return {
-        text: "Warning: you failed to retreat once. Fail again and you lose.",
-        tone: "warn",
-      };
-    }
     if (!ctx.opponentLastMove?.captured) return null;
+    const violations = retreatViolations(ctx.board, ctx.me);
     return {
       text: violations >= 1
         ? "They captured. Retreat now or lose: this is your second strike."
-        : "They captured. You must retreat this turn (first slip is only a warning).",
+        : "They captured. You must retreat this turn (a first slip is only a warning).",
       squares: Array.from(new Set(legal.map((m) => m.from))),
       tone: "warn",
     };

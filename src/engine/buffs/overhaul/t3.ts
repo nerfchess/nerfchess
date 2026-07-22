@@ -387,14 +387,14 @@ export const OVERHAUL_T3: Buff[] = [
   ),
   // 58. Fire Drill ----------------------------------------------------------------
   // ADAPTED: "freely rearrange" resolves as a chain of pairwise swaps along
-  // the chosen rank (up to four), which reaches every permutation of that
+  // the chosen rank (up to three), which reaches most permutations of that
   // rank's pieces. The description says swaps.
   card(
     {
       id: "ov_fire_drill",
       name: "Fire Drill",
       description:
-        "Sound the alarm on one rank of your half: swap pairs of your pieces standing on it, up to 4 swaps, then everyone pretends this was orderly.",
+        "Sound the alarm on one rank of your half: swap pairs of your pieces standing on it, up to 3 swaps, then everyone pretends this was orderly.",
       tier: 3,
       category: "movement",
       icon: "Siren",
@@ -402,7 +402,7 @@ export const OVERHAUL_T3: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        if (picks.length >= 8) return null;
+        if (picks.length >= 6) return null;
         if (picks.length === 0) {
           const own = mySquares(api.board, api.me);
           return {
@@ -479,7 +479,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_draft_dodger",
       name: "Draft Dodger",
       description:
-        "Dodge your next draft entirely: gain 25 seconds now, and the draft after that offers 3 cards instead of 2.",
+        "Dodge your next draft entirely: gain 30 seconds now, and the draft after that offers 3 cards instead of 2. One of your pawns also advances one square for free and you gain one draft reroll. In untimed games only the free pawn step and the reroll apply.",
       tier: 3,
       category: "draft",
       icon: "DoorOpen",
@@ -488,7 +488,13 @@ export const OVERHAUL_T3: Buff[] = [
     instant((_inst, api) => {
       api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       api.mine.flags.prepThree = true;
-      api.adjustClock({ addSelfSec: 25 });
+      api.adjustClock({ addSelfSec: 30 });
+      // The clock gain is a no-op in an untimed game, so always land two
+      // effects that need no clock: a free non-capturing pawn step and a
+      // draft reroll.
+      const cands = advanceablePawns(api);
+      if (cands.length > 0) advancePawn(api, cands[api.rng.int(cands.length)]);
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   // 61. Tax Audit ----------------------------------------------------------------------
@@ -497,7 +503,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_tax_audit",
       name: "Tax Audit",
       description:
-        "Audit both armies: your opponent loses 15 seconds for every piece they have beyond your piece count, up to 45. If they are not ahead in material, the audit finds nothing.",
+        "Audit both armies: your opponent loses 15 seconds for every piece they have beyond your piece count, up to 50. If they are not ahead in material, the audit finds nothing. Either way you gain one draft reroll and see the tier of your opponent's next draft. In untimed games only the reroll and the reveal apply.",
       tier: 3,
       category: "tempo",
       icon: "Calculator",
@@ -507,7 +513,12 @@ export const OVERHAUL_T3: Buff[] = [
       const surplus = mySquares(api.board, api.opp).length - mySquares(api.board, api.me).length;
       const k = kingSquare(api.board, api.opp);
       if (k != null) flashSquares(api, [k]);
-      if (surplus > 0) api.adjustClock({ subOppSec: Math.min(45, surplus * 15) });
+      if (surplus > 0) api.adjustClock({ subOppSec: Math.min(50, surplus * 15) });
+      // The clock steal is a no-op in an untimed game, so always land two
+      // effects that need no clock: a draft reroll and a peek at the tier of
+      // the opponent's next draft.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
     }),
   ),
   // 62. Knight Court ---------------------------------------------------------------------
@@ -515,7 +526,7 @@ export const OVERHAUL_T3: Buff[] = [
     {
       id: "ov_knight_court",
       name: "Knight Court",
-      description: "For your next 4 turns, your knights may also step one square straight up, down, or sideways. The court frowns on diagonals.",
+      description: "For your next 3 turns, your knights may also step one square straight up, down, or sideways. The court frowns on diagonals.",
       tier: 3,
       category: "movement",
       icon: "Gavel",
@@ -525,7 +536,7 @@ export const OVERHAUL_T3: Buff[] = [
     },
     // Overhaul duplicate-resolution: all-direction king-steps duplicated
     // Pixie Dust (same tier); the court grants orthogonal steps for longer.
-    timedAugment(4, (_moves, inst, api) => {
+    timedAugment(3, (_moves, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
         out.push(...slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1));
@@ -539,7 +550,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_quicksilver",
       name: "Quicksilver",
       description:
-        "Your queen's next move may bend once at 90 degrees: up to 7 squares in total, the whole path must be clear, and the corner square must be empty.",
+        "Your queen's next move may bend once at 90 degrees: up to 7 squares in total, the whole path must be clear, the corner square must be empty, and the destination must be empty (it cannot capture).",
       tier: 3,
       category: "movement",
       icon: "Droplets",
@@ -589,7 +600,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_bake_sale",
       name: "Bake Sale",
       description:
-        "Gain 10 seconds now. For your next 5 turns, every pawn move you make sells another cookie for 5 more seconds.",
+        "Gain 15 seconds now. For your next 5 turns, every pawn move you make sells another cookie for 5 more seconds. You also gain one draft reroll and see the tier of your opponent's next draft. In untimed games only the reroll and the reveal apply.",
       tier: 3,
       category: "tempo",
       icon: "Cookie",
@@ -600,7 +611,12 @@ export const OVERHAUL_T3: Buff[] = [
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 5;
-        api.adjustClock({ addSelfSec: 10 });
+        api.adjustClock({ addSelfSec: 15 });
+        // The clock gain is a no-op in an untimed game, so always land two
+        // effects that need no clock: a draft reroll and a peek at the tier
+        // of the opponent's next draft.
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        api.mine.flags.seeOppTier = true;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && move.piece === "p") {
@@ -879,7 +895,7 @@ export const OVERHAUL_T3: Buff[] = [
     {
       id: "ov_night_shift",
       name: "Night Shift",
-      description: "For your next 3 turns, your rooks may move straight through your own pawns.",
+      description: "For your next 3 turns, your rooks may move straight through your own pawns, but these moves cannot capture.",
       tier: 3,
       category: "movement",
       icon: "Moon",
@@ -901,7 +917,7 @@ export const OVERHAUL_T3: Buff[] = [
               if (t.type !== "p") break;
               passed++;
             } else {
-              if (passed > 0) out.push(mv(api.board, from, to, inst.id));
+              // Cannot capture: an enemy piece just blocks the ray.
               break;
             }
             f += df;
@@ -922,13 +938,13 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_pillow_fort",
       name: "Pillow Fort",
       description:
-        "For your opponent's next 2 turns, their bishops, rooks and queen cannot move to any square from which they would attack your king. Knights and pawns may still menace.",
+        "For your opponent's next turn, their bishops, rooks and queen cannot move to any square from which they would attack your king. Knights and pawns may still menace.",
       tier: 3,
       category: "protection",
       icon: "Bed",
       flavor: "Structurally unsound. Emotionally impenetrable.",
     },
-    timedOppFilter(2, (moves, _inst, api) => {
+    timedOppFilter(1, (moves, _inst, api) => {
       const k = kingSquare(api.board, api.me);
       if (k == null) return moves;
       const wouldAttackKing = (m: Move): boolean => {
@@ -1020,8 +1036,8 @@ export const OVERHAUL_T3: Buff[] = [
 ];
 
 /** Quicksilver's bent-queen moves: the elbow square must be empty, every
- * square before the destination must be empty, and the destination may be
- * empty or an enemy capture. Total length capped at 7 squares. */
+ * square before the destination must be empty, and the destination must be
+ * empty too (the bent move cannot capture). Total length capped at 7 squares. */
 function quicksilverMoves(via: string, api: BuffApi): Move[] {
   const out: Move[] = [];
   for (const from of mySquares(api.board, api.me, "q")) {
@@ -1040,7 +1056,7 @@ function quicksilverMoves(via: string, api: BuffApi): Move[] {
             if (!t) {
               out.push(mv(api.board, from, to, via));
             } else {
-              if (t.color === api.opp) out.push(mv(api.board, from, to, via));
+              // Cannot capture: an occupied destination just blocks the ray.
               break;
             }
             f2 += d2[0];
