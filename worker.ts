@@ -457,10 +457,11 @@ export interface Env {
   // Tier 2 / M4 cutover, reversible. When "true", the DO stops spawning its own
   // house-vs-house filler (the arena owns bot-vs-bot); bot-vs-human pickup and
   // house seeks stay on the DO. Off = the DO runs filler itself, as before.
-  // Ownership only holds while the arena is actually checking in: if no
-  // /arena/games sync lands for ARENA_FILLER_FALLBACK_MS the DO resumes its
-  // own filler until the arena returns, so there is always bot-vs-bot even if
-  // the arena is down. Flip, don't delete.
+  // Ownership only holds while the arena is actually SUPPLYING games: if no
+  // /arena/games sync carrying an accepted game lands for
+  // ARENA_FILLER_FALLBACK_MS, the DO resumes its own filler until real arena
+  // games return, so there is always bot-vs-bot even if the arena is down or
+  // misbehaving. Flip, don't delete.
   ARENA_OWNS_FILLER?: string;
 }
 
@@ -899,12 +900,13 @@ const HOUSE_ENGINE_TIMEOUT_MS = 3000;
 // DO holds these only in memory and expires them if the arena stops syncing, so
 // a crashed/paused arena drops out of the lobby on its own.
 const EXTERNAL_GAME_TTL_MS = 20 * 1000;
-// How long ARENA_OWNS_FILLER is honored without an /arena/games sync landing
-// (the arena polls every ~4s, so this is ~15 missed polls). Past it the DO
-// resumes spawning its own filler, making the documented promise real: the
-// arena being down never means a lobby with no bot-vs-bot games. When the
-// arena comes back its next sync re-stamps lastArenaSyncAt and the DO stops
-// spawning new filler on the next tick; any DO-run games just play out.
+// How long ARENA_OWNS_FILLER is honored without an /arena/games sync that
+// carried at least one ACCEPTED game (the arena polls every ~4s, so this is
+// ~15 missed polls). Past it the DO resumes spawning its own filler, making
+// the documented promise real: an arena that is down — or up but supplying
+// nothing usable — never means a lobby with no bot-vs-bot games. When real
+// arena games land again the stamp refreshes (lastArenaGamesAt) and the DO
+// stops spawning new filler on the next tick; any DO-run games just play out.
 const ARENA_FILLER_FALLBACK_MS = 60 * 1000;
 type ExternalSeat = { userId: string; name: string; rating: number };
 type ExternalGameMeta = {
@@ -1047,6 +1049,13 @@ export class GameServer extends DurableObject<Env> {
   // isolate's boot time stands in as the reference, so a live arena gets one
   // fallback window to re-sync (it polls every ~4s) before the DO steps in.
   private lastArenaSyncAt = 0;
+  // When an arena sync last carried at least one VALID (house-vs-house) game.
+  // This — not the bare sync stamp — is what lets the arena keep filler
+  // ownership: an arena that is up but supplying nothing usable (empty
+  // registry, or a version-skewed roster whose ids all fail isHouseUserId and
+  // get filtered) must hand filler back to the DO just like a dead one, or
+  // the lobby sits at zero bot games with every check "passing".
+  private lastArenaGamesAt = 0;
   private readonly bootedAt = Date.now();
   // Cached LIVE per-mode ratings for the house roster, read from user_ratings
   // (the same buckets recordFinishedGame moves after every rated game). The
@@ -1130,12 +1139,35 @@ export class GameServer extends DurableObject<Env> {
 
   // Resolves to true when D1 is configured and its schema is in place.
   // Account features degrade to anonymous play when it isn't.
+  //
+  // A FAILED ensureSchema must NOT be cached forever: it used to be, so one
+  // D1 blip on the isolate's very first db() call (most likely right after a
+  // deploy, when the additive schema pass has real work to do) left db()
+  // returning null for the whole life of the isolate — houseTick bailed at
+  // its `if (!db) return` on every tick and the lobby sat at zero seeks and
+  // zero games while the online list (baked fallbacks) still looked full.
+  // Now a failure clears the latch and retries after a short backoff; only
+  // success is cached. The last error is kept for /healthz.
+  private dbRetryAt = 0;
+  private dbLastError: string | null = null;
   private async db(): Promise<D1Database | null> {
     if (!this.env.DB) return null;
     if (!this.dbReady) {
+      if (Date.now() < this.dbRetryAt) return null;
       this.dbReady = ensureSchema(this.env.DB).then(
-        () => true,
-        () => false,
+        () => {
+          this.dbLastError = null;
+          return true;
+        },
+        (err) => {
+          this.dbLastError = err instanceof Error ? err.message : String(err);
+          console.error("ensureSchema failed (will retry)", err);
+          // Clear the latch so the NEXT call re-runs ensureSchema (after a
+          // short backoff so a hard-down D1 isn't hammered every request).
+          this.dbReady = null;
+          this.dbRetryAt = Date.now() + 5000;
+          return false;
+        },
       );
     }
     return (await this.dbReady) ? this.env.DB : null;
@@ -1417,6 +1449,11 @@ export class GameServer extends DurableObject<Env> {
       const seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
       const seeded = !!(await this.ctx.storage.get<number>(houseSeededKey));
 
+      // Cheap liveness probes for the two dependencies whose silent failure
+      // makes the lobby look dead: D1 (schema latch + last error) and the
+      // arena (last authenticated sync / last sync that actually carried a
+      // game). All in-memory reads; no D1 work is done here.
+      const nowMs = Date.now();
       return Response.json({
         ok: true,
         version: buildVersion,
@@ -1424,6 +1461,21 @@ export class GameServer extends DurableObject<Env> {
         games: liveMatches.length,
         alarmAt, // ms epoch of the next scheduled maintenance pass, if any
         alarmInMs: alarmAt ? alarmAt - Date.now() : null,
+        db: {
+          // true = schema ensured; false = last attempt failed (retrying);
+          // null = not attempted yet this isolate.
+          ready: this.dbReady ? await this.dbReady : null,
+          lastError: this.dbLastError,
+        },
+        presence: {
+          sitePresence: this.sitePresence(),
+          lastLobbyHttpAgoMs: this.lastLobbyHttpAt ? nowMs - this.lastLobbyHttpAt : null,
+        },
+        arena: {
+          lastSyncAgoMs: this.lastArenaSyncAt ? nowMs - this.lastArenaSyncAt : null,
+          lastGamesAgoMs: this.lastArenaGamesAt ? nowMs - this.lastArenaGamesAt : null,
+          liveGames: this.externalGames.size,
+        },
         house: {
           roster: HOUSE_ROSTER.length,
           seeded,
@@ -1431,6 +1483,7 @@ export class GameServer extends DurableObject<Env> {
           games: houseGames,
           houseVsHouse,
           tickError: this.houseTickError,
+          seedError: this.houseSeedError,
           lastDesync: this.houseLastDesync,
           engineRejects: this.houseEngineRejects,
           lastEngineReject: this.houseLastEngineReject,
@@ -3999,6 +4052,10 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private houseTickError: string | null = null;
+  // Last cold-start seeding failure (accounts/ratings/club fills). Seeding no
+  // longer aborts the tick, but the error is kept for /healthz so a half-dead
+  // roster is diagnosable from a browser instead of silently looking "off".
+  private houseSeedError: string | null = null;
   // Last house-game turn-desync the self-heal repaired (cached turn != replay
   // turn), surfaced on /healthz so a reproducing owner can report the exact
   // card + move sequence that drifted the turn without needing the DO logs.
@@ -4475,9 +4532,17 @@ export class GameServer extends DurableObject<Env> {
           await ensureClubsPopulated(db);
         }
         this.houseSeeded = true;
+        this.houseSeedError = null;
       } catch (err) {
-        console.error("house seeding failed", err);
-        return;
+        // Seeding is profile/leaderboard hygiene, NOT a prerequisite for the
+        // lobby being alive — every write above is INSERT OR IGNORE / bounded
+        // UPDATE and retries next tick via the unset houseSeeded latch. This
+        // used to `return`, so one D1 hiccup here silently killed seeks,
+        // pickups, and filler on EVERY tick (0 waiting / 0 in play while the
+        // online list still showed the roster) with nothing on /healthz.
+        // Now: record it, surface it, and carry on with the rest of the tick.
+        this.houseSeedError = err instanceof Error ? err.message : String(err);
+        console.error("house seeding failed (continuing tick)", err);
       }
     }
 
@@ -4592,17 +4657,21 @@ export class GameServer extends DurableObject<Env> {
     // Tier 2 / M4 cutover (reversible): when the arena owns bot-vs-bot, the DO
     // stops spawning its own filler and lets the arena supply it (streamed in
     // via /arena). Flip ARENA_OWNS_FILLER back off and the DO resumes filler on
-    // the next tick. Ownership additionally requires the arena to be ALIVE: it
-    // must have synced /arena/games within ARENA_FILLER_FALLBACK_MS (from boot,
-    // on a fresh isolate). A dark arena therefore hands filler back to the DO
-    // automatically, so the arena being down never means an empty lobby — the
-    // env flag alone used to be trusted blindly, and an arena outage (or its
-    // presence-gated pause) left zero bot-vs-bot games with no fallback.
+    // the next tick. Ownership additionally requires the arena to be SUPPLYING:
+    // an /arena/games sync that carried at least one accepted game must have
+    // landed within ARENA_FILLER_FALLBACK_MS (measured from boot on a fresh
+    // isolate). A bare "I'm alive" sync is NOT enough — an arena that is up but
+    // whose games all get filtered (version-skewed roster ids) or that never
+    // spawns must hand filler back to the DO exactly like a dead one, or the
+    // lobby sits empty while every health signal "passes". While the DO is
+    // covering, the moment a real arena game lands the stamp refreshes and the
+    // DO stops spawning new filler; its in-flight games just play out (brief
+    // overlap during an arena ramp-up is fine — the lobby unions both).
     // Bot-vs-human pickup + house seeks above are unaffected.
     const arenaOwnsFiller =
       this.env.ARENA_OWNS_FILLER === "true" &&
       this.env.ARENA_INGEST_ENABLED === "true" &&
-      now - (this.lastArenaSyncAt || this.bootedAt) < ARENA_FILLER_FALLBACK_MS;
+      now - (this.lastArenaGamesAt || this.bootedAt) < ARENA_FILLER_FALLBACK_MS;
     // Never let a filler spawn dip into the seek reserve: after taking its two
     // personas the roster must still hold enough free personas to top the seek
     // floor back up on the next tick. Together with the roster-sized caps above
@@ -5684,6 +5753,10 @@ export class GameServer extends DurableObject<Env> {
           next.set(g.id, { meta: g, at: now });
         }
         this.externalGames = next;
+        // Stamp only when the sync carried a usable game (post-filter): this is
+        // what keeps ARENA_OWNS_FILLER honored (see houseTick). An empty or
+        // fully-filtered sync deliberately does NOT count as supply.
+        if (next.size > 0) this.lastArenaGamesAt = now;
       } else {
         this.externalGames.clear();
       }
