@@ -55,6 +55,7 @@ import {
   shieldArmy,
   shieldZone,
   slideMoves,
+  spendOnVia,
   timedAugment,
   timedOppFilter,
   voidSquares,
@@ -528,6 +529,54 @@ function summonTempStrike(
   };
 }
 
+/** Arm an effect to resolve one opponent move later: the card sits armed from
+ * the moment it is held until the opponent plays their next move, then `effect`
+ * fires during that move. Because it resolves during the opponent's own move,
+ * any freeze `effect` adds should budget one extra turn (the shared post-move
+ * tick eats one immediately), the same convention Static Field and Frost Ward
+ * already follow. */
+function delayedInstant(effect: (api: BuffApi) => void, pending: string): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.armed = true;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (inst.state.armed !== true || move.color !== api.opp) return;
+      effect(api);
+      inst.state.armed = false;
+      inst.spent = true;
+    },
+    status: (inst) => (inst.state.armed === true ? pending : null),
+  };
+}
+
+/** Diagonal landing squares for a one-capture bolt from `from`: walk each
+ * diagonal, offering the first enemy piece (never a king) and the empty squares
+ * beyond it, until a friendly piece, a king, or a second enemy blocks the ray.
+ * Mirrors lineSweep's dests with maxCaptures=1, used by the charged Lightning
+ * Bolt whose fire is delayed a turn. */
+const boltDests = (api: BuffApi, from: Square): Square[] => {
+  const out: Square[] = [];
+  for (const [df, dr] of DIAG_DIRS) {
+    let f = FILE(from) + df, r = RANK(from) + dr, swept = 0;
+    while (inBoard(f, r)) {
+      const sq = SQ(f, r);
+      const p = api.board.pieces[sq];
+      if (!p) {
+        if (swept > 0) out.push(sq);
+      } else {
+        if (p.color === api.me || p.type === "k") break;
+        swept++;
+        if (swept > 1) break;
+        out.push(sq);
+      }
+      f += df; r += dr;
+    }
+  }
+  return out;
+};
+
 // ---------------------------------------------------------------------------
 
 export const WILD_ELEMENTAL: Buff[] = [
@@ -711,17 +760,17 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_firestorm",
       name: "Firestorm",
       description:
-        "A firestorm falls on the crossroads: every enemy piece except a king standing on the four center squares (d4, e4, d5, e5) is consumed.",
+        "After your opponent replies, a firestorm falls on the crossroads: every enemy piece except a king standing on the four center squares (d4, e4, d5, e5) is consumed.",
       tier: 5,
       category: "attack",
       flavor: "Everything near the middle catches.",
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       for (const sq of [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)]) {
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
       }
-    }),
+    }, "falls after your opponent replies"),
   ),
   card(
     {
@@ -741,36 +790,38 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_frost_nip",
       name: "Frost Nip",
-      description: "Frost nips at the rearguard: every enemy piece except the king still standing on its own back rank is frozen for 1 of their turns.",
+      description: "Frost nips at the rearguard: after your opponent replies, every enemy piece except the king still standing on its own back rank is frozen for 1 of their turns.",
       tier: 2,
       category: "tempo",
       flavor: "Just long enough.",
       fx: { motif: "jail" },
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       const back = api.opp === "w" ? 0 : 7;
       for (const sq of mySquares(api.board, api.opp)) {
         if (RANK(sq) !== back) continue;
         if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        // Resolves during the opponent's reply, so the shared post-move tick
+        // eats one turn immediately: 2 here leaves 1 of their turns frozen.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
       }
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
       id: "we_glaciate",
       name: "Glaciate",
       description:
-        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: every enemy piece directly beside it (up, down, left, or right) is frozen for 1 of their turns.",
+        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: all but one of the enemy pieces directly beside it (up, down, left, or right) are frozen for 1 of their turns.",
       tier: 4,
       category: "tempo",
       flavor: "The cold does not stop at one. It creeps outward.",
       fx: { motif: "jail" },
     },
     // Distinct from wild/arcane's wa_time_stop (a single-target 3-turn lock): the
-    // ice spreads. The chosen piece is frozen for 3 turns, and every enemy piece
-    // orthogonally adjacent (never a king) is chilled for 1 turn. Reuses the same
-    // ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
+    // ice spreads. The chosen piece is frozen for 3 turns, and all but one of the
+    // orthogonally adjacent enemy pieces (never a king) are chilled for 1 turn.
+    // Reuses the same ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -786,14 +837,20 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
+        // Remove one affected piece: the frost spreads to all but one of the
+        // orthogonal enemy neighbours (the highest square index is spared,
+        // deterministic on every replica). The primary target is always frozen.
+        const beside: Square[] = [];
         for (const [df, dr] of ORTHO_DIRS) {
           const f = FILE(sq) + df, r = RANK(sq) + dr;
           if (!inBoard(f, r)) continue;
           const asq = SQ(f, r);
           const p = api.board.pieces[asq];
-          if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
-          }
+          if (p && p.color === api.opp && p.type !== "k") beside.push(asq);
+        }
+        beside.sort((a, b) => a - b).pop();
+        for (const asq of beside) {
+          addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
         }
       },
     ),

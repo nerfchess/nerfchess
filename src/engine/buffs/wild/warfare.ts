@@ -460,7 +460,8 @@ export const WILD_WARFARE: Buff[] = [
         if (sq == null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "r") return;
-        addNovel(moves, phasingSlideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1));
+        // Overhaul balance pass: the phased move may no longer capture.
+        addNovel(moves, phasingSlideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1).filter((m) => !m.captured));
       },
       onMovePlayed: (inst, move) => trackBoundPiece(inst, move),
       status: (inst) => {
@@ -586,16 +587,19 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_shieldbearers",
       name: "Shieldbearers",
-      description: "While at least one of your pawns stands on a square beside your king, your king cannot be captured, for the rest of the game.",
+      description: "After your opponent's next move, while at least one of your pawns stands on a square beside your king, your king cannot be captured, for the rest of the game.",
       tier: 4,
       category: "protection",
       requires: ["p"],
       flavor: "Close ranks around the crown.",
       fx: { motif: "ward", pieces: ["k"], self: true },
     },
+    // Overhaul balance pass: the immunity is shortened by one opponent turn, so
+    // it does not switch on until after your opponent's next move.
     {
       kind: "passive",
-      filterOpponentMoves: (moves, _inst, api) => {
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.started) return moves;
         const k = mySquares(api.board, api.me, "k")[0];
         if (k == null) return moves;
         let guarded = false;
@@ -612,6 +616,9 @@ export const WILD_WARFARE: Buff[] = [
         const kept = moves.filter((m) => m.to !== k);
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.started && move.color === api.opp) inst.state.started = true;
       },
     },
   ),
@@ -862,14 +869,78 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_demolition_charge",
       name: "Demolition Charge",
-      description: "Rig one of your pieces with charges: for the game, whenever it captures an enemy piece the squares around the capture are cleared of enemy pieces. Kings are never caught in the blast.",
+      description: "Rig one of your pieces with charges: each of its next two captures also destroys the enemy's least valuable piece standing next to the capture square (ties break toward the lower square). Kings are never caught in the blast.",
       tier: 5,
       category: "attack",
       flavor: "It goes off exactly where you point it.",
     },
-    bindPiece("Choose the piece to rig with charges", bindCandidates(), {
-      explodeOnCapture: true,
-    }),
+    // Overhaul balance pass: the rig no longer clears the whole neighbourhood
+    // for the game. It carries two charges, and each detonation takes only ONE
+    // adjacent enemy non-king. The defender would keep their best, so the
+    // deterministic loss is their least valuable adjacent piece (ties toward
+    // the lower square).
+    (() => {
+      const VALUE: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.sq != null
+            ? null
+            : {
+                kind: "square",
+                label: "Choose the piece to rig with charges",
+                squares: bindCandidates()(api),
+              },
+        effect: (inst, _api, picks) => {
+          if (inst.state.sq != null) return;
+          inst.state.sq = picks[0]?.square;
+          inst.state.charges = 2;
+        },
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          if (
+            move.from === sq &&
+            move.color === api.me &&
+            move.captured &&
+            move.captured !== "k" &&
+            ((inst.state.charges as number) ?? 0) > 0
+          ) {
+            const center = captureSquare(move) ?? move.to;
+            const candidates: Square[] = [];
+            for (const [df, dr] of ALL_DIRS) {
+              const f = FILE(center) + df, r = RANK(center) + dr;
+              if (!inBoard(f, r)) continue;
+              const asq = SQ(f, r);
+              const p = api.board.pieces[asq];
+              if (p && p.color === api.opp && p.type !== "k") candidates.push(asq);
+            }
+            if (candidates.length) {
+              const victim = candidates.reduce((best, s) => {
+                const vs = VALUE[api.board.pieces[s]!.type];
+                const vb = VALUE[api.board.pieces[best]!.type];
+                return vs < vb || (vs === vb && s < best) ? s : best;
+              });
+              api.removePiece(victim);
+            }
+            const left = ((inst.state.charges as number) ?? 0) - 1;
+            inst.state.charges = left;
+            if (left <= 0) {
+              inst.spent = true;
+              inst.state.sq = undefined;
+              return;
+            }
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return "activate to rig a piece";
+          return `rigged at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}, ${(inst.state.charges as number) ?? 0} charges left`;
+        },
+      };
+    })(),
   ),
 
   // -------------------------------------------------------------------------
@@ -1392,32 +1463,42 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_suppressive_fire",
       name: "Suppressive Fire",
-      description: "Every one of your opponent's knights is pinned down for their next 2 turns, and so is every enemy pawn standing directly beside one.",
+      description: "After your opponent's next move, every one of their knights is pinned down for their next 2 turns, and so is every enemy pawn standing directly beside one.",
       tier: 4,
       category: "tempo",
       flavor: "Keep their heads down, and their diggers too.",
       fx: { motif: "jail", pieces: ["n", "p"] },
     },
-    instant((_inst, api) => {
-      const knights = mySquares(api.board, api.opp, "n");
-      const frozen = new Set<Square>();
-      for (const sq of knights) {
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-        frozen.add(sq);
-      }
-      for (const ksq of knights) {
-        for (const [df, dr] of ORTHO_DIRS) {
-          const f = FILE(ksq) + df, r = RANK(ksq) + dr;
-          if (!inBoard(f, r)) continue;
-          const asq = SQ(f, r);
-          const p = api.board.pieces[asq];
-          if (p && p.color === api.opp && p.type === "p" && !frozen.has(asq)) {
-            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2 });
-            frozen.add(asq);
+    // Overhaul balance pass: the pin-down no longer lands the moment the card
+    // is played; it triggers only after your opponent has replied once.
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.fired || move.color !== api.opp) return;
+        const knights = mySquares(api.board, api.opp, "n");
+        const frozen = new Set<Square>();
+        for (const sq of knights) {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+          frozen.add(sq);
+        }
+        for (const ksq of knights) {
+          for (const [df, dr] of ORTHO_DIRS) {
+            const f = FILE(ksq) + df, r = RANK(ksq) + dr;
+            if (!inBoard(f, r)) continue;
+            const asq = SQ(f, r);
+            const p = api.board.pieces[asq];
+            if (p && p.color === api.opp && p.type === "p" && !frozen.has(asq)) {
+              addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2 });
+              frozen.add(asq);
+            }
           }
         }
-      }
-    }),
+        inst.state.fired = true;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.fired ? "suppression laid down" : "fire falls after your opponent's reply",
+    },
   ),
   card(
     {

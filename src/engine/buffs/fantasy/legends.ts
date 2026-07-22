@@ -127,15 +127,21 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "shieldmaiden",
       name: "Shieldmaiden",
       description:
-        "A shieldmaiden plants herself before one of your pieces: it cannot be captured for your opponent's next 3 turns.",
+        "A shieldmaiden plants herself before one of your pieces: it cannot be captured for your opponent's next 3 turns, but the instant that piece moves to attack the enemy king, her guard shatters and the protection ends.",
       tier: 4,
       category: "protection",
       flavor: "Her shield arm has never once come back empty.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Balance pass: keep the full 3-turn shield, but the guarded piece cannot
+    // give check while shielded. The engine offers no own-move filter, so this
+    // is enforced as a penalty: if the guarded piece moves to a square from
+    // which it attacks the enemy king, the shield is removed at once.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -144,12 +150,63 @@ export const FANTASY_LEGENDS: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 3 });
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Guarded piece captured or overrun: the guard is over.
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        // Guarded piece moved: if it now attacks the enemy king, shatter the
+        // shield (value-matched by the guarded square, which the engine keeps
+        // following the piece) and retire the card.
+        if (move.from === sq && move.color === api.me) {
+          inst.state.sq = move.to;
+          const kingSq = mySquares(api.board, api.opp, "k")[0];
+          if (kingSq != null && attacksKing(api.board, move.to, kingSq)) {
+            api.bs.effects = api.bs.effects.filter(
+              (e) =>
+                !(
+                  e.kind === "shield" &&
+                  e.owner === api.me &&
+                  e.squares != null &&
+                  e.squares.length === 1 &&
+                  (e.squares[0] === move.to || e.squares[0] === move.from)
+                ),
+            );
+            inst.spent = true;
+            inst.state.sq = undefined;
+          }
+          return;
+        }
+        // Tick the guard window on the opponent's turns, matching the shield.
+        if (move.color !== api.opp) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          inst.spent = true;
+          inst.state.sq = undefined;
         }
       },
-    ),
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to guard a piece"
+          : `guarding, ${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
