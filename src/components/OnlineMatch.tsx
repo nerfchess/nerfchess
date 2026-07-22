@@ -3360,6 +3360,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}
+          // Both game clocks stay visible while drafting (with the clock rule
+          // stated in the panel), so time pressure never hides behind cards.
+          clocks={
+            clockEnabled
+              ? {
+                  mine: myColor === "w" ? whiteMs : blackMs,
+                  theirs: myColor === "w" ? blackMs : whiteMs,
+                }
+              : null
+          }
           // Recording mode: cap the draft panel to the 9:16 frame so it lands
           // centered on the board (which is screen-centered here) instead of
           // spilling past the vertical crop.
