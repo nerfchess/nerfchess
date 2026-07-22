@@ -1418,17 +1418,38 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_arcane_reroll",
       icon: "Dice5",
       name: "Arcane Reroll",
-      description: "Gain two draft rerolls.",
+      description:
+        "Gain two draft rerolls. Any you have not spent within your next two draft offers are reclaimed.",
       tier: 3,
       category: "draft",
       flavor: "Do not like these? Ask again.",
     },
-    // Overhaul balance pass: the earlier trim to a single reroll left this
-    // strictly dominated by Peek (tier 1, identical effect); the arcane
-    // version pays out two again, priced at tier 3.
-    instant((_inst, api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
-    }),
+    // Balance: still pays out two rerolls, but they no longer keep forever. Any
+    // that go unspent across the next two drafts are reclaimed (same expiry
+    // idiom as Lucky Coin, scaled to two).
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+        inst.state.baseline = api.mine.rerollsLeft;
+        inst.state.draftsAtGrant = api.mine.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        const spent = Math.max(0, (inst.state.baseline as number) - (api.mine.rerollsLeft ?? 0));
+        const remaining = Math.max(0, 2 - spent);
+        if (remaining <= 0) {
+          inst.spent = true;
+          return;
+        }
+        if (api.mine.draftsTaken - (inst.state.draftsAtGrant as number) >= 2) {
+          const reclaim = Math.min(remaining, api.mine.rerollsLeft ?? 0);
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) - reclaim;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "unspent rerolls expire in two drafts"),
+    },
   ),
   card(
     {

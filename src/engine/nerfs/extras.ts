@@ -119,31 +119,45 @@ export const PAWN_DUTY: Nerf = db({
 export const VAMPIRIC: Nerf = db({
   id: "vampiric",
   name: "Vampiric",
-  description: "You can only capture on dark squares.",
+  description: "You can only capture on dark squares, starting on your second move. The forbidden light squares are shown from the start.",
   flavor: "Sunlight burns.",
   tier: 4,
   icon: "moon",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 0),
+  filterMoves: (moves, _s, ctx) =>
+    ctx.moveNumber < 1
+      ? moves
+      : moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 0),
+  visual: () => {
+    const light: number[] = [];
+    for (let sq = 0; sq < 64; sq++) if ((FILE(sq) + RANK(sq)) % 2 === 1) light.push(sq);
+    return { bannedSquares: light };
+  },
 });
 
 export const SOLAR_FLARE: Nerf = db({
   id: "solar_flare",
   name: "Solar Flare",
-  description: "You can only capture on light squares.",
+  description: "You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start.",
   flavor: "Daylight, only.",
   tier: 4,
   icon: "sun",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 1),
+  filterMoves: (moves, _s, ctx) =>
+    ctx.moveNumber < 1
+      ? moves
+      : moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 1),
+  visual: () => {
+    const dark: number[] = [];
+    for (let sq = 0; sq < 64; sq++) if ((FILE(sq) + RANK(sq)) % 2 === 0) dark.push(sq);
+    return { bannedSquares: dark };
+  },
 });
 
 export const CONSTRICTION: Nerf = db({
   id: "constriction",
   name: "Constriction",
-  description: "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks.",
+  description: "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
   flavor: "The walls close in.",
   tier: 6,
   icon: "minimize",
@@ -174,7 +188,7 @@ export const CONSTRICTION: Nerf = db({
 export const MIRROR_MARCH: Nerf = db({
   id: "mirror_march",
   name: "Mirror March",
-  description: "Your move must go the same file direction (left or right) as your opponent's last move.",
+  description: "Your move must go the same file direction (left or right) as your opponent's last move, except a piece already on the edge file in that direction may move any way.",
   flavor: "Copycat.",
   tier: 5,
   icon: "git-compare",
@@ -185,7 +199,11 @@ export const MIRROR_MARCH: Nerf = db({
     const dx = FILE(last.to) - FILE(last.from);
     if (dx === 0) return moves; // no constraint on perfectly straight opponent moves
     const sign = Math.sign(dx);
-    const same = moves.filter((m) => Math.sign(FILE(m.to) - FILE(m.from)) === sign);
+    const same = moves.filter((m) => {
+      if (Math.sign(FILE(m.to) - FILE(m.from)) === sign) return true;
+      // a piece already on the edge file in the forced direction may leave normally
+      return sign < 0 ? FILE(m.from) === 0 : FILE(m.from) === 7;
+    });
     return same.length ? same : moves;
   },
 });

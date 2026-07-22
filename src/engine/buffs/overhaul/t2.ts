@@ -616,32 +616,44 @@ export const OVERHAUL_T2: Buff[] = [
           return;
         }
         if (move.color === api.opp && move.from === sq) inst.state.sq = move.to;
+        // Delayed payoff: once the countdown elapses the drag does not fire on
+        // your move, it waits for the opponent's next move and lands then.
+        if (inst.state.pending) {
+          if (move.color !== api.opp) return;
+          const cur = inst.state.sq as Square;
+          const p = api.board.pieces[cur];
+          if (p && p.color === api.opp && (p.type === "n" || p.type === "b")) {
+            const backRank = api.opp === "w" ? 0 : 7;
+            const homeFiles = p.type === "n" ? [1, 6] : [2, 5];
+            const homes = homeFiles
+              .map((f) => SQ(f, backRank))
+              .filter((s) => !api.board.pieces[s]);
+            const fallback = Array.from({ length: 8 }, (_, f) => SQ(f, backRank)).filter(
+              (s) => !api.board.pieces[s],
+            );
+            const options = homes.length ? homes : fallback;
+            if (options.length) {
+              const dest = options[api.rng.int(options.length)];
+              api.relocate(cur, dest);
+              flashSquares(api, [dest], true);
+            }
+          }
+          inst.spent = true;
+          return;
+        }
         if (move.color !== api.me) return;
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t > 0) return;
-        const cur = inst.state.sq as Square;
-        const p = api.board.pieces[cur];
-        if (p && p.color === api.opp && (p.type === "n" || p.type === "b")) {
-          const backRank = api.opp === "w" ? 0 : 7;
-          const homeFiles = p.type === "n" ? [1, 6] : [2, 5];
-          const homes = homeFiles
-            .map((f) => SQ(f, backRank))
-            .filter((s) => !api.board.pieces[s]);
-          const fallback = Array.from({ length: 8 }, (_, f) => SQ(f, backRank)).filter(
-            (s) => !api.board.pieces[s],
-          );
-          const options = homes.length ? homes : fallback;
-          if (options.length) {
-            const dest = options[api.rng.int(options.length)];
-            api.relocate(cur, dest);
-            flashSquares(api, [dest], true);
-          }
-        }
-        inst.spent = true;
+        // Countdown done: arm the delayed drag for after the opponent replies.
+        inst.state.pending = true;
       },
       status: (inst) =>
-        inst.state.sq == null ? "pick a book" : `due back in ${turnsLeft(inst)} of your turns`,
+        inst.state.sq == null
+          ? "pick a book"
+          : inst.state.pending
+            ? "overdue, returning after their reply"
+            : `due back in ${turnsLeft(inst)} of your turns`,
     },
   ),
   // 40. Wheelbarrow ------------------------------------------------------------

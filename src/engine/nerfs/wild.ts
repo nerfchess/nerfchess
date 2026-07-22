@@ -347,13 +347,18 @@ export const CURFEW: Nerf = db({
 
 export const GRAVITY: Nerf = db({
   id: "wn_gravity", name: "Gravity", tier: 5, icon: "arrow-down", implemented: true,
-  description: "None of your pieces may move more than two ranks ahead of your own king.",
+  description: "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
   flavor: "The army can't outrun its monarch.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const cap = relRank(ctx.me, ks) + 2;
-    const ok = moves.filter((m) => m.piece === "k" || relRank(ctx.me, m.to) <= cap);
+    const ok = moves.filter(
+      (m) =>
+        m.piece === "k" ||
+        relRank(ctx.me, m.from) > cap || // already inside the region: may leave normally
+        relRank(ctx.me, m.to) <= cap,
+    );
     return ok.length ? ok : moves;
   },
 });
@@ -425,39 +430,55 @@ export const BODYGUARD: Nerf = db({
 
 export const METEOR_SHOWER: Nerf = db({
   id: "wn_meteor_shower", name: "Meteor Shower", tier: 5, icon: "sparkles", implemented: true,
-  description: "Each turn, five random squares are struck and sealed; you can't move any piece onto them this turn.",
+  description: "Each turn, five random squares are struck and sealed; you can't move any piece onto them this turn, unless the strike would leave you fewer than three legal moves. Next turn's five squares are revealed a turn early.",
   flavor: "Look out below.",
-  init: () => ({ banned: [] as number[] }),
-  onTurnStart: (_s, _ctx, rng) => {
+  init: (rng) => {
+    const roll = () => {
+      const set = new Set<number>();
+      while (set.size < 5) set.add(rng.int(64));
+      return Array.from(set);
+    };
+    return { banned: roll(), next: roll() };
+  },
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { banned: number[]; next: number[] };
     const set = new Set<number>();
     while (set.size < 5) set.add(rng.int(64));
-    return { banned: Array.from(set) };
+    return { banned: s.next, next: Array.from(set) };
   },
   filterMoves: (moves, state) => {
     const s = state as { banned: number[] };
     const set = new Set(s.banned);
-    return moves.filter((m) => !set.has(m.to));
+    const ok = moves.filter((m) => !set.has(m.to));
+    return ok.length >= 3 ? ok : moves;
   },
-  visual: (state) => ({ bannedSquares: (state as { banned: number[] }).banned }),
+  visual: (state) => {
+    const s = state as { banned: number[]; next: number[] };
+    return { bannedSquares: s.banned, highlightSquares: s.next };
+  },
 });
 
 // --------------------------- TIER 6 (cruel) ---------------------------
 
 export const KINGS_LEASH: Nerf = db({
   id: "wn_kings_leash", name: "King's Leash", tier: 6, icon: "crown", implemented: true,
-  description: "You can't move any piece to a square more than 3 king-steps from your own king.",
+  description: "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
   flavor: "Nobody strays far from the throne.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const ok = moves.filter((m) => cheb(m.to, ks) <= 3);
-    return ok.length ? ok : moves;
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening the whole
+    // board back up.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
 export const REGICIDE_CLOCK: Nerf = db({
   id: "wn_regicide_clock", name: "Regicide Clock", tier: 6, icon: "target", implemented: true,
-  description: "You must give check at least once every 8 of your turns, or you lose.",
+  description: "You must give check at least once every 6 of your turns, or you lose.",
   flavor: "Keep the pressure on, or the clock runs out.",
   init: () => ({ sinceCheck: 0 }),
   onTurnStart: (_s, ctx) => {

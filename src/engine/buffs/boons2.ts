@@ -459,7 +459,7 @@ export const BOON_WAVE2: Buff[] = [
           } as Move,
         ];
       });
-    }),
+    }, 1),
   ),
 
   // Identity swap, not an upgrade: two of your pieces trade TYPES in place.
