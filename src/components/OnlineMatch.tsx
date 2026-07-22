@@ -211,15 +211,34 @@ interface Props {
 }
 
 // What this rated game is worth: the projected rating change for each result.
-function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: number } }) {
+// Permanently pinned to the FOOT of the left rail (owner request: never a
+// tooltip, modal, or collapsed section). Win green, draw neutral gold, loss
+// red, the three values evenly aligned.
+function RatingStakes({
+  stakes,
+  provisional = false,
+}: {
+  stakes: { win: number; draw: number; loss: number };
+  provisional?: boolean;
+}) {
   const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
   return (
     <div className="plate flex items-center justify-between gap-2 p-2 px-3">
-      <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
-      <span className="font-mono text-[12px] tabular-nums">
-        <span className="text-verdigris">W {fmt(stakes.win)}</span>
-        <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
-        <span className="text-oxblood-glow">L {fmt(stakes.loss)}</span>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
+        {provisional && (
+          <span
+            className="smallcaps shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.04] px-1 py-px text-[10px] text-parchment-400"
+            title="Your rating is provisional: it moves faster until you have played enough rated games to settle it."
+          >
+            Provisional
+          </span>
+        )}
+      </span>
+      <span className="grid shrink-0 grid-cols-3 gap-2 text-right font-mono text-[12px] tabular-nums">
+        <span className="text-verdigris" title="If you win">W {fmt(stakes.win)}</span>
+        <span className="text-gold-leaf/80" title="If you draw">D {fmt(stakes.draw)}</span>
+        <span className="text-oxblood-glow" title="If you lose">L {fmt(stakes.loss)}</span>
       </span>
     </div>
   );
@@ -496,6 +515,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Draft ruleset UI state: hide the overlay after sending a pick/bank (the
   // server's dtResolved confirms it), and surface the opponent's drafting.
   const [draftSubmitted, setDraftSubmitted] = useState(false);
+  // Bumped by the board-strip "Draft pending" control (beside the player's
+  // clock) to re-open and pin the minimized draft panel (DraftOverlay's
+  // expandRequest prop).
+  const [draftExpandReq, setDraftExpandReq] = useState(0);
   // Did I actually pick/bank in the CURRENT shared draft round? Distinguishes
   // "I already resolved, opponent still choosing" from "my draft was genuinely
   // skipped", so the waiting overlay never falsely claims a skip. Set on
@@ -2288,9 +2311,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // the board) and the width left over after the rails present at each
   // breakpoint, so it can never push a rail off-screen. The 2026-07 layout
   // pass made the board the clear priority: the left command rail narrowed
-  // from 440/500px to 320/340px, so each min() term now reserves: none below
+  // to 300/320px, so each min() term now reserves: none below
   // sm, the right move rail (~288px + gaps + page padding = 344px) at sm,
-  // the narrowed left rail added at lg (700px total) and xl (720px total).
+  // the narrowed left rail added at lg (680px total) and xl (700px total).
   // With the rail collapsed (railCollapsed) only the right rail is reserved,
   // so the board grows to its height/cap limit. At 1363x936 this yields a
   // ~640px board expanded and ~710px collapsed (was ~480-540px).
@@ -2298,10 +2321,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const boardFitClass = hint
     ? railCollapsed
       ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
-      : "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-720px))] max-w-full"
+      : "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-680px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-700px))] max-w-full"
     : railCollapsed
     ? "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-720px))] max-w-full";
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-680px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-700px))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2643,7 +2666,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-4 " +
             (railCollapsed
               ? "lg:grid-cols-[auto]"
-              : "lg:grid-cols-[320px_auto] xl:grid-cols-[340px_auto]")
+              : "lg:grid-cols-[300px_auto] xl:grid-cols-[320px_auto]")
           }
           style={railHeightStyle}
         >
@@ -2729,12 +2752,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   plays={oppLog}
                 />
               )}
+              {/* Chat starts collapsed in every mode (unread badge on the
+                  bar); classic games no longer open with a full-height chat
+                  column eating rail space. */}
               <ChatPanel
                 messages={chatMessages}
                 myColor={myColor}
                 onSend={handleSendChat}
-                collapsible={isDraft && !!game.buffs}
-                className={isDraft && game.buffs ? "" : "h-full"}
+                collapsible
               />
             </div>
             <div className="space-y-2">
@@ -2757,7 +2782,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               />
               </div>
               {!isBuffMode && revealControl}
-              {ratingStakes && <RatingStakes stakes={ratingStakes} />}
+              {ratingStakes && <RatingStakes stakes={ratingStakes} provisional={myProvisional} />}
             </div>
           </aside>
           <div className="match-board-col flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
@@ -2992,6 +3017,33 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   className="min-w-0 flex-1 !px-0 !py-1"
                   connected={!connectionLost}
                 />
+                {/* Unresolved minimized draft: a large "Draft pending" control
+                    rides BESIDE the player's clock (the one spot the eye
+                    already watches), showing the running time and re-opening
+                    the draft panel on click. The floating side panel remains,
+                    but is never the only way back in. */}
+                {isDraft && myOffer && !draftSubmitted && !game.result && draftGraceOver && (
+                  <button
+                    type="button"
+                    onClick={() => setDraftExpandReq((n) => n + 1)}
+                    className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-[1px] border-2 border-gold/70 bg-gold/10 px-3 py-1.5 transition hover:border-gold hover:bg-gold/20"
+                    title="Your draft is unresolved and your clock is running. Open it."
+                  >
+                    <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
+                    <span className="font-display text-[12px] font-bold tracking-wide text-gold-leaf">
+                      Draft pending
+                    </span>
+                    {clockEnabled &&
+                      (() => {
+                        const s = Math.max(0, Math.ceil((myColor === "w" ? whiteMs : blackMs) / 1000));
+                        return (
+                          <span className="font-mono text-[12px] font-bold tabular-nums text-parchment-100">
+                            {Math.floor(s / 60)}:{String(s % 60).padStart(2, "0")}
+                          </span>
+                        );
+                      })()}
+                  </button>
+                )}
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
@@ -3020,7 +3072,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               )}
               {ratingStakes && (
                 <div className="mt-1 sm:hidden">
-                  <RatingStakes stakes={ratingStakes} />
+                  <RatingStakes stakes={ratingStakes} provisional={myProvisional} />
                 </div>
               )}
               {historyActions && (
@@ -3357,6 +3409,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           bankedBonus={!!myOffer.banked}
           deadline={draftDeadline}
           minimized={draftGraceOver}
+          expandRequest={draftExpandReq}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}

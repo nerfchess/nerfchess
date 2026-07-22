@@ -99,14 +99,34 @@ export function ChatPanel({
         aria-expanded={false}
         aria-label="Expand chat"
         className={
-          "plate flex w-full items-center gap-2 p-2 px-3 text-left transition hover:border-gold/40 " +
+          "plate flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left transition hover:border-gold/40 " +
           className
         }
       >
+        {/* Chat bubble icon (inline SVG, no glyph) so the collapsed bar reads
+            unmistakably as chat, not a stray strip. */}
+        <svg
+          aria-hidden
+          viewBox="0 0 14 14"
+          width="13"
+          height="13"
+          className="shrink-0 text-parchment-400"
+        >
+          <path
+            d="M1.5 2.5h11v7h-6l-3 2.5v-2.5h-2z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
         <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Chat</span>
         {unread > 0 && (
-          <span className="grid h-4 min-w-[1rem] shrink-0 place-items-center rounded-[1px] bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
-            {unread}
+          <span
+            aria-label={`${unread} unread messages`}
+            className="grid h-4 min-w-[1rem] shrink-0 place-items-center rounded-[1px] bg-gold px-1 font-mono text-[9px] font-bold text-ink-950"
+          >
+            {unread > 9 ? "9+" : unread}
           </span>
         )}
         <span className="min-w-0 flex-1 truncate text-[11px] text-parchment-300">

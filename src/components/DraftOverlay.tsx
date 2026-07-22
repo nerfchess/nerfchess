@@ -65,6 +65,10 @@ interface Props {
   };
   /** Both game clocks (ms), so drafting never hides the time situation. */
   clocks?: { mine: number; theirs: number } | null;
+  /** External re-open signal: bump the number to un-tuck the minimized panel
+   * (the host's "Draft pending" control beside the player's clock uses this).
+   * Also pins the panel open so the auto-tuck cannot swallow it again. */
+  expandRequest?: number;
 }
 
 /** m:ss for the in-overlay clock chips. */
@@ -143,7 +147,17 @@ export function LockInCountdown({
  * plate): a ring that drains with the free window plus big tabular digits.
  * Separate from the card panel so time pressure reads at a glance without
  * crowding the cards. */
-function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?: () => void }) {
+function DraftTimerWindow({
+  deadline,
+  onExpire,
+  compact = false,
+}: {
+  deadline: number;
+  onExpire?: () => void;
+  /** Header placement: smaller ring and tighter chrome so the timer sits
+   * beside the "Buff draft #N" label instead of floating over the board. */
+  compact?: boolean;
+}) {
   const total = 20_000;
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
@@ -157,10 +171,17 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   // r=15.5 keeps the 2.5-width stroke inside the ring (40px viewBox leaves
   // room for the outer hairline ring; the countdown math is untouched).
   const CIRC = 2 * Math.PI * 15.5;
+  const ringPx = compact ? 30 : 40;
   return (
     <div role="timer" aria-label="Draft lock-in timer" className="pointer-events-none shrink-0">
-      <div className={"draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
-        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
+      <div
+        className={
+          "draft-timer draft-timer--lux flex items-center " +
+          (compact ? "gap-2 px-2.5 py-1 " : "gap-3 px-4 py-2 ") +
+          (urgent ? "draft-timer--urgent" : "")
+        }
+      >
+        <svg width={ringPx} height={ringPx} viewBox="0 0 40 40" aria-hidden className="-rotate-90">
           {/* Outer hairline: a second, decorative gold ring framing the dial.
               Literal mirrors --accent-gold (SVG stroke attrs can't read a CSS var). */}
           <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(212,160,23,0.22)" strokeWidth="1" />
@@ -196,10 +217,13 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
           />
         </svg>
         <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">Lock in</div>
+          <div className={"smallcaps text-parchment-400 " + (compact ? "text-[10px]" : "text-[12px]")}>
+            Lock in
+          </div>
           <div
             className={
-              "mt-1 font-mono text-2xl font-bold tabular-nums " +
+              "mt-1 font-mono font-bold tabular-nums " +
+              (compact ? "text-base " : "text-2xl ") +
               (urgent ? "text-oxblood-glow" : "text-parchment-50")
             }
           >
@@ -410,6 +434,7 @@ export function DraftOverlay({
   revealScope,
   opponent,
   clocks,
+  expandRequest,
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
@@ -454,6 +479,10 @@ export function DraftOverlay({
   // chip (still one click from the cards), and a fresh offer / reroll pops it
   // back so an unresolved draft keeps re-announcing itself.
   const [tucked, setTucked] = useState(false);
+  // The free lock-in window has ended for THIS offer: from here the player's
+  // own game clock is charged while they deliberate, and the header shows a
+  // steady (never flashing) warning saying so. Reset when a fresh offer deals.
+  const [clockRunning, setClockRunning] = useState(false);
   // Pack opening: each offer arrives as a sealed treasure chest that opens
   // before the cards deal. Tap to open immediately; it auto-opens after a
   // beat so a player who just wants cards is never held up. The chest plays
@@ -576,6 +605,7 @@ export function DraftOverlay({
     setTucked(false);
     setRerolling(false);
     setCommitted(false);
+    setClockRunning(false);
     setDealt(!!reduceMotion);
     // Fresh cards arrive as a sealed chest (full overlay or the minimized
     // panel, which runs the fast fuse); the deal timer starts once the chest
@@ -799,8 +829,21 @@ export function DraftOverlay({
   // player's own clock. The parent minimizes the overlay to the side.
   const handleExpire = () => {
     if (committedRef.current || chosen != null || banking) return;
+    setClockRunning(true);
     onExpire?.();
   };
+
+  // External "Draft pending" control (beside the player's clock in the host
+  // layout): bumping expandRequest re-opens the minimized panel and pins it,
+  // so the auto-tuck cannot swallow it again for this offer.
+  const expandSeenRef = useRef(expandRequest);
+  useEffect(() => {
+    if (expandRequest === undefined || expandRequest === expandSeenRef.current) return;
+    expandSeenRef.current = expandRequest;
+    userPinnedRef.current = true;
+    setTucked(false);
+    setHidden(false);
+  }, [expandRequest]);
 
   if (minimized) {
     // A committed pick renders the panel inert while the server (or engine)
@@ -826,7 +869,7 @@ export function DraftOverlay({
         <div
           ref={panelRef}
           style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
-          className={"fixed z-40 " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")}
+          className={"fixed z-40 " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-20")}
         >
           <button
             type="button"
@@ -836,7 +879,7 @@ export function DraftOverlay({
               userPinnedRef.current = true;
               setTucked(false);
             }}
-            aria-label={`Resolve your ${noun} draft. Your clock is running.`}
+            aria-label={`Draft pending: resolve your ${noun} draft. Your clock is running.`}
             // Large, persistent, and impossible to miss: an unresolved draft
             // with the clock running must never hide behind a subtle chip.
             className="plate plate-raised flex min-h-[52px] items-center gap-2.5 rounded-[1px] border-2 border-gold/70 bg-gold/10 px-4 py-2.5 shadow-plate transition hover:border-gold hover:bg-gold/20"
@@ -844,7 +887,7 @@ export function DraftOverlay({
             <span aria-hidden className="h-2 w-2 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
             <span className="text-left">
               <span className="block font-display text-sm font-bold tracking-wide text-gold-leaf">
-                Resolve draft
+                Draft pending
               </span>
               <span className="smallcaps block text-[11px] text-oxblood-glow">
                 Your clock is running
@@ -864,7 +907,7 @@ export function DraftOverlay({
         ref={panelRef}
         style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
         className={
-          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")
+          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-20")
         }
       >
         <motion.div
@@ -1019,16 +1062,18 @@ export function DraftOverlay({
           mounted underneath (visibility only), so timers, the pick state,
           and any in-flight animation carry on unaffected. */}
       {hidden && (
-        <div className="fixed bottom-24 right-3 z-50 sm:bottom-16 lg:bottom-4">
+        // bottom-20 at lg keeps the chip clear of the effects dial, which
+        // sits in the layout's bottom-right corner on desktop.
+        <div className="fixed bottom-24 right-3 z-50 sm:bottom-16 lg:bottom-20">
           <button
             type="button"
             onClick={() => setHidden(false)}
-            aria-label="Show the draft"
-            className="plate plate-raised flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            aria-label="Return to the pending draft"
+            className="plate plate-raised flex min-h-[44px] items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
           >
             <EyeIcon className="text-gold-leaf" />
             <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
-              Draft open
+              Draft pending
             </span>
             {deadline != null && <ChipCountdown deadline={deadline} />}
           </button>
@@ -1099,7 +1144,9 @@ export function DraftOverlay({
           (recordingMode ? " draft-col--rec" : "")
         }
       >
-        {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
+        {/* The lock-in countdown lives INSIDE the panel header (beside the
+            "Buff draft #N" label), never floating separately over the board;
+            see the header row below. */}
         {/* Both game clocks stay visible while drafting, with the clock rule
             stated plainly: the free window is paused time; overrunning it
             puts further deliberation on the player's own clock. */}
@@ -1159,8 +1206,24 @@ export function DraftOverlay({
           <span aria-hidden className="dgn-brace dgn-brace--tr"><i /></span>
           <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
-        <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+            <div className="smallcaps dgn-label text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+            {deadline != null && <DraftTimerWindow compact deadline={deadline} onExpire={handleExpire} />}
+            {/* Steady warning (no flashing): the free window is over, so every
+                further second of deliberation charges the player's own clock. */}
+            {clockRunning && (
+              <span
+                role="status"
+                className="flex items-center gap-1.5 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-2 py-1"
+              >
+                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-oxblood-glow" />
+                <span className="smallcaps text-[11px] font-semibold text-oxblood-glow">
+                  Your game clock is running
+                </span>
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1173,16 +1236,18 @@ export function DraftOverlay({
                 </span>
               </div>
             )}
-            {/* Peek control: hide the overlay to study the board; the timer
-                keeps running and the pick state is untouched. */}
+            {/* Peek control: minimize the overlay to study the board; the
+                timer keeps running and the pick state is untouched. Named
+                "Minimize draft" (not "Hide") because the draft still needs an
+                action; hiding it is never dismissing it. */}
             <button
               type="button"
               onClick={() => setHidden(true)}
-              title="Hide the draft and peek at the board"
+              title="Minimize the draft to peek at the board. It still needs your pick."
               className="flex items-center gap-1.5 min-h-[44px] touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-0.5 text-parchment-300 transition hover:border-gold/50 hover:text-gold-leaf"
             >
               <EyeIcon off />
-              <span className="font-display text-[14px] sm:text-[13px] font-semibold tracking-wide">Hide</span>
+              <span className="font-display text-[14px] sm:text-[13px] font-semibold tracking-wide">Minimize draft</span>
             </button>
           </div>
         </div>
@@ -1475,6 +1540,14 @@ export function DraftOverlay({
                     {/* Foil finish: tier 7+ faces carry a slow holographic
                         sheen that drifts across the card, TCG-rare style. */}
                     {card.tier >= 7 && <span aria-hidden className="draft-holo" />}
+                    {/* Unmissable selected state: an explicit label riding the
+                        card's top edge, on top of the stronger ring and lift
+                        the wrapper's selected class already paints. */}
+                    {selected === i && chosen == null && !banking && (
+                      <span className="pointer-events-none absolute -top-2.5 left-1/2 z-10 -translate-x-1/2 rounded-[1px] border border-gold bg-ink-950 px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-[0.08em] text-gold-leaf shadow-plate">
+                        Selected
+                      </span>
+                    )}
                   </div>
                   {/* Card back: an ink panel with a hairline frame and the
                       tier numeral as a quiet watermark. */}
@@ -1511,7 +1584,10 @@ export function DraftOverlay({
         </div>
         )}
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+        {/* Action row. On phones it sticks to the foot of the scrolling panel
+            (its own opaque backing) so Confirm never scrolls out of reach;
+            desktop keeps the static centered row. */}
+        <div className="sticky -bottom-5 z-10 -mx-5 mt-5 flex flex-col gap-3 bg-[color:var(--surface-panel)] px-5 py-3 sm:static sm:m-0 sm:mt-5 sm:flex-row sm:items-center sm:justify-center sm:bg-transparent sm:p-0">
           <button
             onClick={confirmSelection}
             disabled={selected == null || chosen != null || banking}
