@@ -313,18 +313,44 @@ export const HEXES_T4: Buff[] = [
     {
       id: "abandoned_post",
       name: "Abandoned Post",
-      description: "Nobody presses the attack: for your opponent's next 3 turns, any move toward your side of the board may cover at most 2 squares. Sideways moves and retreats keep their full range.",
+      description: "Nobody presses the attack: starting after your opponent's next move, for their following 3 turns any move toward your side of the board may cover at most 2 squares. Sideways moves and retreats keep their full range.",
       flavor: "The ranks hold their ground and refuse to march far.",
       // Board already paints the slowed pieces; fx carried for consistency.
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves, api) =>
-      moves.filter(
-        (m) =>
-          relRank(api.opp, m.to) <= relRank(api.opp, m.from) ||
-          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
-      ),
-    ),
+    // Same clamp as before, but it takes hold one opponent move later: their
+    // next move is free, then the 3-turn clamp runs.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.delay = 1;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (((inst.state.delay as number) ?? 0) > 0) return moves;
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const kept = moves.filter(
+          (m) =>
+            relRank(api.opp, m.to) <= relRank(api.opp, m.from) ||
+            Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (((inst.state.delay as number) ?? 0) > 0) {
+          inst.state.delay = ((inst.state.delay as number) ?? 0) - 1;
+          return;
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        ((inst.state.delay as number) ?? 0) > 0
+          ? "takes hold after their next move"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- stateful cooldown: rooks must rest a turn between hauls -------------
@@ -335,14 +361,14 @@ export const HEXES_T4: Buff[] = [
     {
       id: "frozen_furrows",
       name: "Frozen Furrows",
-      description: "The ruts freeze over between hauls: for your opponent's next 6 turns, whenever they move a rook, their rooks cannot move at all on their following turn.",
+      description: "The ruts freeze over between hauls: for your opponent's next 5 turns, whenever they move a rook, their rooks cannot move at all on their following turn.",
       flavor: "Every pass of the cart leaves ice the next one sticks in.",
       fx: { motif: "anchor", pieces: ["r"] },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.turns as number) ?? 0) <= 0) return moves;
@@ -363,10 +389,11 @@ export const HEXES_T4: Buff[] = [
   ),
 
   // --- skip plus a hangover: lose a turn AND 20 seconds off the clock ------
-  H(
+  hex(
     {
       id: "lost_weekend",
       name: "Lost Weekend",
+      tier: 5,
       description: "Your opponent skips their next turn, and their clock loses 20 seconds.",
       flavor: "A whole day gone, and the headache eats into the next one.",
       fx: { motif: "slow", pieces: "all" },

@@ -918,17 +918,41 @@ export const DEER_IN_HEADLIGHTS: Nerf = db({
 export const RESPECTFUL: Nerf = db({
   id: "respectful",
   name: "Respectful",
-  description: "You can't end your turn giving check.",
+  description: "You can't end your turn giving check. Once per game, if every legal move would give check, you may give check that one time.",
   flavor: "Don't be rude.",
   tier: 5,
   icon: "hand",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
-    return moves.filter((m) => {
-      const nb = makeMove(ctx.board, m);
-      return !isInCheck(nb, opp);
-    });
+    const quiet = moves.filter((m) => !isInCheck(makeMove(ctx.board, m), opp));
+    if (quiet.length) return quiet;
+    // No compliant move exists. Because this nerf normally forbids ever giving
+    // check, any past move of mine that left the opponent in check can only be
+    // the one-time exemption already spent. Replay history to see whether it
+    // was: if not, unlock all moves this once; if so, the exemption is gone.
+    let board = initialBoard();
+    let spent = false;
+    for (const m of ctx.board.history) {
+      board = makeMove(board, m);
+      if (m.color === ctx.me && isInCheck(board, opp)) spent = true;
+    }
+    return spent ? quiet : moves;
+  },
+  hint: (_s, ctx, legal) => {
+    const opp = ctx.me === "w" ? "b" : "w";
+    // Only speak up when the exemption is live this turn: every legal move
+    // gives check (so the filter had to fall back) and it has not been spent.
+    const allCheck = legal.length > 0 && legal.every((m) => isInCheck(makeMove(ctx.board, m), opp));
+    if (!allCheck) return null;
+    let board = initialBoard();
+    let spent = false;
+    for (const m of ctx.board.history) {
+      board = makeMove(board, m);
+      if (m.color === ctx.me && isInCheck(board, opp)) spent = true;
+    }
+    if (spent) return null;
+    return { text: "No polite move exists. You may give check this once.", tone: "warn" };
   },
 });
 

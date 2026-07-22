@@ -4,8 +4,8 @@
 // per `hex(...)`, and lean on `curse`/`walnutTarget`/etc. so the safety rails
 // (kings never frozen, filters never soft-lock) come for free.
 
-import { Buff } from "./shared";
-import { tierHexes, curse, FILE, RANK } from "./shared";
+import { Buff, BuffApi, Mech, Move } from "./shared";
+import { tierHexes, hex, curse, mySquares, relRank, tickTurns, turnsLeft, FILE, RANK } from "./shared";
 
 const H = tierHexes(1);
 
