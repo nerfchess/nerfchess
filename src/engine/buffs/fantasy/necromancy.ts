@@ -5,7 +5,7 @@
 // again (a conditional passive modeled on the library's Understudy / Insurance
 // cards). Nothing raises or petrifies a king.
 
-import { Buff } from "./shared";
+import { Buff, Square } from "./shared";
 import {
   card,
   reviveOne,
@@ -88,9 +88,9 @@ function undyingThrallRevive(): Mech {
       if (sq == null) return;
       const p = api.board.pieces[sq];
       // Only when a thrall was actually raised on this square (a captured minor
-      // was available): a timed_loss removes it after 5 of your own turns.
+      // was available): a timed_loss removes it after 4 of your own turns.
       if (p && p.color === api.me && p.type !== "k") {
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 5, then: "remove" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "remove" });
       }
     },
   };
@@ -103,7 +103,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Bone",
       name: "Undying Thrall",
       description:
-        "Bind a restless spirit into service: one of your captured knights or bishops claws back onto an empty square of your back rank and fights for 5 of your turns, then crumbles to dust, once.",
+        "Bind a restless spirit into service: one of your captured knights or bishops claws back onto an empty square of your back rank and fights for 4 of your turns, then crumbles to dust, once.",
       tier: 2,
       category: "pieces",
       flavor: "It does not remember dying, only serving.",
@@ -116,12 +116,62 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Ghost",
       name: "Raise Dead",
       description:
-        "Speak the words of unmaking over enemy soil: one of your fallen pawns, knights, or bishops rises again on an empty square in your OPPONENT'S half of the board, once.",
+        "Speak the words of unmaking over enemy soil: choose an empty square in your OPPONENT'S half now, and one of your fallen pawns, knights, or bishops rises there after your opponent's next move, once. If the square is taken by then, the revival fizzles and the charge is still spent.",
       tier: 3,
       category: "pieces",
       flavor: "The grave was only ever a suggestion. So was the border.",
     },
-    reviveOne(["p", "n", "b"], (api) => (sq) => !myHalfZone(api)(sq)),
+    // Preserve the revive payoff, but delay its trigger: you pick the square
+    // now and the fallen rise only once the opponent has replied (glossary
+    // directive: delay the first trigger until after the opponent's next move).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.dest != null) return null;
+        const type = (["p", "n", "b"] as const).find(
+          (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+        );
+        return {
+          kind: "square",
+          label: "Choose where the fallen will rise",
+          squares:
+            type == null
+              ? []
+              : emptySquares(api.board, (sq) => !myHalfZone(api)(sq)).filter(
+                  (sq) => type !== "p" || pawnRankOk(sq),
+                ),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.dest != null || picks[0]?.square == null) return;
+        const any = (["p", "n", "b"] as const).some(
+          (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+        );
+        if (!any) return;
+        inst.state.dest = picks[0].square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.dest == null || move.color !== api.opp) return;
+        const dest = inst.state.dest as Square;
+        const type = (["p", "n", "b"] as const).find(
+          (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
+        );
+        if (
+          type != null &&
+          !api.board.pieces[dest] &&
+          !myHalfZone(api)(dest) &&
+          (type !== "p" || pawnRankOk(dest))
+        ) {
+          api.place(dest, type, api.me);
+          api.mine.revived[type] = (api.mine.revived[type] ?? 0) + 1;
+        }
+        inst.state.dest = null;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.dest != null ? "rising after their reply" : "activate to choose a square",
+    },
   ),
   card(
     {

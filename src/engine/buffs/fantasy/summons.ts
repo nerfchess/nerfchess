@@ -8,7 +8,7 @@
 // drop a pawn on rank 1 or 8, and the barred wall is partial, so nothing here
 // can soft-lock a turn.
 
-import { Buff, Square } from "./shared";
+import { Buff, Square, PieceType, BuffApi, Mech } from "./shared";
 import {
   card,
   summonTemp,

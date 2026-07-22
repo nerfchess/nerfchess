@@ -189,11 +189,12 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
               squares: mySquares(api.board, api.me, "b").filter((bsq) => diagStep(api, bsq).length > 0),
             };
           }
-          if (picks.length === 1 && picks[0].square != null) {
+          const bsq = picks[0]?.square;
+          if (picks.length === 1 && bsq != null) {
             return {
               kind: "square",
               label: "Step the bishop one square diagonally",
-              squares: diagStep(api, picks[0].square),
+              squares: diagStep(api, bsq),
             };
           }
           return null;
