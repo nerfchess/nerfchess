@@ -123,8 +123,40 @@ export type FreezeSkin =
   | "stone"
   | "beartrap";
 
+/** The purely visual dressings a `cosmetic` effect can pin to a piece. Each
+ * skin names a client painting (Board's COSMETIC_SKINS table); the mechanic
+ * is always NOTHING. Overhaul cards use these for their comedy identities:
+ * a giant pawn, sunglasses, a name tag, slot reels on a Jackpot Pawn... */
+export type CosmeticSkin =
+  | "giant"
+  | "sunglasses"
+  | "nametag"
+  | "plush"
+  | "wooden"
+  | "matryoshka"
+  | "slotreels"
+  | "vampire"
+  | "gilded"
+  | "wings"
+  | "dunce"
+  | "checkers"
+  | "pigeon"
+  | "hat";
+
 export type ActiveEffect =
   | { kind: "freeze"; sq: Square; owner: Color; turns: number; skin?: FreezeSkin }
+  /** Pure visual dressing pinned to a piece: zero gameplay effect, ever.
+   * Follows the piece when its owner moves it and dies with the piece
+   * (pruned exactly like a freeze). `label` is optional hover text (a name
+   * tag's name, a joke caption). Overhaul primitive; see CosmeticSkin. */
+  | {
+      kind: "cosmetic";
+      sq: Square;
+      owner: Color;
+      turns: number | null;
+      skin: CosmeticSkin;
+      label?: string;
+    }
   | {
       kind: "shield";
       owner: Color;
@@ -180,6 +212,7 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "nerf_suspended":
     case "timed_loss":
     case "short_leash":
+    case "cosmetic":
       return e.owner;
     case "shield":
     case "king_safe":

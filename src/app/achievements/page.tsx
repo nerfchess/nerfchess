@@ -7,6 +7,7 @@ import { ChevronDown, Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
+import { RARITY_ASC, RARITY_THEME } from "@/lib/achievementTheme";
 import { achievementToastsDisabled, setAchievementToastsDisabled } from "@/components/AchievementToast";
 import {
   ACHIEVEMENTS,
@@ -14,6 +15,7 @@ import {
   CATEGORY_ORDER,
   CATEGORY_TAGLINE,
   RARITY_LABEL,
+  RARITY_RANK,
   type AchievementCategory,
   type AchievementRarity,
 } from "@/lib/achievements";
@@ -38,22 +40,7 @@ interface AchievementsResponse {
   achievements: AchievementView[];
 }
 
-// Rarity is the only differentiator the model actually carries, so it drives a
-// quiet chip using the sanctioned tier-bg-* classes (escalating toward gold as
-// rarity rises). No global unlock-percentage feed exists today, so "X% of
-// players" is deliberately not shown rather than faked.
-const RARITY_TIER_BG: Record<AchievementRarity, string> = {
-  common: "tier-bg-1",
-  rare: "tier-bg-3",
-  epic: "tier-bg-7",
-  legendary: "tier-bg-9",
-};
-
-// Earned trophies read in the reward palette (sun/gold). Kept as literals from
-// the palette so both the icon tint and its resting border share one hue.
-const SUN = "#eec25e";
-const SUN_SOFT_BG = "rgba(238,194,94,0.10)";
-const SUN_BORDER = "rgba(238,194,94,0.40)";
+type RarityFilter = "all" | AchievementRarity;
 
 function fmtDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -63,8 +50,9 @@ function fmtDate(ts: number): string {
   });
 }
 
-// A thin progress bar. Track uses an edge tone; the fill is reward-sun.
-function ProgressBar({ value, max }: { value: number; max: number }) {
+// A thin progress bar for locked milestone cards. Track uses an edge tone; the
+// fill takes the card's rarity color.
+function ProgressBar({ value, max, color }: { value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
@@ -77,33 +65,178 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
     >
       <div
         className="h-full rounded-[1px] transition-[width] duration-300"
-        style={{ width: `${pct}%`, background: "var(--sun-glow)" }}
+        style={{ width: `${pct}%`, background: color ?? "var(--sun-glow)" }}
       />
+    </div>
+  );
+}
+
+// The header progress bar, color-segmented by rarity contribution: four
+// stacked segments (common through legendary) in the shared rarity colors.
+function RaritySegmentedBar({ wall, total }: { wall: AchievementView[]; total: number }) {
+  const earned = wall.filter((a) => a.unlocked).length;
+  return (
+    <div
+      className="flex h-1.5 w-full overflow-hidden rounded-[1px]"
+      style={{ background: "var(--edge)" }}
+      role="progressbar"
+      aria-valuenow={earned}
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-label={`${earned} of ${total} achievements earned`}
+    >
+      {RARITY_ASC.map((r) => {
+        const count = wall.filter((a) => a.rarity === r && a.unlocked).length;
+        if (count === 0 || total === 0) return null;
+        return (
+          <div
+            key={r}
+            className="h-full transition-[width] duration-300"
+            style={{ width: `${(count / total) * 100}%`, background: RARITY_THEME[r].color }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// Compact difficulty filter chips: All plus one chip per rarity, each showing
+// its earned/total count. Filters every category section below.
+function RarityFilterRow({
+  wall,
+  filter,
+  onChange,
+}: {
+  wall: AchievementView[];
+  filter: RarityFilter;
+  onChange: (next: RarityFilter) => void;
+}) {
+  return (
+    <div role="group" aria-label="Filter achievements by difficulty" className="mt-4 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        aria-pressed={filter === "all"}
+        onClick={() => onChange("all")}
+        className={
+          "press inline-flex min-h-[32px] items-center rounded-[1px] border px-2.5 text-[12px] transition-colors " +
+          (filter === "all"
+            ? "border-[color:var(--edge-strong)] bg-white/[0.06] text-parchment-100"
+            : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
+        }
+      >
+        All
+      </button>
+      {RARITY_ASC.map((r) => {
+        const theme = RARITY_THEME[r];
+        const total = wall.filter((a) => a.rarity === r).length;
+        const earned = wall.filter((a) => a.rarity === r && a.unlocked).length;
+        const on = filter === r;
+        return (
+          <button
+            key={r}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onChange(on ? "all" : r)}
+            className="press inline-flex min-h-[32px] items-center gap-1.5 rounded-[1px] border px-2.5 text-[12px] transition-colors"
+            style={
+              on
+                ? { borderColor: theme.border, background: theme.softBg, color: theme.color }
+                : { borderColor: "var(--edge)", color: "var(--paper-dim)" }
+            }
+          >
+            <span
+              aria-hidden
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: theme.color, opacity: on ? 1 : 0.55 }}
+            />
+            {RARITY_LABEL[r]}
+            <span className="font-mono tabular-nums" style={{ opacity: 0.85 }}>
+              {earned}/{total}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 function AchievementCard({ a }: { a: AchievementView }) {
   const icon = achievementIcon(a.icon);
+  const theme = RARITY_THEME[a.rarity];
   const showProgress = !a.unlocked && a.goal > 1;
+  const legendaryUnlocked = a.unlocked && a.rarity === "legendary";
+
+  // Legendary unlocked cards trade the flat plate border for a subtle gradient
+  // rim: the plate surface is rebuilt as padding-box layers under a border-box
+  // gold gradient, so nothing else about the plate changes.
+  const cardStyle: React.CSSProperties | undefined = legendaryUnlocked
+    ? {
+        border: "1px solid transparent",
+        background: [
+          "linear-gradient(180deg, rgba(255,255,255,0.028), transparent 26%, rgba(0,0,0,0.1) 100%) padding-box",
+          "linear-gradient(var(--surface-panel), var(--surface-panel)) padding-box",
+          `linear-gradient(150deg, rgb(${theme.rgb} / 0.55), rgb(${theme.rgb} / 0.10) 45%, rgba(255,217,126,0.45)) border-box`,
+        ].join(", "),
+        boxShadow: `0 0 24px -12px ${theme.glow}, 0 12px 40px -24px rgba(0,0,0,0.7)`,
+      }
+    : a.unlocked
+      ? { borderColor: theme.border }
+      : undefined;
+
   return (
     <div
-      className="plate plate-hover relative flex flex-col gap-2.5 p-3 transition-colors"
-      style={a.unlocked ? { borderColor: SUN_BORDER } : undefined}
+      className="plate plate-hover relative flex flex-col gap-2.5 overflow-hidden p-3 transition-colors"
+      style={cardStyle}
     >
-      <div className="flex items-start gap-2.5">
+      {/* Faint oversized ghost of the icon behind the content, for depth. */}
+      {a.unlocked && (
+        <div aria-hidden className="pointer-events-none absolute -bottom-7 -right-6">
+          {createElement(icon, {
+            className: "h-28 w-28",
+            style: { color: theme.color, opacity: 0.05 },
+            strokeWidth: 1.25,
+          })}
+        </div>
+      )}
+
+      <div className="relative flex items-start gap-2.5">
+        {/* Icon medallion: unlocked = radial rarity gradient with a colored
+            ring and soft glow; locked = dimmed embossed disc with a small
+            lock badge on the corner. */}
         <div
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-[1px] border"
-          style={{
-            borderColor: a.unlocked ? SUN_BORDER : "var(--edge)",
-            background: a.unlocked ? SUN_SOFT_BG : "var(--surface-hover)",
-          }}
+          className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full border"
+          style={
+            a.unlocked
+              ? {
+                  borderColor: theme.border,
+                  background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.32), rgb(${theme.rgb} / 0.07) 72%)`,
+                  boxShadow: `0 0 14px -3px ${theme.glow}, inset 0 1px 0 rgb(${theme.rgb} / 0.25)`,
+                }
+              : {
+                  borderColor: "var(--edge)",
+                  background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.05), rgba(0,0,0,0.16) 78%)",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 0 rgba(255,255,255,0.04)",
+                }
+          }
         >
           {createElement(icon, {
             className: "h-6 w-6" + (a.unlocked ? "" : " opacity-40"),
-            style: { color: a.unlocked ? SUN : "var(--paper-dim)" },
+            style: { color: a.unlocked ? theme.color : "var(--paper-dim)" },
             strokeWidth: 2,
           })}
+          {!a.unlocked && (
+            <span
+              aria-label="Locked"
+              title="Locked"
+              className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border"
+              style={{
+                borderColor: "var(--edge-strong)",
+                background: "var(--surface-hover)",
+              }}
+            >
+              <Lock className="h-2.5 w-2.5 text-parchment-500" strokeWidth={2.5} />
+            </span>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div
@@ -113,11 +246,13 @@ function AchievementCard({ a }: { a: AchievementView }) {
             {a.name}
           </div>
           <span
-            className={
-              "mt-1 inline-block rounded-[1px] border px-1.5 py-0.5 text-[12px] leading-none " +
-              RARITY_TIER_BG[a.rarity]
-            }
-            style={{ color: "rgb(var(--tier-rgb))" }}
+            className="mt-1 inline-block rounded-[1px] border px-1.5 py-0.5 text-[12px] leading-none"
+            style={{
+              color: theme.color,
+              borderColor: theme.border,
+              background: theme.softBg,
+              opacity: a.unlocked ? 1 : 0.7,
+            }}
           >
             {RARITY_LABEL[a.rarity]}
           </span>
@@ -126,7 +261,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
 
       <p
         className={
-          "text-[12px] leading-snug " +
+          "relative text-[12px] leading-snug " +
           (a.unlocked ? "text-parchment-200" : "text-parchment-400")
         }
       >
@@ -134,28 +269,21 @@ function AchievementCard({ a }: { a: AchievementView }) {
       </p>
 
       {a.unlocked && a.unlockedAt != null && (
-        <div className="mt-auto flex items-center gap-1.5 text-[12px] text-sun-glow/90">
+        <div className="relative mt-auto flex items-center gap-1.5 text-[12px]" style={{ color: theme.color }}>
           <Trophy className="h-3.5 w-3.5" strokeWidth={2} />
           <span className="tabular-nums">Earned {fmtDate(a.unlockedAt)}</span>
         </div>
       )}
 
       {showProgress && (
-        <div className="mt-auto space-y-1">
+        <div className="relative mt-auto space-y-1">
           <div className="flex items-center justify-between text-[12px] text-parchment-400">
             <span>Progress</span>
             <span className="font-mono tabular-nums text-parchment-300">
               {a.progress}/{a.goal}
             </span>
           </div>
-          <ProgressBar value={a.progress} max={a.goal} />
-        </div>
-      )}
-
-      {!a.unlocked && !showProgress && (
-        <div className="mt-auto flex items-center gap-1.5 text-[12px] text-parchment-500">
-          <Lock className="h-3.5 w-3.5" strokeWidth={2} />
-          <span>Locked</span>
+          <ProgressBar value={a.progress} max={a.goal} color={theme.color} />
         </div>
       )}
     </div>
@@ -171,10 +299,15 @@ function CategorySection({
 }) {
   const [open, setOpen] = useState(true);
   const earned = items.filter((a) => a.unlocked).length;
-  // Earned lead within each section; catalog order (easy to hard) is otherwise
-  // preserved by the stable input order.
+  // Difficulty ascending (common to legendary); unlocked before locked within
+  // the same rarity. The stable sort keeps catalog order otherwise.
   const sorted = useMemo(
-    () => [...items].sort((x, y) => Number(y.unlocked) - Number(x.unlocked)),
+    () =>
+      [...items].sort(
+        (x, y) =>
+          RARITY_RANK[x.rarity] - RARITY_RANK[y.rarity] ||
+          Number(y.unlocked) - Number(x.unlocked),
+      ),
     [items],
   );
   const panelId = `cat-${category}`;
@@ -247,6 +380,7 @@ function AchievementsContent() {
   const requested = searchParams.get("u");
   const [data, setData] = useState<AchievementsResponse | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "signin" | "error">("loading");
+  const [filter, setFilter] = useState<RarityFilter>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -305,11 +439,8 @@ function AchievementsContent() {
     });
   }, [state, data]);
 
-  const byId = useMemo(() => new Map(wall.map((a) => [a.id, a])), [wall]);
   const total = ACHIEVEMENTS.length;
   const earnedCount = wall.filter((a) => a.unlocked).length;
-
-
 
   const viewingOther = state === "ready" && !!requested && !!data;
 
@@ -336,13 +467,14 @@ function AchievementsContent() {
             </div>
           </div>
           <div className="mt-3">
-            <ProgressBar value={state === "ready" ? earnedCount : 0} max={total} />
+            <RaritySegmentedBar wall={state === "ready" ? wall : lockedWall()} total={total} />
           </div>
           <p className="mt-3 text-[13px] text-parchment-300">
             {viewingOther
               ? "What they have unlocked across the board."
               : "Feats you unlock across Nerf and Buff, from first steps to the top of the ladder."}
           </p>
+          <RarityFilterRow wall={wall} filter={filter} onChange={setFilter} />
         </header>
 
         {/* Guest, error, and popup-toggle states. */}
@@ -394,12 +526,14 @@ function AchievementsContent() {
           </div>
         ) : (
           <div className="mt-8 space-y-9">
-            {/* Category sections. */}
+            {/* Category sections, filtered by the selected difficulty. */}
             {CATEGORY_ORDER.map((category) => {
-              const items = wall.filter((a) => a.category === category);
+              const items = wall.filter(
+                (a) => a.category === category && (filter === "all" || a.rarity === filter),
+              );
               if (!items.length) return null;
               return (
-                <CategorySection key={category} category={category} items={items} />
+                <CategorySection key={`${category}-${filter}`} category={category} items={items} />
               );
             })}
 

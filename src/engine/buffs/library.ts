@@ -10,6 +10,7 @@ import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
 import { TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
+import { OVERHAUL_CARDS } from "./overhaul";
 import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
 import { buffRegistry } from "./registry";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
@@ -4589,6 +4590,7 @@ export const ALL_BUFFS: Buff[] = [
   ...PERSONAL_CARDS,
   ...NEWJEANS_CARDS,
   ...ITEMS,
+  ...OVERHAUL_CARDS,
   ...TIER9,
   ...TIER10,
 ];

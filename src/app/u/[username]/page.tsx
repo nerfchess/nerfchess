@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
+import { RARITY_THEME } from "@/lib/achievementTheme";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink } from "@/components/PlayerLink";
 import { PresenceBadge } from "@/components/PresenceBadge";
@@ -543,23 +544,25 @@ function ProfileContent() {
             {placements.length > 0 && <CurrentStandings placements={placements} />}
             <AchievementsStrip username={user.username} />
             {stats && (
-              <div className="mt-6">
-                <h2 className="font-display text-2xl">Statistics</h2>
+              <div className="mt-10">
+                <div className="eyebrow">Record</div>
+                <h2 className="mt-1 font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} peakRating={peakRating} />
                 </div>
               </div>
             )}
             {ratingHistory.length > 0 && (
-              <div className="mt-6">
-                <div className="rule-ornament mb-3">
-                  <span className="font-display">Rating history</span>
+              <div className="mt-10">
+                <div className="eyebrow">Form</div>
+                <h2 className="mt-1 font-display text-2xl">Rating history</h2>
+                <div className="mt-3">
+                  <RatingHistoryPanel
+                    key={user.username}
+                    points={ratingHistory}
+                    currentRatings={currentRatings}
+                  />
                 </div>
-                <RatingHistoryPanel
-                  key={user.username}
-                  points={ratingHistory}
-                  currentRatings={currentRatings}
-                />
               </div>
             )}
           </div>
@@ -673,7 +676,16 @@ function ProfileHeader({
   );
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* Signature flavor: a large, very faint knight watermark behind the
+          identity block. Decorative only; hidden on small screens. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -top-12 right-6 hidden select-none font-display text-[11rem] leading-none md:block"
+        style={{ color: "var(--paper)", opacity: 0.03 }}
+      >
+        &#9822;
+      </span>
       <div className="flex min-w-0 items-start gap-4">
         {isOwner ? (
           <Link
@@ -726,10 +738,7 @@ function ProfileHeader({
               </span>
             )}
             {best && (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.03] px-2 py-0.5"
-                style={{ border: "1px solid var(--edge)" }}
-              >
+              <span className="inline-flex items-center gap-1.5">
                 <best.c.icon className="h-3 w-3" style={{ color: best.c.accent }} strokeWidth={2.2} aria-hidden />
                 <span className="font-mono text-xs tabular-nums text-parchment-100">{Math.round(best.r.rating)}</span>
                 <span className="text-[12px] text-parchment-400">{best.c.label}</span>
@@ -737,12 +746,15 @@ function ProfileHeader({
             )}
           </div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-300">
+          {/* One quiet meta line: presence, join date, friend count. */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-400">
             {showPresence && (
               <PresenceBadge state={presenceState} mode={presenceMode} lastSeenAt={user.lastSeenAt} />
             )}
-            <span className="text-parchment-400">
-              Member since {new Date(user.createdAt).toLocaleDateString()}
+            <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
+            <span aria-hidden className="text-parchment-600">&middot;</span>
+            <span>
+              {user.friendCount} {user.friendCount === 1 ? "friend" : "friends"}
             </span>
           </div>
 
@@ -1133,8 +1145,11 @@ function GamesTab({
 
   return (
     <div>
-      {/* Counts header */}
-      <div className="plate flex flex-wrap items-center gap-x-5 gap-y-2 p-3">
+      {/* Counts header: one quiet line above a hairline. */}
+      <div
+        className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b px-1 pb-3"
+        style={{ borderColor: "var(--edge)" }}
+      >
         {playingNow && (
           <span className="inline-flex items-center gap-1.5 smallcaps text-[12px] text-oxblood-glow">
             <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
@@ -1216,7 +1231,7 @@ function GamesTab({
           </div>
         ) : (
           <>
-            <div className="plate overflow-hidden">
+            <div className="border-b" style={{ borderColor: "var(--edge)" }}>
               {games.map((g) => (
                 <GameHistoryRow key={g.id} game={g} viewer={username} />
               ))}
@@ -1371,20 +1386,13 @@ interface StripAchievement {
   unlockedAt: number | null;
 }
 
-const STRIP_ACCENT: Record<StripAchievement["rarity"], string> = {
-  legendary: "#e0b256",
-  epic: "#b78fd6",
-  rare: "#4a9fee",
-  common: "#7eb59a",
-};
-
-// A one-row trophy shelf: the player's most recent (rarest-first on ties)
-// unlocks and their earned/total count, linking to the full wall.
+// A one-row trophy shelf: the player's 3 rarest unlocked achievements as
+// rarity-themed medallions plus their earned/total count, linking to the wall.
 function AchievementsStrip({ username }: { username: string }) {
   const [data, setData] = useState<{
     unlockedCount: number;
     total: number;
-    recent: StripAchievement[];
+    rarest: StripAchievement[];
   } | null>(null);
 
   useEffect(() => {
@@ -1402,13 +1410,14 @@ function AchievementsStrip({ username }: { username: string }) {
       .then((body) => {
         if (cancelled || !body) return;
         const rank = { legendary: 3, epic: 2, rare: 1, common: 0 } as const;
-        const recent = body.achievements
+        // Rarest first; newest unlock breaks ties within a rarity.
+        const rarest = body.achievements
           .filter((a) => a.unlocked)
           .sort(
-            (x, y) => (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0) || rank[y.rarity] - rank[x.rarity],
+            (x, y) => rank[y.rarity] - rank[x.rarity] || (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0),
           )
-          .slice(0, 6);
-        setData({ unlockedCount: body.unlockedCount, total: body.total, recent });
+          .slice(0, 3);
+        setData({ unlockedCount: body.unlockedCount, total: body.total, rarest });
       })
       .catch(() => {});
     return () => {
@@ -1419,7 +1428,8 @@ function AchievementsStrip({ username }: { username: string }) {
   return (
     <Link
       href={`/achievements?u=${encodeURIComponent(username)}`}
-      className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-3 transition hover:border-gold/40"
+      className="mt-6 flex flex-wrap items-center justify-between gap-3 border-y py-3 transition hover:bg-white/[0.02]"
+      style={{ borderColor: "var(--edge)" }}
     >
       <span className="flex items-center gap-2 font-display text-parchment-100">
         <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
@@ -1431,17 +1441,21 @@ function AchievementsStrip({ username }: { username: string }) {
         )}
       </span>
       <span className="flex items-center gap-2">
-        {data?.recent.map((a) => {
+        {data?.rarest.map((a) => {
           const Icon = achievementIcon(a.icon);
-          const accent = STRIP_ACCENT[a.rarity];
+          const theme = RARITY_THEME[a.rarity];
           return (
             <span
               key={a.id}
-              title={a.name}
-              className="grid h-8 w-8 place-items-center rounded-md border"
-              style={{ borderColor: `${accent}66`, background: `${accent}1a` }}
+              title={`${a.name} (${theme.label})`}
+              className="grid h-9 w-9 place-items-center rounded-full border"
+              style={{
+                borderColor: theme.border,
+                background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.30), rgb(${theme.rgb} / 0.06) 72%)`,
+                boxShadow: `0 0 10px -3px ${theme.glow}`,
+              }}
             >
-              <Icon className="h-4 w-4" style={{ color: accent }} strokeWidth={2} />
+              <Icon className="h-[18px] w-[18px]" style={{ color: theme.color }} strokeWidth={2} />
             </span>
           );
         })}
@@ -1459,7 +1473,7 @@ function AchievementsStrip({ username }: { username: string }) {
 // dropping out of the top 10 simply stops the medallion rendering.
 function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
   return (
-    <section aria-label="Leaderboard honors" className="mt-2 plate dgn-rivets p-3">
+    <section aria-label="Leaderboard honors" className="mt-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-2 font-display text-parchment-100">
           <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />

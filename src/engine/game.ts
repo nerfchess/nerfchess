@@ -424,6 +424,7 @@ function effectPublicSquares(e: ActiveEffect, board: BoardState): number[] {
     case "freeze":
     case "walnut":
     case "timed_loss":
+    case "cosmetic":
       return [e.sq];
     case "barred":
     case "strike":
@@ -456,6 +457,7 @@ function effectPublicSides(e: ActiveEffect): { owner?: Color; against?: Color } 
     case "strike":
     case "bonk":
     case "short_leash":
+    case "cosmetic":
       return { owner: e.owner };
     case "barred":
     case "no_pawn_advance":
@@ -750,7 +752,7 @@ function pruneOrphanedSquareEffects(game: NerfGame) {
   const bs = game.buffs;
   if (!bs) return;
   bs.effects = bs.effects.filter((e) => {
-    if (e.kind === "freeze" || e.kind === "walnut" || e.kind === "timed_loss") {
+    if (e.kind === "freeze" || e.kind === "walnut" || e.kind === "timed_loss" || e.kind === "cosmetic") {
       // A trade-off timer whose piece was captured (or otherwise vanished)
       // before it expired has nothing left to reclaim: drop it like a freeze.
       const p = game.board.pieces[e.sq];
@@ -1497,6 +1499,11 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       // A trade-off timer tracks its piece the same way, so the delayed loss
       // still lands on the right square after the piece moves.
       if (e.kind === "timed_loss" && e.owner === move.color && e.sq === move.from) {
+        e.sq = move.to;
+      }
+      // A cosmetic dressing rides its piece (a giant pawn stays giant when it
+      // advances). Pure visual: nothing else in the pipeline reads it.
+      if (e.kind === "cosmetic" && e.owner === move.color && e.sq === move.from) {
         e.sq = move.to;
       }
     }
