@@ -495,48 +495,38 @@ export const TIER9: Buff[] = [
     ),
   ),
 
-  // Purge: at the start of each of your next 2 turns, a random enemy piece
-  // (never the king) is dragged off the board. Held (spendOnUse:false) so it
-  // can fire twice; it arms on use and retires when all purges are spent.
-  // Two guaranteed removals still dismantles most defences.
+  // The Culling: reworked in the apex pass. On use it marks two random enemy
+  // pieces (never the king): one gets a timed_loss that removes it after the
+  // opponent's next completed turn (the mark follows the piece and is pruned if
+  // it is captured first), the other freezes for two of the opponent's turns.
+  // Both random draws run on the seeded api.rng inside the effect hook, so every
+  // replica marks the same pieces.
   apex(
     {
       id: "culling",
       icon: "Skull",
       name: "The Culling",
       description:
-        "At the start of each of your next 2 turns, a random enemy piece other than the king is captured.",
+        "Two random enemy pieces other than the king are marked: one is destroyed after your opponent's next turn, the other freezes for your opponent's next 2 turns.",
       category: "hex",
       flavor: "The list grows shorter.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    {
-      kind: "activated",
-      spendOnUse: false,
-      effect: (inst) => {
-        // Arm the purge on use; onMovePlayed does the work over the next turns.
-        if (inst.state.charges == null) inst.state.charges = 2;
-      },
-      onMovePlayed: (inst, move, api) => {
-        const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0) return;
-        // Fire at the boundary before each of my turns (the opponent's move
-        // just completed). Mirrors Voodoo Doll's rng-in-hook pattern.
-        if (move.color !== api.opp) return;
-        const targets = mySquares(api.board, api.opp).filter(
-          (sq) => api.board.pieces[sq]!.type !== "k",
-        );
-        if (targets.length === 0) return;
-        const victim = targets[api.rng.int(targets.length)];
-        api.removePiece(victim);
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
-      },
-      status: (inst) => {
-        const c = (inst.state.charges as number) ?? 0;
-        return c > 0 ? `${c} purge${c === 1 ? "" : "s"} left` : null;
-      },
-    },
+    activatedSimple((_inst, api) => {
+      const targets = mySquares(api.board, api.opp).filter(
+        (sq) => api.board.pieces[sq]!.type !== "k",
+      );
+      if (targets.length === 0) return;
+      const doomed = targets[api.rng.int(targets.length)];
+      // Removed after the opponent's next completed turn; the square follows the
+      // piece and the effect is pruned if the piece is captured first.
+      addEffect(api, { kind: "timed_loss", owner: api.opp, sq: doomed, turns: 1, then: "remove" });
+      const rest = targets.filter((sq) => sq !== doomed);
+      if (rest.length > 0) {
+        const frozen = rest[api.rng.int(rest.length)];
+        addEffect(api, { kind: "freeze", sq: frozen, owner: api.opp, turns: 2, skin: "stone" });
+      }
+    }),
   ),
 
   // Promoted from tier 8 (owner call): one queen deleting the entire enemy

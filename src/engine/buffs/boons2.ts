@@ -946,7 +946,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_standard_bearer",
       name: "Standard Bearer",
       description:
-        "One of your pawns takes up the army's standard: for the rest of the game it may also move like a queen, but never capture that way, and never onto a first or last rank. Its humble pawn captures remain.",
+        "One of your pawns takes up the army's standard: at most once in every four of your turns it may also move like a queen, up to three squares, but never to capture, and never onto a first or last rank. Its humble pawn captures remain.",
       tier: 6,
       category: "movement",
       icon: "FlagTriangleRight",
@@ -954,9 +954,67 @@ export const BOON_WAVE2: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },
-    pieceBound("p", "Choose the pawn that bears the standard", (board, sq, via) =>
-      slideMoves(board, sq, ALL_DIRS, via).filter((m) => !m.captured && pawnRankOk(m.to)),
-    ),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the pawn that bears the standard",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+        inst.state.cd = 0;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || ((inst.state.cd as number) ?? 0) > 0) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me) return;
+        addNovel(
+          moves,
+          slideMoves(api.board, sq, ALL_DIRS, inst.id, 3).filter(
+            (m) => !m.captured && pawnRankOk(m.to),
+          ),
+        );
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) {
+          if (move.promotion) {
+            inst.spent = true;
+            return;
+          }
+          inst.state.sq = move.to;
+        } else if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          return;
+        }
+        // A standard move starts the four-turn cooldown; your other turns tick
+        // it back down, so the queen-step returns on your fourth turn.
+        if (move.via === inst.id) inst.state.cd = 3;
+        else if (move.color === api.me) {
+          const cd = (inst.state.cd as number) ?? 0;
+          if (cd > 0) inst.state.cd = cd - 1;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a pawn";
+        const cd = (inst.state.cd as number) ?? 0;
+        const name = `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        return cd > 0 ? `standard on ${name}, ready in ${cd}` : `standard on ${name}, ready`;
+      },
+    },
   ),
 
   // ===== TIER 7 ==============================================================
