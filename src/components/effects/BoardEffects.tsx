@@ -1636,7 +1636,18 @@ export type SigSoundKey =
   | "aegis"
   | "cathedral"
   | "shades"
-  | "wall";
+  | "wall"
+  // --- Gambling voices (gm_* overhaul set; voices in sounds.ts, dispatch in
+  // Board.playSignature, used by gamblingPlays.tsx) ---
+  | "slots" // reel ticks decelerating + payline ding
+  | "wheel" // wheel clacker decelerating + settle
+  | "dice" // two knocks + a settle clatter
+  | "chips" // chip-stack riffle + felt thump
+  | "coinflip" // rising coin ring + the catch
+  | "vault" // drill grind + clank + alarm
+  | "gacha" // rising star chime
+  | "crashrocket" // climbing whistle + boom
+  | "bust"; // sad trombone
 
 /**
  * Where Board derives a signature's target squares. Batch 1 signatures read

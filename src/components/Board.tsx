@@ -136,9 +136,15 @@ import {
   playAtomic,
   playBlitz,
   playBonk,
+  playBustTrombone,
   playCataclysm,
   playCathedral,
   playChains,
+  playChipRiffle,
+  playCoinFlip,
+  playCrashRocket,
+  playDiceRoll,
+  playGachaChime,
   playClockCage,
   playClockIce,
   playColossus,
@@ -160,11 +166,14 @@ import {
   playShieldUp,
   playSiege,
   playSlip,
+  playSlots,
   playSnooze,
   playStun,
   playSummon,
   playTransform,
+  playVaultHeist,
   playWall,
+  playWheelSpin,
 } from "@/lib/sounds";
 
 interface Visual {
@@ -687,6 +696,25 @@ function playSignature(id: string, count: number) {
       return playShades();
     case "wall":
       return playWall();
+    // Gambling voices (gm_* set): each machine has its own noise.
+    case "slots":
+      return playSlots();
+    case "wheel":
+      return playWheelSpin();
+    case "dice":
+      return playDiceRoll();
+    case "chips":
+      return playChipRiffle(count);
+    case "coinflip":
+      return playCoinFlip();
+    case "vault":
+      return playVaultHeist();
+    case "gacha":
+      return playGachaChime();
+    case "crashrocket":
+      return playCrashRocket();
+    case "bust":
+      return playBustTrombone();
     default:
       return playExplosion();
   }

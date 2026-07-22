@@ -71,6 +71,7 @@ import {
   revealHeldBuffs,
 } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { isGodPanelUser, INFINITE_REROLLS } from "@/lib/godPanel";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
@@ -486,6 +487,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           { id: inst.id, tier: inst.tier },
           `Opponent's ${draftCardNoun(start.mode)} triggered`,
         );
+      }
+      // Gambling cards record their rolled outcome in inst.state; hand it to
+      // the play animation so the table enacts what actually happened.
+      if (inst.id.startsWith("gm_")) {
+        stashGamblingOutcome(inst.id, { ...inst.state, __spent: inst.spent === true });
       }
       fireSignature(inst.id);
     }
@@ -1254,6 +1260,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         // Signature spectacle for EITHER side's activation (the board update
         // below batches with this so the Board claims exactly this diff).
+        // Gambling cards first stash their just-rolled outcome (inst.state,
+        // filled by applyDraftAction above) so the animation plays the TRUE
+        // branch: the lootbox opens what it opened.
+        if (e.used.card?.id.startsWith("gm_")) {
+          const inst = g.buffs.players[e.used.color].buffs[e.used.buffIndex];
+          if (inst?.id === e.used.card.id) {
+            stashGamblingOutcome(inst.id, { ...inst.state, __spent: inst.spent === true });
+          }
+        }
         if (e.used.card) fireSignature(e.used.card.id);
         applyGame({ ...g });
       } else if (e.type === "draft-diff-flag") {

@@ -853,6 +853,126 @@ export function playWall(count = 5) {
   }
 }
 
+// --- Gambling voices (gm_* overhaul set) --------------------------------------
+// One synthesized voice per gambling machine, matching the gamblingPlays.tsx
+// choreography beats (reel stops, wheel clacker, dice clatter, boom). Same
+// house rules as the other signature voices: knock/tone primitives only, no
+// samples, gated by fx(), short enough to never smear across plays.
+
+/** Slots: three reel-stop tick runs (one per reel, staggered like the art),
+ * then the payline ding, a bright two-note bell. */
+export function playSlots(count = 3) {
+  if (!fx()) return;
+  const reels = Math.max(1, Math.min(count, 3));
+  for (let r = 0; r < reels; r++) {
+    const stopAt = 0.35 + r * 0.24;
+    // Decelerating ticks that end at the reel's stop.
+    for (let i = 0; i < 5; i++) {
+      const t = stopAt - (5 - i) * (0.028 + i * 0.012);
+      if (t < 0) continue;
+      knock({ filterFreq: 2400, filterQ: 9, dur: 0.02, gain: 0.14 + i * 0.02, delay: t });
+    }
+    knock({ filterFreq: 900, filterQ: 4, dur: 0.05, gain: 0.3, bodyFreq: 180, bodyGain: 0.16, bodyDur: 0.05, delay: stopAt });
+  }
+  // Payline ding.
+  tone({ freq: 1568, dur: 0.16, type: "sine", gain: 0.1, attack: 0.004, release: 0.22, delay: 1.02 });
+  tone({ freq: 2093, dur: 0.2, type: "sine", gain: 0.07, attack: 0.004, release: 0.26, delay: 1.1 });
+}
+
+/** Wheel: a clacker rattling past pegs, gaps widening as the wheel dies,
+ * ending in a soft pocket settle. */
+export function playWheelSpin() {
+  if (!fx()) return;
+  let t = 0;
+  let gap = 0.045;
+  for (let i = 0; i < 14; i++) {
+    knock({ filterFreq: 3000 - i * 90, filterQ: 8, dur: 0.02, gain: 0.22 - i * 0.008, delay: t });
+    t += gap;
+    gap *= 1.18;
+  }
+  knock({ filterFreq: 520, filterQ: 3, dur: 0.07, gain: 0.3, bodyFreq: 150, bodyGain: 0.2, bodyDur: 0.08, delay: t + 0.05 });
+}
+
+/** Dice: two hard knuckle-bounces, a skitter, and the settle pair. */
+export function playDiceRoll() {
+  if (!fx()) return;
+  knock({ filterFreq: 1500, filterQ: 5, dur: 0.04, gain: 0.4, bodyFreq: 240, bodyGain: 0.2, bodyDur: 0.05 });
+  knock({ filterFreq: 1250, filterQ: 5, dur: 0.04, gain: 0.34, bodyFreq: 210, bodyGain: 0.18, bodyDur: 0.05, delay: 0.14 });
+  knock({ filterFreq: 1900, filterQ: 7, dur: 0.025, gain: 0.18, delay: 0.26 });
+  knock({ filterFreq: 1700, filterQ: 7, dur: 0.025, gain: 0.14, delay: 0.33 });
+  // The two dice settle a hair apart.
+  knock({ filterFreq: 1000, filterQ: 4, dur: 0.05, gain: 0.3, bodyFreq: 190, bodyGain: 0.2, bodyDur: 0.06, delay: 0.44 });
+  knock({ filterFreq: 950, filterQ: 4, dur: 0.05, gain: 0.26, bodyFreq: 175, bodyGain: 0.18, bodyDur: 0.06, delay: 0.52 });
+}
+
+/** Chips: a fast riffle of clay clicks climbing the stack, capped by a felt
+ * thump as the tower lands. */
+export function playChipRiffle(count = 6) {
+  if (!fx()) return;
+  const n = Math.max(3, Math.min(count + 2, 9));
+  for (let i = 0; i < n; i++) {
+    knock({ filterFreq: 2100 + (i % 3) * 260, filterQ: 8, dur: 0.02, gain: 0.16 + i * 0.012, delay: i * 0.045 });
+  }
+  knock({ filterFreq: 480, filterQ: 2.4, dur: 0.08, gain: 0.34, bodyFreq: 140, bodyGain: 0.26, bodyDur: 0.09, delay: n * 0.045 + 0.06 });
+}
+
+/** Coin flip: a bright ring that wobbles while the coin tumbles, then the
+ * clean catch snap. */
+export function playCoinFlip() {
+  if (!fx()) return;
+  tone({ freq: 2350, dur: 0.5, type: "sine", gain: 0.07, sweep: 2600, release: 0.3 });
+  tone({ freq: 3520, dur: 0.4, type: "sine", gain: 0.035, sweep: 3800, release: 0.26, delay: 0.02 });
+  // Tumble shimmer: quick alternating partials.
+  tone({ freq: 2800, dur: 0.06, type: "triangle", gain: 0.03, release: 0.05, delay: 0.16 });
+  tone({ freq: 3100, dur: 0.06, type: "triangle", gain: 0.03, release: 0.05, delay: 0.3 });
+  // The catch.
+  knock({ filterFreq: 1400, filterQ: 4, dur: 0.05, gain: 0.34, bodyFreq: 220, bodyGain: 0.2, bodyDur: 0.06, delay: 0.62 });
+}
+
+/** Vault: drill grind, the tumbler clank, then the two-tone alarm whoop. */
+export function playVaultHeist() {
+  if (!fx()) return;
+  tone({ freq: 95, dur: 0.4, type: "sawtooth", gain: 0.09, sweep: 130, release: 0.08 });
+  tone({ freq: 190, dur: 0.4, type: "square", gain: 0.04, sweep: 260, release: 0.08, delay: 0.02 });
+  knock({ filterFreq: 2400, filterQ: 9, dur: 0.05, gain: 0.3, bodyFreq: 200, bodyGain: 0.18, bodyDur: 0.06, delay: 0.46 });
+  knock({ filterFreq: 1700, filterQ: 8, dur: 0.06, gain: 0.26, delay: 0.56 });
+  // Alarm: two rising whoops.
+  tone({ freq: 620, dur: 0.16, type: "square", gain: 0.06, sweep: 940, release: 0.06, delay: 0.72 });
+  tone({ freq: 620, dur: 0.16, type: "square", gain: 0.06, sweep: 940, release: 0.06, delay: 0.94 });
+}
+
+/** Gacha: a rising star-chime arpeggio with a detuned glisten on top. */
+export function playGachaChime() {
+  if (!fx()) return;
+  const steps = [784, 988, 1319, 1760];
+  steps.forEach((f, i) => {
+    tone({ freq: f, dur: 0.16, type: "triangle", gain: 0.09, attack: 0.004, release: 0.2, delay: i * 0.09 });
+    tone({ freq: f * 2, dur: 0.14, type: "sine", gain: 0.03, attack: 0.006, release: 0.2, delay: i * 0.09 + 0.02 });
+  });
+  tone({ freq: 3520, dur: 0.24, type: "sine", gain: 0.045, attack: 0.01, release: 0.3, delay: 0.42 });
+}
+
+/** Crash rocket: a climbing whistle that keeps climbing... then the boom. */
+export function playCrashRocket() {
+  if (!fx()) return;
+  tone({ freq: 480, dur: 0.75, type: "sine", gain: 0.08, sweep: 1900, release: 0.05 });
+  tone({ freq: 240, dur: 0.75, type: "sawtooth", gain: 0.04, sweep: 950, release: 0.05, delay: 0.01 });
+  knock({ filterFreq: 200, filterQ: 0.8, dur: 0.26, gain: 0.6, bodyFreq: 75, bodyGain: 0.55, bodyDur: 0.24, delay: 0.82 });
+  knock({ filterFreq: 1500, filterQ: 0.7, dur: 0.12, gain: 0.26, delay: 0.84 });
+}
+
+/** Bust: the sad trombone. Three slumping slides, the last one long. */
+export function playBustTrombone() {
+  if (!fx()) return;
+  const wah = (freq: number, delay: number, dur: number, gain: number) => {
+    tone({ freq, dur, type: "sawtooth", gain, sweep: freq * 0.84, attack: 0.02, release: 0.1, delay });
+    tone({ freq: freq / 2, dur, type: "triangle", gain: gain * 0.6, sweep: (freq / 2) * 0.84, attack: 0.02, release: 0.1, delay });
+  };
+  wah(311, 0, 0.22, 0.07);
+  wah(294, 0.28, 0.22, 0.07);
+  wah(277, 0.56, 0.5, 0.075);
+}
+
 // --- Passive effect family cues --------------------------------------------
 // Every card's persistent effect (a nerf reveal, a buff/boon/hex acquisition)
 // carries one of nine sound families in its passive composition
