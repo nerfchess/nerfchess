@@ -653,6 +653,42 @@ html[data-anim="off"] .bank-vault { opacity: 0; }
 }
 html[data-anim="off"] .draft-timer--urgent { animation: none; }
 
+/* Decision-start announcement: the countdown just replaced the preparation
+   label, so the player's time is now running. One restrained gold pulse
+   (transform/opacity + a brief ring), one shot, never looped. Stood down
+   entirely when animations are off. */
+.draft-timer--announce {
+  animation: draft-timer-announce 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes draft-timer-announce {
+  0% { transform: scale(0.94); box-shadow: 0 0 0 0 rgb(212 160 23 / 0.55); }
+  35% { transform: scale(1.04); box-shadow: 0 0 0 6px rgb(212 160 23 / 0.25); }
+  100% { transform: scale(1); box-shadow: 0 0 0 12px rgb(212 160 23 / 0); }
+}
+html[data-anim="off"] .draft-timer--announce { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .draft-timer--announce { animation: none; }
+}
+
+/* Preparation chip dot: a small gold ember breathing while the chest opens
+   and the cards deal. Opacity only; still (steady) under reduced motion. */
+.draft-prep-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 1px;
+  background: var(--accent-gold, #d4a017);
+  animation: draft-prep-dot 1.4s ease-in-out infinite;
+}
+@keyframes draft-prep-dot {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+html[data-anim="off"] .draft-prep-dot { animation: none; opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) {
+  .draft-prep-dot { animation: none; opacity: 0.8; }
+}
+
 /* ---------------------------------------------------------------------------
    Draft panel frame: ember-forged iron — a 1px rim that runs from hot ember
    orange through cold iron gray and back, like a band of metal fresh off the

@@ -119,6 +119,10 @@ export type MPDraftState = {
   chainKingGuard?: Color;
   historyDiverged?: boolean;
   players: Record<Color, MPDraftPlayerState>;
+  /** Current shared lock-in deadline (ms epoch), when a decision window is
+   * open. Carried on every dtState frame so a reroll's fresh window (and any
+   * server-side deadline change) reaches clients without a dedicated frame. */
+  deadline?: number;
 };
 
 export type MPDraftOffer = {

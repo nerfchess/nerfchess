@@ -26,6 +26,11 @@ export type SavedAiGame = {
   whiteMs: number;
   blackMs: number;
   premoves: QueuedPremove[];
+  /** Offer index whose decision window had already expired when the game was
+   * saved (the draft was running on the player's clock). Restored so a
+   * refresh cannot convert an expired draft back into a fresh paused one.
+   * Absent in older saves and when no window had expired. */
+  draftOnClockIndex?: number | null;
   game: {
     board: NerfGame["board"];
     white: SavedPlayerSlot;
@@ -141,6 +146,7 @@ export function saveAiGame(input: {
   premoves: QueuedPremove[];
   whiteCustomSpec?: CustomNerf | null;
   blackCustomSpec?: CustomNerf | null;
+  draftOnClockIndex?: number | null;
 }) {
   if (typeof window === "undefined") return;
   const white = saveSlot(input.game.white, input.whiteCustomSpec);
@@ -153,6 +159,7 @@ export function saveAiGame(input: {
     whiteMs: input.whiteMs,
     blackMs: input.blackMs,
     premoves: [],
+    ...(input.draftOnClockIndex != null ? { draftOnClockIndex: input.draftOnClockIndex } : {}),
     game: {
       board: input.game.board,
       white,

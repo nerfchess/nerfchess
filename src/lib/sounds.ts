@@ -399,6 +399,18 @@ export function playDraftUrgent() {
   tone({ freq: 311, dur: 0.3, type: "sine", gain: 0.08, attack: 0.004, release: 0.28, delay: 0.16 });
 }
 
+// Draft decision window opening: the cards are dealt, readable, and the
+// countdown just appeared. A small, bright two-note lift (up a fourth), much
+// softer than the urgent knock: it says "your time starts now", not "hurry".
+// Gated by the master switch + mute like the other draft voices.
+export function playDecisionStart() {
+  if (!soundPrefs.enabled) return;
+  if (isMuted()) return;
+  tone({ freq: 988, dur: 0.1, type: "sine", gain: 0.1, attack: 0.004, release: 0.09 });
+  tone({ freq: 1318, dur: 0.2, type: "sine", gain: 0.12, attack: 0.004, release: 0.18, delay: 0.09 });
+  tone({ freq: 2637, dur: 0.16, type: "sine", gain: 0.035, attack: 0.004, release: 0.15, delay: 0.09 });
+}
+
 // Incoming challenge: the lichess social notify (what lichess plays when a
 // challenge lands in your inbox).
 export function playChallenge() {

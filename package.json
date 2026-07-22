@@ -22,6 +22,7 @@
     "test:sound": "node scripts/check-sound-coverage.cjs",
     "test:card-registry": "npx -y tsx scripts/gen-card-registry.ts --check",
     "test:draft-fairness": "npx -y tsx scripts/test-draft-fairness.ts",
+    "test:draft-sequence": "npx -y tsx scripts/test-draft-sequence.ts",
     "audit:cards": "npx -y tsx scripts/audit-cards.ts",
     "test:buff-purity": "npx -y tsx scripts/test-buff-purity.ts",
     "test:balance-fixes": "npx -y tsx scripts/test-balance-fixes.ts",
