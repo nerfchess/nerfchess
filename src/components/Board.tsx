@@ -844,7 +844,8 @@ function animDurationMs(): number {
   // easing below) reads as a decisive snap and stops stacking on top of network
   // lag when an opponent's move arrives late.
   if (mode === "fast") return 90;
-  return 140;
+  // Inside the 90-130ms target for normal piece movement (2026-07 pass).
+  return 120;
 }
 
 // Pending animation cleanups, per piece element: starting a new slide on an
