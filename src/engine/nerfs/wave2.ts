@@ -414,7 +414,7 @@ const KILLING_SPREE: Nerf = nerf(
         return { text: "The spree demands blood and there is none to spill. This move loses.", tone: "warn" };
       }
       return {
-        text: "Killing spree: you must capture again this turn.",
+        text: "Killing spree: you must capture again this turn or you lose.",
         squares: Array.from(new Set(caps.map((m) => m.from))),
         tone: "warn",
       };
@@ -446,7 +446,7 @@ const PYRRHIC_VICTORIES: Nerf = nerf(
     name: "Pyrrhic Victories",
     tier: 8,
     icon: "mountain",
-    description: "Any of your pieces that captures turns to stone and can never move again. Your king is immune to the curse.",
+    description: "Any of your pieces that captures turns to stone and can never move again; a petrified piece can still be captured by your opponent. Your king is immune to the curse.",
     flavor: "Every victory costs a soldier.",
   },
   {
