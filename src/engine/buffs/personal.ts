@@ -148,7 +148,7 @@ const GYM: Buff[] = [
       id: "waist_25",
       name: "25 Inch Waist",
       description:
-        "Lean and nimble: each of your pawns may also slip diagonally forward one square onto empty ground, no capture needed, wiggling past the traffic.",
+        "Lean and nimble: after your opponent's next move, each of your pawns may also slip diagonally forward one square onto empty ground, no capture needed, wiggling past the traffic.",
       tier: 2,
       category: "movement",
       requires: ["p"],
@@ -156,19 +156,32 @@ const GYM: Buff[] = [
       flavor: "No belt, no problem, no spare inch.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
-        const dr = fwd(api.board.pieces[sq]!.color);
-        const tos = [
-          [FILE(sq) + 1, RANK(sq) + dr],
-          [FILE(sq) - 1, RANK(sq) + dr],
-        ]
-          .filter(([f, r]) => inBoard(f, r))
-          .map(([f, r]) => SQ(f, r))
-          .filter((s) => pawnRankOk(s));
-        return teleportMoves(api.board, sq, tos, inst.id);
-      }),
-    ),
+    {
+      kind: "passive",
+      // Delayed grant: the diagonal slip only wakes after your opponent's next
+      // move, so the augment stays inert until then.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active && move.color === api.opp) inst.state.active = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.active) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "p").flatMap((sq) => {
+            const dr = fwd(api.board.pieces[sq]!.color);
+            const tos = [
+              [FILE(sq) + 1, RANK(sq) + dr],
+              [FILE(sq) - 1, RANK(sq) + dr],
+            ]
+              .filter(([f, r]) => inBoard(f, r))
+              .map(([f, r]) => SQ(f, r))
+              .filter((s) => pawnRankOk(s));
+            return teleportMoves(api.board, sq, tos, inst.id);
+          }),
+        );
+      },
+      status: (inst) => (inst.state.active ? null : "wakes after your opponent replies"),
+    },
   ),
 
   card(
@@ -227,7 +240,7 @@ const GYM: Buff[] = [
       id: "muscle_up",
       name: "Muscle Up",
       description:
-        "Explosive pull-up: take one of your pieces except the king and hurl it straight up its own file to any empty square, blurring past everything in the way. Once.",
+        "Explosive pull-up: take one of your pieces except the king and hurl it straight up its own file to any empty square, phasing past your own pieces but stopping short of the first enemy in its lane. Once.",
       tier: 4,
       category: "movement",
       icon: "ArrowUpFromLine",

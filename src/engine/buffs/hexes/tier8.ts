@@ -327,38 +327,82 @@ export const HEXES_T8: Buff[] = [
     {
       id: "blighted_furrows",
       name: "Blighted Furrows",
-      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns.",
+      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns, though the first pawn to try may make one advance before the lock takes hold.",
       flavor: "The fields are poisoned; the tallest stalks fall first.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "p")) {
-        if (relRank(api.opp, sq) >= 5) api.removePiece(sq);
-      }
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        for (const sq of mySquares(api.board, api.opp, "p")) {
+          if (relRank(api.opp, sq) >= 5) api.removePiece(sq);
+        }
+        inst.state.turns = 4;
+        inst.state.escapeUsed = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // A pawn advance is a non-capturing forward push (file unchanged).
+        const isAdvance = (m: (typeof moves)[number]) =>
+          m.piece === "p" && FILE(m.from) === FILE(m.to);
+        if (inst.state.escapeUsed) {
+          const kept = moves.filter((m) => !isAdvance(m));
+          return kept.length > 0 ? kept : moves;
+        }
+        // Escape unused: the first affected pawn (lowest square with an advance)
+        // keeps its advance; every other pawn's advance is blocked.
+        let escapeFrom: number | null = null;
+        for (const m of moves) {
+          if (isAdvance(m) && (escapeFrom === null || m.from < escapeFrom)) escapeFrom = m.from;
+        }
+        const kept = moves.filter((m) => !isAdvance(m) || m.from === escapeFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          move.piece === "p" &&
+          FILE(move.from) === FILE(move.to)
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- combo: skip a whole turn AND block the next 2 drafts ----------------
   H(
     {
-      // The scaled-up sibling of Time Lock (one skip, two blocked drafts):
-      // a full two turns stripped on top of the two drafts.
       id: "sacked_capital",
       name: "Sacked Capital",
-      description: "Your opponent skips their next 2 turns entirely, and their next draft is skipped as well.",
+      description: "Your opponent skips their next turn and their next draft. On the turn they return, they may move only pawns or their king.",
       flavor: "The capital burns, the messengers scatter, and no orders reach the field.",
       // fx covers the turn skip; the draft denial half shows no board motif.
       fx: { motif: "slow", pieces: "all" },
     },
-    // Rebalance: two skipped turns AND two skipped drafts was double denial on
-    // both axes. The turn skip (the card's identity) is kept at 2; the draft
-    // denial drops to one (blockedDrafts +2 -> +1).
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 2;
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-    }),
+    // Rebalance: the old double skip plus a draft skip was denial on every axis.
+    // Now a single skipped turn and a single skipped draft, and the return turn
+    // is hobbled to pawn or king moves only. The 1-turn filter cannot tick
+    // during the skip (no completed opponent move), so it bites on the turn
+    // they finally return.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.bs.skips[api.opp] += 1;
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        inst.state.turns = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- barred: seal the victim's 4th, 5th and 6th ranks for 3 turns --------
