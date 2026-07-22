@@ -371,7 +371,7 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
 export const UNTITLED_DUCK: Nerf = db({
   id: "untitled_duck",
   name: "Untitled duck nerf",
-  description: "A duck occupies one random square (shown on the board) all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it.",
+  description: "A duck occupies one random square, marked on the board from the opening turn (a full turn before it can matter), all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it. If the duck would leave you fewer than three legal moves, it steps aside for that turn.",
   flavor: "Quack.",
   tier: 1,
   icon: "bird",
@@ -384,7 +384,7 @@ export const UNTITLED_DUCK: Nerf = db({
   },
   filterMoves: (moves, state) => {
     const s = state as { duck: number };
-    return moves.filter((m) => {
+    const filtered = moves.filter((m) => {
       if (m.to === s.duck) return false;
       // sliders must not pass through; we approximate by checking interior squares of straight-line moves
       const df = Math.sign(FILE(m.to) - FILE(m.from));
@@ -397,6 +397,9 @@ export const UNTITLED_DUCK: Nerf = db({
       }
       return true;
     });
+    // Guarantee at least three legal moves: if the duck would strand you with
+    // fewer, it steps aside for this turn.
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => ({ duckSquare: (state as { duck: number }).duck }),
 });

@@ -243,28 +243,66 @@ export const HEXES_T4: Buff[] = [
     {
       id: "sealed_gate",
       name: "Sealed Gate",
-      description: "Brick up one gate of your choosing: pick any square, and your opponent cannot move any piece onto that square's entire file for their next 3 turns.",
+      description: "Brick up one gate of your choosing: pick any square. The first enemy piece to step onto that square's file passes through freely; the instant it does, the whole file seals against your opponent for the remainder of their next 3 turns.",
       flavor: "Any gate can be bricked shut, if you know which one.",
-      // Board already paints barred squares; square-scoped, no pieces field.
+      // Board paints the barred file once it seals; square-scoped, no pieces field.
       fx: { motif: "blindfold" },
     },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once aimed, the gate never re-aims.
+      targets: (inst, _api, picks) =>
+        picks.length > 0 || inst.state.file != null
           ? null
           : {
               kind: "square",
               label: "Pick any square on the file to seal",
               squares: Array.from({ length: 64 }, (_, i) => i),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.file != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        const squares: number[] = [];
-        for (let r = 0; r < 8; r++) squares.push(SQ(FILE(sq), r));
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+        inst.state.file = FILE(sq);
+        inst.state.turns = 3;
+        // The gate stands open until one piece slips through it.
+        inst.state.open = true;
       },
-    ),
+      filterOpponentMoves: (moves, inst, _api) => {
+        const file = inst.state.file as number | undefined;
+        if (file == null || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        if (inst.state.open) return moves; // one piece may still pass
+        const kept = moves.filter((m) => FILE(m.to) !== file);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const file = inst.state.file as number | undefined;
+        if (file == null) return;
+        if (inst.state.open && FILE(move.to) === file) {
+          // The escaping piece pulls the gate shut behind it: paint and seal the
+          // file for the rest of the duration. Added during their move, so the
+          // post-move tick eats one turn; the current count leaves the rest.
+          inst.state.open = false;
+          const rem = (inst.state.turns as number) ?? 0;
+          if (rem > 1) {
+            const squares: number[] = [];
+            for (let r = 0; r < 8; r++) squares.push(SQ(file, r));
+            addEffect(api, { kind: "barred", squares, against: api.opp, turns: rem });
+          }
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.file == null
+          ? "activate to seal a file"
+          : inst.state.open
+            ? "the gate stands open for one pass"
+            : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- direction-gated clamp: advances crawl, retreats are free ------------
