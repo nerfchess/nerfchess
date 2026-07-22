@@ -652,6 +652,7 @@ const T3: Buff[] = [
         inst.state.a = a;
         inst.state.b = b;
         inst.state.turns = 6;
+        inst.state.escaped = false;
       },
       onMovePlayed: (inst, move, api) => {
         let a = (inst.state.a as Square | null | undefined) ?? null;
@@ -668,11 +669,15 @@ const T3: Buff[] = [
           return;
         }
         if (move.color === api.opp && turnsLeft(inst) > 0 && (capA || capB)) {
-          const twin = capA ? b : a;
-          const p = api.board.pieces[twin];
-          if (p && p.color === api.opp && p.type !== "k") {
-            // Added during their own move: 3 leaves exactly 2 of their turns.
-            addEffect(api, { kind: "freeze", sq: twin, owner: api.opp, turns: 3, skin: "web" });
+          if (!inst.state.escaped) {
+            inst.state.escaped = true; // the first strike by either is free
+          } else {
+            const twin = capA ? b : a;
+            const p = api.board.pieces[twin];
+            if (p && p.color === api.opp && p.type !== "k") {
+              // Added during their own move: 3 leaves exactly 2 of their turns.
+              addEffect(api, { kind: "freeze", sq: twin, owner: api.opp, turns: 3, skin: "web" });
+            }
           }
         }
         tickTurns(inst, move, api.opp);

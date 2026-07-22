@@ -293,9 +293,10 @@ const T5: Buff[] = [
     instant((_inst, api) => barNow(api, CENTER4, 1)),
   ),
   H5(
-    { id: "hx4_honey_spill", name: "Honey Spill", description: "A barrel of honey bursts over the stables: all of your opponent's knights are stuck fast and cannot move for 2 of their turns.", flavor: "Sweetest trap ever set.", icon: "Droplet", fx: { motif: "jail", pieces: ["n"] } },
+    { id: "hx4_honey_spill", name: "Honey Spill", description: "A barrel of honey bursts over the stables: all but one of your opponent's knights are stuck fast and cannot move for 2 of their turns. The first knight the honey reaches wriggles free.", flavor: "Sweetest trap ever set.", icon: "Droplet", fx: { motif: "jail", pieces: ["n"] } },
     instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "n")) freezeNow(api, sq, 2, "honey");
+      const knights = mySquares(api.board, api.opp, "n");
+      for (let i = 1; i < knights.length; i++) freezeNow(api, knights[i], 2, "honey");
     }),
   ),
   H5(

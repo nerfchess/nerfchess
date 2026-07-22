@@ -927,12 +927,14 @@ const TIER1: Buff[] = [
         }
       }
       return out;
-    }),
+    }, 2),
   ),
   def(
-    { id: "rook_slide", requires: ["r"], name: "Rook Slide", description: "One rook moves one square diagonally, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id, 1)),
+    { id: "rook_slide", requires: ["r"], name: "Rook Slide", description: "One rook moves one square diagonally, twice.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
+    augment(
+      (_m, inst, api) =>
+        mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id, 1)),
+      2,
     ),
   ),
   def(
