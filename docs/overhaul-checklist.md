@@ -77,6 +77,16 @@ Keep: tier curve + jitter + top-tier slip gate (tier progression), banking (+1, 
 - One Tier 7 card takes both cards from the next draft; another similar-tier card takes both from the next TWO drafts (strict domination). Identify ids; fix progression.
 (Statuses here must be filled in with real card ids and outcomes during Phase 2/8. Do not mark resolved without a diff.)
 
+## Late owner additions (2026-07-22 night, full autonomy continues)
+
+- Leaderboard UI improvement; Codex UI intuitiveness overhaul.
+- Square edges app-wide (rounded corners removed except semantic circles).
+- Remove sort feature from TV live games list.
+- 2 gambling hexes + 2 gambling boons (nerf-mode pools).
+- OPENING BUFF DRAFT: buff-mode games start with an opener pick mirroring the
+  opening nerf pair; ~250 unique tiny "opener" buffs, each with a unique
+  entrance animation. Owner reviews the set after implementation.
+
 ## Decisions log
 
 - 2026-07-22: Overhaul started. Roster approved with 29 replacements + 24 gambling cards; hexes/boons = 100 + 100 total.

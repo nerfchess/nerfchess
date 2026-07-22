@@ -15,7 +15,7 @@ import {
 import { grantGuaranteedTier9, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
-import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollOpenerOffers, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "./types";
@@ -673,6 +673,11 @@ export function enableDraftMode(
   if (opts?.stackFor && opts.stackBoost && opts.stackBoost > 0) {
     game.buffs.players[opts.stackFor].flags.stackBoost = opts.stackBoost;
   }
+  // Buff mode's OPENING pick (owner feature): both players are dealt a pair
+  // of tiny opener cards before the first move, mirroring the opening nerf
+  // pair. Deterministic from the seed above, so every replica and every
+  // rebuild deals the identical pairs (replay-safe by construction).
+  rollOpenerOffers(game.buffs);
 }
 
 export function newGameAsColor(myNerf: Nerf, myColor: Color, mySeed: number): NerfGame {

@@ -19,6 +19,8 @@ import {
   emptySquares,
   explodeAt,
   captureSquare,
+  leapMoves,
+  KNIGHT_LEAPS,
   FILE,
   RANK,
 } from "./shared";
@@ -84,12 +86,63 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Hexagon",
       name: "Summoning Circle",
       description:
-        "Chalk the circle and speak a greater name: a summoned queen steps through onto any empty square and serves for 6 of your turns before the circle pulls her back.",
+        "Chalk the circle and speak a greater name: an Amazon steps through onto any empty square and serves for the rest of the game, moving as queen and knight both. Whoever fells her is dragged into the circle after her. Kings are too large to pull through.",
       tier: 8,
       category: "pieces",
       flavor: "One name spoken, and the candles all lean away.",
     },
-    summonTemp("q", 6, anyEmptyZone),
+    // Overhaul balance pass: the old 6-turn loaner queen was strictly worse
+    // than Summon Dragon one tier BELOW it (permanent queen + fire breath).
+    // The circle now delivers a tier-8 moment: a permanent Amazon (queen +
+    // knight mover) with a revenge clause that makes every trade against her
+    // cost the capturer too (kings exempt, so she creates no mate immunity).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the Amazon steps through",
+              squares: emptySquares(api.board, anyEmptyZone(api)),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        api.place(sq, "q", api.me);
+        inst.state.sq = sq;
+      },
+      // She also leaps like a knight (the amazon movement grant).
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "q") return;
+        moves.push(...leapMoves(api.board, sq, KNIGHT_LEAPS, api.me));
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.to === sq && move.from !== sq) {
+          // She was slain: the circle drags her killer through after her.
+          // Kings are exempt (no accidental win/mate immunity through her).
+          const killer = api.board.pieces[move.to];
+          if (killer && killer.color !== api.me && killer.type !== "k") {
+            api.removePiece(move.to);
+          }
+          inst.spent = true;
+          return;
+        }
+        if (move.from === sq) inst.state.sq = move.to;
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to open the circle"
+          : `Amazon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     {

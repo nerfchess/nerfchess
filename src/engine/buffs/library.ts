@@ -3630,11 +3630,15 @@ const TIER7: Buff[] = [
     activatedSimple((_inst, api) => reformArmy(api)),
   ),
   def(
-    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft.", tier: 7, category: "draft" },
-    // Rebalance: takeBoth reduced from your next TWO drafts to just the next
-    // one (+2 -> +1), a ~30% trim on the raw card economy it prints.
+    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft, and that draft rolls one tier higher.", tier: 7, category: "draft" },
+    // Overhaul balance pass: the old text ("take both cards in your next
+    // draft") was an exact duplicate of Greed (wa_greed, tier 6) one tier
+    // higher, i.e. strictly dominated. The sovereign now also lifts the offer
+    // one tier (same lift as a banked skip, capped by the same rollOffer
+    // rules), so tier 7 buys a real step over Greed.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
   // Nerf-modifiers (cross-cutting)

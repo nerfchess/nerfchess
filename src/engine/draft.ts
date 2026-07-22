@@ -288,6 +288,8 @@ function rollCards(
     for (const tag of COMBO_TAGS[held.id] ?? []) heldComboTags.add(tag);
   }
   const inMode = (b: Buff) => {
+    // Openers only ever come from the opening pick (rollOpenerOffers).
+    if (b.opener) return false;
     if (heldComboTags.size > 0 && (COMBO_TAGS[b.id] ?? []).some((t) => heldComboTags.has(t)))
       return false;
     // Apex cards (special / tier 9 apex / tier 10 mythic) are never in the
@@ -491,6 +493,49 @@ export function rollOffer(
   return offer;
 }
 
+// ---------------------------------------------------------------------------
+// The OPENING buff pick (owner feature, buff mode only): before the first
+// move each player is dealt 2 opener cards (Buff.opener) and picks one,
+// mirroring the opening nerf pair. Offer INDEX 0 marks it: draftsTaken stays
+// 0 so the cadence curve is untouched, rerolls are refused on it (a reroll
+// would leak normal pool cards into the opening), and banking it simply
+// declines (the normal +1 bank bonus applies, a fun consolation).
+// Deterministic: two uniform draws per color off the shared draft RNG, so
+// every replica and replay deals the identical pairs.
+// ---------------------------------------------------------------------------
+
+/** The opener pool: implemented opener-flagged cards. */
+export function openerPool(): Buff[] {
+  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true);
+}
+
+/** Deal both players' opening offers (buff mode). Call once right after
+ * enableDraftMode; a no-op when the pool is empty or offers already exist. */
+export function rollOpenerOffers(bs: BuffMatchState): void {
+  if (bs.mode !== "buff") return;
+  const pool = openerPool();
+  if (pool.length < 2) return;
+  const rng = drawRng(bs);
+  for (const color of ["w", "b"] as const) {
+    const ps = bs.players[color];
+    if (ps.offer || ps.draftsTaken > 0) continue;
+    const first = pool[rng.int(pool.length)];
+    let second = pool[rng.int(pool.length)];
+    // Distinct pair (single bounded re-draw keeps the stream deterministic).
+    for (let i = 0; second.id === first.id && i < 8; i++) second = pool[rng.int(pool.length)];
+    if (second.id === first.id) second = pool[(pool.indexOf(first) + 1) % pool.length];
+    ps.offer = {
+      cards: [
+        { id: first.id, tier: first.tier },
+        { id: second.id, tier: second.tier },
+      ],
+      index: 0,
+    };
+    ps.offerTiers = [first.tier, second.tier];
+  }
+  saveRng(bs, rng);
+}
+
 /** Skip the pending offer, banking +1 tier for the next one (capped). */
 export function bankOffer(ps: PlayerBuffState) {
   // Reward for skipping a strong offer: if the offer being banked CONTAINED a
@@ -512,6 +557,9 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   const ps = bs.players[color];
   const offer = ps.offer;
   if (!offer || (ps.rerollsLeft ?? 0) <= 0) return false;
+  // The opening pick (index 0) cannot be rerolled: a reroll draws from the
+  // NORMAL pool and would leak cadence cards into the opening. Bank or pick.
+  if (offer.index === 0) return false;
   const slotTiers = (ps.offerTiers?.length ? ps.offerTiers : offer.cards.map((c) => c.tier)) as Tier[];
   // An apex offer (from banking at the top tier) never rolls off the normal
   // pool: rerolling it draws FRESH apex cards off the seeded RNG rather than

@@ -12,7 +12,7 @@
 //    board/effects are stashed, pending offers are cancelled, buffs cannot be
 //    activated, and NO mythic is granted at cast time.
 // 4. Deciding the diff (king capture) restores the paused board and effects,
-//    hands ONLY the winner a guaranteed tier-10 mythic, and the match itself
+//    hands ONLY the winner a guaranteed tier-9 apex card, and the match itself
 //    keeps running. A clock flag (resolveDiffFlag) resolves the same way.
 // 5. The three amped mythics (Oblivion, Grand Army, Ascendancy) plus the
 //    Total War card resolve without stranding the opponent's king.
@@ -189,12 +189,14 @@ function clearDiffBoard(game: NerfGame) {
   const blackHeld = nbs.players.b.buffs;
   const granted = blackHeld[blackHeld.length - 1];
   const grantedDef = granted && BUFF_BY_ID[granted.id];
+  // Balance pass contract: the diff's prize is a GUARANTEED tier-9 apex card
+  // (one band below the mythic it used to pay; see grantGuaranteedTier9).
   check(
-    blackHeld.length === 1 && grantedDef?.tier === 10 && grantedDef.special === true,
-    `the diff's WINNER is handed a guaranteed tier-10 mythic (${granted?.id})`,
+    blackHeld.length === 1 && grantedDef?.tier === 9 && grantedDef.special === true,
+    `the diff's WINNER is handed a guaranteed tier-9 apex (${granted?.id})`,
   );
   check(
-    nbs.players.w.buffs.every((b) => BUFF_BY_ID[b.id]?.tier !== 10),
+    nbs.players.w.buffs.every((b) => (BUFF_BY_ID[b.id]?.tier ?? 0) < 9),
     "the loser (the caster here) gets nothing",
   );
 }
@@ -209,8 +211,8 @@ function clearDiffBoard(game: NerfGame) {
   const blackHeld = bs.players.b.buffs;
   const granted = blackHeld[blackHeld.length - 1];
   check(
-    blackHeld.length === 1 && BUFF_BY_ID[granted?.id]?.tier === 10,
-    "the flagged side's opponent wins the diff's mythic",
+    blackHeld.length === 1 && BUFF_BY_ID[granted?.id]?.tier === 9,
+    "the flagged side's opponent wins the diff's apex prize",
   );
   check(game.board.turn === "b" && !boardIsStandardOpening(game), "the paused board and turn are restored after a flag");
 }

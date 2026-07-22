@@ -536,6 +536,10 @@ export interface Buff {
    * the normal draft roll and can only be obtained through a dedicated grant
    * (the gambling Jackpot card or banking at the top tier). */
   special?: boolean;
+  /** Opener cards: the tiny buff dealt as buff mode's OPENING pick (mirroring
+   * the opening nerf pair). Never offered by the normal cadence draft; only
+   * rollOpenerOffers deals them, as offer index 0 before the first move. */
+  opener?: boolean;
   category: BuffCategory;
   /** Part of nerf mode's boon pool. Category "nerf" cards are boons
    * implicitly (see isBoon); light general cards flagged here round the
