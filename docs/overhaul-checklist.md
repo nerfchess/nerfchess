@@ -29,17 +29,17 @@ This file is the cross-session source of truth for overhaul progress. Update sta
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | Persistent checklist + roster docs in repo | IN PROGRESS |
-| 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | TOOLING DONE (1366 rows; 126 dup-sig, 49 near-dup, 48 dominated-candidates, 2 misleading flagged). Per-card actions land via scripts/card-actions.json in Phase 8. |
+| 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | DONE: tooling + parameter-aware signatures; card-actions.json carries the deliberate decisions (78 reviewed entries and growing through Phase 8) |
 | 3 | Draft RNG fairness + seeded distribution tests | DONE (draft.ts weighting removed; scripts/test-draft-fairness.ts, npm run test:draft-fairness, 23 checks green; sims updated to fair expectations) |
 | 4 | Buff-mode Nerf-reference purge | DONE (genesis reworked to pure reset; chess_diff + glossary text neutralized; 6 dual-effect nerf-text boons excluded from buff pool via NERF_REVEAL; gate: npm run test:buff-purity) |
-| 5 | Broken/silent card fixes + dev diagnostics | TODO |
-| 6 | Animation primitives expansion + gambling primitives | TODO |
-| 7 | Card laboratory (dev-only) | TODO |
-| 8 | Balance pass (duplicates, dominated, retier) + automated checks | TODO |
-| 9 | Implement 224 Buffs (tiers 1-8, incl. gambling) | TODO |
-| 10 | Implement 100 Hexes + 100 Boons | TODO |
+| 5 | Broken/silent card fixes + dev diagnostics | DONE: 3 "broken cards" were stale sims (walnut, opening band, diff prize; all updated); bank-drop unmount bug fixed; anim-off feedback restored (CastTextFallback); lab run-all harness (test:lab) = the standing no-silent-failure gate, 1483/1483 PASS |
+| 6 | Animation primitives expansion + gambling primitives | IN PROGRESS: generated-finisher layer (8 endings, every generated card) + opener entrance generator landed; gambling plays module in flight |
+| 7 | Card laboratory (dev-only) | DONE: /dev/lab + scripts/lab-run-all.ts (npm run test:lab) |
+| 8 | Balance pass | IN PROGRESS: three waves landed (circle/sovereign/outriders; white_monster/seelie/hoodie/favorable_stars/arcane_reroll/coupon; loot_filter/knight_court); card-actions.json is the decision record |
+| 9 | Implement 224 Buffs (tiers 1-8, incl. gambling) | DONE: 228 cards (224 + 2 gambling hexes + 2 gambling boons), library green in lab harness |
+| 10 | Implement 300 Hexes + 300 Boons | IN PROGRESS: wave4 agents writing hexes/wave4.ts + boons4.ts |
 | 11 | Animation/feedback improvement for every existing card | TODO |
-| 12 | Unique sound expansion | TODO |
+| 12 | Unique sound expansion | IN PROGRESS: per-card audio fingerprints landed (cueVariation); bespoke gambling voices in flight |
 | 13 | Performance / reduced motion / accessibility pass | TODO |
 | 14 | Verification (30-point acceptance list) + final report | TODO |
 
@@ -89,7 +89,7 @@ Keep: tier curve + jitter + top-tier slip gate (tier progression), banking (+1, 
 
 ## Decisions log
 
-- 2026-07-22: Overhaul started. Roster approved with 29 replacements + 24 gambling cards; hexes/boons = 100 + 100 total.
+- 2026-07-22: Overhaul started. Roster approved with 29 replacements + 24 gambling cards; hexes/boons raised to 300 + 300; opening buff draft added (249 openers, offer index 0, rollOpenerOffers).\n- Icon capacity: face identity is now the (icon, variant) pair (cardFaceVariant); the library outgrew the lucide catalog.
 - New buff modules live in `src/engine/buffs/overhaul/` (t1.ts .. t8.ts, gambling.ts); new hexes in `hexes/wave4.ts`; new boons in `boons4.ts`.
 - Gambling RNG: all rolls via `api.rng` (deterministic, replay-safe); outcome stored in `inst.state` for animation honesty; odds stated in descriptions match code constants.
 - Sound: new per-card cues synthesized in sounds.ts (`playCardCue(id)` layered voices); gambling gets bespoke voices (slots, wheel, dice, chips, crash).
