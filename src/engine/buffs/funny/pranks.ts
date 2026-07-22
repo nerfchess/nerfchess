@@ -139,7 +139,7 @@ export const FUNNY_PRANKS: Buff[] = [
       name: "Blue Screen of Death",
       description:
         "Their whole board bluescreens and reboots: collecting error info, then a slow restart. Your opponent's clock loses 35 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "A problem has been detected and NerfChess has been shut down. :(",
     },
@@ -153,7 +153,7 @@ export const FUNNY_PRANKS: Buff[] = [
       name: "Forced Update",
       description:
         "Installing update 1 of 3, do not turn off your opponent. A progress bar crawls: at the end of each of their next 3 turns their clock loses 8 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "This will only take a moment. (It will not only take a moment.)",
     },
@@ -179,7 +179,7 @@ export const FUNNY_PRANKS: Buff[] = [
       name: "NerfChess Defender",
       description:
         "Threat detected. A fake antivirus sweeps their board and quarantines up to 2 random enemy pieces: they cannot move for 2 of your opponent's turns. Kings are too big to quarantine.",
-      tier: 4,
+      tier: 3,
       category: "tempo",
       flavor: "Real-time protection is protecting nothing in real time.",
       fx: { motif: "jail", pieces: "all" },
@@ -248,7 +248,7 @@ export const FUNNY_PRANKS: Buff[] = [
       name: "Chain Letter",
       description:
         "Forward to 10 friends or else: a cursed email hops around their army. One random enemy piece freezes each of your opponent's next 3 turns, jumping to a different piece every time. Never a king.",
-      tier: 5,
+      tier: 4,
       category: "tempo",
       flavor: "Grandma forwarded this. Now it is legally your problem.",
     },

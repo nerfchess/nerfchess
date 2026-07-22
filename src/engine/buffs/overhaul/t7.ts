@@ -91,7 +91,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "The Great Flood",
       description:
         "A wave washes every piece on the central four ranks (kings excluded) one square toward its own back rank, where that square is empty. Blocked pieces stay.",
-      tier: 7,
+      tier: 6,
       category: "movement",
       icon: "Droplets",
       flavor: "Nobody built an ark. Everybody built excuses.",
@@ -196,7 +196,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Time Heist",
       description:
         "Your opponent skips their next turn. 6 of your turns later the timeline collects: they take one extra move.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "Hourglass",
       flavor: "Every stolen minute charges interest.",
@@ -226,7 +226,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Colossal Visitor",
       description:
         "A colossal lizard crosses a chosen file: every pawn on it is trampled, every other piece (kings excluded) is shoved one file aside where empty, and two random empty squares of the file smolder: your opponent cannot enter them for their next 2 turns.",
-      tier: 7,
+      tier: 6,
       category: "attack",
       icon: "Turtle",
       flavor: "It is not angry. It is just very, very wide.",
@@ -284,7 +284,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Prophecy Engine",
       description:
         "Point at an enemy piece: for your opponent's next 6 turns, every move they make with that piece type gains you 6 seconds. If they never move one, the engine pays 40 seconds when the prophecy closes.",
-      tier: 7,
+      tier: 5,
       category: "info",
       icon: "Orbit",
       flavor: "The gears do not predict the future. They invoice it.",
@@ -340,7 +340,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_speedhack",
       name: "Speedhack",
       description: "Each of your next 5 moves puts 6 seconds back on your clock.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       icon: "Gauge",
       flavor: "The anticheat looked at your rating and shrugged.",
@@ -368,7 +368,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Split the Timeline",
       description:
         "The timeline splits and both of you act at once: you and your opponent each gain one extra move, you first.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "GitBranch",
       flavor: "Somewhere, a version of you already blundered this.",
@@ -440,7 +440,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Grail Quest",
       description:
         "Send one of your knights away on quest. After 5 of your turns it returns to a random empty square in your half as a Grail Knight, permanently able to also step one square in any direction.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "Trophy",
       flavor: "He left with a horse and returned with a cup and opinions.",
@@ -518,7 +518,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "World Serpent",
       description:
         "For 4 of your turns the serpent bites its tail: your rooks' and queen's horizontal moves wrap around the board edge.",
-      tier: 7,
+      tier: 8,
       category: "movement",
       icon: "Infinity",
       flavor: "The board was never flat. You just moved like it was.",
@@ -565,7 +565,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Insider Trading",
       description:
         "See the cards of your opponent's next draft, and pocket 10 seconds for the tip.",
-      tier: 7,
+      tier: 5,
       category: "info",
       icon: "TrendingUp",
       flavor: "Allegedly. The briefcase was allegedly open.",
@@ -582,7 +582,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Coliseum",
       description:
         "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and you gain 10 seconds per point of value difference.",
-      tier: 7,
+      tier: 5,
       category: "attack",
       icon: "Swords",
       flavor: "The sand does not care who was favored.",
@@ -696,7 +696,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Fourth Wall Repair Crew",
       description:
         "For your next 3 turns, every enemy piece you capture is carried off-screen by the crew, gaining you 4 seconds each.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       icon: "HardHat",
       flavor: "Mind the cone. The scene is structural.",
@@ -725,7 +725,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Deja Vu",
       description:
         "You take one extra move right away, and the enemy piece that moved last (king excluded) is stuck in the loop and cannot move on your opponent's next turn.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "RotateCcw",
       flavor: "Haven't we... no. Surely not. Haven't we...",
@@ -755,7 +755,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Heavenly Bureaucracy",
       description:
         "Once within your next 8 turns: when an enemy move puts your king in check, the check is misfiled and your king is relocated to a random empty square that is not attacked. If no safe square exists, the filing stands.",
-      tier: 7,
+      tier: 6,
       category: "protection",
       icon: "Stamp",
       flavor: "Form 7-K (Regicide, Attempted) is missing a signature.",
@@ -793,7 +793,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Menagerie Stampede",
       description:
         "The herd thunders up two adjacent files: every pawn on them (both sides) is shoved to the neighboring file away from the stampede, or trampled if that square is blocked or off the board. Every other piece on them (kings excluded) is stunned for 1 turn.",
-      tier: 7,
+      tier: 8,
       category: "attack",
       icon: "PawPrint",
       flavor: "Rhinos first, ostriches second, one deeply confused cow.",
@@ -925,7 +925,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Ancestral Audience",
       description:
         "Revive your highest-value captured piece onto an empty square in your half. In fairness before the ancestors, your opponent's best captured pawn or minor returns to a random empty square in their half.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "DoorOpen",
       flavor: "The spirits grant two doors, and dignity demands both open.",
@@ -980,7 +980,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_cartographers_vault",
       name: "Cartographer's Vault",
       description: "Your next 2 drafts each offer 3 cards.",
-      tier: 7,
+      tier: 8,
       category: "draft",
       icon: "Map",
       flavor: "Every shelf is a coastline nobody has drafted yet.",

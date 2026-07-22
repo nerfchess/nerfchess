@@ -177,7 +177,7 @@ const GYM: Buff[] = [
       name: "Handstand Pushup",
       description:
         "Flip one pawn upside down. Forever it may also step and capture straight back or diagonally back toward your own side, but never onto its own back rank.",
-      tier: 3,
+      tier: 2,
       category: "movement",
       requires: ["p"],
       icon: "FlipVertical",
@@ -427,7 +427,7 @@ const GYM: Buff[] = [
       name: "Middle Part",
       description:
         "Not one hair off the axis: choose one of your pieces except the king or queen, and a perfect mirror copy of it materializes on the file-reflected square (a-file to h-file), if that square is empty. Once.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "FlipHorizontal2",
       flavor: "Split dead center. Both sides immaculate.",
@@ -505,7 +505,7 @@ const FOCUS: Buff[] = [
       name: "White Monster",
       description:
         "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
-      tier: 4,
+      tier: 5,
       category: "tempo",
       icon: "Zap",
       flavor: "Zero sugar. All consequences.",
@@ -621,7 +621,7 @@ const FOCUS: Buff[] = [
       name: "Geometry Dash",
       description:
         "One of your pieces hits the beat: it dashes straight forward, phasing over your own pieces and smashing up to 2 enemies in its lane before landing. Never kings.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       icon: "Triangle",
       flavor: "Jump. Jump. Do not miss the beat.",
@@ -1304,7 +1304,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       name: "I Love Chaewon",
       description:
         "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Feather",
       flavor: "Every step placed on purpose. The whole formation dances into place.",
@@ -1355,7 +1355,7 @@ const NAMED: Buff[] = [
       name: "Joseph Leung",
       description:
         "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "Fingerprint",
       flavor: "One name, all over it.",

@@ -142,7 +142,7 @@ export const BRAINROT: Buff[] = [
       name: "Tung Tung Tung Sahur",
       description:
         "The drum-man marches on your opponent's king. On each of your next 5 turns, the two enemy pieces nearest their king are bonked and cannot move for their next 2 turns. Kings are too stubborn to bonk.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "Tung tung tung tung tung tung tung tung tung sahur.",
     },
@@ -310,7 +310,7 @@ export const BRAINROT: Buff[] = [
       name: "Lirili Larila",
       description:
         "The cactus-elephant trades your afternoon for its hourglass: steal 45 seconds from your opponent's clock, but you skip your own next turn.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Is it later already? For you it is.",
     },
@@ -330,7 +330,7 @@ export const BRAINROT: Buff[] = [
       name: "Brr Brr Patapim",
       description:
         "The cold finds whoever wanders alone: every enemy piece except the king with no friendly piece on any square beside it freezes solid for their next 2 turns.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "Brr brr. Stay with the group.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
@@ -389,7 +389,7 @@ export const BRAINROT: Buff[] = [
       name: "Boneca Ambalabu",
       description:
         "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
-      tier: 3,
+      tier: 4,
       category: "hex",
       flavor: "Heavy is the tread that bears the frog.",
       fx: { motif: "anchor", pieces: "all" },
@@ -409,7 +409,7 @@ export const BRAINROT: Buff[] = [
       name: "Cappuccino Assassino",
       description:
         "The espresso assassin strikes before the foam settles: the enemy piece nearest your king (never their king) is destroyed, and the two enemy pieces nearest the scene of the crime are stunned for their next turn.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Decaffeinated. Permanently.",
     },
@@ -449,7 +449,7 @@ export const BRAINROT: Buff[] = [
       name: "Ballerina Cappuccina",
       description:
         "The coffee-cup ballerina leads a formation twirl: choose one of your pieces (not the king) to step one square, then up to two allies that stood beside it may each step one square too. No captures, just choreography.",
-      tier: 4,
+      tier: 5,
       category: "tempo",
       flavor: "Plié, rond de jambe, checkmate threat.",
     },
@@ -548,7 +548,7 @@ export const BRAINROT: Buff[] = [
       name: "Frigo Camelo",
       description:
         "The fridge-camel opens both doors: two of your pieces (never the king) are refrigerated: they cannot be captured for your opponent's next 2 turns, but each is frozen solid for 1 of your turns while it defrosts.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Crisp. Chilled. Slightly humming.",
     },
@@ -694,7 +694,7 @@ export const BRAINROT: Buff[] = [
       name: "Skibidi Flush",
       description:
         "The porcelain vortex opens: up to 3 chosen enemy pieces (never the king) are flushed back to their home squares (or, if home is taken, to the nearest empty square toward home). Nothing is captured; everything is humiliated.",
-      tier: 5,
+      tier: 4,
       category: "tempo",
       flavor: "Skibidi dop dop dop yes yes.",
     },

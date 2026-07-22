@@ -86,7 +86,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Golden Touch",
       description:
         "The next two enemy pieces you capture (other than kings) are reforged as your own and added to your army on empty squares in your half. The price of greed: each reforging turns one of your pawns to gold, and it is lost.",
-      tier: 6,
+      tier: 7,
       category: "pieces",
       flavor: "Everything you touch, and everything it costs you.",
     },
@@ -193,7 +193,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Overclocked",
       description:
         "Crank the clock speed: add 75 seconds to your own clock. Then everything runs hot and has to cool down, so for your next 3 turns all your pieces can move only one square.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       flavor: "More gigahertz, more regret.",
       fx: { motif: "anchor", pieces: "all", self: true },
@@ -232,7 +232,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Time Out",
       description:
         "The referee throws a flag on your opponent: their next draft is skipped and their clock loses 15 seconds.",
-      tier: 5,
+      tier: 3,
       category: "draft",
       flavor: "Two-minute penalty, no draft for you.",
     },
@@ -267,7 +267,7 @@ export const PT_TIME_CARDS: Buff[] = [
       // tier-4 clock cards, not a tier-2 trinket.
       description:
         "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Time and a half, in your favor.",
     },
@@ -284,7 +284,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Mystery Box",
       description:
         "Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 7.",
-      tier: 4,
+      tier: 3,
       category: "draft",
       flavor: "Could be a diamond, could be a sock.",
     },
@@ -310,7 +310,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Swap Meet",
       description:
         "Set up a stall and shake on a deal: your lowest-tier held card and a random one of your opponent's held cards are swapped between you.",
-      tier: 5,
+      tier: 4,
       category: "draft",
       flavor: "One player's junk...",
     },
@@ -353,7 +353,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Gamble",
       description:
         "Flip a fair coin, heads half the time. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
-      tier: 4,
+      tier: 3,
       category: "draft",
       flavor: "Heads you win, tails you win a little.",
     },
@@ -386,7 +386,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Jackpot",
       description:
         "Pull the lever for a one-in-two shot at a random apex card, one of the game's most powerful. Miss, and the consolation is still rich: your next draft rolls one tier higher and offers three cards instead of two.",
-      tier: 7,
+      tier: 6,
       category: "draft",
       flavor: "Cherry, cherry, and please, cherry.",
     },
@@ -417,7 +417,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "Double or Nothing",
       description:
         "Bet one of your other held cards on a coin flip. Heads: it is upgraded two tiers. Tails: it is knocked down one tier, but you keep it.",
-      tier: 4,
+      tier: 3,
       category: "draft",
       flavor: "Let it ride.",
     },

@@ -65,7 +65,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       icon: "Drama",
       name: "Understudy",
       description: "The first time your queen is captured, one of your bishops, or a knight if you have no bishop, immediately turns into a queen on its own square. If you have neither, nothing happens. Triggers once.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       flavor: "Spotlight, and a bow.",
     },

@@ -317,7 +317,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Blink",
       description:
         "Your king blinks: it trades places with one of your knights, bishops, or rooks, once.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       requires: ["n", "b", "r"],
       flavor: "Here, then not. There, then crowned.",
@@ -353,7 +353,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Far Step",
       description:
         "Teleport one of your pieces (not the king) to any empty square on the board, once.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       flavor: "Distance is a suggestion.",
     },
@@ -365,7 +365,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Twin Blink",
       description:
         "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
-      tier: 5,
+      tier: 4,
       category: "movement",
       flavor: "Nobody lands where they meant to.",
     },
@@ -478,7 +478,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Conjured Scout",
       description:
         "Conjure a knight on an empty square on your back rank. It fights for 2 of your turns, then fades.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "Borrowed from somewhere quieter.",
     },
@@ -490,7 +490,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Conjured Bishop",
       description:
         "Conjure your bishop's reflection: choose one of your bishops whose mirror square (same rank, file flipped left-to-right) is empty, and a new bishop appears there.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       requires: ["b"],
       flavor: "Faith, made solid, in the looking glass.",
@@ -679,7 +679,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_stasis_field",
       name: "Phase Field",
       description: "One of your bishops slips half out of the world: each move it may pass through a single piece of either color, for the game. It still cannot capture its own side.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       requires: ["b"],
       flavor: "Held between one second and the next.",
@@ -757,7 +757,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Arrest the Hour",
       description:
         "Freeze one enemy rook or queen for 3 of their turns.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "The heavy hand of the clock, stayed.",
       fx: { motif: "jail", pieces: ["r", "q"] },
@@ -787,7 +787,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Frozen Moment",
       description:
         "Seal this moment in glass: choose one enemy piece except a king. After 3 of their turns, wherever it has run to, it is snapped back to the square it stands on right now (if that square is free again).",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "The board remembers exactly where you were.",
     },
@@ -860,7 +860,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_quicken",
       name: "Quicken",
       description: "Time reasserts itself around your army: every freeze, stasis, and walnut afflicting YOUR pieces is dispelled on the spot.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       flavor: "Two heartbeats in one, and both of them yours.",
     },
@@ -876,7 +876,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Stolen Hours",
       description:
         "Steal 20 seconds from your opponent's clock and take one extra move this turn. You cannot capture the king on the bonus move.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Turn their spent minutes into one more of your moves.",
       fx: { motif: "rally", self: true },
@@ -949,7 +949,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Chrono Siphon",
       description:
         "Steal up to 20 seconds from your opponent's clock and freeze one enemy piece for its next 2 turns.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Draw the time off a single piece, slowly, like heat.",
       fx: { motif: "jail" },
@@ -979,7 +979,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Sigil Ward",
       description:
         "Choose one of your pieces: it cannot be captured for your opponent's next 3 turns, and the first enemy piece to move up next to it in that time is frozen for its next 2 turns.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       flavor: "A drawn circle it may not cross, and it stings the first hand that reaches in.",
       fx: { motif: "ward", self: true },
@@ -1034,7 +1034,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Royal Aegis",
       description:
         "Your king and your queen cannot be captured for your opponent's next 2 turns.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "The crown and the sword, both under glass.",
       fx: { motif: "ward", pieces: ["k", "q"], self: true },
@@ -1096,7 +1096,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Void Rift",
       description:
         "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game, and any enemy piece that ends its move on a square next to the rift is frozen for its next turn.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       flavor: "It does not close on its own, and it pulls at whatever passes.",
     },
@@ -1267,7 +1267,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Disjunction",
       description:
         "The conjuration is disjoined: up to two pieces waiting in your opponent's pocket wink out of existence, strongest first.",
-      tier: 4,
+      tier: 5,
       category: "draft",
       flavor: "Whatever they were saving it for, they are not.",
     },
@@ -1326,7 +1326,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Disrupt Ritual",
       description:
         "Your opponent's next draft is skipped, and your next draft offer shows three cards instead of two.",
-      tier: 4,
+      tier: 5,
       category: "draft",
       flavor: "You break their circle and widen yours.",
     },
@@ -1341,7 +1341,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Greed",
       description:
         "Your next draft offer, you take both cards instead of choosing one.",
-      tier: 6,
+      tier: 7,
       category: "draft",
       flavor: "Why choose?",
     },
@@ -1359,7 +1359,7 @@ export const WILD_ARCANE: Buff[] = [
       icon: "Dice6",
       name: "High Roll",
       description: "Force your next draft offer to roll at tier 5.",
-      tier: 4,
+      tier: 3,
       category: "draft",
       flavor: "Load the dice, then roll them.",
     },
@@ -1375,7 +1375,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_jinx",
       name: "Jinx",
       description: "The jinx sours every friendship: for their next 2 turns, your opponent's pieces cannot end a move on a square beside another of their own pieces.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "Suddenly nobody wants to stand together.",
       fx: { motif: "slow", pieces: "all" },
@@ -1421,7 +1421,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Foresight",
       description:
         "See your opponent's nerf for the rest of the game, and your next draft rolls one tier higher.",
-      tier: 3,
+      tier: 2,
       category: "info",
       boon: true,
       flavor: "You read the next page before they turn it.",
@@ -1457,7 +1457,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Omniscience",
       description:
         "See your opponent's nerf for the rest of the game; your next draft shows three cards to pick from.",
-      tier: 4,
+      tier: 3,
       category: "info",
       boon: true,
       flavor: "Nothing about them is hidden now.",

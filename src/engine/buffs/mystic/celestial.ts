@@ -92,7 +92,7 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       name: "Zodiac Wheel",
       description:
         "You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4.",
-      tier: 4,
+      tier: 5,
       category: "draft",
       flavor: "Mercury is in retrograde. Your rooks are in ascension.",
     },
@@ -111,7 +111,7 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       name: "Starlight Ward",
       description:
         "Starlight pools around the crown: your pieces standing on the squares beside your king cannot be captured for your opponent's next 3 turns.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Light that left its star a thousand years ago, arriving exactly on time.",
       fx: { motif: "ward", pieces: ["k"], self: true },

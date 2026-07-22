@@ -20,7 +20,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Time Thief",
       description:
         "Pick your opponent's pocket: steal half of the time left on their clock (up to 75 seconds) and add it to your own.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Tick tock, that's mine now.",
     },
@@ -34,7 +34,7 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "AlarmClock",
       name: "Deadline",
       description: "Every deliverable now costs overtime: your opponent's next 3 captures each cost them 15 seconds off the clock.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "The report was due yesterday.",
     },
@@ -116,7 +116,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Buzzer Beater",
       description:
         "Steal a buzzer-beating 20 seconds off your opponent's clock and put it on yours.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Off the glass at the buzzer.",
     },
@@ -131,7 +131,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Computer Virus",
       description:
         "Upload a virus to your opponent's clock. At the end of each of their next 5 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Your files are encrypted. Also your clock.",
     },

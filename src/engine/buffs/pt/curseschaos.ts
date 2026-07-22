@@ -407,7 +407,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Pinocchio",
       description:
         "One pawn's nose grows: each of your turns it does not capture, its reach grows by one square, up to plus four. It may capture the first enemy piece other than a king directly ahead of it within that reach. Capturing shrinks the nose back to zero.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       requires: ["p"],
       flavor: "It wasn't lying, exactly.",
@@ -708,7 +708,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Sea Monkeys",
       description:
         "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       flavor: "The instructions promised a castle.",
     },
@@ -762,7 +762,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Greenhouse",
       description:
         "Raise a glass dome over one file. For the game, your pawns may promote one rank early, on your 7th rank instead of your 8th, when they advance along that file, capture out of it, or capture into it.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       requires: ["p"],
       flavor: "Everything grows faster under glass.",
@@ -807,7 +807,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Chaos Theory",
       description:
         "A tornado sweeps the board: every pawn, yours and your opponent's, is randomly reshuffled among the squares pawns currently stand on. Happens once.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       flavor: "A butterfly flapped somewhere.",
     },
@@ -841,7 +841,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Wheel of Fortune",
       description:
         "Spin the wheel for one of six random effects: plus 55 seconds to your clock, minus 55 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       flavor: "Big money, big money, no whammies.",
     },

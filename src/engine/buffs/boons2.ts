@@ -231,7 +231,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Divine Right",
       description:
         "No peasant may slay a king: enemy pawns can never capture your king, for the rest of the game.",
-      tier: 1,
+      tier: 2,
       category: "protection",
       icon: "Crown",
       flavor: "The law is older than the board it stands on.",
@@ -281,7 +281,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Pioneer's Banner",
       description:
         "The next 3 times one of your pieces (your king excepted) crosses from your half into your opponent's half, it plants the banner: that piece cannot be captured for your opponent's next turn.",
-      tier: 2,
+      tier: 3,
       category: "protection",
       icon: "Flag",
       flavor: "The flag does not make the ground yours. It does confuse everyone for a moment.",
@@ -336,7 +336,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Jester's Rule",
       description:
         "The court demands variety: for your opponent's next 6 turns, they can never capture the same kind of piece their previous move just captured.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       icon: "Drama",
       flavor: "Do the bit again and the king stops laughing.",
@@ -423,7 +423,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Masquerade",
       description:
         "Two of your pieces trade masks: choose two of your knights, bishops, rooks or queens of different kinds, and they swap types where they stand. Your material never changes, only where the powers live.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       icon: "VenetianMask",
       flavor: "At midnight nobody swapped back.",
@@ -476,7 +476,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Queen's Testament",
       description:
         "Her will is already written: the first time your opponent captures your queen, up to two of your captured knights and bishops immediately return to empty squares nearest your home rank.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Feather",
       flavor: "She provided for the household.",
@@ -605,7 +605,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Deathless Oath",
       description:
         "One of your pieces (your king excepted) swears the oath: the first time it is captured, it instantly returns to the empty square nearest your home rank. One rebirth, then the oath is spent.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "Sunrise",
       flavor: "Death kept the appointment. The piece did not.",
@@ -716,7 +716,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Highwayman's Toll",
       description:
         "Stand and deliver: your next 3 captures each steal 8 seconds from your opponent's clock and add them to yours. In untimed games the toll collects nothing.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "Coins",
       flavor: "Your valuables or your tempo. Ideally both.",
@@ -826,7 +826,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Alchemist's Trade",
       description:
         "Equivalent exchange: one of your knights, bishops or rooks is transmuted into a queen; in payment, another of your knights, bishops, rooks or queens crumbles into a pawn where it stands (it cannot be standing on a first or last rank).",
-      tier: 6,
+      tier: 7,
       category: "pieces",
       icon: "Gem",
       flavor: "Gold from lead, lead from gold. The scales do not care which way.",

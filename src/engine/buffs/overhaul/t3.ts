@@ -205,7 +205,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Lightning Rod",
       description:
         "Bolt a rod onto one of your pieces (not the king). If it is captured within 6 of your turns, the storm answers: the capturer is destroyed too.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       icon: "Zap",
       flavor: "Grounding recommended. For your opponent.",
@@ -257,7 +257,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Portal Pair",
       description:
         "Open two portals on empty squares for 5 of your turns: whenever one of your pieces ends a move on a portal, it exits from the other one (if that square is empty).",
-      tier: 3,
+      tier: 2,
       category: "movement",
       icon: "Orbit",
       flavor: "Now you are thinking with two extra squares.",
@@ -343,7 +343,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Ventriloquist",
       description:
         "Once, throw your voice: pick an enemy knight and make it perform a legal knight move of your choice to an empty square. No captures.",
-      tier: 3,
+      tier: 4,
       category: "tempo",
       icon: "Mic",
       flavor: "The knight swears it never said that.",
@@ -548,7 +548,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Poltergeist",
       description:
         "For your opponent's next 3 turns, a poltergeist shoves one random enemy pawn one square sideways at the start of each (when a side square is empty).",
-      tier: 3,
+      tier: 2,
       category: "attack",
       icon: "Ghost",
       flavor: "The rattling is free. The giggling costs extra.",
@@ -610,7 +610,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Siege Ladder",
       description:
         "Slap ladders on one file: for 3 of your turns, your rooks, bishops and queen may slide straight through enemy pawns standing on that file.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       icon: "Castle",
       flavor: "Pawns make excellent rungs. Do not tell them.",
@@ -721,7 +721,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_masterclass",
       name: "Masterclass",
       description: "One pawn graduates: it permanently gains the ability to capture straight ahead.",
-      tier: 3,
+      tier: 2,
       category: "movement",
       icon: "Award",
       flavor: "Top of a class of one.",
@@ -740,7 +740,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_tasting_flight",
       name: "Tasting Flight",
       description: "Your next draft offers 3 cards instead of 2.",
-      tier: 3,
+      tier: 4,
       category: "draft",
       icon: "Wine",
       flavor: "Notes of tempo, a long finish, hints of pawn.",
@@ -756,7 +756,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Boomerang",
       description:
         "One of your pieces throws: remove the first enemy pawn up to 3 squares away in a straight line with a clear flight path. On the return, if a friendly piece stands directly in front of the thrower, the catch stuns it for 1 turn.",
-      tier: 3,
+      tier: 4,
       category: "attack",
       icon: "IterationCw",
       flavor: "It always comes back. That is the problem.",
@@ -816,7 +816,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Growth Ring",
       description:
         "Bless one square and its neighbors: for your opponent's next 4 turns, your pieces standing in that area cannot be captured by enemy pawns.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       icon: "TreePine",
       flavor: "The moss remembers. The pawns cannot get through the moss.",
@@ -997,7 +997,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Chariot Lessons",
       description:
         "Hitch up one rook: for 5 of your turns it is a chariot, keeping its rook moves and adding one-square diagonal steps.",
-      tier: 3,
+      tier: 2,
       category: "pieces",
       icon: "CarFront",
       flavor: "Week one: reins. Week two: cornering.",

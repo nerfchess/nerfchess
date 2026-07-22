@@ -46,7 +46,7 @@ function db(d: Nerf): Nerf {
 // --------------------------- TIER 1 (trivial) ---------------------------
 
 export const MOONLIT_KING: Nerf = db({
-  id: "wn_moonlit_king", name: "Moonlit King", tier: 1, icon: "moon", implemented: true,
+  id: "wn_moonlit_king", name: "Moonlit King", tier: 2, icon: "moon", implemented: true,
   description: "Your king can only move to dark squares.",
   flavor: "He walks only where the moon touches.",
   filterMoves: (moves) =>
@@ -54,7 +54,7 @@ export const MOONLIT_KING: Nerf = db({
 });
 
 export const NO_TAKEBACKS: Nerf = db({
-  id: "wn_no_takebacks", name: "No Takebacks", tier: 1, icon: "rotate-ccw", implemented: true,
+  id: "wn_no_takebacks", name: "No Takebacks", tier: 2, icon: "rotate-ccw", implemented: true,
   description: "You can't move a piece to the exact square your last move started from.",
   flavor: "What's done is done.",
   filterMoves: (moves, _s, ctx) => {
@@ -65,7 +65,7 @@ export const NO_TAKEBACKS: Nerf = db({
 });
 
 export const EDGE_SHY_QUEEN: Nerf = db({
-  id: "wn_edge_shy_queen", name: "Edge-Shy Queen", tier: 1, icon: "crown", implemented: true,
+  id: "wn_edge_shy_queen", name: "Edge-Shy Queen", tier: 2, icon: "crown", implemented: true,
   description: "Your queen can't move onto the a-file or the h-file.",
   flavor: "She keeps clear of the walls.",
   filterMoves: (moves) =>
@@ -73,7 +73,7 @@ export const EDGE_SHY_QUEEN: Nerf = db({
 });
 
 export const WALLFLOWER: Nerf = db({
-  id: "wn_wallflower", name: "Wallflower", tier: 1, icon: "castle", implemented: true,
+  id: "wn_wallflower", name: "Wallflower", tier: 2, icon: "castle", implemented: true,
   description: "Your rooks can't move onto the four center squares (d4, d5, e4, e5).",
   flavor: "The towers hug the walls.",
   filterMoves: (moves) =>
@@ -102,7 +102,7 @@ export const GENTLE_GIANT: Nerf = db({
 });
 
 export const NO_GOING_HOME: Nerf = db({
-  id: "wn_no_going_home", name: "No Going Home", tier: 2, icon: "home", implemented: true,
+  id: "wn_no_going_home", name: "No Going Home", tier: 3, icon: "home", implemented: true,
   description: "Your non-pawn pieces can't move back onto your own back rank.",
   flavor: "The officers have burned the barracks.",
   filterMoves: (moves, _s, ctx) =>
@@ -110,7 +110,7 @@ export const NO_GOING_HOME: Nerf = db({
 });
 
 export const KNIGHT_TOLL: Nerf = db({
-  id: "wn_knight_toll", name: "Knight Toll", tier: 2, icon: "swords", implemented: true,
+  id: "wn_knight_toll", name: "Knight Toll", tier: 3, icon: "swords", implemented: true,
   description: "You can't capture with a knight if a knight of yours captured on your previous turn.",
   flavor: "The horses need a turn to recover.",
   filterMoves: (moves, _s, ctx) => {
@@ -125,7 +125,7 @@ export const KNIGHT_TOLL: Nerf = db({
 // --------------------------- TIER 3 (common) ---------------------------
 
 export const PAWN_SHY: Nerf = db({
-  id: "wn_pawn_shy", name: "Pawn Shy", tier: 3, icon: "shield", implemented: true,
+  id: "wn_pawn_shy", name: "Pawn Shy", tier: 4, icon: "shield", implemented: true,
   description: "You can't move any piece onto a square guarded by an enemy pawn.",
   flavor: "The infantry's picket line is untouchable.",
   filterMoves: (moves, _s, ctx) => {
@@ -143,7 +143,7 @@ export const PAWN_SHY: Nerf = db({
 });
 
 export const LONELY_KING: Nerf = db({
-  id: "wn_lonely_king", name: "Lonely King", tier: 3, icon: "crown", implemented: true,
+  id: "wn_lonely_king", name: "Lonely King", tier: 4, icon: "crown", implemented: true,
   description: "Your king can't move to a square adjacent to one of your own pieces.",
   flavor: "His majesty demands personal space.",
   filterMoves: (moves, _s, ctx) =>
@@ -159,7 +159,7 @@ export const LONELY_KING: Nerf = db({
 });
 
 export const SHORT_QUEEN: Nerf = db({
-  id: "wn_short_queen", name: "Short Queen", tier: 3, icon: "crown", implemented: true,
+  id: "wn_short_queen", name: "Short Queen", tier: 4, icon: "crown", implemented: true,
   description: "Your queen can't move more than 4 squares in a single move.",
   flavor: "Her long game is a memory.",
   filterMoves: (moves) =>
@@ -167,7 +167,7 @@ export const SHORT_QUEEN: Nerf = db({
 });
 
 export const STAMPEDE: Nerf = db({
-  id: "wn_stampede", name: "Stampede", tier: 3, icon: "swords", implemented: true,
+  id: "wn_stampede", name: "Stampede", tier: 4, icon: "swords", implemented: true,
   description: "If you moved a knight on your last turn, you must move a knight again this turn (if you can).",
   flavor: "Once the herd starts, it can't stop.",
   filterMoves: (moves, _s, ctx) => {
@@ -188,7 +188,7 @@ export const STAMPEDE: Nerf = db({
 });
 
 export const SLOW_START: Nerf = db({
-  id: "wn_slow_start", name: "Slow Start", tier: 3, icon: "hourglass", implemented: true,
+  id: "wn_slow_start", name: "Slow Start", tier: 4, icon: "hourglass", implemented: true,
   description: "For your first 6 moves, you can only move pawns and knights.",
   flavor: "The heavy pieces sleep in.",
   filterMoves: (moves, _s, ctx) =>
@@ -198,7 +198,7 @@ export const SLOW_START: Nerf = db({
 });
 
 export const SLOW_BURN: Nerf = db({
-  id: "wn_slow_burn", name: "Slow Burn", tier: 3, icon: "clock", implemented: true,
+  id: "wn_slow_burn", name: "Slow Burn", tier: 4, icon: "clock", implemented: true,
   description: "You can't capture anything before your 6th move.",
   flavor: "Patience. Let it build.",
   filterMoves: (moves, _s, ctx) =>
@@ -206,7 +206,7 @@ export const SLOW_BURN: Nerf = db({
 });
 
 export const FLINCH: Nerf = db({
-  id: "wn_flinch", name: "Flinch", tier: 3, icon: "shield-alert", implemented: true,
+  id: "wn_flinch", name: "Flinch", tier: 4, icon: "shield-alert", implemented: true,
   description: "While your king is in check, you can't capture; you have to get out another way.",
   flavor: "Under fire, your hands shake too much to grab.",
   filterMoves: (moves, _s, ctx) => {
@@ -266,7 +266,7 @@ export const SHIFTING_SANDS: Nerf = db({
 });
 
 export const GLASS_JAW: Nerf = db({
-  id: "wn_glass_jaw", name: "Glass Jaw", tier: 4, icon: "crown", implemented: true,
+  id: "wn_glass_jaw", name: "Glass Jaw", tier: 5, icon: "crown", implemented: true,
   description: "You can't make a move that leaves your queen attacked by the enemy.",
   flavor: "Keep her chin tucked at all times.",
   filterMoves: (moves, _s, ctx) => {
@@ -306,7 +306,7 @@ export const TAX_SEASON: Nerf = db({
 });
 
 export const CURFEW: Nerf = db({
-  id: "wn_curfew", name: "Curfew", tier: 4, icon: "moon", implemented: true,
+  id: "wn_curfew", name: "Curfew", tier: 5, icon: "moon", implemented: true,
   description: "After your 25th move, you can't move any piece into the enemy half (relative ranks 5 to 8).",
   flavor: "The border closes at the 25th bell.",
   filterMoves: (moves, _s, ctx) => {
@@ -332,7 +332,7 @@ export const GRAVITY: Nerf = db({
 });
 
 export const BOTTOM_FEEDER: Nerf = db({
-  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 5, icon: "fish", implemented: true,
+  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 6, icon: "fish", implemented: true,
   description: "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
   flavor: "Scraps only.",
   filterMoves: (moves) =>
@@ -340,7 +340,7 @@ export const BOTTOM_FEEDER: Nerf = db({
 });
 
 export const MIMICRY: Nerf = db({
-  id: "wn_mimicry", name: "Mimicry", tier: 5, icon: "copy", implemented: true,
+  id: "wn_mimicry", name: "Mimicry", tier: 6, icon: "copy", implemented: true,
   description: "You must move the same piece type as your opponent's last move, if you can.",
   flavor: "Whatever they did, you do.",
   filterMoves: (moves, _s, ctx) => {
@@ -360,7 +360,7 @@ export const MIMICRY: Nerf = db({
 });
 
 export const FOLLOW_THE_LEADER: Nerf = db({
-  id: "wn_follow_the_leader", name: "Follow the Leader", tier: 5, icon: "columns", implemented: true,
+  id: "wn_follow_the_leader", name: "Follow the Leader", tier: 6, icon: "columns", implemented: true,
   description: "You must move a piece onto the same file as your opponent's last move's destination, if you can.",
   flavor: "March in their column.",
   filterMoves: (moves, _s, ctx) => {
@@ -381,7 +381,7 @@ export const FOLLOW_THE_LEADER: Nerf = db({
 });
 
 export const BODYGUARD: Nerf = db({
-  id: "wn_bodyguard", name: "Bodyguard", tier: 5, icon: "shield", implemented: true,
+  id: "wn_bodyguard", name: "Bodyguard", tier: 6, icon: "shield", implemented: true,
   description: "You lose if your king ever has no friendly piece adjacent to it (after your first move).",
   flavor: "A king is never left alone.",
   checkLoss: (_s, ctx) => {
@@ -529,7 +529,7 @@ export const DAISY_CHAIN: Nerf = db({
 // --------------------------- TIER 7 (punishing) ---------------------------
 
 export const GLASS_QUEEN: Nerf = db({
-  id: "wn_glass_queen", name: "Glass Queen", tier: 7, icon: "crown", implemented: true,
+  id: "wn_glass_queen", name: "Glass Queen", tier: 6, icon: "crown", implemented: true,
   description: "You lose if you end one of your turns with your queen attacked by the enemy.",
   flavor: "One touch and she shatters.",
   // Rebalance 2026-07: judged only after YOUR OWN move (the after-my-move

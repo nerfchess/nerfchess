@@ -105,7 +105,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Sinkhole",
       description:
         "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       flavor: "The ground had other plans.",
     },
@@ -144,7 +144,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Chain Lightning",
       description:
         "One bishop captures up to three enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       requires: ["b"],
       flavor: "It leaps from soul to soul.",
@@ -158,7 +158,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Fissure Field",
       description:
         "The ground splits open behind the enemy army: your opponent cannot move any piece onto their own back rank for their next 4 turns.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "There is no falling back over a chasm.",
       fx: { motif: "blindfold" },

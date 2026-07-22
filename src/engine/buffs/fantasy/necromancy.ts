@@ -178,7 +178,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       name: "Lich Phylactery",
       description:
         "The first time your queen is captured, a new queen appears on her home square, or on the nearest empty square of your back rank if her home is taken.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       flavor: "You cannot kill what refuses to stay dead.",
     },
@@ -216,7 +216,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       name: "Army of the Dead",
       description:
         "The fallen answer the roll: one pawn musters into your pocket for every two of your pieces captured so far, plus one more, up to five in all. Drop them onto empty squares on later turns.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       flavor: "Roll call is a very long list of names.",
     },

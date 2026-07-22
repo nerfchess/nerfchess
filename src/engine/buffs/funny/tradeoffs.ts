@@ -80,7 +80,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       name: "Berserker",
       description:
         "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       flavor: "Blood first, thinking later.",
       fx: { motif: "rally", pieces: "all", self: true },

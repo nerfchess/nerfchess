@@ -176,7 +176,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Stack Overflow",
       description:
         "For your opponent's next 3 turns, every move they make that is not a capture costs them 4 seconds. Closed as duplicate.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "Layers",
       flavor: "Have you tried searching before moving?",
@@ -205,7 +205,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Midas Gauntlet",
       description:
         "Your next 3 captures each gain you 10 seconds, and the capturing piece is gilded for the trophy cabinet.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "HandCoins",
       flavor: "Everything he takes turns to gold. Mostly the clock.",
@@ -233,7 +233,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Tornado",
       description:
         "A funnel travels a chosen file: every piece within one file of it (kings excluded) is flung to a random empty square in its own half.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       icon: "Tornado",
       flavor: "Forecast: scattered rooks, with a chance of knights.",
@@ -287,7 +287,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Duplicate Glitch",
       description:
         "Dupe glitch: gain a second copy of a random unspent card you hold. If your hand is empty, gain 2 draft rerolls instead.",
-      tier: 6,
+      tier: 5,
       category: "draft",
       icon: "Copy",
       flavor: "Do not patch this. Do NOT patch this.",
@@ -320,7 +320,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Archmage's Sabbatical",
       description:
         "For 4 of your turns, instead of a normal move you may teleport one of your pieces (king excluded) to any empty square in your half.",
-      tier: 6,
+      tier: 5,
       category: "movement",
       icon: "Wand2",
       flavor: "He is technically on leave. The tower disagrees.",
@@ -347,7 +347,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Rage Bait",
       description:
         "For your opponent's next 4 turns, every capture they make costs them 6 seconds while the taunt plays.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "Angry",
       flavor: "EZ. Absolutely EZ. Would you like to hear the airhorn again?",
@@ -410,7 +410,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Golden Goose",
       description:
         "Place a goose (a pawn stuck fast in golden honey) on an empty square in your half. For your next 8 turns it lays 6 seconds onto your clock after each of your moves. If it is captured, the gold stops.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       icon: "Egg",
       flavor: "Do not ask where the eggs come from. Bank them.",
@@ -484,7 +484,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Emergency Patch",
       description:
         "For your opponent's next 5 turns, one randomly chosen enemy slider type (bishop, rook or queen) is limited to moves of 2 squares that turn.",
-      tier: 6,
+      tier: 5,
       category: "protection",
       icon: "Wrench",
       flavor: "Known issue: your rooks. Fix ETA: five turns.",
@@ -602,7 +602,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Vampire Court",
       description:
         "Up to 2 of your knights or bishops become vampires: each of their captures gains you 6 seconds, and the first time one is killed it returns 3 of your turns later on a square next to where it fell.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       icon: "Moon",
       flavor: "The court convenes at dusk and bills by the neck.",
@@ -711,7 +711,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Great Migration",
       description:
         "As your move, every one of your pawns with an empty square ahead advances one square. Blocked pawns hold their ground.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Route",
       flavor: "The herd does not ask the fence for permission.",
@@ -798,7 +798,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Coup d'Etat",
       description:
         "The queen takes the throne: she cannot be captured for your opponent's next 6 turns, and for 6 of your turns your king moves like a queen.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Crown",
       flavor: "The paperwork simply says 'restructuring'.",
@@ -834,7 +834,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Plot Armor",
       description:
         "Choose one of your pieces (king excluded): it cannot be captured during your opponent's next 6 turns. The script insists.",
-      tier: 6,
+      tier: 7,
       category: "protection",
       icon: "ScrollText",
       flavor: "Sorry, this character is contracted for two more acts.",
@@ -920,7 +920,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_private_gallery",
       name: "Private Gallery",
       description: "Your next draft offers 3 cards, and you pocket 10 seconds at the door.",
-      tier: 6,
+      tier: 4,
       category: "draft",
       icon: "Image",
       flavor: "The velvet rope is load-bearing.",
@@ -937,7 +937,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Rolling Boulder",
       description:
         "Roll a boulder down a chosen file from your side: the first enemy pawn in its path is flattened, the next piece beyond (kings excluded) is shoved one square onward, and the crater cannot be entered by your opponent for their next 3 turns.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       icon: "Weight",
       flavor: "It gathers no moss and takes no questions.",
@@ -999,7 +999,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Lantern Festival",
       description:
         "Revive up to 4 of your captured pawns onto empty squares of your second rank as lantern wisps. Any still on the board after 6 of your turns drift away.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       icon: "Flame",
       flavor: "Every light on the water is a soldier walking home.",

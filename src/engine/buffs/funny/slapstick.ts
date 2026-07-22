@@ -250,7 +250,7 @@ export const FUNNY_SLAPSTICK: Buff[] = [
       icon: "Grip",
       name: "Bubble Wrap",
       description: "Shrink-wrap one of your own pieces: it cannot be captured for 3 turns, but it can only move for the last of them. Your king cannot be chosen.",
-      tier: 2,
+      tier: 3,
       category: "protection",
       boon: true,
       flavor: "Pop pop pop pop pop.",

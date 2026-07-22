@@ -61,7 +61,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Cloud Serpent",
       description:
         "A serpent coils a chosen rank: enemy pieces cannot enter or cross it for your opponent's next 5 turns (yours can). As it lands it may crush one enemy pawn on an adjacent rank.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       icon: "Wind",
       flavor: "It flows in like weather with opinions.",
@@ -116,7 +116,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Wizard Duel",
       description:
         "One of your bishops duels an enemy bishop: 50% either way, the loser is removed. If your bishop wins, it also gains single king steps for 3 of your turns.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Wand2",
       flavor: "Two beams meet, spark, and one hat goes home empty.",
@@ -213,7 +213,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Royal Wedding",
       description:
         "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       icon: "Church",
       flavor: "Bells, rice, and a suspicious amount of new infantry.",
@@ -259,7 +259,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Chat Vote",
       description:
         "Chat votes on your prize, winner random: gain 25 seconds, every one of your pawns with an open square ahead advances one, or a random enemy minor is stunned for 1 turn.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       icon: "MessageSquare",
       flavor: "The poll bars race. Democracy has never been this loud.",
@@ -433,7 +433,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Volcanic Vent",
       description:
         "Open a vent on an empty square for 9 of your turns. Every 3rd of your turns it erupts: pawns of both sides adjacent to it are destroyed, and other adjacent pieces except kings are pushed one square outward if the square is free.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Flame",
       flavor: "The crack glows. The neighborhood reconsiders.",
@@ -628,7 +628,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_locust_swarm",
       name: "Locust Swarm",
       description: "Choose a rank: every pawn on it, yours and theirs, is devoured.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Bug",
       flavor: "The cloud arrives hungry and leaves punctual.",
@@ -674,7 +674,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Compound Interest",
       description:
         "The vault locks for 6 of your turns. When it opens, if your queen is still on the board: your next draft offers three cards and you gain 20 seconds. If she is gone, the investment is lost.",
-      tier: 5,
+      tier: 3,
       category: "draft",
       icon: "TrendingUp",
       flavor: "The dial spins. The queen is the collateral.",
@@ -887,7 +887,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Puppeteer's Gala",
       description:
         "Pull the strings: move up to two different enemy minor pieces yourself, each along its own normal non-capture moves, onto empty squares.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "Grab",
       flavor: "Gloved hands, taut strings, a jerky little waltz.",
@@ -961,7 +961,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Demolition Derby",
       description:
         "Choose a 3x3 arena: every piece inside except kings lurches one random square (blocked pieces stay put), and any two that crash into the same square are both wrecked.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       icon: "Car",
       flavor: "Engines rev. Nobody signed a waiver.",
@@ -1099,7 +1099,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Flash Mob",
       description:
         "Four pawns appear on random empty squares of your third rank. They hold the final pose (cannot move) for 1 turn.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "Speaker",
       flavor: "The boombox clicks on and infantry materializes.",
@@ -1126,7 +1126,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Gravity Flip",
       description:
         "For 2 of your turns, your pawns may also step one square straight backward onto an empty square. No backward captures.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "ArrowDownUp",
       flavor: "The board tilts and the infantry discovers reverse.",

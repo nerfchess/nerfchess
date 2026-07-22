@@ -25,7 +25,7 @@ export const LUCKY: Nerf = db({
   name: "Lucky",
   description: "You have no nerf. A rare gift from the gods of chess.",
   flavor: "Today, fortune smiles upon you.",
-  tier: 1,
+  tier: 2,
   icon: "sparkles",
   implemented: true,
 });
@@ -35,7 +35,7 @@ export const CESS: Nerf = db({
   name: "Cess",
   description: "You can't move to the h-file.",
   flavor: "An invisible wall hugs the right edge of your world.",
-  tier: 1,
+  tier: 2,
   icon: "ban",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => FILE(m.to) !== 7),
@@ -57,7 +57,7 @@ export const TRUE_GENTLEMAN: Nerf = db({
   name: "True Gentleman",
   description: "You can't capture queens.",
   flavor: "It simply isn't done.",
-  tier: 2,
+  tier: 3,
   icon: "crown",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => m.captured !== "q"),
@@ -79,7 +79,7 @@ export const LAME_DUCK: Nerf = db({
   name: "Lame Duck",
   description: "You can't move your king at all.",
   flavor: "His majesty is paralyzed with indecision.",
-  tier: 5,
+  tier: 6,
   icon: "lock",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => m.piece !== "k"),
@@ -90,7 +90,7 @@ export const OUT_OF_BREATH: Nerf = db({
   name: "Out of Breath",
   description: "You can only move your king once the entire game.",
   flavor: "Royal cardio is not what it used to be.",
-  tier: 3,
+  tier: 4,
   icon: "wind",
   implemented: true,
   progress: (state) => {
@@ -116,7 +116,7 @@ export const THREE_CHECK: Nerf = db({
   name: "Three Check",
   description: "If you have been checked three times total, you lose.",
   flavor: "Three strikes and you're out.",
-  tier: 3,
+  tier: 4,
   icon: "alert-triangle",
   implemented: true,
   progress: (state) => {
@@ -154,7 +154,7 @@ export const SIMP: Nerf = db({
   name: "Simp",
   description: "You lose if you have no queen.",
   flavor: "Without her, what is the point of anything?",
-  tier: 4,
+  tier: 5,
   icon: "heart",
   implemented: true,
   checkLoss: (state, ctx) => {
@@ -168,7 +168,7 @@ export const IVORY_TOWER: Nerf = db({
   name: "Ivory Tower",
   description: "You lose if any opponent piece is adjacent to your king.",
   flavor: "Royalty does not mingle.",
-  tier: 4,
+  tier: 5,
   icon: "tower-control",
   implemented: true,
   checkLoss: (state, ctx) => {
@@ -188,7 +188,7 @@ export const PACMAN: Nerf = db({
   name: "Pacman",
   description: "If you can capture a pawn, you must.",
   flavor: "Waka waka waka.",
-  tier: 4,
+  tier: 5,
   icon: "circle-dot",
   implemented: true,
   progress: (_s, ctx) => ({
@@ -216,7 +216,7 @@ export const GREEDY: Nerf = db({
   name: "Greedy",
   description: "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
   flavor: "Eyes always on the biggest prize.",
-  tier: 2,
+  tier: 3,
   icon: "coins",
   implemented: true,
   filterMoves: (moves) => {
@@ -247,7 +247,7 @@ export const TRUANT: Nerf = db({
   name: "Truant",
   description: "You can't move the same piece twice in a row.",
   flavor: "Pieces demand a fair rotation.",
-  tier: 2,
+  tier: 3,
   icon: "shuffle",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -262,7 +262,7 @@ export const HIPSTER: Nerf = db({
   name: "Hipster",
   description: "You can't move the same piece type as your opponent's last move.",
   flavor: "If they did it, it's already over.",
-  tier: 3,
+  tier: 4,
   icon: "glasses",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -278,7 +278,7 @@ export const FORWARD_MARCH: Nerf = db({
   name: "Forward March",
   description: "You can't move backward.",
   flavor: "There is no looking back. There is only forward.",
-  tier: 5,
+  tier: 6,
   icon: "arrow-up",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -303,7 +303,7 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
   name: "Champing at the Bit",
   description: "All pawn moves must be distance 2.",
   flavor: "Why walk when you can sprint?",
-  tier: 4,
+  tier: 5,
   icon: "fast-forward",
   implemented: true,
   filterMoves: (moves) =>
@@ -348,7 +348,7 @@ export const RISING_WATER: Nerf = db({
   name: "Rising Water",
   description: "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
   flavor: "The tide is rising.",
-  tier: 5,
+  tier: 6,
   icon: "waves",
   implemented: true,
   init: () => ({ level: 0 }),
@@ -464,7 +464,7 @@ export const PACK_MENTALITY: Nerf = db({
   name: "Pack Mentality",
   description: "Pieces must move to squares adjacent to another of your pieces.",
   flavor: "Never alone, never.",
-  tier: 4,
+  tier: 5,
   icon: "users",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -484,7 +484,7 @@ export const SLEEPY_KING: Nerf = db({
   name: "Sleepy King",
   description: "Your king can only move when in check.",
   flavor: "Don't wake him unless you must.",
-  tier: 2,
+  tier: 3,
   icon: "moon",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -504,7 +504,7 @@ export const SCORCHED_EARTH: Nerf = db({
   name: "Scorched Earth",
   description: "You can't move to a square you've previously moved FROM.",
   flavor: "Burn the bridges. There is no return.",
-  tier: 5,
+  tier: 6,
   icon: "flame",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -519,7 +519,7 @@ export const SKITTISH: Nerf = db({
   name: "Skittish",
   description: "While in check, you must move your king.",
   flavor: "Run, your majesty.",
-  tier: 2,
+  tier: 3,
   icon: "alert",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -538,7 +538,7 @@ export const HORSE_TRANQUILIZER: Nerf = db({
   name: "Horse Tranquilizer",
   description: "Your knights can't capture.",
   flavor: "Their hooves are heavy with sleep.",
-  tier: 3,
+  tier: 4,
   icon: "moon",
   implemented: true,
   filterMoves: (moves) => moves.filter((m) => !(m.piece === "n" && m.captured)),
@@ -560,7 +560,7 @@ export const SHADOW_QUEEN: Nerf = db({
   name: "Shadow Queen",
   description: "Your queen can only move to dark squares.",
   flavor: "She walks only in shadow.",
-  tier: 2,
+  tier: 3,
   icon: "moon-star",
   implemented: true,
   filterMoves: (moves) =>
@@ -576,7 +576,7 @@ export const NO_SHUFFLING: Nerf = db({
   name: "No Shuffling",
   description: "Your rooks can't move sideways.",
   flavor: "Vertical or nothing.",
-  tier: 3,
+  tier: 4,
   icon: "arrow-up-down",
   implemented: true,
   filterMoves: (moves) =>
@@ -604,7 +604,7 @@ export const PROFESSIONAL_COURTESY: Nerf = db({
   name: "Professional Courtesy",
   description: "Non-pawn pieces can't capture pieces of their own type.",
   flavor: "We do not stoop to such things.",
-  tier: 2,
+  tier: 3,
   icon: "handshake",
   implemented: true,
   filterMoves: (moves) =>
@@ -631,7 +631,7 @@ export const STAY_AT_HOME_MOM: Nerf = db({
   name: "Stay-at-Home Mom",
   description: "Your queen can only move within your two home ranks.",
   flavor: "She manages the home front.",
-  tier: 4,
+  tier: 5,
   icon: "home",
   implemented: true,
   filterMoves: (moves, _s, ctx) =>
@@ -647,7 +647,7 @@ export const PUNCHING_DOWN: Nerf = db({
   name: "Punching Down",
   description: "Pieces can't capture pieces worth more than themselves.",
   flavor: "Pick on someone your own size.",
-  tier: 3,
+  tier: 4,
   icon: "shield",
   implemented: true,
   filterMoves: (moves) =>
@@ -662,7 +662,7 @@ export const ELEPHANTS_FEAR_MICE: Nerf = db({
   name: "Elephants Fear Mice",
   description: "Your non-pawn pieces can't capture pawns.",
   flavor: "Even kings dread the squeak.",
-  tier: 3,
+  tier: 4,
   icon: "rat",
   implemented: true,
   filterMoves: (moves) =>
@@ -686,7 +686,7 @@ export const SIMPLIFIER: Nerf = db({
   name: "Simplifier",
   description: "If you can capture with an equal- or lesser-value piece, you must.",
   flavor: "Trade up. Always trade up.",
-  tier: 3,
+  tier: 4,
   icon: "scale",
   implemented: true,
   filterMoves: (moves) => {
@@ -713,7 +713,7 @@ export const SPICE_OF_LIFE: Nerf = db({
   name: "Spice of Life",
   description: "You can't move the same piece type twice in a row.",
   flavor: "Variety is everything.",
-  tier: 3,
+  tier: 4,
   icon: "shuffle",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -728,7 +728,7 @@ export const STOP_STALLING: Nerf = db({
   name: "Stop Stalling",
   description: "Your pieces can't move laterally.",
   flavor: "Forward, backward, anywhere but sideways.",
-  tier: 3,
+  tier: 4,
   icon: "move-vertical",
   implemented: true,
   filterMoves: (moves) =>
@@ -740,7 +740,7 @@ export const INSIDE_THE_LINES: Nerf = db({
   name: "Inside the Lines",
   description: "You can't move ONTO the rim. Pieces already on the rim may stay there.",
   flavor: "Color outside the lines, lose your turn.",
-  tier: 4,
+  tier: 5,
   icon: "frame",
   implemented: true,
   filterMoves: (moves) =>
@@ -758,7 +758,7 @@ export const ALTERNATOR: Nerf = db({
   name: "Alternator",
   description: "You must alternate pawn moves and non-pawn moves.",
   flavor: "Step left, step right.",
-  tier: 4,
+  tier: 5,
   icon: "alternate",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -957,7 +957,7 @@ export const SECRET_GARDEN: Nerf = db({
   description:
     "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
   flavor: "Some patches of earth are not yours to trample.",
-  tier: 6,
+  tier: 5,
   icon: "flower",
   implemented: true,
   init: (rng, color) => {

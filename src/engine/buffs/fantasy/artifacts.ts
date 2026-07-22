@@ -47,7 +47,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Horn of Summoning",
       description:
         "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       requires: ["r"],
       flavor: "One long note, and the towers themselves answer.",
@@ -131,7 +131,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Staff of Stasis",
       description:
         "Bind the staff to one of your pieces: whoever dares capture it is locked in a bubble of frozen time for 3 of their turns. The ward lasts the rest of the game.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       flavor: "For whoever touches it, a heartbeat lasts an age.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -200,7 +200,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Banner of War",
       description:
         "Raise the banner and your cavalry surges: for your next 3 turns each of your knights may also step one square in any direction like a king.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "Follow the colors and do not look back.",

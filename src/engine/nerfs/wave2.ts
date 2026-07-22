@@ -37,7 +37,7 @@ const LATE_RISER: Nerf = nerf(
   {
     id: "nw2_late_riser",
     name: "Late Riser",
-    tier: 1,
+    tier: 2,
     icon: "moon",
     description: "Your queen can't move during your first four moves. From your fifth move on she is free.",
     flavor: "Her majesty does not do mornings.",
@@ -137,7 +137,7 @@ const COLD_TRAIL: Nerf = nerf(
   {
     id: "nw2_cold_trail",
     name: "Cold Trail",
-    tier: 2,
+    tier: 3,
     icon: "footprints",
     description: "You can't move any piece onto the square your opponent's last move just left.",
     flavor: "Their footprints are still warm. Don't step in them.",
@@ -187,7 +187,7 @@ const MINOR_NOBILITY: Nerf = nerf(
   {
     id: "nw2_minor_nobility",
     name: "Minor Nobility",
-    tier: 2,
+    tier: 1,
     icon: "sprout",
     description: "Your pawns can only promote to knights or bishops, never to queens or rooks.",
     flavor: "The crown ennobles, but only so far.",
@@ -461,7 +461,7 @@ const SHIELD_WALL: Nerf = nerf(
   {
     id: "nw2_shield_wall",
     name: "Shield Wall",
-    tier: 8,
+    tier: 7,
     icon: "shield",
     description: "Your king must always end your turn with at least one of your own pawns adjacent to him, or you lose. If the shield is broken on the opponent's turn, you get one move to restore it.",
     flavor: "A bare king is a dead king.",

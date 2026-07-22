@@ -132,7 +132,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Bishop's Blessing",
       description:
         "The clergy is above the cavalry's reach: enemy knights can never capture your bishops, for the rest of the game.",
-      tier: 1,
+      tier: 2,
       category: "protection",
       icon: "Church",
       flavor: "A horse has no business in the sanctuary.",
@@ -201,7 +201,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Heir Apparent",
       description:
         "The line of succession is settled in advance: the first time your opponent captures one of your knights or bishops, your pawn nearest your home rank is knighted into that same kind of piece where it stands.",
-      tier: 2,
+      tier: 1,
       category: "pieces",
       icon: "Baby",
       flavor: "The squire had been polishing that armor for years.",
@@ -236,7 +236,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Shield Wall",
       description:
         "Shoulder to shoulder they cannot be broken: any of your pawns that stands directly beside another of your pawns (on the next file over, same rank) cannot be captured. A lone pawn is on its own.",
-      tier: 2,
+      tier: 3,
       category: "protection",
       icon: "Users",
       flavor: "Break the line first. Good luck breaking the line.",
@@ -275,7 +275,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Home Guard",
       description:
         "The threshold is warded for good: no enemy piece may ever move onto your first rank. Your back rank stays yours, and no enemy pawn can promote on it.",
-      tier: 2,
+      tier: 3,
       category: "protection",
       icon: "Fence",
       flavor: "They may take the field. They will not take the hall.",
@@ -299,7 +299,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "King's Shield",
       description:
         "The king's own shieldbearer never falls first: your piece standing on the square directly in front of your king cannot be captured. Whichever piece holds that square is protected while it stays there.",
-      tier: 2,
+      tier: 3,
       category: "protection",
       icon: "ShieldHalf",
       flavor: "Stand there. Do not move. That is the whole job.",
@@ -362,7 +362,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Double Down",
       description:
         "Push it all onto the next hand: your next draft shows three cards and you keep all three of them. In return, the draft after that is skipped.",
-      tier: 3,
+      tier: 4,
       category: "draft",
       icon: "Layers2",
       flavor: "The house always wins. You are, briefly, the house.",
@@ -466,7 +466,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Praetorian",
       description:
         "The guard never leaves her side: your queen cannot be captured while at least one of your knights or bishops stands on a square adjacent to her. Cut down her escort and the guard is gone.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       icon: "Shield",
       flavor: "Nine of them. One job. They take it personally.",
@@ -600,7 +600,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Coronation Bonus",
       description:
         "The crowning is worth a stolen hour: the first time one of your pawns promotes, you gain 30 seconds on your clock. In untimed games it grants nothing.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Crown",
       flavor: "Long live whoever this used to be.",
@@ -628,7 +628,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Eleventh Hour",
       description:
         "When the last of the line is nearly spent, help arrives: the first time your non-king pieces number three or fewer, your best captured piece returns to the empty square nearest your home rank.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Hourglass",
       flavor: "Reinforcements are always exactly this late.",
@@ -775,7 +775,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Deep Position",
       description:
         "Break into their camp and the clock rewards the incursion: the first time any of your pieces reaches your opponent's back two ranks, you gain 45 seconds. In untimed games it grants nothing.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       icon: "Flag",
       flavor: "Behind their lines, time moves differently. In your favor.",
@@ -802,7 +802,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Martyr's Gift",
       description:
         "Every loss leaves you something: each of the next 3 times your opponent captures one of your pieces, you gain a draft reroll and 5 seconds on your clock.",
-      tier: 5,
+      tier: 3,
       category: "draft",
       icon: "HeartCrack",
       flavor: "They spent a piece of yours. You spent nothing. Interesting.",
@@ -954,7 +954,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Rally to the King",
       description:
         "Call the nearest blade home: teleport any one of your pieces (your king aside) to an empty square directly adjacent to your king.",
-      tier: 6,
+      tier: 5,
       category: "movement",
       icon: "Castle",
       flavor: "Form up. Backs to the throne.",
@@ -1114,7 +1114,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Last Muster",
       description:
         "Call up whoever is left in the village: place up to 3 pawns on empty squares in your half. They hold the line, then disband four of your turns later, vanishing from the board.",
-      tier: 6,
+      tier: 7,
       category: "pieces",
       icon: "Users",
       flavor: "Farmhands with pitchforks. For four turns, heroes.",
@@ -1193,7 +1193,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Vantage Point",
       description:
         "Dig in on the heights and they cannot dislodge you: any of your pieces (your king aside) standing on your opponent's back two ranks cannot be captured. Step back off the heights and it is fair game again.",
-      tier: 6,
+      tier: 7,
       category: "protection",
       icon: "Mountain",
       flavor: "The high ground was always the whole argument.",
@@ -1237,7 +1237,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Mummers' Dance",
       description:
         "The masks come round and everyone swaps: every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged, only re-tasked. While the troupe is changing costume, none of the re-tasked minors can be captured on your opponent's next turn.",
-      tier: 7,
+      tier: 8,
       category: "pieces",
       icon: "VenetianMask",
       flavor: "Nobody left the dance as who they arrived.",
@@ -1316,7 +1316,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "From the Ashes",
       description:
         "The dead are called back only far enough to make it even: your captured pieces return one at a time to your home rank, strongest first, until your non-king pieces number exactly as many as your opponent's. From ahead or level, nobody rises.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "Bird",
       flavor: "Balance is restored. No more, no less. The ledger insists.",
@@ -1531,7 +1531,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Covenant of Return",
       description:
         "Swear the covenant and death loses its next three arguments: the next 3 of your pieces that are captured each return at once to the empty square nearest your home rank.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Infinity",
       flavor: "Three times the ferryman rowed back empty.",
@@ -1567,7 +1567,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "The Homecoming",
       description:
         "The veterans are called back to the colors: your best captured major (a queen, or else a rook) and your best captured minor (a bishop, or else a knight) both return to empty squares nearest your home rank. The muster costs you your next 2 drafts.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Tent",
       flavor: "They hung up the armor. The armor did not agree.",

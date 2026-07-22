@@ -89,7 +89,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Puppet Practice",
       description:
         "Once: move an enemy bishop or rook yourself, along its normal lines, onto an empty square. No captures.",
-      tier: 4,
+      tier: 5,
       category: "movement",
       icon: "Hand",
       flavor: "Strings drop from nowhere and the marionette jerks to attention.",
@@ -137,7 +137,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Dragon Egg",
       description:
         "Place an egg (an immobile pawn) on an empty square in your half. After 6 of your turns it hatches into a queen; every 3 of your turns after hatching, the wyrm devours one random enemy pawn adjacent to it. If the egg is captured first, nothing hatches.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Egg",
       flavor: "It wobbles once per turn. That is not reassuring.",
@@ -215,7 +215,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Thunderstorm",
       description:
         "For your opponent's next 3 turns, lightning strikes a random square in their half after each of their moves, destroying any enemy pawn standing there.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       icon: "CloudLightning",
       flavor: "The forecast said scattered pawns.",
@@ -246,7 +246,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Glass Bridge",
       description:
         "Choose one of the four central ranks: it turns to glass for 4 of your turns. Any piece of either side that ends a move there has a 50% chance to fall through and be removed. Kings are exempt.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       icon: "GlassWater",
       flavor: "Step lightly. Or heavily, once.",
@@ -295,7 +295,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Royal Food Taster",
       description:
         "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       icon: "Utensils",
       flavor: "A slow-motion leap, then a posthumous medal.",
@@ -460,7 +460,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Petting Zoo",
       description:
         "A Goat, a Duck, and a Sheep (a pawn each) appear on random empty squares in your half for 8 of your turns. They cannot move or capture, they just block, then they wander home.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "PawPrint",
       flavor: "The gate opens and professionalism leaves the board.",
@@ -527,7 +527,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Fireworks Barge",
       description:
         "Choose a 2x2 area: at the end of your opponent's next turn the rockets go off. Enemy pawns inside are destroyed; every other piece inside except kings is pushed one square outward if the square is free.",
-      tier: 4,
+      tier: 5,
       category: "attack",
       icon: "PartyPopper",
       flavor: "The barge slides in humming. Everyone should worry.",
@@ -584,7 +584,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Bodyswap Ball",
       description:
         "The disco ball drops: two random pieces in your army swap squares, and two random pieces in your opponent's army swap squares. Kings sit the dance out.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Disc3",
       flavor: "Everyone swears they were someone else when it happened.",
@@ -638,7 +638,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Alt Account",
       description:
         "Go incognito for 5 of your turns: your king wears sunglasses, and your first capture while disguised earns 15 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Glasses",
       flavor: "Definitely a guest account. Definitely not you.",
@@ -718,7 +718,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Loan Shark",
       description:
         "Gain 60 seconds now. In 8 of your turns the shark collects: unless you have captured 3 or more pieces by then, your next draft is skipped and your opponent pockets a free reroll.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Banknote",
       flavor: "Great rates. Unbelievable rates. Rates you will not believe.",
@@ -754,7 +754,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_sponsored_segment",
       name: "Sponsored Segment",
       description: "Roll the sponsor banner: gain 20 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Megaphone",
       flavor: "This blunder was brought to you by RAID: Shadow Pawns.",
@@ -874,7 +874,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_prank_call",
       name: "Prank Call",
       description: "Ring ring: your opponent takes a very important call and loses 5 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Phone",
       flavor: "Caller ID says: Your Rook.",
@@ -996,7 +996,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Rube Goldberg",
       description:
         "Advance one of your pawns one square. If it lands beside an enemy pawn, that pawn is pushed back one square; if the push is blocked, the enemy blocker is stunned for 1 turn; and if that blocker is a rook, you also gain 10 seconds.",
-      tier: 4,
+      tier: 2,
       category: "attack",
       icon: "Cog",
       flavor: "Domino, marble, see-saw, boot on a stick, checkmate eventually.",
@@ -1045,7 +1045,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Rules Lawyer",
       description:
         "Once within 6 of your turns, when your opponent gives check: the check stands, but they lose 10 seconds and you gain 10.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "Scale",
       flavor: "OBJECTION! Sustained, technically. Fined anyway.",
@@ -1079,7 +1079,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_booster_pack",
       name: "Booster Pack",
       description: "Tear the foil: immediately receive one random tier-4 card, fair odds.",
-      tier: 4,
+      tier: 3,
       category: "draft",
       icon: "Package",
       flavor: "The rainbow light means nothing. It is always the rainbow light.",
@@ -1112,7 +1112,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Identity Crisis",
       description:
         "One random minor piece of yours and one random enemy minor swap sides. After 4 of your turns, each one still on the board swaps back.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Shuffle",
       flavor: "Two question marks appear, and a repainting happens mid-air.",

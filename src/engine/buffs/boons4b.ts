@@ -297,7 +297,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_pillars_of_home", name: "Pillars of Home", tier: 5, category: "nerf", icon: "Columns3",
+    { id: "bn4_pillars_of_home", name: "Pillars of Home", tier: 6, category: "nerf", icon: "Columns3",
       description: "While at least two of your rooks stand on the board, your nerf is suspended.",
       flavor: "The roof holds as long as both towers do.", requires: ["r"] },
     reliefWhile((api) => mySquares(api.board, api.me, "r").length >= 2, "leaning on the towers"),
@@ -319,7 +319,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_diplomatic_pouch", name: "Diplomatic Pouch", tier: 5, category: "nerf", icon: "Briefcase",
+    { id: "bn4_diplomatic_pouch", name: "Diplomatic Pouch", tier: 6, category: "nerf", icon: "Briefcase",
       description: "Suspend your nerf for your next 5 turns, and see the cards in your opponent's next draft offer.",
       flavor: "Sealed, immune, and full of other people's secrets." },
     suspendNow(5, (api) => {
@@ -341,7 +341,7 @@ export const BOON_WAVE4B: Buff[] = [
     reliefOn(5, 1, (m, api) => m.color === api.me && m.piece === "q", "errands"),
   ),
   card(
-    { id: "bn4_coronation_rest", name: "Coronation Rest", tier: 5, category: "nerf", icon: "Crown",
+    { id: "bn4_coronation_rest", name: "Coronation Rest", tier: 4, category: "nerf", icon: "Crown",
       description: "The first time one of your pawns promotes, your nerf is suspended for your next 10 turns.",
       flavor: "A new crown outshines every old chain.", requires: ["p"] },
     reliefOn(1, 10, (m, api) => m.color === api.me && !!m.promotion, "crownings"),
@@ -353,7 +353,7 @@ export const BOON_WAVE4B: Buff[] = [
     suspendNow(4, (api) => thawMine(api)),
   ),
   card(
-    { id: "bn4_out_on_bail", name: "Out on Bail", tier: 5, category: "nerf", icon: "Banknote",
+    { id: "bn4_out_on_bail", name: "Out on Bail", tier: 6, category: "nerf", icon: "Banknote",
       description: "Suspend your nerf for your next 9 turns. The bail costs you your next draft, which is skipped.",
       flavor: "Freedom now, invoices later." },
     suspendNow(9, (api) => {
@@ -367,7 +367,7 @@ export const BOON_WAVE4B: Buff[] = [
     reliefEvery(6, (m, api) => m.color === api.opp && !!m.promotion, "waiting on their parade"),
   ),
   card(
-    { id: "bn4_rule_of_three", name: "Rule of Three", tier: 5, category: "nerf", icon: "Dices",
+    { id: "bn4_rule_of_three", name: "Rule of Three", tier: 6, category: "nerf", icon: "Dices",
       description: "Every 3rd capture you make suspends your nerf for your next 4 turns. Lasts the rest of the game.",
       flavor: "The third one always lands different." },
     {
@@ -405,7 +405,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_ghost_walk", name: "Ghost Walk", tier: 5, category: "movement", icon: "Ghost",
+    { id: "bn4_ghost_walk", name: "Ghost Walk", tier: 4, category: "movement", icon: "Ghost",
       description: "Once, teleport one of your pieces (your king excepted) to any empty square in your half. Pawns cannot land on a first or last rank.",
       flavor: "Politely declined to use the hallway." },
     activated(
@@ -512,7 +512,7 @@ export const BOON_WAVE4B: Buff[] = [
     instant((_inst, api) => grantInventory(api, "n", 1)),
   ),
   card(
-    { id: "bn4_dowry", name: "Dowry", tier: 5, category: "pieces", icon: "Gem",
+    { id: "bn4_dowry", name: "Dowry", tier: 6, category: "pieces", icon: "Gem",
       description: "Return one of your captured rooks to an empty square on your home rank.",
       flavor: "The family insisted. The family always insists." },
     reviveOne(["r"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
@@ -565,7 +565,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_life_insurance", name: "Life Insurance", tier: 5, category: "pieces", icon: "FileHeart",
+    { id: "bn4_life_insurance", name: "Life Insurance", tier: 6, category: "pieces", icon: "FileHeart",
       description: "Choose one of your pieces (your king excepted). When it is captured, a piece of the same kind pays out into your pocket, ready to drop on a later turn.",
       flavor: "Premiums waived. Payout guaranteed. Grief optional." },
     {
@@ -623,7 +623,7 @@ export const BOON_WAVE4B: Buff[] = [
     shieldOne(null, "Choose the piece that turns to stone"),
   ),
   card(
-    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 5, category: "protection", icon: "Moon",
+    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 6, category: "protection", icon: "Moon",
       description: "None of your pawns can be captured for your opponent's next 3 turns.",
       flavor: "Count them all you like. None go missing tonight.", requires: ["p"],
       fx: { motif: "ward", pieces: ["p"], self: true } },
@@ -672,13 +672,13 @@ export const BOON_WAVE4B: Buff[] = [
   // --- tempo (3) ---
 
   card(
-    { id: "bn4_overtime_claim", name: "Overtime Claim", tier: 5, category: "tempo", icon: "AlarmClock",
+    { id: "bn4_overtime_claim", name: "Overtime Claim", tier: 3, category: "tempo", icon: "AlarmClock",
       description: "Add 45 seconds to your clock. In untimed games it adds nothing.",
       flavor: "Filed in triplicate. Paid in seconds." },
     instant((_inst, api) => api.adjustClock({ addSelfSec: 45 })),
   ),
   card(
-    { id: "bn4_winter_orders", name: "Winter Orders", tier: 5, category: "tempo", icon: "CloudSnow",
+    { id: "bn4_winter_orders", name: "Winter Orders", tier: 6, category: "tempo", icon: "CloudSnow",
       description: "Up to two enemy pieces of your choice (their king excepted) are frozen for your opponent's next 2 turns.",
       flavor: "By decree: everyone named here stays exactly where winter found them." },
     activated(
@@ -715,7 +715,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- info (2) ---
 
   card(
-    { id: "bn4_augurs_flight", name: "Augur's Flight", tier: 5, category: "info", icon: "Bird",
+    { id: "bn4_augurs_flight", name: "Augur's Flight", tier: 4, category: "info", icon: "Bird",
       description: "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies.",
       flavor: "The birds circle only where the ground is soft." },
     instant((_inst, api) => {
@@ -726,7 +726,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_border_survey", name: "Border Survey", tier: 5, category: "info", icon: "MapPin",
+    { id: "bn4_border_survey", name: "Border Survey", tier: 4, category: "info", icon: "MapPin",
       description: "Every square in your half currently reachable by an enemy attack lights up until your opponent replies.",
       flavor: "The surveyors bill by the incursion." },
     instant((_inst, api) => {
@@ -853,7 +853,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_moonlit_reprieve", name: "Moonlit Reprieve", tier: 6, category: "nerf", icon: "MoonStar",
+    { id: "bn4_moonlit_reprieve", name: "Moonlit Reprieve", tier: 7, category: "nerf", icon: "MoonStar",
       description: "For the rest of the game the moon keeps your schedule: your nerf is suspended for 2 of your turns, returns for 2, and so on.",
       flavor: "Wax, wane, wax, wane. You can plan a life around it." },
     {
@@ -873,7 +873,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_champions_rest", name: "Champion's Rest", tier: 6, category: "nerf", icon: "Trophy",
+    { id: "bn4_champions_rest", name: "Champion's Rest", tier: 7, category: "nerf", icon: "Trophy",
       description: "For the rest of the game, every rook or queen you capture suspends your nerf for your next 4 turns.",
       flavor: "Fell a giant, sleep like one." },
     reliefEvery(
@@ -898,7 +898,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_escape_artist", name: "Escape Artist", tier: 6, category: "nerf", icon: "Link2Off",
+    { id: "bn4_escape_artist", name: "Escape Artist", tier: 7, category: "nerf", icon: "Link2Off",
       description: "For the rest of the game, whenever your king steps out of check, your nerf is suspended for your next 2 turns.",
       flavor: "Every lock is a puzzle. Every puzzle is a doorway." },
     {
@@ -938,7 +938,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_faerie_door", name: "Faerie Door", tier: 6, category: "movement", icon: "DoorOpen",
+    { id: "bn4_faerie_door", name: "Faerie Door", tier: 5, category: "movement", icon: "DoorOpen",
       description: "Once, teleport one of your pieces (your king excepted) to any empty square on the board. Pawns cannot land on a first or last rank.",
       flavor: "Knock twice. Mind the toll. Do not eat anything." },
     activated(
@@ -1039,7 +1039,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_old_guard", name: "The Old Guard", tier: 6, category: "pieces", icon: "Users",
+    { id: "bn4_old_guard", name: "The Old Guard", tier: 5, category: "pieces", icon: "Users",
       description: "One of your captured knights and one of your captured bishops both return at once, each to the empty square nearest your home rank.",
       flavor: "They heard the bells. They were already dressed." },
     instant((_inst, api) => {
@@ -1053,7 +1053,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_pocket_cavalry", name: "Pocket Cavalry", tier: 6, category: "pieces", icon: "Backpack",
+    { id: "bn4_pocket_cavalry", name: "Pocket Cavalry", tier: 7, category: "pieces", icon: "Backpack",
       description: "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
       flavor: "A very small army in a very large coat." },
     instant((_inst, api) => {
@@ -1062,7 +1062,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_changeling_child", name: "Changeling Child", tier: 6, category: "pieces", icon: "Baby",
+    { id: "bn4_changeling_child", name: "Changeling Child", tier: 7, category: "pieces", icon: "Baby",
       description: "Choose one of your pawns standing beside one of your knights or bishops: it grows into that same kind of piece where it stands.",
       flavor: "Raised by the cavalry. It shows.", requires: ["p"] },
     activated(
@@ -1095,7 +1095,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_drawbridge_crew", name: "Drawbridge Crew", tier: 6, category: "pieces", icon: "Cog",
+    { id: "bn4_drawbridge_crew", name: "Drawbridge Crew", tier: 7, category: "pieces", icon: "Cog",
       description: "Place three new pawns on empty squares on your second rank.",
       flavor: "Three shifts, one bridge, zero complaints on record." },
     activated(
@@ -1138,7 +1138,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_harbor_queen", name: "Harbor Queen", tier: 6, category: "protection", icon: "Sailboat",
+    { id: "bn4_harbor_queen", name: "Harbor Queen", tier: 7, category: "protection", icon: "Sailboat",
       description: "For the rest of the game, your queen cannot be captured while she stands in your half of the board. Across the middle line she sails at her own risk.",
       flavor: "In home waters, nothing touches her.", requires: ["q"],
       fx: { motif: "ward", pieces: ["q"], self: true } },
@@ -1240,7 +1240,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_grandfather_clock", name: "Grandfather Clock", tier: 6, category: "tempo", icon: "Clock",
+    { id: "bn4_grandfather_clock", name: "Grandfather Clock", tier: 4, category: "tempo", icon: "Clock",
       description: "Add 60 seconds to your clock. In untimed games it adds nothing.",
       flavor: "It has stood in the hall for two hundred years, saving up." },
     instant((_inst, api) => api.adjustClock({ addSelfSec: 60 })),
@@ -1259,7 +1259,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_lighthouse_beam", name: "Lighthouse Beam", tier: 6, category: "info", icon: "Lightbulb",
+    { id: "bn4_lighthouse_beam", name: "Lighthouse Beam", tier: 5, category: "info", icon: "Lightbulb",
       description: "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies.",
       flavor: "The beam does not judge. The keeper does." },
     instant((_inst, api) => {
@@ -1289,7 +1289,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_patrons_favor", name: "Patron's Favor", tier: 6, category: "draft", icon: "Handshake",
+    { id: "bn4_patrons_favor", name: "Patron's Favor", tier: 7, category: "draft", icon: "Handshake",
       description: "Your next draft offer is fated to deal tier 7 cards. The favor costs the draft after it, which is skipped.",
       flavor: "Generosity with a ledger behind it." },
     instant((_inst, api) => {
@@ -1367,7 +1367,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_siege_mentality", name: "Siege Mentality", tier: 7, category: "nerf", icon: "Castle",
+    { id: "bn4_siege_mentality", name: "Siege Mentality", tier: 8, category: "nerf", icon: "Castle",
       description: "For the rest of the game, whenever your opponent puts your king in check, your nerf is suspended for your next 3 turns.",
       flavor: "Every alarm bell rings a little freer." },
     reliefEvery(
@@ -1399,7 +1399,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_masked_ball", name: "Masked Ball", tier: 7, category: "nerf", icon: "VenetianMask",
+    { id: "bn4_masked_ball", name: "Masked Ball", tier: 8, category: "nerf", icon: "VenetianMask",
       description: "Suspend your nerf for your next 6 turns, and your knights and bishops cannot be captured for your opponent's next 2 turns.",
       flavor: "Behind the masks, nobody owes anybody anything." },
     suspendNow(6, (api) => {
@@ -1411,7 +1411,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_written_in_stone", name: "Written in Stone", tier: 7, category: "nerf", icon: "Landmark",
+    { id: "bn4_written_in_stone", name: "Written in Stone", tier: 8, category: "nerf", icon: "Landmark",
       description: "After your next 10 turns, the inscription takes effect: your nerf is suspended for the 20 turns that follow.",
       flavor: "Slow to carve. Impossible to argue with." },
     reliefAfter(10, 20),
@@ -1436,7 +1436,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_royal_we", name: "The Royal We", tier: 7, category: "nerf", icon: "Crown",
+    { id: "bn4_royal_we", name: "The Royal We", tier: 8, category: "nerf", icon: "Crown",
       description: "Suspend your nerf for your next 7 turns, and your king cannot be captured for your opponent's next 2 turns.",
       flavor: "We are unbothered. We are, in fact, thriving." },
     suspendNow(7, (api) => {
@@ -1497,7 +1497,7 @@ export const BOON_WAVE4B: Buff[] = [
     relocateMany(3, (api) => emptySquares(api.board)),
   ),
   card(
-    { id: "bn4_royal_barge", name: "Royal Barge", tier: 7, category: "movement", icon: "Sailboat",
+    { id: "bn4_royal_barge", name: "Royal Barge", tier: 6, category: "movement", icon: "Sailboat",
       description: "Once, your queen may be carried to any empty square in your half.",
       flavor: "She does not travel. She arrives.", requires: ["q"] },
     activated(
@@ -1556,7 +1556,7 @@ export const BOON_WAVE4B: Buff[] = [
     placePieces(["b"], myHalf),
   ),
   card(
-    { id: "bn4_relief_column", name: "Relief Column", tier: 7, category: "pieces", icon: "Truck",
+    { id: "bn4_relief_column", name: "Relief Column", tier: 6, category: "pieces", icon: "Truck",
       description: "Your best captured rook and your best captured minor (a bishop, or else a knight) both return to empty squares nearest your home rank. The muster costs your next draft, which is skipped.",
       flavor: "Dust on the road. Cheering on the walls." },
     instant((_inst, api) => {
@@ -1783,7 +1783,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- tempo (3) ---
 
   card(
-    { id: "bn4_stolen_hour", name: "Stolen Hour", tier: 7, category: "tempo", icon: "Watch",
+    { id: "bn4_stolen_hour", name: "Stolen Hour", tier: 5, category: "tempo", icon: "Watch",
       description: "Steal 30 seconds from your opponent's clock and add them to yours. In untimed games nothing changes hands.",
       flavor: "Time is property. Property is theft. Ergo." },
     instant((_inst, api) => api.adjustClock({ stealFlatSec: 30, stealCapSec: 30 })),
@@ -1823,7 +1823,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- info (2) ---
 
   card(
-    { id: "bn4_all_seeing_spire", name: "All-Seeing Spire", tier: 7, category: "info", icon: "TowerControl",
+    { id: "bn4_all_seeing_spire", name: "All-Seeing Spire", tier: 6, category: "info", icon: "TowerControl",
       description: "See both the cards and the tier of your opponent's next draft offer, and every enemy piece that no other enemy piece defends lights up until your opponent replies.",
       flavor: "From high enough, every secret is just scenery." },
     instant((_inst, api) => {
@@ -1833,7 +1833,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_auditors_ledger", name: "Auditor's Ledger", tier: 7, category: "info", icon: "BookOpen",
+    { id: "bn4_auditors_ledger", name: "Auditor's Ledger", tier: 6, category: "info", icon: "BookOpen",
       description: "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies.",
       flavor: "The ledger flatters nobody. That is its entire charm." },
     instant((_inst, api) => {
@@ -1982,7 +1982,7 @@ export const BOON_WAVE4B: Buff[] = [
     reliefEvery(2, (m, api) => m.color === api.me && m.piece === "q", "the court defers to her"),
   ),
   card(
-    { id: "bn4_tithe_of_time", name: "Tithe of Time", tier: 8, category: "nerf", icon: "Hourglass",
+    { id: "bn4_tithe_of_time", name: "Tithe of Time", tier: 6, category: "nerf", icon: "Hourglass",
       description: "Suspend your nerf for your next 9 turns, and steal 20 seconds from your opponent's clock. In untimed games only the suspension applies.",
       flavor: "One tenth of their hours, owed and collected." },
     suspendNow(9, (api) => api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 })),
@@ -2298,7 +2298,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_hourglass_throne", name: "Hourglass Throne", tier: 8, category: "tempo", icon: "Hourglass",
+    { id: "bn4_hourglass_throne", name: "Hourglass Throne", tier: 6, category: "tempo", icon: "Hourglass",
       description: "Add 60 seconds to your clock and steal 30 more from your opponent's. In untimed games nothing changes hands.",
       flavor: "Whoever sits the throne decides what late means." },
     instant((_inst, api) =>
@@ -2329,7 +2329,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- info (1) ---
 
   card(
-    { id: "bn4_eye_of_ages", name: "Eye of Ages", tier: 8, category: "info", icon: "Eye",
+    { id: "bn4_eye_of_ages", name: "Eye of Ages", tier: 7, category: "info", icon: "Eye",
       description: "See both the cards and the tier of your opponent's next draft offer, gain 3 draft rerolls, and every enemy piece that no other enemy piece defends lights up until your opponent replies.",
       flavor: "It has watched every game ever played. It is mildly impressed by yours." },
     instant((_inst, api) => {

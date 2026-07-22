@@ -37,7 +37,7 @@ export const FUNNY_META: Buff[] = [
       name: "Emotional Support Pawn",
       description:
         "A small round friend refuses to leave your side: place a new pawn on an empty square right beside your king.",
-      tier: 2,
+      tier: 3,
       category: "pieces",
       flavor: "It cannot play chess. It believes in you SO much.",
     },
@@ -73,7 +73,7 @@ export const FUNNY_META: Buff[] = [
       name: "Stream Sniper",
       description:
         "You found their stream: see your opponent's nerf for the rest of the game, and your own next draft shows three cards to pick from.",
-      tier: 2,
+      tier: 1,
       category: "info",
       boon: true,
       flavor: "Thanks for the content, streamer.",
@@ -160,7 +160,7 @@ export const FUNNY_META: Buff[] = [
       name: "Battle Pass",
       description:
         "Season rewards trickle in: at the end of each of your next 6 turns, your clock gains 10 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Only 99 more tiers of grinding to go.",
     },
@@ -186,7 +186,7 @@ export const FUNNY_META: Buff[] = [
       name: "Pop-up Ad",
       description:
         "An ad nobody can close appears on the board: place a knight on any empty square. It is finally dismissed after 4 of your turns.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       flavor: "HOT SINGLES IN YOUR HALF OF THE BOARD.",
     },
@@ -228,7 +228,7 @@ export const FUNNY_META: Buff[] = [
       name: "Alt+F4",
       description:
         "Their whole client crashes to desktop and takes a minute to reboot: your opponent's clock loses 60 seconds.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Press Alt+F4 for free rating points, they said.",
     },
@@ -242,7 +242,7 @@ export const FUNNY_META: Buff[] = [
       name: "Touch Grass",
       description:
         "You step outside for your own good: add 30 seconds to your clock, and your nerf is suspended for your next 2 turns.",
-      tier: 4,
+      tier: 2,
       category: "nerf",
       flavor: "The sun. The big lamp in the sky. Go look at it.",
     },

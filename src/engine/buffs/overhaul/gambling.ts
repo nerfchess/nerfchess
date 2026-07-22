@@ -184,7 +184,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Raffle Ticket",
       description:
         "For your next 3 turns the drum spins after your move: 1 chance in 3 each time that a random pawn of yours marches a free square forward.",
-      tier: 2,
+      tier: 1,
       category: "tempo",
       icon: "Ticket",
       flavor: "Winners are drawn hourly. Pawns are drawn onward.",
@@ -242,7 +242,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Loaded Dice",
       description:
         "Pick a pawn and roll two dice. Seven or more: it advances a square. Boxcars (twelve): it advances two. Under seven: the loaded dice grant one free re-roll before giving up.",
-      tier: 2,
+      tier: 1,
       category: "movement",
       icon: "Dices",
       flavor: "They only cheat a little. For you.",
@@ -352,7 +352,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Three-Card Monte",
       description:
         "Follow the queen, one chance in three: find her and you win a free reroll plus a look at your opponent's next draft offer. Miss and the dealer tips his hat.",
-      tier: 3,
+      tier: 2,
       category: "draft",
       icon: "Layers",
       flavor: "The hand is quicker than the eye. The odds are printed anyway.",
@@ -423,7 +423,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "River Card",
       description:
         "You and your opponent are each dealt a hidden card, ace low king high. Higher card wins: the winner steals a random enemy pawn, which walks across and defects. A tie splits the pot and nothing happens.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       icon: "Diamond",
       flavor: "The river forgives nothing.",
@@ -456,7 +456,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Piece Roulette",
       description:
         "Bet one of your pawns on the wheel: 45% it comes back a knight, 10% it hits the green zero and comes back a rook, 25% nothing, 20% the house takes it.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "LifeBuoy",
       flavor: "Round and round the little pawn goes.",
@@ -498,7 +498,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Jackpot Pawn",
       description:
         "Fit one pawn with slot reels for 5 of your turns: every time it advances, the reels spin: 20% it banks a king-step charge it can spend later, 3% JACKPOT, it promotes to queen on the spot.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Coins",
       flavor: "Ka-chunk. Ka-chunk. Believe.",
@@ -583,7 +583,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Double Down Draft",
       description:
         "Push your chips in, half and half: 50% you take BOTH cards of your next draft, 50% your next draft is skipped entirely while the dealer smiles.",
-      tier: 5,
+      tier: 6,
       category: "draft",
       icon: "Copy",
       flavor: "The dealer knocks twice. So does your heart.",
@@ -602,7 +602,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Crash Game",
       description:
         "Strap a pawn to the rocket and let it ride: 30% it lands with a free sidestep, 25% it comes back a knight, 20% a knight plus a draft reroll, 10% it comes back a ROOK, 15% the rocket crashes and the pawn burns up.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "Rocket",
       flavor: "It is not the fall that gets you. It is the multiplier.",
@@ -828,7 +828,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Seven Cases",
       description:
         "Seven cases, one opens at random: two hold pawns, one a knight, one a bishop, one a rook, one a full intelligence packet (a reroll plus your opponent's next offer revealed), and one holds absolutely nothing.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "BriefcaseBusiness",
       flavor: "The banker is not on the phone. The banker is the phone.",
@@ -858,7 +858,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Martingale",
       description:
         "Flip until you miss, half odds each flip, ladder capped at four: one win pays a pawn, two pays two pawns, three a knight and a pawn, four a rook and a knight. You keep the rung you reached, but going bust on the very first flip stuns the last piece you moved for a turn.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "Repeat",
       flavor: "The strategy is flawless. The bankroll is a pawn.",
@@ -952,7 +952,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Break the Bank",
       description:
         "Run the heist: three laser grids, 60% each to slip through. Three clean: your best captured piece returns AND a random tier 6 card joins your hand. Two: the tier 6 card. One: a consolation pawn, but a random piece of yours sits jailed for 2 turns. Zero: two of your pieces are jailed for 2 turns.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Vault",
       flavor: "The plan had one job. The plan is in custody.",
@@ -1170,7 +1170,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Consolation Scratcher",
       description:
         "Scratch it: 50% a random pawn of yours advances a free square, 30% you gain a draft reroll, 20% dust and a lovely sentiment.",
-      tier: 2,
+      tier: 1,
       category: "tempo",
       boon: true,
       icon: "Eraser",

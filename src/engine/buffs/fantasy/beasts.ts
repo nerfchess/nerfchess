@@ -154,7 +154,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Griffon Rider",
       description:
         "Move up to two of your pieces to any empty squares, once.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       flavor: "Hold on tight and mind the updraft.",
     },

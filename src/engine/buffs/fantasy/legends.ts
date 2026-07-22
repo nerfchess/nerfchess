@@ -98,7 +98,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Hero's Journey",
       description:
         "The call to adventure rings out: your next draft shows three cards to pick from, and your bank offer improves by one tier.",
-      tier: 4,
+      tier: 5,
       category: "draft",
       flavor: "Refuse the call once, and the story sends a bigger horn.",
     },
@@ -113,7 +113,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Giant's Maul",
       description:
         "The maul comes down once: crush one enemy knight, bishop, or rook, and the shock leaves every enemy piece beside it (kings aside) frozen for 1 of their turns.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Subtlety is for people who cannot lift the hammer.",
     },
@@ -269,7 +269,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Legendary Forge",
       description:
         "The forge mends what war broke: one of your captured knights or bishops is reforged and returns to your pocket. Spend a later turn to drop it onto any empty square.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "Iron remembers every shape it has ever worn.",
     },

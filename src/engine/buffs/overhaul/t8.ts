@@ -235,7 +235,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Continental Drift",
       description:
         "A chasm tears the board between the fourth and fifth ranks for your opponent's next 5 turns: their pieces cannot cross it, except knights or through the two bridge squares you choose.",
-      tier: 8,
+      tier: 9,
       category: "protection",
       icon: "Mountain",
       flavor: "The tectonic plates have picked a side.",
@@ -311,7 +311,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Let Me Play For You",
       description:
         "Three times, at most once per your turn and as a free action, move one of your opponent's pieces yourself: any empty square its normal movement reaches. No captures, kings excluded.",
-      tier: 8,
+      tier: 9,
       category: "movement",
       icon: "Hand",
       flavor: "Player two controller connected.",
@@ -480,7 +480,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "All the King's Men",
       description:
         "Up to four of your captured pieces return at once, strongest first, on random empty squares in your half.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Users",
       flavor: "Humpty was beyond saving. The cavalry was not.",
@@ -511,7 +511,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Anti-Gravity Gala",
       description:
         "For 3 of your turns everything floats: your sliding pieces may pass over the first piece in their path, friend or foe, and continue beyond it. Kings are too dignified to be floated over.",
-      tier: 8,
+      tier: 9,
       category: "movement",
       icon: "Sparkles",
       flavor: "Dress code: weightless.",
@@ -629,7 +629,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Symphony of the Legion",
       description:
         "Three movements, each a free action, at most one per your turn, played in order: first every pawn you own advances a square; second each of your knights and bishops drifts one random empty step; third your rooks and queen may pass through friendly pieces until your turn ends.",
-      tier: 8,
+      tier: 7,
       category: "tempo",
       icon: "Music2",
       flavor: "The conductor taps the podium. The army inhales.",
@@ -711,7 +711,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "The Tutorial",
       description:
         "A relentlessly cheerful tutorial haunts your opponent for their next 3 turns: every enemy move is marked and reviewed, and whenever their moved piece ends up hanging you are paid 8 seconds while it congratulates them.",
-      tier: 8,
+      tier: 6,
       category: "info",
       icon: "MousePointerClick",
       flavor: "GREAT JOB! That was a blunder.",
@@ -743,7 +743,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Ragnarok Postponed",
       description:
         "The doomsday bell begins to toll: in 10 of your turns, every piece on the board except kings and pawns is removed. Both armies. No exceptions, no cancellations.",
-      tier: 8,
+      tier: 9,
       category: "attack",
       icon: "Bell",
       flavor: "Rescheduled, not cancelled. The wolves apologize for the delay.",
@@ -877,7 +877,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Standing Ovation",
       description:
         "An audience gathers for 5 of your turns: each of your moves that leaves the enemy king under attack earns 10 seconds of applause.",
-      tier: 8,
+      tier: 6,
       category: "tempo",
       icon: "Theater",
       flavor: "They paid for blood. They will settle for checks.",
@@ -910,7 +910,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Leviathan Below",
       description:
         "Mark three squares; both players see the water darken. The moment your opponent's next move ends, tentacles erupt from all three at once: any piece standing there except a king is dragged below, and the wreckage blocks those squares for 2 turns.",
-      tier: 8,
+      tier: 9,
       category: "attack",
       icon: "Waves",
       flavor: "The board is only the surface.",
@@ -959,7 +959,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Dev Console",
       description:
         "Open the console once and run the whole macro: spawn a pawn on a chosen empty square in your half, add 20 seconds to your clock, and dump your opponent's next draft offer to your screen.",
-      tier: 8,
+      tier: 6,
       category: "draft",
       icon: "Terminal",
       flavor: "sudo win. Command not found. The pawn worked though.",
@@ -990,7 +990,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Democracy",
       description:
         "Parliament sits for 3 of your turns. After each of your moves the house votes: usually applause worth 8 seconds, sometimes a motion that marches a random pawn of yours forward, occasionally a filibuster where nothing happens at all.",
-      tier: 8,
+      tier: 6,
       category: "tempo",
       icon: "Landmark",
       flavor: "The rook party demands open files for all.",
@@ -1020,7 +1020,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Monks of the Fifth Bell",
       description:
         "Permanent: every fifth of your turns the bell tolls and one random pawn of yours takes a free step forward.",
-      tier: 8,
+      tier: 7,
       category: "tempo",
       icon: "Church",
       flavor: "They keep no clock. They ARE the clock.",
@@ -1126,7 +1126,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "NerfChess: The Musical",
       description:
         "The whole board takes the stage, once: rearrange up to five of your pieces onto empty squares in your half, then collect 10 seconds for putting on a show.",
-      tier: 8,
+      tier: 6,
       category: "movement",
       icon: "Clapperboard",
       flavor: "Tonight only. The pawns learned choreography and one of them cries.",

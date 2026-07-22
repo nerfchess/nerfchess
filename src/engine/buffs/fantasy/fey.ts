@@ -157,7 +157,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Thorn Hedge",
       description:
         "A hedge of black thorns walls off your realm: enemy bishops, rooks, and queens cannot cross into your half of the board for their next 3 turns.",
-      tier: 5,
+      tier: 6,
       category: "hex",
       flavor: "A hundred years of briars in a single heartbeat.",
       fx: { motif: "blindfold", pieces: ["b", "r", "q"] },
@@ -175,7 +175,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Changeling",
       description:
         "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "The cradle was never empty. It was just not yours.",
     },
@@ -208,7 +208,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Seelie Blessing",
       description:
         "The bright court smiles on one of your pieces: it cannot be captured for your opponent's next 3 turns, and any freeze or stun on it melts away as the blessing lands.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       boon: true,
       flavor: "Their favor is warm, brief, and absolutely conditional.",
@@ -311,7 +311,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Puck's Mischief",
       description:
         "A hobgoblin ties every royal shoelace together: for their next 3 turns your opponent's queen and rooks may move only one square at a time.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "Lord, what fools these monarchs be.",
       fx: { motif: "slow", pieces: ["q", "r"] },
@@ -366,7 +366,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "The Wild Hunt",
       description:
         "The horns of the twilight court sound: pick any square, and the Hunt rides both diagonals through it, carrying off every enemy piece on them. Kings are never taken.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Do not look up when the hoofbeats pass overhead.",
     },

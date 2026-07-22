@@ -39,7 +39,7 @@ export const MYSTIC_FATE: Buff[] = [
       name: "Threads of Fate",
       description:
         "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "The Fates do not take requests. You did not ask.",
     },
@@ -65,7 +65,7 @@ export const MYSTIC_FATE: Buff[] = [
       name: "Favorable Stars",
       description:
         "You cast your chart and the houses agree: your next draft is fated to offer tier 6 cards.",
-      tier: 5,
+      tier: 6,
       category: "draft",
       flavor: "Born under a good sign, drafting under a better one.",
     },

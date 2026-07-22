@@ -51,7 +51,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Home Field",
       description:
         "Home advantage: while standing in your own half of the board or one rank past it, each of your knights, bishops, and rooks may also step one square in any direction.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       requires: ["n", "b", "r"],
       flavor: "The crowd, the turf, the extra step.",
@@ -183,7 +183,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Union Rules",
       description:
         "Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "You cannot work them to the bone every shift.",
     },
@@ -269,7 +269,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Magnetism",
       description:
         "Your knights are magnetized: after each knight move, the nearest enemy piece (never a king) is dragged up to two squares toward that knight, as long as the squares between them are empty.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "Opposites attract, and so does the cavalry.",
     },
@@ -402,7 +402,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Termites",
       description:
         "Termites gnaw at your opponent's towers: every 2 of their turns, their rooks lose one more square of reach. The decay stops at a reach of 1, so a rook can always shuffle a single square.",
-      tier: 6,
+      tier: 7,
       category: "hex",
       flavor: "You can hear them chewing.",
       fx: { motif: "anchor", pieces: ["r"] },

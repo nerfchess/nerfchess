@@ -33,7 +33,7 @@ export const MYSTIC_OCCULT: Buff[] = [
       name: "Third Eye",
       description:
         "Your third eye opens onto what is still hidden: see your opponent's nerf for the rest of the game, and gain one draft reroll.",
-      tier: 2,
+      tier: 1,
       category: "info",
       boon: true,
       flavor: "It does not blink. It does not need to.",

@@ -113,7 +113,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Celestial Ascension",
       description:
         "Your bishops ascend to a higher plane: for the game every one of them also moves in straight lines like a rook, wielding a queen's full reach.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       requires: ["b"],
       flavor: "The whole clergy takes wing at once.",
@@ -132,7 +132,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Philosopher's Stone",
       description:
         "Press the fabled stone to your ranks and transmute base metal to gold: three of your pawns become queens, once.",
-      tier: 8,
+      tier: 9,
       category: "pieces",
       requires: ["p"],
       flavor: "The final work of a thousand alchemists.",

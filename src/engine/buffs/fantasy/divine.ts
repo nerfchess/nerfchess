@@ -67,7 +67,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Divine Intervention",
       description:
         "Your king cannot be captured for your opponent's next 3 turns, and the first enemy piece to strike at your king in that time is hurled clean off the board. Kings are never banished.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Not today, the heavens say.",
       fx: { motif: "ward", pieces: ["k"], self: true },
@@ -112,7 +112,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Judgment Day",
       description:
         "A pillar of holy light smites one enemy knight, bishop, rook, or queen you name, then petrifies the two enemy pieces nearest the impact into stone for the rest of the game. Kings are never petrified.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Weighed, measured, and found wanting; the stone is left to mark the spot.",
     },
@@ -161,7 +161,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Hallowed Return",
       description:
         "A prayer is answered exactly: one of your captured knights, bishops, or rooks is restored to life on one of its own starting squares, if one is free, once.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "Called back from the far shore, to the very pew it left.",
     },
