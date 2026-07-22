@@ -367,27 +367,42 @@ for (const c of cards) {
 }
 
 // Pass 3: everyone else open-address-probes the catalog from hash(id).
+// OVERHAUL: the library outgrew the catalog (2000+ cards vs ~1500 icons), so
+// uniqueness is now on the (icon, variant) PAIR: once every plain icon is
+// claimed, probing continues over "Name#1", then "Name#2"... The client
+// (cardIcon.ts) resolves the base component and exposes the variant, which
+// the card face renders as a deterministic tint/mirror treatment, so two
+// cards sharing a glyph still never share a FACE.
 const n = CATALOG.length;
+const MAX_VARIANTS = 8; // 8 * ~1500 = capacity for ~12000 cards
 for (const c of cards) {
   if (assigned.has(c.id)) continue;
-  if (claimed.size >= n) break; // catalog exhausted (guarded below)
-  let slot = hashId(c.id) % n;
-  while (claimed.has(CATALOG[slot])) slot = (slot + 1) % n;
-  claimed.add(CATALOG[slot]);
-  assigned.set(c.id, CATALOG[slot]);
+  if (claimed.size >= n * MAX_VARIANTS) break; // truly exhausted (guarded below)
+  let probe = hashId(c.id) % n;
+  let variant = 0;
+  let key = CATALOG[probe];
+  while (claimed.has(key)) {
+    probe = (probe + 1) % n;
+    if (probe === hashId(c.id) % n) variant++; // full lap: next variant band
+    key = variant === 0 ? CATALOG[probe] : `${CATALOG[probe]}#${variant}`;
+    if (variant >= MAX_VARIANTS) break;
+  }
+  if (claimed.has(key)) continue;
+  claimed.add(key);
+  assigned.set(c.id, key);
 }
 
-// Hard invariants — a violation here is an algorithm bug or catalog overflow,
-// so fail the build rather than emit a bad map.
+// Hard invariants — a violation here is an algorithm bug or a capacity
+// overflow (raise MAX_VARIANTS), so fail the build rather than emit a bad map.
 if (assigned.size !== cards.length) {
   console.error(
     `[gen-card-icons] FATAL: ${cards.length - assigned.size} of ${cards.length} ` +
-      `cards have no unique face icon (lucide catalog: ${n}).`,
+      `cards have no unique face (lucide catalog: ${n} x ${MAX_VARIANTS} variants).`,
   );
   process.exit(1);
 }
 if (new Set(assigned.values()).size !== assigned.size) {
-  console.error("[gen-card-icons] FATAL: duplicate face icon assignment — algorithm bug.");
+  console.error("[gen-card-icons] FATAL: duplicate face assignment — algorithm bug.");
   process.exit(1);
 }
 
@@ -396,7 +411,7 @@ if (new Set(assigned.values()).size !== assigned.size) {
 // so resolveLucideIcon() can still resolve a wire-received def whose id is
 // not (yet) in the map but whose icon string names a known face.
 // ---------------------------------------------------------------------------
-const registry = new Set(assigned.values());
+const registry = new Set([...assigned.values()].map((v) => v.split("#")[0]));
 for (const c of cards) {
   const own = canonicalIconName(c.icon);
   if (own) registry.add(own);

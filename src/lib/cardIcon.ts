@@ -309,7 +309,10 @@ export function cardFaceIcon(
   category: BuffCategory,
   icon?: string,
 ): LucideIcon | undefined {
-  const name = Object.hasOwn(CARD_ICON_NAMES, id) ? CARD_ICON_NAMES[id] : undefined;
+  const raw = Object.hasOwn(CARD_ICON_NAMES, id) ? CARD_ICON_NAMES[id] : undefined;
+  // Overflow variants ("Name#2"): resolve the base component; the visual
+  // variant is exposed separately via cardFaceVariant.
+  const name = raw?.split("#")[0];
   if (name && Object.hasOwn(GEN_ICON_COMPONENTS, name)) {
     return GEN_ICON_COMPONENTS[name];
   }
@@ -323,6 +326,19 @@ export function cardFaceIcon(
   const ring = RINGS[category];
   if (!ring || ring.length === 0) return undefined;
   return ring[hashId(id) % ring.length];
+}
+
+/** The face VARIANT for a card (0 = the plain icon). The library outgrew the
+ * lucide catalog, so face identity is the (icon, variant) pair: cards sharing
+ * a glyph carry different variants, and the card face renders variant > 0
+ * with a deterministic treatment (hue tint / mirror), keeping every face
+ * visually distinct. */
+export function cardFaceVariant(id: string): number {
+  const raw = Object.hasOwn(CARD_ICON_NAMES, id) ? CARD_ICON_NAMES[id] : undefined;
+  const i = raw?.indexOf("#") ?? -1;
+  if (raw == null || i < 0) return 0;
+  const v = parseInt(raw.slice(i + 1), 10);
+  return Number.isFinite(v) ? v : 0;
 }
 
 /** Face icon for a nerf card: same globally unique map as buffs (nerfs are

@@ -1,0 +1,579 @@
+/* ----------------------------------------------------------------------------
+   gamblingPlays.css - keyframes for the gm_* gambling bespoke play animations
+   (gamblingPlays.tsx). Owned by the gambling card workstream.
+
+   Rules (mirrors casinoPlays.css / effects.css):
+   - transform/opacity ONLY: the compositor never relayouts mid-play.
+   - one-shot flourishes: fill-mode `both` keeps delayed elements hidden until
+     their start frame; every track ends faded out.
+   - animations off (Settings): the whole layer is transient spectacle, so it
+     is hidden outright (same defensive double-cover as the casino layer).
+---------------------------------------------------------------------------- */
+
+/* Percentage transform-origins resolve against each SVG child's own box, so
+   pivots (reels, wheels, lids, claws) land where the art expects them. */
+.gsp svg * {
+  transform-box: fill-box;
+}
+
+/* --- shared stage tracks ---------------------------------------------------- */
+
+@keyframes gsp-wash {
+  0% { opacity: 0; transform: scale(1.04); }
+  16% { opacity: 0.85; transform: scale(1); }
+  70% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.gsp-wash { animation: gsp-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes gsp-linger {
+  0% { opacity: 0; transform: scale(0.94); }
+  12% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.01); }
+}
+.gsp-linger { animation: gsp-linger calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.gsp-linger--long { animation-duration: calc(2.7s * var(--fx-dur, 1)); }
+
+@keyframes gsp-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  22% { opacity: 1; transform: scale(1.18); }
+  38% { transform: scale(0.96); }
+  50% { transform: scale(1); }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.gsp-pop { animation: gsp-pop calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+@keyframes gsp-rise {
+  0% { opacity: 0; transform: translateY(34%) scale(0.7); }
+  26% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-130%) scale(1.05); }
+}
+.gsp-rise { animation: gsp-rise calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes gsp-flash {
+  0% { opacity: 0; }
+  30% { opacity: 0; }
+  44% { opacity: 0.85; }
+  58% { opacity: 0.15; }
+  72% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+.gsp-flash { animation: gsp-flash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes gsp-star {
+  0% { opacity: 0; transform: scale(0.2) rotate(-30deg); }
+  40% { opacity: 1; transform: scale(1.1) rotate(0deg); }
+  70% { opacity: 1; transform: scale(0.85) rotate(6deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.gsp-star { animation: gsp-star calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* Grey sad-puff wisp drifting up (the bust beat). */
+@keyframes gsp-puff {
+  0% { opacity: 0; transform: translateY(16%) scale(0.5); }
+  26% { opacity: 0.85; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-150%) scale(1.2); }
+}
+.gsp-puff { animation: gsp-puff calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* Winnings pour toward the player's rail (per-coin --px/--py lanes). */
+@keyframes gsp-payout {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  14% { opacity: 1; transform: translate(calc(var(--px, 0%) * 0.3), 60%) scale(1); }
+  55% { transform: translate(calc(var(--px, 0%) * 0.8), var(--py, 480%)); }
+  68% { transform: translate(calc(var(--px, 0%) * 0.88), calc(var(--py, 480%) * 0.85)); }
+  100% { opacity: 0; transform: translate(var(--px, 0%), calc(var(--py, 480%) * 1.12)) scale(0.95); }
+}
+.gsp-payout { animation: gsp-payout calc(1.05s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+
+/* Rubber-stamp slam: swings in oversized and slams down with a tiny recoil. */
+@keyframes gsp-stamp {
+  0% { opacity: 0; transform: scale(2.4) rotate(-14deg); }
+  40% { opacity: 0; transform: scale(2.4) rotate(-14deg); }
+  55% { opacity: 1; transform: scale(0.94) rotate(-7deg); }
+  66% { transform: scale(1.08) rotate(-8deg); }
+  76% { transform: scale(1) rotate(-8deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1) rotate(-8deg); }
+}
+.gsp-stamp { animation: gsp-stamp calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Sweep: the house rakes it off the table (slide right + fade). */
+@keyframes gsp-sweep {
+  0% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  30% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(150%) rotate(9deg); }
+}
+.gsp-sweep { animation: gsp-sweep calc(1.1s * var(--fx-dur, 1)) ease-in both; }
+
+/* Forward step arrow: nudges ahead twice (the pawn marches). */
+@keyframes gsp-step {
+  0% { opacity: 0; transform: translateY(30%); }
+  25% { opacity: 1; transform: translateY(12%); }
+  50% { transform: translateY(-4%); }
+  70% { opacity: 1; transform: translateY(-18%); }
+  100% { opacity: 0; transform: translateY(-40%); }
+}
+.gsp-step { animation: gsp-step calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- reels (penny slots / jackpot pawn) -------------------------------------- */
+
+/* Reel strip spins DOWN fast and decelerates onto --stop (the true symbol). */
+@keyframes gsp-reel {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(var(--stop, -66%)); }
+}
+.gsp-reel { animation: gsp-reel calc(var(--spin, 1s) * var(--fx-dur, 1)) cubic-bezier(0.15, 0.85, 0.2, 1) both; }
+
+/* Lever yank: raise, hard yank, held beat, spring back. */
+@keyframes gsp-lever {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(-6deg); }
+  22% { transform: rotate(54deg); }
+  36% { transform: rotate(54deg); }
+  48% { transform: rotate(-10deg); }
+  58% { transform: rotate(5deg); }
+  74% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+.gsp-lever { animation: gsp-lever calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 8%; }
+
+/* --- wheels (roulette / cosmos / raffle drum) --------------------------------- */
+
+/* Wheel spins several turns and eases to rest EXACTLY on --turn, so the
+   pointer lands on the true segment. */
+@keyframes gsp-spinvar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(var(--turn, 1080deg)); }
+}
+.gsp-spinvar { animation: gsp-spinvar calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 0.82, 0.24, 1) both; transform-origin: 50% 50%; }
+
+/* Raffle drum tumble: two quick turns with a wobble stop. */
+@keyframes gsp-drum {
+  0% { transform: rotate(0deg); }
+  70% { transform: rotate(700deg); }
+  84% { transform: rotate(716deg); }
+  100% { transform: rotate(720deg); }
+}
+.gsp-drum { animation: gsp-drum calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* Roulette ball: counter-spin then clatter down into the pocket. */
+@keyframes gsp-balltrack {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-1584deg); }
+}
+.gsp-balltrack { animation: gsp-balltrack calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.12, 0.8, 0.2, 1) both; transform-origin: 50% 50%; }
+@keyframes gsp-balldrop {
+  0% { transform: translateY(0); }
+  56% { transform: translateY(0); }
+  64% { transform: translateY(22%); }
+  72% { transform: translateY(9%); }
+  80% { transform: translateY(20%); }
+  88% { transform: translateY(14%); }
+  100% { transform: translateY(18%); }
+}
+.gsp-balldrop { animation: gsp-balldrop calc(1.6s * var(--fx-dur, 1)) ease-in both; }
+
+/* Pointer flick: kicked by passing pegs, settles straight. */
+@keyframes gsp-pointer {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(-22deg); }
+  30% { transform: rotate(-4deg); }
+  45% { transform: rotate(-26deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(-16deg); }
+  90% { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}
+.gsp-pointer { animation: gsp-pointer calc(1.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+
+/* --- coin flip ---------------------------------------------------------------- */
+
+@keyframes gsp-toss {
+  0% { transform: translateY(30%); }
+  46% { transform: translateY(-130%); }
+  100% { transform: translateY(0); }
+}
+.gsp-toss { animation: gsp-toss calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.4, 1) both; }
+
+/* Edge-over-edge tumble (scaleY squash cycles), ends flat on the true face. */
+@keyframes gsp-tumble {
+  0% { transform: scaleY(1); }
+  10% { transform: scaleY(0.08); }
+  20% { transform: scaleY(1); }
+  30% { transform: scaleY(0.08); }
+  40% { transform: scaleY(1); }
+  52% { transform: scaleY(0.08); }
+  66% { transform: scaleY(1); }
+  100% { transform: scaleY(1); }
+}
+.gsp-tumble { animation: gsp-tumble calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* --- dice ---------------------------------------------------------------------- */
+
+/* Dice clatter in: skitter, two bounces, settle on the true face. */
+@keyframes gsp-dice {
+  0% { opacity: 0; transform: translate(-170%, -60%) rotate(-160deg); }
+  16% { opacity: 1; transform: translate(-90%, 10%) rotate(-80deg); }
+  38% { transform: translate(-38%, -26%) rotate(-28deg); }
+  56% { transform: translate(-8%, 6%) rotate(8deg); }
+  72% { transform: translate(4%, -8%) rotate(-4deg); }
+  84% { transform: translate(0, 2%) rotate(2deg); }
+  100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+.gsp-dice { animation: gsp-dice calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+/* --- cards ---------------------------------------------------------------------- */
+
+@keyframes gsp-deal {
+  0% { opacity: 0; transform: translate(-160%, -40%) rotate(-24deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: translate(0, 0) rotate(var(--tilt, 0deg)); }
+}
+.gsp-deal { animation: gsp-deal calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* Snap flip: back shrinks edge-on, face snaps out with an overshoot. */
+@keyframes gsp-flipback {
+  0% { opacity: 1; transform: scaleX(1); }
+  46% { opacity: 1; transform: scaleX(1); }
+  60% { opacity: 1; transform: scaleX(0.04); }
+  62% { opacity: 0; transform: scaleX(0.04); }
+  100% { opacity: 0; transform: scaleX(0.04); }
+}
+.gsp-flipback { animation: gsp-flipback calc(0.8s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+@keyframes gsp-flipface {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  60% { opacity: 0; transform: scaleX(0.04); }
+  62% { opacity: 1; transform: scaleX(0.04); }
+  78% { transform: scaleX(1.14); }
+  88% { transform: scaleX(0.96); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+.gsp-flipface { animation: gsp-flipface calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
+
+/* Monte shuffle: a card slides out, crosses, and slides back twice. */
+@keyframes gsp-monte-a {
+  0% { transform: translateX(0); }
+  20% { transform: translate(120%, -26%); }
+  40% { transform: translateX(240%); }
+  60% { transform: translate(120%, 26%); }
+  80% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+.gsp-monte-a { animation: gsp-monte-a calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+@keyframes gsp-monte-b {
+  0% { transform: translateX(0); }
+  20% { transform: translate(-120%, 26%); }
+  40% { transform: translateX(-240%); }
+  60% { transform: translate(-120%, -26%); }
+  80% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+.gsp-monte-b { animation: gsp-monte-b calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- claw machine ----------------------------------------------------------------- */
+
+/* Carriage slides over, the claw drops, holds (the grab), and hoists back up. */
+@keyframes gsp-clawdrop {
+  0% { transform: translate(-24%, 0); }
+  22% { transform: translate(0, 0); }
+  46% { transform: translate(0, 58%); }
+  60% { transform: translate(0, 58%); }
+  88% { transform: translate(0, -2%); }
+  100% { transform: translate(0, 0); }
+}
+.gsp-clawdrop { animation: gsp-clawdrop calc(2.1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.3, 1) both; }
+/* Prongs pinch closed at the grab beat. */
+@keyframes gsp-prong-l {
+  0% { transform: rotate(0deg); }
+  46% { transform: rotate(0deg); }
+  58% { transform: rotate(24deg); }
+  100% { transform: rotate(24deg); }
+}
+.gsp-prong-l { animation: gsp-prong-l calc(2.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+@keyframes gsp-prong-r {
+  0% { transform: rotate(0deg); }
+  46% { transform: rotate(0deg); }
+  58% { transform: rotate(-24deg); }
+  100% { transform: rotate(-24deg); }
+}
+.gsp-prong-r { animation: gsp-prong-r calc(2.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+/* The prize appears in the claw's grip at the grab beat and rides up with it. */
+@keyframes gsp-prize {
+  0% { opacity: 0; }
+  56% { opacity: 0; }
+  62% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.gsp-prize { animation: gsp-prize calc(2.1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- crates / cases / piggy -------------------------------------------------------- */
+
+/* Comic shake-shake ... pause ... BURST (squash-and-stretch pop). */
+@keyframes gsp-jiggle {
+  0% { transform: rotate(0deg) scale(1); }
+  6% { transform: rotate(-4deg); }
+  12% { transform: rotate(4deg); }
+  18% { transform: rotate(-2.5deg); }
+  24% { transform: rotate(0deg); }
+  36% { transform: rotate(-5deg); }
+  42% { transform: rotate(5deg); }
+  48% { transform: rotate(0deg); }
+  66% { transform: rotate(0deg) scale(1); }
+  72% { transform: rotate(0deg) scale(1.2, 0.78); }
+  80% { transform: rotate(0deg) scale(0.92, 1.16); }
+  90% { transform: rotate(0deg) scale(1.04, 0.97); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+.gsp-jiggle { animation: gsp-jiggle calc(1.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+
+/* Lid rattles shut, then blows open past the hinge. */
+@keyframes gsp-lid {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(-2deg); }
+  20% { transform: rotate(1.5deg); }
+  40% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(0deg); }
+  66% { transform: rotate(0deg); }
+  72% { transform: rotate(7deg); }
+  86% { transform: rotate(-128deg); }
+  100% { transform: rotate(-114deg); }
+}
+.gsp-lid { animation: gsp-lid calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.2, 1) both; transform-origin: 8% 100%; }
+
+/* Padlock strains twice and pops off. */
+@keyframes gsp-lock {
+  0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(0) rotate(-10deg); }
+  34% { transform: translateY(0) rotate(8deg); }
+  52% { transform: translateY(0) rotate(-12deg); }
+  64% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  78% { opacity: 1; transform: translate(24%, 60%) rotate(38deg); }
+  100% { opacity: 0; transform: translate(46%, 170%) rotate(72deg); }
+}
+.gsp-lock { animation: gsp-lock calc(1.5s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 20%; }
+
+/* Rarity rays burst at the open beat, tinted per rarity by the art. */
+@keyframes gsp-rays {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  64% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  80% { opacity: 0.95; transform: scale(1.05) rotate(14deg); }
+  100% { opacity: 0; transform: scale(1.4) rotate(30deg); }
+}
+.gsp-rays { animation: gsp-rays calc(1.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 60%; }
+
+/* The prize floats up out of the crate after the burst. */
+@keyframes gsp-loot {
+  0% { opacity: 0; transform: translateY(40%) scale(0.5); }
+  62% { opacity: 0; transform: translateY(40%) scale(0.5); }
+  80% { opacity: 1; transform: translateY(-18%) scale(1.16); }
+  90% { transform: translateY(-24%) scale(0.98); }
+  100% { opacity: 0; transform: translateY(-42%) scale(1.02); }
+}
+.gsp-loot { animation: gsp-loot calc(2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 60%; }
+
+/* --- vault heist -------------------------------------------------------------------- */
+
+/* Laser beam arms, then flashes verdict (paired with green/red fill). */
+@keyframes gsp-laser {
+  0% { opacity: 0; transform: scaleX(0); }
+  18% { opacity: 0.5; transform: scaleX(1); }
+  55% { opacity: 0.5; }
+  64% { opacity: 1; }
+  72% { opacity: 0.3; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.gsp-laser { animation: gsp-laser calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+
+/* Vault door swings open (a fat disc rotating away on a hinge). */
+@keyframes gsp-vaultdoor {
+  0% { transform: rotate(0deg) scaleX(1); }
+  55% { transform: rotate(0deg) scaleX(1); }
+  75% { transform: rotate(-8deg) scaleX(0.4); }
+  100% { transform: rotate(-10deg) scaleX(0.18); }
+}
+.gsp-vaultdoor { animation: gsp-vaultdoor calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 0% 50%; }
+
+/* Alarm strobe: hard red pulses. */
+@keyframes gsp-alarm {
+  0% { opacity: 0; }
+  20% { opacity: 0; }
+  30% { opacity: 0.7; }
+  40% { opacity: 0.05; }
+  52% { opacity: 0.7; }
+  64% { opacity: 0.05; }
+  76% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+.gsp-alarm { animation: gsp-alarm calc(1.6s * var(--fx-dur, 1)) linear both; }
+
+/* Chains clamp in from above with a hard settle (the jailed piece). */
+@keyframes gsp-chains {
+  0% { opacity: 0; transform: translateY(-120%) scale(1.15); }
+  55% { opacity: 0; transform: translateY(-120%) scale(1.15); }
+  72% { opacity: 1; transform: translateY(0) scale(0.96); }
+  82% { transform: translateY(-3%) scale(1.02); }
+  90% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.gsp-chains { animation: gsp-chains calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1.2) both; transform-origin: 50% 50%; }
+
+/* --- crash rocket ------------------------------------------------------------------- */
+
+/* Rocket rides the multiplier curve: up and to the right, accelerating. */
+@keyframes gsp-rocket {
+  0% { opacity: 0; transform: translate(0, 0) rotate(38deg); }
+  10% { opacity: 1; transform: translate(4%, -6%) rotate(36deg); }
+  45% { transform: translate(26%, -34%) rotate(30deg); }
+  75% { transform: translate(58%, -86%) rotate(22deg); }
+  100% { opacity: 1; transform: translate(84%, -150%) rotate(16deg); }
+}
+.gsp-rocket { animation: gsp-rocket calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.8, 0.4) both; }
+
+/* Exhaust flame flickers under the rocket. */
+@keyframes gsp-exhaust {
+  0% { opacity: 0.9; transform: scaleY(1); }
+  25% { opacity: 0.6; transform: scaleY(0.6); }
+  50% { opacity: 0.9; transform: scaleY(1.15); }
+  75% { opacity: 0.6; transform: scaleY(0.7); }
+  100% { opacity: 0.9; transform: scaleY(1); }
+}
+.gsp-exhaust { animation: gsp-exhaust calc(0.24s * var(--fx-dur, 1)) linear 6 both; transform-origin: 50% 0%; }
+
+/* Boom: a hard radial burst then gone. */
+@keyframes gsp-boom {
+  0% { opacity: 0; transform: scale(0.1); }
+  18% { opacity: 1; transform: scale(1.15); }
+  40% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.gsp-boom { animation: gsp-boom calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* Parachute: pops open and sways gently down. */
+@keyframes gsp-chute {
+  0% { opacity: 0; transform: translateY(-20%) scale(0.3); }
+  14% { opacity: 1; transform: translateY(0) scale(1.1); }
+  24% { transform: translateY(6%) scale(1); }
+  50% { transform: translate(-6%, 46%) rotate(-5deg); }
+  76% { transform: translate(5%, 90%) rotate(4deg); }
+  100% { opacity: 0; transform: translate(-2%, 130%) rotate(-2deg); }
+}
+.gsp-chute { animation: gsp-chute calc(1.6s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+
+/* --- chips / martingale -------------------------------------------------------------- */
+
+/* Chip drops onto the stack and settles with a squash. */
+@keyframes gsp-chip {
+  0% { opacity: 0; transform: translateY(-220%) scaleY(0.9); }
+  60% { opacity: 1; transform: translateY(0) scaleY(1); }
+  72% { transform: translateY(0) scaleY(0.82); }
+  86% { transform: translateY(0) scaleY(1.04); }
+  100% { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+.gsp-chip { animation: gsp-chip calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1.3) both; transform-origin: 50% 100%; }
+
+/* Rake arm shoves across the felt and drags everything with it. */
+@keyframes gsp-rake {
+  0% { opacity: 0; transform: translateX(90%); }
+  25% { opacity: 1; transform: translateX(60%); }
+  70% { opacity: 1; transform: translateX(-40%); }
+  100% { opacity: 0; transform: translateX(-60%); }
+}
+.gsp-rake { animation: gsp-rake calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.4, 1) both; }
+
+/* --- misc one-offs -------------------------------------------------------------------- */
+
+/* Gacha capsule rolls out of the chute and wobbles to rest. */
+@keyframes gsp-capsule {
+  0% { opacity: 0; transform: translate(-90%, -60%) rotate(-220deg); }
+  30% { opacity: 1; transform: translate(-40%, 6%) rotate(-110deg); }
+  60% { transform: translate(-10%, -8%) rotate(-30deg); }
+  80% { transform: translate(2%, 2%) rotate(6deg); }
+  100% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+}
+.gsp-capsule { animation: gsp-capsule calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+/* Capsule top half pops off. */
+@keyframes gsp-capsplit {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  55% { transform: translate(0, 0) rotate(0deg); }
+  70% { transform: translate(14%, -70%) rotate(24deg); }
+  100% { opacity: 0; transform: translate(30%, -140%) rotate(48deg); }
+}
+.gsp-capsplit { animation: gsp-capsplit calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* Shadow hand: rises from below, grabs, drags its catch down. */
+@keyframes gsp-shadowgrab {
+  0% { opacity: 0; transform: translateY(90%); }
+  28% { opacity: 0.9; transform: translateY(0); }
+  48% { transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(110%); }
+}
+.gsp-shadowgrab { animation: gsp-shadowgrab calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Back-room door slides shut over the queen. */
+@keyframes gsp-doorshut {
+  0% { transform: scaleX(0); }
+  35% { transform: scaleX(0); }
+  70% { transform: scaleX(1.03); }
+  82% { transform: scaleX(0.98); }
+  100% { transform: scaleX(1); }
+}
+.gsp-doorshut { animation: gsp-doorshut calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 100% 50%; }
+
+/* Glue splat: slaps on with an overshoot and oozes (sags). */
+@keyframes gsp-splat {
+  0% { opacity: 0; transform: scale(0.1); }
+  40% { opacity: 0; transform: scale(0.1); }
+  52% { opacity: 1; transform: scale(1.25); }
+  64% { transform: scale(0.95); }
+  78% { transform: scale(1.04, 0.98); }
+  100% { opacity: 0.9; transform: scale(1.02, 1.06); }
+}
+.gsp-splat { animation: gsp-splat calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* Melt drip: a droplet slides down and thins out (the thaw). */
+@keyframes gsp-drip {
+  0% { opacity: 0; transform: translateY(0) scaleY(0.6); }
+  30% { opacity: 0.9; transform: translateY(30%) scaleY(1); }
+  100% { opacity: 0; transform: translateY(160%) scaleY(1.3); }
+}
+.gsp-drip { animation: gsp-drip calc(1s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 0%; }
+
+/* Ticket flies out of the drum in a little arc, spinning. */
+@keyframes gsp-ticket {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  55% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.6); }
+  70% { opacity: 1; transform: translate(60%, -120%) rotate(24deg) scale(1); }
+  100% { opacity: 1; transform: translate(130%, -60%) rotate(46deg) scale(1); }
+}
+.gsp-ticket { animation: gsp-ticket calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+/* Foil scrubbed off a scratcher panel. */
+@keyframes gsp-scratch {
+  0% { opacity: 1; transform: translateX(0); }
+  22% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(118%); }
+}
+.gsp-scratch { animation: gsp-scratch calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.1, 0.4, 1) both; }
+
+/* Sad trombone slump: the whole prop sags and tilts. */
+@keyframes gsp-slump {
+  0% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(1) rotate(0deg); }
+  70% { transform: scale(1.02, 0.86) rotate(-3deg); }
+  100% { transform: scale(1, 0.88) rotate(-2.5deg); }
+}
+.gsp-slump { animation: gsp-slump calc(1.6s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+
+/* --- animations off (Settings) --------------------------------------------------------- */
+html[data-anim="off"] .gsp,
+html[data-anim="off"] .gsp * {
+  animation: none !important;
+}
+html[data-anim="off"] .gsp {
+  display: none !important;
+}

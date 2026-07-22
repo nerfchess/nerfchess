@@ -21,7 +21,7 @@
 
 import { newBuffMatchState } from "../src/engine/buff";
 import type { DraftMode } from "../src/engine/buff";
-import { rollOffer, rerollOffer, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
+import { rollOffer, rerollOffer, rollOpenerOffers, openerPool, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
 import { ALL_BUFFS, BUFF_BY_ID } from "../src/engine/buffs/library";
 import { FUNNY_CARDS } from "../src/engine/buffs/funny";
 import { FANTASY_CARDS } from "../src/engine/buffs/fantasy";
@@ -45,6 +45,7 @@ function check(ok: boolean, label: string) {
 // combo tags, nerf active, no board threaded so requires-guard is skipped).
 function eligible(mode: DraftMode, b: Buff): boolean {
   if (b.special || b.tier === 9 || b.tier === 10) return false;
+  if (b.opener) return false; // openers are dealt only by the opening pick
   if (!b.implemented) return false;
   if (mode === "buff") {
     return b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id);
@@ -231,6 +232,54 @@ for (const mode of ["buff", "nerf"] as DraftMode[]) {
       }
     }
     check(bad === 0, `${mode} mode only ever offers its eligible pool (${bad} leaks)`);
+  }
+}
+
+// --- Opening pick fairness (overhaul: the opener pair must be uniform) --------
+
+{
+  const pool = openerPool();
+  if (pool.length >= 2) {
+    const tally = new Map<string, number>(pool.map((b) => [b.id, 0]));
+    let draws = 0;
+    const target = Math.max(30 * pool.length, 12000);
+    for (let seed = 1; draws < target; seed++) {
+      const bs = newBuffMatchState(seed, 5, "buff");
+      rollOpenerOffers(bs);
+      for (const color of ["w", "b"] as Color[]) {
+        const offer = bs.players[color].offer;
+        if (!offer || offer.index !== 0) continue;
+        const [a, b] = offer.cards;
+        if (a.id === b.id) check(false, `opener pair not distinct (${a.id})`);
+        for (const c of offer.cards) {
+          if (!tally.has(c.id)) continue;
+          tally.set(c.id, (tally.get(c.id) ?? 0) + 1);
+          draws++;
+        }
+      }
+    }
+    const expected = draws / pool.length;
+    let chi = 0;
+    for (const [, n] of tally) chi += ((n - expected) * (n - expected)) / expected;
+    const limit = chiSquareLimit(pool.length - 1) * 1.1; // slack: distinct-pair redraw
+    check(
+      chi < limit,
+      `opening picks uniform over ${pool.length} openers (chi2 ${chi.toFixed(1)} < ${limit.toFixed(1)}, ${draws} draws)`,
+    );
+    // Openers never leak into cadence drafts.
+    let leaks = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const bs = newBuffMatchState(seed, 5, "buff");
+      for (const color of ["w", "b"] as Color[]) {
+        const offer = rollOffer(bs, color, [1, 1]);
+        for (const c of offer?.cards ?? []) {
+          if (BUFF_BY_ID[c.id]?.opener) leaks++;
+        }
+      }
+    }
+    check(leaks === 0, `openers never appear in cadence drafts (${leaks} leaks)`);
+  } else {
+    check(false, "opener pool unexpectedly empty");
   }
 }
 
