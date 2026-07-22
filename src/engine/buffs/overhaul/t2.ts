@@ -6,6 +6,7 @@
 import {
   Buff,
   BuffApi,
+  buffRegistry,
   FILE,
   Move,
   RANK,
@@ -605,15 +606,32 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_loot_filter",
       name: "Loot Filter",
-      description: "Gain one extra draft reroll for sifting the grey junk out of an offer you dislike.",
+      description:
+        "Gain a draft reroll. Filter bonus: the first time an offer deals you two cards of the same category, the filter flags the dupes and refunds another reroll.",
       tier: 2,
       category: "draft",
       icon: "Filter",
       flavor: "Vendor trash is a state of mind.",
     },
-    instant((_inst, api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    // Overhaul duplicate-resolution: a flat reroll duplicated Peek (T1); the
+    // filter now also pays out on same-category offers, a real T2 rider.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        void inst;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        const offer = api.mine.offer;
+        if (!offer || offer.cards.length < 2) return;
+        const cats = offer.cards.map((c) => buffRegistry.byId[c.id]?.category);
+        if (cats[0] != null && cats.every((c) => c === cats[0])) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "filter armed: watching for a same-category offer"),
+    },
   ),
   // 42. Encore -----------------------------------------------------------------
   // ADAPTED: the roster's "extra pawn move" reward is granted through the

@@ -192,7 +192,14 @@ const VERB_TERMS = [
 
 function descTerms(desc: string): string[] {
   const lc = desc.toLowerCase();
-  return VERB_TERMS.filter((t) => lc.includes(t));
+  const terms = VERB_TERMS.filter((t) => lc.includes(t));
+  // Parameters count as mechanics: "the c-file pawn" and "the f-file pawn"
+  // are different cards, as are "2 squares" and "3 squares". Without these
+  // tokens every parametrized family (openers especially) collapses into one
+  // signature and floods the duplicate report with by-design variants.
+  for (const m of lc.matchAll(/\b([a-h])-file\b/g)) terms.push(`file:${m[1]}`);
+  for (const m of lc.matchAll(/\b(\d+)\b/g)) terms.push(`n:${m[1]}`);
+  return terms;
 }
 
 function durationClass(desc: string): string {
@@ -393,7 +400,8 @@ for (const [, group] of bySig) {
 for (const r of rows) {
   if (r.kind === "hex" || r.kind === "nerf") continue; // nerf-mode-only cards may
   if (r.kind === "boon") continue; // boons are nerf-mode pool
-  if (/\bnerf/i.test(r.effect) || /\bnerf/i.test(r.name)) {
+  const scrub = (t: string) => t.replace(/nerfchess/gi, "");
+  if (/\bnerf/i.test(scrub(r.effect)) || /\bnerf/i.test(scrub(r.name))) {
     r.flags.push("misleading(nerf-reference-in-buff-mode-card)");
   }
 }

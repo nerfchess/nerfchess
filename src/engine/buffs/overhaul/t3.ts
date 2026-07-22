@@ -507,7 +507,7 @@ export const OVERHAUL_T3: Buff[] = [
     {
       id: "ov_knight_court",
       name: "Knight Court",
-      description: "For your next 3 turns, your knights may also step one square in any direction.",
+      description: "For your next 4 turns, your knights may also step one square straight up, down, or sideways. The court frowns on diagonals.",
       tier: 3,
       category: "movement",
       icon: "Gavel",
@@ -515,10 +515,12 @@ export const OVERHAUL_T3: Buff[] = [
       requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
-    timedAugment(3, (_moves, inst, api) => {
+    // Overhaul duplicate-resolution: all-direction king-steps duplicated
+    // Pixie Dust (same tier); the court grants orthogonal steps for longer.
+    timedAugment(4, (_moves, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
-        out.push(...slideMoves(api.board, sq, ALL_DIRS, inst.id, 1));
+        out.push(...slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1));
       }
       return out;
     }),
