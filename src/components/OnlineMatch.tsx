@@ -851,8 +851,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDraftSubmitted(false);
         // The server refusing our move as stale or illegal means the local
         // replica has drifted from the authoritative game: resync instead of
-        // dead-ending on the error message.
+        // dead-ending on the error message. The optimistic piece snaps back
+        // when pendingLocalMove clears above, so pair that rollback with an
+        // audible cue and a message that says what happened and what to do.
         if (e.code === "stale_ply" || e.code === "illegal_move") {
+          playError();
+          setError("Your move was not accepted. The board has been resynced; try the move again.");
           resyncFromServer(`server rejected our move: ${e.code}`);
         }
       } else if (e.type === "disconnected") {
