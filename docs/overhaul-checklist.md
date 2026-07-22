@@ -28,20 +28,20 @@ This file is the cross-session source of truth for overhaul progress. Update sta
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | Persistent checklist + roster docs in repo | IN PROGRESS |
-| 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | DONE: tooling + parameter-aware signatures; card-actions.json carries the deliberate decisions (78 reviewed entries and growing through Phase 8) |
+| 1 | Persistent checklist + roster docs in repo | DONE |
+| 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | DONE: 2443/2443 rows reviewed. Unflagged harness-executed rows auto-keep; all 578 flagged rows carry curated decisions in card-actions.json (656 entries) |
 | 3 | Draft RNG fairness + seeded distribution tests | DONE (draft.ts weighting removed; scripts/test-draft-fairness.ts, npm run test:draft-fairness, 23 checks green; sims updated to fair expectations) |
 | 4 | Buff-mode Nerf-reference purge | DONE (genesis reworked to pure reset; chess_diff + glossary text neutralized; 6 dual-effect nerf-text boons excluded from buff pool via NERF_REVEAL; gate: npm run test:buff-purity) |
 | 5 | Broken/silent card fixes + dev diagnostics | DONE: 3 "broken cards" were stale sims (walnut, opening band, diff prize; all updated); bank-drop unmount bug fixed; anim-off feedback restored (CastTextFallback); lab run-all harness (test:lab) = the standing no-silent-failure gate, 2083/2083 PASS |
 | 6 | Animation primitives expansion + gambling primitives | DONE: generated-finisher layer (8 endings), opener entrance generator, 28 outcome-honest gambling scenes (gamblingPlays.tsx) with the gamblingOutcome stash channel and 9 synthesized voices |
 | 7 | Card laboratory (dev-only) | DONE: /dev/lab + scripts/lab-run-all.ts (npm run test:lab) |
-| 8 | Balance pass | IN PROGRESS: three waves landed; card-actions.json is the decision record; flagged-group review sweep running (578 flagged rows: ladders vs true duplicates) |
+| 8 | Balance pass | DONE: three targeted waves plus the full flagged-row sweep; 32 real dominations/duplicates fixed in the engine (opener two-use trades, coin riders, free-action timing for legacy suspensions, ten wave-4 hex redesigns/retunes); every keep names its differentiating axis |
 | 9 | Implement 224 Buffs (tiers 1-8, incl. gambling) | DONE: 228 cards (224 + 2 gambling hexes + 2 gambling boons), library green in lab harness |
 | 10 | Implement 300 Hexes + 300 Boons | DONE: hexes/wave4.ts + wave4b.ts (300 hx4_, split 38x4/37x4), boons4.ts + boons4b.ts (300 bn4_, same split); static hex validation + lab green |
 | 11 | Animation/feedback improvement for every existing card | DONE: every card now has (a) a flagship play (core, plugin, or generated with per-card finisher; audit-animations F1 total, registry 2427 entries), (b) a per-card audio fingerprint, (c) an anim-off text fallback (CastTextFallback); passive registry covers all 1237 passives with unique sentences |
 | 12 | Unique sound expansion | DONE: per-card audio fingerprints (cueVariation) on all 9 passive cue families + playCardUse; 9 gambling voices wired through playSignature; check-sound-coverage green over 1237 compositions |
-| 13 | Performance / reduced motion / accessibility pass | TODO |
-| 14 | Verification (30-point acceptance list) + final report | TODO |
+| 13 | Performance / reduced motion / accessibility pass | DONE: heavy visuals (sigVisuals + plugin plays + gambling scenes) confirmed in one lazy prefetched chunk; icon registry is build-time generated with per-icon imports and dynamically imported on the homepage; compositions emitted in chunks; global html[data-anim=off] kill switch (auto-set from OS prefers-reduced-motion) covers every new animation; CastTextFallback keeps anim-off games readable |
+| 14 | Verification (30-point acceptance list) + final report | DONE: full battery green (typecheck, lint, production build, rules/icons/hexes/sig-plugins, nerfs, fairness, purity, balance, lab 2083/2083, desync, apex, snapshot, spectator-sync, tv-spectator, archive-replay, replay-spectate, tv-snapshots, glicko, passive-registry 1237, sound, emdash, card-registry, card-audit, animations) |
 
 ## Architecture map (do not re-derive)
 
