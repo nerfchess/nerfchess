@@ -57,14 +57,27 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
   transform: none;
 }
 
-/* Selected-for-confirm state: a firm gold outline over a thin tier line, and
-   a hard dark drop. The lift itself is animated by the shell (framer). */
+/* Selected-for-confirm state: a firm gold outline over a thin tier line, a
+   soft tier-colored halo, and a hard dark drop. The lift itself is animated
+   by the shell (framer); the raised translate below backs it up so the
+   selected card reads raised even with animations reduced. */
 .draft-fx--selected .draft-fx__glow {
   opacity: 1;
   box-shadow:
-    0 0 0 2px rgb(var(--accent-hi-rgb, 216 181 110) / 0.95),
-    0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.4),
+    0 0 0 2.5px rgb(var(--accent-hi-rgb, 216 181 110) / 1),
+    0 0 0 4px rgb(var(--tier-rgb, 216 181 110) / 0.55),
+    0 0 22px 2px rgb(var(--tier-rgb, 216 181 110) / 0.3),
     0 12px 26px -14px rgba(0, 0, 0, 0.85);
+}
+.draft-fx--selected .draft-face {
+  transform: translateY(-4px);
+  transition: transform 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .draft-fx--selected .draft-face {
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -95,6 +108,14 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
   height: 100%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+/* Draft faces sit on a near-neutral ink gradient instead of the tier wash:
+   the old grey-green tint read washed out against the chamber. tier-bg-*
+   still supplies the border color and --tier-rgb; only its background is
+   replaced here. */
+.draft-face--neutral {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    rgba(16, 13, 11, 0.92);
 }
 .draft-card-back {
   position: absolute;

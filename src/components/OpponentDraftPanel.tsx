@@ -132,29 +132,26 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
 export function OpponentDraftPanel({ opponent }: { opponent: OpponentDraftState }) {
   const offer = opponent.offer;
 
-  // 1) Full visible cards (Draft Insight / open information).
-  if (offer && opponent.showCards) {
+  // 1) The opponent has an open offer they have not resolved yet. The old
+  // row of tiny preview cards read as noise while the player weighs their
+  // own pick, so before the opponent commits this is just a calm status
+  // line; their CHOSEN card shows once they confirm (case 4 below), and the
+  // full identity of their offer stays one place: the left dock.
+  if (offer && (opponent.showCards || opponent.showTier)) {
     return (
-      <Frame label="Opponent is drafting">
-        {offer.cards.map((c, i) => (
-          <MiniCard key={i} id={c.id} tier={c.tier} />
-        ))}
+      <Frame label="Opponent">
+        <span
+          role="status"
+          className="flex items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5"
+        >
+          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-parchment-400 animate-pulse motion-reduce:animate-none" />
+          <span className="text-[12px] text-parchment-300">Opponent is choosing&hellip;</span>
+        </span>
       </Frame>
     );
   }
 
-  // 2) Tier only (partial info): face-down backs with tier numerals.
-  if (offer && opponent.showTier) {
-    return (
-      <Frame label={`Opponent is drafting at tier ${Math.max(...offer.cards.map((c) => c.tier))}`}>
-        {offer.cards.map((c, i) => (
-          <HiddenCard key={i} tier={c.tier} />
-        ))}
-      </Frame>
-    );
-  }
-
-  // 3) One-shot reveal snapshot (Peek / Quick Glance).
+  // 2) One-shot reveal snapshot (Peek / Quick Glance).
   if (opponent.reveal?.cards && opponent.reveal.cards.length > 0) {
     return (
       <Frame label={`Revealed draft #${opponent.reveal.index}`}>
@@ -172,16 +169,17 @@ export function OpponentDraftPanel({ opponent }: { opponent: OpponentDraftState 
     );
   }
 
-  // 4) Last resolved pick (public identity).
+  // 3) The opponent's confirmed pick: one compact tile (name, tier, and the
+  // two-line effect summary), the "they chose this" toast of the overlay.
   if (opponent.lastPick && BUFF_BY_ID[opponent.lastPick.id]) {
     return (
-      <Frame label="Opponent last drafted">
+      <Frame label="Opponent chose">
         <MiniCard id={opponent.lastPick.id} tier={opponent.lastPick.tier} />
       </Frame>
     );
   }
 
-  // 5) Nothing legitimately visible.
+  // 4) Nothing legitimately visible.
   return (
     <Frame label="Opponent's draft is hidden">
       <HiddenCard />

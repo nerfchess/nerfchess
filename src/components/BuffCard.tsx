@@ -90,6 +90,12 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         // group/card (a NAMED group, so ancestor `group` wrappers in docks /
         // overlays can't leak in) lets the face icons color up on card hover.
         `group/card relative plate draft-face overflow-hidden border tier-bg-${t} ` +
+        // Draft picker faces keep a mostly NEUTRAL background: the tier
+        // speaks through the border, badge, icon tint, and the top accent
+        // bar below, instead of washing the whole card in a murky tint
+        // (2026-07 draft contrast pass). tier-bg still supplies --tier-rgb
+        // and the border color; only its background is overridden.
+        (preview && !compact ? "draft-face--neutral " : "") +
         (enterDelayMs != null ? "draft-in " : "") +
         // Full-size cards fill their grid cell as a column so every card in
         // one draft offer lands the same height (description stretches, tier
@@ -106,6 +112,14 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           : "")
       }
     >
+      {/* Tier accent: a thin colored bar along the card's top edge, the
+          tier's one loud stroke on the otherwise neutral draft face. */}
+      {preview && !compact && (
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-[3px] bg-[rgb(var(--tier-rgb))] opacity-80"
+        />
+      )}
       {/* Face watermark: a large glyph anchored bottom-right, behind the
           text. Faint by default; hovering the card brightens it in the tier
           (severity) color and nudges the scale. Transitions only (no
@@ -136,7 +150,11 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       )}
       <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className={`font-display leading-tight tier-${t} ${compact ? "text-sm" : "text-lg"}`}>
+          <div
+            className={`font-display leading-tight tier-${t} ${
+              compact ? "text-sm" : preview ? "text-xl font-semibold" : "text-lg"
+            }`}
+          >
             {buff.name}
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
@@ -172,10 +190,29 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       {/* flex-1 on full cards: the description absorbs the height difference,
           so flavor/status footers pin to the aligned card bottoms. */}
       {/* Full-contrast rule text: the effect is the decision, so it never
-          renders dimmer than body parchment (2026-07 draft readability pass). */}
-      <p className={`leading-snug text-parchment-100 ${compact ? "mt-1.5 text-[12px]" : "flex-1 text-[13px]"}`}>
+          renders dimmer than body parchment (2026-07 draft readability pass).
+          Draft faces set it a step larger still: after the name it is the
+          most readable thing on the card. */}
+      <p
+        className={`leading-snug text-parchment-100 ${
+          compact ? "mt-1.5 text-[12px]" : preview ? "flex-1 text-[14px] text-parchment-50" : "flex-1 text-[13px]"
+        }`}
+      >
         <GlossaryText text={buff.description} />
       </p>
+      {/* Activation status, stated in words on draft faces (the TurnCostBadge
+          chip up top carries the same fact for the dock and codex). */}
+      {preview && !compact && (
+        <p className="smallcaps mt-1.5 text-[10px] text-parchment-400">
+          {buff.kind === "passive"
+            ? "Passive: always on while held"
+            : buff.kind === "instant"
+            ? "Instant: applies when drafted"
+            : turnCost(buff) === "free"
+            ? "Activated: free action"
+            : "Activated: uses your turn"}
+        </p>
+      )}
       {/* Rules footnote, auto-attached to every card that grants
           uncapturability (owner request): the engine never lets a piece that
           cannot be captured deliver the king capture itself (you must expose
@@ -200,7 +237,16 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       {/* Flavor line: the card's voice, quoted and dim, TCG-style. Full cards
           only; dock rows and compact picks stay all-business. */}
       {!compact && buff.flavor && (
-        <p className="relative mt-2 text-[11px] italic leading-snug text-parchment-400">
+        // Draft faces keep flavor quiet (smaller, dimmer) and drop it
+        // entirely on phones, where card height is the scarce resource.
+        <p
+          className={
+            "relative mt-2 italic leading-snug " +
+            (preview
+              ? "hidden text-[10px] text-parchment-500 sm:block"
+              : "text-[11px] text-parchment-400")
+          }
+        >
           &ldquo;{buff.flavor}&rdquo;
         </p>
       )}

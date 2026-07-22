@@ -1,6 +1,6 @@
 "use client";
 
-import { BuffPick, BuffTarget, draftCardNoun, turnCost } from "@/engine/buff";
+import { BuffPick, BuffTarget, turnCost } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { TurnCostBadge } from "./TurnCostBadge";
 import { NerfGame, activateBuff, buffNextTarget } from "@/engine/game";
@@ -9,10 +9,10 @@ import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { playCardUse } from "@/lib/sounds";
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
+import { Ban, ChevronRight, Clock, History, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuffCard } from "./BuffCard";
-import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
+import { type OppPlay } from "./OppPlaysLog";
 // Shares the dock pocket flash keyframes (and nothing else) with the overlay.
 import "./DraftOverlay.css";
 
@@ -369,58 +369,6 @@ function DockSectionHeader({
   );
 }
 
-/** Hoverable card name for the Latest pocket: mousing over (or tapping, on
- * touch) the newest card's name raises a small popover with the full rule
- * text, so "what did Grand Dominion do again?" is answered in place instead
- * of hunting the row below. */
-function LatestHoverName({
-  name,
-  tier,
-  description,
-  className,
-}: {
-  name: string;
-  tier: Tier;
-  description?: string;
-  className: string;
-}) {
-  const [open, setOpen] = useState(false);
-  if (!description) return <span className={className}>{name}</span>;
-  return (
-    <span
-      className="relative min-w-0 flex-1"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className={
-          className +
-          " block w-full text-left underline decoration-dotted decoration-1 underline-offset-2 decoration-parchment-500/60"
-        }
-      >
-        {name}
-      </button>
-      {open && (
-        <span
-          role="tooltip"
-          className="plate dropdown absolute left-0 top-full z-30 mt-1.5 block w-64 max-w-[70vw] p-2.5 shadow-2xl"
-        >
-          <span className={`block font-display text-[12px] font-bold tier-${tier}`}>
-            {name}
-            <span className="ml-1.5 text-parchment-400">{TIER_ROMAN[tier]}</span>
-          </span>
-          <span className="mt-1 block text-[12px] font-normal normal-case leading-snug tracking-normal text-parchment-300">
-            {description}
-          </span>
-        </span>
-      )}
-    </span>
-  );
-}
-
 /** Unmistakable state stamp for a spent or nullified card, sized to read
  * without a hover. Nullified wears the oxblood alert colour; a plain "Used"
  * stays quiet but crisp. Kept at full strength (the row dims its name and
@@ -450,31 +398,47 @@ function UsedDivider() {
   );
 }
 
-/** Small elegant progress ring for the "next draft in N moves" chip: fills
- * gold toward the draft (oxblood while your draft is blocked). Decorative
- * twin of the countdown text next to it; the fraction comes straight from
- * the same draftFrac the old bar used, no timing logic of its own. */
-function DraftProgressRing({ fraction, blocked }: { fraction: number; blocked: boolean }) {
-  const R = 7;
-  const CIRC = 2 * Math.PI * R;
+/** Compact five-step cadence indicator for the "next draft in N moves" chip:
+ * five small squares, one per own move in the 5-move draft cadence. Filled
+ * squares are the moves already made toward the next draft, empty ones the
+ * moves still to go. Blocked drafts wear the oxblood alert tint; a ready draft
+ * (all five filled) glows gilt gold. Decorative twin of the countdown text; the
+ * fill comes straight from the same draftMovesLeft / draftFrac the old ring
+ * used, no timing logic of its own. */
+function DraftSteps({
+  movesLeft,
+  fraction,
+  blocked,
+}: {
+  movesLeft: number | null;
+  fraction: number;
+  blocked: boolean;
+}) {
+  // Cadence is 5 own moves per draft: filled = 5 - movesLeft, clamped 0..5.
+  // When movesLeft is unknown (older saves), fall back to the fraction so the
+  // pips still track progress rather than sitting empty.
+  const filled =
+    movesLeft != null
+      ? Math.max(0, Math.min(5, 5 - movesLeft))
+      : Math.max(0, Math.min(5, Math.round(fraction * 5)));
   return (
-    <span aria-hidden className="ml-auto shrink-0">
-      <svg width="18" height="18" viewBox="0 0 18 18" className="-rotate-90 block">
-        <circle cx="9" cy="9" r={R} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
-        {/* Blocked stroke mirrors the --accent-nerf token (#e05252); the gilt gold is decorative draft progress. */}
-        <circle
-          cx="9"
-          cy="9"
-          r={R}
-          fill="none"
-          stroke={blocked ? "rgb(224 82 82 / 0.85)" : "rgb(216 181 110 / 0.9)"}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeDasharray={CIRC}
-          strokeDashoffset={CIRC * (1 - Math.max(0, Math.min(1, fraction)))}
-          style={{ transition: "stroke-dashoffset 300ms ease, stroke 300ms ease" }}
-        />
-      </svg>
+    <span aria-hidden className="ml-auto flex shrink-0 items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const on = i < filled;
+        return (
+          <span
+            key={i}
+            className={
+              "h-2 w-2 rounded-[1px] border transition-colors duration-300 " +
+              (!on
+                ? "border-[color:var(--edge-strong)] bg-white/[0.04]"
+                : blocked
+                ? "border-oxblood-glow/70 bg-oxblood-glow/70"
+                : "border-gold/70 bg-gold-leaf/80")
+            }
+          />
+        );
+      })}
     </span>
   );
 }
@@ -630,13 +594,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const toggle = (key: string) =>
     setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? defaultOpen(key)) }));
   const reduceMotion = useReducedMotion();
+  // Active-effects tabs: your arsenal (default) vs the opponent's. Roving
+  // tablist below drives aria-selected and the roving tabindex.
+  const [effectsTab, setEffectsTab] = useState<"mine" | "opp">("mine");
+  // Events feed: collapsed to the newest 3 rows until "View all" is toggled.
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   const bs = game.buffs;
   if (!bs) return null;
-  const noun = draftCardNoun(bs.mode);
-  // Nerf mode's dock holds a mix (hexes, boons, items); "hexes" is the
-  // umbrella noun the mode drafts under.
-  const nounPlural = noun === "hex" ? "hexes" : `${noun}s`;
   const oppColor: Color = myColor === "w" ? "b" : "w";
   const mine = bs.players[myColor].buffs;
   const theirs = bs.players[oppColor].buffs;
@@ -691,6 +656,56 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
 
   // Constraints currently running against me (see againstYouRows above).
   const againstRows = againstYouRows(game, myColor);
+
+  // --- Events feed ---------------------------------------------------------
+  // A single newest-first ledger of what just happened, built from data this
+  // component already holds: your newest drafted/banked card, the opponent's
+  // newest visible drafted card, and every card the opponent has played. No
+  // timestamps are invented; ordering is approximate (the two fresh drafts
+  // lead, the opponent's play history follows, newest play first).
+  interface FeedEntry {
+    key: string;
+    icon: LucideIcon;
+    /** Leading copy; the card name (when present) is appended in tier color. */
+    prefix: string;
+    name: string | null;
+    tier: Tier | null;
+  }
+  const feed: FeedEntry[] = [];
+  if (lastMine) {
+    feed.push({
+      key: `you-draft-${mine.length}`,
+      icon: Inbox,
+      prefix: lastMineDef ? "You drafted" : "You banked the draft",
+      name: lastMineDef?.name ?? null,
+      tier: lastMineDef ? lastMine.tier : null,
+    });
+  }
+  if (lastTheirs && !lastTheirsHidden) {
+    const def = BUFF_BY_ID[lastTheirs.id];
+    feed.push({
+      key: `opp-draft-${theirs.length}`,
+      icon: Swords,
+      prefix: "Opponent drafted",
+      name: def?.name ?? null,
+      tier: lastTheirs.tier,
+    });
+  }
+  if (plays) {
+    // Newest play first; hidden/unknown ids drop out (they have no name).
+    [...plays].reverse().forEach((p) => {
+      const def = BUFF_BY_ID[p.card.id];
+      if (!def) return;
+      feed.push({
+        key: `opp-play-${p.key}`,
+        icon: History,
+        prefix: "Opponent played",
+        name: def.name,
+        tier: p.card.tier as Tier,
+      });
+    });
+  }
+  const feedShown = showAllEvents ? feed : feed.slice(0, 3);
 
   const myRow = ({ inst, i }: { inst: (typeof mine)[number]; i: number }) => {
     const def = BUFF_BY_ID[inst.id];
@@ -918,16 +933,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
 
   return (
     <div data-buff-dock className="plate flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-2">
+      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto bg-inherit px-2.5 pb-2">
         {/* Next-draft indicator: how many of your moves until the shared
-            draft fires, with a small bar filling toward it. Hidden for older
-            saves without nextDraftAtPly and once the game ends. Blocked
-            drafts (opponent hexes) take over the chip in alert colors. */}
+            draft fires, with a compact five-step cadence meter filling toward
+            it. Hidden for older saves without nextDraftAtPly and once the game
+            ends. Blocked drafts (opponent hexes) take over the chip in alert
+            colors. */}
         {draftMovesLeft != null && (
           <div
             role="status"
             className={
-              "mt-2 flex items-center gap-2 rounded-[1px] border px-2 py-1.5 " +
+              "mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[1px] border px-2 py-1 " +
               (myDraftBlocked
                 ? "border-oxblood-glow/40 bg-oxblood/10"
                 : draftMovesLeft === 0
@@ -957,64 +973,57 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 ? "Draft now"
                 : `Next draft in ${draftMovesLeft} move${draftMovesLeft === 1 ? "" : "s"}`}
             </span>
-            <DraftProgressRing fraction={draftFrac} blocked={myDraftBlocked} />
+            <DraftSteps movesLeft={draftMovesLeft} fraction={draftFrac} blocked={myDraftBlocked} />
           </div>
         )}
 
-        {/* Latest pick slot: your newest card stays visible here; the
-            opponent's side shows a face-down card while hidden. */}
-        {(lastMine || lastTheirs) && (
-          <div className="sticky top-0 z-10 -mx-3 border-b border-[color:var(--edge)] bg-inherit px-3 pb-2 pt-2">
-            {/* The pocket: a rounded slot that flashes a brief mint/sun glow
-                whenever a fresh card lands (keying by the card counts remounts
-                it, replaying the one-shot CSS animation). */}
-            <div
-              key={`pocket-${mine.length}-${theirs.length}`}
-              className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1.5"
-            >
-              <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
-              <span className="smallcaps shrink-0 text-[12px] text-sun/90">Latest</span>
-            {lastMine && (
-              <motion.span
-                key={`m${mine.length}`}
-                initial={{ opacity: 0, x: -18, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="flex min-w-0 flex-1"
+        {/* Events feed: one compact newest-first ledger of the latest happenings
+            (your draft/bank, the opponent's newest draft, and their plays). The
+            newest row flashes as a fresh card lands (its key changes, remounting
+            the row so the one-shot CSS animation replays). Collapsed to three
+            rows with a View all / Show less toggle. */}
+        {feed.length > 0 && (
+          <div className="border-b border-[color:var(--edge)] pb-2">
+            <DockSectionHeader icon={History} label="Events" count={feed.length} />
+            <ul className="mt-1 space-y-0.5">
+              {feedShown.map((e, i) => (
+                <motion.li
+                  // The newest row keys on the changing entry key so a fresh
+                  // card remounts it and replays the pocket flash; older rows
+                  // keep stable keys and stay put.
+                  key={e.key}
+                  initial={reduceMotion ? false : { opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className={
+                    "flex items-center gap-1.5 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] px-2 py-1 " +
+                    (i === 0 ? "dock-pocket-flash" : "")
+                  }
+                >
+                  <e.icon aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
+                  <span className="min-w-0 flex-1 truncate text-[12px] leading-tight text-parchment-300">
+                    {e.prefix}
+                    {e.name && (
+                      <>
+                        {" "}
+                        <span className={`font-display font-semibold tier-${e.tier}`}>{e.name}</span>
+                      </>
+                    )}
+                  </span>
+                </motion.li>
+              ))}
+            </ul>
+            {feed.length > 3 && (
+              <button
+                type="button"
+                onClick={() => setShowAllEvents((v) => !v)}
+                className="smallcaps mt-1 inline-flex min-h-[44px] items-center text-[12px] text-parchment-400 transition hover:text-parchment-200 sm:min-h-0"
               >
-                <LatestHoverName
-                  name={lastMineDef?.name ?? "Banked"}
-                  tier={lastMine.tier}
-                  description={lastMineDef?.description}
-                  className={`truncate font-display text-[12px] font-semibold tier-${lastMine.tier}`}
-                />
-              </motion.span>
+                {showAllEvents ? "Show less" : `View all (${feed.length})`}
+              </button>
             )}
-            {!lastMine && <span className="min-w-0 flex-1" />}
-            {lastTheirs && !lastTheirsHidden && (
-              <motion.span
-                key={`t${theirs.length}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="flex max-w-[45%] shrink-0"
-              >
-                <LatestHoverName
-                  name={BUFF_BY_ID[lastTheirs.id]?.name ?? "Hidden"}
-                  tier={lastTheirs.tier}
-                  description={BUFF_BY_ID[lastTheirs.id]?.description}
-                  className={`truncate font-display text-[12px] tier-${lastTheirs.tier}`}
-                />
-              </motion.span>
-            )}
-            </div>
           </div>
         )}
-
-        {/* The opponent's play ledger ("their pocket") lives at the TOP of the
-            dock, right under the Latest slot — their plays land up here by the
-            opponent's side of the table, not buried at the foot of the list. */}
-        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
 
         {/* Pending take-both: the next offer is taken whole, and the player
             should know before the draft opens, not discover it inside. */}
@@ -1107,60 +1116,99 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </>
         )}
 
-        <DockSectionHeader
-          icon={Layers}
-          label={`Your ${nounPlural}`}
-          count={mine.length}
-          accent="mine"
-        />
-        {/* The next-draft chip above already says when cards arrive; repeating
-            it here went stale after banks ("your first draft" forever). */}
-        {mine.length === 0 && <p className="text-[12px] text-parchment-400">None yet.</p>}
-        {/* A thin blue spine brackets your arsenal so "these are mine" is
-            unmistakable next to the opponent's coral rows (blue = your buffs).
-            Live cards sit up top; your spent ones gather under a "Used" rule at
-            the foot of the same section (tier descending), so used cards stay
-            clearly YOURS. */}
-        {mine.length > 0 && (
-          <div className="space-y-1 border-l border-mode-buff/30 pl-2">
-            {mineLive.map(myRow)}
-            {mineDead.length > 0 && (
-              <>
-                <UsedDivider />
-                {mineDead.map(myRow)}
-              </>
-            )}
+        {/* Active effects: your arsenal and the opponent's, folded into one
+            section with two tabs (Yours default). Each tab reuses the same row
+            renderers and the same live-then-Used grouping as before; only the
+            two headers collapse into a tablist. The "Against you" block above
+            stays separate (it is rule-critical). */}
+        <div className="border-t border-[color:var(--edge)] pt-2">
+          <DockSectionHeader
+            icon={Layers}
+            label="Active effects"
+            count={mine.length + theirsShown.length}
+            accent="mine"
+          />
+          {/* Roving tablist: the selected tab holds tabindex 0, the other -1,
+              and Left/Right/Home/End move the selection (and focus) between
+              them. The selected tab reads in its own accent with a solid
+              underline so the active side is unmistakable. */}
+          <div role="tablist" aria-label="Active effects" className="mt-1.5 flex items-stretch gap-1">
+            {([
+              { id: "mine", label: `Yours (${mine.length})`, on: "text-mode-buffGlow border-mode-buff/60 bg-mode-buff/10", off: "text-parchment-400 border-[color:var(--edge)]" },
+              { id: "opp", label: `Opponent (${theirsShown.length})`, on: "text-coral-glow border-coral/60 bg-coral/10", off: "text-parchment-400 border-[color:var(--edge)]" },
+            ] as const).map((tab) => {
+              const selected = effectsTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  type="button"
+                  aria-selected={selected}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setEffectsTab(tab.id)}
+                  onKeyDown={(e) => {
+                    if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
+                      e.preventDefault();
+                      const next = e.key === "Home" ? "mine" : e.key === "End" ? "opp" : effectsTab === "mine" ? "opp" : "mine";
+                      setEffectsTab(next);
+                      const parent = (e.currentTarget.parentElement ?? null) as HTMLElement | null;
+                      const target = parent?.querySelector<HTMLButtonElement>(
+                        next === "mine" ? '[role="tab"]:first-of-type' : '[role="tab"]:last-of-type',
+                      );
+                      target?.focus();
+                    }
+                  }}
+                  className={
+                    "smallcaps min-h-[44px] flex-1 touch-manipulation rounded-[1px] border px-2 py-1 text-[12px] font-semibold transition sm:min-h-0 " +
+                    (selected ? tab.on + " border-b-2" : tab.off + " bg-white/[0.02] hover:text-parchment-200")
+                  }
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        {theirsShown.length > 0 && (
-          <>
-            <div className="border-t border-[color:var(--edge)] pt-2">
-              <DockSectionHeader
-                icon={Swords}
-                label={`Opponent's ${nounPlural}`}
-                count={theirsShown.length}
-                accent="opponent"
-              />
-            </div>
-            {/* Opponent's cards mirror yours: live rows first, then their used
-                ones under the same "Used" rule, kept in the opponent's own
-                section rather than blended into a shared pile. */}
-            <div className="space-y-1">
-              {theirsLive.map(oppEntry)}
-              {theirsDead.length > 0 && (
-                <>
-                  <UsedDivider />
-                  {theirsDead.map(oppEntry)}
-                </>
+          {/* Yours: a thin blue spine brackets your arsenal (blue = your
+              buffs); live cards first, spent ones under a Used rule. */}
+          {effectsTab === "mine" && (
+            <div role="tabpanel" className="mt-1.5">
+              {mine.length === 0 ? (
+                <p className="text-[12px] text-parchment-400">None yet.</p>
+              ) : (
+                <div className="space-y-1 border-l border-mode-buff/30 pl-2">
+                  {mineLive.map(myRow)}
+                  {mineDead.length > 0 && (
+                    <>
+                      <UsedDivider />
+                      {mineDead.map(myRow)}
+                    </>
+                  )}
+                </div>
               )}
             </div>
-            {/* Opponent hidden cards render nothing at all: no face-down minis
-                and no "N hidden" count. Cards summoned via the owner god panel
-                (and any still-masked card) stay fully invisible to the
-                opponent, on the left side included. */}
-          </>
-        )}
+          )}
+
+          {/* Opponent: their cards mirror yours, live rows first then their
+              used ones under the same Used rule. Hidden cards render nothing. */}
+          {effectsTab === "opp" && (
+            <div role="tabpanel" className="mt-1.5">
+              {theirsShown.length === 0 ? (
+                <p className="text-[12px] text-parchment-400">None yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {theirsLive.map(oppEntry)}
+                  {theirsDead.length > 0 && (
+                    <>
+                      <UsedDivider />
+                      {theirsDead.map(oppEntry)}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Blocked-draft moment: your hex sealed the opponent's next draft(s).
             Reads as an event: face-down minis with a bar across flip in.
