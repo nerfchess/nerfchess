@@ -1344,14 +1344,14 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_gale",
       name: "Gale",
       description:
-        "A driving wind opens gaps: for your next 2 turns your bishops may each slip through one friendly piece in their way.",
+        "A driving wind opens gaps: for your next turn your bishops may each slip through one friendly piece in their way.",
       tier: 3,
       category: "movement",
       requires: ["b"],
       flavor: "The wind holds the door.",
       fx: { motif: "empower", pieces: ["b"], self: true },
     },
-    timedAugment(2, bishopsPhaseGen),
+    timedAugment(1, bishopsPhaseGen),
   ),
   card(
     {
@@ -1370,14 +1370,23 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_updraft",
       name: "Updraft",
-      description: "One knight may make a longer 3-by-1 leap, once.",
+      description: "One knight may make a longer 3-by-1 leap, once; after the leap, gain one draft reroll.",
       tier: 1,
       category: "movement",
       requires: ["n"],
       flavor: "Caught on a thermal.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
-    augment(knightCamelGen),
+    {
+      ...augment(knightCamelGen),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          // The leap resolves: reward the narrow use with one draft reroll.
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   card(
     {
@@ -1453,7 +1462,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_whirlpool",
       name: "Whirlpool",
       description:
-        "A whirlpool drags one enemy pawn to your side and deposits it on your 4th rank, yours now and ready to advance.",
+        "A whirlpool drags one enemy pawn to your side and deposits it on an empty square of your 4th rank, never a capture, yours now and ready to advance.",
       tier: 3,
       category: "pieces",
       flavor: "Down on their side, up on ours.",
@@ -1482,6 +1491,8 @@ export const WILD_ELEMENTAL: Buff[] = [
         if (from == null || to == null) return;
         const p = api.board.pieces[from];
         if (!p || p.type !== "p" || p.color !== api.opp) return;
+        // The special move never captures: the pawn only surfaces on an empty,
+        // pawn-legal square of your 4th rank.
         if (api.board.pieces[to] || !pawnRankOk(to)) return;
         api.setPieceColor(from, api.me);
         api.relocate(from, to);
