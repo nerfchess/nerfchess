@@ -472,10 +472,34 @@ export const HEXES_T4: Buff[] = [
     {
       id: "heavy_shackles",
       name: "Heavy Shackles",
-      description: "Your opponent cannot move their queen or their rooks for their next 2 turns.",
+      description: "Your opponent's queen and rooks are in irons for their next 2 turns. The first heavy piece they move slips free for that one move; after it, no queen or rook may move for the rest of the duration.",
       flavor: "The heavy pieces are all in irons.",
       fx: { motif: "jail", pieces: ["q", "r"] },
     },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "q" && m.piece !== "r")),
+    // Same lock, but the first heavy piece they move gets one legal escape move
+    // before the irons hold for the rest of the duration.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+        inst.state.escape = true;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        if (inst.state.escape) return moves; // one heavy piece may still flee
+        const kept = moves.filter((m) => m.piece !== "q" && m.piece !== "r");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (inst.state.escape && (move.piece === "q" || move.piece === "r")) {
+          inst.state.escape = false; // the escaping heavy piece spends it
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 ];

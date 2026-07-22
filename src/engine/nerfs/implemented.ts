@@ -31,6 +31,23 @@ function lineClear(board: BoardState, f0: number, r0: number, f1: number, r1: nu
   return true;
 }
 
+// How many times over the whole game `me` failed to move backward on a turn
+// that immediately followed an opponent capture (Cowardly's core rule).
+function retreatViolations(board: BoardState, me: Color): number {
+  const dir = me === "w" ? -1 : 1; // backward for me
+  const h = board.history;
+  let count = 0;
+  for (let i = 0; i < h.length; i++) {
+    const m = h[i];
+    if (m.color !== me) continue;
+    const prev = h[i - 1];
+    if (!prev || prev.color === me || !prev.captured) continue;
+    const retreated = (RANK(m.to) - RANK(m.from)) * dir > 0;
+    if (!retreated) count++;
+  }
+  return count;
+}
+
 // Squares of the enemy pieces that currently give check to `me`. Used by the
 // capture nerfs whose owner-approved rebalance always lets you take the piece
 // checking your king, so the handicap can never leave you stuck in check.
@@ -508,32 +525,41 @@ export const COWARDLY: Nerf = db({
 export const HAND_AND_BRAINLESS: Nerf = db({
   id: "hand_and_brainless",
   name: "Hand and Brainless",
-  description: "Each turn, a random piece type. You must move that type if possible.",
+  description: "Each turn the voice names a random piece type, and it names next turn's type one turn ahead. You must move the named type, but only while doing so still leaves you at least three legal moves; otherwise you may move anything.",
   flavor: "A voice in your head names a piece. You obey.",
   tier: 6,
   icon: "dice-5",
   implemented: true,
-  init: () => ({ piece: "p" as PieceType }),
-  onTurnStart: (_state, _ctx, rng) => {
+  init: (rng) => {
     const types: PieceType[] = ["p", "n", "b", "r", "q", "k"];
-    return { piece: rng.pick(types) };
+    return { piece: rng.pick(types), upcoming: rng.pick(types) };
+  },
+  onTurnStart: (state, _ctx, rng) => {
+    const types: PieceType[] = ["p", "n", "b", "r", "q", "k"];
+    const s = state as { piece: PieceType; upcoming: PieceType };
+    // Promote last turn's preview to this turn's requirement, then draw a new
+    // preview so the owner always sees one turn ahead.
+    return { piece: s.upcoming, upcoming: rng.pick(types) };
   },
   filterMoves: (moves, state) => {
     const s = state as { piece: PieceType };
     const filtered = moves.filter((m) => m.piece === s.piece);
-    return filtered.length ? filtered : moves;
+    // Guarantee at least three legal moves: only bind you to the named type
+    // when doing so keeps three or more options.
+    return filtered.length >= 3 ? filtered : moves;
   },
   hint: (state, _c, legal) => {
-    const s = state as { piece: PieceType };
+    const s = state as { piece: PieceType; upcoming: PieceType };
     const names: Record<PieceType, string> = {
       p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king",
     };
     const matching = legal.filter((m) => m.piece === s.piece);
-    if (matching.length === 0) {
-      return { text: `The voice says ${names[s.piece]}, but none can move. Pick anything.`, tone: "info" };
+    const next = `Next turn: ${names[s.upcoming]}.`;
+    if (matching.length < 3) {
+      return { text: `The voice says ${names[s.piece]}, but that leaves too few moves. Move freely. ${next}`, tone: "info" };
     }
     return {
-      text: `The voice says: move a ${names[s.piece]}.`,
+      text: `The voice says: move a ${names[s.piece]}. ${next}`,
       squares: Array.from(new Set(matching.map((m) => m.from))),
       tone: "warn",
     };
