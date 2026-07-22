@@ -7,6 +7,7 @@
 
 import { Buff } from "./shared";
 import {
+  hex,
   tierHexes,
   curse,
   walnutAll,
@@ -30,12 +31,35 @@ export const HEXES_T4: Buff[] = [
     {
       id: "granite_towers",
       name: "Granite Towers",
-      description: "Your opponent's rooks turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
+      description: "After your opponent's next move, their rooks turn to walnuts for their following 3 turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "The towers set hard as granite.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
     },
-    walnutAll(["r"], 3),
+    // Delayed petrify: the granite does not set until the opponent has taken
+    // one more move; then every rook turns to a walnut for their next 3 turns.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const d = ((inst.state.delay as number) ?? 0) - 1;
+        inst.state.delay = d;
+        if (d > 0) return;
+        // The delay is spent: petrify every enemy rook now. Added during their
+        // own move, so the shared post-move tick eats one turn immediately; 4
+        // here leaves exactly 3 of their turns.
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type !== "r") continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        ((inst.state.delay as number) ?? 0) > 0 ? "sets after their next move" : null,
+    },
   ),
 
   // --- petrify all: bishops for 3 turns -----------------------------------
@@ -43,22 +67,61 @@ export const HEXES_T4: Buff[] = [
     {
       id: "stone_clergy",
       name: "Stone Clergy",
-      description: "Your opponent's bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
+      description: "Your opponent's bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time. The first bishop keeps one free move before it too sets.",
       flavor: "The clergy are carved into the pews.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["b"] },
     },
-    walnutAll(["b"], 3),
+    // All bishops petrify now, save one: the first bishop is left a single
+    // escape move, then it sets to stone where it lands for the rest of the run.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 3;
+        const bishops = mySquares(api.board, api.opp, "b");
+        const escapeSq = bishops.length ? bishops[0] : null;
+        inst.state.escapeSq = escapeSq;
+        for (const sq of bishops) {
+          if (sq === escapeSq) continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const esc = inst.state.escapeSq as number | undefined;
+        if (esc != null && move.color === api.opp && move.from === esc) {
+          // The freed bishop spent its escape move: petrify it where it lands.
+          // Added during their own move, so the post-move tick eats one turn;
+          // the current count leaves exactly its remaining turns.
+          const rem = (inst.state.turns as number) ?? 0;
+          if (rem > 1) {
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: rem });
+          }
+          inst.state.escapeSq = null;
+        } else if (esc != null && move.to === esc && move.from !== esc) {
+          // The freed bishop was captured before it could flee.
+          inst.state.escapeSq = null;
+        }
+        if (move.color !== api.opp) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.escapeSq != null
+          ? "one bishop may still flee"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
 
   // --- petrify all knights, and YOUR knights take stone-skin ---------------
   // Not a heavier Hobbled Cavalry (T3 walnuts their knights and stops there):
   // the same casting spills onto your own stable, so your knights ride out as
   // living statues, uncapturable while theirs sit inert.
-  H(
+  hex(
     {
       id: "statue_stable",
       name: "Statue Stable",
+      tier: 5,
       description: "Your opponent's knights turn to walnuts for 2 of their turns, and your own knights harden into living statues: they cannot be captured for those same 2 turns.",
       flavor: "One stable turns to plinths, the other to armor.",
       // Board already paints walnuts; fx carried for consistency.
@@ -80,10 +143,10 @@ export const HEXES_T4: Buff[] = [
     {
       id: "medusas_stare",
       name: "Medusa's Stare",
-      description: "Turn one enemy queen you target into a walnut for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
+      description: "Turn one enemy queen you target into a walnut for 2 of their turns: a walnut is so heavy it can only shuffle one square at a time.",
       flavor: "Even majesty turns to stone under that gaze.",
     },
-    walnutTarget(3, ["q"]),
+    walnutTarget(2, ["q"]),
   ),
 
   // --- freeze: a targeted piece AND its neighbors, briefly ------------------
@@ -91,7 +154,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "cryostasis",
       name: "Cryostasis",
-      description: "Flash-freeze one enemy piece you target: it and every enemy piece beside it are frozen for 1 of their turns. Kings are never frozen.",
+      description: "Flash-freeze one enemy piece you target: it and every enemy piece beside it are frozen for 1 of their turns. The defender keeps their single most valuable caught piece free. Kings are never frozen.",
       flavor: "The cold spreads faster than the warning.",
     },
     activated(
@@ -108,7 +171,9 @@ export const HEXES_T4: Buff[] = [
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
-        addEffect(api, { kind: "freeze", sq: c, owner: api.opp, turns: 1 });
+        // Everything the one-turn freeze would catch: the target and its
+        // non-king neighbors.
+        const caught: number[] = [c];
         for (let df = -1; df <= 1; df++) {
           for (let dr = -1; dr <= 1; dr++) {
             if (df === 0 && dr === 0) continue;
@@ -116,20 +181,36 @@ export const HEXES_T4: Buff[] = [
             if (f < 0 || f > 7 || r < 0 || r > 7) continue;
             const sq = SQ(f, r);
             const p = api.board.pieces[sq];
-            if (p && p.color === api.opp && p.type !== "k") {
-              addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
-            }
+            if (p && p.color === api.opp && p.type !== "k") caught.push(sq);
           }
+        }
+        // A one-turn effect gives one defender-chosen piece immunity. A
+        // caster-cast hex has no defender-choice flow, so exempt the defender's
+        // most valuable caught piece deterministically (first on a value tie).
+        const VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+        let exempt = caught[0];
+        let best = -1;
+        for (const sq of caught) {
+          const v = VALUE[api.board.pieces[sq]!.type] ?? 0;
+          if (v > best) {
+            best = v;
+            exempt = sq;
+          }
+        }
+        for (const sq of caught) {
+          if (sq === exempt) continue;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
         }
       },
     ),
   ),
 
   // --- freeze: two targeted enemy pieces for 2 turns ----------------------
-  H(
+  hex(
     {
       id: "hard_frost",
       name: "Hard Frost",
+      tier: 5,
       description: "Freeze two enemy pieces you target so they cannot move for 2 of their turns. Kings cannot be targeted.",
       flavor: "The whole army rimed white overnight.",
     },

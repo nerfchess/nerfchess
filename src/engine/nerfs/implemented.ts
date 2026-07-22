@@ -1,6 +1,6 @@
 import { Nerf } from "../nerf";
 import { attackedBy, findKing, initialBoard, isInCheck, makeMove } from "../board";
-import { FILE, Move, PieceType, RANK, SQ, Square } from "../types";
+import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square } from "../types";
 import { HAND_AND_GIGABRAIN, MORE_NERFS } from "./more";
 import { EXTRA_NERFS } from "./extras";
 import { EXPANDED_NERFS, FOOTSOLDIERS_ONLY } from "./expanded";
@@ -14,6 +14,54 @@ const adj = (a: Square, b: Square) =>
   a !== b && Math.abs(FILE(a) - FILE(b)) <= 1 && Math.abs(RANK(a) - RANK(b)) <= 1;
 
 const PIECE_VAL: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+const KNIGHT_HOPS = [
+  [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
+];
+
+// Is every square strictly between (f0,r0) and (f1,r1) empty? Assumes the two
+// endpoints share a rank, file, or diagonal (slider geometry).
+function lineClear(board: BoardState, f0: number, r0: number, f1: number, r1: number): boolean {
+  const df = Math.sign(f1 - f0), dr = Math.sign(r1 - r0);
+  let f = f0 + df, r = r0 + dr;
+  while (f !== f1 || r !== r1) {
+    if (board.pieces[SQ(f, r)]) return false;
+    f += df; r += dr;
+  }
+  return true;
+}
+
+// Squares of the enemy pieces that currently give check to `me`. Used by the
+// capture nerfs whose owner-approved rebalance always lets you take the piece
+// checking your king, so the handicap can never leave you stuck in check.
+function checkingSquares(board: BoardState, me: Color): Set<number> {
+  const out = new Set<number>();
+  const ks = findKing(board, me);
+  if (ks == null) return out;
+  const opp: Color = me === "w" ? "b" : "w";
+  const kf = FILE(ks), kr = RANK(ks);
+  for (let sq = 0; sq < 64; sq++) {
+    const p = board.pieces[sq];
+    if (!p || p.color !== opp) continue;
+    const f = FILE(sq), r = RANK(sq);
+    const df = kf - f, dr = kr - r;
+    let hit = false;
+    switch (p.type) {
+      case "p": { const dir = opp === "w" ? 1 : -1; hit = dr === dir && Math.abs(df) === 1; break; }
+      case "n": hit = KNIGHT_HOPS.some(([a, b]) => f + a === kf && r + b === kr); break;
+      case "k": hit = Math.max(Math.abs(df), Math.abs(dr)) === 1; break;
+      case "b": hit = df !== 0 && Math.abs(df) === Math.abs(dr) && lineClear(board, f, r, kf, kr); break;
+      case "r": hit = (df === 0) !== (dr === 0) && lineClear(board, f, r, kf, kr); break;
+      case "q":
+        hit = !(df === 0 && dr === 0) &&
+          (df === 0 || dr === 0 || Math.abs(df) === Math.abs(dr)) &&
+          lineClear(board, f, r, kf, kr);
+        break;
+    }
+    if (hit) out.add(sq);
+  }
+  return out;
+}
 
 // Helpers to make defining a nerf less verbose
 function db(d: Nerf): Nerf {
@@ -44,12 +92,17 @@ export const CESS: Nerf = db({
 export const VEGAN: Nerf = db({
   id: "vegan",
   name: "Vegan",
-  description: "You can't capture knights.",
+  description: "You can't capture knights, unless the knight is the piece checking your king.",
   flavor: "Horses are friends, not food.",
   tier: 2,
   icon: "leaf",
   implemented: true,
-  filterMoves: (moves) => moves.filter((m) => m.captured !== "n"),
+  filterMoves: (moves, _s, ctx) => {
+    const chk = checkingSquares(ctx.board, ctx.me);
+    return moves.filter(
+      (m) => m.captured !== "n" || chk.has(m.capturedSquare ?? m.to),
+    );
+  },
 });
 
 export const TRUE_GENTLEMAN: Nerf = db({
@@ -66,12 +119,17 @@ export const TRUE_GENTLEMAN: Nerf = db({
 export const TROPHY_WIFE: Nerf = db({
   id: "trophy_wife",
   name: "Trophy Wife",
-  description: "Your queen can't capture.",
+  description: "Your queen can't capture, unless the target is the piece checking your king.",
   flavor: "She is for display only.",
   tier: 3,
   icon: "gem",
   implemented: true,
-  filterMoves: (moves) => moves.filter((m) => !(m.piece === "q" && m.captured)),
+  filterMoves: (moves, _s, ctx) => {
+    const chk = checkingSquares(ctx.board, ctx.me);
+    return moves.filter(
+      (m) => !(m.piece === "q" && m.captured) || chk.has(m.capturedSquare ?? m.to),
+    );
+  },
 });
 
 export const LAME_DUCK: Nerf = db({
@@ -586,17 +644,20 @@ export const NO_SHUFFLING: Nerf = db({
 export const OUTFLANKED: Nerf = db({
   id: "outflanked",
   name: "Outflanked",
-  description: "You can't capture on the rim. The enemy king is fair game anywhere.",
+  description: "You can't capture on the rim. The enemy king is fair game anywhere, and you may always capture the piece checking your king.",
   flavor: "The edges are scorched ground.",
   tier: 3,
   icon: "square-dashed",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => {
+  filterMoves: (moves, _s, ctx) => {
+    const chk = checkingSquares(ctx.board, ctx.me);
+    return moves.filter((m) => {
       if (!m.captured || m.captured === "k") return true;
+      if (chk.has(m.capturedSquare ?? m.to)) return true;
       const f = FILE(m.to), r = RANK(m.to);
       return f !== 0 && f !== 7 && r !== 0 && r !== 7;
-    }),
+    });
+  },
 });
 
 export const PROFESSIONAL_COURTESY: Nerf = db({
@@ -618,12 +679,17 @@ export const PROFESSIONAL_COURTESY: Nerf = db({
 export const CONSCIENTIOUS_OBJECTORS: Nerf = db({
   id: "conscientious_objectors",
   name: "Conscientious Objectors",
-  description: "Your pawns can't capture.",
+  description: "Your pawns can't capture, unless the target is the piece checking your king.",
   flavor: "They refuse to draw blood.",
   tier: 3,
   icon: "feather",
   implemented: true,
-  filterMoves: (moves) => moves.filter((m) => !(m.piece === "p" && m.captured)),
+  filterMoves: (moves, _s, ctx) => {
+    const chk = checkingSquares(ctx.board, ctx.me);
+    return moves.filter(
+      (m) => !(m.piece === "p" && m.captured) || chk.has(m.capturedSquare ?? m.to),
+    );
+  },
 });
 
 export const STAY_AT_HOME_MOM: Nerf = db({
@@ -672,13 +738,17 @@ export const ELEPHANTS_FEAR_MICE: Nerf = db({
 export const FAR_SIGHTED: Nerf = db({
   id: "far_sighted",
   name: "Far Sighted",
-  description: "You can't capture a piece standing right next to the capturing piece; captures must reach at least 2 squares away.",
+  description: "You can't capture a piece standing right next to the capturing piece; captures must reach at least 2 squares away. The one exception: you may always capture the piece checking your king.",
   flavor: "Your eyes don't focus that close.",
   tier: 4,
   icon: "eye",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => !m.captured || cheb(m.from, m.to) > 1),
+  filterMoves: (moves, _s, ctx) => {
+    const chk = checkingSquares(ctx.board, ctx.me);
+    return moves.filter(
+      (m) => !m.captured || cheb(m.from, m.to) > 1 || chk.has(m.capturedSquare ?? m.to),
+    );
+  },
 });
 
 export const SIMPLIFIER: Nerf = db({
