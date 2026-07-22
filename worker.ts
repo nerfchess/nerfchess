@@ -5865,12 +5865,61 @@ export class GameServer extends DurableObject<Env> {
       // Spectators (if any) see the game end with the revealed nerfs + held
       // buffs, then the replica is dropped (Tier 2 / M3).
       this.endExternalForWatchers(rec);
-      // Bot-vs-bot is never recorded (owner rule): arena games end for their
-      // watchers above and that is ALL — no games row (D1 or Postgres), no
-      // recorded_games claim, no Glicko movement on the house accounts. The
-      // arena's POST stays (it is what delivers the end frame to spectators);
-      // it just no longer triggers any database work.
       if (body.aborted) return Response.json({ ok: true, aborted: true });
+      // Archive + RATE the finished bot-vs-bot game, exactly like the Tier 3
+      // /api/arena/end route (owner directive 2026-07-22: bot games ARE
+      // rated). In production the arena normally posts ends to that route
+      // (ARENA_END_URL), so this path is the fallback for an arena configured
+      // without it — without recording here, losing that one env var made bot
+      // ratings silently freeze. recordFinishedGame is idempotent per game id
+      // (recorded_games ledger), so even a double-post through both paths
+      // applies the rating exactly once. A malformed record from an older
+      // arena bundle skips recording but still delivers the end frame above.
+      if (rec.setup && Array.isArray(rec.moves) && rec.result) {
+        const db = await this.db();
+        if (db) {
+          try {
+            await recordFinishedGame(
+              db,
+              {
+                id: rec.id,
+                whiteUserId: rec.bots.w,
+                blackUserId: rec.bots.b,
+                whiteName: rec.seats?.w?.name ?? "Anonymous",
+                blackName: rec.seats?.b?.name ?? "Anonymous",
+                whiteNerfId: rec.setup.whiteNerfId,
+                blackNerfId: rec.setup.blackNerfId,
+                seed: rec.setup.seed,
+                timeSec: rec.setup.timeSec,
+                incrementSec: rec.setup.incrementSec,
+                moves: rec.moves,
+                winner: rec.result.winner,
+                reason: rec.result.reason,
+                rated: true,
+                ruleset: "draft",
+                ratingCategory: rec.mode,
+                ...(rec.draftSeed !== undefined && rec.draftActions
+                  ? {
+                      draftRecord: {
+                        mode: rec.mode,
+                        draftSeed: rec.draftSeed,
+                        ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                        draftActions: rec.draftActions,
+                      },
+                    }
+                  : {}),
+                replayVersion: rec.replayVersion,
+                startedAt: rec.startedAt,
+                completedAt: rec.completedAt,
+              },
+              this.env.HYPERDRIVE?.connectionString,
+            );
+          } catch (err) {
+            console.error("arena end record failed", rec.id, err);
+            return Response.json({ ok: false, reason: "record_failed" });
+          }
+        }
+      }
       return Response.json({ ok: true });
     }
 
