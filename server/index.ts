@@ -619,6 +619,23 @@ function resignGame(client: Client) {
   finish(match);
 }
 
+// Abort: end the game with no result. Dev-server mirror of the worker's
+// abortGame, minus the abuse tracking (no database here) — same one-whole-turn
+// bound so the client behaves identically against either server.
+function abortGame(client: Client) {
+  const match = client.matchId ? matches.get(client.matchId) : undefined;
+  if (!match?.game || !client.color) return error(client, "no_game", "Join a game before aborting.");
+  if (finishOnFlag(match) || match.game.result) return;
+  if (match.game.board.history.length >= 2) {
+    return error(client, "abort_too_late", "The game can no longer be aborted once both sides have moved.");
+  }
+  match.clocks = currentClocks(match);
+  match.runningSince = null;
+  match.drawOfferBy = null;
+  match.game.result = { winner: null, reason: "aborted" };
+  finish(match);
+}
+
 function offerDraw(client: Client) {
   const match = client.matchId ? matches.get(client.matchId) : undefined;
   if (!match?.game || !client.color) return error(client, "no_game", "Join a game before offering a draw.");
@@ -726,6 +743,8 @@ function onMessage(client: Client, raw: RawData) {
       return playClientMove(client, frame.d);
     case "resign":
       return resignGame(client);
+    case "abort":
+      return abortGame(client);
     case "drawOffer":
       return offerDraw(client);
     case "drawAccept":

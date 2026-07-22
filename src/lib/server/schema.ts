@@ -641,6 +641,15 @@ const ADDITIVE_COLUMNS: string[] = [
   // seed on every resync, so a hand-edit is not reverted on the next roster
   // version bump. Mirrors migrations/0036_house_rating_override.sql.
   `ALTER TABLE house_identity_overrides ADD COLUMN rating REAL`,
+  // Abort-abuse tracking. recent_aborts is a ring buffer of the account's last
+  // six finished games, most recent last, '1' = a game this player aborted.
+  // Maintained by recordFinishedGame with a pure-SQL substr append so it needs
+  // no read-modify-write. Three or more '1's in the window draws a warning on
+  // the next abort; aborting again while still at the threshold sets
+  // abort_timeout_until, and matchmaking/game creation refuse new games until
+  // that instant passes. Mirrors migrations/0038_abort_tracking.sql.
+  `ALTER TABLE users ADD COLUMN recent_aborts TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE users ADD COLUMN abort_timeout_until INTEGER`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

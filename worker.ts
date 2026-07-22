@@ -213,6 +213,9 @@ type StoredMatch = {
   clocks: Record<Color, number>;
   runningSince: number | null;
   drawOfferBy: Color | null;
+  // Seat that aborted the game (result.winner null, reason "aborted"), kept so
+  // the archived row can attribute the abort for abuse tracking.
+  abortedBy?: Color;
   // Pending takeback request (casual games only).
   takebackOfferBy?: Color | null;
   createdAt: number;
@@ -386,6 +389,7 @@ type ClientFrame =
   | { t: "reconnect"; d?: { id?: unknown; color?: unknown; token?: unknown } }
   | { t: "move"; d?: { u?: unknown; ply?: unknown } }
   | { t: "resign" }
+  | { t: "abort" }
   | { t: "claimWin" }
   | { t: "claimDraw" }
   | { t: "drawOffer" }
@@ -488,6 +492,15 @@ const disconnectGraceMs = 15 * 1000;
 // How long the opponent must have been disconnected before the remaining
 // player may claim the game by abandonment (claimWin / claimDraw).
 const abandonmentClaimMs = 30 * 1000;
+// Aborting: either player may end the game without a result until one whole
+// turn (two plies) has been played. Abusing it is throttled per account via
+// the users.recent_aborts ring buffer (last abortWindow finished games):
+// reaching abortWarnCount aborts in the window draws a warning, and aborting
+// again while still at the threshold blocks new games for abortTimeoutMs.
+const abortMaxPlies = 2;
+const abortWindow = 6;
+const abortWarnCount = 3;
+const abortTimeoutMs = 10 * 60 * 1000;
 // House players (see src/lib/server/bots.ts). Storage keys use the "hp:"
 // prefix, distinct from the retired system's "bots:" keys, which were purged
 // in production long ago. Every knob here exists because the first system
@@ -1525,6 +1538,8 @@ export class GameServer extends DurableObject<Env> {
         return this.playClientMove(ws, frame.d);
       case "resign":
         return this.resignGame(ws);
+      case "abort":
+        return this.abortGame(ws);
       case "claimWin":
         return this.claimAbandonment(ws, false);
       case "claimDraw":
@@ -2968,6 +2983,7 @@ export class GameServer extends DurableObject<Env> {
             winner: match.result.winner,
             reason: match.result.reason,
             rated: !!match.rated,
+            ...(match.abortedBy ? { abortedBy: match.abortedBy } : {}),
             ...(match.draft ? { ruleset: "draft" } : {}),
             // Mode games count toward (and, when rated, move) the per-mode
             // rating bucket instead of a speed bucket.
@@ -3043,6 +3059,7 @@ export class GameServer extends DurableObject<Env> {
   private async createMatch(ws: WebSocket, data: unknown) {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    if (await this.abortTimedOut(ws, session.userId)) return;
 
     const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
@@ -3126,6 +3143,7 @@ export class GameServer extends DurableObject<Env> {
   private async joinMatch(ws: WebSocket, data: unknown) {
     const session = this.session(ws);
     if (session.matchId) return error(ws, "already_joined", "This connection already belongs to a game.");
+    if (await this.abortTimedOut(ws, session.userId)) return;
 
     const id = String((data as { id?: unknown } | undefined)?.id || "").trim().toUpperCase();
     const match = await this.loadMatch(id);
@@ -3458,6 +3476,97 @@ export class GameServer extends DurableObject<Env> {
     await this.endMatch(match);
   }
 
+  // Abort: either player may end the game with no result (and no rating
+  // movement — recordFinishedGame treats a null winner as unrated) until one
+  // whole turn has been played. Repeated aborts draw a warning and then a
+  // temporary matchmaking timeout; see the abort* constants.
+  private async abortGame(ws: WebSocket) {
+    const session = this.session(ws);
+    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    if (!match || !session.color) return error(ws, "no_game", "Join a game before aborting.");
+    if (await this.finishOnFlag(match)) return;
+    if (match.result) return;
+    if (match.moves.length >= abortMaxPlies) {
+      return error(ws, "abort_too_late", "The game can no longer be aborted once both sides have moved.");
+    }
+
+    const game = await this.gameForPlay(match);
+    if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before aborting.");
+
+    // Snapshot the aborter's ring buffer BEFORE endMatch appends this game's
+    // flag, so the warning/timeout decision can compare the window with and
+    // without this abort. House-bot seats never abort, so only humans land here.
+    const db = await this.db();
+    let prevFlags = "";
+    if (db && session.userId && match.startedAt) {
+      try {
+        const row = await db
+          .prepare(`SELECT recent_aborts FROM users WHERE id = ?`)
+          .bind(session.userId)
+          .first<{ recent_aborts: string | null }>();
+        prevFlags = row?.recent_aborts ?? "";
+      } catch {}
+    }
+
+    match.clocks = this.currentClocks(match);
+    match.runningSince = null;
+    match.drawOfferBy = null;
+    match.abortedBy = session.color;
+    match.result = { winner: null, reason: "aborted" };
+    match.completedAt = Date.now();
+    await this.endMatch(match);
+
+    // Warning / timeout pass. Only started games are recorded (and so only
+    // they append to the ring buffer); an unstarted abort carries no penalty.
+    if (db && session.userId && match.startedAt) {
+      const aborts = (flags: string) =>
+        flags.slice(-abortWindow).split("").filter((c) => c === "1").length;
+      const before = aborts(prevFlags);
+      const after = aborts(prevFlags + "1");
+      if (after >= abortWarnCount) {
+        if (before >= abortWarnCount) {
+          // Already warned (still at the threshold) and aborted again: block
+          // new games for a cooldown period.
+          const until = Date.now() + abortTimeoutMs;
+          try {
+            await db
+              .prepare(`UPDATE users SET abort_timeout_until = ? WHERE id = ?`)
+              .bind(until, session.userId)
+              .run();
+          } catch {}
+          send(ws, "abortWarning", { level: "timeout", until });
+        } else {
+          send(ws, "abortWarning", { level: "warning" });
+        }
+      }
+    }
+  }
+
+  // True (and an error frame already sent) when this signed-in account is
+  // inside an abort-abuse cooldown, so every new-game entry point can refuse
+  // with one call. Anonymous sessions pass: they have no row to check.
+  private async abortTimedOut(ws: WebSocket, userId: string | null | undefined): Promise<boolean> {
+    if (!userId) return false;
+    const db = await this.db();
+    if (!db) return false;
+    let until = 0;
+    try {
+      const row = await db
+        .prepare(`SELECT abort_timeout_until FROM users WHERE id = ?`)
+        .bind(userId)
+        .first<{ abort_timeout_until: number | null }>();
+      until = row?.abort_timeout_until ?? 0;
+    } catch {}
+    if (until <= Date.now()) return false;
+    const mins = Math.max(1, Math.ceil((until - Date.now()) / 60_000));
+    error(
+      ws,
+      "abort_timeout",
+      `You've aborted too many recent games. You can start a new game in ${mins} minute${mins === 1 ? "" : "s"}.`,
+    );
+    return true;
+  }
+
   // ---------------- abandonment claims ----------------
 
   // Once the opponent has been disconnected for 30+ seconds in a started,
@@ -3650,6 +3759,7 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
+    if (await this.abortTimedOut(ws, session.userId)) return;
     const req = (data as { pool?: unknown; mode?: unknown; target?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
     const pool = QUEUE_POOLS[poolName];
@@ -5113,6 +5223,7 @@ export class GameServer extends DurableObject<Env> {
     if (!session.userId || !session.username) {
       return error(ws, "auth_required", "Sign in to play a rated bot game.");
     }
+    if (await this.abortTimedOut(ws, session.userId)) return;
     const req = (data as
       | { difficulty?: unknown; mode?: unknown; timeSec?: unknown; incrementSec?: unknown; color?: unknown }
       | undefined) ?? {};

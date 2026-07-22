@@ -324,6 +324,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [confirmMovePending, setConfirmMovePending] = useState<Move | null>(null);
   const [drawOfferBy, setDrawOfferBy] = useState<Color | null>(null);
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
+  // Abort-abuse notice from the server after my abort: at the threshold
+  // ("warning") or actively blocked from new games ("timeout" + cooldown
+  // minutes, computed at event time -- render must stay pure).
+  const [abortNotice, setAbortNotice] = useState<{ level: "warning" | "timeout"; minutes?: number } | null>(null);
   const [takebackOfferBy, setTakebackOfferBy] = useState<Color | null>(null);
   const [takebackStatus, setTakebackStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(start.wc);
@@ -1037,6 +1041,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setError(null);
         setDrawOfferBy(e.color);
         setDrawOfferStatus(e.color === myColor ? "offering" : "idle");
+      } else if (e.type === "abort-warning") {
+        setAbortNotice({
+          level: e.level,
+          minutes: e.until ? Math.max(1, Math.ceil((e.until - Date.now()) / 60_000)) : undefined,
+        });
       } else if (e.type === "draw-declined") {
         setDrawOfferBy(null);
         setDrawOfferStatus(e.color === myColor ? "idle" : "declined");
@@ -1330,6 +1339,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // A restored session may already carry a finished game; never re-record it.
   useEffect(() => {
     if (!game?.result) return;
+    // Aborted games have no outcome (winner null) and stay out of the local
+    // history, which only knows win/loss/draw.
+    if (game.result.winner === null && game.result.reason === "aborted") {
+      recordedResult.current = true;
+      return;
+    }
     if (!recordedResult.current && game.board.history.length === (start.moves?.length ?? 0)) {
       // Result present on first render (restored finished game) — skip.
       recordedResult.current = true;
@@ -1831,6 +1846,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     session.resign();
   };
 
+  // Abort: no confirm step -- it is only offered before one whole turn exists,
+  // so nothing is at stake yet (the server enforces the same bound).
+  const onAbort = () => {
+    if (!game || game.result) return;
+    setError(null);
+    if (!session.abort()) setError("Disconnected from the game server.");
+  };
+
   const requestResign = () => {
     if (uiSettings.confirmResign) setConfirmingResign(true);
     else onResign();
@@ -2241,6 +2264,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
     !start.rated && !isDraft && game.board.history.some((m) => m.color === myColor);
+  // Opening grace window: until one whole turn (two plies) has been played,
+  // the Draw button reads Abort instead -- end the game with no result and no
+  // rating change rather than negotiate a draw nobody wants that early.
+  const canAbort = game.board.history.length < 2;
   const revealControl = game.result ? null : myRevealState === "revealed" ? (
     <div className="plate flex items-center gap-2 p-2 px-3 text-xs text-parchment-300">
       <span aria-hidden className="text-verdigris-glow">✓</span>
@@ -2419,13 +2446,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
-        <button
-          onClick={onOfferDraw}
-          disabled={drawOfferStatus === "offering"}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {drawOfferStatus === "offering" ? "Offered" : "Draw"}
-        </button>
+        {canAbort ? (
+          <button
+            onClick={onAbort}
+            title="End the game without a result. Nobody wins and no rating changes."
+            className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide"
+          >
+            Abort
+          </button>
+        ) : (
+          <button
+            onClick={onOfferDraw}
+            disabled={drawOfferStatus === "offering"}
+            className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 hover:border-gold/70 transition text-xs font-display font-semibold tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {drawOfferStatus === "offering" ? "Offered" : "Draw"}
+          </button>
+        )}
         {takebackAvailable && (
           <button
             onClick={onOfferTakeback}
@@ -2454,6 +2491,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       }
     >
       <ConnectionBanner session={session} />
+      {abortNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+        >
+          <div className="smallcaps text-[10px] text-parchment-400">
+            {abortNotice.level === "timeout" ? "New games paused" : "Abort warning"}
+          </div>
+          <p className="mt-1 text-xs leading-snug text-parchment-300">
+            {abortNotice.level === "timeout"
+              ? `You've aborted too many of your recent games, so starting new games is paused for about ${abortNotice.minutes ?? 10} minutes.`
+              : "You've aborted several of your recent games. Abort another soon and starting new games will be paused for a while."}
+          </p>
+          <button
+            onClick={() => setAbortNotice(null)}
+            className="mt-2 btn-ghost px-2 py-1 text-[11px] font-display tracking-wide"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
         {/* Wordmark + collapsed nav menu: design system §9 keeps every global
             destination reachable from the in-game bar (the menu shows on desktop
