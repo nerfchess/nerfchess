@@ -19,8 +19,15 @@
  *   - canvas specs:          src/components/effects/vfxSpecs.ts (imported)
  *   - passive compositions:  src/components/effects/passive/registry.ts (imported)
  *
+ * Coverage layers (checked in order): core signature (BoardEffects SIGNATURES),
+ * plugin play (*Plays.tsx), then the deterministic generated-signature pipeline
+ * (genSignatureCore.ts) which composes a unique family/variant/palette/glyph/
+ * finisher play per card id. Nerf flagships are passive-registry compositions.
+ *
  * Failure conditions:
- *   F1  an implemented tier 1-8 upgrade with NO flagship animation at all
+ *   F1  an implemented tier 1-8 nerf with NO passive-registry composition
+ *       (buffs/hexes can no longer be uncovered: the generated pipeline is
+ *       total, and its self-check enforces per-card uniqueness)
  *   F2  two upgrades whose flagship identity AND dressing (palette + emblem)
  *       are byte-identical — a true copy-paste duplicate
  *   F3  the count of tier>=5 upgrades sharing a template without a structural
@@ -37,6 +44,7 @@ import { ALL_BUFFS } from "../src/engine/buffs/library";
 import { PLAYABLE_NERFS } from "../src/engine/nerfs/library";
 import { resolveCardVfx } from "../src/components/effects/vfxSpecs";
 import { PASSIVE_REGISTRY, passiveKey } from "../src/components/effects/passive/registry";
+import { genSignatureConfig } from "../src/components/effects/genSignatureCore";
 
 const ROOT = path.join(__dirname, "..");
 const EFFECTS = path.join(ROOT, "src", "components", "effects");
@@ -267,6 +275,7 @@ for (const b of buffs) {
   let motionPath: string;
   let sound: string;
   let victims: string;
+  let ending: string | undefined;
   if (coreInfo) {
     animId = `core:${coreInfo.visual}`;
     entranceStyle = `core signature "${coreInfo.visual}"`;
@@ -286,8 +295,23 @@ for (const b of buffs) {
     sound = play.sound;
     victims = play.victims;
   } else {
-    fail(`F1: ${kind} "${b.id}" (t${b.tier}) has no core signature and no plugin play`);
-    continue;
+    // Generated signature fallback: cards with no bespoke core scene and no
+    // plugin play are rendered by the deterministic generated-signature
+    // pipeline (genSignatureCore.ts -> GenSignaturePlay). The config is pure
+    // and hash-derived, so the registry can record the exact composition the
+    // player sees. The animId captures every visual dimension (family,
+    // structural variant, both hues, rotation seed, glyph, finisher), so F2's
+    // byte-identical detection still bites if two cards ever hash to the same
+    // full composition.
+    const g = genSignatureConfig(b.id, b.category, b.tier);
+    const v = g.visual;
+    animId = `gen:${v.family}#${v.variant}|h${v.hue}/${v.hue2}|r${v.rot}|${v.glyph}|${v.finisher}`;
+    entranceStyle = `generated ${v.family} signature (variant ${v.variant}, ${v.glyph} glyph)`;
+    mainObject = `${v.family}:${v.glyph}`;
+    motionPath = g.ordering;
+    sound = g.sound;
+    victims = g.victims === "all" ? "all" : g.victims.join("+");
+    ending = `finisher:${v.finisher}`;
   }
 
   entries.push({
@@ -307,7 +331,7 @@ for (const b of buffs) {
     pieceReaction: victims,
     persistentEffect: String(persistent),
     soundFamily: sound,
-    endingEffect: vfx?.aftermath ?? "none",
+    endingEffect: ending ?? vfx?.aftermath ?? "none",
   });
 }
 
