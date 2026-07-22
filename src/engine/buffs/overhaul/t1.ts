@@ -12,6 +12,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   advancePawn,
   advanceablePawns,
   attackersOf,
@@ -611,25 +612,34 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_left_foot_first",
       name: "Left Foot First",
-      description: "Once, your king may lunge two squares toward the queenside if both squares are empty.",
+      description:
+        "Once, your king may lunge two squares toward the queenside if both squares are empty. Making the lunge spends your next unused draft reroll, if you have one.",
       tier: 1,
       category: "movement",
       icon: "Footprints",
       flavor: "The queenside was closer anyway.",
       fx: { motif: "empower", pieces: ["k"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "k")) {
-        const f = FILE(sq);
-        if (f < 2) continue;
-        const mid = sq - 1, to = sq - 2;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
+    {
+      ...augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "k")) {
+          const f = FILE(sq);
+          if (f < 2) continue;
+          const mid = sq - 1, to = sq - 2;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }),
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 22. Spare Button ---------------------------------------------------------------------------------------------------------
   card(
@@ -637,7 +647,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_spare_button",
       name: "Spare Button",
       description:
-        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty. One use.",
+        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty, and you gain 5 seconds. One use.",
       tier: 1,
       category: "pieces",
       icon: "CircleDot",
@@ -655,6 +665,7 @@ export const OVERHAUL_T1: Buff[] = [
           // Only my own pawns count (the capture square held my pawn).
           if (!api.board.pieces[home]) {
             api.place(home, "p", api.me);
+            api.adjustClock({ addSelfSec: 5 });
             inst.spent = true;
             return;
           }
@@ -670,7 +681,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_tiny_trebuchet",
       name: "Tiny Trebuchet",
       description:
-        "Launch one of your pawns two squares straight ahead, once. Both squares must be empty; no capturing on landing.",
+        "Launch one of your pawns two squares straight ahead, once. Both squares must be empty; no capturing on landing. It arms only after your opponent's next move.",
       tier: 1,
       category: "movement",
       icon: "Landmark",
@@ -678,19 +689,34 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = fwdOf(api.me);
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const mid = sq + fwd, to = sq + fwd * 2;
-        if (to < 0 || to > 63) continue;
-        if (RANK(to) === 0 || RANK(to) === 7) continue;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.armed = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return;
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const mid = sq + fwd, to = sq + fwd * 2;
+          if (to < 0 || to > 63) continue;
+          if (RANK(to) === 0 || RANK(to) === 7) continue;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Delay the launch: it arms only after the opponent has moved once.
+        if (!inst.state.armed && move.color === api.opp) inst.state.armed = true;
+        spendOnVia(inst, move);
+      },
+      status: (inst) => (inst.state.armed ? null : "arms after your opponent moves"),
+    },
   ),
   // 24. Name Tag --------------------------------------------------------------------------------------------------------------------
   card(
@@ -742,7 +768,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_fresh_socks",
       name: "Fresh Socks",
-      description: "Your next move puts 8 seconds back on your clock. New socks, new you.",
+      description:
+        "Your next move puts 13 seconds back on your clock, flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. In untimed games only the flag and the reroll apply. New socks, new you.",
       tier: 1,
       category: "tempo",
       icon: "Sparkles",
@@ -752,7 +779,13 @@ export const OVERHAUL_T1: Buff[] = [
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me) return;
-        api.adjustClock({ addSelfSec: 8 });
+        api.adjustClock({ addSelfSec: 13 });
+        // The clock gain is a no-op in an untimed game, so always land two
+        // effects that need no clock: mark the last enemy mover (clears once
+        // they reply) and hand back a draft reroll.
+        const last = lastMoveBy(api.board, api.opp);
+        if (last) flashSquares(api, [last.to], true);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
         inst.spent = true;
       },
       status: () => "active on your next move",
