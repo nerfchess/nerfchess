@@ -856,7 +856,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_early_coronation",
       name: "Early Coronation",
       description:
-        "The heralds cannot wait: for your next 3 turns, any pawn move of yours that reaches your opponent's third of the board (their back three ranks) may promote to a queen on the spot.",
+        "The heralds cannot wait, though the coronation is a modest one: once, a pawn move of yours that reaches your opponent's second rank may promote on the spot to a rook, bishop, or knight.",
       tier: 6,
       category: "pieces",
       icon: "Church",
@@ -864,7 +864,7 @@ export const BOON_WAVE2: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    timedAugment(3, (_moves, inst, api) => {
+    augment((_moves, inst, api) => {
       const out: Move[] = [];
       const fwd = api.me === "w" ? 1 : -1;
       for (const from of mySquares(api.board, api.me, "p")) {
@@ -874,22 +874,25 @@ export const BOON_WAVE2: Buff[] = [
           const f = FILE(from) + df;
           if (!inBoard(f, tr)) continue;
           const to = SQ(f, tr);
-          if (relRank(api.me, to) < 6 || relRank(api.me, to) > 7) continue;
+          // The opponent's second rank only (their back rank is relRank 8).
+          if (relRank(api.me, to) !== 7) continue;
           const t = api.board.pieces[to];
           if (df === 0 ? t != null : !t || t.color !== api.opp || t.type === "k") continue;
-          out.push({
-            from,
-            to,
-            piece: "p",
-            color: api.me,
-            ...(t ? { captured: t.type, capturedSquare: to } : {}),
-            promotion: "q",
-            via: inst.id,
-          } as Move);
+          for (const promo of ["r", "b", "n"] as PieceType[]) {
+            out.push({
+              from,
+              to,
+              piece: "p",
+              color: api.me,
+              ...(t ? { captured: t.type, capturedSquare: to } : {}),
+              promotion: promo,
+              via: inst.id,
+            } as Move);
+          }
         }
       }
       return out;
-    }),
+    }, 1),
   ),
 
   // A transformation that PAYS for itself in the same breath: one piece

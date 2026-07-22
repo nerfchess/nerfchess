@@ -360,7 +360,7 @@ export const TIER9: Buff[] = [
       icon: "Castle",
       name: "Iron Legion",
       description:
-        "A rook and a knight join your pocket to drop onto empty squares in your half on later turns; a queen joins them only if your queen has already been captured.",
+        "A rook and a knight join your pocket to drop onto empty squares on later turns; a queen joins them only if your queen has already been captured.",
       category: "pieces",
       flavor: "Reinforcements, at last.",
     },
@@ -371,26 +371,24 @@ export const TIER9: Buff[] = [
     }),
   ),
 
-  // Living God: promoted from tier 8 into the apex band (owner request). One
-  // of your pieces ascends for the game: amazon movement, permanently
-  // uncapturable, and it detonates the surrounding ring whenever it captures.
-  // Same rails as its tier-8 life: bindPiece never offers the king, the
-  // permanent shield is the square-bound kind (it follows the piece), and the
-  // engine's invulnerability guard means the god itself may never be the piece
-  // that captures the enemy king.
+  // Living God: promoted from tier 8 into the apex band (owner request), then
+  // trimmed in the soft-nerf pass. One of your pieces gains amazon movement and
+  // non-chaining explosive captures for four of your turns; the permanent shield
+  // is gone, so the god is now mortal. bindPiece never offers the king, the timer
+  // ticks on your own moves, and explodeAt (default opts) does not chain.
   apex(
     {
       id: "living_god",
       icon: "Sparkles",
       name: "Living God",
       description:
-        "One piece gains amazon movement and explosive captures for the game, and cannot be captured for your opponent's next 6 turns. An uncapturable piece may never capture the king itself.",
+        "One piece gains amazon movement and explosive captures for your next 4 turns. Its captures blow up the surrounding ring but do not chain.",
       category: "movement",
       flavor: "Worship is optional. Survival is not.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
     },
     bindPiece("Choose your living god", bindCandidates(), {
-      shieldTurns: 6,
+      turns: 4,
       gen: (board, sq, via) => [
         ...slideMoves(board, sq, ALL_DIRS, via),
         ...leapMoves(board, sq, KNIGHT_LEAPS, via),

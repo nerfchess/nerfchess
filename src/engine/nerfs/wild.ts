@@ -673,9 +673,16 @@ export const ROYAL_MERIDIAN: Nerf = db({
 
 export const KINGPIN: Nerf = db({
   id: "wn_kingpin", name: "Kingpin", tier: 7, icon: "crown", implemented: true,
-  description: "Only your king may capture. No other piece can make a capture.",
+  description: "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
   flavor: "The boss does all the dirty work himself.",
-  filterMoves: (moves) => moves.filter((m) => !m.captured || m.piece === "k"),
+  filterMoves: (moves) => {
+    const ok = moves.filter((m) => !m.captured || m.piece === "k");
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening captures
+    // back up to every piece.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
+  },
 });
 
 // --------------------------- TIER 8 (unhinged) ---------------------------

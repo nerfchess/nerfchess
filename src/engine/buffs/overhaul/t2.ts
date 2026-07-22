@@ -941,7 +941,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_speedrun_timer",
       name: "Speedrun Timer",
       description:
-        "For your next 3 turns, each move you make refunds 4 seconds. A capture counts as a gold split and refunds 8 instead.",
+        "For your next 3 turns, each move you make refunds 9 seconds. A capture counts as a gold split and refunds 13 instead.",
       tier: 2,
       category: "tempo",
       icon: "Timer",
@@ -954,7 +954,7 @@ export const OVERHAUL_T2: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me) {
-          api.adjustClock({ addSelfSec: move.captured ? 8 : 4 });
+          api.adjustClock({ addSelfSec: move.captured ? 13 : 9 });
         }
         tickTurns(inst, move, api.me);
       },
@@ -987,7 +987,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_barn_door",
       name: "Barn Door",
       description:
-        "Slam the barn door on one file: enemy pieces cannot end a move on that file's square of your back rank for your opponent's next 3 turns.",
+        "Slam the barn door on one file: enemy pieces cannot end a move on that file's square of your back rank for your opponent's next 3 turns. Use it before your next move, or the charge is spent unused.",
       tier: 2,
       category: "protection",
       icon: "DoorClosed",
@@ -1012,7 +1012,16 @@ export const OVERHAUL_T2: Buff[] = [
           turns: 3,
         });
       },
-      { freeAction: true },
+      {
+        freeAction: true,
+        // The activation is only offered when the door can be slammed, so a
+        // failed attempt cannot occur; instead the charge expires the moment
+        // you next move without having used it (glossary: a failed or illegal
+        // attempt still spends the charge).
+        onMovePlayed: (inst, move, api) => {
+          if (move.color === api.me && !inst.usedActivation) inst.spent = true;
+        },
+      },
     ),
   ),
 ];

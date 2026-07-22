@@ -552,7 +552,7 @@ export const KNIGHT_PARADE: Nerf = db({
 export const RHYTHM_MASTER: Nerf = db({
   id: "rhythm_master",
   name: "Rhythm Master",
-  description: "You must alternate captures and non-captures.",
+  description: "You must alternate captures and non-captures. If no move complies, your king may move instead.",
   flavor: "And one, and two, and...",
   tier: 6,
   icon: "music",
@@ -562,19 +562,23 @@ export const RHYTHM_MASTER: Nerf = db({
     if (!last) return moves;
     const wantCapture = !last.captured;
     const filtered = moves.filter((m) => !!m.captured === wantCapture);
-    return filtered.length ? filtered : moves;
+    if (filtered.length) return filtered;
+    // no compliant move exists: fall back to a king move so you are not stuck
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
 export const ICY_SQUARES: Nerf = db({
   id: "icy_squares",
   name: "Icy Squares",
-  description: "After you move a piece, it must slide once more in the same direction on your next move (if possible). Forced slides don't force another.",
+  description: "Starting on move 4, after you move a piece it must slide once more in the same direction on your next move (if possible). Forced slides don't force another.",
   flavor: "Slide.",
   tier: 6,
   icon: "snowflake",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const last = ctx.myLastMove;
     if (!last) return moves;
     const df = Math.sign(FILE(last.to) - FILE(last.from));
@@ -766,7 +770,7 @@ export const COURT_JESTER: Nerf = db({
 export const DOMINO: Nerf = db({
   id: "domino",
   name: "Domino",
-  description: "Each move must end adjacent to your previous move's destination.",
+  description: "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
   flavor: "Tip them over in sequence.",
   tier: 6,
   icon: "spline",
@@ -782,12 +786,23 @@ export const DOMINO: Nerf = db({
 export const SLOWPOKE: Nerf = db({
   id: "slowpoke",
   name: "Slowpoke",
-  description: "All your moves must be distance exactly 1.",
+  description: "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
   flavor: "Step. By. Step.",
   tier: 6,
   icon: "footprints",
   implemented: true,
-  filterMoves: (moves) => moves.filter((m) => cheb(m.from, m.to) === 1),
+  filterMoves: (moves, _s, ctx) => {
+    const allowLeap = (ctx.moveNumber + 1) % 5 === 0; // one knight leap every five owner turns
+    return moves.filter((m) => {
+      if (cheb(m.from, m.to) === 1) return true;
+      if (allowLeap && m.piece === "n") {
+        const df = Math.abs(FILE(m.to) - FILE(m.from));
+        const dr = Math.abs(RANK(m.to) - RANK(m.from));
+        return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+      }
+      return false;
+    });
+  },
 });
 
 export const PILGRIMAGE: Nerf = db({
