@@ -19,8 +19,69 @@ import {
   turnsLeft,
   ORTHO_DIRS,
   ALL_DIRS,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
   type Square,
+  type BuffApi,
+  type Mech,
 } from "./shared";
+
+// Balance pass (Dragon's Breath): a rook sweeps down a straight orthogonal
+// line, removing every enemy piece in its path and landing beyond, once. Unlike
+// the base lineSweep it may also be aimed down a line with nothing to burn: a
+// failed or illegal attempt (an empty-line whiff) still spends the one-shot
+// charge (glossary directive). Friendly pieces and kings block the ray.
+function dragonsBreathSweep(): Mech {
+  const dests = (api: BuffApi, from: Square): Square[] => {
+    const out: Square[] = [];
+    for (const [df, dr] of ORTHO_DIRS) {
+      let f = FILE(from) + df, r = RANK(from) + dr;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (p && (p.color === api.me || p.type === "k")) break;
+        out.push(sq);
+        f += df;
+        r += dr;
+      }
+    }
+    return out;
+  };
+  return activated(
+    (_inst, api, picks) => {
+      if (picks.length >= 2) return null;
+      if (picks.length === 0) {
+        return {
+          kind: "square",
+          label: "Choose the rook that breathes fire",
+          squares: mySquares(api.board, api.me, "r").filter((sq) => dests(api, sq).length > 0),
+        };
+      }
+      return {
+        kind: "square",
+        label: "Choose where the fire ends",
+        squares: dests(api, picks[0].square!),
+      };
+    },
+    (_inst, api, picks) => {
+      const from = picks[0]?.square, to = picks[1]?.square;
+      if (from == null || to == null || from === to) return;
+      const df = Math.sign(FILE(to) - FILE(from)), dr = Math.sign(RANK(to) - RANK(from));
+      let f = FILE(from) + df, r = RANK(from) + dr;
+      while (inBoard(f, r)) {
+        const sq = SQ(f, r);
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+        if (sq === to) break;
+        f += df;
+        r += dr;
+      }
+      if (!api.board.pieces[to]) api.relocate(from, to);
+    },
+  );
+}
 
 export const FANTASY_BEASTS: Buff[] = [
   card(
@@ -29,13 +90,13 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "FlameKindling",
       name: "Dragon's Breath",
       description:
-        "One rook captures every enemy piece in a straight line in a single move, once.",
+        "One rook captures every enemy piece in a straight line in a single move, once. Loosing the breath spends the card even if the line is empty and nothing burns.",
       tier: 5,
       category: "attack",
       requires: ["r"],
       flavor: "Everything in the corridor turns to ash.",
     },
-    lineSweep("r", ORTHO_DIRS, null),
+    dragonsBreathSweep(),
   ),
   card(
     {

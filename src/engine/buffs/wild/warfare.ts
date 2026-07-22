@@ -890,15 +890,16 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_war_wagon",
       name: "War Wagon",
-      description: "One of your bishops may also move up to two squares straight in any direction, for the game.",
+      description: "One of your bishops may also move, without capturing, up to two squares straight in any direction, for the game.",
       tier: 3,
       category: "movement",
       requires: ["b"],
       flavor: "A rolling fort with a blade on top.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "r", self: true },
     },
+    // Overhaul balance pass: the added straight move may no longer capture.
     pieceBound("b", "Choose the bishop to mount on a war wagon", (board, sq, via) =>
-      slideMoves(board, sq, ORTHO_DIRS, via, 2),
+      slideMoves(board, sq, ORTHO_DIRS, via, 2).filter((m) => !m.captured),
     ),
   ),
   card(
@@ -920,22 +921,37 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_phalanx_advance",
       name: "Phalanx Advance",
-      description: "Shields lock across the whole front: enemy pawns can never capture your pawns, for the rest of the game.",
+      description: "Shields lock across the front: enemy pawns can never capture your pawns, save your single most advanced pawn (furthest forward, ties toward the a-file) whenever more than one of your pawns stands. For the rest of the game.",
       tier: 3,
       category: "protection",
       requires: ["p"],
       flavor: "Shields locked, the whole line moves together.",
       fx: { motif: "ward", pieces: ["p"], self: true },
     },
+    // Overhaul balance pass: the permanent shield now covers one fewer pawn
+    // (minimum one still covered): your single most advanced pawn is left
+    // exposed while you hold more than one pawn.
     {
       kind: "passive",
       filterOpponentMoves: (moves, _inst, api) => {
+        const pawns = mySquares(api.board, api.me, "p");
+        // The one unprotected pawn: most advanced, ties toward the a-file. Only
+        // when at least two pawns stand (never drop protection below one pawn).
+        let exposed: Square | null = null;
+        if (pawns.length >= 2) {
+          exposed = pawns.reduce((best, sq) => {
+            const rs = relRank(api.me, sq), rb = relRank(api.me, best);
+            return rs > rb || (rs === rb && sq < best) ? sq : best;
+          });
+        }
         const kept = moves.filter((m) => {
           if (m.piece !== "p") return true;
           const cap = captureSquare(m);
           if (cap == null) return true;
           const target = api.board.pieces[cap];
-          return !(target && target.color === api.me && target.type === "p");
+          if (!(target && target.color === api.me && target.type === "p")) return true;
+          // The exposed pawn may still be captured; every other pawn is shielded.
+          return cap === exposed;
         });
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
@@ -1021,19 +1037,23 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_pontoon_bridge",
       name: "Pontoon Bridge",
-      description: "One of your rooks, bishops, or queens may pass through up to two of your own pieces on its move, once.",
+      description: "One of your rooks, bishops, or queens may pass through up to two of your own pieces on its move, landing only on an empty square, once.",
       tier: 3,
       category: "movement",
       requires: ["r", "b", "q"],
       flavor: "Lay the planks, cross your own crowd.",
       fx: { motif: "empower", pieces: ["r", "b", "q"], self: true },
     },
+    // Overhaul balance pass: the single-use crossing may no longer end on a
+    // capture; the phased move can only settle on an empty square.
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me)) {
         const t = api.board.pieces[sq]!.type;
         const dirs = t === "r" ? ORTHO_DIRS : t === "b" ? DIAG_DIRS : t === "q" ? ALL_DIRS : null;
-        if (dirs) out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, 2));
+        if (dirs) {
+          out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, 2).filter((m) => !m.captured));
+        }
       }
       return out;
     }),
