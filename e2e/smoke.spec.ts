@@ -114,7 +114,7 @@ test("buff-mode bot game: moves, draft pick, card in dock", async ({ page }) => 
     page.getByRole("heading", { name: /choose a buff/i }),
   ).toBeVisible({ timeout: 75_000 });
 
-  // Pick the first card: one click selects it, the explicit "Confirm pick"
+  // Pick the first card: one click selects it, the explicit Confirm button
   // button locks it in (exempt from the double-click guard).
   const dealGrid = page.locator(".draft-deal-grid");
   await expect(dealGrid).toBeVisible();
@@ -126,7 +126,9 @@ test("buff-mode bot game: moves, draft pick, card in dock", async ({ page }) => 
   expect(cardName.length).toBeGreaterThan(0);
 
   await firstCard.click();
-  const confirm = page.getByRole("button", { name: "Confirm pick" });
+  // The commit button names the selected card ("Confirm Holy Hell"), so match
+  // the stable "Confirm ..." prefix rather than a literal label.
+  const confirm = page.getByRole("button", { name: /^confirm /i });
   await expect(confirm).toBeEnabled();
   await confirm.click();
 
