@@ -4,7 +4,8 @@ import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { playDraftChime, playDraftUrgent } from "@/lib/sounds";
+import { playDecisionStart, playDraftChime, playDraftUrgent } from "@/lib/sounds";
+import { pushUiHold } from "@/lib/uiInterrupts";
 import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
@@ -28,8 +29,17 @@ interface Props {
   rerollsLeft?: number;
   /** Discard the current offer and roll a fresh one at the same tiers. */
   onReroll?: () => void;
-  /** Lock-in deadline (ms epoch). The countdown renders while set. */
+  /** Decision deadline (ms epoch). The countdown renders while set. The
+   * parent must pass null until the cards are ready (see onCardsReady): while
+   * null, the timer slot shows a contextual preparation label ("Opening your
+   * draft", "Dealing the cards") instead of a running countdown, so no
+   * animation or loading state can ever eat into the decision window. */
   deadline?: number | null;
+  /** Fired once per offer version (offer index + reroll count) when both
+   * cards are fully dealt, painted, and interactive. The parent arms the
+   * decision countdown on this signal and never before. Re-fires after a
+   * reroll's fresh deal, so every reroll earns a complete new window. */
+  onCardsReady?: (offerKey: string) => void;
   /** Called once when the free lock-in window ends. The offer stays open:
    * the parent minimizes this overlay to the side and resumes the clock, so
    * further deliberation costs the player's own time. */
@@ -143,7 +153,17 @@ export function LockInCountdown({
  * plate): a ring that drains with the free window plus big tabular digits.
  * Separate from the card panel so time pressure reads at a glance without
  * crowding the cards. */
-function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?: () => void }) {
+function DraftTimerWindow({
+  deadline,
+  onExpire,
+  announce = false,
+}: {
+  deadline: number;
+  onExpire?: () => void;
+  /** One-shot reveal pulse: the countdown just appeared because the cards
+   * became ready. Motion-gated by the caller (off under reduced motion). */
+  announce?: boolean;
+}) {
   const total = 20_000;
   const leftMs = useCountdown(deadline, onExpire);
   const seconds = Math.ceil(leftMs / 1000);
@@ -158,8 +178,14 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
   // room for the outer hairline ring; the countdown math is untouched).
   const CIRC = 2 * Math.PI * 15.5;
   return (
-    <div role="timer" aria-label="Draft lock-in timer" className="pointer-events-none shrink-0">
-      <div className={"draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " + (urgent ? "draft-timer--urgent" : "")}>
+    <div role="timer" aria-label="Draft decision timer" className="pointer-events-none shrink-0">
+      <div
+        className={
+          "draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " +
+          (urgent ? "draft-timer--urgent " : "") +
+          (announce ? "draft-timer--announce" : "")
+        }
+      >
         <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
           {/* Outer hairline: a second, decorative gold ring framing the dial.
               Literal mirrors --accent-gold (SVG stroke attrs can't read a CSS var). */}
@@ -196,7 +222,7 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
           />
         </svg>
         <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">Lock in</div>
+          <div className="smallcaps text-[12px] text-parchment-400">Choose within</div>
           <div
             className={
               "mt-1 font-mono text-2xl font-bold tabular-nums " +
@@ -207,6 +233,48 @@ function DraftTimerWindow({ deadline, onExpire }: { deadline: number; onExpire?:
             <span className="ml-0.5 text-sm font-semibold text-parchment-400">s</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** What the timer slot shows BEFORE the decision window opens: a plain
+ * contextual label for the phase that is actually running (chest opening,
+ * cards dealing), never a ticking countdown. The player can see at a glance
+ * that their time has not started yet. */
+function DraftPrepChip({ label }: { label: string }) {
+  return (
+    <div role="status" aria-live="polite" className="pointer-events-none shrink-0">
+      <div className="draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2">
+        <span aria-hidden className="draft-prep-dot" />
+        <div className="leading-none">
+          <div className="smallcaps text-[12px] text-parchment-400">{label}</div>
+          <div className="mt-1 text-[12px] font-semibold text-parchment-200">
+            Your timer starts when the cards are ready
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Shown by the game surfaces BEFORE the draft overlay mounts, while the
+ * board finishes telling the previous move's story (card spectacles, capture
+ * effects). Non-blocking and purely informative: the draft opens the moment
+ * the effects settle, and the decision timer starts later still. */
+export function DraftResolvingChip() {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-14 z-40 flex justify-center px-3">
+      <div
+        role="status"
+        aria-live="polite"
+        className="plate plate-raised flex items-center gap-2.5 border-gold/40 px-4 py-2 shadow-plate"
+      >
+        <span aria-hidden className="draft-prep-dot" />
+        <span className="font-display text-sm font-semibold text-parchment-100">
+          Resolving effects
+        </span>
+        <span className="text-[11px] text-parchment-400">Your draft opens next</span>
       </div>
     </div>
   );
@@ -401,6 +469,7 @@ export function DraftOverlay({
   rerollsLeft = 0,
   onReroll,
   deadline,
+  onCardsReady,
   onExpire,
   minimized,
   cardNoun = "buff",
@@ -413,6 +482,11 @@ export function DraftOverlay({
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
+  // Untimed games (casual bot games with the clock off) pass clocks: null.
+  // An expired decision window there is NOT a punishment: the pending panel
+  // says "take your time" instead of warning about a clock that is not
+  // running.
+  const timed = !!clocks;
   // The OPENING pick (offer index 0, buff mode's game-start pair) wears its
   // own label everywhere the round number would show: "Opening pick" instead
   // of "Buff draft #0".
@@ -671,6 +745,69 @@ export function DraftOverlay({
     if (packStage === "open" && revealScope) markRevealPlayed(revealScope, dealKey);
   }, [packStage, dealKey, revealScope]);
 
+  // CARDS READY: the chest is open and the deal has settled. Wait two more
+  // animation frames so the card faces are actually painted and clickable,
+  // then report readiness to the parent. This is the event that lets the
+  // parent arm the decision countdown; there is no duration guessing anywhere
+  // in that chain. A reroll bumps dealKey, so the fresh deal re-reports and
+  // earns a complete new window. The report itself carries the offer version
+  // and the parent is idempotent per version, so an effect re-run (StrictMode
+  // remount, dev fast refresh) re-reporting is harmless while a NEVER-firing
+  // report would strand the draft in preparation (the parent's watchdog would
+  // then arm the countdown late).
+  const onCardsReadyRef = useRef(onCardsReady);
+  useEffect(() => {
+    onCardsReadyRef.current = onCardsReady;
+  });
+  useEffect(() => {
+    if (packStage !== "open" || !dealt) return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        onCardsReadyRef.current?.(dealKey);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+    };
+  }, [packStage, dealt, dealKey]);
+
+  // DECISION START MOMENT: the countdown appearing (deadline flipping from
+  // null to a timestamp while the full overlay is up) is the signal that the
+  // player's time is now running. Mark it with a soft two-note cue and a
+  // one-shot pulse on the timer chip, both stood down by the usual gates
+  // (sound prefs inside playDecisionStart; motion via reduceMotion).
+  const [timerAnnounce, setTimerAnnounce] = useState(false);
+  const prevDeadlineRef = useRef<number | null | undefined>(deadline);
+  useEffect(() => {
+    const prev = prevDeadlineRef.current;
+    prevDeadlineRef.current = deadline;
+    if (!(prev == null && deadline != null && !minimized)) return;
+    playDecisionStart();
+    if (reduceMotion) return;
+    // State writes live in timer callbacks, never the effect body.
+    let settle = 0;
+    const arm = window.setTimeout(() => {
+      setTimerAnnounce(true);
+      settle = window.setTimeout(() => setTimerAnnounce(false), 1500);
+    }, 0);
+    return () => {
+      window.clearTimeout(arm);
+      if (settle) window.clearTimeout(settle);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deadline, minimized]);
+
+  // While this draft is unresolved it holds the UI interrupt gate: nothing
+  // nonessential (performance prompts, achievement toasts, announcements) may
+  // present over the cards or the compact pending panel. Released on commit
+  // and on unmount; urgent connection failures bypass the gate by design.
+  useEffect(() => {
+    if (committed) return;
+    return pushUiHold();
+  }, [committed]);
+
   // Pack lifecycle: sealed -> (tap or auto) tearing -> open. The card deal and
   // its settle timer only start once the pack is open.
   useEffect(() => {
@@ -910,7 +1047,7 @@ export function DraftOverlay({
         <div role="alert" className="fixed inset-x-0 top-14 z-50 flex justify-center px-3">
           <div className="plate plate-raised border-2 border-oxblood-glow/70 bg-ink-900/95 px-4 py-2.5 text-center shadow-plate">
             <span className="block font-display text-sm font-bold text-oxblood-glow">
-              Free pick time ended. Your clock is now running.
+              {timed ? "Draft pending. Your game clock is running." : "Draft pending."}
             </span>
             <span className="block text-[11px] text-parchment-300">
               The draft reopens as soon as you finish this move.
@@ -937,7 +1074,11 @@ export function DraftOverlay({
               userPinnedRef.current = true;
               setTucked(false);
             }}
-            aria-label={`Resolve your ${noun} draft. Your clock is running.`}
+            aria-label={
+              timed
+                ? `Resolve your ${noun} draft. Your game clock is running.`
+                : `Resolve your ${noun} draft.`
+            }
             // Large, persistent, and impossible to miss: an unresolved draft
             // with the clock running must never hide behind a subtle chip.
             className="plate plate-raised flex min-h-[52px] items-center gap-2.5 rounded-[1px] border-2 border-gold/70 bg-gold/10 px-4 py-2.5 shadow-plate transition hover:border-gold hover:bg-gold/20"
@@ -947,8 +1088,13 @@ export function DraftOverlay({
               <span className="block font-display text-sm font-bold tracking-wide text-gold-leaf">
                 Resolve draft
               </span>
-              <span className="smallcaps block text-[11px] text-oxblood-glow">
-                Your clock is running
+              <span
+                className={
+                  "smallcaps block text-[11px] " +
+                  (timed ? "text-oxblood-glow" : "text-parchment-400")
+                }
+              >
+                {timed ? "Your game clock is running" : "Draft pending"}
               </span>
             </span>
             {clocks && (
@@ -1005,16 +1151,31 @@ export function DraftOverlay({
                   {fmtClock(clocks.mine)}
                 </span>
               )}
-              <span className="smallcaps text-[12px] text-oxblood-glow">On your clock</span>
+              <span
+                className={
+                  "smallcaps text-[12px] " + (timed ? "text-oxblood-glow" : "text-parchment-400")
+                }
+              >
+                {timed ? "On your clock" : "Draft pending"}
+              </span>
             </span>
           </div>
-          {/* Why the draft moved: the free window ended, so it collapsed here
-              rather than covering the board, and time now costs the player. */}
-          <p className="text-[12px] font-semibold leading-snug text-oxblood-glow">
-            Free pick time ended. Your clock is now running.
+          {/* Why the draft moved: the decision countdown ended, so it
+              collapsed here rather than covering the board. Nothing was
+              discarded: the cards, any selection, rerolls, and the bank
+              option all carry over untouched. */}
+          <p
+            className={
+              "text-[12px] font-semibold leading-snug " +
+              (timed ? "text-oxblood-glow" : "text-parchment-200")
+            }
+          >
+            {timed ? "Draft pending. Your game clock is running." : "Draft pending."}
           </p>
           <p className="mt-0.5 text-[11px] leading-snug text-parchment-400">
-            Your draft moved here; further thinking costs your own time.
+            {timed
+              ? "Your draft moved here; further thinking costs your own time."
+              : "No clock in this game; resolve it whenever you are ready."}
           </p>
           {takeBoth && (
             <p className="mt-1 text-[12px] font-semibold leading-snug text-gold-leaf">
@@ -1035,7 +1196,7 @@ export function DraftOverlay({
               still={!!reduceMotion}
             />
           ) : (
-          <div className="mt-2 space-y-1.5">
+          <div data-draft-compact-cards className="mt-2 space-y-1.5">
             {offer.cards.map((card, i) => {
               const def = BUFF_BY_ID[card.id];
               if (!def) return null;
@@ -1208,9 +1369,23 @@ export function DraftOverlay({
           (recordingMode ? " draft-col--rec" : "")
         }
       >
-        {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
+        {deadline != null ? (
+          <DraftTimerWindow deadline={deadline} onExpire={handleExpire} announce={timerAnnounce} />
+        ) : (
+          /* Preparation phases show WHAT is happening instead of a countdown:
+             the decision timer only appears once the cards are readable. */
+          <DraftPrepChip
+            label={
+              packStage !== "open"
+                ? "Opening your draft"
+                : !dealt
+                ? "Dealing the cards"
+                : "Preparing your draft"
+            }
+          />
+        )}
         {/* Both game clocks stay visible while drafting, with the clock rule
-            stated plainly: the free window is paused time; overrunning it
+            stated plainly: choosing is paused time; overrunning the countdown
             puts further deliberation on the player's own clock. */}
         {clocks && (
           <div className="pointer-events-none flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-parchment-300">
@@ -1222,7 +1397,7 @@ export function DraftOverlay({
               Opponent <span className="font-bold text-parchment-100">{fmtClock(clocks.theirs)}</span>
             </span>
             <span className="smallcaps text-[11px] text-parchment-400">
-              Clocks paused during the free window; after it, drafting costs your clock
+              Clocks are paused while you choose; after the countdown ends, drafting costs your clock
             </span>
           </div>
         )}

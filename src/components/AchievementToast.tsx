@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Trophy, X } from "lucide-react";
 import { fetchMe } from "@/lib/authClient";
 import { RARITY_THEME } from "@/lib/achievementTheme";
 import type { AchievementRarity } from "@/lib/achievements";
+import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
 
 // Desktop-only unlock toast: when an achievement lands (they are awarded
 // server-side after a game archives, silently), a small card slides into the
@@ -99,10 +100,39 @@ export function AchievementToast() {
     };
   }, []);
 
-  const current = queue[0] ?? null;
+  // Presentation goes through the shared UI interrupt queue: an unlock that
+  // lands mid-draft (games archive and award while the next one is already
+  // running) waits until the draft resolves instead of covering the corner
+  // the compact draft panel lives in. One interruption at a time, site-wide.
+  const [current, setCurrent] = useState<Unlock | null>(null);
+  const releaseRef = useRef<(() => void) | null>(null);
+  const head = queue[0] ?? null;
+  useEffect(() => {
+    if (disabled || current || !head) return;
+    const cancel = requestUiSlot(UI_PRIORITY.achievement, (release) => {
+      releaseRef.current = release;
+      setCurrent(head);
+      setQueue((q) => q.slice(1));
+    });
+    return cancel;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled, current, head?.id]);
+  const dismiss = () => {
+    setCurrent(null);
+    releaseRef.current?.();
+    releaseRef.current = null;
+  };
+  // Release the slot if the whole component unmounts while presenting.
+  useEffect(
+    () => () => {
+      releaseRef.current?.();
+      releaseRef.current = null;
+    },
+    [],
+  );
   useEffect(() => {
     if (!current) return;
-    const t = window.setTimeout(() => setQueue((q) => q.slice(1)), SHOW_MS);
+    const t = window.setTimeout(dismiss, SHOW_MS);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
@@ -123,7 +153,7 @@ export function AchievementToast() {
     >
       <button
         type="button"
-        onClick={() => setQueue((q) => q.slice(1))}
+        onClick={dismiss}
         className="plate animate-rise block w-full border p-3 text-left shadow-plate"
         style={{ borderColor: theme.border }}
         title="Dismiss"
@@ -163,6 +193,7 @@ export function AchievementToast() {
             setAchievementToastsDisabled(true);
             setDisabled(true);
             setQueue([]);
+            dismiss();
           }}
           className="smallcaps inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-parchment-100"
         >

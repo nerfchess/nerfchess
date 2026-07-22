@@ -790,6 +790,14 @@ const chessDiffClockMs = 60 * 1000;
 // The server auto-resolves overdue picks so a stalling player cannot freeze
 // the game.
 const draftLockInMs = 20 * 1000;
+// Presentation budget granted ON TOP of the decision window when a buff offer
+// rolls: the client plays the chest opening and the card deal first and only
+// reveals the countdown once both cards are dealt and interactive, so the
+// player's decision seconds must not start until then. Clocks are paused for
+// the whole window either way; this only sizes the shared deadline so the
+// full draftLockInMs remains once a normally-paced client shows the cards.
+// A client that finishes preparing early simply sees a few extra seconds.
+const draftPrepMs = 3500;
 // Grace after a lock-in deadline before the server force-resolves it. A pick
 // the player clicked right at the deadline arrives a network hop later; without
 // this the auto-resolve fires first (defaulting the opening nerf pick to option
@@ -2883,7 +2891,7 @@ export class GameServer extends DurableObject<Env> {
     const game = await this.gameForPlay(match);
     if (!game?.buffs) return;
     if (!game.buffs.players.w.offer && !game.buffs.players.b.offer) return;
-    match.dtDeadline = now + draftLockInMs;
+    match.dtDeadline = now + draftPrepMs + draftLockInMs;
     // Both clocks pause for the shared free window; enforceDraftDeadlines
     // resumes them if the window expires with an offer still open.
     match.runningSince = null;
@@ -3528,7 +3536,11 @@ export class GameServer extends DurableObject<Env> {
       (color) => nextGame.buffs?.players[color as Color].offer && !offersBefore?.[color as Color],
     );
     if (match.draft) {
-      if (rolledNow && !nextGame.result) match.dtDeadline = now + draftLockInMs;
+      // The window is presentation budget + the full decision time: clients
+      // reveal the countdown only once the cards are dealt and interactive,
+      // so the player still receives the complete decision window after the
+      // chest and deal animations.
+      if (rolledNow && !nextGame.result) match.dtDeadline = now + draftPrepMs + draftLockInMs;
       else if (!offersPending) match.dtDeadline = null;
       // Keep the charged-seat mirror current: past the free window the seat
       // still holding its offer pays (see chargedColor), never the waiter.
@@ -6770,6 +6782,10 @@ export class GameServer extends DurableObject<Env> {
       ...(bs.chainKingGuard ? { chainKingGuard: bs.chainKingGuard } : {}),
       ...(bs.historyDiverged ? { historyDiverged: true } : {}),
       players: { w: playerState("w"), b: playerState("b") },
+      // The live shared lock-in deadline rides every dtState frame, so a
+      // reroll's restarted window (and any other server-side deadline change)
+      // reaches clients without needing its own frame type.
+      ...(match.dtDeadline ? { deadline: match.dtDeadline } : {}),
     };
   }
 
@@ -7054,9 +7070,19 @@ export class GameServer extends DurableObject<Env> {
       ...(match.draftActions ?? []),
       { ply: match.moves.length, color, a: "reroll" },
     ];
+    // A reroll INSIDE the shared decision window restarts the presentation
+    // (the fresh cards re-deal), so it also restarts the window: prep budget
+    // plus the full decision time from now, with clocks still paused. The
+    // fresh deadline reaches both clients on the dtState frames below. A
+    // reroll AFTER the window expired changes nothing: that draft already
+    // runs on the straggler's own clock.
+    const now = Date.now();
+    if (match.dtDeadline && now < match.dtDeadline) {
+      match.dtDeadline = now + draftPrepMs + draftLockInMs;
+    }
     // A house seat can hold the offer; a reroll leaves whose-turn-it-is
     // untouched, so just refresh any pending house action off the new state.
-    this.armBotAction(match, game, Date.now());
+    this.armBotAction(match, game, now);
     await this.saveMatch(match);
     this.sendDraftState(match, game);
     this.sendWatcherDraftState(match, game);

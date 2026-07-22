@@ -27,11 +27,45 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
   const queueRef = useRef<string[]>([]);
   const busyUntilRef = useRef(0);
   const timerRef = useRef<number | null>(null);
-
-  const playNow = useCallback((id: string) => {
-    busyUntilRef.current = Date.now() + SPACING_MS;
-    setSignatureCard({ id, key: ++keyRef.current });
+  // Live "a spectacle is playing (or queued to play)" signal for the draft
+  // sequencing layer: the draft overlay's own entrance is deferred while the
+  // board is still telling the previous move's story, so the card animations
+  // always finish BEFORE the draft presentation begins. Held (gated) plays do
+  // not count as busy: they wait for the overlay by design.
+  const [busy, setBusy] = useState(false);
+  const busyTimerRef = useRef<number | null>(null);
+  // Self-rescheduling through a ref (a useCallback cannot refer to itself
+  // before its own declaration), mirroring the drainRef pattern below.
+  const scheduleBusyClearRef = useRef<() => void>(() => {});
+  const scheduleBusyClear = useCallback(() => {
+    if (busyTimerRef.current != null) window.clearTimeout(busyTimerRef.current);
+    const wait = Math.max(0, busyUntilRef.current - Date.now()) + 30;
+    busyTimerRef.current = window.setTimeout(() => {
+      busyTimerRef.current = null;
+      if (Date.now() >= busyUntilRef.current && queueRef.current.length === 0) {
+        setBusy(false);
+      } else if (!gateRef?.current) {
+        scheduleBusyClearRef.current();
+      } else {
+        // Gated leftovers replay under the overlay; they no longer block it.
+        setBusy(false);
+      }
+    }, wait);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    scheduleBusyClearRef.current = scheduleBusyClear;
+  }, [scheduleBusyClear]);
+
+  const playNow = useCallback(
+    (id: string) => {
+      busyUntilRef.current = Date.now() + SPACING_MS;
+      setSignatureCard({ id, key: ++keyRef.current });
+      setBusy(true);
+      scheduleBusyClear();
+    },
+    [scheduleBusyClear],
+  );
 
   // The stepper self-reschedules through a ref (a useCallback cannot refer to
   // itself before its own declaration). Written from an effect, never during
@@ -78,9 +112,10 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
   useEffect(
     () => () => {
       if (timerRef.current != null) window.clearTimeout(timerRef.current);
+      if (busyTimerRef.current != null) window.clearTimeout(busyTimerRef.current);
     },
     [],
   );
 
-  return { signatureCard, fire, notifyGateOpen };
+  return { signatureCard, fire, notifyGateOpen, busy };
 }

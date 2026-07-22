@@ -55,10 +55,13 @@ import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { DraftNotice } from "@/components/DraftNotice";
 import {
   DraftOverlay,
+  DraftResolvingChip,
   DraftRevealBanner,
   LockInCountdown,
   type DraftRevealSide,
 } from "@/components/DraftOverlay";
+import { useDraftSequence } from "@/lib/useDraftSequence";
+import { pushUiHold } from "@/lib/uiInterrupts";
 import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move, Square } from "@/engine/types";
@@ -408,6 +411,12 @@ function GamePage() {
             saved.game.black.nerf.kind === "custom" ? saved.game.black.nerf.spec : null;
           lastSeenMoveCount.current = restored.board.history.length;
           sawResult.current = !!restored.result;
+          // A draft whose decision window had already expired stays expired
+          // across a refresh (the compact pending panel returns, the clock
+          // keeps charging in timed games). A draft still inside its window
+          // restarts preparation and receives a complete fresh window: the
+          // sequence machine re-arms the deadline once the cards re-deal.
+          setOfferOnClockIndex(saved.draftOnClockIndex ?? null);
           return;
         }
       }
@@ -532,15 +541,39 @@ function GamePage() {
   // HOLD-AND-REPLAY + serialization live in the shared queue: plays that land
   // while my full-screen draft overlay covers the board (or while another
   // spectacle is mid-play) queue and step out one by one.
-  const draftCovered =
-    !!game?.buffs?.players[myColor]?.offer &&
-    offerOnClockIndex !== game.buffs.players[myColor].offer!.index &&
-    !game?.result;
   const draftCoveredRef = useRef(false);
+  const { signatureCard, fire: fireSigQueued, notifyGateOpen, busy: sigBusy } = useSignatureQueue(draftCoveredRef);
+  // --- Draft lifecycle sequencing -----------------------------------------
+  // The state machine (useDraftSequence) owns the order of the draft moments:
+  // board spectacles finish FIRST (sigBusy from the signature queue), only
+  // then does the overlay mount (chest + deal), and only once the overlay
+  // reports both cards dealt and interactive is the 20s decision window
+  // armed. The countdown can therefore never tick while anything animates.
+  const liveOffer = !game?.result ? game?.buffs?.players[myColor]?.offer ?? null : null;
+  const liveOfferKey = liveOffer ? `${liveOffer.index}:${liveOffer.rerolled ?? 0}` : null;
+  const liveOfferOnClock = !!liveOffer && offerOnClockIndex === liveOffer.index;
+  const draftSeq = useDraftSequence({
+    offerKey: liveOfferKey,
+    animationsBusy: sigBusy,
+    onClock: liveOfferOnClock,
+    onDecisionStart: (deadline) => setOfferDeadline(deadline),
+    onPrepStart: () => setOfferDeadline(null),
+  });
+  const draftCovered = !!liveOffer && !liveOfferOnClock && draftSeq.overlayVisible;
   useEffect(() => {
     draftCoveredRef.current = draftCovered;
   });
-  const { signatureCard, fire: fireSigQueued, notifyGateOpen } = useSignatureQueue(draftCoveredRef);
+  // An active draft (held, preparing, or deciding) gates every nonessential
+  // interruption (performance prompts, achievement toasts): they queue and
+  // present after the draft resolves. Board spectacles hold the gate too, so
+  // a recommendation can never land mid-animation either.
+  const draftActive = liveOfferKey != null;
+  useEffect(() => {
+    if (draftActive) return pushUiHold();
+  }, [draftActive]);
+  useEffect(() => {
+    if (sigBusy) return pushUiHold();
+  }, [sigBusy]);
   // Signature plays keyed by the ply they landed on (history length at fire
   // time), so the clip renderer can splash the card name over that segment.
   const sigPlyRef = useRef<Map<number, string>>(new Map());
@@ -639,17 +672,20 @@ function GamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, myColor]);
 
-  // Lock-in window and clock pause for my buff offers: a fresh offer arms
-  // the 15s deadline and freezes the clock; resolving it shifts the turn
-  // start forward by the paused span so the pick cost no time. Once the free
-  // window has expired for an offer (offerOnClockIndex), the clock stays
-  // live: the panel sits at the side and thinking runs on the player's time.
+  // Clock pause for my buff offers: the clock freezes the INSTANT an offer
+  // opens (before any chest or deal animation), and resolving it shifts the
+  // turn start forward by the paused span so the pick cost no time. The
+  // decision deadline itself is NOT armed here: the draft sequence machine
+  // arms it (onDecisionStart above) only once every animation has finished
+  // and both cards are dealt and interactive, so the player always gets the
+  // complete 20 seconds. Once the window has expired for an offer
+  // (offerOnClockIndex), the clock stays live: the panel sits at the side
+  // and thinking runs on the player's time.
   useEffect(() => {
     const offer = game?.buffs?.players[myColor].offer ?? null;
     if (offer && offerPausedAt == null && offerOnClockIndex !== offer.index) {
       queueMicrotask(() => {
         setOfferPausedAt(Date.now());
-        setOfferDeadline(Date.now() + 20_000);
       });
     } else if (!offer && offerPausedAt != null) {
       turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
@@ -672,6 +708,7 @@ function GamePage() {
         premoves,
         whiteCustomSpec: whiteCustomSpec.current,
         blackCustomSpec: blackCustomSpec.current,
+        draftOnClockIndex: offerOnClockIndex,
       });
     persist();
     if (!clockEnabled || game.result) return;
@@ -684,7 +721,7 @@ function GamePage() {
       window.removeEventListener("pagehide", persist);
       window.clearInterval(id);
     };
-  }, [game, querySignature, myColor, premoves, remainingClock, clockEnabled]);
+  }, [game, querySignature, myColor, premoves, remainingClock, clockEnabled, offerOnClockIndex]);
 
   // Record the live board at each ply so history review can reconstruct
   // positions even after a board-mutating buff diverged from move history.
@@ -2242,7 +2279,11 @@ function GamePage() {
         />
       )}
 
-      {myOffer && !game.result && (
+      {/* Board spectacles still playing when the draft arrived: a small
+          status chip says so while the overlay waits its turn. The machine
+          caps this hold, so a stuck animation can never block the draft. */}
+      {myOffer && !game.result && !draftSeq.overlayVisible && <DraftResolvingChip />}
+      {myOffer && !game.result && draftSeq.overlayVisible && (
         <DraftOverlay
           offer={myOffer}
           // Local games have no server id; the start stamp survives the AI
@@ -2253,6 +2294,7 @@ function GamePage() {
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}
+          onCardsReady={draftSeq.reportCardsReady}
           minimized={offerOnClockIndex === myOffer.index}
           cardNoun={draftCardNoun(game.buffs?.mode)}
           onExpire={() => {
@@ -2283,11 +2325,13 @@ function GamePage() {
             // dress that resolution as the card's signature.
             const inst = gained.find((b) => BUFF_BY_ID[b.id]?.kind === "instant");
             if (inst) fireSignature(inst.id);
+            draftSeq.noteConfirmed();
             setGame({ ...game });
           }}
           onBank={() => {
             bankDraft(game, myColor);
             recordMyDraftResolution({ banked: true, cards: [] });
+            draftSeq.noteConfirmed();
             setGame({ ...game });
           }}
           rerollsLeft={bsMine?.rerollsLeft ?? 0}

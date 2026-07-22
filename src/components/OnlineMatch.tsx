@@ -18,10 +18,13 @@ import { DraftNotice } from "@/components/DraftNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
 import {
   DraftOverlay,
+  DraftResolvingChip,
   DraftRevealBanner,
   LockInCountdown,
   type DraftRevealSide,
 } from "@/components/DraftOverlay";
+import { useDraftSequence } from "@/lib/useDraftSequence";
+import { pushUiHold } from "@/lib/uiInterrupts";
 import { OpponentDraftViewer } from "@/components/OpponentDraftViewer";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
@@ -458,7 +461,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // the right trade. The queue also serializes SIMULTANEOUS plays (several
   // passives triggered by one move) so each is seen instead of only the last.
   const draftCoveredRef = useRef(false);
-  const { signatureCard, fire: fireSigQueued, notifyGateOpen } = useSignatureQueue(draftCoveredRef);
+  const { signatureCard, fire: fireSigQueued, notifyGateOpen, busy: sigBusy } = useSignatureQueue(draftCoveredRef);
   const fireSignature = (id: string) => {
     // Every known card fires: bespoke signatures get their choreography and
     // every other card gets the Board's category cast spectacle.
@@ -618,11 +621,41 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // the board comes back, and the clock runs — deliberating past the window
   // costs the straggler's own time (the server resumes the clock too).
   const [draftGraceOver, setDraftGraceOver] = useState(false);
+  // --- Draft lifecycle sequencing -----------------------------------------
+  // The state machine (useDraftSequence) orders the draft moments: board
+  // spectacles finish first (sigBusy), only then does the overlay mount
+  // (chest + deal), and only once the overlay reports both cards dealt and
+  // interactive does the countdown REVEAL. The server's shared deadline
+  // already includes the presentation budget (draftPrepMs), so the full
+  // decision window remains when the countdown appears.
+  const liveOffer =
+    !game?.result && !draftSubmitted ? game?.buffs?.players[myColor]?.offer ?? null : null;
+  const liveOfferKey = liveOffer ? `${liveOffer.index}:${liveOffer.rerolled ?? 0}` : null;
+  // The countdown stays hidden until the cards are ready (or the window has
+  // already expired, where the compact panel takes over).
+  const [countdownRevealed, setCountdownRevealed] = useState(false);
+  const draftSeq = useDraftSequence({
+    offerKey: liveOfferKey,
+    animationsBusy: sigBusy,
+    onClock: draftGraceOver,
+    onDecisionStart: () => setCountdownRevealed(true),
+    onPrepStart: () => setCountdownRevealed(false),
+  });
+  // An active draft (held, preparing, or deciding) plus any playing spectacle
+  // gate every nonessential interruption (performance prompts, achievement
+  // toasts): they queue and present after the draft resolves.
+  const draftActive = liveOfferKey != null;
+  useEffect(() => {
+    if (draftActive) return pushUiHold();
+  }, [draftActive]);
+  useEffect(() => {
+    if (sigBusy) return pushUiHold();
+  }, [sigBusy]);
   // The board is covered while my offer renders full-screen (the grace-over
-  // minimized panel leaves the board visible). Kept in a ref for
-  // fireSignature and mirrored to state-shaped deps for the flush effect.
-  const draftCovered =
-    !!game?.buffs?.players[myColor]?.offer && !draftGraceOver && !game?.result;
+  // minimized panel leaves the board visible; a held overlay waiting out the
+  // spectacles leaves it visible too). Kept in a ref for fireSignature and
+  // mirrored to state-shaped deps for the flush effect.
+  const draftCovered = !!liveOffer && !draftGraceOver && draftSeq.overlayVisible;
   useEffect(() => {
     draftCoveredRef.current = draftCovered;
   });
@@ -1178,6 +1211,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
       } else if (e.type === "draft-state") {
         const g = gameRef.current;
+        // The server's live lock-in deadline rides every dtState frame: a
+        // reroll restarts the shared window (fresh prep + full decision time)
+        // and this is how the fresh deadline reaches both clients.
+        if (typeof e.state.deadline === "number") setDraftDeadline(e.state.deadline);
         if (!g?.buffs) return;
         mergeDraftState(g.buffs, e.state, myColor);
         // Server-authoritative reroll counts (not carried by mergeDraftState).
@@ -3440,7 +3477,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         />
       )}
 
-      {isDraft && myOffer && !draftSubmitted && !game.result && (
+      {/* Board spectacles still playing when the draft arrived: a small
+          status chip says so while the overlay waits its turn. The sequence
+          machine caps this hold, so nothing can block the draft. */}
+      {isDraft && myOffer && !draftSubmitted && !game.result && !draftSeq.overlayVisible && (
+        <DraftResolvingChip />
+      )}
+      {isDraft && myOffer && !draftSubmitted && !game.result && draftSeq.overlayVisible && (
         <DraftOverlay
           key={`draft-${replayEpoch}-${myOffer.index}`}
           offer={myOffer}
@@ -3451,7 +3494,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           revealScope={start.id}
           takeBoth={(bsMine?.flags.takeBoth ?? 0) > 0}
           bankedBonus={!!myOffer.banked}
-          deadline={draftDeadline}
+          // The countdown is withheld until the cards are ready: the server's
+          // deadline includes the presentation budget, so the full decision
+          // window remains when it appears. An expired window (grace over)
+          // shows regardless: the compact panel handles that state.
+          deadline={countdownRevealed || draftGraceOver ? draftDeadline : null}
+          onCardsReady={draftSeq.reportCardsReady}
           minimized={draftGraceOver}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
@@ -3472,12 +3520,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           recordingMode={recordingLayout}
           onPick={(i) => {
             if (session.sendDraftPick(i)) {
+              draftSeq.noteConfirmed();
               setDraftSubmitted(true);
               setMyDraftResolved(true);
             } else setError("Disconnected from the game server.");
           }}
           onBank={() => {
             if (session.sendDraftBank()) {
+              draftSeq.noteConfirmed();
               setDraftSubmitted(true);
               setMyDraftResolved(true);
             } else setError("Disconnected from the game server.");

@@ -11,6 +11,7 @@ import {
   SETTINGS_CHANGED_EVENT,
 } from "@/lib/settings";
 import { configureSoundPrefs, preloadSounds, setUiSounds, setVolume } from "@/lib/sounds";
+import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
 
 export function SettingsBootstrap() {
   const [fps, setFps] = useState(false);
@@ -82,9 +83,16 @@ const LAG_NOTICE_KEY = "dc:lag-notice"; // "dismissed" | "applied"
 
 /** Watches real frame pacing and, on sustained jank, offers performance mode
  *  in a small popup — animations are never silently degraded or disabled.
- *  One-shot per device: any choice (or already-reduced settings) disarms it. */
+ *  One-shot per device: any choice (or already-reduced settings) disarms it.
+ *
+ *  PRESENTATION IS GATED: the detection runs silently in the background, but
+ *  the popup itself goes through the UI interrupt queue (uiInterrupts). While
+ *  a draft is active (or any other protected moment holds interrupts), the
+ *  recommendation waits; it can never cover the cards, eat decision time, or
+ *  burn game-clock time. It presents once the table is clear. */
 function LagWatch() {
   const [show, setShow] = useState(false);
+  const releaseRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     try {
@@ -95,6 +103,7 @@ function LagWatch() {
     if (s.perfMode || s.reducedMotion || s.animationSpeed !== "normal") return;
 
     let raf = 0;
+    let cancelSlot: (() => void) | null = null;
     let last = performance.now();
     let windowStart = last;
     let slowMs = 0;
@@ -121,15 +130,25 @@ function LagWatch() {
           windowStart = now;
           slowMs = 0;
           if (badWindows >= LAG_BAD_WINDOWS) {
-            setShow(true);
-            return; // stop sampling once the notice is up
+            // Detected. Queue the recommendation; it shows only when no draft
+            // (or other protected surface) is active, one interrupt at a time.
+            cancelSlot = requestUiSlot(UI_PRIORITY.performance, (release) => {
+              releaseRef.current = release;
+              setShow(true);
+            });
+            return; // stop sampling once the notice is queued
           }
         }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      cancelSlot?.();
+      releaseRef.current?.();
+      releaseRef.current = null;
+    };
   }, []);
 
   if (!show) return null;
@@ -138,6 +157,8 @@ function LagWatch() {
       window.localStorage.setItem(LAG_NOTICE_KEY, key);
     } catch {}
     setShow(false);
+    releaseRef.current?.();
+    releaseRef.current = null;
   };
   return (
     <div
