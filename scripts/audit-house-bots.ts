@@ -16,8 +16,20 @@ import { dirname, join } from "node:path";
 import {
   HOUSE_ROSTER,
   HOUSE_AVATAR_IDS,
+  HOUSE_COUNT_MAX,
+  HOUSE_ONLINE_COUNT,
+  HOUSE_RATING_UPLIFT_MIN,
+  HOUSE_RATING_UPLIFT_MAX,
+  EXPANSION_SIZE,
+  EXPANSION_BIO_COUNT,
+  EXPANSION_BIO_POOL_SIZE,
   houseIdentity,
+  houseRatingUplift,
   houseSeedRating,
+  houseSeedRatingForMode,
+  houseStyle,
+  isExpansionPersona,
+  personaBio,
   ogClubMembers,
   OG_CLUB_NAME,
 } from "../src/lib/server/bots";
@@ -54,7 +66,13 @@ for (const p of HOUSE_ROSTER) {
   names.add(p.name.toLowerCase());
   note(typeof p.skill === "number" && p.skill > 0, `bad skill: ${p.name}`);
   note(houseSeedRating(p) >= 100, `bad seed rating: ${p.name}`);
-  note(!!p.location && p.location.length > 0, `missing location: ${p.name}`);
+  // Legacy personas carry a /mod-editor location label; the 2026-07 expansion
+  // wave deliberately carries NONE (no fictional hometowns for labeled bots).
+  if (isExpansionPersona(p.name)) {
+    note(p.location === "", `expansion persona has a fictional location: ${p.name}`);
+  } else {
+    note(!!p.location && p.location.length > 0, `missing location: ${p.name}`);
+  }
   note(!!p.avatar, `missing avatar: ${p.name}`);
   // Avatar must be a house-space id (a house pfp or a flower/other house id).
   const known = isHousePfp(p.avatar) || HOUSE_AVATAR_IDS.includes(p.avatar);
@@ -81,6 +99,76 @@ for (const name of HOUSE_PFP_NAMES) {
     problems.push(`catalog pfp has no file: ${name}.svg`);
   }
 }
+
+// --- 2026-07 expansion wave invariants --------------------------------------
+const expansion = HOUSE_ROSTER.filter((p) => isExpansionPersona(p.name));
+note(EXPANSION_SIZE === 300, `expansion size must be exactly 300, got ${EXPANSION_SIZE}`);
+note(
+  expansion.length === EXPANSION_SIZE,
+  `expansion roster slice (${expansion.length}) != EXPANSION_SIZE (${EXPANSION_SIZE})`,
+);
+note(
+  EXPANSION_BIO_COUNT === 150,
+  `exactly 150 expansion bots must carry a bio, got ${EXPANSION_BIO_COUNT}`,
+);
+note(
+  EXPANSION_BIO_POOL_SIZE >= 150,
+  `expansion bio pool must hold at least 150 unique lines, got ${EXPANSION_BIO_POOL_SIZE}`,
+);
+const expansionBios = expansion.map((p) => personaBio(p)).filter((b): b is string => !!b);
+note(
+  expansionBios.length === 150,
+  `expansion personas with a bio: ${expansionBios.length}, expected exactly 150`,
+);
+note(
+  new Set(expansionBios).size === expansionBios.length,
+  "expansion bios must all be distinct (no repeated templates)",
+);
+for (const bio of expansionBios) {
+  note(!/—|–/.test(bio), `bio contains an em/en dash: ${bio}`);
+  note(!/[\u{1F000}-\u{1FAFF}☀-➿]/u.test(bio), `bio contains an emoji: ${bio}`);
+  note(bio.length <= 70, `bio too long (${bio.length}): ${bio}`);
+}
+
+// Legacy uplift: every legacy persona's deterministic uplift is in [300, 400]
+// and stable across calls (the "no re-randomizing" guarantee).
+for (const p of HOUSE_ROSTER) {
+  if (isExpansionPersona(p.name)) continue;
+  const uplift = houseRatingUplift(p.name);
+  note(
+    uplift >= HOUSE_RATING_UPLIFT_MIN && uplift <= HOUSE_RATING_UPLIFT_MAX,
+    `uplift out of [300,400] for ${p.name}: ${uplift}`,
+  );
+  note(uplift === houseRatingUplift(p.name), `uplift not deterministic for ${p.name}`);
+}
+
+// Seed ratings and styles are deterministic (same inputs, same outputs).
+for (const p of HOUSE_ROSTER.slice(0, 25)) {
+  note(houseSeedRating(p) === houseSeedRating(p), `seed rating unstable: ${p.name}`);
+  note(
+    houseSeedRatingForMode(p, "buff") === houseSeedRatingForMode(p, "buff"),
+    `mode rating unstable: ${p.name}`,
+  );
+  const s1 = houseStyle(p);
+  const s2 = houseStyle(p);
+  note(JSON.stringify(s1) === JSON.stringify(s2), `style unstable: ${p.name}`);
+  note(s1.tempo >= 0.75 && s1.tempo <= 1.35, `tempo out of range: ${p.name}`);
+  note(
+    s1.activationChance >= 0.25 && s1.activationChance <= 0.55,
+    `activation chance out of range: ${p.name}`,
+  );
+}
+
+// Availability: never everyone online at once — both windows must sit clearly
+// below the roster size, and active stays a subset of online.
+note(
+  HOUSE_ONLINE_COUNT < HOUSE_ROSTER.length,
+  `online window (${HOUSE_ONLINE_COUNT}) must be below the roster size (${HOUSE_ROSTER.length})`,
+);
+note(
+  HOUSE_COUNT_MAX <= HOUSE_ONLINE_COUNT,
+  `active window max (${HOUSE_COUNT_MAX}) must not exceed the online window (${HOUSE_ONLINE_COUNT})`,
+);
 
 // --- OG club membership (informational + sanity) ---------------------------
 const og = ogClubMembers();

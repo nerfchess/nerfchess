@@ -17,9 +17,12 @@ interface Props {
   // rows (watching or reviewing a finished game); false in the viewer's OWN
   // active game, where a click must not leave the board mid-play.
   linkProfile?: boolean;
+  // Live socket state for this seat, when the caller knows it: a small dot
+  // beside the name (green = connected, red = disconnected). Omitted = no dot.
+  connected?: boolean | null;
 }
 
-export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "", linkProfile = true }: Props) {
+export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "", linkProfile = true, connected = null }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
@@ -68,6 +71,16 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
               )}
               {typeof elo === "number" && (
                 <span className="text-parchment-400"> ({Math.round(elo)})</span>
+              )}
+              {connected !== null && (
+                <span
+                  aria-label={connected ? "Connected" : "Disconnected"}
+                  title={connected ? "Connected" : "Disconnected"}
+                  className={
+                    "ml-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full align-middle " +
+                    (connected ? "bg-[rgb(var(--pos-rgb))]" : "bg-oxblood-glow")
+                  }
+                />
               )}
             </div>
           </div>

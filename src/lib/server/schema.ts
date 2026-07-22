@@ -53,6 +53,11 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (user_id, category)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_user_ratings_leaderboard ON user_ratings(category, rating DESC)`,
+  // 2026-07 bot expansion (migrations/0039): the ~510-account roster makes the
+  // per-user active-bucket subquery and the leaderboard tiebreak worth their
+  // own covering indexes.
+  `CREATE INDEX IF NOT EXISTS idx_user_ratings_user_games ON user_ratings(user_id, games DESC, rating DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_ratings_games ON user_ratings(category, rating DESC, games DESC)`,
   `CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),

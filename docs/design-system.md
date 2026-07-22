@@ -80,7 +80,7 @@ Rules:
 
 - Buttons: `.btn-leaf` primary (one per region), `.btn-ghost` secondary, plain link tertiary, `.btn-cursed` destructive (Resign/Delete/Leave/Decline/Remove), `.btn-gold` reserved for reward/prestige moments, `.btn-glass` for emotional-peak commits. Loading = `.btn-busy` + a `.rune-loader` in the label. Min touch target 44x44 mobile, 36px desktop. All buttons `.press`. Bespoke one-off button styles are retired: every new button picks from this set.
 - Tabs: underline style (current), 13px+ label, active = parchment-50 + accent underline, inactive = parchment-300. Same component on every route.
-- Chips/badges: 12px, `.tier-bg-*` for tiers, mode chips for Buff/Nerf, `LIVE` badge = pos dot + label, `HOUSE BOT` badge = parchment-400 outline chip. House bots are labeled every single place a name renders.
+- Chips/badges: 12px, `.tier-bg-*` for tiers, mode chips for Buff/Nerf, `LIVE` badge = pos dot + label.
 - Lists and tables: row hover `--surface-hover`, dividers `--edge`, never zebra. Rank/rating right-aligned tabular.
 - Player identity unit: avatar (or piece glyph) + name + rating (+ provisional "?") + badges. One shared component, used by lobby rows, TV, game HUD, leaderboard, profiles, community.
 - Forms: inputs on `ink-900/60`, `--edge` border, accent focus ring `focus-visible:outline-2 outline-offset-2`.
@@ -110,10 +110,10 @@ Rules:
 
 ## 11. Voice
 
-- Sentence case everywhere, including buttons ("Find a match", not "FIND A MATCH"). Allcaps survive only in `.eyebrow` section labels and the LIVE/HOUSE BOT badges.
+- Sentence case everywhere, including buttons ("Find a match", not "FIND A MATCH"). Allcaps survive only in `.eyebrow` section labels and the LIVE badge.
 - Copy is confident and concrete: "A draft lands every 5 moves", never marketing fluff.
 - Numbers are shown, not narrated: "312 online", not "lots of players online".
 
 ## 12. Route-level contracts
 
-Every route redesign must produce: desktop + mobile screenshots, all five system states implemented, zero new colors, zero sub-12px text, House Bot labeling, linked player names, and a pass through this checklist recorded in the PR description.
+Every route redesign must produce: desktop + mobile screenshots, all five system states implemented, zero new colors, zero sub-12px text, linked player names, and a pass through this checklist recorded in the PR description.

@@ -190,8 +190,13 @@ export function createVfxEngine(
   /* ---------------- particle plumbing ---------------- */
 
   function push(p: Particle): void {
-    if (particles.length >= MAX_PARTICLES) {
-      particles.splice(0, particles.length - MAX_PARTICLES + 1); // drop oldest
+    // Two ceilings: the engine-wide MAX_PARTICLES safety net, and the harder
+    // per-play cap the effects dial sets (playCap, derived from intensity in
+    // play()); Calm keeps far fewer particles alive than Max, no matter how
+    // many overlapping plays try to spawn.
+    const cap = Math.min(MAX_PARTICLES, playCap);
+    if (particles.length >= cap) {
+      particles.splice(0, particles.length - cap + 1); // drop oldest
     }
     particles.push(p);
   }
@@ -243,6 +248,20 @@ export function createVfxEngine(
   // lifetime and fx duration created while a play unwinds is stretched by it.
   // Same overlapping-plays caveat as playScale — it is a device-global knob.
   let playDur = 1;
+  // Hard particle ceiling for the current dial level (set in play() from the
+  // play's intensity). Calm (0.6) runs a fraction of the budget so a low-end
+  // device never pays for a full-strength particle field.
+  let playCap = MAX_PARTICLES;
+
+  // The dial's hard per-level particle budgets. Keyed off VfxPlay.intensity
+  // (FX_LEVELS[level].vfx): Off never reaches the engine (and play() also
+  // early-returns on 0), Calm 180, Normal 400, Epic 500, Max the full 600.
+  function capForIntensity(intensity: number): number {
+    if (intensity <= 0.6) return 180;
+    if (intensity <= 1) return 400;
+    if (intensity <= 1.25) return 500;
+    return MAX_PARTICLES;
+  }
 
   function impactCount(tier: number): number {
     // tier 4 ≈ 12 particles, tier 10 ≈ 60 at Normal; the dial scales it.
@@ -878,14 +897,23 @@ export function createVfxEngine(
     if (w <= 0 || h <= 0) resize();
     if (w <= 0 || h <= 0) return; // not laid out yet; drop
 
+    // Level 0 (Off): callers already gate plays on vfx > 0, but the engine
+    // enforces it too so no code path can render at Off via the 0.3 clamp.
+    if ((spec.intensity ?? 1) <= 0) return;
+
     const now = performance.now();
     playScale = clamp(spec.intensity ?? 1, 0.3, 2);
     playDur = clamp(spec.durationScale ?? 1, 0.5, 2);
+    playCap = capForIntensity(playScale);
     const tier = clamp(spec.tier ?? 1, 1, 12);
     const palette =
       spec.palette && spec.palette.length > 0 ? spec.palette : ["#ffe9a3", "#ff9d2e"];
     const sq = clamp(spec.squareSize ?? 1 / 8, 0.02, 0.5) * w;
-    const cinematic = tier >= 7;
+    // Calm (level 1) skips the expensive layers wholesale: no tier-7+ buildup
+    // cinematic and no aftermath residue (both are gradient-per-frame work).
+    // The impact itself still plays, so the rule stays legible.
+    const calm = playScale <= 0.6;
+    const cinematic = tier >= 7 && !calm;
     const src = spec.source ?? { x: 0.5, y: 0 };
     const sx = src.x * w;
     const sy = src.y * h;
@@ -924,7 +952,7 @@ export function createVfxEngine(
         fn: () => {
           fireShake();
           spawnImpact(x, y, impact, palette, tier, sq);
-          spawnAftermath(x, y, aftermath, palette, sq);
+          if (!calm) spawnAftermath(x, y, aftermath, palette, sq);
         },
       });
     };

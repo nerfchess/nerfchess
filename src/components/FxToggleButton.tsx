@@ -45,7 +45,10 @@ export function FxToggleButton({ className = "" }: { className?: string }) {
       </datalist>
       <span
         className={
-          "smallcaps w-10 shrink-0 text-[12px] " +
+          // min-width (not a fixed width): "Normal" in tracked smallcaps
+          // overflows 48px, and a hard width clipped it to "NORMA". The min
+          // keeps the row from jittering between short and long labels.
+          "smallcaps min-w-[3rem] shrink-0 whitespace-nowrap text-[12px] " +
           (level === 0 ? "text-parchment-400" : level >= 3 ? "text-gold-leaf" : "text-parchment-300")
         }
       >

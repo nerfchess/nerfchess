@@ -171,7 +171,9 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       )}
       {/* flex-1 on full cards: the description absorbs the height difference,
           so flavor/status footers pin to the aligned card bottoms. */}
-      <p className={`leading-snug text-parchment/90 ${compact ? "mt-1.5 text-[11px]" : "flex-1 text-[13px]"}`}>
+      {/* Full-contrast rule text: the effect is the decision, so it never
+          renders dimmer than body parchment (2026-07 draft readability pass). */}
+      <p className={`leading-snug text-parchment-100 ${compact ? "mt-1.5 text-[12px]" : "flex-1 text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
       {/* Rules footnote, auto-attached to every card that grants

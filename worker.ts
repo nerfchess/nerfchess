@@ -51,6 +51,7 @@ import {
   housePersona,
   houseSeedRating,
   houseSeedRatingForMode,
+  houseStyle,
   houseThinkMs,
   isHouseUserId,
   pickHouseBotByDifficulty,
@@ -528,7 +529,12 @@ const houseSeeksKey = "hp:seeks";
 // low tiers) so the active window can be 60-90 and cycle daily. The 150 new
 // handles are new hp_ ids, so re-run ensureHouseUsers to create their accounts
 // (rows, per-mode ratings, avatars, bios). Old accounts stay as-is.
-const houseSeededKey = "hp:seeded:v5";
+// v6: 2026-07 expansion — 300 new personas, legacy +300..400 rating uplift.
+// v7: the 300 expansion personas were renamed to natural chess-site handles
+// before the wave ever shipped. New names mean new hp_ ids: re-run
+// ensureHouseUsers to create the renamed accounts; the v6 accounts (if any
+// deployment seeded them) stay orphaned in the DB, harmless as ever.
+const houseSeededKey = "hp:seeded:v7";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -571,7 +577,12 @@ const houseSeededKey = "hp:seeded:v5";
 // character/meme wave with new thematic HOUSE_PFP_ASSIGN picks, and the
 // catalog growth reshuffles every name-hashed assignment. Re-circulate so
 // users.avatar carries the new ids everywhere (lobby, TV, profiles).
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-5";
+// identity-6: 2026-07 expansion — legacy +300..400 rating uplift circulated to
+// existing accounts, expansion-wave bios landed.
+// identity-7: the expansion-wave rename (see houseSeededKey v7). The renamed
+// personas carry new name-hashed avatars and the same index-based bios, so
+// circulate identity once more onto the freshly seeded accounts.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-7";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
@@ -4170,11 +4181,15 @@ export class GameServer extends DurableObject<Env> {
     // Filler (bot-only) games pace slower via the multiplier passed INTO
     // houseThinkMs, so the slow pace is still bounded by the bot's own clock and
     // never flags it early (the multiply used to happen here, after the clamp).
+    // Persona tempo: each bot paces its thinks with a stable personal lean
+    // (houseStyle), so the roster never moves in lockstep after one delay.
+    const turnPersona = housePersona(match.bots[turn] ?? "");
     const think = houseThinkMs(
       randomInt,
       clocks[turn] + grace,
       match.setup.timeSec,
       this.isBotOnlyMatch(match) ? houseFillerThinkMultiplier : 1,
+      turnPersona ? houseStyle(turnPersona).tempo : 1,
     );
     match.botActAt = now + think;
   }
@@ -4938,7 +4953,15 @@ export class GameServer extends DurableObject<Env> {
       if (!match.bots?.[color] || !game.buffs?.players[color].offer) continue;
       try {
         const choice = aiDraftChoice(game, color);
-        if (choice?.action === "pick") await this.resolveDraftPick(match, game, color, choice.index);
+        // Persona draft behavior: cautious personas sometimes bank a pickable
+        // offer to roll a higher tier next round (houseStyle().bankBias), so
+        // different bots run visibly different draft plans.
+        const draftPersona = housePersona(match.bots[color] ?? "");
+        const bankRoll =
+          draftPersona && choice?.action === "pick"
+            ? randomInt(100) < Math.round(houseStyle(draftPersona).bankBias * 100)
+            : false;
+        if (choice?.action === "pick" && !bankRoll) await this.resolveDraftPick(match, game, color, choice.index);
         else await this.resolveDraftBank(match, game, color);
       } catch (err) {
         console.error("house draft resolve failed, banking offer", match.id, err);
@@ -4976,7 +4999,7 @@ export class GameServer extends DurableObject<Env> {
     // applies its own worth-it gates; the extra coin keeps house players from
     // dumping every card the moment it clears the bar. A buff that throws
     // mid-activation must not wedge the bot or corrupt the move it plays next.
-    if (match.draft && game.buffs && randomInt(100) < 40) {
+    if (match.draft && game.buffs && randomInt(100) < Math.round(houseStyle(persona).activationChance * 100)) {
       try {
         const activation = aiChooseBuffActivation(game, color);
         if (activation) {
@@ -5088,7 +5111,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!move) {
       try {
-        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile);
+        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile, persona);
       } catch (err) {
         console.error("house move pick failed, using a legal fallback", match.id, err);
       }

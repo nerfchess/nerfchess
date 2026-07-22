@@ -9,6 +9,7 @@
 // internal marker, but no visible mark is drawn from them anymore).
 
 import { pickAIMove, defaultSearchShape, type AILevel, type WeakenParams } from "../../engine/ai";
+import { moveToUCI } from "../../engine/board";
 import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
@@ -45,7 +46,22 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // public URL (not just localhost:8787 on the box) before raising any of
 // these -- don't trust the nominal number, and don't trust a localhost-only
 // measurement either.
-export type HouseSkill = 1350 | 1450 | 1550 | 1650 | 1750 | 1900 | 1950 | 2000 | 2050 | 2100 | 2150 | 2200;
+export type HouseSkill =
+  | 900
+  | 1050
+  | 1200
+  | 1350
+  | 1450
+  | 1550
+  | 1650
+  | 1750
+  | 1900
+  | 1950
+  | 2000
+  | 2050
+  | 2100
+  | 2150
+  | 2200;
 
 // Baked per-tier profile. The weakening fields are OPTIONAL and every baked
 // tier below leaves them unset, so a fresh install resolves to topK:1 / no
@@ -79,19 +95,34 @@ export type ResolvedSkillProfile = {
   evalNoiseCp: number;
 };
 
+// 2026-07 strength uplift: every legacy tier's advertised rating moved up a
+// deterministic +300..400 (see houseSeedBase), so every tier's REAL strength
+// moves with it — more search budget, fewer outright blunders, deeper limits.
+// The DO local fallback still clamps to HOUSE_SEARCH_CEILING_MS, so these
+// budgets only bite on the OCI engine path; budgets stay within
+// WEAKEN_CLAMP.budgetMs and under the worker's 3000ms engine timeout
+// (nominal x1.5-2.5 measured wall time — see the note above).
+//
+// The 900-1200 tiers are new with the 2026-07 roster expansion: genuinely
+// beginner-strength bots (shallow search, baked move-quality noise, frequent
+// blunders) so low-rated humans finally have peers. Their displayed rating
+// matches their strength directly (no legacy uplift stack — see houseSeedBase).
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
-  1350: { level: "medium", budgetMs: 25, blunderChance: 0.1 },
-  1450: { level: "medium", budgetMs: 40, blunderChance: 0.075 },
-  1550: { level: "medium", budgetMs: 60, blunderChance: 0.05 },
-  1650: { level: "hard", budgetMs: 100, blunderChance: 0.02 },
-  1750: { level: "hard", budgetMs: 150, blunderChance: 0.005 },
-  1900: { level: "hard", budgetMs: 180, blunderChance: 0.005 },
-  1950: { level: "hard", budgetMs: 250, blunderChance: 0.005 },
-  2000: { level: "hard", budgetMs: 350, blunderChance: 0.005 },
-  2050: { level: "hard", budgetMs: 450, blunderChance: 0.005 },
-  2100: { level: "hard", budgetMs: 550, blunderChance: 0.005 },
-  2150: { level: "hard", budgetMs: 650, blunderChance: 0.005 },
-  2200: { level: "hard", budgetMs: 800, blunderChance: 0.005 },
+  900: { level: "easy", budgetMs: 15, blunderChance: 0.22, maxDepth: 2, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
+  1050: { level: "easy", budgetMs: 20, blunderChance: 0.16, maxDepth: 2, topK: 5, temperatureCp: 200, evalNoiseCp: 90, extendedEval: false },
+  1200: { level: "medium", budgetMs: 20, blunderChance: 0.12, maxDepth: 3, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
+  1350: { level: "medium", budgetMs: 60, blunderChance: 0.05 },
+  1450: { level: "medium", budgetMs: 90, blunderChance: 0.035 },
+  1550: { level: "hard", budgetMs: 120, blunderChance: 0.02 },
+  1650: { level: "hard", budgetMs: 200, blunderChance: 0.01 },
+  1750: { level: "hard", budgetMs: 300, blunderChance: 0.003 },
+  1900: { level: "hard", budgetMs: 380, blunderChance: 0.002 },
+  1950: { level: "hard", budgetMs: 480, blunderChance: 0.002 },
+  2000: { level: "hard", budgetMs: 580, blunderChance: 0.001 },
+  2050: { level: "hard", budgetMs: 680, blunderChance: 0.001 },
+  2100: { level: "hard", budgetMs: 760, blunderChance: 0.001 },
+  2150: { level: "hard", budgetMs: 840, blunderChance: 0.0005 },
+  2200: { level: "hard", budgetMs: 900, blunderChance: 0.0005 },
 };
 
 // ---------------------------------------------------------------------------
@@ -536,6 +567,508 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   ["paolo2002", 1650],
 ];
 
+// ---------------------------------------------------------------------------
+// 2026-07 expansion wave: 300 more house bots, spanning genuine beginner
+// strength (the new 900-1200 tiers) through elite (2200). Handles follow the
+// same varied register the legacy roster uses (name+number combos, opening
+// references, lowercase phrases, the occasional underscore) so the wave reads
+// like any other slice of the player base. Their displayed rating tracks
+// their tier directly (no legacy uplift stack — see houseSeedBase). Exactly
+// the even-index half (150 of 300) carries a short casual bio (EXPANSION_BIOS
+// below, one unique line each); the odd-index half stays blank, like real
+// users who never bothered. New names mean new hp_ ids: worker.ts's
+// houseSeededKey is bumped so the accounts are created on the next cold start.
+// ---------------------------------------------------------------------------
+const EXPANSION_DEFS: Array<[name: string, skill: HouseSkill]> = [
+  // --- beginner: 900 (35) ---
+  ["tomas_r7", 900],
+  ["emilylovescats", 900],
+  ["justvibing64", 900],
+  ["marcus2011", 900],
+  ["pineapplepawn", 900],
+  ["sofie_kk", 900],
+  ["deniz_04", 900],
+  ["lowkeylearning", 900],
+  ["rainydaymoves", 900],
+  ["benji_h", 900],
+  ["chessafterwork", 900],
+  ["mia_rose22", 900],
+  ["pawnandorder", 900],
+  ["arlo_finn", 900],
+  ["sleepysunday9", 900],
+  ["katya_m8", 900],
+  ["bignoobenergy", 900],
+  ["leo_dubs", 900],
+  ["strawberryking", 900],
+  ["hannah_bee3", 900],
+  ["couchplayer99", 900],
+  ["oskar_pl", 900],
+  ["checkpleaseok", 900],
+  ["tiredteacher77", 900],
+  ["lunapark12", 900],
+  ["whatevermate", 900],
+  ["rileyq_", 900],
+  ["dad_of_three", 900],
+  ["zeynep_a", 900],
+  ["grumpygrandpa1", 900],
+  ["firstyearuni", 900],
+  ["bo_jax88", 900],
+  ["milkteamoves", 900],
+  ["pdx_rainplayer", 900],
+  ["sam_i_am_99", 900],
+  // --- beginner: 1050 (35) ---
+  ["kevin_t99", 1050],
+  ["midnightcaro", 1050],
+  ["anya_petrova11", 1050],
+  ["e4e5whatnow", 1050],
+  ["quietcornercafe", 1050],
+  ["dylan_t20", 1050],
+  ["rustyandback", 1050],
+  ["nightshiftnurse2", 1050],
+  ["pawnstorm_92", 1050],
+  ["gabe_2007", 1050],
+  ["sundaymornings4", 1050],
+  ["lichenmoss4", 1050],
+  ["tariq_zz", 1050],
+  ["mollys_dad", 1050],
+  ["brokenclockwins", 1050],
+  ["ines_lisboa", 1050],
+  ["halfcaffholly", 1050],
+  ["rando_cal77", 1050],
+  ["jules_vr", 1050],
+  ["stonecoldpawn", 1050],
+  ["tinytownchamp", 1050],
+  ["priya_sings", 1050],
+  ["losingstreak12", 1050],
+  ["mika_polar", 1050],
+  ["caffeineandchess", 1050],
+  ["ollie_oxen3", 1050],
+  ["slowtrainrider", 1050],
+  ["fernwood_78", 1050],
+  ["chess_and_chill", 1050],
+  ["tuck_everlast", 1050],
+  ["nightowl_nadia", 1050],
+  ["bricklayerbrett", 1050],
+  ["vanillalatte7", 1050],
+  ["georgie_pie", 1050],
+  ["apartment4b", 1050],
+  // --- beginner-plus: 1200 (30) ---
+  ["zwischenzug77", 1200],
+  ["ruben_dario5", 1200],
+  ["londonsystemfan", 1200],
+  ["clara_bell12", 1200],
+  ["knightowl_23", 1200],
+  ["caro_kann_stan", 1200],
+  ["felix_the_2nd", 1200],
+  ["bulletproofbex", 1200],
+  ["skatepark_sasha", 1200],
+  ["gambitgremlin", 1200],
+  ["marseille_mo", 1200],
+  ["offbeatopenings", 1200],
+  ["theo_v12", 1200],
+  ["chai_and_chess", 1200],
+  ["rainyrook", 1200],
+  ["dario_88", 1200],
+  ["stalemate_steph", 1200],
+  ["pnw_hiker42", 1200],
+  ["vince_van_go", 1200],
+  ["slowcookedwins", 1200],
+  ["basia_k", 1200],
+  ["fried_liver_fan", 1200],
+  ["murathan_35", 1200],
+  ["grindcoregreg", 1200],
+  ["josie_moves", 1200],
+  ["halfpastblitz", 1200],
+  ["nordicwinters", 1200],
+  ["tomek_pl99", 1200],
+  ["bookishbrooke", 1200],
+  ["subwaysolver", 1200],
+  // --- casual: 1350 (25) ---
+  ["sicilian_sisters", 1350],
+  ["andres_1998", 1350],
+  ["blitzntears", 1350],
+  ["quiet_riot88", 1350],
+  ["matcha_mate", 1350],
+  ["leftybishop", 1350],
+  ["warsaw_wanderer", 1350],
+  ["keegan_77", 1350],
+  ["vegan_gambit", 1350],
+  ["rue_de_rivoli", 1350],
+  ["smotheredhopes", 1350],
+  ["danny_twopawns", 1350],
+  ["elif_yildiz3", 1350],
+  ["garagebandgary", 1350],
+  ["nihal_x", 1350],
+  ["offseasonhooper", 1350],
+  ["bird_gang44", 1350],
+  ["prettygoodatthis", 1350],
+  ["marcin_k2", 1350],
+  ["latenightlaszlo", 1350],
+  ["tempo_tantrum", 1350],
+  ["saltlakesolo", 1350],
+  ["fiona_h20", 1350],
+  ["secondhandbooks", 1350],
+  ["rowdyrook55", 1350],
+  // --- casual: 1450 (25) ---
+  ["najdorfandchill", 1450],
+  ["petra_svit", 1450],
+  ["glasgow_g1", 1450],
+  ["hypermodernhank", 1450],
+  ["crimsonfile", 1450],
+  ["yusuf_bey7", 1450],
+  ["blitzburgh412", 1450],
+  ["quietmovequinn", 1450],
+  ["antwerp_ace", 1450],
+  ["el_blunderino", 1450],
+  ["sofia_bg1988", 1450],
+  ["graveyardshift64", 1450],
+  ["pawnbrokerphil", 1450],
+  ["mangolassi22", 1450],
+  ["tundraking77", 1450],
+  ["rios_r9", 1450],
+  ["cornfieldchess", 1450],
+  ["velvetknight", 1450],
+  ["arjun_kt", 1450],
+  ["doubleespresso2", 1450],
+  ["winterberlin", 1450],
+  ["slipperyelo", 1450],
+  ["nadia_pm", 1450],
+  ["heavypieces", 1450],
+  ["last_rank_larry", 1450],
+  // --- intermediate: 1550 (20) ---
+  ["catalan_dreams", 1550],
+  ["boris_not_that1", 1550],
+  ["slavdefender", 1550],
+  ["marina_vl", 1550],
+  ["benoni_blues", 1550],
+  ["kolya_k77", 1550],
+  ["stonewall_dutch", 1550],
+  ["hansen_hs", 1550],
+  ["nimzoindianfan", 1550],
+  ["closedsicilian", 1550],
+  ["tarrasch_talks", 1550],
+  ["mehmet_efe1", 1550],
+  ["kingsindianattack", 1550],
+  ["lena_bxh7", 1550],
+  ["scandi_main", 1550],
+  ["old_benoni", 1550],
+  ["diegof_1989", 1550],
+  ["hippo_setup", 1550],
+  ["reti_forever", 1550],
+  ["engine_says_no", 1550],
+  // --- intermediate: 1650 (20) ---
+  ["rookonseventh", 1650],
+  ["tempo_thief", 1650],
+  ["milan_c4", 1650],
+  ["badbishopclub", 1650],
+  ["outpost_hermit", 1650],
+  ["sylvia_r66", 1650],
+  ["openfileaddict", 1650],
+  ["overprotection", 1650],
+  ["hangingpawnsok", 1650],
+  ["darjeelingdraw", 1650],
+  ["marco_lt17", 1650],
+  ["isolani_life", 1650],
+  ["spacegrabber", 1650],
+  ["fianchettofiend", 1650],
+  ["aksel_no", 1650],
+  ["twobishopsplease", 1650],
+  ["middlegamemess", 1650],
+  ["rooklifts4days", 1650],
+  ["chessdadof2", 1650],
+  ["tightsqueeze77", 1650],
+  // --- advanced: 1750 (20) ---
+  ["endgamegrinder", 1750],
+  ["bridgebuilder64", 1750],
+  ["karpov_stan99", 1750],
+  ["quietmoves_only", 1750],
+  ["zugzwang_artist", 1750],
+  ["renata_cz", 1750],
+  ["fortress_or_bust", 1750],
+  ["twoweaknesses", 1750],
+  ["igor_bp", 1750],
+  ["passedpawnpusher", 1750],
+  ["triangulate_this", 1750],
+  ["rookendingsdrawn", 1750],
+  ["opposition_guru", 1750],
+  ["vasyl_uv", 1750],
+  ["knightvsbishop", 1750],
+  ["wrongbishop", 1750],
+  ["technique_tbd", 1750],
+  ["grindtilldawn", 1750],
+  ["helen_e6", 1750],
+  ["practicalplay", 1750],
+  // --- advanced: 1900 (20) ---
+  ["novelty_on_nine", 1900],
+  ["theoryhound", 1900],
+  ["carlsbad_grip", 1900],
+  ["hedgehog_life", 1900],
+  ["maroczy_wall", 1900],
+  ["anti_berlin", 1900],
+  ["katarina_2k", 1900],
+  ["sacthexchange", 1900],
+  ["dubov_lines", 1900],
+  ["meran_madness", 1900],
+  ["zaitsev_files", 1900],
+  ["botvinnik_lab", 1900],
+  ["marshall_denier", 1900],
+  ["structure_nerd", 1900],
+  ["ivan_ivanov19", 1900],
+  ["chigorin_soul", 1900],
+  ["c_file_junkie", 1900],
+  ["lena_prep", 1900],
+  ["middlegamemaps", 1900],
+  ["najdorf_lifer", 1900],
+  // --- expert: 1950 (15) ---
+  ["no_bad_pieces", 1950],
+  ["forcinglines", 1950],
+  ["alexey_v88", 1950],
+  ["tiniestedge", 1950],
+  ["smalledgegrind", 1950],
+  ["defends_anything", 1950],
+  ["miguel_santos7", 1950],
+  ["accuracy_junkie", 1950],
+  ["stonepatience", 1950],
+  ["fiftygoodmoves", 1950],
+  ["karolina_ww", 1950],
+  ["silentgrind", 1950],
+  ["tablebase_ted", 1950],
+  ["defensivegenius", 1950],
+  ["win_the_won_game", 1950],
+  // --- expert: 2000 (12) ---
+  ["titled_someday", 2000],
+  ["blindfold_bruno", 2000],
+  ["simul_ghost", 2000],
+  ["threecandidates", 2000],
+  ["dmitry_dk", 2000],
+  ["patternhoarder", 2000],
+  ["visualizer_v", 2000],
+  ["attack_f7", 2000],
+  ["sacs_on_sight", 2000],
+  ["irina_wins", 2000],
+  ["prep_and_pray", 2000],
+  ["no_draws_today", 2000],
+  // --- expert: 2050 (10) ---
+  ["boa_constrictor", 2050],
+  ["stalkingbishop", 2050],
+  ["marat_ke", 2050],
+  ["repertoirewall", 2050],
+  ["deepcalc_dana", 2050],
+  ["novelty_sniper", 2050],
+  ["edgehunterx", 2050],
+  ["initiative_only", 2050],
+  ["sofia_grinds", 2050],
+  ["momentum_merchant", 2050],
+  // --- elite: 2100 (12) ---
+  ["relentlessgrind", 2100],
+  ["fortresscracker", 2100],
+  ["cleansheetchess", 2100],
+  ["passers_united", 2100],
+  ["diagonal_doom", 2100],
+  ["anaconda_style", 2100],
+  ["endgame_surgeon", 2100],
+  ["autopilot_wins", 2100],
+  ["praxisfirst", 2100],
+  ["abyssal_prep", 2100],
+  ["mia_gm_track", 2100],
+  ["cold_technique", 2100],
+  // --- elite: 2150 (10) ---
+  ["totalcontrol64", 2150],
+  ["surgical_rook", 2150],
+  ["vise_grip_vic", 2150],
+  ["prep_leviathan", 2150],
+  ["lasersharplines", 2150],
+  ["fullboardvision", 2150],
+  ["ironclad_endings", 2150],
+  ["anna_in_the_lab", 2150],
+  ["theorycrusher", 2150],
+  ["immortal_grind", 2150],
+  // --- elite: 2200 (11) ---
+  ["apex_predator64", 2200],
+  ["silent_titan", 2200],
+  ["finalboss_e4", 2200],
+  ["endgame_oracle", 2200],
+  ["deepest_prep", 2200],
+  ["grandsqueeze", 2200],
+  ["absolute_zero64", 2200],
+  ["ghost_king64", 2200],
+  ["the_last_rank", 2200],
+  ["summit_seeker", 2200],
+  ["zerocounterplay", 2200],
+];
+
+// The names of the 2026-07 expansion wave, for the "is this a new-wave
+// persona" checks in houseSeedBase / personaBio.
+const EXPANSION_NAME_SET = new Set(EXPANSION_DEFS.map(([name]) => name));
+
+// 150 original, casual, deliberately imperfect one-liners in the register real
+// chess-site bios use: lowercase, short, no emojis, no marketing voice. One
+// line per bio-carrying expansion bot (the even-index half of EXPANSION_DEFS),
+// each used exactly once, so no two bots share a bio.
+const EXPANSION_BIOS: string[] = [
+  "i play way too much blitz",
+  "mostly here for the weird cards",
+  "trying not to hang my queen again",
+  "d4 when i remember my prep",
+  "still figuring out endgames",
+  "one more game then bed",
+  "knights over bishops, always",
+  "no clue what im doing half the time",
+  "chess after work, most days",
+  "premoves are my downfall",
+  "slowly climbing, mostly falling",
+  "e4 every single game",
+  "here since the beta",
+  "caro kann and chill",
+  "resigning is for other people",
+  "my rating is a rollercoaster",
+  "blitz brain, rapid rating",
+  "puzzle streak enjoyer",
+  "flagging people is my cardio",
+  "i blame mouse slips",
+  "learning the sicilian, badly",
+  "endgames scare me",
+  "will trade queens for no reason",
+  "london system apologist",
+  "somehow always in time trouble",
+  "just here to push pawns",
+  "queen sac enthusiast",
+  "castle early, panic late",
+  "gambit first, think later",
+  "my openings are held together with tape",
+  "playing since last winter",
+  "the eval bar lies to me",
+  "back rank checkmates haunt me",
+  "chess between lectures",
+  "fianchetto everything",
+  "cant stop playing bullet",
+  "hydrate and rook lifts",
+  "always down for a rematch",
+  "lost to scholars mate once. never again",
+  "openings memorized: one",
+  "i peaked in a puzzle rush",
+  "en passant is my favorite rule",
+  "team knight",
+  "chess podcasts while i work",
+  "the board sees all my mistakes",
+  "quiet moves make me nervous",
+  "still waiting for my brilliant move",
+  "average c player energy",
+  "counting to ten before every move, allegedly",
+  "born to gambit, forced to defend",
+  "morning coffee and a rapid game",
+  "cards make everything chaotic and i love it",
+  "trying the nerf ladder this month",
+  "my prep ends at move six",
+  "resident of time trouble",
+  "won once against a 1900, still bragging",
+  "stalemate specialist, not on purpose",
+  "if it looks like a trap it probably is",
+  "middlegames are just vibes",
+  "opening names are half the fun",
+  "perpetual check, perpetual cope",
+  "never resign, always suffer",
+  "sixty percent of the time i castle every time",
+  "rooks belong on open files apparently",
+  "keep hanging knights on f5",
+  "played chess irl once, terrifying",
+  "the horse does the L thing",
+  "check first, ask questions later",
+  "smothered mate is the dream",
+  "my endgame plan is hope",
+  "just discovered the stafford",
+  "pawn storms fix everything",
+  "here for hexes and bad decisions",
+  "grinding to 1500, eta unknown",
+  "the queen is a rook and bishop glued together",
+  "friendly games only, until i lose",
+  "sometimes i premove the wrong piece",
+  "you miss all the forks you dont take",
+  "bishop pair believer",
+  "draws feel like homework",
+  "my clock management is a war crime",
+  "still salty about a stalemate from march",
+  "opening theory is a suggestion",
+  "buff mode turned me into a gambler",
+  "netflix and blunder",
+  "yes i saw the mate in one. after i moved",
+  "will play anything with a knight on rim",
+  "pet opening: the wayward queen",
+  "chess first, sleep second",
+  "1200 with the heart of a 2000",
+  "i just like the little horses",
+  "tilted since tuesday",
+  "longtime lurker, recent blunderer",
+  "shoutout to whoever invented castling",
+  "my favorite square is e5",
+  "escaping bullet, one rapid game at a time",
+  "took a break, came back worse",
+  "the pin is mightier than the sword",
+  "always one tempo short",
+  "accidentally decent at endgames",
+  "banking drafts like a coward",
+  "if chess is art im finger painting",
+  "certified pawn grabber",
+  "i study tactics and then ignore them",
+  "playing until the tilt wears off",
+  "self taught and it shows",
+  "somewhere between patzer and fine",
+  "checkmate is just spicy check",
+  "rooks on the seventh or nothing",
+  "i respect the fifty move rule",
+  "gambiteer in recovery",
+  "the knight fork found me again",
+  "chess with tea, always",
+  "lowkey scared of the dragon",
+  "my repertoire is a rumor",
+  "promoted a pawn to a knight once. worth it",
+  "running on caffeine and cheap tactics",
+  "career highlight: beat my uncle",
+  "the h pawn is my emotional support pawn",
+  "opening principles are more like guidelines",
+  "hex me once, shame on you",
+  "1 minute games, 10 minute tilt",
+  "spectating my own decline",
+  "castling queenside feels illegal",
+  "the real chess was the blunders we made along the way",
+  "every game a new way to lose a rook",
+  "doubling pawns recreationally",
+  "trying to make f4 work",
+  "zugzwang is my native language",
+  "collect knights, drop queens",
+  "gave up bullet for lent, relapsed",
+  "half my wins are flags",
+  "swindle artist in training",
+  "pawn endings are pure fear",
+  "playing the position, losing the game",
+  "big fan of the little center",
+  "will punish greek gifts, eventually",
+  "back after a long break, rusty",
+  "the c file is home",
+  "underpromotion appreciation account",
+  "blundered here first",
+  "warmup games are my main games",
+  "safety first, tactics eventually",
+  "greetings from the losing side of theory",
+  "was winning. history will remember",
+  "my kings walk more than i do",
+  "trading pieces to feel something",
+  "student of the game, repeat year",
+  "arrived for chess, stayed for the cards",
+  "small brain, big center",
+];
+
+// Exactly the even-index half of the expansion wave carries a bio, each a
+// UNIQUE line from EXPANSION_BIOS (index i -> bio i/2). 300 defs, 150 bios.
+const EXPANSION_BIO_BY_NAME: Map<string, string> = new Map(
+  EXPANSION_DEFS.filter((_, i) => i % 2 === 0).map(
+    ([name], j) => [name, EXPANSION_BIOS[j] ?? EXPANSION_BIOS[j % EXPANSION_BIOS.length]] as [string, string],
+  ),
+);
+
+// Fold the expansion wave into the roster proper.
+PERSONA_DEFS.push(...EXPANSION_DEFS);
+
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
 // look plus a small flower mark. Never offered to real accounts (isAvatarId
 // rejects them), so the flower stays a reliable internal house mark everywhere
@@ -699,13 +1232,30 @@ const HOUSE_BIOS: string[] = [
   "chess over everything",
 ];
 
-/** A persona's baked bio: a stable hashed blurb for ~45% of the roster, null for
- * the rest. Deterministic per name, so it never flickers across deploys. Used as
- * the fallback under any staff bio override. */
+/** A persona's baked bio. 2026-07 expansion wave: exactly half (150 of 300)
+ * carry one unique line each from EXPANSION_BIOS; the other half stay blank.
+ * Legacy roster keeps its stable hashed blurb for ~45% of personas. All
+ * deterministic per name, so nothing flickers across deploys. Used as the
+ * fallback under any staff bio override. */
 export function personaBio(persona: HousePersona): string | null {
+  if (EXPANSION_NAME_SET.has(persona.name)) {
+    return EXPANSION_BIO_BY_NAME.get(persona.name) ?? null;
+  }
   if (nameHash(persona.name + "|hasbio") % 100 >= 45) return null;
   return HOUSE_BIOS[nameHash(persona.name + "|bio") % HOUSE_BIOS.length];
 }
+
+/** True for a 2026-07 expansion-wave persona (new-style seeding: rating tracks
+ * the tier directly, no legacy uplift stack; no fictional location). Exported
+ * for the roster audit. */
+export function isExpansionPersona(name: string): boolean {
+  return EXPANSION_NAME_SET.has(name);
+}
+
+/** Expansion-wave seeding facts, exported for the roster audit script. */
+export const EXPANSION_SIZE = EXPANSION_DEFS.length;
+export const EXPANSION_BIO_COUNT = EXPANSION_BIO_BY_NAME.size;
+export const EXPANSION_BIO_POOL_SIZE = EXPANSION_BIOS.length;
 
 // The avatar id space a house persona may hold: the full flowered catalog plus
 // the house-pfp catalog. Exported for the /mod/house admin editor (its avatar
@@ -800,37 +1350,104 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // a curated one (HOUSE_PFP_ASSIGN) where the name fits, else a name-hashed
   // one from the catalog. Stable per persona and varied across the roster.
   avatar: personaAvatar(name),
-  // Roster-index assignment keeps every persona's location DISTINCT (the list
-  // is at least as long as the roster) and stable across deploys.
-  location: HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
+  // Legacy personas keep their /mod-editor location label. The 2026-07
+  // expansion wave carries NO fictional location: a blank location is the
+  // commonest shape on real chess sites anyway, and it keeps the expansion
+  // personas from accumulating invented biography beyond their short bios.
+  location: isExpansionPersona(name) ? "" : HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
 }));
 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
+// ---------------------------------------------------------------------------
+// Per-persona style. Two bots on the same skill tier should not play (or pace)
+// identically: each persona derives a stable style from its name — think tempo,
+// how often it fires a held buff, how willing it is to bank a draft, and an
+// aggression/risk lean that jitters the search's move-quality knobs. All
+// deterministic (name-hashed), so a persona plays the same "personality" every
+// session and across deploys.
+// ---------------------------------------------------------------------------
+
+export type HouseStyle = {
+  /** Multiplier on think pacing: 0.75 (snappy) .. 1.35 (deliberate). */
+  tempo: number;
+  /** Chance per turn to fire a held activated buff instead of moving:
+   * 0.25 .. 0.55 (the old roster-wide coin was a flat 0.40). */
+  activationChance: number;
+  /** Extra probability of banking a buff draft for a higher tier next round:
+   * 0 .. 0.25. Cautious personas bank more, greedy ones almost never. */
+  bankBias: number;
+  /** 0..1 aggression/risk lean; drives the search jitter below. */
+  aggression: number;
+  /** Preferred first move as White (UCI), tried when legal. */
+  openingWhite: string;
+  /** Preferred reply to 1.e4 / 1.d4 as Black (UCI), tried when legal. */
+  openingBlackVsE4: string;
+  openingBlackVsD4: string;
+};
+
+const OPENING_WHITE = ["e2e4", "d2d4", "c2c4", "g1f3", "b2b3", "f2f4", "g2g3", "b1c3"];
+const OPENING_BLACK_E4 = ["e7e5", "c7c5", "e7e6", "c7c6", "d7d6", "g7g6", "b8c6", "d7d5"];
+const OPENING_BLACK_D4 = ["g8f6", "d7d5", "e7e6", "f7f5", "g7g6", "c7c5", "d7d6", "b8c6"];
+
+export function houseStyle(persona: HousePersona): HouseStyle {
+  const h = (salt: string, mod: number) => nameHash(persona.name + "|" + salt) % mod;
+  return {
+    tempo: 0.75 + h("tempo", 61) / 100, // 0.75..1.35
+    activationChance: 0.25 + h("act", 31) / 100, // 0.25..0.55
+    bankBias: h("bank", 26) / 100, // 0..0.25
+    aggression: h("aggro", 101) / 100, // 0..1
+    openingWhite: OPENING_WHITE[h("openw", OPENING_WHITE.length)],
+    openingBlackVsE4: OPENING_BLACK_E4[h("openbe", OPENING_BLACK_E4.length)],
+    openingBlackVsD4: OPENING_BLACK_D4[h("openbd", OPENING_BLACK_D4.length)],
+  };
+}
+
+/** Apply a persona's style to a resolved profile: aggressive personas search a
+ * touch hotter (more temperature — sharper, riskier picks), cautious ones a
+ * touch colder, plus a small stable eval-noise jitter so same-tier personas
+ * don't play move-for-move identical chess. Deterministic per persona; bounded
+ * so it never leaves the sane clamp ranges. */
+export function applyPersonaStyle(
+  persona: HousePersona,
+  profile: ResolvedSkillProfile,
+): ResolvedSkillProfile {
+  const style = houseStyle(persona);
+  const tempJitter = Math.round((style.aggression - 0.5) * 60); // -30..+30
+  const noiseJitter = nameHash(persona.name + "|noise") % 13; // 0..12
+  return {
+    ...profile,
+    temperatureCp: Math.max(0, Math.min(400, profile.temperatureCp + tempJitter)),
+    evalNoiseCp: Math.max(0, Math.min(200, profile.evalNoiseCp + noiseJitter)),
+  };
+}
+
 // House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
-// of the full 210-deep roster (same day offset, so the smaller set is always a
+// of the full roster (same day offset, so the smaller set is always a
 // prefix of the larger — no persona is "playing" without also being "online"):
-//   • ACTIVE (the whole roster): the bots that actually seek, get picked up, and
-//     play filler. The moderator does not thin this set; lobby load is tuned via
-//     the concurrent house-GAMES target instead (HOUSE_GAMES_* / house_games).
-//   • ONLINE (up to 150): how many bots SHOW in the lobby's online list at once.
+//   • ACTIVE: the bots that actually seek, get picked up, and play filler.
+//     The moderator does not thin this set; lobby load is tuned via the
+//     concurrent house-GAMES target instead (HOUSE_GAMES_* / house_games).
+//   • ONLINE: how many bots SHOW in the lobby's online list at once.
 //     The active ones among them read as playing/searching; the rest just idle
 //     "online" for a fuller lobby (they don't seek or play).
 // The window's start advances each day (step coprime with the roster) so the
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-// The ACTIVE bot count is the whole roster — every persona can seek, get picked
-// up by a human, and play filler at once (Min == Max, so activeHouseRoster always
-// returns the full roster). Lobby liveliness is tuned NOT by thinning this
-// seeking crowd but by the concurrent-GAMES target (HOUSE_GAMES_* below, the /mod
-// "Active games" slider); sustaining up to HOUSE_GAMES_MAX filler games needs the
-// full roster seated anyway (2 bots per game).
-export const HOUSE_COUNT_MIN = HOUSE_ROSTER.length;
-export const HOUSE_COUNT_MAX = HOUSE_ROSTER.length;
-// Every bot also shows "online" for presence — the whole roster.
-export const HOUSE_ONLINE_COUNT = HOUSE_ROSTER.length;
+// With the 2026-07 expansion the roster is ~510 deep, and marking all of them
+// online at once would read as absurd (and be one). The ACTIVE window (bots
+// that seek / get picked up / play filler) breathes daily between 180 and 240
+// — comfortably above the seat budget the filler-games cap needs (2 seats x
+// HOUSE_GAMES_MAX = 140) plus pickup headroom — and the ONLINE window shows at
+// most ~55% of the roster at a time. Both windows rotate daily
+// (houseWindowStart), so every persona cycles through availability over time:
+// a believable "some regulars are on tonight, some aren't" schedule.
+export const HOUSE_COUNT_MIN = 180;
+export const HOUSE_COUNT_MAX = 240;
+// How many bots show "online" at once: the active window plus idlers.
+export const HOUSE_ONLINE_COUNT = 280;
 
 export function clampHouseCount(n: number): number {
   return Number.isFinite(n)
@@ -1053,17 +1670,35 @@ export function pickHouseFillerPair(
 // ceiling), but the displayed/rated number is shifted here so the field can be
 // re-spread without touching strength or the difficulty-band picker.
 //
-// The ORIGINAL spread (every bot +100, sub-1600 tiers dropping 100-150 so the
-// roster spans ~1150 to ~2300), PLUS the owner boost: every bot gains a
-// further +100..+300 Elo, name-hashed so each persona's boost is stable
-// (never re-randomized on refresh or resync). Net roster span ~1250 to ~2600.
+// LEGACY roster: the ORIGINAL spread (every bot +100, sub-1600 tiers dropping
+// 100-150), PLUS the owner boost (+100..+300), PLUS the 2026-07 uplift: every
+// legacy bot gains a further deterministic +300..+400 Elo, name-hashed so each
+// persona's number is stable (never re-randomized on refresh or resync). The
+// engine profiles were strengthened in the same change (HOUSE_SKILL_PROFILES)
+// so real strength moves with the advertised number.
+//
+// EXPANSION roster (2026-07 wave): the advertised rating tracks the tier
+// directly (skill +-40 jitter only) — a 900-tier bot debuts around 900, a
+// 2200-tier bot around 2200 — so the new beginner tiers finally read as
+// beginners instead of inheriting the legacy uplift stack.
+export const HOUSE_RATING_UPLIFT_MIN = 300;
+export const HOUSE_RATING_UPLIFT_MAX = 400;
+
+/** The deterministic 2026-07 rating uplift for a LEGACY persona name:
+ * a stable value in [300, 400]. Exported for the roster audit. */
+export function houseRatingUplift(name: string): number {
+  const span = HOUSE_RATING_UPLIFT_MAX - HOUSE_RATING_UPLIFT_MIN + 1;
+  return HOUSE_RATING_UPLIFT_MIN + (nameHash(name + "|uplift2026") % span);
+}
+
 function houseSeedBase(persona: HousePersona): number {
   const seed = persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
+  if (isExpansionPersona(persona.name)) return seed;
   const spread = persona.skill < 1600
     ? -(100 + (nameHash(persona.name + "|drop") % 51)) // 100..150 drop
     : 100;
   const boost = 100 + (nameHash(persona.name + "|boost") % 201); // +100..+300
-  return seed + spread + boost;
+  return seed + spread + boost + houseRatingUplift(persona.name);
 }
 
 /** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
@@ -1673,6 +2308,10 @@ export function houseThinkMs(
   myClockMs: number,
   timeSec: number,
   thinkMultiplier = 1,
+  /** Persona tempo (houseStyle().tempo, 0.75-1.35): a stable per-bot pacing
+   * lean, applied with the filler multiplier BEFORE the low-clock clamps so a
+   * deliberate persona still can never overthink itself into a flag. */
+  tempo = 1,
 ): number {
   const hasClock = timeSec > 0;
   // Fast time controls (1+0, 2+1, 3+0 and the like, base <= 3 min): the bot
@@ -1685,9 +2324,11 @@ export function houseThinkMs(
   else if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
   else delay = 6000 + random(4001); // 6-10s
 
-  // Filler pacing slows the base think, but is still bounded by the clock clamps
-  // below, so it never causes a premature flag.
+  // Filler pacing slows the base think, and the persona tempo leans it, but
+  // both are still bounded by the clock clamps below, so neither can cause a
+  // premature flag.
   if (thinkMultiplier > 1) delay = Math.round(delay * thinkMultiplier);
+  if (tempo !== 1) delay = Math.round(delay * Math.max(0.5, Math.min(1.5, tempo)));
 
   if (hasClock) {
     if (myClockMs < 10_000) delay = Math.min(delay, 300 + random(501));
@@ -1754,10 +2395,35 @@ export function pickHouseMove(
   remainingClockMs?: number,
   ceilingMs?: number,
   profile?: ResolvedSkillProfile,
+  persona?: HousePersona,
 ): Move | null {
-  const p = profile ?? bakedResolvedProfile(skill);
+  let p = profile ?? bakedResolvedProfile(skill);
+  // Persona style: a stable per-bot jitter on the search's move-quality knobs,
+  // so same-tier personas don't play move-for-move identical chess.
+  if (persona) p = applyPersonaStyle(persona, p);
   const all = legalMoves(game);
   if (!all.length) return null;
+  // Opening preference: on each side's FIRST move a persona usually (70%)
+  // reaches for its pet opening when that move is legal, so different bots
+  // steer games into different structures instead of all converging on the
+  // search's one favorite line. Draft cards can rewrite the opening position,
+  // in which case the preferred square may be illegal and the search decides.
+  if (persona && game.board.history.length < 2 && random(10) < 7) {
+    const style = houseStyle(persona);
+    const last = game.board.history[0];
+    const preferred =
+      game.board.history.length === 0
+        ? style.openingWhite
+        : last && moveToUCI(last) === "e2e4"
+        ? style.openingBlackVsE4
+        : last && moveToUCI(last) === "d2d4"
+        ? style.openingBlackVsD4
+        : null;
+    if (preferred) {
+      const move = all.find((m) => moveToUCI(m) === preferred);
+      if (move && !triggersOwnNerfLoss(game, move)) return move;
+    }
+  }
   if (random(10_000) < Math.round(p.blunderChance * 10_000)) {
     const safe = all.filter((m) => !triggersOwnNerfLoss(game, m));
     const moves = safe.length ? safe : all;

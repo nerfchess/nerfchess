@@ -64,18 +64,18 @@ test("switching mode updates the matchmaking button and is remembered", async ({
 
 test("/play is bot practice only: one shared mode, no online queue", async ({ page }) => {
   await page.goto("/play");
-  // Bot practice only: Buff is preselected on the top mode cards, and there is
-  // NO online matchmaking button anywhere on this page.
-  const topBuff = page.getByRole("button", { name: /buff mode/i });
-  await expect(topBuff).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+  // Bot practice only: the single Game type selector opens on Buff, and there
+  // is NO online matchmaking button anywhere on this page. (The old duplicate
+  // top mode cards were removed; the pills are the one selector.)
+  const buffPill = page.getByRole("button", { name: /^buff$/i });
+  await expect(buffPill).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
   await expect(findButton(page)).toHaveCount(0);
   // A prominent door back to online play points at the lobby, so nobody who
   // wanted a real opponent gets stuck here.
   await expect(page.getByRole("link", { name: /play online/i })).toHaveAttribute("href", "/lobby");
 
-  // Switching the top mode drives the bot game-type pills: the two selectors
-  // share one mode and can't disagree.
-  await page.getByRole("button", { name: /nerf mode/i }).click();
+  // The pills drive the one shared mode and the explainer line follows.
+  await page.getByRole("button", { name: /^nerf$/i }).click();
   await expect(page.getByRole("button", { name: /^nerf$/i })).toHaveAttribute(
     "aria-pressed",
     "true",
@@ -86,9 +86,9 @@ test("/play is bot practice only: one shared mode, no online queue", async ({ pa
   await page.getByRole("button", { name: /plain chess/i }).click();
   await expect(page.getByText("Ordinary chess. No cards.")).toBeVisible();
 
-  // Picking Buff at the top clears the Plain override and restores Buff.
-  await page.getByRole("button", { name: /buff mode/i }).click();
-  await expect(topBuff).toHaveAttribute("aria-pressed", "true");
+  // Picking Buff again clears the Plain override and restores Buff.
+  await buffPill.click();
+  await expect(buffPill).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Draft buffs to outbuild the bot.")).toBeVisible();
 });
 

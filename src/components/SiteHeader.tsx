@@ -427,7 +427,11 @@ export function SiteHeader({ active }: { active?: string }) {
               </div>
             )}
 
-            {/* Notifications */}
+            {/* Notifications: an account-only feed (friend requests, replies,
+                mod notices) that never populates for a throwaway guest, so it
+                is hidden entirely rather than shown as a dead bell. */}
+            {!user.isGuest && (
+              <>
             <button
               type="button"
               aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
@@ -486,6 +490,8 @@ export function SiteHeader({ active }: { active?: string }) {
                 )}
               </div>
             )}
+              </>
+            )}
           </>
         )}
 
@@ -501,23 +507,44 @@ export function SiteHeader({ active }: { active?: string }) {
           </Link>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => toggle("profile")}
-              className="ml-1 inline-flex items-center gap-2 px-2 py-1.5 font-display text-sm text-parchment transition-colors hover:bg-white/5"
-              aria-haspopup="menu"
-              aria-expanded={menu === "profile"}
-            >
-              {/* The name is dead weight at phone widths and can collide with
-                  the wordmark; the avatar alone opens the menu there. Guests
-                  are always labeled as guests so the header never makes a
-                  throwaway identity look like a registered account. */}
-              <span className="hidden sm:inline">
-                {user.isGuest && <span className="text-parchment-400">Guest: </span>}
-                {user.username}
-              </span>
-              <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
-            </button>
+            <div className="ml-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => toggle("profile")}
+                aria-label={user.isGuest ? "Guest account menu" : "Account menu"}
+                title={user.isGuest ? "Guest account menu" : "Account menu"}
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 font-display text-sm text-parchment transition-colors hover:bg-white/5"
+                aria-haspopup="menu"
+                aria-expanded={menu === "profile"}
+              >
+                {/* The name is dead weight at phone widths and can collide with
+                    the wordmark; the avatar alone opens the menu there. Guests
+                    show a plain "Sign in" affordance beside the name so the
+                    header reads as signed-out, never as a registered account. */}
+                <span className="hidden items-center gap-1.5 sm:inline-flex">
+                  {user.isGuest && (
+                    <span className="smallcaps text-[11px] text-parchment-400">Guest</span>
+                  )}
+                  <span className={user.isGuest ? "text-parchment-200" : undefined}>{user.username}</span>
+                </span>
+                <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
+              </button>
+              {/* Guest sign-in affordance, reading "<name> · Sign in". Links to
+                  the same /login flow used by the signed-out button and the
+                  in-menu items. Hidden on phones (like the name) to keep the
+                  compact mobile header intact; the menu still offers Sign in. */}
+              {user.isGuest && (
+                <>
+                  <span aria-hidden className="hidden text-parchment-500 sm:inline">·</span>
+                  <Link
+                    href="/login"
+                    className="btn-ghost press hidden min-h-[44px] items-center px-2.5 py-1.5 font-display text-sm text-gold-leaf no-underline sm:inline-flex"
+                  >
+                    Sign in
+                  </Link>
+                </>
+              )}
+            </div>
             {menu === "profile" && (
               <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown dgn-menu py-1 shadow-2xl">
                 {user.isGuest && (
@@ -569,14 +596,18 @@ export function SiteHeader({ active }: { active?: string }) {
                     router.push("/achievements");
                   }}
                 />
-                <MenuItem
-                  icon={<Mail size={14} />}
-                  label="Inbox"
-                  onClick={() => {
-                    setMenu(null);
-                    router.push("/inbox");
-                  }}
-                />
+                {/* Private messages are account-only: a guest has no inbox
+                    worth opening, so the row is hidden for them. */}
+                {!user.isGuest && (
+                  <MenuItem
+                    icon={<Mail size={14} />}
+                    label="Inbox"
+                    onClick={() => {
+                      setMenu(null);
+                      router.push("/inbox");
+                    }}
+                  />
+                )}
                 <MenuItem
                   icon={<Settings size={14} />}
                   label="Preferences"

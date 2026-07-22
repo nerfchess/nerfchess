@@ -15,6 +15,7 @@ import { NERF_MODE_CADENCE, DEFAULT_CADENCE } from "../src/engine/draft";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
 import {
   pickHouseMove, houseThinkMs, houseDraftThinkMs, houseNerfPickIndex, houseSeedRating,
+  houseStyle,
   type HousePersona,
 } from "../src/lib/server/bots";
 import type { Move } from "../src/engine/types";
@@ -310,7 +311,7 @@ export class ArenaGame {
     const turn = g.board.turn;
     const grace = this.movedOnce[turn] ? 0 : firstMoveGraceMs;
     const clock = this.timeSec > 0 ? this.clocks[turn] + grace : 0;
-    return houseThinkMs(randomInt, clock, this.timeSec, this.thinkMult);
+    return houseThinkMs(randomInt, clock, this.timeSec, this.thinkMult, houseStyle(this.seats[turn]).tempo);
   }
 
   // ---- the one-action step (port of playHouseAction) ----
@@ -378,8 +379,9 @@ export class ArenaGame {
 
     const turn = g.board.turn;
 
-    // 3. Sometimes fire a held buff instead of moving (40% coin, draft games).
-    if (g.buffs && randomInt(100) < 40) {
+    // 3. Sometimes fire a held buff instead of moving (persona-styled coin,
+    // draft games): each bot has its own stable activation appetite.
+    if (g.buffs && randomInt(100) < Math.round(houseStyle(this.seats[turn]).activationChance * 100)) {
       try {
         const act = aiChooseBuffActivation(g, turn);
         if (act) {
@@ -405,7 +407,15 @@ export class ArenaGame {
     // 4. The move.
     let move: Move | null = null;
     try {
-      move = pickHouseMove(this.game!, this.seats[turn].skill, randomInt, this.timeSec > 0 ? this.clocks[turn] : undefined);
+      move = pickHouseMove(
+        this.game!,
+        this.seats[turn].skill,
+        randomInt,
+        this.timeSec > 0 ? this.clocks[turn] : undefined,
+        undefined,
+        undefined,
+        this.seats[turn],
+      );
     } catch {
       /* fall through to a legal fallback */
     }

@@ -62,6 +62,7 @@ import {
 import { BoardState, Color, Move, PieceType, Square } from "@/engine/types";
 import {
   applyDraftAction,
+  cardEventsFromDtActions,
   draftZones,
   mergeDraftState,
   playReplicaMove,
@@ -341,6 +342,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const [awaitingPremoveAck, setAwaitingPremoveAckState] = useState(false);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  // Desktop: the left command rail can be collapsed to give the board the
+  // extra ~340px. Persisted per browser; the board sizing math reserves less
+  // width while collapsed (see boardFitClass).
+  const [railCollapsed, setRailCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRailCollapsed(window.localStorage.getItem("dc:rail-collapsed") === "1");
+    } catch {}
+  }, []);
+  const toggleRail = () => {
+    setRailCollapsed((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem("dc:rail-collapsed", next ? "1" : "0");
+      } catch {}
+      return next;
+    });
+  };
   const [revealedOppNerf, setRevealedOppNerf] = useState<Nerf | null>(() => {
     const oppId = start.revealed?.[start.color === "w" ? "b" : "w"];
     return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
@@ -354,6 +374,13 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     rank: number;
   } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
+  // The full public draft-action record for THIS viewer: seeded from the start
+  // payload (so refreshes and reconnects keep the whole history) and appended
+  // as resolved/used frames arrive. Feeds the result screen's match timeline;
+  // without it a finished draft game wrongly read "no card record".
+  const [dtActionLog, setDtActionLog] = useState<MPDraftAction[]>(() =>
+    start.dtActions ? [...start.dtActions] : [],
+  );
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
   // Abandonment claims: opponentGone arrived and no sign of life since; after
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
@@ -824,8 +851,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDraftSubmitted(false);
         // The server refusing our move as stale or illegal means the local
         // replica has drifted from the authoritative game: resync instead of
-        // dead-ending on the error message.
+        // dead-ending on the error message. The optimistic piece snaps back
+        // when pendingLocalMove clears above, so pair that rollback with an
+        // audible cue and a message that says what happened and what to do.
         if (e.code === "stale_ply" || e.code === "illegal_move") {
+          playError();
+          setError("Your move was not accepted. The board has been resynced; try the move again.");
           resyncFromServer(`server rejected our move: ${e.code}`);
         }
       } else if (e.type === "disconnected") {
@@ -877,6 +908,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // game as usual (this is also how the draft screen hands over once
         // both picks are in).
         setNerfDraft(e.setup.nerfDraft ?? null);
+        // The replayed start carries the authoritative action record: reset the
+        // local log to it so the timeline never double-counts after a reconnect.
+        setDtActionLog(e.setup.dtActions ? [...e.setup.dtActions] : []);
         applyGame(e.setup.nerfDraft ? null : buildGameFromStart(e.setup));
       } else if (e.type === "nerf-picked") {
         // Progress only: never the card. My own echo is just an ack.
@@ -1138,6 +1172,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             ? { ply: g.board.history.length, color: e.resolved.color, a: "pick", cards: e.resolved.cards ?? [] }
             : { ply: g.board.history.length, color: e.resolved.color, a: "bank" };
         applyDraftAction(g, action);
+        setDtActionLog((log) => [...log, action]);
         // Shared reveal moment: hold this side's resolution; once both sides
         // of the round are in (either order), fire the banner. The server
         // already filtered `cards` for this seat (masked entries carry only a
@@ -1185,14 +1220,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "draft-used") {
         const g = gameRef.current;
         if (!g?.buffs) return;
-        applyDraftAction(g, {
+        const useAction: MPDraftAction = {
           ply: g.board.history.length,
           color: e.used.color,
           a: "use",
           buffIndex: e.used.buffIndex,
           picks: e.used.picks,
           card: e.used.card,
-        });
+        };
+        applyDraftAction(g, useAction);
+        setDtActionLog((log) => [...log, useAction]);
         if (e.used.color !== myColor) {
           playNerf();
           if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
@@ -2246,20 +2283,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
-  // Board sizing, mirroring the local game page: the square board must fit
-  // BOTH the available height (an h-dvh layout) and the width left over after
-  // the rails present at each breakpoint, so it can never push a rail
-  // off-screen. Each min() term reserves those rails: none below sm, the
-  // right move rail (~288px + gaps + page padding) at sm, the left command
-  // rail (440px) added at lg (820px total), and its wider 500px form at xl
-  // (880px total). The old lg/xl terms reserved only 32/36rem, less than the
-  // real rail total, so at 1440x900 the centered grid overflowed and clipped
-  // the left panel and the right rail's clock/Resign at the viewport edges.
-  // Below sm the board runs nearly edge to edge. Literal class strings only,
-  // so Tailwind's JIT emits them.
+  // Board sizing: the square board must fit BOTH the available height (an
+  // h-dvh layout, now including the always-visible player bars above and below
+  // the board) and the width left over after the rails present at each
+  // breakpoint, so it can never push a rail off-screen. The 2026-07 layout
+  // pass made the board the clear priority: the left command rail narrowed
+  // from 440/500px to 320/340px, so each min() term now reserves: none below
+  // sm, the right move rail (~288px + gaps + page padding = 344px) at sm,
+  // the narrowed left rail added at lg (700px total) and xl (720px total).
+  // With the rail collapsed (railCollapsed) only the right rail is reserved,
+  // so the board grows to its height/cap limit. At 1363x936 this yields a
+  // ~640px board expanded and ~710px collapsed (was ~480-540px).
+  // Literal class strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
+    ? railCollapsed
+      ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
+      : "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-720px))] max-w-full"
+    : railCollapsed
+    ? "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-720px))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2597,13 +2639,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className="match-grid grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
+          className={
+            "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-4 " +
+            (railCollapsed
+              ? "lg:grid-cols-[auto]"
+              : "lg:grid-cols-[320px_auto] xl:grid-cols-[340px_auto]")
+          }
           style={railHeightStyle}
         >
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside className="rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
+          <aside
+            className={
+              "rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start " +
+              (railCollapsed ? "" : "lg:grid")
+            }
+          >
             <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
               <span
                 className={
@@ -2622,6 +2674,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {subtitle && (
                 <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">{subtitle}</span>
               )}
+              {/* Collapse the rail for a bigger board; a matching expand
+                  control rides the opponent bar while collapsed. */}
+              <button
+                type="button"
+                onClick={toggleRail}
+                aria-label="Collapse side panel"
+                title="Collapse side panel for a bigger board"
+                className="btn-ghost grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+              </button>
               {/* A gold gleam that occasionally travels the header hairline. */}
               <span aria-hidden className="rail-header-sheen" />
             </div>
@@ -2641,6 +2707,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               hideNerf={hideOppNerfCard}
               ownerLabel=""
               compact
+              connected={!opponentGone}
             />
             </div>
             <div
@@ -2686,6 +2753,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
                 boons={myHeldBoons}
                 compact
+                connected={!connectionLost}
               />
               </div>
               {!isBuffMode && revealControl}
@@ -2694,9 +2762,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </aside>
           <div className="match-board-col flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="match-board-shell min-h-0 min-w-0 sm:flex-none">
-              {/* Mobile-only player strips: the side rails (clocks, cards,
-                  actions) are hidden below the sm breakpoint. */}
-              <div className="board-strip flex items-center justify-between gap-2 sm:hidden">
+              {/* Player bars at every breakpoint (2026-07 layout pass): the
+                  opponent's identity + clock ride directly above the board and
+                  the viewer's directly below it, so nothing forces a scan
+                  across the screen. The rails keep the rules/moves/chat. */}
+              <div className="board-strip flex items-center justify-between gap-2">
+                {railCollapsed && (
+                  <button
+                    type="button"
+                    onClick={toggleRail}
+                    aria-label="Show side panel"
+                    title="Show the side panel"
+                    className="btn-ghost hidden h-8 w-8 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100 lg:grid"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <polyline points="13 17 18 12 13 7" />
+                      <polyline points="6 17 11 12 6 7" />
+                    </svg>
+                  </button>
+                )}
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2709,6 +2793,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   avatar={start.players?.[oppColor]?.avatar}
                   linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
+                  connected={!opponentGone}
                 />
                 {clockEnabled && (
                   <ClockPill
@@ -2892,7 +2977,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 </div>
               )}
-              <div className="board-strip flex items-center justify-between gap-2 sm:hidden">
+              <div className="board-strip flex items-center justify-between gap-2">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2905,6 +2990,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   avatar={start.players?.[myColor]?.avatar}
                   linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
+                  connected={!connectionLost}
                 />
                 {clockEnabled && (
                   <ClockPill
@@ -2984,44 +3070,35 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             <div
               className={
                 "match-side-rail hidden min-h-0 overflow-hidden gap-3 sm:grid sm:h-[var(--board-height)] sm:w-72 sm:shrink-0 " +
-                (clockEnabled ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]" : "sm:grid-rows-[minmax(0,1fr)]")
+                (clockEnabled && !start.rated
+                  ? "sm:grid-rows-[auto_minmax(0,1fr)_auto]"
+                  : "sm:grid-rows-[minmax(0,1fr)_auto]")
               }
               style={railHeightStyle}
             >
-              {clockEnabled && (
-                // Wrapped so the pill plus the courtesy buttons stay in one
-                // grid row (the rail defines exactly three row tracks).
-                <div className="space-y-1">
-                  <ClockPill
-                    ms={myColor === "w" ? blackMs : whiteMs}
-                    active={chargedColor === oppColor}
-                    startDelayMs={clockStartDelay(oppColor)}
-                  />
-                  {/* Clock courtesy: +15s to the opponent for anyone in a casual
-                      game; -15s is the owner-only tool (server re-verifies). */}
-                  {!start.rated && (
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => session.adjustOppClock(false)}
-                        disabled={!!game.result}
-                        title="Give your opponent 15 seconds"
-                        className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[12px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
-                      >
-                        +15s
-                      </button>
-                      {isOwnerAccount && (
-                        <button
-                          type="button"
-                          onClick={() => session.adjustOppClock(true)}
-                          disabled={!!game.result}
-                          title="Take 15 seconds from your opponent"
-                          className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[12px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
-                        >
-                          -15s
-                        </button>
-                      )}
-                    </div>
+              {/* Clocks now live in the player bars above/below the board; the
+                  rail keeps only the casual-game clock courtesy tools. */}
+              {clockEnabled && !start.rated && (
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => session.adjustOppClock(false)}
+                    disabled={!!game.result}
+                    title="Give your opponent 15 seconds"
+                    className="flex-1 rounded-[1px] border border-mint/40 bg-mint/10 px-2 py-1 text-[12px] font-semibold text-mint-glow transition-colors hover:bg-mint/20 disabled:opacity-40"
+                  >
+                    +15s
+                  </button>
+                  {isOwnerAccount && (
+                    <button
+                      type="button"
+                      onClick={() => session.adjustOppClock(true)}
+                      disabled={!!game.result}
+                      title="Take 15 seconds from your opponent"
+                      className="flex-1 rounded-[1px] border border-coral/40 bg-coral/10 px-2 py-1 text-[12px] font-semibold text-coral-glow transition-colors hover:bg-coral/20 disabled:opacity-40"
+                    >
+                      -15s
+                    </button>
                   )}
                 </div>
               )}
@@ -3034,15 +3111,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 showHeader={false}
                 footer={historyActions}
               />
-              {clockEnabled && (
-                <ClockPill
-                  ms={myColor === "w" ? whiteMs : blackMs}
-                  active={chargedColor === myColor}
-                  startDelayMs={clockStartDelay(myColor)}
-                  warnLowTime={uiSettings.lowTimeWarning}
-                />
-              )}
-              <div className="flex justify-end pt-1">
+              {/* The effects control keeps clear inset from the rail edge so
+                  its slider and labels are never clipped at any width. */}
+              <div className="flex justify-end px-1 pt-1">
                 <FxToggleButton />
               </div>
             </div>
@@ -3289,6 +3360,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}
+          // Both game clocks stay visible while drafting (with the clock rule
+          // stated in the panel), so time pressure never hides behind cards.
+          clocks={
+            clockEnabled
+              ? {
+                  mine: myColor === "w" ? whiteMs : blackMs,
+                  theirs: myColor === "w" ? blackMs : whiteMs,
+                }
+              : null
+          }
           // Recording mode: cap the draft panel to the 9:16 frame so it lands
           // centered on the board (which is screen-centered here) instead of
           // spilling past the vertical crop.
@@ -3424,6 +3505,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // the board on a reconnected client).
           onReview={() => handleHistoryPlyChange(0)}
           moves={game.board.history}
+          // The full public card history (picks, uses) with plies, so the match
+          // timeline shows the real record instead of "no card record".
+          cardEvents={isDraft ? cardEventsFromDtActions(dtActionLog) : undefined}
           playerNames={{
             w: myColor === "w" ? myName : oppName,
             b: myColor === "b" ? myName : oppName,

@@ -63,6 +63,14 @@ interface Props {
     reveal?: { index: number; cards?: { id: string; tier: number }[]; tier?: number } | null;
     lastPick?: { id: string; tier: number } | null;
   };
+  /** Both game clocks (ms), so drafting never hides the time situation. */
+  clocks?: { mine: number; theirs: number } | null;
+}
+
+/** m:ss for the in-overlay clock chips. */
+function fmtClock(ms: number): string {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
 /** Shared countdown tick: milliseconds left plus a one-shot expiry callback
@@ -401,6 +409,7 @@ export function DraftOverlay({
   recordingMode = false,
   revealScope,
   opponent,
+  clocks,
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
@@ -827,14 +836,25 @@ export function DraftOverlay({
               userPinnedRef.current = true;
               setTucked(false);
             }}
-            aria-label={`Resolve your ${noun} draft`}
-            className="plate plate-raised flex items-center gap-2 rounded-[1px] border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            aria-label={`Resolve your ${noun} draft. Your clock is running.`}
+            // Large, persistent, and impossible to miss: an unresolved draft
+            // with the clock running must never hide behind a subtle chip.
+            className="plate plate-raised flex min-h-[52px] items-center gap-2.5 rounded-[1px] border-2 border-gold/70 bg-gold/10 px-4 py-2.5 shadow-plate transition hover:border-gold hover:bg-gold/20"
           >
-            <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
-            <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
-              Resolve {noun} draft #{offer.index}
+            <span aria-hidden className="h-2 w-2 shrink-0 rounded-[1px] bg-oxblood-glow animate-flicker" />
+            <span className="text-left">
+              <span className="block font-display text-sm font-bold tracking-wide text-gold-leaf">
+                Resolve draft
+              </span>
+              <span className="smallcaps block text-[11px] text-oxblood-glow">
+                Your clock is running
+              </span>
             </span>
-            <span className="smallcaps shrink-0 text-[12px] text-oxblood-glow">On your clock</span>
+            {clocks && (
+              <span className="ml-1 shrink-0 font-mono text-sm font-bold tabular-nums text-parchment-100">
+                {fmtClock(clocks.mine)}
+              </span>
+            )}
           </button>
         </div>
       );
@@ -873,8 +893,20 @@ export function DraftOverlay({
                 {nounCap} draft #{offer.index}
               </span>
             </span>
-            <span className="smallcaps shrink-0 text-[12px] text-oxblood-glow">On your clock</span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              {clocks && (
+                <span className="font-mono text-[12px] font-bold tabular-nums text-parchment-100">
+                  {fmtClock(clocks.mine)}
+                </span>
+              )}
+              <span className="smallcaps text-[12px] text-oxblood-glow">On your clock</span>
+            </span>
           </div>
+          {/* Why the draft moved: the free window ended, so it collapsed here
+              rather than covering the board, and time now costs the player. */}
+          <p className="text-[11px] leading-snug text-parchment-400">
+            The free pick window ended. Your draft moved here and further thinking runs on your clock.
+          </p>
           {takeBoth && (
             <p className="mt-1 text-[12px] font-semibold leading-snug text-gold-leaf">
               Picking any card takes the whole offer.
@@ -920,7 +952,7 @@ export function DraftOverlay({
                 }}
                 className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
               >
-                Confirm pick
+                Confirm {BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}
               </button>
             )}
             {canReroll && (
@@ -1068,6 +1100,23 @@ export function DraftOverlay({
         }
       >
         {deadline != null && <DraftTimerWindow deadline={deadline} onExpire={handleExpire} />}
+        {/* Both game clocks stay visible while drafting, with the clock rule
+            stated plainly: the free window is paused time; overrunning it
+            puts further deliberation on the player's own clock. */}
+        {clocks && (
+          <div className="pointer-events-none flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-parchment-300">
+            <span className="font-mono tabular-nums">
+              You <span className="font-bold text-parchment-100">{fmtClock(clocks.mine)}</span>
+            </span>
+            <span aria-hidden className="text-parchment-500">·</span>
+            <span className="font-mono tabular-nums">
+              Opponent <span className="font-bold text-parchment-100">{fmtClock(clocks.theirs)}</span>
+            </span>
+            <span className="smallcaps text-[11px] text-parchment-400">
+              Clocks paused during the free window; after it, drafting costs your clock
+            </span>
+          </div>
+        )}
         {/* Unclipped wrapper: hosts the wall torches straddling the slab's top
             corners. They must sit OUTSIDE the frame, whose corner-cut
             clip-path would behead anything poking past its bounds. */}
@@ -1468,7 +1517,11 @@ export function DraftOverlay({
             disabled={selected == null || chosen != null || banking}
             className="btn-glass btn-glass--primary w-full touch-manipulation px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
           >
-            {selected != null ? "Confirm pick" : "Pick a card"}
+            {/* The commit names the selected card ("Confirm Holy Hell") so
+                the player always knows exactly what they are locking in. */}
+            {selected != null
+              ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
+              : "Pick a card"}
           </button>
           {canReroll && (
             <button

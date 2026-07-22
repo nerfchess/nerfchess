@@ -38,6 +38,10 @@ export function CodexRow({
   const tier = card.tier;
   const Icon = entryIcon(entry);
   const path = entryPath(entry);
+  // Real number of difficulty tiers, derived from the shared tier table
+  // (index 0 is a filler, so subtract it) rather than hardcoded. Covers the
+  // normal 1..8 bands plus Apex (9) and Mythic (10).
+  const tierTotal = TIER_ROMAN.length - 1;
 
   const onRowClick = (e: MouseEvent) => {
     // Let modified / non-primary clicks navigate to the stable URL as normal
@@ -49,17 +53,24 @@ export function CodexRow({
 
   const rowStyle: CSSProperties = { contentVisibility: "auto", containIntrinsicSize: "auto 48px" };
 
+  // The Copy button is a SIBLING of the card link, not a child: nesting one
+  // interactive control inside another is invalid and lets a Copy click also
+  // trigger the link. The bordered row surface, hover, and expanded styling
+  // therefore live on this wrapper; the link keeps its own focus ring.
   return (
-    <div style={rowStyle}>
+    <div
+      style={rowStyle}
+      className={`group flex min-h-[44px] items-center gap-2.5 rounded-sm border px-2.5 py-2 transition ${
+        expanded
+          ? "border-[color:var(--edge-strong)] bg-white/[0.04]"
+          : "border-[color:var(--edge)] bg-white/[0.015] hover:bg-[color:var(--surface-hover)]"
+      }`}
+    >
       <Link
         href={path}
         onClick={onRowClick}
         aria-expanded={expanded}
-        className={`group flex min-h-[44px] items-center gap-2.5 rounded-sm border px-2.5 py-2 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] ${
-          expanded
-            ? "border-[color:var(--edge-strong)] bg-white/[0.04]"
-            : "border-[color:var(--edge)] bg-white/[0.015] hover:bg-[color:var(--surface-hover)]"
-        }`}
+        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
       >
         <span
           aria-hidden
@@ -74,7 +85,7 @@ export function CodexRow({
           </span>
           <span
             className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${tier} tier-${tier}`}
-            title={`Tier ${TIER_ROMAN[tier]} of 8: ${TIER_LABEL[tier]}`}
+            title={`Tier ${TIER_ROMAN[tier]} of ${tierTotal}: ${TIER_LABEL[tier]}`}
           >
             {TIER_ROMAN[tier]}
           </span>
@@ -82,26 +93,22 @@ export function CodexRow({
             {card.description}
           </span>
         </span>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onCopy();
-          }}
-          aria-label={`Copy link to ${card.name}`}
-          className="hidden h-8 shrink-0 items-center gap-1 rounded-sm px-2 text-[12px] text-parchment-400 hover:bg-white/5 hover:text-parchment-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:inline-flex"
-        >
-          <Link2 size={14} aria-hidden />
-          {copied ? "Copied" : "Copy"}
-        </button>
-        <ChevronRight
-          size={16}
-          aria-hidden
-          className={`shrink-0 text-parchment-400 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
-        />
       </Link>
+
+      <button
+        type="button"
+        onClick={onCopy}
+        aria-label={`Copy link to ${card.name}`}
+        className="hidden h-8 shrink-0 items-center gap-1 rounded-sm px-2 text-[12px] text-parchment-400 hover:bg-white/5 hover:text-parchment-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:inline-flex"
+      >
+        <Link2 size={14} aria-hidden />
+        {copied ? "Copied" : "Copy"}
+      </button>
+      <ChevronRight
+        size={16}
+        aria-hidden
+        className={`shrink-0 text-parchment-400 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
+      />
     </div>
   );
 }

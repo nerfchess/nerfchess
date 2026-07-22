@@ -105,11 +105,11 @@ export default function PlayPage() {
     <main className="min-h-screen">
       <SiteHeader />
 
-      <section className="max-w-2xl mx-auto px-6 py-8">
+      <section className="max-w-2xl mx-auto px-6 py-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-5xl">Play the computer</h1>
-            <p className="mt-2 text-[13px] text-parchment-300">
+            <h1 className="font-display text-4xl">Play the computer</h1>
+            <p className="mt-1.5 text-[13px] text-parchment-300">
               Practice against a bot at your own pace. Buff, Nerf, or plain chess.
             </p>
           </div>
@@ -121,7 +121,7 @@ export default function PlayPage() {
               <span className="smallcaps text-[11px] text-parchment-400">Rating</span>
               <span className="font-mono text-sm text-parchment-100 tabular-nums">{rating}</span>
               <span className="font-mono text-[12px] text-parchment-400">·</span>
-              <span className="font-mono text-[12px] text-parchment-400 tabular-nums">{games}g</span>
+              <span className="font-mono text-[12px] text-parchment-400 tabular-nums">{games} {games === 1 ? "game" : "games"}</span>
             </Link>
           )}
         </div>
@@ -167,7 +167,7 @@ export default function PlayPage() {
             one lands here and gets stuck. */}
         <Link
           href="/lobby"
-          className="mt-6 plate group flex items-center gap-4 border-mode-buff/40 bg-mode-buff/5 p-4 no-underline transition-colors hover:border-mode-buff/70 hover:bg-mode-buff/10"
+          className="mt-4 plate group flex items-center gap-3 border-mode-buff/40 bg-mode-buff/5 p-3 no-underline transition-colors hover:border-mode-buff/70 hover:bg-mode-buff/10"
         >
           <span
             aria-hidden
@@ -193,27 +193,7 @@ export default function PlayPage() {
           </span>
         </Link>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <ModeCard
-            mode="buff"
-            selected={gameMode === "buff"}
-            onClick={() => selectMode("buff")}
-            title="Buff mode"
-            tagline="Power-ups"
-            body="Start with normal chess. Draft powers for your own army."
-            recommended
-          />
-          <ModeCard
-            mode="nerf"
-            selected={gameMode === "nerf"}
-            onClick={() => selectMode("nerf")}
-            title="Nerf mode"
-            tagline="Handicaps"
-            body="Start with a secret handicap. Draft curses for your opponent."
-          />
-        </div>
-
-        <div className="mt-8 plate p-6 sm:p-7 space-y-6">
+        <div className="mt-6 plate p-6 sm:p-7 space-y-6">
           <div>
             <Group label="Game type">
               <Pill selected={botMode === "buff"} onClick={() => selectMode("buff")}>Buff</Pill>
@@ -336,61 +316,6 @@ function TimeSlider({
         <span>{formatEdgeLabel(values[values.length - 1])}</span>
       </div>
     </div>
-  );
-}
-
-// Each mode card wears its color identity (Nerf slightly red, Buff blue) at
-// all times; selecting it deepens the border, wash, and glow.
-function ModeCard({
-  mode,
-  selected,
-  onClick,
-  title,
-  tagline,
-  body,
-  recommended = false,
-}: {
-  mode: "nerf" | "buff";
-  selected: boolean;
-  onClick: () => void;
-  title: string;
-  tagline: string;
-  body: string;
-  recommended?: boolean;
-}) {
-  const identity =
-    mode === "nerf"
-      ? {
-          card: selected
-            ? "border-mode-nerf/70 bg-mode-nerf/10 shadow-nerf"
-            : "border-mode-nerf/25 hover:border-mode-nerf/50 hover:bg-mode-nerf/5",
-          title: "text-mode-nerfGlow",
-        }
-      : {
-          card: selected
-            ? "border-mode-buff/70 bg-mode-buff/10 shadow-buff"
-            : "border-mode-buff/25 hover:border-mode-buff/50 hover:bg-mode-buff/5",
-          title: "text-mode-buffGlow",
-        };
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={selected}
-      className={"plate p-4 text-left transition " + identity.card}
-    >
-      <div className="flex items-center gap-2">
-        <div className={"font-display text-xl font-semibold " + identity.title}>
-          {title}
-        </div>
-        {recommended && (
-          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[11px] text-gold-leaf">
-            Recommended
-          </span>
-        )}
-      </div>
-      <div className={"mt-0.5 smallcaps text-[11px] " + identity.title}>{tagline}</div>
-      <p className="mt-1.5 text-[12px] leading-snug text-parchment-300">{body}</p>
-    </button>
   );
 }
 

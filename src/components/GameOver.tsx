@@ -244,14 +244,12 @@ function DraftedCardRow({
           </span>
         )}
       </div>
-      {/* The rule text always shows (clamped to two lines): a card's effect
-          should never hide behind a hover tooltip. The vote thumbs share this
+      {/* The rule text always shows IN FULL: a card's effect must never be
+          truncated into a broken fragment ("Your pawns can never be..."), and
+          it must never hide behind a hover tooltip. The vote thumbs share this
           row so the name line above keeps its full width in narrow columns. */}
       <div className="mt-0.5 flex items-start gap-2">
-        <p
-          className="min-w-0 flex-1 line-clamp-2 text-left text-xs leading-snug text-parchment-400"
-          title={def.description}
-        >
+        <p className="min-w-0 flex-1 text-left text-xs leading-snug text-parchment-300">
           {def.description}
         </p>
         {votable && (
@@ -416,7 +414,9 @@ function MatchTimeline({
           ? `${activeEvent.def?.name ?? "Card"} · ply ${activeEvent.ply}`
           : events.length > 0
           ? "Hover a marker to see the card played there."
-          : "Moves only: no card record for this game."}
+          : cardEvents
+          ? "No cards landed on the board in this game."
+          : "Moves only: this game has no card record."}
       </p>
     </section>
   );

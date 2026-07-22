@@ -3,13 +3,29 @@
 The "house players" are a fixed roster of engine-driven accounts that keep the
 lobby and TV alive: they sit in the queues so a new player always finds a game,
 pick up humans who queue, and play each other when nobody needs them. They look
-like ordinary players everywhere (real accounts, ratings, profiles, leaderboard)
-except for a small flower in the bottom-left of their avatar.
+like ordinary players everywhere (real accounts, ratings, profiles, leaderboard):
+no bot flag ever leaves the server, in any payload or API (owner request: no
+trace anywhere on the site).
 
-TL;DR of the moving parts:
+TL;DR of the moving parts (2026-07 expansion):
 
-- **50 fake accounts** ("personas"), skill mix ~40/30/20/10 across 1200 / 1400 /
-  1600 / 1750.
+- **510 accounts** ("personas"): the 210-deep legacy roster plus a 300-persona
+  expansion wave spanning genuine beginner (new 900 / 1050 / 1200 tiers)
+  through elite (2200) strength.
+- Every **legacy** persona's advertised rating gained a deterministic
+  **+300..400** (name-hashed, stable across resyncs — `houseRatingUplift`), and
+  every tier's engine profile was strengthened in the same change (bigger
+  search budgets, fewer forced blunders) so real strength moves with the number.
+  **Expansion** personas advertise their tier directly (no uplift stack).
+- Exactly **150 of the 300** expansion personas carry a short, casual,
+  unique bio; the other 150 stay blank. Expansion personas carry **no**
+  fictional location.
+- Each persona has a stable **style** (`houseStyle`): think tempo, buff
+  activation appetite, draft bank bias, aggression-driven search jitter, and a
+  pet opening for each color — so no two bots pace or play identically.
+- **Availability**: never the whole roster at once. The ACTIVE window breathes
+  daily between 180 and 240 personas, the ONLINE window shows at most 280, and
+  both rotate daily through the full roster.
 - Each move is chosen by a **local chess engine** (a small alpha-beta search in
   `src/engine/ai.ts`) with a **hard 80ms budget** so it can never stall the
   server. It is NOT Maia and nothing is outsourced (see "Notes vs the original

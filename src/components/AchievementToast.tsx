@@ -117,8 +117,16 @@ export function AchievementToast() {
   const tone = RARITY_TONE[current.rarity] ?? RARITY_TONE.common;
   return (
     // Desktop only (hidden below sm): on phones this corner is busy with
-    // drawers and the moment can wait for the achievements page.
-    <div className="fixed bottom-4 right-4 z-40 hidden w-72 sm:block">
+    // drawers and the moment can wait for the achievements page. Safe-area
+    // aware and width-capped so the card and its action row can never clip
+    // past the viewport edge.
+    <div
+      className="fixed z-40 hidden w-72 max-w-[calc(100vw-2rem)] sm:block"
+      style={{
+        right: "max(env(safe-area-inset-right), 1rem)",
+        bottom: "max(env(safe-area-inset-bottom), 1rem)",
+      }}
+    >
       <button
         type="button"
         onClick={() => setQueue((q) => q.slice(1))}
@@ -130,7 +138,7 @@ export function AchievementToast() {
             <Trophy size={17} strokeWidth={2} />
           </span>
           <span className="min-w-0">
-            <span className="smallcaps block text-[9px] text-parchment-400">
+            <span className="smallcaps block text-[11px] text-parchment-400">
               Achievement unlocked · {current.rarity}
             </span>
             <span className={`block truncate font-display text-sm font-bold ${tone.split(" ")[0]}`}>
@@ -143,10 +151,11 @@ export function AchievementToast() {
           {current.description}
         </span>
       </button>
+      {/* Readable, clickable secondary actions (12px floor, 32px hit area). */}
       <div className="mt-1 flex justify-end gap-3">
         <Link
           href="/achievements"
-          className="smallcaps text-[9px] text-parchment-400 transition-colors hover:text-parchment-100"
+          className="smallcaps inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 transition-colors hover:text-parchment-100"
         >
           View all
         </Link>
@@ -157,7 +166,7 @@ export function AchievementToast() {
             setDisabled(true);
             setQueue([]);
           }}
-          className="smallcaps text-[9px] text-parchment-500 underline decoration-dotted underline-offset-2 transition-colors hover:text-parchment-200"
+          className="smallcaps inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-parchment-100"
         >
           Disable these popups
         </button>

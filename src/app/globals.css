@@ -1995,11 +1995,17 @@ html[data-theme="nebula"] .mode-def-card {
      --sq-light / --sq-dark at runtime (settings.ts). */
   --sq-light: var(--board-light);
   --sq-dark: var(--board-dark);
-  /* Piece palette (recolored per piece theme; see lib/settings) */
-  --piece-w-fill: #f5f5f5;
-  --piece-w-stroke: #1a1a22;
-  --piece-b-fill: #1a1a22;
-  --piece-b-stroke: #f5f5f5;
+  /* Piece palette (recolored per piece theme; see lib/settings). The SSR
+     defaults match the "classic" theme (warm ivory over charcoal) so pieces
+     never flash clinical black-and-white before settings hydrate. */
+  --piece-w-fill: #f2ead8;
+  --piece-w-stroke: #3b332a;
+  --piece-b-fill: #2b2b31;
+  --piece-b-stroke: #d8c9a8;
+  /* Outline weight for the inline SVG set. 1.2 keeps silhouettes crisp at
+     board size without the heavy woodcut edge 1.5 gave the tiny 22px capture
+     row sprites. */
+  --piece-stroke-w: 1.2;
 }
 .piece-shell {
   line-height: 0;

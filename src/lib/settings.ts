@@ -245,7 +245,10 @@ export const PIECE_THEMES: Record<
   PieceTheme,
   { label: string; wFill: string; wStroke: string; bFill: string; bStroke: string; assetSet?: string }
 > = {
-  classic:           { label: "Classic",             wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5" },
+  // Classic ships warm ivory whites and charcoal blacks with a warm edge, so
+  // the default set sits inside the dungeon palette instead of clinical
+  // black-and-white (2026-07 piece pass).
+  classic:           { label: "Classic",             wFill: "#f2ead8", wStroke: "#3b332a", bFill: "#2b2b31", bStroke: "#d8c9a8" },
   ivory:             { label: "Ivory",               wFill: "#f0e8d5", wStroke: "#3a2f22", bFill: "#26201a", bStroke: "#f0e8d5" },
   steel:             { label: "Steel",               wFill: "#e8edf2", wStroke: "#2a3340", bFill: "#2b3440", bStroke: "#e8edf2" },
   rosewood:          { label: "Rosewood",            wFill: "#f3e6e4", wStroke: "#5a2b2b", bFill: "#4a2222", bStroke: "#f3e6e4" },
