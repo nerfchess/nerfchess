@@ -422,13 +422,26 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_quicksand_patch",
       name: "Quicksand Patch",
-      description: "Every one of your opponent's pawns sinks into quicksand and can only crawl one square at a time for their next 2 turns.",
+      description: "The ground gives way one move late: after your opponent's next move, every one of their pawns sinks into quicksand and can only crawl one square at a time for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Do not struggle, it only makes it worse.",
       fx: { motif: "jail", pieces: ["p"] },
     },
-    walnutAll(["p"], 2),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // Delayed one reply: the walnuts are added during the opponent's own
+        // move, so the shared post-move tick eats one turn at once. turns 3
+        // here leaves 2 of their turns crawling, matching the original.
+        for (const sq of mySquares(api.board, api.opp, "p")) {
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        }
+        inst.spent = true;
+      },
+      status: () => "the quicksand sets after their next move",
+    },
   ),
   card(
     {
@@ -738,23 +751,101 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_lost_and_found",
       name: "Lost and Found",
-      description: "Dig through the lost and found: return one of your captured pieces other than the queen to an empty square in your half, once. The heaviest lost piece comes back first.",
+      description: "Dig through the lost and found: pick the empty square in your half where a captured piece other than the queen will return. It reappears only after your opponent's next move, and only if that square is still empty. The heaviest lost piece comes back first.",
       tier: 4,
       category: "pieces",
       flavor: "That has been back there for ages.",
     },
-    reviveOne(["r", "b", "n", "p"], myHalfZone),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.sq != null) return null;
+        const type = (["r", "b", "n", "p"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        return {
+          kind: "square",
+          label: "Choose where the revived piece will return",
+          squares:
+            type == null
+              ? []
+              : emptySquares(api.board, myHalfZone(api)).filter(
+                  (sq) => type !== "p" || pawnRankOk(sq),
+                ),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const type = (["r", "b", "n", "p"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        if (type == null) return;
+        inst.state.sq = sq;
+        inst.state.type = type;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null) return;
+        if (move.color !== api.opp) return;
+        // The piece climbs back out only after the opponent's next move, and
+        // only if the chosen square is still empty.
+        const sq = inst.state.sq as Square;
+        const type = inst.state.type as PieceType;
+        if (!api.board.pieces[sq] && (type !== "p" || pawnRankOk(sq))) {
+          api.place(sq, type, api.me);
+          markRevived(api, type);
+        }
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to dig through the lost and found" : "it returns after their next move",
+    },
   ),
   card(
     {
       id: "wc_body_double",
       name: "Body Double",
-      description: "Slip one of your opponent's knights or bishops a better offer: it switches to your side for the rest of the game, once. Kings cannot be swayed.",
+      description: "Slip one of your opponent's knights or bishops a better offer: they get one more move with it, then, after that reply, it switches to your side for the rest of the game, once. Kings cannot be swayed.",
       tier: 4,
       category: "pieces",
       flavor: "Same face, different jersey.",
     },
-    convertEnemies(1, ["n", "b"], "Choose the enemy knight or bishop to poach"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy knight or bishop to poach",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b";
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The offer closes only after the opponent's next move.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.opp && p.type !== "k") api.setPieceColor(cur, api.me);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to make the offer" : "they defect after their next move",
+    },
   ),
   card(
     {
@@ -942,16 +1033,24 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_red_tape",
       name: "Red Tape",
-      description: "Bury your opponent in paperwork: they skip their next turn, but the forms catch up with you and you skip the turn after that.",
+      description: "Bury your opponent in paperwork: it takes a move to process, so after their next move they skip a turn, and then the forms catch up with you and you skip the turn after that.",
       tier: 3,
       category: "tempo",
       flavor: "Please take a number.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 1;
-      api.bs.skips[api.me] += 1;
-    }),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The paperwork lands one reply late: the opponent's next move goes
+        // through, then they skip, and the forms bill you the turn after.
+        api.bs.skips[api.opp] += 1;
+        api.bs.skips[api.me] += 1;
+        inst.spent = true;
+      },
+      status: () => "the paperwork clears after their next move",
+    },
   ),
   card(
     {
@@ -1250,16 +1349,47 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_panic_button",
       name: "Panic Button",
-      description: "Slam the big red button: your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess.",
+      description: "Slam the big red button: your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess. The shield is defensive only: if a move leaves your king next to the enemy king, giving check, the shield pops at once.",
       tier: 4,
       category: "protection",
       flavor: "That is what it is there for.",
       fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
-      api.bs.extraMoves[api.me] += 1;
-    }),
+    {
+      kind: "passive",
+      // Applies the instant its owner acquires it (init runs on acquire, exactly
+      // where an instant card's effect would): the shield is set and the extra
+      // move is banked right now.
+      init: (inst, api) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        api.bs.extraMoves[api.me] += 1;
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // While shielded the king cannot give check. A king only ever gives
+        // check by standing next to the enemy king, so if any of my moves
+        // leaves my king adjacent to theirs, the king_safe shield pops.
+        if (move.color === api.me) {
+          const myK = mySquares(api.board, api.me, "k")[0];
+          const oppK = mySquares(api.board, api.opp, "k")[0];
+          if (myK != null && oppK != null && dist(myK, oppK) <= 1) {
+            for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+              const e = api.bs.effects[i];
+              if (e.kind === "king_safe" && e.owner === api.me) api.bs.effects.splice(i, 1);
+            }
+            inst.spent = true;
+            return;
+          }
+        }
+        // The shield covers the opponent's next turn; retire once it has passed.
+        if (move.color === api.opp) {
+          const left = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => ((inst.state.turns as number) > 0 ? "the king is shielded" : null),
+    },
   ),
   card(
     {

@@ -800,7 +800,7 @@ export const TIER10: Buff[] = [
       icon: "Crown",
       name: "Ascendancy",
       description:
-        "For your next 3 turns every one of your pieces except the king moves and captures as an amazon (a queen that also leaps like a knight), and your king cannot be captured.",
+        "Choose up to four of your pieces other than the king; each moves and captures as an amazon (a queen that also leaps like a knight) for your next 2 turns, and your king cannot be captured for your opponent's next turn.",
       category: "movement",
       flavor: "Ascend, all of you.",
       fx: { motif: "empower", pieces: "all", moveAs: "q", self: true },
@@ -808,26 +808,53 @@ export const TIER10: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      effect: (inst, api) => {
-        // One activation only; re-use is a guarded no-op.
-        if (inst.state.turns != null) return;
-        inst.state.turns = 3;
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+      // One activation only: the ascendant pieces are chosen once.
+      targets: (inst, api, picks) =>
+        picks.length >= 4 || inst.state.sqs != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to ascend (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (!sqs.length) return;
+        inst.state.sqs = sqs;
+        inst.state.turns = 2;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
       },
       augmentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0) return;
-        for (const sq of mySquares(api.board, api.me)) {
-          if (api.board.pieces[sq]!.type === "k") continue;
-          addNovel(moves, amazonMoves(api, sq, inst.id));
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me && p.type !== "k") addNovel(moves, amazonMoves(api, sq, inst.id));
         }
       },
       onMovePlayed: (inst, move, api) => {
-        if (inst.state.turns == null) return;
-        tickTurns(inst, move, api.me);
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (sqs?.length) {
+          const next = sqs
+            .map((sq) => {
+              if (move.capturedSquare === sq && move.from !== sq) return null;
+              if (move.from === sq) return move.to;
+              if (move.to === sq && move.from !== sq) return null;
+              return sq;
+            })
+            .filter((s): s is Square => s != null);
+          inst.state.sqs = next;
+        }
+        if (inst.state.turns != null) tickTurns(inst, move, api.me);
       },
       status: (inst) =>
-        inst.state.turns == null
-          ? "activate: your whole army moves as amazons"
+        inst.state.sqs == null
+          ? "activate: choose up to four pieces to move as amazons"
           : `ascendant: ${turnsLeft(inst)} of your turns left`,
     },
   ),
@@ -844,29 +871,38 @@ export const TIER10: Buff[] = [
       icon: "Swords",
       name: "Total War",
       description:
-        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next turn.",
+        "Destroy up to five enemy pieces other than the king, then a fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns.",
       category: "attack",
       flavor: "Everything, everywhere, all at once.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        api.removePiece(sq);
-      }
-      const spots = backfillSpots(api);
-      spots.push(
-        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
-          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
-        ),
-      );
-      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
-      for (const type of force) {
-        const sq = spots.shift();
-        if (sq == null) break;
-        api.place(sq, type, api.me);
-      }
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 5
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to destroy (${picks.length + 1}/5)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (
+            k.square != null &&
+            api.board.pieces[k.square]?.color === api.opp &&
+            api.board.pieces[k.square]?.type !== "k"
+          ) {
+            api.removePiece(k.square);
+          }
+        }
+        grantInventory(api, "q");
+        grantInventory(api, "r");
+        grantInventory(api, "b");
+        grantInventory(api, "n");
+      },
+    ),
   ),
 ];
