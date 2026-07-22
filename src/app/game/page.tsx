@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -258,6 +259,9 @@ function GamePage() {
   // Bumped when a targeting tap lands on a non-eligible square; the
   // TargetingBanner flashes a one-line "what is targetable" hint per bump.
   const [invalidPickKey, setInvalidPickKey] = useState(0);
+  // The rail can be dragged wider/narrower by its right edge (desktop);
+  // --match-rail-w feeds both the grid column and the board sizing math.
+  const { railWidth, resizeRail, railWidthStyle } = useRailWidth();
   const aiThinking = useRef(false);
   const gameRef = useRef<NerfGame | null>(null);
   const aiWorkerRef = useRef<Worker | null>(null);
@@ -1585,12 +1589,17 @@ function GamePage() {
   // layout) and the width left over after the side rails, at every breakpoint,
   // so it never pushes a rail off-screen. Each min() term reserves the rails
   // present at that breakpoint: none below sm, the right move rail (~288px +
-  // gaps + page padding) at sm, the left command rail (440px) added at lg, and
-  // its wider 500px form at xl. Below sm the board runs nearly edge to edge
-  // (full width minus 8px). Literal strings only, so Tailwind's JIT emits them.
+  // gaps + page padding) at sm, and at lg the draggable left command rail on
+  // top of that (380px + the rail's live width, --match-rail-w, default
+  // 320px). Below sm the board runs nearly edge to edge (full width minus
+  // 8px) height-permitting: the 13rem (16rem with a hint) height reserve
+  // keeps the mobile player strips and clocks on-screen above the bottom
+  // drawer even on short landscape viewports (the old 7rem reserve let the
+  // bottom clock get pushed off). Literal strings only, so Tailwind's JIT
+  // emits them.
   const boardFitClass = hint
-    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-720px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-720px))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -1868,8 +1877,11 @@ function GamePage() {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[320px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[340px_auto]"
-          style={railHeightStyle}
+          // The rail column tracks the draggable --match-rail-w and a thin
+          // resize-handle column sits between rail and board; the 6px gaps +
+          // 4px handle keep the same 16px gutter as before.
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto] lg:justify-center lg:gap-x-1.5"
+          style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
               you) instead of floating islands; mirrors the online layout. */}
@@ -1967,6 +1979,7 @@ function GamePage() {
               }
             />
           </aside>
+          <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
               {/* Mobile-only player strips: the side rails (clocks, cards,
