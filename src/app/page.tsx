@@ -47,11 +47,6 @@ export default function HomePage() {
               at lg. */}
           <OpenLobbyPanel className="mt-2.5 lg:hidden" />
           <LiveRvPanel className="mt-3 lg:hidden" />
-          {/* Socials live right under the hero board (owner request: back to
-              its original spot). */}
-          <div className="mt-4">
-            <SocialsRow />
-          </div>
         </div>
 
         {/* The action column is kept short on purpose: it should never run
@@ -84,7 +79,7 @@ export default function HomePage() {
               so the next click is the matchmaking button. */}
           <DungeonGateButton
             href="/lobby"
-            className="mt-5 hidden w-full items-center justify-center px-6 py-6 font-display text-3xl font-bold no-underline sm:text-4xl lg:flex"
+            className="mt-5 hidden w-full items-center justify-center px-6 py-7 font-display text-4xl font-bold tracking-wide no-underline sm:text-5xl lg:flex"
           >
             Open lobby
           </DungeonGateButton>
@@ -150,6 +145,10 @@ export default function HomePage() {
       <LiveActivity />
       <CommunityProof />
 
+      {/* Socials now sit adjacent to the footer, closing out the page. */}
+      <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+        <SocialsRow />
+      </div>
       <SiteFooter />
     </main>
   );
@@ -783,10 +782,35 @@ function SiteFooter() {
       </nav>
       <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-parchment-400">
         <span className="opacity-70">Nerf Chess</span>
-        <span className="font-mono text-[10px] opacity-70" title="Deployed version">
-          {process.env.NEXT_PUBLIC_BUILD_VERSION ?? ""}
-        </span>
+        <BuildVersionLabel />
       </div>
     </footer>
+  );
+}
+
+// The deployed build/version stamp is an operator detail, not visitor-facing.
+// It is rendered only for moderators and admins. The role is resolved the same
+// way the rest of the page reads the viewer (fetchMe from the account API), in
+// a client effect after first paint, so signed-out visitors and still-loading
+// JavaScript never see it and it never reserves layout: nothing renders until
+// a moderator is confirmed.
+function BuildVersionLabel() {
+  const [isModerator, setIsModerator] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMe().then((me) => {
+      if (cancelled || !me || me.isGuest) return;
+      if (me.role === "mod" || me.role === "admin") setIsModerator(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const version = process.env.NEXT_PUBLIC_BUILD_VERSION ?? "";
+  if (!isModerator || !version) return null;
+  return (
+    <span className="font-mono text-[10px] opacity-70" title="Deployed version">
+      {version}
+    </span>
   );
 }

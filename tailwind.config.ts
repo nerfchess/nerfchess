@@ -30,8 +30,8 @@ export default {
           100: "#e0dcd2",
           200: "#cac6bd",
           300: "#a7a297",
-          400: "#7f7d77",
-          500: "#5c5a55",
+          400: "#999790",
+          500: "#6d6b65",
         },
         // gold = the configurable accent (links / primary); the rgb triples are
         // set on :root and swapped by the accent-color setting.
