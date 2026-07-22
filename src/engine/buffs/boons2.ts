@@ -28,6 +28,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   augment,
   captureSquare,
   emptySquares,

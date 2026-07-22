@@ -25,7 +25,7 @@
 // ---------------------------------------------------------------------------
 
 import { Buff, BuffApi, BuffCategory, CardFx } from "../buff";
-import { FILE, Move, PieceType, RANK, Square } from "../types";
+import { FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
   ALL_DIRS,
   KNIGHT_LEAPS,
@@ -36,12 +36,13 @@ import {
   bindCandidates,
   bindPiece,
   emptySquares,
+  grantInventory,
   inHalf,
+  instant,
   leapMoves,
   markRevived,
   mySquares,
   pawnRankOk,
-  placePieces,
   relRank,
   revivable,
   slideMoves,
@@ -78,6 +79,26 @@ function apex(meta: Meta, mech: Mech): Buff {
 /** Chebyshev (king-step) distance between two squares. */
 function cheb(a: Square, b: Square): number {
   return Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
+}
+
+/** Enemy pieces the queen on `from` can see: the first piece along each of the
+ * eight queen rays, if it is an enemy non-king (pieces behind a blocker are
+ * hidden). */
+function queenVisibleEnemies(api: BuffApi, from: Square): Square[] {
+  const out: Square[] = [];
+  for (const [df, dr] of ALL_DIRS) {
+    let f = FILE(from) + df, r = RANK(from) + dr;
+    while (inBoard(f, r)) {
+      const sq = SQ(f, r);
+      const p = api.board.pieces[sq];
+      if (p) {
+        if (p.color === api.opp && p.type !== "k") out.push(sq);
+        break;
+      }
+      f += df; r += dr;
+    }
+  }
+  return out;
 }
 
 /** Empty squares in my half, ordered from my back rank outward, so a respawn
