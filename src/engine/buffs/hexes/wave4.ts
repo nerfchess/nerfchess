@@ -14,12 +14,13 @@
 //   - each card is a distinct axis combination (piece class x constraint x
 //     zone x trigger x duration x punishment) within the wave.
 
-import type { Buff, Square } from "./shared";
+import type { Buff, BuffApi, Mech, Move, Square } from "./shared";
 import {
   activated,
   addEffect,
   curse,
   emptySquares,
+  hex,
   instant,
   isInCheck,
   mySquares,
@@ -42,10 +43,12 @@ import {
   cheb,
   drawRandom,
   dressUp,
+  followSq,
   freezeNow,
   moveDist,
   myKing,
   nutNow,
+  nutSting,
   onTheirMove,
   oppKing,
   sqShade,
@@ -57,6 +60,63 @@ const H1 = tierHexes(1);
 const H2 = tierHexes(2);
 const H3 = tierHexes(3);
 const H4 = tierHexes(4);
+
+// A curse that grants the first affected piece one escape: while the escape is
+// unused the restriction is off, so the first otherwise-forbidden move they play
+// slips through; from then on `pred` (a per-move KEEP test) is enforced for the
+// rest of the duration. The timer still ticks every one of their turns, so the
+// duration is preserved. `pred` must read only move fields (no board lookups)
+// since it is re-checked in onMovePlayed, after the move is applied.
+function escapeCurse(turns: number, pred: (m: Move, api: BuffApi) => boolean): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.escaped = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      if (!inst.state.escaped) return moves;
+      const kept = moves.filter((m) => pred(m, api));
+      return kept.length > 0 ? kept : moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color === api.opp && turnsLeft(inst) > 0 && !inst.state.escaped && !pred(move, api)) {
+        inst.state.escaped = true;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      !inst.state.escaped ? "one escape move remains" : `${turnsLeft(inst)} of their turns left`,
+  };
+}
+
+// A curse whose restriction starts one opponent move late: the first of their
+// moves passes unrestricted, then `filter` runs for the next `turns` of their
+// turns (the duration is preserved, just shifted).
+function delayedCurse(turns: number, filter: (moves: Move[], api: BuffApi) => Move[]): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.delay = 1;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if ((inst.state.delay as number) > 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      const kept = filter(moves, api);
+      return kept.length > 0 ? kept : moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color === api.opp && (inst.state.delay as number) > 0) {
+        inst.state.delay = (inst.state.delay as number) - 1;
+        return;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
+  };
+}
 
 // ------------------------------- TIER 1 ------------------------------------
 // Pinpricks: one pawn inconvenienced, one-turn quirks, cosmetic jabs.
@@ -78,8 +138,8 @@ const T1: Buff[] = [
     { id: "hx4_wet_matches", name: "Wet Matches", description: "Your opponent's pawns cannot capture on their next turn.", flavor: "Strike all you like.", icon: "Flame", fx: { motif: "muzzle", pieces: ["p"] } },
     curse(1, (moves) => moves.filter((m) => m.piece !== "p" || !m.captured)),
   ),
-  H1(
-    { id: "hx4_blunted_horseshoes", name: "Blunted Horseshoes", description: "For your opponent's next 3 turns, a knight of theirs that moved on their previous turn is too winded to capture.", flavor: "All trot, no trample.", icon: "Origami", fx: { motif: "muzzle", pieces: ["n"] } },
+  hex(
+    { id: "hx4_blunted_horseshoes", name: "Blunted Horseshoes", description: "For your opponent's next 3 turns, a knight of theirs that moved on their previous turn is too winded to capture.", flavor: "All trot, no trample.", icon: "Origami", fx: { motif: "muzzle", pieces: ["n"] }, tier: 2 },
     curse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
@@ -93,8 +153,8 @@ const T1: Buff[] = [
     }),
   ),
   H1(
-    { id: "hx4_buttoned_scabbard", name: "Buttoned Scabbard", description: "Your opponent's king cannot capture anything for their next 2 turns.", flavor: "The royal sword is ceremonial this week.", icon: "Shield", fx: { motif: "muzzle" } },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "k" || !m.captured)),
+    { id: "hx4_buttoned_scabbard", name: "Buttoned Scabbard", description: "Your opponent's king cannot capture anything for their next 2 turns, except its first capture slips through as one escape, then the restriction holds.", flavor: "The royal sword is ceremonial this week.", icon: "Shield", fx: { motif: "muzzle" } },
+    escapeCurse(2, (m) => m.piece !== "k" || !m.captured),
   ),
   H1(
     { id: "hx4_dusty_boots", name: "Dusty Boots", description: "One of your opponent's pawns, chosen at random, becomes a walnut for 1 of their turns: it can only shuffle a single square.", flavor: "March enough miles and you become the road.", icon: "Nut", fx: { motif: "anchor", pieces: ["p"] } },
@@ -141,12 +201,12 @@ const T1: Buff[] = [
     { id: "hx4_creaky_axles", name: "Creaky Axles", description: "For your opponent's next 2 turns, their rooks may slide at most 4 squares.", flavor: "You can hear the tower coming three streets away.", icon: "Cog", fx: { motif: "anchor", pieces: ["r"] } },
     curse(2, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) <= 4)),
   ),
-  H1(
-    { id: "hx4_homesick_queen", name: "Homesick Queen", description: "For your opponent's next 3 turns, their queen may not move into your half of the board.", flavor: "She misses the curtains, apparently.", icon: "House", fx: { motif: "anchor", pieces: ["q"] } },
+  hex(
+    { id: "hx4_homesick_queen", name: "Homesick Queen", description: "For your opponent's next 3 turns, their queen may not move into your half of the board.", flavor: "She misses the curtains, apparently.", icon: "House", fx: { motif: "anchor", pieces: ["q"] }, tier: 2 },
     curse(3, (moves, api) => moves.filter((m) => m.piece !== "q" || relRank(api.opp, m.to) <= 4)),
   ),
-  H1(
-    { id: "hx4_gnat_cloud", name: "Gnat Cloud", description: "For your opponent's next 3 turns, they may not move the same piece they moved on their previous turn. Their king is exempt.", flavor: "It followed the horse. Now it follows everyone.", icon: "Bug", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_gnat_cloud", name: "Gnat Cloud", description: "For your opponent's next 3 turns, they may not move the same piece they moved on their previous turn. Their king is exempt.", flavor: "It followed the horse. Now it follows everyone.", icon: "Bug", fx: { motif: "slow", pieces: "all" }, tier: 2 },
     curse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
@@ -301,16 +361,15 @@ const T1: Buff[] = [
     curse(1, (moves) => moves.filter((m) => !m.captured || FILE(m.from) > 3)),
   ),
   H1(
-    { id: "hx4_borrowed_boots", name: "Borrowed Boots", description: "For your opponent's next 3 turns, their king cannot step diagonally. Straight steps only.", flavor: "Two sizes too big and pointed the wrong way.", icon: "Footprints", fx: { motif: "anchor" } },
-    curse(3, (moves) =>
-      moves.filter(
-        (m) => m.piece !== "k" || FILE(m.from) === FILE(m.to) || RANK(m.from) === RANK(m.to),
-      ),
+    { id: "hx4_borrowed_boots", name: "Borrowed Boots", description: "For your opponent's next 3 turns, their king cannot step diagonally, straight steps only. The first diagonal step slips through as one escape, then the restriction holds.", flavor: "Two sizes too big and pointed the wrong way.", icon: "Footprints", fx: { motif: "anchor" } },
+    escapeCurse(
+      3,
+      (m) => m.piece !== "k" || FILE(m.from) === FILE(m.to) || RANK(m.from) === RANK(m.to),
     ),
   ),
   H1(
-    { id: "hx4_curfew_horn", name: "Curfew Horn", description: "For your opponent's next 3 turns, none of their pieces may move onto your back rank.", flavor: "The horn sounds and the deep streets empty.", icon: "Megaphone", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves, api) => moves.filter((m) => relRank(api.opp, m.to) !== 8)),
+    { id: "hx4_curfew_horn", name: "Curfew Horn", description: "For your opponent's next 3 turns, none of their pieces may move onto your back rank. The first piece to try slips through as one escape, then the restriction holds.", flavor: "The horn sounds and the deep streets empty.", icon: "Megaphone", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurse(3, (m, api) => relRank(api.opp, m.to) !== 8),
   ),
   H1(
     { id: "hx4_mild_sting", name: "Mild Sting", description: "A wasp circles their camp, in plain sight: after 3 of your opponent's turns, one of their pawns, chosen at random, is stung and frozen for 1 of their turns.", flavor: "You always hear it long before it lands.", icon: "Bug", fx: { motif: "slow", pieces: ["p"] } },

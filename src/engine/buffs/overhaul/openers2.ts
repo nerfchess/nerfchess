@@ -13,6 +13,7 @@
 import {
   Buff,
   BuffApi,
+  Color,
   FILE,
   Move,
   RANK,
@@ -50,6 +51,23 @@ const FILE_NAMES = "abcdefgh";
 /** 1-turn shield on one of my squares (uncapturable on the opponent's next turn). */
 function shield1(api: BuffApi, sq: Square) {
   addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+}
+
+/** Strip finite-duration (temporary) shields owned by `owner` from the given
+ * squares. Permanent shields (turns == null) and whole-army shields (squares
+ * == null) are left intact; a square-scoped shield simply drops the listed
+ * squares, going inert once empty. */
+function stripTempShields(api: BuffApi, squares: Square[], owner: Color) {
+  for (const e of api.bs.effects) {
+    if (e.kind === "shield" && e.owner === owner && e.turns != null && e.squares != null) {
+      e.squares = e.squares.filter((s) => !squares.includes(s));
+    }
+  }
+}
+
+/** Enemy squares the piece on `from` can currently capture (geometric reach). */
+function capturesFrom(api: BuffApi, from: Square, victimColor: Color): Square[] {
+  return mySquares(api.board, victimColor).filter((sq) => attacksSquare(api.board, from, sq));
 }
 
 /** The 8 squares around `sq` that exist on the board. */
@@ -202,12 +220,22 @@ function shopPerk(entry: (typeof SHOP_PERKS)[number]): Buff {
 // complementing the First Steps reference family with board-side payouts.
 // ---------------------------------------------------------------------------
 
-const SLOW_SEASONS: Array<OpenerMeta & { after: number; what: string; pay: (api: BuffApi) => void }> = [
+const SLOW_SEASONS: Array<
+  OpenerMeta & {
+    after: number;
+    what: string;
+    pay: (api: BuffApi) => void;
+    /** Announce the pending reward one of your moves before it lands. */
+    revealEarly?: boolean;
+    /** The (single-use) reward lapses if unused after this many of your drafts. */
+    expireAfterDrafts?: number;
+  }
+> = [
   { id: "title_deed", name: "Title Deed", flavor: "The clerk finds the castle paperwork behind a radiator.", icon: "ScrollText", after: 8, what: "your castling rights are restored if you had lost them", pay: (api) => api.restoreCastling() },
   { id: "ripe_for_picking", name: "Ripe for Picking", flavor: "The orchard tells you exactly which branches sag.", icon: "Apple", after: 5, what: "every currently undefended enemy piece flashes until your opponent replies", pay: (api) => flashSquares(api, undefendedPieces(api.board, api.opp)) },
-  { id: "early_sprout", name: "Early Sprout", flavor: "One green number pokes out of the draft soil.", icon: "Sprout", after: 4, what: "you learn the tier of your opponent's next draft offer", pay: (api) => { api.mine.flags.seeOppTier = true; } },
-  { id: "bumper_crop", name: "Bumper Crop", flavor: "Some years the cart simply comes back fuller.", icon: "Wheat", after: 7, what: "your next draft offers three cards instead of two", pay: (api) => { api.mine.flags.prepThree = true; } },
-  { id: "compost_heap", name: "Compost Heap", flavor: "Give it six moves. Good things rot upward.", icon: "Recycle", after: 6, what: "your next draft offer rolls one tier higher", pay: (api) => { api.mine.flags.bankBonus = 1; } },
+  { id: "early_sprout", name: "Early Sprout", flavor: "One green number pokes out of the draft soil.", icon: "Sprout", after: 4, what: "you learn the tier of your opponent's next draft offer", pay: (api) => { api.mine.flags.seeOppTier = true; }, expireAfterDrafts: 2 },
+  { id: "bumper_crop", name: "Bumper Crop", flavor: "Some years the cart simply comes back fuller.", icon: "Wheat", tier: 2, after: 7, what: "your next draft offers three cards instead of two", pay: (api) => { api.mine.flags.prepThree = true; }, revealEarly: true },
+  { id: "compost_heap", name: "Future Compost", flavor: "Give it seven moves. Good things rot upward.", icon: "Recycle", after: 7, what: "your next draft offer rolls one tier higher", pay: (api) => { api.mine.flags.bankBonus = 1; }, revealEarly: true },
   { id: "trellis", name: "Trellis", flavor: "The climbing pawn gets one lattice of protection.", icon: "Fence", after: 6, what: "your most advanced pawn cannot be captured during your opponent's next turn", pay: (api) => { const p = vanguardPawn(api); if (p != null) shield1(api, p); } },
   { id: "late_bloom", name: "Late Bloom", flavor: "Ten moves of patience, one burst of gold leaf.", icon: "Flower", after: 10, what: "your queen is gilded, purely cosmetically, forever", pay: (api) => { const q = mySquares(api.board, api.me, "q")[0]; if (q != null) { pinCosmetic(api, q, api.me, "gilded", null); flashSquares(api, [q], true); } } },
   { id: "second_harvest", name: "Second Harvest", flavor: "The field you already reaped owes you two more rows.", icon: "Tractor", after: 12, what: "gain 2 draft rerolls", pay: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2; } },

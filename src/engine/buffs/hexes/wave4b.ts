@@ -545,13 +545,13 @@ const T5: Buff[] = [
     ),
   ),
   H5(
-    { id: "hx4_hollow_fanfare", name: "Hollow Fanfare", description: "For your opponent's next 8 turns, any pawn they promote arrives as a walnut for 2 of their turns: crowned, celebrated, and unable to do more than shuffle.", flavor: "The trumpets were rented. The crown is a shell.", icon: "Trophy", fx: { motif: "slow", pieces: ["p"] } },
-    onTheirMove(8, (move, api) => {
+    { id: "hx4_hollow_fanfare", name: "Hollow Fanfare", description: "For your opponent's next 7 turns, any pawn they promote arrives as a walnut for 2 of their turns: crowned, celebrated, and unable to do more than shuffle.", flavor: "The trumpets were rented. The crown is a shell.", icon: "Trophy", fx: { motif: "slow", pieces: ["p"] } },
+    onTheirMove(7, (move, api) => {
       if (move.promotion) nutSting(api, move.to, 2);
     }),
   ),
-  H5(
-    { id: "hx4_beartrap_cache", name: "Beartrap Cache", description: "Hide traps on 2 empty squares you choose: the first enemy piece to stop on each is caught and frozen for 2 of their turns. Kings step over traps.", flavor: "The forest floor is patient.", icon: "Cross", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_beartrap_cache", name: "Beartrap Cache", description: "Hide traps on 2 empty squares you choose: the first enemy piece to stop on each is caught and frozen for 2 of their turns. Kings step over traps.", flavor: "The forest floor is patient.", icon: "Cross", fx: { motif: "blindfold" }, tier: 6 },
     {
       kind: "activated",
       spendOnUse: false,
@@ -579,8 +579,8 @@ const T5: Buff[] = [
     },
   ),
   H5(
-    { id: "hx4_ash_veil", name: "Ash Veil", description: "A veil of ash hides your minor pieces: your opponent cannot capture your knights or bishops for their next 3 turns.", flavor: "Strike the shadow, miss the shape.", icon: "CloudFog", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) =>
+    { id: "hx4_ash_veil", name: "Ash Veil", description: "A veil of ash hides your minor pieces: your opponent cannot capture your knights or bishops for their next 2 turns.", flavor: "Strike the shadow, miss the shape.", icon: "CloudFog", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
         if (c == null) return true;
@@ -589,8 +589,8 @@ const T5: Buff[] = [
       }),
     ),
   ),
-  H5(
-    { id: "hx4_gilded_cage", name: "Gilded Cage", description: "For your opponent's next 3 turns, their queen may only move to squares on their own back two ranks. The palace doors are locked from outside.", flavor: "Every luxury except a key.", icon: "Lock", fx: { motif: "anchor", pieces: ["q"] } },
+  hex(
+    { id: "hx4_gilded_cage", name: "Gilded Cage", description: "For your opponent's next 3 turns, their queen may only move to squares on their own back two ranks. The palace doors are locked from outside.", flavor: "Every luxury except a key.", icon: "Lock", fx: { motif: "anchor", pieces: ["q"] }, tier: 6 },
     curse(3, (moves, api) => moves.filter((m) => m.piece !== "q" || relRank(api.opp, m.to) <= 2)),
   ),
   H5(
@@ -610,10 +610,16 @@ const T5: Buff[] = [
     curse(6, (moves) => moves.filter((m) => m.piece !== "q" || !m.captured)),
   ),
   H5(
-    { id: "hx4_grasping_ivy", name: "Grasping Ivy", description: "Ivy coils around your king's court: for your opponent's next 4 turns, any piece of theirs that ends a move adjacent to your king is seized by vines and frozen for 1 of their turns.", flavor: "The garden defends the gardener.", icon: "Leaf", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
+    { id: "hx4_grasping_ivy", name: "Grasping Ivy", description: "Ivy coils around your king's court: for your opponent's next 4 turns, any piece of theirs that ends a move adjacent to your king is seized by vines and frozen for 1 of their turns. The first piece to reach the court escapes the vines; every piece after it is seized.", flavor: "The garden defends the gardener.", icon: "Leaf", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(4, (move, api, inst) => {
       const k = myKing(api);
-      if (k != null && move.piece !== "k" && cheb(move.to, k) <= 1) sting(api, move.to, 1, "vines");
+      if (k != null && move.piece !== "k" && cheb(move.to, k) <= 1) {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          return;
+        }
+        sting(api, move.to, 1, "vines");
+      }
     }),
   ),
   H5(

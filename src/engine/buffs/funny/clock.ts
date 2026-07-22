@@ -10,7 +10,7 @@
 // untimed) but whose board half, a Groundhog-style forced re-move, still bites.
 
 import { Buff, Square } from "./shared";
-import { card, instant, tickTurns, turnsLeft } from "./shared";
+import { addEffect, card, instant, tickTurns, turnsLeft } from "./shared";
 
 export const FUNNY_CLOCK: Buff[] = [
   card(
@@ -100,13 +100,24 @@ export const FUNNY_CLOCK: Buff[] = [
       id: "overtime_whistle",
       icon: "Bell",
       name: "Overtime Whistle",
-      description: "Blow the whistle for overtime: add 30 seconds to your own clock.",
+      description: "Blow the whistle for overtime: add 35 seconds to your own clock, flag the last enemy piece that moved until your opponent replies, and gain a draft reroll. In untimed games only the flag and the reroll apply.",
       tier: 3,
       category: "tempo",
       flavor: "We are not done yet.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 30 });
+      api.adjustClock({ addSelfSec: 35 });
+      // The clock gain does nothing in an untimed game, so always land two
+      // effects that do not need a clock: mark the last enemy mover (a purely
+      // visual flag that clears once they reply) and hand back a draft reroll.
+      const hist = api.board.history;
+      for (let i = hist.length - 1; i >= 0; i--) {
+        if (hist[i].color === api.opp) {
+          addEffect(api, { kind: "strike", squares: [hist[i].to], owner: api.me, turns: 1 });
+          break;
+        }
+      }
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   card(

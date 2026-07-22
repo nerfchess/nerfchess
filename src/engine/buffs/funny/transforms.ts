@@ -47,7 +47,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "king_of_the_hill",
       icon: "Flag",
       name: "King of the Hill",
-      description: "Your king rules the hill: while it stands on or beside one of the four center squares it may move like a queen.",
+      description: "Your king rules the hill: while it stands on or beside one of the four center squares it may move like a queen, though those extended queen moves cannot capture.",
       tier: 4,
       category: "movement",
       flavor: "Plant the flag and hold the high ground.",
@@ -55,7 +55,11 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) =>
-        onHill(sq) ? slideMoves(api.board, sq, ALL_DIRS, inst.id) : [],
+        // The king rules the hill by moving like a queen, but those extended
+        // queen moves cannot capture: drop any that land on an enemy piece.
+        onHill(sq)
+          ? slideMoves(api.board, sq, ALL_DIRS, inst.id).filter((m) => !m.captured)
+          : [],
       ),
     ),
   ),
@@ -87,7 +91,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "clone",
       icon: "Copy",
       name: "Clone",
-      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square within two squares of it, once.",
+      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square beside it, once.",
       tier: 3,
       category: "pieces",
       requires: ["p"],
@@ -95,12 +99,12 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        // The copy tray reaches two squares in every direction (it used to be
-        // only the adjacent ring).
+        // The copy tray reaches only the adjacent ring, one square in every
+        // direction (it used to reach two).
         const adj = (sq: number) => {
           const out: number[] = [];
-          for (let df = -2; df <= 2; df++) {
-            for (let dr = -2; dr <= 2; dr++) {
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
               if (df === 0 && dr === 0) continue;
               const f = FILE(sq) + df, r = RANK(sq) + dr;
               if (f < 0 || f > 7 || r < 0 || r > 7) continue;

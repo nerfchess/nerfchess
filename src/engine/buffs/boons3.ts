@@ -34,7 +34,6 @@ import {
   activatedSimple,
   addEffect,
   addNovel,
-  augment,
   captureSquare,
   emptySquares,
   explodeAt,
@@ -45,13 +44,15 @@ import {
   mySquares,
   oppFilter,
   pawnRankOk,
-  permanentAugment,
   phasingSlideMoves,
   pieceBound,
   relRank,
   revivable,
+  spendOnVia,
   teleportMoves,
-  timedAugment,
+  tickTurns,
+  trackBoundPiece,
+  turnsLeft,
 } from "./helpers";
 
 // --- Local plumbing ----------------------------------------------------------
@@ -150,7 +151,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_first_blood",
       name: "First Blood",
       description:
-        "The first capture you make in the game steals 10 seconds from your opponent's clock and adds them to yours. In untimed games it collects nothing.",
+        "The first capture you make in the game steals 15 seconds from your opponent's clock and adds them to yours, grants you one draft reroll, and reveals the tier of your opponent's next draft offer. In untimed games no time is taken, but the reroll and the reveal still come.",
       tier: 1,
       category: "tempo",
       icon: "Droplet",
@@ -161,7 +162,9 @@ export const BOON_WAVE3: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
-        api.adjustClock({ stealFlatSec: 10, stealCapSec: 10 });
+        api.adjustClock({ stealFlatSec: 15, stealCapSec: 15 });
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        api.mine.flags.seeOppTier = true;
         inst.spent = true;
       },
       status: () => "waiting on first blood",
@@ -177,7 +180,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_postern_gate",
       name: "Postern Gate",
       description:
-        "An old side door swings open in the keep wall: your right to castle on both sides is restored, even if your king or rooks have already moved.",
+        "An old side door swings open in the keep wall: your right to castle on both sides is restored, even if your king or rooks have already moved. Castling, as ever, can never be used to make a capture.",
       tier: 1,
       category: "movement",
       icon: "DoorClosed",
@@ -329,7 +332,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_forced_march",
       name: "Forced March",
       description:
-        "Sound the double-quick: for your next 2 turns, any of your pawns may advance two squares in one move from wherever it stands (both squares ahead must be empty), not only from its starting rank. It cannot double-step onto the final rank.",
+        "Sound the double-quick: for your next 2 turns, any of your pawns may advance two squares in one move from wherever it stands (both squares ahead must be empty), not only from its starting rank. It cannot double-step onto the final rank. Each such advance flags its landing square for your opponent until they reply.",
       tier: 3,
       category: "movement",
       icon: "Footprints",
@@ -337,19 +340,34 @@ export const BOON_WAVE3: Buff[] = [
       requires: ["p"],
       fx: { motif: "rally", pieces: ["p"], self: true },
     },
-    timedAugment(2, (_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = api.me === "w" ? 1 : -1;
-      for (const from of mySquares(api.board, api.me, "p")) {
-        const midr = RANK(from) + fwd, tr = RANK(from) + 2 * fwd;
-        if (tr < 0 || tr > 7) continue;
-        const to = SQ(FILE(from), tr);
-        if (relRank(api.me, to) > 7) continue; // no double-step onto the last rank
-        if (api.board.pieces[SQ(FILE(from), midr)] || api.board.pieces[to]) continue;
-        out.push({ from, to, piece: "p", color: api.me, via: inst.id } as Move);
-      }
-      return out;
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        const out: Move[] = [];
+        const fwd = api.me === "w" ? 1 : -1;
+        for (const from of mySquares(api.board, api.me, "p")) {
+          const midr = RANK(from) + fwd, tr = RANK(from) + 2 * fwd;
+          if (tr < 0 || tr > 7) continue;
+          const to = SQ(FILE(from), tr);
+          if (relRank(api.me, to) > 7) continue; // no double-step onto the last rank
+          if (api.board.pieces[SQ(FILE(from), midr)] || api.board.pieces[to]) continue;
+          out.push({ from, to, piece: "p", color: api.me, via: inst.id } as Move);
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Telegraph: the destination is flagged for the opponent until they reply.
+        if (move.via === inst.id && move.color === api.me) {
+          addEffect(api, { kind: "strike", squares: [move.to], owner: api.me, turns: 1 });
+        }
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
   ),
 
   // A draft cadence bet: gorge on one bumper offer, then fast. Neighbours:
@@ -384,7 +402,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_underdogs_gambit",
       name: "Underdog's Gambit",
       description:
-        "Desperation sharpens the rank and file: while you have fewer pieces than your opponent (kings aside), your pawns may also capture an enemy piece standing directly beside them, one square to the left or right. Draw level and they fight like pawns again.",
+        "Desperation sharpens the rank and file: while you have fewer pieces than your opponent (kings aside), your pawns may also capture an enemy piece standing directly beside them, one square to the left or right. Draw level and they fight like pawns again. The gift takes hold only after your opponent's next move.",
       tier: 3,
       category: "movement",
       icon: "Swords",
@@ -392,30 +410,41 @@ export const BOON_WAVE3: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_moves, inst, api) => {
-      if (armySize(api.board, api.me) >= armySize(api.board, api.opp)) return [];
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "p")) {
-        const r = RANK(from), f = FILE(from);
-        for (const df of [-1, 1]) {
-          const nf = f + df;
-          if (nf < 0 || nf > 7) continue;
-          const to = SQ(nf, r);
-          const t = api.board.pieces[to];
-          if (!t || t.color !== api.opp) continue;
-          out.push({
-            from,
-            to,
-            piece: "p",
-            color: api.me,
-            captured: t.type,
-            capturedSquare: to,
-            via: inst.id,
-          } as Move);
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Delay: the payoff wakes only after the opponent has replied once.
+        if (!inst.state.armed && move.color === api.opp) inst.state.armed = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return;
+        if (armySize(api.board, api.me) >= armySize(api.board, api.opp)) return;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "p")) {
+          const r = RANK(from), f = FILE(from);
+          for (const df of [-1, 1]) {
+            const nf = f + df;
+            if (nf < 0 || nf > 7) continue;
+            const to = SQ(nf, r);
+            const t = api.board.pieces[to];
+            if (!t || t.color !== api.opp) continue;
+            out.push({
+              from,
+              to,
+              piece: "p",
+              color: api.me,
+              captured: t.type,
+              capturedSquare: to,
+              via: inst.id,
+            } as Move);
+          }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+    },
   ),
 
   // A one-shot early promotion to a KNIGHT specifically. Neighbours: Early
@@ -514,7 +543,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_battlefield_commission",
       name: "Battlefield Commission",
       description:
-        "The deeper the hole, the higher the field promotion: if you have fewer pieces than your opponent (kings aside), your most advanced pawn is promoted where it stands - to a knight, or to a rook if you are outnumbered by four pieces or more. Used while you are not behind, the commission goes unsigned.",
+        "The deeper the hole, the higher the field promotion: if you have fewer pieces than your opponent (kings aside), your most advanced pawn is promoted where it stands - to a knight, or to a rook if you are outnumbered by four pieces or more. Used while you are not behind, the commission goes unsigned. The newly commissioned piece cannot move again on your next turn.",
       tier: 4,
       category: "pieces",
       icon: "Medal",
@@ -532,6 +561,10 @@ export const BOON_WAVE3: Buff[] = [
         if (relRank(api.me, sq) > relRank(api.me, tip)) tip = sq;
       }
       api.setPieceType(tip, theirs - mine >= 4 ? "r" : "n");
+      // The fresh commission cannot move again on your next turn. turns:2 so it
+      // survives the activation's own tick (passTurnAfterBuff) and expires after
+      // your next move.
+      addEffect(api, { kind: "freeze", sq: tip, owner: api.me, turns: 2 });
     }),
   ),
 
@@ -544,19 +577,35 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_royal_caper",
       name: "Royal Caper",
       description:
-        "A cornered king learns to vault: while your king is in check it may leap like a knight. The trick works twice, then the old bones remember their age.",
+        "A cornered king learns to vault: while your king is in check it may leap like a knight, its landing square flagged for your opponent until they reply. The trick works twice, then the old bones remember their age.",
       tier: 4,
       category: "movement",
       icon: "Rabbit",
       flavor: "Dignity is for kings who are not currently being chased.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true },
     },
-    augment((_moves, inst, api) => {
-      if (!isInCheck(api.board, api.me)) return [];
-      const ks = mySquares(api.board, api.me, "k")[0];
-      if (ks == null) return [];
-      return leapMoves(api.board, ks, KNIGHT_LEAPS, inst.id);
-    }, 2),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        if (!isInCheck(api.board, api.me)) return;
+        const ks = mySquares(api.board, api.me, "k")[0];
+        if (ks == null) return;
+        addNovel(moves, leapMoves(api.board, ks, KNIGHT_LEAPS, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Telegraph: the king's landing square is flagged for the opponent until
+        // they reply.
+        if (move.via === inst.id && move.color === api.me) {
+          addEffect(api, { kind: "strike", squares: [move.to], owner: api.me, turns: 1 });
+        }
+        spendOnVia(inst, move);
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} uses left`,
+    },
   ),
 
   // Draft economy tied to the board: each capture buys a reroll. Neighbours:
@@ -567,7 +616,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_plunderers_ledger",
       name: "Plunderer's Ledger",
       description:
-        "Every prize is entered in the ledger: each of your next 3 captures earns you one draft reroll to spend whenever you like.",
+        "Every prize is entered in the ledger: each of your next 3 captures earns you one draft reroll to spend whenever you like. The ledger closes after two of your drafts, and any captures not yet cashed in are lost.",
       tier: 4,
       category: "draft",
       icon: "BookMarked",
@@ -575,10 +624,17 @@ export const BOON_WAVE3: Buff[] = [
     },
     {
       kind: "passive",
-      init: (inst) => {
+      init: (inst, api) => {
         inst.state.charges = 3;
+        inst.state.draftAt = api.mine.draftsTaken;
       },
       onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        // The ledger closes after two of your drafts, forfeiting unclaimed spoils.
+        if (api.mine.draftsTaken - ((inst.state.draftAt as number) ?? 0) >= 2) {
+          inst.spent = true;
+          return;
+        }
         const left = (inst.state.charges as number) ?? 0;
         if (left <= 0 || move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
@@ -661,7 +717,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_kings_road",
       name: "King's Road",
       description:
-        "One lane on the board is declared yours: choose a file, and for the rest of the game no enemy piece may stand on that file within your own half of the board. Your pieces travel it freely.",
+        "One lane on the board is declared yours: choose a file, and for the rest of the game no enemy piece may stand on that file across your own half of the board, save its most advanced square, which stays open. Your pieces travel it freely.",
       tier: 4,
       category: "protection",
       icon: "Milestone",
@@ -685,6 +741,10 @@ export const BOON_WAVE3: Buff[] = [
           const s = SQ(f, r);
           if (inHalf(api.me, s)) squares.push(s);
         }
+        // Balance: the road is one square shorter, ceding its most advanced
+        // square (the largest count above one, reduced by one).
+        squares.sort((a, b) => relRank(api.me, a) - relRank(api.me, b));
+        if (squares.length > 1) squares.pop();
         addEffect(api, { kind: "barred", squares, against: api.opp, turns: null });
       },
     ),
@@ -702,7 +762,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_ironwrights_bargain",
       name: "Ironwright's Bargain",
       description:
-        "The forge takes iron and gives iron back heavier: one of your knights or bishops is reforged into a rook, and in payment one of your pawns is thrown into the fire and lost.",
+        "The forge takes iron and gives iron back heavier: one of your knights or bishops is reforged into a rook, and in payment one of your pawns is thrown into the fire and lost. Your next draft is skipped while the forge cools.",
       tier: 5,
       category: "pieces",
       icon: "Hammer",
@@ -739,6 +799,8 @@ export const BOON_WAVE3: Buff[] = [
         if (!pp || pp.color !== api.me || pp.type !== "p") return;
         api.removePiece(pay);
         api.setPieceType(up, "r");
+        // In payment, your next draft is skipped.
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       },
     ),
   ),

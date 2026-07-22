@@ -92,13 +92,17 @@ export const FUNNY_META: Buff[] = [
       id: "lag_spike",
       name: "Lag Spike",
       description:
-        "Their connection chooses violence: your opponent's clock loses 25 seconds.",
+        "Their connection chooses violence: your opponent's clock loses 30 seconds. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply.",
       tier: 3,
       category: "tempo",
       flavor: "It is not the wifi. It is never the wifi. It is the wifi.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ subOppSec: 25 });
+      api.adjustClock({ subOppSec: 30 });
+      // The clock hit is a no-op in an untimed game, so pair it with two draft
+      // effects that always land: a reroll and a peek at their next offer tier.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
     }),
   ),
   card(
@@ -106,12 +110,29 @@ export const FUNNY_META: Buff[] = [
       id: "ctrl_z",
       name: "Ctrl+Z",
       description:
-        "Undo. One of your captured pawns, knights, or bishops returns to an empty square in your half, once.",
+        "Undo, but the tape rewinds a beat late: only after your opponent's next move may you return one of your captured pawns, knights, or bishops to an empty square in your half, once.",
       tier: 3,
       category: "pieces",
       flavor: "History is written by whoever holds the keyboard.",
     },
-    reviveOne(["p", "n", "b"], myHalfZone),
+    // Preserve the revive payoff, but delay its first use: the card stays
+    // unusable until the opponent has played one move after it is drafted.
+    (() => {
+      const base = reviveOne(["p", "n", "b"], myHalfZone);
+      return {
+        ...base,
+        init: (inst) => {
+          inst.state.ready = false;
+        },
+        targets: (inst, api, picks) =>
+          inst.state.ready ? base.targets!(inst, api, picks) : null,
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+        },
+        status: (inst) =>
+          inst.state.ready ? "undo ready" : "buffering: waiting for their reply",
+      };
+    })(),
   ),
   card(
     {

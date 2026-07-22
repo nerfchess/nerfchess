@@ -745,20 +745,26 @@ export const TURN_OTHER_CHEEK: Nerf = db({
 
 export const GAMBLER: Nerf = db({
   id: "gambler", name: "Gambler", tier: 4, implemented: true,
-  description: "Can't move a specific piece type, re-randomized each turn.",
-  init: () => ({ banned: "p" as PieceType }),
-  onTurnStart: (_s, _ctx, rng) => ({ banned: rng.pick(["p", "n", "b", "r", "q", "k"] as PieceType[]) }),
+  description: "Can't move a specific piece type, re-randomized each turn and revealed one turn early. The ban is dropped whenever it would leave you fewer than three legal moves.",
+  init: (rng) => ({
+    banned: rng.pick(["p", "n", "b", "r", "q", "k"] as PieceType[]),
+    next: rng.pick(["p", "n", "b", "r", "q", "k"] as PieceType[]),
+  }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { banned: PieceType; next: PieceType };
+    return { banned: s.next, next: rng.pick(["p", "n", "b", "r", "q", "k"] as PieceType[]) };
+  },
   filterMoves: (moves, state) => {
     const s = state as { banned: PieceType };
     const filtered = moves.filter((m) => m.piece !== s.banned);
-    return filtered.length ? filtered : moves;
+    return filtered.length >= 3 ? filtered : moves;
   },
   hint: (state) => {
-    const s = state as { banned: PieceType };
+    const s = state as { banned: PieceType; next: PieceType };
     const names: Record<PieceType, string> = {
       p: "pawns", n: "knights", b: "bishops", r: "rooks", q: "queens", k: "your king",
     };
-    return { text: `The dice say: no moving ${names[s.banned]} this turn.`, tone: "warn" };
+    return { text: `The dice say: no moving ${names[s.banned]} this turn, ${names[s.next]} next turn.`, tone: "warn" };
   },
 });
 

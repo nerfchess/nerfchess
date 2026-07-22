@@ -124,13 +124,17 @@ export const FUNNY_PRANKS: Buff[] = [
       id: "pr_donation_alert",
       name: "Subscriber Raid",
       description:
-        "A fake donation alert blasts across the board and the raid pours in: add 20 seconds to your clock while your opponent loses 10 to the chaos.",
+        "A fake donation alert blasts across the board and the raid pours in: add 25 seconds to your clock while your opponent loses 10 to the chaos. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply.",
       tier: 3,
       category: "tempo",
       flavor: "ChessLord420 donated 5 dollars: get good lmao",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 20, subOppSec: 10 });
+      api.adjustClock({ addSelfSec: 25, subOppSec: 10 });
+      // The clock swing is a no-op in an untimed game, so always land two draft
+      // effects: a reroll and a peek at the tier of their next offer.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
     }),
   ),
   card(
@@ -201,13 +205,13 @@ export const FUNNY_PRANKS: Buff[] = [
       id: "pr_captcha",
       name: "Captcha Check",
       description:
-        "Select all squares with a bicycle to continue. Verification fails: whichever piece type your opponent has moved the most is locked and cannot move for their next 2 turns.",
+        "Select all squares with a bicycle to continue. Verification fails: whichever piece type your opponent has moved the most is locked and cannot move for their next turn.",
       tier: 4,
       category: "tempo",
       flavor: "I am not a robot. [ ] I am not a robot. [x] Access denied.",
       fx: { motif: "jail" },
     },
-    curse(2, (moves, api) => {
+    curse(1, (moves, api) => {
       // Deterministic read of the synced move history: count the opponent's
       // moves by piece type (kings excluded, they can never be locked) and
       // lock the most-moved type. The curse wrapper restores the full list if
@@ -235,12 +239,12 @@ export const FUNNY_PRANKS: Buff[] = [
       id: "pr_popup_storm",
       name: "Pop-up Storm",
       description:
-        "HOT DEALS raining on their side: plant 2 pop-up windows on empty squares in your opponent's half. For your next 5 turns, any enemy piece that clicks onto one (a king is too careful to) is closed out of the game.",
+        "HOT DEALS raining on their side: plant 1 pop-up window on an empty square in your opponent's half. For your next 5 turns, any enemy piece that clicks onto it (a king is too careful to) is closed out of the game.",
       tier: 4,
       category: "protection",
       flavor: "You are the 1,000,000th visitor. Your knight has been selected.",
     },
-    popupVoids(2, 5),
+    popupVoids(1, 5),
   ),
   card(
     {

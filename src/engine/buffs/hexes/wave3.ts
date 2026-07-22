@@ -289,7 +289,7 @@ const T2: Buff[] = [
       id: "hw3_fifth_column",
       name: "Fifth Column",
       description:
-        "Turn one enemy pawn to your cause: it fights under your banner for your next 3 turns, then its conscience returns and it goes back to your opponent. You move it on your turns; if it is captured while it serves you, the plot simply ends. Kings and other pieces are beyond the recruiter's reach.",
+        "Turn one enemy pawn to your cause: mark it, and it gets one move of its own before it turns. The first time your opponent moves the marked pawn, it defects and fights under your banner for your next 3 turns, then its conscience returns and it goes back to your opponent. You move it on your turns; if it is captured while it serves you, the plot simply ends. Kings and other pieces are beyond the recruiter's reach.",
       flavor: "Every camp has one soul already halfway out the gate.",
       fx: { motif: "jail", pieces: ["p"] },
     },
@@ -297,30 +297,52 @@ const T2: Buff[] = [
       kind: "activated",
       spendOnUse: false,
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.pending != null || inst.state.sq != null
           ? null
           : {
               kind: "square",
               label: "Choose an enemy pawn to recruit",
               squares: mySquares(api.board, api.opp, "p"),
             },
-      effect: (inst, api, picks) => {
-        if (inst.state.sq != null) return;
+      effect: (inst, _api, picks) => {
+        if (inst.state.pending != null || inst.state.sq != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        api.setPieceColor(sq, api.me);
-        inst.state.sq = sq;
-        inst.state.myTurns = 3;
+        // It gets one move of its own before it turns: mark it, do not seize yet.
+        inst.state.pending = sq;
       },
       onMovePlayed: (inst, move, api) => {
-        if (inst.state.sq == null) return;
+        if (inst.state.sq == null) {
+          let pending = (inst.state.pending as Square | null | undefined) ?? null;
+          if (pending == null) return;
+          if (move.color === api.opp && move.from === pending && move.to !== pending) {
+            // Its one escape move is spent; it defects where it lands.
+            const dest = move.to;
+            const p = api.board.pieces[dest];
+            if (p && p.color === api.opp && p.type === "p") {
+              api.setPieceColor(dest, api.me);
+              inst.state.sq = dest;
+              inst.state.myTurns = 3;
+            } else {
+              inst.spent = true; // it promoted or vanished on its escape: the plot ends
+            }
+            inst.state.pending = null;
+            return;
+          }
+          pending = followSq(pending, move);
+          inst.state.pending = pending;
+          if (pending == null) inst.spent = true; // lost before it could turn
+          return;
+        }
         if (tickDefect(inst, move, api) === "ended") inst.spent = true;
       },
       status: (inst) => {
+        const pending = inst.state.pending as Square | undefined;
         const sq = inst.state.sq as Square | undefined;
-        return sq == null
-          ? "activate to recruit a pawn"
-          : `serving from ${sqName(sq)}, ${(inst.state.myTurns as number) ?? 0} of your turns left`;
+        if (sq != null)
+          return `serving from ${sqName(sq)}, ${(inst.state.myTurns as number) ?? 0} of your turns left`;
+        if (pending != null) return `marked at ${sqName(pending)}, defects after it makes one move`;
+        return "activate to recruit a pawn";
       },
     },
   ),
@@ -1059,7 +1081,7 @@ const T4: Buff[] = [
       id: "hw3_time_bomb",
       name: "Powder Keg",
       description:
-        "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When the fuse burns out, it detonates: every enemy piece (except the king) standing on or next to that square is blown off the board. The count is on the card the whole time - clear their pieces out of the blast before it goes, or lose whatever lingers.",
+        "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When the fuse burns out, it detonates: every enemy piece (except the king) standing on or next to that square is blown off the board, and you gain one draft reroll. The count is on the card the whole time - clear their pieces out of the blast before it goes, or lose whatever lingers.",
       flavor: "Plenty of time to move. That is what everyone says.",
       fx: { motif: "blindfold" },
     },
@@ -1097,6 +1119,8 @@ const T4: Buff[] = [
                 if (p && p.color === api.opp && p.type !== "k") api.removePiece(t);
               }
             }
+            // Grant one draft reroll after the blast resolves.
+            api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
             inst.spent = true;
             return;
           }

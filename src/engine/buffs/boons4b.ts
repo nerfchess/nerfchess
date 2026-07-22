@@ -102,6 +102,30 @@ function suspendFree(n: number, rider?: (api: BuffApi) => void): Mech {
   };
 }
 
+// "Keep the suspension; its final turn applies only to movement restrictions":
+// the nerf stays suspended for all `n` of your turns, but on the last of those
+// turns you are put under a one-square (king-step) leash, so a movement
+// restriction is the only thing still holding you back that turn. Pairs with
+// `leashRider` below, which arms the leash after n-1 of your turns.
+function armMoveOnlyFinal(api: BuffApi, inst: BuffInstance, n: number) {
+  susp(api, n);
+  inst.state.leashAt = Math.max(1, n) - 1;
+}
+
+function leashRider(inst: BuffInstance, move: Move, api: BuffApi) {
+  if (inst.spent || move.color !== api.me) return;
+  const left = (inst.state.leashAt as number) ?? 0;
+  if (left <= 0) return;
+  const next = left - 1;
+  inst.state.leashAt = next;
+  if (next <= 0) {
+    // Added inside this move's hook, so the immediate same-turn tick eats one:
+    // ask for 2 to leave 1 (mirrors the short_leash timing in funny/tradeoffs).
+    addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
+    inst.spent = true;
+  }
+}
+
 function reliefOn(
   charges: number,
   turns: number,
@@ -272,11 +296,13 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_scapegoat", name: "Scapegoat", tier: 5, category: "nerf", icon: "Rat",
-      description: "Send one of your knights or bishops into the wilderness (it is removed and truly lost): your nerf is suspended for your next 12 turns.",
+      description: "Send one of your knights or bishops into the wilderness (it is removed and truly lost): your nerf is suspended for your next 12 turns. On the last of those turns you may only step one square (a king step).",
       flavor: "It carries everything you could not." },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.used
           ? null
           : {
               kind: "square",
@@ -286,15 +312,20 @@ export const BOON_WAVE4B: Buff[] = [
                 return t === "n" || t === "b";
               }),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
+        if (inst.state.used) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || (p.type !== "n" && p.type !== "b")) return;
         api.removePiece(sq);
-        susp(api, 12);
+        inst.state.used = true;
+        armMoveOnlyFinal(api, inst, 12);
       },
-    ),
+      onMovePlayed: leashRider,
+      status: (inst) =>
+        inst.state.used ? "the final turn tightens the leash" : "activate to send one away",
+    },
   ),
   card(
     { id: "bn4_pillars_of_home", name: "Pillars of Home", tier: 6, category: "nerf", icon: "Columns3",
@@ -328,17 +359,64 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_holy_water", name: "Holy Water", tier: 5, category: "nerf", icon: "Droplets",
-      description: "Suspend your nerf for your next 4 turns, and your king cannot be captured for your opponent's next 2 turns.",
+      description: "Suspend your nerf for your next 4 turns, and choose up to four of your pieces (your king counts): each chosen piece cannot be captured for your opponent's next 2 turns.",
       flavor: "Blessed, bottled, and extremely refreshing." },
-    suspendNow(4, (api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
-    }),
+    {
+      kind: "activated",
+      targets: (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to bless (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (_inst, api, picks) => {
+        susp(api, 4);
+        const zone: Square[] = [];
+        let kingChosen = false;
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) continue;
+          if (p.type === "k") kingChosen = true;
+          else zone.push(sq);
+        }
+        if (zone.length) addEffect(api, { kind: "shield", owner: api.me, squares: zone, turns: 2 });
+        if (kingChosen) addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      },
+    },
   ),
   card(
     { id: "bn4_royal_household", name: "Royal Household", tier: 5, category: "nerf", icon: "Castle",
-      description: "The next 5 times you move your queen, your nerf is suspended for your next turn.",
+      description: "After your opponent's next move, the next 5 times you move your queen your nerf is suspended for your next turn.",
       flavor: "When she works, the whole house breathes easier.", requires: ["q"] },
-    reliefOn(5, 1, (m, api) => m.color === api.me && m.piece === "q", "errands"),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 5;
+        inst.state.armed = false;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0 || move.color !== api.me || move.piece !== "q") return;
+        susp(api, 1);
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `${(inst.state.charges as number) ?? 5} errands left`
+          : "waiting on their reply",
+    },
   ),
   card(
     { id: "bn4_coronation_rest", name: "Coronation Rest", tier: 4, category: "nerf", icon: "Crown",
@@ -348,9 +426,9 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_prison_break", name: "Prison Break", tier: 5, category: "nerf", icon: "Unlock",
-      description: "Suspend your nerf for your next 4 turns, and every one of your frozen or stuck pieces thaws at once.",
+      description: "Suspend your nerf for your next 3 turns, and every one of your frozen or stuck pieces thaws at once.",
       flavor: "One spoon. Years of patience. Worth it." },
-    suspendNow(4, (api) => thawMine(api)),
+    suspendNow(3, (api) => thawMine(api)),
   ),
   card(
     { id: "bn4_out_on_bail", name: "Out on Bail", tier: 6, category: "nerf", icon: "Banknote",
@@ -362,9 +440,25 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_salt_in_the_wound", name: "Salt in the Wound", tier: 5, category: "nerf", icon: "CloudLightning",
-      description: "For the rest of the game, whenever one of your opponent's pawns promotes, your nerf is suspended for your next 6 turns.",
+      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
       flavor: "Their parade, your permission slip." },
-    reliefEvery(6, (m, api) => m.color === api.opp && !!m.promotion, "waiting on their parade"),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        susp(api, 18);
+        inst.state.turns = 18;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 18) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+    },
   ),
   card(
     { id: "bn4_rule_of_three", name: "Rule of Three", tier: 6, category: "nerf", icon: "Dices",
