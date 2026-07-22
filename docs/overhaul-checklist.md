@@ -30,7 +30,7 @@ This file is the cross-session source of truth for overhaul progress. Update sta
 |---|-------|--------|
 | 1 | Persistent checklist + roster docs in repo | IN PROGRESS |
 | 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | TODO |
-| 3 | Draft RNG fairness + seeded distribution tests | TODO |
+| 3 | Draft RNG fairness + seeded distribution tests | DONE (draft.ts weighting removed; scripts/test-draft-fairness.ts, npm run test:draft-fairness, 23 checks green; sims updated to fair expectations) |
 | 4 | Buff-mode Nerf-reference purge | TODO |
 | 5 | Broken/silent card fixes + dev diagnostics | TODO |
 | 6 | Animation primitives expansion + gambling primitives | TODO |
@@ -63,6 +63,12 @@ In `src/engine/draft.ts`:
 3. `HEX_SHARE = 0.6` bucket roll in nerf mode (category weighting). REMOVE: uniform across eligible pool.
 4. `NERF_DECLINE_LIMIT` streak-based category suppression per player. REMOVE (streak-based weighting).
 Keep: tier curve + jitter + top-tier slip gate (tier progression), banking (+1, apex gate), combo-tag exclusivity (visible pool rule), requires/dead-draft guard (technical invalidity), held-card exclusion, reroll exclusion, mod overrides (explicit admin tool), NERF_REVEAL buff-mode filter (dead card).
+
+## Broken-behavior findings (Phase 5 queue; found during Phase 3, PRE-EXISTING on master)
+
+1. `scripts/sim-hexes-items.ts`: Walnut Queen never lands its 3-turn walnut on d8 (4 checks fail). Root-cause the walnut effect path.
+2. `scripts/sim-hexes-items.ts`: openingNerfPool holds tiers above 2 / pickNerfPair exceeds the tier-2 cap (2 checks fail).
+3. `scripts/sim-chess-diff.ts`: the diff's winner is NOT handed the guaranteed tier-10 mythic (2 checks fail).
 
 ## Balance issues named by owner (must resolve)
 

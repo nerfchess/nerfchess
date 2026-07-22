@@ -67,11 +67,9 @@ function countOffers(mode: DraftMode, rounds: number): Record<string, number> {
 for (const mode of ["buff", "nerf"] as DraftMode[]) {
   const tally = countOffers(mode, 4000);
   const diffCount = tally["chess_diff"] ?? 0;
-  // chess_diff's true baseline is the cards it is drawn AGAINST in the same
-  // pool. In buff mode that is every other tier-6 card; in nerf mode the draw
-  // is split into a hex bucket and a boon/item bucket (HEX_SHARE), and
-  // chess_diff (category "pieces", a boon) only ever competes inside the
-  // boon/item bucket, so its peers there are the other NON-hex tier-6 cards.
+  // FAIR RNG (overhaul): chess_diff has NO appearance multiplier anymore. It
+  // must roll at the same rate as any other eligible tier-6 peer in the same
+  // mode's pool (uniform draw), so the ratio to the peer average sits near 1.
   const peers = Object.entries(tally)
     .filter(([id]) => {
       const b = BUFF_BY_ID[id];
@@ -83,8 +81,8 @@ for (const mode of ["buff", "nerf"] as DraftMode[]) {
   const ratio = peerAvg ? diffCount / peerAvg : 0;
   check(diffCount > 0, `chess_diff is offered in ${mode} mode (${diffCount} hits)`);
   check(
-    ratio > 1.5 && ratio < 2.6,
-    `chess_diff rolls ~2x a bucket peer in ${mode} mode (ratio ${ratio.toFixed(2)}, over ${peers.length} peers)`,
+    ratio > 0.6 && ratio < 1.5,
+    `chess_diff rolls at a FAIR ~1x peer rate in ${mode} mode (ratio ${ratio.toFixed(2)}, over ${peers.length} peers)`,
   );
 }
 

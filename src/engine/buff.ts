@@ -302,17 +302,11 @@ export interface PlayerBuffState {
    * were already folded in and their flags consumed at the first roll). Not
    * sent to clients; rebuilt on replay when the offer is rolled. */
   offerTiers?: Tier[];
-  /** The nerf-relief card ids (category "nerf") shown in this player's most
-   * recent offer, kept so the NEXT roll can tell which of them went unpicked
-   * (a pure read of the held-buff list). Like offerTiers, not sent to clients;
-   * rebuilt on replay as offers roll. */
+  /** LEGACY (fair-RNG overhaul): decline tracking was removed; these two
+   * fields remain only so saved states that carry them still parse. Never
+   * written with real values anymore and never read by the draft. */
   lastNerfOffered?: string[];
-  /** Running count of nerf-relief cards this player was offered but did not
-   * pick. Once it reaches the suppress threshold (see draft.ts) the nerf-relief
-   * category leaves this player's pool for the rest of the game, mirroring the
-   * reliefIsDead / nerfRemoved suppression (owner request: "once you ignore two
-   * of the nerf cards they should stop showing up"). Reconstructed as offers
-   * roll, so it never needs syncing. */
+  /** LEGACY: see lastNerfOffered. */
   nerfDeclines?: number;
 }
 

@@ -3,9 +3,10 @@
 //   npx -y tsx scripts/sim-hexes-items.ts
 //
 // Proves, off the server:
-// 1. Pool composition: nerf-mode offers draw hexes at roughly HEX_SHARE
-//    (55-65% target band) with boons/items filling the rest, and hexes
-//    never leak into buff mode (nor nerf-relief cards).
+// 1. Pool composition: nerf-mode offers draw uniformly from the eligible
+//    pool (fair RNG overhaul: hex/boon share emerges from pool sizes, no
+//    bucket weighting), and hexes never leak into buff mode (nor
+//    nerf-relief cards).
 // 2. Walnut Queen: the opponent's queen is inert for exactly 3 of their
 //    turns, then the walnut expires and the queen moves again.
 // 3. Items work in both modes: Apple shields a piece from capture in nerf
@@ -27,7 +28,7 @@ import {
   playMove,
 } from "../src/engine/game";
 import { newBuffMatchState } from "../src/engine/buff";
-import { HEX_SHARE, rollOffer, rollSharedTiers } from "../src/engine/draft";
+import { rollOffer, rollSharedTiers } from "../src/engine/draft";
 import { ALL_BUFFS, BUFF_BY_ID } from "../src/engine/buffs/library";
 import { getNerf, openingNerfPool, pickNerfPair } from "../src/engine/nerfs/library";
 import { moveToUCI } from "../src/engine/board";
@@ -96,7 +97,18 @@ for (const mode of ["nerf", "buff"] as DraftMode[]) {
   const share = hexes / total;
   console.log(`${mode} mode: ${total} cards drawn ->`, counts, `hex share ${(share * 100).toFixed(1)}%`);
   if (mode === "nerf") {
-    check(share >= 0.5 && share <= 0.7, `nerf-mode hex share ${(share * 100).toFixed(1)}% within 50-70% (target ${HEX_SHARE * 100}%)`);
+    // Fair RNG: the hex share should track the hex fraction of the eligible
+    // nerf-mode pool (uniform draw), not a tuned constant. Compare against the
+    // pool-derived expectation with a generous band (tier mix shifts it).
+    const nerfPool = ALL_BUFFS.filter(
+      (b) => b.implemented && b.tier <= 8 && !b.special &&
+        (b.category === "hex" || b.category === "item" || b.category === "nerf" || b.boon),
+    );
+    const poolHexShare = nerfPool.filter((b) => b.category === "hex").length / nerfPool.length;
+    check(
+      Math.abs(share - poolHexShare) <= 0.15,
+      `nerf-mode hex share ${(share * 100).toFixed(1)}% tracks pool share ${(poolHexShare * 100).toFixed(1)}% (fair uniform draw)`,
+    );
     const legal = Object.keys(counts).every((cat) => {
       if (cat === "hex" || cat === "item" || cat === "nerf") return true;
       // remaining categories must all come from boon-flagged cards; verified
