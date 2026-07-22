@@ -21,6 +21,7 @@
 
 import {
   Buff,
+  type BuffApi,
   DIAG_DIRS,
   FILE,
   Move,
@@ -152,6 +153,76 @@ const FILE_SCOUTS: Array<OpenerMeta & { file: number }> = [
 
 function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
   const fileName = "abcdefgh"[entry.file];
+  if (entry.id === "back_alley") {
+    // Reworked identity: the a-file pawn slips one square inward onto the empty
+    // b-file square (a quiet step, never a capture).
+    return opener(
+      entry,
+      "Once, your a-file pawn may step one square sideways to the b-file. The destination must be empty; not a capture.",
+      augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== 0) continue;
+          out.push(...teleportMoves(api.board, sq, [sq + 1], inst.id));
+        }
+        return out;
+      }),
+    );
+  }
+  if (entry.id === "cloister_step") {
+    // Reworked: a free-action pair move. Reposition one bishop a single diagonal
+    // step onto an empty square, and the c-file pawn nearest it sidesteps one
+    // square toward that bishop's file if that square is empty.
+    const diagStep = (api: BuffApi, bsq: Square): Square[] =>
+      DIAG_DIRS.map(([df, dr]) => [FILE(bsq) + df, RANK(bsq) + dr] as const)
+        .filter(([f, r]) => inBoard(f, r) && !api.board.pieces[SQ(f, r)])
+        .map(([f, r]) => SQ(f, r));
+    return opener(
+      entry,
+      "Use once as a free action: step one of your bishops one square diagonally onto an empty square (not a capture); your c-file pawn nearest it then sidesteps one square toward that bishop if that square is empty.",
+      activated(
+        (_inst, api, picks) => {
+          if (picks.length === 0) {
+            return {
+              kind: "square",
+              label: "Choose a bishop to reposition",
+              squares: mySquares(api.board, api.me, "b").filter((bsq) => diagStep(api, bsq).length > 0),
+            };
+          }
+          if (picks.length === 1 && picks[0].square != null) {
+            return {
+              kind: "square",
+              label: "Step the bishop one square diagonally",
+              squares: diagStep(api, picks[0].square),
+            };
+          }
+          return null;
+        },
+        (_inst, api, picks) => {
+          const bsq = picks[0]?.square,
+            dest = picks[1]?.square;
+          if (bsq == null || dest == null || api.board.pieces[dest]) return;
+          const bishopFile = FILE(bsq);
+          api.relocate(bsq, dest);
+          const cPawns = mySquares(api.board, api.me, "p").filter((sq) => FILE(sq) === 2);
+          if (cPawns.length > 0) {
+            let chosen = cPawns[0];
+            for (const p of cPawns) {
+              if (Math.abs(RANK(p) - RANK(dest)) < Math.abs(RANK(chosen) - RANK(dest))) chosen = p;
+            }
+            const dir = bishopFile > 2 ? 1 : bishopFile < 2 ? -1 : 0;
+            if (dir !== 0) {
+              const f = FILE(chosen) + dir,
+                r = RANK(chosen);
+              const to = SQ(f, r);
+              if (inBoard(f, r) && !api.board.pieces[to] && pawnRankOk(to)) api.relocate(chosen, to);
+            }
+          }
+        },
+        { freeAction: true },
+      ),
+    );
+  }
   return opener(
     entry,
     `Your ${fileName}-file pawn may step one square sideways, once. The destination must be empty.`,
@@ -181,11 +252,14 @@ const FIRST_STEPS: Array<OpenerMeta & { after: number; prize: "reroll" | "peek" 
 ];
 
 function firstStep(entry: (typeof FIRST_STEPS)[number]): Buff {
+  const earlyBird = entry.id === "early_bird";
   const what =
     entry.prize === "reroll"
       ? "gain a draft reroll"
       : entry.prize === "peek"
-        ? "see your opponent's next draft offer"
+        ? earlyBird
+          ? "see your opponent's next draft offer and gain 5 seconds"
+          : "see your opponent's next draft offer"
         : "gain 6 seconds";
   return opener(entry, `After your ${entry.after}th move, ${what}.`, {
     kind: "passive",
@@ -198,8 +272,10 @@ function firstStep(entry: (typeof FIRST_STEPS)[number]): Buff {
       inst.state.turns = t;
       if (t > 0) return;
       if (entry.prize === "reroll") api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-      else if (entry.prize === "peek") api.mine.flags.seeOppCards = true;
-      else api.adjustClock({ addSelfSec: 6 });
+      else if (entry.prize === "peek") {
+        api.mine.flags.seeOppCards = true;
+        if (earlyBird) api.adjustClock({ addSelfSec: 5 });
+      } else api.adjustClock({ addSelfSec: 6 });
       inst.spent = true;
     },
     status: (inst) => `pays out in ${turnsLeft(inst)} of your moves`,

@@ -407,12 +407,30 @@ const HOUSEWARMINGS: Array<
 ];
 
 function housewarming(entry: (typeof HOUSEWARMINGS)[number]): Buff {
-  return opener(entry, `When you castle, ${entry.what}. One use.`, {
+  const desc =
+    entry.fallbackBy != null
+      ? `When you castle, ${entry.what}. If you have not castled by your ${entry.fallbackBy}th move, gain a draft reroll instead. One use.`
+      : `When you castle, ${entry.what}. One use.`;
+  return opener(entry, desc, {
     kind: "passive",
+    init: (inst) => {
+      if (entry.fallbackBy != null) inst.state.turns = entry.fallbackBy;
+    },
     onMovePlayed: (inst, move, api) => {
-      if (inst.spent || move.color !== api.me || !move.castle) return;
-      entry.ride(move, api);
-      inst.spent = true;
+      if (inst.spent || move.color !== api.me) return;
+      if (move.castle) {
+        entry.ride(move, api);
+        inst.spent = true;
+        return;
+      }
+      if (entry.fallbackBy != null) {
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      }
     },
     status: () => "awaiting your castle",
   });
@@ -489,7 +507,7 @@ const WATCHTOWER: Array<
     what: string;
     mark: (move: Move, api: BuffApi) => Square[] | null;
     comedic?: boolean;
-    perk?: (api: BuffApi) => void;
+    perk?: (api: BuffApi, marked: Square[]) => void;
   }
 > = [
   { id: "tripwire_bell", name: "Tripwire Bell", flavor: "One thread of catgut across the whole border.", icon: "BellRing", what: "The first enemy piece to end a move in your half is marked until you reply", mark: (move, api) => (inHalf(api.me, move.to) ? [move.to] : null) },
@@ -514,7 +532,7 @@ function watchtower(entry: (typeof WATCHTOWER)[number]): Buff {
       const squares = entry.mark(move, api);
       if (!squares || squares.length === 0) return;
       flashSquares(api, squares, entry.comedic);
-      entry.perk?.(api);
+      entry.perk?.(api, squares);
       inst.spent = true;
     },
     status: () => "watching",

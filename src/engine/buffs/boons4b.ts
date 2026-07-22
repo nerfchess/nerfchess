@@ -577,11 +577,13 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_ratlines", name: "Ratlines", tier: 5, category: "movement", icon: "Anchor",
-      description: "Your king and one of your rooks standing directly beside him swap squares at once.",
+      description: "Choose one of your rooks standing directly beside your king. After your opponent's next move, the king and that rook swap squares.",
       flavor: "Up the rigging, down the other side, crown intact.", requires: ["r"] },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length > 0) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.rook != null) return null;
         const ks = kingSquare(api.board, api.me);
         return {
           kind: "square",
@@ -595,17 +597,32 @@ export const BOON_WAVE4B: Buff[] = [
                 }),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.rook != null) return;
         const rsq = picks[0]?.square;
-        const ks = kingSquare(api.board, api.me);
-        if (rsq == null || ks == null) return;
-        const rp = api.board.pieces[rsq];
-        if (!rp || rp.color !== api.me || rp.type !== "r") return;
-        if (!adjSquares(ks).includes(rsq)) return;
-        api.setPieceType(ks, "r");
-        api.setPieceType(rsq, "k");
+        if (rsq != null) inst.state.rook = rsq;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.rook == null || move.color !== api.opp) return;
+        // Delayed payoff: the swap resolves only after the opponent replies.
+        const rsq = inst.state.rook as Square;
+        const ks = kingSquare(api.board, api.me);
+        const rp = api.board.pieces[rsq];
+        if (
+          ks != null &&
+          rp &&
+          rp.color === api.me &&
+          rp.type === "r" &&
+          adjSquares(ks).includes(rsq)
+        ) {
+          api.setPieceType(ks, "r");
+          api.setPieceType(rsq, "k");
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.rook == null ? "activate to choose the rook" : "swapping after their reply",
+    },
   ),
   card(
     { id: "bn4_pathfinders", name: "Pathfinders", tier: 5, category: "movement", icon: "Compass",

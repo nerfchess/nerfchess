@@ -204,14 +204,14 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_heavy_pockets", name: "Heavy Pockets", description: "For your opponent's next 3 turns, their pawns cannot make two square advances. Single steps only.", flavor: "Someone filled their coats with gravel.", icon: "Weight", fx: { motif: "slow", pieces: ["p"] } },
-    curse(3, (moves) =>
+    { id: "hx4_heavy_pockets", name: "Heavy Pockets", description: "Starting after your opponent's next move, for their following 3 turns their pawns cannot make two square advances. Single steps only.", flavor: "Someone filled their coats with gravel.", icon: "Weight", fx: { motif: "slow", pieces: ["p"] } },
+    delayedCurse(3, (moves) =>
       moves.filter((m) => m.piece !== "p" || Math.abs(RANK(m.to) - RANK(m.from)) !== 2),
     ),
   ),
   H1(
-    { id: "hx4_creaky_axles", name: "Creaky Axles", description: "For your opponent's next 2 turns, their rooks may slide at most 4 squares.", flavor: "You can hear the tower coming three streets away.", icon: "Cog", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) <= 4)),
+    { id: "hx4_creaky_axles", name: "Creaky Axles", description: "On your opponent's next turn, their rooks may slide at most 4 squares.", flavor: "You can hear the tower coming three streets away.", icon: "Cog", fx: { motif: "anchor", pieces: ["r"] } },
+    curse(1, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) <= 4)),
   ),
   hex(
     { id: "hx4_homesick_queen", name: "Homesick Queen", description: "For your opponent's next 3 turns, their queen may not move into your half of the board.", flavor: "She misses the curtains, apparently.", icon: "House", fx: { motif: "anchor", pieces: ["q"] }, tier: 2 },
@@ -237,8 +237,41 @@ const T1: Buff[] = [
     ),
   ),
   H1(
-    { id: "hx4_loose_horseshoe", name: "Loose Horseshoe", description: "One enemy knight you target throws a shoe and becomes a walnut for 1 of their turns: no leaping, only a one square hobble.", flavor: "For want of a nail, the leap was lost.", icon: "Magnet", fx: { motif: "anchor", pieces: ["n"] } },
-    walnutTarget(1, ["n"]),
+    { id: "hx4_loose_horseshoe", name: "Loose Horseshoe", description: "One enemy knight you target loses a shoe after your opponent's next move and becomes a walnut for 1 of their turns: no leaping, only a one square hobble.", flavor: "For want of a nail, the leap was lost.", icon: "Magnet", fx: { motif: "anchor", pieces: ["n"] } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : { kind: "square", label: "Choose an enemy knight", squares: mySquares(api.board, api.opp, "n") },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        let sq = (inst.state.sq as Square | null | undefined) ?? null;
+        if (sq == null) return;
+        sq = followSq(sq, move);
+        inst.state.sq = sq;
+        if (sq == null) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          if ((inst.state.delay as number) <= 0) {
+            nutSting(api, sq, 1);
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to target a knight" : "the shoe is working loose",
+    },
   ),
   H1(
     { id: "hx4_puddle", name: "The Puddle", description: "Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it.", flavor: "It looks shallow. It is not.", icon: "Droplet", fx: { motif: "blindfold" } },
