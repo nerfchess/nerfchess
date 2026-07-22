@@ -345,9 +345,17 @@ function symLeaps(a: number, b: number): Array<readonly [number, number]> {
 }
 
 const STRANGE_GAITS: Array<
-  OpenerMeta & { leaps: Array<readonly [number, number]>; forward?: boolean; how: string }
+  OpenerMeta & {
+    leaps: Array<readonly [number, number]>;
+    forward?: boolean;
+    how: string;
+    /** "none": non-capturing only. "only": capturing only. */
+    capture?: "none" | "only";
+    /** Use it or lose it: an unplayed turn spends a charge. */
+    lossy?: boolean;
+  }
 > = [
-  { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction" },
+  { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction", capture: "none" },
   { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction" },
   { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between" },
   { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between" },
@@ -356,8 +364,8 @@ const STRANGE_GAITS: Array<
   { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between" },
   { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between" },
   { id: "giraffe_keeper", name: "Giraffe Keeper", flavor: "The enclosure was never going to hold her.", icon: "TreePalm", leaps: symLeaps(4, 1), how: "a giraffe leap, 4 by 1, in any direction" },
-  { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, two deliveries, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only" },
-  { id: "colts_gallop", name: "Colt's Gallop", flavor: "All legs, no brakes, forward only.", icon: "Sprout", leaps: symLeaps(3, 2), forward: true, how: "a zebra leap, 3 by 2, toward the enemy side only" },
+  { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, two deliveries, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only", capture: "only" },
+  { id: "colts_gallop", name: "Colt's Gallop", flavor: "All legs, no brakes, forward only.", icon: "Sprout", leaps: symLeaps(3, 2), forward: true, how: "a zebra leap, 3 by 2, toward the enemy side only", lossy: true },
   { id: "signal_rocket", name: "Signal Rocket", flavor: "Four squares of flight and a very confused landing.", icon: "Rocket", leaps: symLeaps(4, 0), how: "a launch of exactly 4 straight, clearing anything between" },
 ];
 
@@ -365,20 +373,34 @@ function strangeGait(entry: (typeof STRANGE_GAITS)[number]): Buff {
   // Forward-only gaits trade the lost directions for a second use, so the
   // any-direction sibling never strictly dominates them.
   const uses = entry.forward ? 2 : 1;
+  const captureNote =
+    entry.capture === "none"
+      ? " Not a capture; the landing square must be empty."
+      : entry.capture === "only"
+        ? " Only to capture on landing; a leap onto an empty square is not offered."
+        : " It may capture on landing.";
+  const lossyNote = entry.lossy
+    ? " A turn where the leap is on offer but not taken spends one use."
+    : "";
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const dir = api.me === "w" ? 1 : -1;
+    const leaps = entry.forward
+      ? entry.leaps.filter(([, dr]) => dr * dir > 0)
+      : entry.leaps;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, "n")) {
+      for (const m of leapMoves(api.board, sq, leaps, inst.id)) {
+        if (entry.capture === "none" && m.captured) continue;
+        if (entry.capture === "only" && !m.captured) continue;
+        out.push(m);
+      }
+    }
+    return out;
+  };
   return opener(
     entry,
-    `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}. It may capture on landing.`,
-    augment((_moves, inst, api) => {
-      const dir = api.me === "w" ? 1 : -1;
-      const leaps = entry.forward
-        ? entry.leaps.filter(([, dr]) => dr * dir > 0)
-        : entry.leaps;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "n")) {
-        out.push(...leapMoves(api.board, sq, leaps, inst.id));
-      }
-      return out;
-    }, uses),
+    `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}.${captureNote}${lossyNote}`,
+    entry.lossy ? lossyAugment(gen, uses) : augment(gen, uses),
   );
 }
 
@@ -537,8 +559,8 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
 
 const GUARDIANS: Array<OpenerMeta & { file?: number; piece?: "q" | "r" | "b" | "n" }> = [
   { id: "harbor_gull", name: "Harbor Gull", flavor: "Nobody ambushes a pawn under a screaming gull.", icon: "Bird", file: 0 },
-  { id: "alley_cat", name: "Alley Cat", flavor: "The b-file belongs to the cat. The pawn just lives there.", icon: "Cat", file: 1 },
-  { id: "cloister_bell", name: "Cloister Bell", flavor: "One toll, and the c-file pawn is suddenly elsewhere in spirit.", icon: "Bell", file: 2 },
+  { id: "alley_cat", name: "Alley Cat", flavor: "The b-file belongs to the cat. The pawn just lives there.", icon: "Cat", file: 1, tier: 2 },
+  { id: "cloister_bell", name: "Cloister Bell", flavor: "One toll, and the c-file pawn is suddenly elsewhere in spirit.", icon: "Bell", file: 2, tier: 2 },
   { id: "market_dog", name: "Market Dog", flavor: "Fed by every stall on the d-file. Repays in barking.", icon: "Dog", file: 3 },
   { id: "parade_marshal", name: "Parade Marshal", flavor: "Nobody touches the e-file pawn on the marshal's watch.", icon: "Shield", file: 4 },
   { id: "garden_scarecrow", name: "Garden Scarecrow", flavor: "It works on crows. It works on rooks. Mostly.", icon: "Wheat", file: 5 },
@@ -546,7 +568,7 @@ const GUARDIANS: Array<OpenerMeta & { file?: number; piece?: "q" | "r" | "b" | "
   { id: "lighthouse_keeper", name: "Lighthouse Keeper", flavor: "The lamp swings round the moment trouble sails in.", icon: "Flashlight", file: 7 },
   { id: "lady_in_waiting", name: "Lady in Waiting", flavor: "She steps in front of the first blade, exactly once.", icon: "Crown", piece: "q" },
   { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r" },
-  { id: "chapel_warden", name: "Chapel Warden", flavor: "The first heckler finds the pulpit warded.", icon: "Church", piece: "b" },
+  { id: "chapel_warden", name: "Chapel Warden", flavor: "The first heckler finds the pulpit warded.", icon: "Church", piece: "b", tier: 2 },
   { id: "stable_groom", name: "Stable Groom", flavor: "Touch the horse and answer to the groom.", icon: "PawPrint", piece: "n" },
 ];
 
@@ -555,27 +577,113 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
     entry.piece != null
       ? { q: "your queen", r: "one of your rooks", b: "one of your bishops", n: "one of your knights" }[entry.piece]
       : `your ${FILE_NAMES[entry.file!]}-file pawn`;
-  return opener(
-    entry,
-    `The first time an enemy piece attacks ${what}, that piece cannot be captured during your opponent's next turn. One use.`,
-    {
-      kind: "passive",
-      onMovePlayed: (inst, move, api) => {
-        if (inst.spent || move.color !== api.opp) return;
-        const targets =
-          entry.piece != null
-            ? mySquares(api.board, api.me, entry.piece)
-            : mySquares(api.board, api.me, "p").filter((sq) => FILE(sq) === entry.file);
-        for (const sq of targets) {
-          if (attackersOf(api.board, api.opp, sq).length > 0) {
-            addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+  const getTargets = (api: BuffApi): Square[] =>
+    entry.piece != null
+      ? mySquares(api.board, api.me, entry.piece)
+      : mySquares(api.board, api.me, "p").filter((sq) => FILE(sq) === entry.file);
+
+  if (entry.id === "alley_cat") {
+    // Retier + delay: the protection now begins only after the opponent's next
+    // move (template: delay activation until after the opponent replies).
+    return opener(
+      entry,
+      `One use: the first time an enemy piece attacks ${what}, it gains a one-turn shield, but only after your opponent's next move.`,
+      {
+        kind: "passive",
+        onMovePlayed: (inst, move, api) => {
+          if (inst.spent || move.color !== api.opp) return;
+          if (inst.state.pending) {
+            for (const sq of getTargets(api)) {
+              addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+            }
             inst.spent = true;
             return;
           }
-        }
+          for (const sq of getTargets(api)) {
+            if (attackersOf(api.board, api.opp, sq).length > 0) {
+              inst.state.pending = true;
+              return;
+            }
+          }
+        },
+        status: (inst) => (inst.state.pending ? "shielding after the reply" : "standing guard"),
       },
-      status: () => "standing guard",
+    );
+  }
+
+  if (entry.id === "chapel_warden") {
+    // Retier + the shield does not stop pawn captures. A custom opponent-move
+    // filter (rather than the central shield) so the "except pawns" carve-out
+    // can be expressed.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that bishop cannot be captured during your opponent's next turn, except by a pawn. One use.`,
+      {
+        kind: "passive",
+        onMovePlayed: (inst, move, api) => {
+          if (inst.spent) return;
+          if (inst.state.armed) {
+            if (move.from === (inst.state.sq as number)) inst.state.sq = move.to;
+            if (captureSquare(move) === (inst.state.sq as number) && move.from !== (inst.state.sq as number)) {
+              inst.spent = true;
+              return;
+            }
+            if (move.color === api.opp) {
+              inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
+              if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
+            }
+            return;
+          }
+          if (move.color !== api.opp) return;
+          for (const sq of getTargets(api)) {
+            if (attackersOf(api.board, api.opp, sq).length > 0) {
+              inst.state.armed = true;
+              inst.state.sq = sq;
+              inst.state.turns = 1;
+              return;
+            }
+          }
+        },
+        filterOpponentMoves: (moves, inst) => {
+          if (!inst.state.armed || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+          const sq = inst.state.sq as number;
+          return moves.filter((m) => !(captureSquare(m) === sq && m.piece !== "p"));
+        },
+        status: (inst) => (inst.state.armed ? "warded, pawns excepted" : "standing guard"),
+      },
+    );
+  }
+
+  const standardMech: Parameters<typeof card>[1] = {
+    kind: "passive",
+    onMovePlayed: (inst, move, api) => {
+      if (inst.spent || move.color !== api.opp) return;
+      for (const sq of getTargets(api)) {
+        if (attackersOf(api.board, api.opp, sq).length > 0) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+          inst.spent = true;
+          return;
+        }
+      }
     },
+    status: () => "standing guard",
+  };
+
+  if (entry.id === "cloister_bell") {
+    // Retier + "ends after preventing one capture": the one-turn shield already
+    // lasts exactly through the opponent's single reply, so it turns aside that
+    // turn's capture and is then spent.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
+      standardMech,
+    );
+  }
+
+  return opener(
+    entry,
+    `The first time an enemy piece attacks ${what}, that piece cannot be captured during your opponent's next turn. One use.`,
+    standardMech,
   );
 }
 
@@ -590,7 +698,7 @@ const SIDE_DOORS: Array<OpenerMeta & { files?: number[]; mode?: "in" | "out" }> 
   { id: "revolving_door", name: "Revolving Door", flavor: "Central pawns enter at an angle and act like they meant to.", icon: "RotateCw", files: [2, 3, 4, 5] },
   { id: "fire_escape", name: "Fire Escape", flavor: "Rim pawns keep one bolted ladder for emergencies.", icon: "Siren", files: [0, 1, 6, 7] },
   { id: "palace_gate", name: "Palace Gate", flavor: "The d- and e-pawns bow once and step through sideways.", icon: "Landmark", files: [3, 4] },
-  { id: "cellar_hatch", name: "Cellar Hatch", flavor: "The edge files hide a trapdoor under the barrels.", icon: "Archive", files: [0, 7] },
+  { id: "cellar_hatch", name: "Cellar Hatch", flavor: "The edge files hide a trapdoor under the barrels.", icon: "Archive", files: [0, 1, 6, 7] },
   { id: "drawbridge_in", name: "Drawbridge", flavor: "Lowered once, toward the middle of things.", icon: "Castle", mode: "in" },
   { id: "storm_door", name: "Storm Door", flavor: "When weather comes, pawns angle for the walls.", icon: "CloudRain", mode: "out" },
 ];
@@ -609,30 +717,34 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
       : entry.mode === "out"
         ? " The step must angle toward the board's edge."
         : "";
+  const lossy = entry.id === "drawbridge_in";
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const dir = api.me === "w" ? 1 : -1;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, "p")) {
+      if (entry.files && !entry.files.includes(FILE(sq))) continue;
+      const dfs =
+        entry.mode === "in"
+          ? [FILE(sq) < 4 ? 1 : -1]
+          : entry.mode === "out"
+            ? [FILE(sq) < 4 ? -1 : 1]
+            : [-1, 1];
+      for (const df of dfs) {
+        const f = FILE(sq) + df, r = RANK(sq) + dir;
+        if (!inBoard(f, r)) continue;
+        const to = SQ(f, r);
+        if (!pawnRankOk(to)) continue;
+        out.push(...teleportMoves(api.board, sq, [to], inst.id));
+      }
+    }
+    return out;
+  };
   return opener(
     entry,
-    `Once, one of your pawns ${who} may step one square diagonally forward onto an empty square. Not a capture.${dirNote}`,
-    augment((_moves, inst, api) => {
-      const dir = api.me === "w" ? 1 : -1;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (entry.files && !entry.files.includes(FILE(sq))) continue;
-        const dfs =
-          entry.mode === "in"
-            ? [FILE(sq) < 4 ? 1 : -1]
-            : entry.mode === "out"
-              ? [FILE(sq) < 4 ? -1 : 1]
-              : [-1, 1];
-        for (const df of dfs) {
-          const f = FILE(sq) + df, r = RANK(sq) + dir;
-          if (!inBoard(f, r)) continue;
-          const to = SQ(f, r);
-          if (!pawnRankOk(to)) continue;
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
-        }
-      }
-      return out;
-    }),
+    `Once, one of your pawns ${who} may step one square diagonally forward onto an empty square. Not a capture.${dirNote}${
+      lossy ? " If the step is on offer on your turn but you move elsewhere, the charge is spent." : ""
+    }`,
+    lossy ? lossyAugment(gen) : augment(gen),
   );
 }
 
@@ -643,7 +755,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
 
 const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: number }> = [
   { id: "tactical_withdrawal", name: "Tactical Withdrawal", flavor: "It is only running away if someone writes it down.", icon: "Undo2" },
-  { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2 },
+  { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2, tier: 2 },
   { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 2 },
   { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 2 },
   { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },

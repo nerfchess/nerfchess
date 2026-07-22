@@ -519,7 +519,7 @@ const WATCHTOWER: Array<
   { id: "harbor_horn", name: "Harbor Horn", flavor: "One long blast means company on the kingside water.", icon: "Megaphone", what: "The first enemy piece to enter your half on the kingside files (e through h) is marked until you reply, and you gain a draft reroll", mark: (move, api) => (inHalf(api.me, move.to) && FILE(move.to) >= 4 ? [move.to] : null), perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "postern_watch", name: "Postern Watch", flavor: "The small queenside door has the most attentive guard.", icon: "DoorClosed", what: "The first enemy piece to enter your half on the queenside files (a through d) is marked until you reply", mark: (move, api) => (inHalf(api.me, move.to) && FILE(move.to) <= 3 ? [move.to] : null) },
   { id: "incident_report", name: "Incident Report", flavor: "Filed while the dust is still airborne.", icon: "FileText", what: "When the enemy makes their first capture, the capturer and every one of your pieces attacking it are marked until you reply", mark: (move, api) => (move.captured ? [move.to, ...attackersOf(api.board, api.me, move.to)] : null) },
-  { id: "alarm_lantern", name: "Alarm Lantern", flavor: "It only lights for royalty in distress.", icon: "Flashlight", what: "The first time the enemy gives check, every checking piece is marked until you reply", mark: (_move, api) => { const k = kingSquare(api.board, api.me); if (k == null) return null; const checkers = attackersOf(api.board, api.opp, k); return checkers.length > 0 ? checkers : null; } },
+  { id: "alarm_lantern", name: "Alarm Lantern", flavor: "It only lights for royalty in distress.", icon: "Flashlight", what: "The first time the enemy gives check, every checking piece is marked until you reply, and you gain a draft reroll", mark: (_move, api) => { const k = kingSquare(api.board, api.me); if (k == null) return null; const checkers = attackersOf(api.board, api.opp, k); return checkers.length > 0 ? checkers : null; }, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "keys_copied", name: "Keys Copied", flavor: "They moved into a castle. You made arrangements.", icon: "KeyRound", what: "When your opponent castles, you gain a draft reroll", mark: (move) => (move.castle ? [move.to] : null), comedic: true, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "regina_dossier", name: "Regina Dossier", flavor: "Page one: she moved. Page two: worry.", icon: "BookMarked", what: "The first time the enemy queen moves, she is marked until you reply", mark: (move) => (move.piece === "q" ? [move.to] : null) },
 ];
@@ -579,28 +579,103 @@ function houseRule(entry: (typeof HOUSE_RULES)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const GRADUATIONS: Array<
-  OpenerMeta & { what: string; cond: (move: Move, api: BuffApi) => boolean; pay: (move: Move, api: BuffApi) => void }
+  OpenerMeta & {
+    what: string;
+    cond: (move: Move, api: BuffApi) => boolean;
+    pay: (move: Move, api: BuffApi) => void;
+    /** The guard does not stop pawn captures of the protected piece. */
+    guardExceptPawns?: boolean;
+    /** The guard drops the moment the protected piece makes a capture. */
+    guardEndsOnCapture?: boolean;
+    /** The guard begins only after the opponent's next reply (one turn later). */
+    guardDelay?: boolean;
+  }
 > = [
-  { id: "first_day_badge", name: "First Day Badge", flavor: "Rank four! The pin is enormous on so small a chest.", icon: "BadgeCheck", what: "The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 4, pay: (move, api) => shield1(api, move.to) },
+  { id: "first_day_badge", name: "First Day Badge", flavor: "Rank four! The pin is enormous on so small a chest.", icon: "BadgeCheck", tier: 2, what: "The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn, and the guard ends the moment that pawn makes a capture", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 4, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true },
   { id: "honor_roll", name: "Honor Roll", flavor: "Fifth rank, first honors, gold trim.", icon: "Award", what: "The first of your pawns to reach your fifth rank is gilded, purely cosmetically, forever", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 5, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); flashSquares(api, [move.to], true); } },
   { id: "riding_certificate", name: "Riding Certificate", flavor: "Licensed for forward operations at last.", icon: "FileCheck", what: "The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn", cond: (move, api) => move.piece === "n" && relRank(api.me, move.to) >= 4, pay: (move, api) => shield1(api, move.to) },
-  { id: "exchange_student", name: "Exchange Student", flavor: "First semester abroad comes with an escort.", icon: "Backpack", what: "The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn", cond: (move, api) => inHalf(api.opp, move.to), pay: (move, api) => shield1(api, move.to) },
-  { id: "debutante_ball", name: "Debutante Ball", flavor: "Her first appearance is, by decree, uninterruptible.", icon: "Sparkles", what: "When your queen makes her first move, she cannot be captured during your opponent's next turn", cond: (move) => move.piece === "q", pay: (move, api) => shield1(api, move.to) },
+  { id: "exchange_student", name: "Exchange Student", flavor: "First semester abroad comes with an escort.", icon: "Backpack", tier: 2, what: "The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn, except by a pawn", cond: (move, api) => inHalf(api.opp, move.to), pay: (move, api) => shield1(api, move.to), guardExceptPawns: true },
+  { id: "debutante_ball", name: "Debutante Ball", flavor: "Her first appearance is, by decree, uninterruptible.", icon: "Sparkles", tier: 2, what: "When your queen makes her first move, she cannot be captured during your opponent's turn after next (the guard begins only after their next reply)", cond: (move) => move.piece === "q", pay: (move, api) => shield1(api, move.to), guardDelay: true },
   { id: "tower_inspection", name: "Tower Inspection", flavor: "Freshly certified: one tower, structurally smug.", icon: "Castle", what: "When your first rook moves, it cannot be captured during your opponent's next turn", cond: (move) => move.piece === "r" && !move.castle, pay: (move, api) => shield1(api, move.to) },
   { id: "ordination_day", name: "Ordination Day", flavor: "The diagonal is a calling, formally answered.", icon: "Church", what: "When your first bishop moves, it cannot be captured during your opponent's next turn", cond: (move) => move.piece === "b", pay: (move, api) => shield1(api, move.to) },
   { id: "morning_constitutional", name: "Morning Constitutional", flavor: "A king who walks before breakfast earns his hat.", icon: "Footprints", what: "When your king makes his first non-castling move, he earns a hat, purely cosmetically, forever", cond: (move) => move.piece === "k" && !move.castle, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "hat", null); flashSquares(api, [move.to], true); } },
 ];
 
 function graduation(entry: (typeof GRADUATIONS)[number]): Buff {
+  const guarded = !!(entry.guardExceptPawns || entry.guardEndsOnCapture || entry.guardDelay);
+  if (!guarded) {
+    return opener(entry, `${entry.what}. One use, automatic.`, {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        if (!entry.cond(move, api)) return;
+        entry.pay(move, api);
+        inst.spent = true;
+      },
+      status: () => "awaiting the milestone",
+    });
+  }
+  // Card-managed guard: a one-opponent-turn protection on the milestone piece,
+  // enforced through our own move filter so it can carve out pawn captures,
+  // drop on the piece's own capture, or begin a turn late.
   return opener(entry, `${entry.what}. One use, automatic.`, {
     kind: "passive",
     onMovePlayed: (inst, move, api) => {
-      if (inst.spent || move.color !== api.me) return;
-      if (!entry.cond(move, api)) return;
-      entry.pay(move, api);
-      inst.spent = true;
+      // Arm on the milestone move.
+      if (inst.state.sq == null && !inst.state.done) {
+        if (move.color !== api.me || !entry.cond(move, api)) return;
+        inst.state.sq = move.to;
+        inst.state.delay = entry.guardDelay ? 1 : 0;
+        inst.state.turns = 1;
+        return;
+      }
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null) return;
+      // Track the guarded piece as it moves; optionally end on its capture.
+      if (move.color === api.me && move.from === sq) {
+        if (entry.guardEndsOnCapture && move.captured) {
+          inst.state.sq = null;
+          inst.state.done = true;
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = move.to;
+      } else if (move.capturedSquare === sq && move.from !== sq) {
+        // The guarded piece was captured (a pawn slipped through, or the guard
+        // had not armed yet): the card is done.
+        inst.state.sq = null;
+        inst.state.done = true;
+        inst.spent = true;
+        return;
+      }
+      // Timing runs on the opponent's turns.
+      if (move.color === api.opp) {
+        if ((inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+        } else {
+          const t = (inst.state.turns as number) - 1;
+          inst.state.turns = t;
+          if (t <= 0) {
+            inst.state.sq = null;
+            inst.state.done = true;
+            inst.spent = true;
+          }
+        }
+      }
     },
-    status: () => "awaiting the milestone",
+    filterOpponentMoves: (moves, inst, _api) => {
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null || (inst.state.delay as number) > 0 || (inst.state.turns as number) <= 0) {
+        return moves;
+      }
+      return moves.filter((m) => {
+        const cap = m.capturedSquare ?? (m.captured ? m.to : null);
+        if (cap !== sq) return true;
+        if (entry.guardExceptPawns && m.piece === "p") return true;
+        return false;
+      });
+    },
+    status: (inst) => (inst.state.sq == null ? "awaiting the milestone" : "guarding"),
   });
 }
 
@@ -639,10 +714,18 @@ function superstition(entry: (typeof SUPERSTITIONS)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const NIGHT_WATCH: Array<
-  OpenerMeta & { turns: number; where: string; cond: (to: Square, api: BuffApi) => boolean }
+  OpenerMeta & {
+    turns: number;
+    where: string;
+    cond: (to: Square, api: BuffApi) => boolean;
+    /** Extra rider run on each newly marked enemy piece. */
+    onMark?: (to: Square, api: BuffApi) => void;
+    /** Extra description clause appended after the mark clause. */
+    extra?: string;
+  }
 > = [
   { id: "ladys_escort", name: "Lady's Escort", flavor: "Two paces behind the queen, eyes everywhere.", icon: "Moon", turns: 4, where: "next to your queen", cond: (to, api) => { const q = mySquares(api.board, api.me, "q")[0]; return q != null && ringAround(q).includes(to); } },
-  { id: "curfew_patrol", name: "Curfew Patrol", flavor: "After the bell, every visitor gets a lantern in the face.", icon: "Flashlight", turns: 5, where: "in your half", cond: (to, api) => inHalf(api.me, to) },
+  { id: "curfew_patrol", name: "Curfew Patrol", flavor: "After the bell, every visitor gets a lantern in the face.", icon: "Flashlight", turns: 5, where: "in your half", cond: (to, api) => inHalf(api.me, to), extra: ", every one of your pieces it could capture flashes, and you gain 5 seconds", onMark: (to, api) => { const caps = capturesFrom(api, to, api.me); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "wall_sentries", name: "Wall Sentries", flavor: "The back two ranks are walked all night, boots echoing.", icon: "BrickWall", turns: 6, where: "on your back two ranks", cond: (to, api) => relRank(api.me, to) <= 2 },
   { id: "plaza_lantern", name: "Plaza Lantern", flavor: "The town square is lit whether the town likes it or not.", icon: "Lamp", turns: 4, where: "on the four center squares", cond: (to) => CENTER4.includes(to) },
   { id: "tower_torches", name: "Tower Torches", flavor: "Anything that sidles up to a rook gets torchlight and questions.", icon: "Flame", turns: 4, where: "next to one of your rooks", cond: (to, api) => mySquares(api.board, api.me, "r").some((r) => ringAround(r).includes(to)) },
@@ -652,14 +735,17 @@ const NIGHT_WATCH: Array<
 function nightWatch(entry: (typeof NIGHT_WATCH)[number]): Buff {
   return opener(
     entry,
-    `For your next ${entry.turns} turns, any enemy piece that ends a move ${entry.where} is marked until you reply.`,
+    `For your next ${entry.turns} turns, any enemy piece that ends a move ${entry.where} is marked until you reply${entry.extra ?? ""}.`,
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = entry.turns;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && entry.cond(move.to, api)) flashSquares(api, [move.to]);
+        if (move.color === api.opp && entry.cond(move.to, api)) {
+          flashSquares(api, [move.to]);
+          entry.onMark?.(move.to, api);
+        }
         tickTurns(inst, move, api.me);
       },
       status: (inst) => `${turnsLeft(inst)} of your turns left`,
@@ -677,7 +763,7 @@ const VELVET_ROPES: Array<
 > = [
   { id: "no_horses_on_lawn", name: "No Horses on the Lawn", flavor: "The groundskeeper's glare stops cavalry cold.", icon: "PawPrint", rule: "enemy knights cannot end a move in your half", keep: (m, api) => !(m.piece === "n" && inHalf(api.me, m.to)) },
   { id: "walking_pace", name: "Walking Pace, Please", flavor: "This is a respectable board, not a racetrack.", icon: "Snail", rule: "enemy pawns cannot make two-square moves", keep: (m) => !m.isDoublePawn },
-  { id: "fresh_sod", name: "Fresh Sod", flavor: "The groundsman just laid the center. Walk around it.", icon: "Sprout", rule: "enemy pieces cannot end a move on the four center squares", keep: (m) => !CENTER4.includes(m.to) },
+  { id: "fresh_sod", name: "Fresh Sod", flavor: "The groundsman just laid the center. Walk around it.", icon: "Sprout", rule: "enemy pieces cannot end a non-capturing move on the four center squares (a capture may still land there)", keep: (m) => !(CENTER4.includes(m.to) && !m.captured) },
   { id: "personal_space", name: "Personal Space", flavor: "His majesty requires one full square of polite distance.", icon: "CircleSlash", rule: "enemy pieces cannot end a move next to your king", keep: (m, api) => { const k = kingSquare(api.board, api.me); return k == null || !ringAround(k).includes(m.to); } },
   { id: "quiet_cloister", name: "Quiet Cloister", flavor: "Visiting clergy may not sermonize on this side of the board.", icon: "Church", rule: "enemy bishops cannot end a move in your half", keep: (m, api) => !(m.piece === "b" && inHalf(api.me, m.to)) },
   { id: "invitation_only", name: "Invitation Only", flavor: "The back two ranks are a private function.", icon: "Ticket", rule: "enemy pieces cannot end a move on your back two ranks", keep: (m, api) => relRank(api.me, m.to) > 2 },

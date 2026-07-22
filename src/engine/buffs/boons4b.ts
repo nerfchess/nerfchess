@@ -642,19 +642,35 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_queens_gambol", name: "Queen's Gambol", tier: 5, category: "movement", icon: "Sparkle",
-      description: "Once, your queen may leap like a knight (capturing allowed).",
+      description: "Once, your queen may leap like a knight (capturing allowed). Her landing square is revealed and stays marked until your opponent replies.",
       flavor: "She learned it watching. She learns everything watching.", requires: ["q"],
       fx: { motif: "empower", pieces: ["q"], moveAs: "n", self: true } },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const leaps = [
-        [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
-      ] as const;
-      for (const from of mySquares(api.board, api.me, "q")) {
-        out.push(...leapMoves(api.board, from, leaps, inst.id));
-      }
-      return out;
-    }, 1),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const leaps = [
+          [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
+        ] as const;
+        for (const from of mySquares(api.board, api.me, "q")) {
+          out.push(...leapMoves(api.board, from, leaps, inst.id));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id || !move.color) return;
+        // Reveal the landing square: the strike flash lingers until the
+        // opponent replies (it ticks on their turns).
+        flashSquares(api, [move.to]);
+        const charges = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = charges;
+        if (charges <= 0) inst.spent = true;
+      },
+    },
   ),
 
   // --- pieces (5) ---
@@ -673,7 +689,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_retraining", name: "Retraining", tier: 5, category: "pieces", icon: "RefreshCw",
-      description: "One of your knights becomes a bishop, or one of your bishops becomes a knight, where it stands.",
+      description: "One of your knights becomes a bishop, or one of your bishops becomes a knight, where it stands. Your next draft is then skipped.",
       flavor: "Six weeks of night classes and a new walk." },
     activated(
       (_inst, api, picks) =>
@@ -691,9 +707,10 @@ export const BOON_WAVE4B: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         const p = api.board.pieces[sq];
-        if (!p || p.color !== api.me) return;
+        if (!p || p.color !== api.me || (p.type !== "n" && p.type !== "b")) return;
         if (p.type === "n") api.setPieceType(sq, "b");
-        else if (p.type === "b") api.setPieceType(sq, "n");
+        else api.setPieceType(sq, "n");
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       },
     ),
   ),
@@ -810,17 +827,34 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_quartermasters_lock", name: "Quartermaster's Lock", tier: 5, category: "protection", icon: "Lock",
-      description: "Your rooks and your queen cannot be captured for your opponent's next 2 turns.",
+      description: "Choose up to four of your rooks or your queen: each chosen piece cannot be captured for your opponent's next 2 turns.",
       flavor: "Heavy equipment signs out through ME.",
       fx: { motif: "ward", pieces: ["r", "q"], self: true } },
-    shieldZone(
-      (api) =>
-        mySquares(api.board, api.me).filter((sq) => {
-          const t = api.board.pieces[sq]!.type;
-          return t === "r" || t === "q";
-        }),
-      2,
-    ),
+    {
+      kind: "activated",
+      targets: (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a rook or queen to lock down (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return (t === "r" || t === "q") && !picks.some((k) => k.square === sq);
+              }),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (_inst, api, picks) => {
+        const zone: Square[] = [];
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me && (p.type === "r" || p.type === "q")) zone.push(sq);
+        }
+        if (zone.length) addEffect(api, { kind: "shield", owner: api.me, squares: zone, turns: 2 });
+      },
+    },
   ),
 
   // --- tempo (3) ---
@@ -861,9 +895,19 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_logjam", name: "Logjam", tier: 5, category: "tempo", icon: "TreePine",
-      description: "The river clogs: your opponent skips their next turn.",
+      description: "The river clogs after your opponent's next move: they skip the turn that follows.",
       flavor: "Somewhere upstream, one very smug beaver." },
-    skipOpponent(1),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        // Delayed payoff: the jam sets only after the opponent's next move, so
+        // the turn it skips is the one after that.
+        api.bs.skips[api.opp] += 1;
+        inst.spent = true;
+      },
+      status: () => "the jam is building",
+    },
   ),
 
   // --- info (2) ---
