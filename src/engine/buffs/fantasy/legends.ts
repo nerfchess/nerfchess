@@ -34,7 +34,66 @@ import {
   ORTHO_DIRS,
   FILE,
   RANK,
+  SQ,
+  type BoardState,
+  type Square,
+  type Mech,
 } from "./shared";
+
+// Balance pass: wrap a charge-limited move augment so that PLAYING one of its
+// granted moves also consumes the caster's next unused reroll, if any. The base
+// charge bookkeeping (spendOnVia) is preserved.
+function consumesRerollOnUse(base: Mech): Mech {
+  const inner = base.onMovePlayed;
+  return {
+    ...base,
+    onMovePlayed: (inst, move, api) => {
+      if (move.via === inst.id && move.color === api.me) {
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+      }
+      inner?.(inst, move, api);
+    },
+  };
+}
+
+// Does a piece standing on `from` attack `kingSq` by standard movement, given
+// the current board occupancy? Used by Shieldmaiden to detect the guarded piece
+// giving check (attacking the enemy king). Discovered attacks by other pieces
+// are not considered; only the piece on `from` itself.
+function attacksKing(board: BoardState, from: Square, kingSq: Square): boolean {
+  const p = board.pieces[from];
+  if (!p || from === kingSq) return false;
+  const df = FILE(kingSq) - FILE(from), dr = RANK(kingSq) - RANK(from);
+  const adf = Math.abs(df), adr = Math.abs(dr);
+  switch (p.type) {
+    case "n":
+      return (adf === 1 && adr === 2) || (adf === 2 && adr === 1);
+    case "k":
+      return adf <= 1 && adr <= 1;
+    case "p":
+      return adr === (p.color === "w" ? 1 : -1) && adf === 1;
+    case "b":
+      if (adf !== adr) return false;
+      break;
+    case "r":
+      if (df !== 0 && dr !== 0) return false;
+      break;
+    case "q":
+      if (adf !== adr && df !== 0 && dr !== 0) return false;
+      break;
+    default:
+      return false;
+  }
+  // Slider: the ray from `from` to the king must be unobstructed.
+  const sf = Math.sign(df), sr = Math.sign(dr);
+  let f = FILE(from) + sf, r = RANK(from) + sr;
+  while (SQ(f, r) !== kingSq) {
+    if (board.pieces[SQ(f, r)]) return false;
+    f += sf;
+    r += sr;
+  }
+  return true;
+}
 
 export const FANTASY_LEGENDS: Buff[] = [
   card(
@@ -230,21 +289,23 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "giant_slayer",
       name: "Giant Slayer",
       description:
-        "Your pawns carry slings and know the soft spots: twice this game, one of your pawns may capture an enemy piece on any square directly beside it.",
+        "Your pawns carry slings and know the soft spots: twice this game, one of your pawns may capture an enemy piece on any square directly beside it. Each such capture consumes your next unused reroll, if you have one.",
       tier: 4,
       category: "attack",
       requires: ["p"],
       flavor: "The bigger they come, the better the target.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment(
-      (_m, inst, api) =>
-        mySquares(api.board, api.me, "p").flatMap((sq) =>
-          slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter(
-            (mv) => mv.captured && pawnRankOk(mv.to),
+    consumesRerollOnUse(
+      augment(
+        (_m, inst, api) =>
+          mySquares(api.board, api.me, "p").flatMap((sq) =>
+            slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter(
+              (mv) => mv.captured && pawnRankOk(mv.to),
+            ),
           ),
-        ),
-      2,
+        2,
+      ),
     ),
   ),
   card(

@@ -662,14 +662,16 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_forward_observer",
       name: "Forward Observer",
-      description: "The observer calls in indirect fire: for your next 2 turns, your rooks may capture an enemy piece along a rank or file even when exactly one piece stands in the way. The blocker is unharmed; the rook lands on its target.",
+      description: "The observer calls in indirect fire: for your next turn, your rooks may capture an enemy piece along a rank or file even when exactly one piece stands in the way. The blocker is unharmed; the rook lands on its target.",
       tier: 4,
       category: "attack",
       requires: ["r"],
       flavor: "Eyes on the far ridge, shells over the hill.",
       fx: { motif: "empower", pieces: ["r"], self: true },
     },
-    timedAugment(2, (_m, inst, api) => {
+    // Overhaul balance pass: the longest duration is shortened by one of your
+    // turns (2 -> 1).
+    timedAugment(1, (_m, inst, api) => {
       const out: Move[] = [];
       for (const from of mySquares(api.board, api.me, "r")) {
         for (const [df, dr] of ORTHO_DIRS) {
@@ -967,16 +969,17 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_flanking_knights",
       name: "Flanking Knights",
-      description: "Both of your knights may also step one square in any direction like a king, for the game.",
+      description: "Both of your knights may also step one square in any direction like a king, without capturing, for the game.",
       tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "Hit them from two sides at once.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true },
     },
+    // Overhaul balance pass: the added king-steps may no longer capture.
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
-        slideMoves(api.board, sq, ALL_DIRS, inst.id, 1),
+        slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter((m) => !m.captured),
       ),
     ),
   ),
@@ -984,14 +987,26 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_field_fortification",
       name: "Field Fortification",
-      description: "Your pawns may also capture the enemy piece directly ahead of them, for the game.",
+      description: "After your opponent's next move, your pawns may also capture the enemy piece directly ahead of them, for the rest of the game.",
       tier: 4,
       category: "movement",
       requires: ["p"],
       flavor: "Dug in and biting back.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_m, inst, api) => forwardCaptureGen(inst, api)),
+    // Overhaul balance pass: the permanent grant cannot be shortened, so its
+    // start is delayed instead: the forward capture only switches on after your
+    // opponent has replied once.
+    {
+      kind: "passive",
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.started) return;
+        addNovel(moves, forwardCaptureGen(inst, api));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.started && move.color === api.opp) inst.state.started = true;
+      },
+    },
   ),
   card(
     {
