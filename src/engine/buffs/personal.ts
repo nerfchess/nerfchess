@@ -1550,24 +1550,27 @@ const NAMED: Buff[] = [
       id: "rgb_keyboard",
       name: "RGB Keyboard",
       description:
-        "Light up every key. For the game your knights add a 1-square step any direction, your bishops slide 2 straight, and your rooks slide 2 diagonally.",
+        "Light up every key. For the game your knights add a 1-square step any direction, your bishops slide 2 straight, and your rooks slide 2 diagonally, but these added moves cannot capture.",
       tier: 4,
       category: "movement",
       icon: "Keyboard",
       flavor: "Red, green, blue, and the whole squad glows.",
       fx: { motif: "empower", pieces: ["n", "b", "r"], self: true },
     },
-    permanentAugment((_m, inst, api) => [
-      ...mySquares(api.board, api.me, "n").flatMap((sq) =>
-        leapMoves(api.board, sq, ALL_DIRS, inst.id),
-      ),
-      ...mySquares(api.board, api.me, "b").flatMap((sq) =>
-        slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 2),
-      ),
-      ...mySquares(api.board, api.me, "r").flatMap((sq) =>
-        slideMoves(api.board, sq, DIAG_DIRS, inst.id, 2),
-      ),
-    ]),
+    permanentAugment((_m, inst, api) =>
+      [
+        ...mySquares(api.board, api.me, "n").flatMap((sq) =>
+          leapMoves(api.board, sq, ALL_DIRS, inst.id),
+        ),
+        ...mySquares(api.board, api.me, "b").flatMap((sq) =>
+          slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 2),
+        ),
+        ...mySquares(api.board, api.me, "r").flatMap((sq) =>
+          slideMoves(api.board, sq, DIAG_DIRS, inst.id, 2),
+        ),
+        // The added moves are non-capturing: drop any that would capture.
+      ].filter((m) => !m.captured),
+    ),
   ),
 
   card(

@@ -404,7 +404,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Snail",
       name: "Slowpoke",
       description:
-        "A famously bad card. Your whole army goes sluggish: for your next turn every piece can move only one square. It shrugs, apologetically.",
+        "A famously bad card. Your whole army goes sluggish: for your next turn every piece can move only one square, and those steps cannot capture. It shrugs, apologetically.",
       tier: 2,
       category: "movement",
       flavor: "Sorry. Sorry. Coming through. Sorry.",
@@ -412,6 +412,14 @@ export const PT_CURSE_CARDS: Buff[] = [
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
+      // The sluggish one-square steps cannot capture: bar every square an enemy
+      // piece stands on against you for that turn, so no shuffle can take a
+      // piece. The engine still exempts a king capture (its universal
+      // unwinnability guard) and relaxes the wall rather than ever stranding you.
+      const occupied = mySquares(api.board, api.opp);
+      if (occupied.length > 0) {
+        addEffect(api, { kind: "barred", squares: occupied, against: api.me, turns: 1 });
+      }
     }),
   ),
 

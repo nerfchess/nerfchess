@@ -34,6 +34,11 @@ import {
   addEffect,
   mySquares,
   grantInventory,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
+  pawnRankOk,
 } from "../funny/shared";
 import { grantRandomTier9 } from "../helpers";
 
@@ -213,7 +218,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       icon: "Ticket",
       name: "Scratch Card",
       description:
-        "Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 30 seconds. Three blanks and the dud ticket costs you your weakest pawn.",
+        "Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 35 seconds, a free forward pawn step when one is open, and a draft reroll. Three blanks and the dud ticket costs you your weakest pawn.",
       tier: 3,
       category: "pieces",
       flavor: "This is the lucky one, I can feel it.",
@@ -226,8 +231,23 @@ export const PT_CASINO_CARDS: Buff[] = [
         grantInventory(api, "n", 1);
         inst.state.outcome = "Three matching symbols: a knight to your pocket";
       } else if (a === b || b === c || a === c) {
-        api.adjustClock({ addSelfSec: 30 });
-        inst.state.outcome = "Two matching symbols: 30 seconds";
+        // The printed clock gain is bumped by 5 seconds (30 to 35). Untimed play
+        // cannot be detected here, so the untimed consolation (a free forward
+        // pawn step and a draft reroll) is paid unconditionally: harmless
+        // garnish when the clock swing already landed, real value when it did not.
+        api.adjustClock({ addSelfSec: 35 });
+        const dir = api.me === "w" ? 1 : -1;
+        const step = mySquares(api.board, api.me, "p")
+          .map((sq) => ({ sq, to: SQ(FILE(sq), RANK(sq) + dir) }))
+          .find(
+            (o) =>
+              inBoard(FILE(o.sq), RANK(o.sq) + dir) &&
+              !api.board.pieces[o.to] &&
+              pawnRankOk(o.to),
+          );
+        if (step) api.relocate(step.sq, step.to);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        inst.state.outcome = "Two matching symbols: 35 seconds, a pawn step, and a reroll";
       } else {
         const took = payTheHouse(api, ["p"]);
         inst.state.outcome = `Dud ticket: ${took}`;

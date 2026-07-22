@@ -23,6 +23,7 @@ import {
   ORTHO_DIRS,
   activated,
   addEffect,
+  addNovel,
   emptySquares,
   extraMovesNow,
   freezeTarget,
@@ -36,7 +37,6 @@ import {
   permanentAugment,
   pieceBound,
   relocateMany,
-  removeEnemies,
   slideMoves,
   stealBuffs,
   timedOppFilter,
@@ -411,12 +411,12 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_swap_flanks",
       name: "Fold Space",
       description:
-        "Swap the squares of up to two pairs of your own pieces, once.",
+        "Swap the squares of one pair of your own pieces, once.",
       tier: 4,
       category: "movement",
       flavor: "Two folds and the map is redrawn.",
     },
-    swapOwnPieces(undefined, 2),
+    swapOwnPieces(undefined, 1),
   ),
 
   // ===================== PHASE / MOVEMENT GRANTS =====================
@@ -425,7 +425,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_ghostwalk_bishop",
       name: "Ghostwalk",
       description:
-        "One of your bishops may also step one square straight, like a rook, for the rest of the game.",
+        "One of your bishops may also step one square straight, like a rook, but never to capture, for the rest of the game.",
       tier: 3,
       category: "movement",
       requires: ["b"],
@@ -433,7 +433,7 @@ export const WILD_ARCANE: Buff[] = [
       fx: { motif: "empower", pieces: ["b"], moveAs: "r", self: true },
     },
     pieceBound("b", "Choose the bishop to teach the ghostwalk", (board, sq, via) =>
-      slideMoves(board, sq, ORTHO_DIRS, via, 1),
+      slideMoves(board, sq, ORTHO_DIRS, via, 1).filter((m) => !m.captured),
     ),
   ),
   card(

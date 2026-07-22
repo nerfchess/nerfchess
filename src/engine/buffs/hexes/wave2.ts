@@ -411,29 +411,49 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_no_reins",
       name: "No Reins",
       description:
-        "Their long pieces bolt: for your opponent's next 4 turns, every bishop, rook or queen slide must run as far as the line allows: to the board's edge, into a capture, or right up against one of their own pieces. No stopping halfway. Knights, pawns and the king keep their footing.",
+        "Their long pieces bolt, a beat late: their next move keeps its footing, then for their following 4 turns, every bishop, rook or queen slide must run as far as the line allows: to the board's edge, into a capture, or right up against one of their own pieces. No stopping halfway. Knights, pawns and the king keep their footing.",
       flavor: "The horses took the bits in their teeth.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
-    curse(4, (moves, api) =>
-      moves.filter((m) => {
-        if ((m.piece !== "b" && m.piece !== "r" && m.piece !== "q") || m.castle) return true;
-        const adf = Math.abs(FILE(m.to) - FILE(m.from));
-        const adr = Math.abs(RANK(m.to) - RANK(m.from));
-        // Non-slide shapes (buff-granted leaps) are not runaway lines.
-        if (adf !== 0 && adr !== 0 && adf !== adr) return true;
-        if (m.captured) return true; // a capture IS the end of the line
-        const df = Math.sign(FILE(m.to) - FILE(m.from));
-        const dr = Math.sign(RANK(m.to) - RANK(m.from));
-        const f = FILE(m.to) + df;
-        const r = RANK(m.to) + dr;
-        if (!inBoard(f, r)) return true; // ran out of board
-        const next = api.board.pieces[SQ(f, r)];
-        // Stopped against their own piece: the line truly ends here. Stopping
-        // one short of an enemy piece is refusing the capture — forbidden.
-        return !!next && next.color === api.opp;
-      }),
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => {
+          if ((m.piece !== "b" && m.piece !== "r" && m.piece !== "q") || m.castle) return true;
+          const adf = Math.abs(FILE(m.to) - FILE(m.from));
+          const adr = Math.abs(RANK(m.to) - RANK(m.from));
+          // Non-slide shapes (buff-granted leaps) are not runaway lines.
+          if (adf !== 0 && adr !== 0 && adf !== adr) return true;
+          if (m.captured) return true; // a capture IS the end of the line
+          const df = Math.sign(FILE(m.to) - FILE(m.from));
+          const dr = Math.sign(RANK(m.to) - RANK(m.from));
+          const f = FILE(m.to) + df;
+          const r = RANK(m.to) + dr;
+          if (!inBoard(f, r)) return true; // ran out of board
+          const next = api.board.pieces[SQ(f, r)];
+          // Stopped against their own piece: the line truly ends here. Stopping
+          // one short of an enemy piece is refusing the capture, forbidden.
+          return !!next && next.color === api.opp;
+        });
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move keeps its footing; the reins
+          // snap tight after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- a capture budget, spent however they like -----------------------------
@@ -445,7 +465,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_war_rations",
       name: "War Rations",
       description:
-        "Their war chest is sealed to two requisitions: across your opponent's next 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends. They pick which battles are worth the ration.",
+        "Their war chest is sealed a beat late: their next move is free, then across your opponent's following 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends. They pick which battles are worth the ration.",
       flavor: "The quartermaster stamps two chits. The rest is on credit.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -454,14 +474,21 @@ export const HEX_WAVE2: Buff[] = [
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.caps = 2;
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst) => {
-        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         if (((inst.state.caps as number) ?? 0) > 0) return moves;
         const kept = moves.filter((m) => !m.captured);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched, its captures
+          // uncounted; the ration seal binds after it.
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
           inst.state.caps = Math.max(0, ((inst.state.caps as number) ?? 0) - 1);
         }
@@ -486,7 +513,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_witching_hour",
       name: "The Witching Hour",
       description:
-        "Midnight creeps up on their army: for your opponent's next 4 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 4 turns, all touched pieces freeze for 2 of their turns. Moving few pieces, or only ones they can spare, keeps the damage down.",
+        "Midnight creeps up on their army: for your opponent's next 3 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 3 turns, all touched pieces freeze for 2 of their turns. Moving few pieces, or only ones they can spare, keeps the damage down.",
       flavor: "Whatever stirred after dark, the hour keeps.",
       fx: { motif: "slow", pieces: "all" },
     },
