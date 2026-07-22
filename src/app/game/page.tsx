@@ -1585,8 +1585,8 @@ function GamePage() {
   // its wider 500px form at xl. Below sm the board runs nearly edge to edge
   // (full width minus 8px). Literal strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
-    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-880px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-820px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-880px))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-720px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-720px))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -1864,7 +1864,7 @@ function GamePage() {
           </div>
         )}
         <div
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[440px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[500px_auto]"
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[320px_auto] lg:justify-center lg:gap-x-4 xl:grid-cols-[340px_auto]"
           style={railHeightStyle}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,

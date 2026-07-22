@@ -45,7 +45,7 @@ export function FxToggleButton({ className = "" }: { className?: string }) {
       </datalist>
       <span
         className={
-          "smallcaps w-10 shrink-0 text-[12px] " +
+          "smallcaps w-12 shrink-0 whitespace-nowrap text-[12px] " +
           (level === 0 ? "text-parchment-400" : level >= 3 ? "text-gold-leaf" : "text-parchment-300")
         }
       >
