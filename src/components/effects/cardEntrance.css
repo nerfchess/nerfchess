@@ -413,3 +413,57 @@ html[data-anim="off"] .ce-scene,
 html[data-anim="off"] .ce-cast {
   display: none;
 }
+
+/* --- Opener entrances (overhaul): one keyframe family, per-card variety via
+   CSS custom properties (--oe-fx/--oe-fy arrival vector, --oe-rot tilt) set
+   from the card id hash in cardEntrance.tsx. All transform/opacity only.
+   Lives inside .ce-scene, so the existing html[data-anim="off"] .ce-scene
+   gate hides the whole composition with the rest of the entrance layer. */
+.oe-flyer {
+  animation-name: oe-fly-in;
+  animation-fill-mode: both;
+}
+.oe-ease-a { animation-timing-function: cubic-bezier(0.16, 0.84, 0.3, 1); }
+.oe-ease-b { animation-timing-function: cubic-bezier(0.34, 1.4, 0.44, 1); }
+.oe-ease-c { animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1.15); }
+.oe-ease-d { animation-timing-function: cubic-bezier(0.2, 1.1, 0.7, 1); }
+@keyframes oe-fly-in {
+  0% {
+    opacity: 0;
+    transform: translate(var(--oe-fx, -60%), var(--oe-fy, -60%)) rotate(var(--oe-rot, 0deg)) scale(0.55);
+  }
+  18% { opacity: 1; }
+  82% {
+    transform: translate(1.5%, -1.5%) rotate(calc(var(--oe-rot, 0deg) * -0.2)) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+.oe-ring {
+  animation: oe-ring-breathe 900ms ease-out both;
+}
+@keyframes oe-ring-breathe {
+  0% { opacity: 0; transform: scale(0.6); }
+  55% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0.9; transform: scale(1); }
+}
+.oe-trail {
+  animation-name: oe-trail-in;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+@keyframes oe-trail-in {
+  0% { opacity: 0; transform: translate(var(--oe-fx, -40%), var(--oe-fy, -40%)) scale(0.4) rotate(0deg); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(0, 0) scale(1) rotate(200deg); }
+}
+.oe-pop {
+  opacity: 0;
+  animation: oe-pop-ring 460ms ease-out both;
+}
+@keyframes oe-pop-ring {
+  0% { opacity: 0.9; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(1.35); }
+}

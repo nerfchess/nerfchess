@@ -438,12 +438,112 @@ export function CategoryArrival(props: ArrivalProps) {
  *  steal, grant) — distinct from its play. Mounted by Board keyed to the
  *  acquisition, so React runs it exactly once. Marquee tiers add a dim +
  *  board-wide rim shock. */
+// --- Opener entrances (overhaul) ---------------------------------------------
+// Every opener card (id op_*) gets a UNIQUE deterministic entrance: the id's
+// hash picks the screen edge it arrives from, its flight curve, tilt, timing,
+// hue shift, and a small trail of themed glyphs. One keyframe family plus CSS
+// custom properties yields thousands of distinct compositions with no
+// per-card code. Lives inside .ce-scene, so the anim-off gate applies as-is.
+
+function openerHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** 12 arrival origins around and beyond the crop (percent offsets). */
+const OE_ORIGINS: Array<[number, number]> = [
+  [-70, -70], [0, -85], [70, -70], [-85, 0], [85, 0], [-70, 70],
+  [0, 85], [70, 70], [-90, -30], [90, -30], [-90, 30], [90, 30],
+];
+
+/** Trail glyphs: tiny SVG paths stamped along the flight. */
+const OE_GLYPHS = [
+  "M6 0 L7.6 4.2 L12 4.6 L8.6 7.4 L9.8 12 L6 9.4 L2.2 12 L3.4 7.4 L0 4.6 L4.4 4.2 Z", // star
+  "M6 0 C9 3 12 6 6 12 C0 6 3 3 6 0 Z", // leaf/drop
+  "M2 6 A4 4 0 1 0 10 6 A4 4 0 1 0 2 6 M6 2 V0 M6 12 V10 M2 6 H0 M12 6 H10", // gear-ish
+  "M1 6 A5 3.4 0 1 0 11 6 A5 3.4 0 1 0 1 6", // coin
+  "M0 12 C4 8 8 4 12 0 C10 6 6 10 0 12 Z", // feather
+  "M6 0 L8 6 L6 12 L4 6 Z", // spark
+  "M4 0 H6 V8 A2.4 2.4 0 1 1 4 6.4 Z", // note
+  "M6 1 L11 11 H1 Z", // rune
+];
+
+const OE_EASINGS = ["oe-ease-a", "oe-ease-b", "oe-ease-c", "oe-ease-d"];
+
+function OpenerArrival({ seed, icon: Icon }: { seed: string; icon: LucideIcon }) {
+  const h = openerHash(seed);
+  const [ox, oy] = OE_ORIGINS[h % OE_ORIGINS.length];
+  const rot = ((h >>> 4) % 51) - 25; // -25..25 deg
+  const dur = 620 + ((h >>> 9) % 9) * 55; // 620..1060ms
+  const hue = (h >>> 13) % 360;
+  const glyph = OE_GLYPHS[(h >>> 17) % OE_GLYPHS.length];
+  const glyphCount = 3 + ((h >>> 21) % 4); // 3..6
+  const easing = OE_EASINGS[(h >>> 24) % OE_EASINGS.length];
+  const spin = (h & 1) === 0 ? 1 : -1;
+  const color = `hsl(${hue} 62% 66%)`;
+  const soft = `hsl(${hue} 62% 66% / 0.28)`;
+  return (
+    <span className="absolute inset-0 block" aria-hidden="true">
+      {/* the flyer: badge ring + card icon, arriving from beyond the crop */}
+      <span
+        className={`oe-flyer ${easing} absolute left-1/2 top-1/2 flex h-[34%] w-[34%] items-center justify-center`}
+        style={
+          {
+            "--oe-fx": `${ox}%`,
+            "--oe-fy": `${oy}%`,
+            "--oe-rot": `${rot * spin}deg`,
+            animationDuration: `${dur}ms`,
+            marginLeft: "-17%",
+            marginTop: "-17%",
+          } as React.CSSProperties
+        }
+      >
+        <span
+          className="oe-ring absolute inset-0 block rounded-full"
+          style={{ border: `2.5px solid ${color}`, boxShadow: `0 0 24px ${soft}, inset 0 0 18px ${soft}` }}
+        />
+        <Icon className="relative h-[52%] w-[52%]" style={{ color }} strokeWidth={2} />
+      </span>
+      {/* the trail: themed glyphs strung back along the arrival vector */}
+      {Array.from({ length: glyphCount }).map((_, i) => (
+        <svg
+          key={i}
+          viewBox="0 0 12 12"
+          className="oe-trail absolute left-1/2 top-1/2 h-[7%] w-[7%]"
+          style={
+            {
+              "--oe-fx": `${ox * (0.35 + i * 0.16)}%`,
+              "--oe-fy": `${oy * (0.35 + i * 0.16)}%`,
+              animationDuration: `${dur + 90 + i * 70}ms`,
+              animationDelay: `${60 + i * 45}ms`,
+              marginLeft: "-3.5%",
+              marginTop: "-3.5%",
+            } as React.CSSProperties
+          }
+        >
+          <path d={glyph} fill={color} opacity={0.85} />
+        </svg>
+      ))}
+      {/* landing pop */}
+      <span
+        className="oe-pop absolute left-1/2 top-1/2 block h-[40%] w-[40%] rounded-full"
+        style={{ marginLeft: "-20%", marginTop: "-20%", border: `2px solid ${color}`, animationDelay: `${dur - 80}ms` }}
+      />
+    </span>
+  );
+}
+
 export function CardEntrance({
   category,
   tier,
   icon,
   name,
   mine,
+  cardId,
 }: {
   category: BuffCategory;
   tier: number;
@@ -451,9 +551,12 @@ export function CardEntrance({
   name: string;
   /** Which side gained the card: flavors the banner label. */
   mine: boolean;
+  /** Card id: openers (op_*) swap in their unique generated entrance. */
+  cardId?: string;
 }) {
   const t = ARRIVAL_THEME[category];
   const marquee = tier >= 8;
+  const isOpener = !!cardId?.startsWith("op_");
   return (
     <span className="ce-scene pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
       {marquee && <span className="ce-dim absolute inset-0 block" style={{ background: "rgba(6,10,16,0.45)" }} />}
@@ -461,9 +564,14 @@ export function CardEntrance({
         className="ce-wash absolute inset-0 block"
         style={{ background: `radial-gradient(circle at 50% 42%, ${t.soft}, transparent 70%)` }}
       />
-      {/* the arrival plays in a centered stage, ~56% of the crop */}
+      {/* the arrival plays in a centered stage, ~56% of the crop; openers
+          swap in their unique per-card generated entrance */}
       <span className="absolute left-[22%] top-[14%] block h-[56%] w-[56%]">
-        <CategoryArrival category={category} icon={icon} delayMs={80} />
+        {isOpener && cardId ? (
+          <OpenerArrival seed={cardId} icon={icon} />
+        ) : (
+          <CategoryArrival category={category} icon={icon} delayMs={80} />
+        )}
       </span>
       {marquee && (
         <span
@@ -478,7 +586,7 @@ export function CardEntrance({
           className="ce-title-tag smallcaps text-[9.5px] tracking-[0.22em] text-parchment-300"
           style={{ animationDelay: "300ms", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}
         >
-          {mine ? "New card" : "Opponent gains"}
+          {isOpener ? (mine ? "Opening pick" : "Opponent opens with") : mine ? "New card" : "Opponent gains"}
         </span>
         <span className="relative block max-w-full overflow-hidden">
           <span

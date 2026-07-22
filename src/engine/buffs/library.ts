@@ -1,7 +1,9 @@
 import { isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
+import { HEX_WAVE4 } from "./hexes/wave4";
 import { BOON_WAVE2 } from "./boons2";
 import { BOON_WAVE3 } from "./boons3";
+import { BOON_WAVE4 } from "./boons4";
 import { FUNNY_CARDS } from "./funny";
 import { FANTASY_CARDS } from "./fantasy";
 import { MYSTIC_CARDS } from "./mystic";
@@ -10,6 +12,7 @@ import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
 import { TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
+import { OVERHAUL_CARDS } from "./overhaul";
 import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
 import { buffRegistry } from "./registry";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
@@ -1430,10 +1433,10 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 2 turns, used at the moment you choose.", tier: 2, category: "nerf" },
+    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 3 turns, used at the moment you choose.", tier: 2, category: "nerf" },
     {
       ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
       }),
       freeAction: true,
     },
@@ -1931,10 +1934,13 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 4, category: "nerf" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
-    }),
+    { id: "respite", name: "Respite", description: "Free action: suspend your nerf for your next 5 turns, used at the moment you choose.", tier: 4, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
+      }),
+      freeAction: true,
+    },
   ),
   def(
     { id: "timely_lull", name: "Timely Lull", description: "Free action: a lull settles over the whole board: both players' nerfs are suspended for their next 3 turns, used at the moment you choose.", tier: 3, category: "nerf", flavor: "For three turns, it is just chess." },
@@ -2856,7 +2862,7 @@ const TIER6: Buff[] = [
       id: "chess_diff",
       name: "Chess Diff",
       description:
-        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
+        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no cards, no powers of any kind. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
       tier: 6,
       category: "pieces",
       boon: true,
@@ -3629,11 +3635,15 @@ const TIER7: Buff[] = [
     activatedSimple((_inst, api) => reformArmy(api)),
   ),
   def(
-    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft.", tier: 7, category: "draft" },
-    // Rebalance: takeBoth reduced from your next TWO drafts to just the next
-    // one (+2 -> +1), a ~30% trim on the raw card economy it prints.
+    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft, and that draft rolls one tier higher.", tier: 7, category: "draft" },
+    // Overhaul balance pass: the old text ("take both cards in your next
+    // draft") was an exact duplicate of Greed (wa_greed, tier 6) one tier
+    // higher, i.e. strictly dominated. The sovereign now also lifts the offer
+    // one tier (same lift as a banked skip, capped by the same rollOffer
+    // rules), so tier 7 buys a real step over Greed.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
   // Nerf-modifiers (cross-cutting)
@@ -3647,10 +3657,13 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "sabbatical", name: "Sabbatical", description: "Suspend your nerf for your next 10 turns.", tier: 7, category: "nerf" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
-    }),
+    { id: "sabbatical", name: "Sabbatical", description: "Free action: suspend your nerf for your next 10 turns, used at the moment you choose.", tier: 7, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+      }),
+      freeAction: true,
+    },
   ),
   def(
     { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn. You cannot capture the king on the bonus move: your opponent replies first.", tier: 7, category: "nerf" },
@@ -4019,11 +4032,14 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position with your nerf removed, once.", tier: 8, category: "pieces" },
+    { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position, once. Every lingering effect is washed away.", tier: 8, category: "pieces" },
     activatedSimple((_inst, api) => {
       const BACK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
       // Whole-board rewrite: uncounted, or the fresh armies would register
-      // as 32 captures and corrupt every revive pool and nerf condition.
+      // as 32 captures and corrupt every revive pool.
+      // (Buff-mode purity overhaul: the old "your nerf removed" rider is gone.
+      // Genesis is buff-mode only, where there is no nerf to remove; the rider
+      // was dead text there and an undocumented legacy-mode kindness.)
       for (let sq = 0; sq < 64; sq++) api.removePiece(sq, { uncounted: true });
       for (let f = 0; f < 8; f++) {
         api.place(SQ(f, 0), BACK[f], "w");
@@ -4036,7 +4052,6 @@ const TIER8: Buff[] = [
       api.board.castling.bk = api.board.castling.bq = true;
       api.board.epTarget = null;
       api.board.halfmove = 0;
-      api.removeMyNerf();
     }),
   ),
   // Nerf-modifiers (cross-cutting)
@@ -4577,6 +4592,8 @@ export const ALL_BUFFS: Buff[] = [
   ...NEW_HEXES,
   ...BOON_WAVE2,
   ...BOON_WAVE3,
+  ...BOON_WAVE4,
+  ...HEX_WAVE4,
   ...FUNNY_CARDS,
   ...FANTASY_CARDS,
   ...MYSTIC_CARDS,
@@ -4587,6 +4604,7 @@ export const ALL_BUFFS: Buff[] = [
   ...PERSONAL_CARDS,
   ...NEWJEANS_CARDS,
   ...ITEMS,
+  ...OVERHAUL_CARDS,
   ...TIER9,
   ...TIER10,
 ];

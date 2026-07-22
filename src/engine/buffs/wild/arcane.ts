@@ -1290,15 +1290,16 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_arcane_reroll",
       icon: "Dice5",
       name: "Arcane Reroll",
-      description: "Gain a draft reroll.",
+      description: "Gain two draft rerolls.",
       tier: 3,
       category: "draft",
       flavor: "Do not like these? Ask again.",
     },
-    // Rebalance: two free rerolls was a lot of raw draft-shaping for tier 3;
-    // trimmed to a single reroll (+2 -> +1).
+    // Overhaul balance pass: the earlier trim to a single reroll left this
+    // strictly dominated by Peek (tier 1, identical effect); the arcane
+    // version pays out two again, priced at tier 3.
     instant((_inst, api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
     }),
   ),
   card(

@@ -460,11 +460,15 @@ export const WILD_WARFARE: Buff[] = [
       // advance is strictly more than the plain summon, so it prices a tier up.
       id: "ww_outriders",
       name: "Outriders",
-      description: "Place a new knight on any empty square in your half, then advance one of your pawns one square.",
+      description: "Place a new knight on any empty square in your half, then up to two different pawns each advance one square behind it.",
       tier: 4,
       category: "pieces",
       flavor: "Cavalry ahead, infantry a step behind.",
     },
+    // Overhaul balance pass: the old rider (one pawn step) left this a
+    // near-copy of Summon Knight (tier 3). The outriders now escort the whole
+    // line: up to TWO different pawns step up, a real development surge that
+    // earns the tier gap while staying strictly-not-worse.
     {
       kind: "activated",
       spendOnUse: true,
@@ -472,29 +476,40 @@ export const WILD_WARFARE: Buff[] = [
         if (picks.length === 0) {
           return { kind: "square", label: "Place your new knight", squares: emptySquares(api.board, myHalfZone(api)) };
         }
-        if (picks.length === 1) {
+        if (picks.length <= 2) {
           const fwd = api.me === "w" ? 8 : -8;
+          const taken = new Set(picks.slice(1).map((p) => p.square));
           const advancers = mySquares(api.board, api.me, "p").filter((sq) => {
             const to = sq + fwd;
-            return to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to) && to !== picks[0].square;
+            return (
+              to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to) &&
+              to !== picks[0].square && !taken.has(sq) && !taken.has(to as Square)
+            );
           });
           if (advancers.length === 0) return null;
-          return { kind: "square", label: "Advance one of your pawns one square", squares: advancers, finishable: true };
+          return {
+            kind: "square",
+            label: picks.length === 1 ? "Advance a pawn one square" : "Advance a second pawn, or finish",
+            squares: advancers,
+            finishable: true,
+          };
         }
         return null;
       },
       effect: (_inst, api, picks) => {
         const knightSq = picks[0]?.square;
         if (knightSq != null && !api.board.pieces[knightSq]) api.place(knightSq, "n", api.me);
-        const pawnSq = picks[1]?.square;
-        if (
-          pawnSq != null &&
-          api.board.pieces[pawnSq]?.type === "p" &&
-          api.board.pieces[pawnSq]?.color === api.me
-        ) {
-          const fwd = api.me === "w" ? 8 : -8;
-          const to = pawnSq + fwd;
-          if (to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to)) api.relocate(pawnSq, to);
+        const fwd = api.me === "w" ? 8 : -8;
+        for (const pick of picks.slice(1, 3)) {
+          const pawnSq = pick?.square;
+          if (
+            pawnSq != null &&
+            api.board.pieces[pawnSq]?.type === "p" &&
+            api.board.pieces[pawnSq]?.color === api.me
+          ) {
+            const to = pawnSq + fwd;
+            if (to >= 0 && to < 64 && !api.board.pieces[to] && pawnRankOk(to)) api.relocate(pawnSq, to);
+          }
         }
       },
     },

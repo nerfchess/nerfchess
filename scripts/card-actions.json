@@ -1,0 +1,1970 @@
+{
+ "abdication_edict": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "aegis": {
+  "action": "keep: army shield T6"
+ },
+ "aegis_of_ages": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "allergies": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "alt_f4": {
+  "action": "keep: clock-hit ladder T5"
+ },
+ "anchored_rooks": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "berolina_pawns": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bishop_archbishop": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "blinkered_bishops": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "blitzkrieg": {
+  "action": "keep: extra-move ladder T8 (4 moves)"
+ },
+ "bn4_age_of_peace": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_all_seeing_spire": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_ancestral_shield": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_angelus_bell": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_auditors_ledger": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_augurs_flight": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_bakers_dozen": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_bodyguard_detail": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_bottled_courage": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_bottom_of_the_well": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_bread_and_salt": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_charm_bracelet": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_coffee_break": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_cold_compress": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_cold_snap": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_color_guard": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_coronation_rest": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_council_of_peace": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_coupon_book": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "bn4_court_procession": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_crown_commission": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_crowned_calm": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_crowned_strider": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_danger_sense": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_debtors_holiday": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_double_pardon": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_dowagers_patience": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_dragonslayer": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_drawbridge_crew": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_dukes_patent": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_egg_timer": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_escape_artist": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_eye_of_ages": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_faerie_door": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_falconers_glove": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_ferry_ticket": {
+  "action": "keep: rank-wide crossing vs the vault's single-jump geometry; different mechanics"
+ },
+ "bn4_field_glasses": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_field_stitches": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_flash_frost": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_florists_trick": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_forty_winks": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_frozen_moat": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_furlough": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_ghost_walk": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_glacier_calving": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_glass_case": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_glass_of_water": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_grandfather_clock": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_griffins_brood": {
+  "action": "REBALANCED: 4 turns; Masked Ball (same minors shield plus suspension, same tier) no longer strictly dominates"
+ },
+ "bn4_gryphon_rider": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_guards_change": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_hairline_crack": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_half_step_back": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_hall_of_doors": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_harvest_and_fallow": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "bn4_harvest_rest": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_hearth_ring": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_heralds_truce": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_hermits_hour": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_hidden_clause": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_hollow_crown": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_holy_water": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_hourglass_flip": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_hourglass_throne": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_hundred_days": {
+  "action": "keep: 12-turn suspension at pick; Sabbatical is now the free-action timing variant"
+ },
+ "bn4_hundred_year_lease": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_hush_money": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_jubilee": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_keep_gate": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_keys_to_the_city": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_kind_omen": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_kings_indulgence": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_kings_own_wings": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_knights_vigil": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_leave_of_absence": {
+  "action": "keep: 5 free turns plus reroll vs Wardens Bribe's 6; a real trade"
+ },
+ "bn4_listening_post": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_logjam": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_long_holiday": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_lucky_coin": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_masked_ball": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_masons_lodge": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_measured_breath": {
+  "action": "keep: 2 free turns plus reroll; Held Breath now runs 3 turns"
+ },
+ "bn4_militia_call": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_ministers_seal": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_muddy_boots": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_night_watch": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_open_season": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_overtime_claim": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_paid_leave": {
+  "action": "keep: 6-turn suspension at pick; Respite is now the free-action timing variant"
+ },
+ "bn4_patrons_favor": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_pawn_bulwark": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_pawns_lullaby": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_pinch_of_sand": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_pocket_cavalry": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_pocket_metronome": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_pocket_shield": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_prison_break": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_private_auction": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_promise_of_rest": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_punch_card": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_quartermasters_lock": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_quiet_after": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_quiet_coup": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_quilted_armor": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_rampart_watch": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_ravens_court": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_reserve_officer": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_rest_stop": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_rook_nest": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_royal_banquet": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_royal_household": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_royal_stroll": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_royal_taster": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_royal_we": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_royal_writ": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_rule_of_three": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_saints_day": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_saints_procession": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_scouts_report": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_season_ticket": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_second_skin": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_seven_league_boots": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_shared_silence": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_shepherds_watch": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_shieldmaidens": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_side_shuffle": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_siege_mentality": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_slipped_collar": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_slow_doors": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_slow_procession": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_small_ritual": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_smoke_break_union": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_spare_button": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_steady_hands": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_stolen_hour": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_stormcrossing": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_stray_cat": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_tangled_reins": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_third_wind": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_thorn_hedge": {
+  "action": "REBALANCED: 4 turns; Watchtower (same effect, lower tier) no longer strictly dominates"
+ },
+ "bn4_tiptoe": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "bn4_trade_secret": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_twin_buttons": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_uphill_battle": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_vaulting_pole": {
+  "action": "keep: jump-over-blocker geometry, distinct from Ferry Ticket's rank slide"
+ },
+ "bn4_velvet_queue": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_veterans_pension": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_veterans_return": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_visor_down": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_wagon_circle": {
+  "action": "REBALANCED: 3 turns; Watermelon Rind (two ranks, 2 turns) no longer strictly dominates"
+ },
+ "bn4_wall_of_faith": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_war_room_map": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_wardens_retirement": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_warding_circle": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_watchmans_lantern": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_wheelbarrow": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_window_shopping": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "bn4_winter_garrison": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_winter_orders": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_worry_beads": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_written_in_stone": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bn4_year_of_jubilee": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "bodyguard": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "buff_plunder": {
+  "action": "keep: steal family T8 (three)"
+ },
+ "buff_siphon": {
+  "action": "keep: steal family T6 (two)"
+ },
+ "buff_thief": {
+  "action": "keep: steal family T5 (any tier)"
+ },
+ "buff_thief_minor": {
+  "action": "keep: reviewed as the steal family's T4 entry (1 low-tier steal)"
+ },
+ "burned_dispatches": {
+  "action": "keep: skip plus nullify T5 baseline of the draft-denial ladder"
+ },
+ "butter_bishops": {
+  "action": "keep: bishop range clamp T2 baseline; Mitred Blinders now clamps to 1 square"
+ },
+ "butterfingers": {
+  "action": "keep: queen-capture ban T1 baseline; Widow's Veil now runs 6 turns"
+ },
+ "bw2_ascetics_bargain": {
+  "action": "keep: skip-for-quality ladder T3"
+ },
+ "bw2_long_truce": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf-suspension rider is dead text there); fully alive in nerf mode"
+ },
+ "bw3_futures_market": {
+  "action": "keep: skip-for-quality ladder T7 (apex shot)"
+ },
+ "chain_nullify": {
+  "action": "keep: nullify axis at T4"
+ },
+ "chess_diff": {
+  "action": "TEXT: mode-neutral description (buff-mode purity); appearance multiplier removed (fair RNG)"
+ },
+ "clone_army": {
+  "action": "keep: pocket-pawn ladder T6 (4)"
+ },
+ "cold_feet": {
+  "action": "keep: full pawn-capture ban T1 baseline; Polite Infantry runs longer on the directional axis"
+ },
+ "cold_open": {
+  "action": "keep: full queen freeze T1 baseline of the queen-hex trio"
+ },
+ "counter_nerf": {
+  "action": "keep: relief-on-capture ladder T4 (3 procs)"
+ },
+ "counterstep": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "cream_pie": {
+  "action": "keep: flat 2-turn capture ban T3; White Flag Hour redesigned onto a rolling cadence"
+ },
+ "crossed_wires": {
+  "action": "keep: flat knight-capture ban; Blunted Horseshoes redesigned onto the cooldown axis"
+ },
+ "crown_and_castle": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "daniel_caesar": {
+  "action": "keep: full capture ban T4 baseline; No Easy Pickings now runs 4 turns on the honor-code axis"
+ },
+ "deep_freeze": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "deflect": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "divine_legion": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "doom_march": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "double_or_nothing": {
+  "action": "keep: held-card gamble axis at T4"
+ },
+ "draft_insight": {
+  "action": "keep: T2 rung of the forced-tier ladder"
+ },
+ "draft_seize": {
+  "action": "keep: take-both plus opponent skip at T6, distinct axis (denial)"
+ },
+ "draft_supremacy": {
+  "action": "keep: T8 top of the take-both ladder (two drafts plus denial)"
+ },
+ "eternal_statue": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "extra_glance": {
+  "action": "keep: nerf-mode only via NERF_REVEAL exclusion (buff-mode purity)"
+ },
+ "extra_move": {
+  "action": "keep: extra-move ladder T4 (2 moves)"
+ },
+ "favorable_stars": {
+  "action": "REBALANCED: forces tier 6 (was tier 5, strictly dominated by High Roll T4 forcing the same tier)"
+ },
+ "ferz_king": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "fissure": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "fissure_field": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "foggy_glasses": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "frostbite": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "frozen_solid": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "full_resurrection": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "gamble": {
+  "action": "keep: coin-flip take-both variant, random axis"
+ },
+ "genesis": {
+  "action": "REWORKED: pure board reset; dead nerf-removal rider removed (buff-mode purity)"
+ },
+ "giant_slayer": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "god_king": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "grace_period": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "grand_nullify": {
+  "action": "keep: nullify sweep T7 (wider)"
+ },
+ "grand_resurrection": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "grand_summon": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "granite_towers": {
+  "action": "keep: rook walnut 3 turns T4 baseline; Castle of Sand now runs 4"
+ },
+ "gremlins": {
+  "action": "keep: even-distance rooks T3; Crooked Arrow redesigned onto odd distances"
+ },
+ "griffon_rider": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "heavy_shackles": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "held_breath": {
+  "action": "REBALANCED: 3 turns; Measured Breath (2 turns plus reroll, same tier) no longer strictly dominates"
+ },
+ "heros_journey": {
+  "action": "keep: three cards plus bank improvement at T4; Algorithm Boost differentiated with a reroll"
+ },
+ "hexed_satchel": {
+  "action": "keep: nullification axis vs Paper Orders' offer-filtering axis"
+ },
+ "hobbled_cavalry": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "homesick": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "horn_of_summoning": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "hunters_relief": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hw2_witchs_veto": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hw3_bloodbond": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hw3_bounty_mark": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hw3_toll_road": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hw3_wrong_foot": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_banquet_of_dust": {
+  "action": "REBALANCED: 5 turns; 3 duplicated Mute Button (T4)"
+ },
+ "hx4_blunted_horseshoes": {
+  "action": "REDESIGNED: winded-knight cooldown (a knight that moved last turn cannot capture, 3 turns); was a byte-duplicate of Crossed Wires"
+ },
+ "hx4_broken_compass": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_broken_oars": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_broken_supply": {
+  "action": "REBALANCED: nullifies 3 cards; 2 duplicated Hexed Satchel (T5)"
+ },
+ "hx4_buttoned_scabbard": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_candle_curfew": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_castle_of_sand": {
+  "action": "REBALANCED: 4 turns; 3 duplicated Granite Towers (T4)"
+ },
+ "hx4_censors_ink": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_change_of_step": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_checkers_law": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_cobweb_corners": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "hx4_cold_porridge": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_cold_shoulder": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_command_paralysis": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_court_in_session": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_creaky_axles": {
+  "action": "keep: looser clamp for fewer turns vs Slippery Grip; a real trade"
+ },
+ "hx4_crooked_arrow": {
+  "action": "REDESIGNED: odd distances, 4 turns; even distances duplicated Gremlins"
+ },
+ "hx4_crown_malaise": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_dead_letter": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_dead_mans_boots": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_debt_of_crowns": {
+  "action": "REBALANCED: skip plus 2 nullified; skip plus 1 duplicated Burned Dispatches (T5)"
+ },
+ "hx4_deja_vu": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_echo_chamber": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_echo_of_bells": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_elbow_room": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_famine": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_famine_year": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_ford_crossing": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_fresh_crater": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_gargoyle_perch": {
+  "action": "REDESIGNED: perches on up to two rooks; single-rook walnut was dominated by Stone Curse"
+ },
+ "hx4_gnat_cloud": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_great_glacier": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_grim_procession": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_haunted_gallery": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_homesick_queen": {
+  "action": "REBALANCED: 3 turns; the half-board ban pays for its lighter touch with duration vs Cold Open"
+ },
+ "hx4_house_arrest": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_iron_portcullis": {
+  "action": "REBALANCED: skips 2 drafts; a single skip was dominated by Burned Dispatches (skip plus nullify, T5)"
+ },
+ "hx4_ironglass_mirror": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_ivory_tower": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_lantern_out": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_leaden_boots": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_leaky_quiver": {
+  "action": "keep: queen range clamp; Butter Bishops clamps bishops"
+ },
+ "hx4_left_glove": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_lockstep": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_mitred_blinders": {
+  "action": "REBALANCED: at most 1 square; at most 2 duplicated Butter Bishops (T2)"
+ },
+ "hx4_muster_silence": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_night_soil": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_no_easy_pickings": {
+  "action": "REBALANCED: 4 turns; Daniel Caesar (full capture ban, 3 turns, same tier) no longer strictly dominates"
+ },
+ "hx4_no_return": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_no_sidling": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_one_ladle_each": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_one_way_cloister": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_paddock_fence": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_paper_orders": {
+  "action": "REBALANCED: 4 offers; 2 duplicated Sealed Orders (T2)"
+ },
+ "hx4_pawn_snob": {
+  "action": "keep: pawn-takes-pawn ban (target-type axis); Polite Infantry bans by direction. Signature collision is a heuristic false positive"
+ },
+ "hx4_pigeon_perch": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_polite_infantry": {
+  "action": "REBALANCED: 4 turns; Cold Feet (full pawn-capture ban, 3 turns) no longer strictly dominates"
+ },
+ "hx4_prowlers_bell": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_restless_blades": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_royal_escort": {
+  "action": "REDESIGNED: queen chained to her rooks (was king-anchored, a semantic duplicate of Throne Bound)"
+ },
+ "hx4_royal_quarantine": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_sated_blades": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_severed_lines": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_shadowed_meadow": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_shifting_floor": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_shrunken_shoes": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_signal_jam": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_siren_song": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_slack_bowstrings": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_sleepwalkers": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_slippery_scepter": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_smoke_line": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_soggy_invaders": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_squeaky_wheel": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_stone_garden": {
+  "action": "REDESIGNED: wider petrification (minors plus rooks) for 1 turn; minors-for-2 was dominated by Statue Garden"
+ },
+ "hx4_stone_orchard": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_summons_to_court": {
+  "action": "REBALANCED: 2 king-only turns; 1 duplicated Royal Duty (T3)"
+ },
+ "hx4_tangled_marionettes": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_tangled_reins": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_tar_flood": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_thin_ice_patch": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_tilted_crown": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_two_step": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_veil_of_moths": {
+  "action": "REBALANCED: 4 turns; Withered Hands (full capture ban, 3 turns, same tier) no longer strictly dominates"
+ },
+ "hx4_waste_not": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_wax_seal": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_wet_matches": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "hx4_wheel_of_ice": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "hx4_white_flag_hour": {
+  "action": "REDESIGNED: rolling truce (no captures on the 1st and 3rd of 4 turns); flat 2-turn ban duplicated Cream Pie"
+ },
+ "hx4_widows_veil": {
+  "action": "REBALANCED: 6 turns of mourning; was identical to Butterfingers (T1)"
+ },
+ "hx4_winded_monarch": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "hx4_wrong_map": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "ihatemyex": {
+  "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
+ },
+ "ilovesmellingmygfshoodie": {
+  "action": "REBALANCED: hoodie now also shields the friendly piece directly behind; was a strict duplicate of Reinforce (T2) one tier up"
+ },
+ "iron_reign": {
+  "action": "keep: royal shield T5; Aegis T6 covers the army instead (different target class)"
+ },
+ "iron_will": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "kings_guard": {
+  "action": "keep: pocket-pawn ladder T2 (1)"
+ },
+ "kings_legion": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "lag_spike": {
+  "action": "keep: clock-hit ladder T3"
+ },
+ "legendary_forge": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "lone_sovereign": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "long_leash": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "main_character": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "mass_mind_control": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "mass_resurrect": {
+  "action": "keep: revive ladder T5 (4 pawns)"
+ },
+ "medusas_stare": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "mind_empire": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "molasses": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "mute_button": {
+  "action": "keep: heavy-piece capture ban 3 turns T4 baseline; Banquet of Dust now runs 5"
+ },
+ "no_mans_land": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "north_star": {
+  "action": "keep: T3 rung of the forced-tier ladder"
+ },
+ "onett": {
+  "action": "keep: immediate-placement variant at T2 (pocket vs instant is a real axis)"
+ },
+ "op_airmail": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_alley_cat": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_back_alley": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_back_to_barracks": {
+  "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
+ },
+ "op_back_to_school": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_barometer_falling": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_border_report": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_bread_for_the_table": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_bricklayer": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_bridle_path": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_bulk_postage": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_bumper_crop": {
+  "action": "keep: card-count axis at move 7 vs Compost Heap's tier axis at move 6"
+ },
+ "op_camel_fair": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_carbon_copy": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "op_cellar_hatch": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_certified_letter": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_chairs_on_tables": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_champions_shades": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_chapel_warden": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_chimney_sweep": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_choir_wings": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_cloister_bell": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_cloister_step": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_closed_for_cleaning": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_colts_gallop": {
+  "action": "REBALANCED: forward-only gaits now run twice; the any-direction zebra no longer strictly dominates"
+ },
+ "op_compost_heap": {
+  "action": "keep: tier axis; distinct from Bumper Crop"
+ },
+ "op_corduroy_road": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_country_auction": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_crane_swing": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_crown_indemnity": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_crystal_ball": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_curfew_patrol": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_day_census": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_dead_letter_office": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_distant_thunder": {
+  "action": "keep: cosmetic twin of First Frost by design (omen locus differs)"
+ },
+ "op_do_not_disturb": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_doorman": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_downtown_premium": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_dowsing_rod": {
+  "action": "REBALANCED: heads now also grants a draft reroll; Margin Notes no longer strictly dominates the coin"
+ },
+ "op_drawbridge_in": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_driftwood_tower": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_dromedary_post": {
+  "action": "REBALANCED: forward-only gaits now run twice; the any-direction camel no longer strictly dominates"
+ },
+ "op_edge_of_the_map": {
+  "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
+ },
+ "op_evil_eye_bead": {
+  "action": "REBALANCED: heads now shields the queen 2 turns; Parasol Bearer no longer strictly dominates the coin"
+ },
+ "op_exchange_student": {
+  "action": "keep: first-crossing trigger; distinct from Victory Lap"
+ },
+ "op_express_courier": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_ferry_crossing": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_fetch_the_flour": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_field_sketch": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_fire_escape": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_first_class_stamp": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_first_frost": {
+  "action": "keep: cosmetic twin of Distant Thunder by design (omen locus differs); openers embrace skin pairs"
+ },
+ "op_first_robin": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_flea_market_find": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_fools_gold": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_four_leaf_clover": {
+  "action": "REBALANCED: heads now deals three cards one tier higher; Sampler Platter no longer strictly dominates the coin"
+ },
+ "op_four_winds": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_foxtrot_slide": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_freight_elevator": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_frontier_waiver": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_full_coverage": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_gallery_docent": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_gallery_row": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_garden_door": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_garden_gate": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_garden_hedge": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_garden_scarecrow": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_general_delivery": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_giraffe_keeper": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_goat_track": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_gossip_charm": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_grand_march": {
+  "action": "keep: straight two-step vs Ferz King's diagonal; different geometry"
+ },
+ "op_grandfathers_watch": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_green_room": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_guardian_sprite": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_halo_moon": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_harbor_gull": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_harbor_horn": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_harbor_pilot": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_harbor_walk": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_harborside_h": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_harborside_rider": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_hedgerow_buds": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_hired_muscle": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_homesick_private": {
+  "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
+ },
+ "op_homestead_clause": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_homing_pigeon": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_horseshoe_nail": {
+  "action": "REBALANCED: heads now also grants a reroll; Layaway Plan no longer strictly dominates the coin"
+ },
+ "op_house_lights_up": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_kings_road_watch": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_lady_in_waiting": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_ladys_escort": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_late_spring": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_layaway_plan": {
+  "action": "keep: guaranteed tier-up; the coin variant now carries a reroll rider"
+ },
+ "op_leapfrog_lesson": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_left_bank_atlas": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_lighthouse_keeper": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_locker_room_nickname": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_long_jump": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_margin_notes": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_market_dog": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_market_lane": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_nesting_doll": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_night_census": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_night_court": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_night_custodian": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_no_horses_on_lawn": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_old_counselor": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_old_post_road": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_ordination_day": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_painters_lift": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_palace_floor_plan": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_palace_gate": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_parade_elephant": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_parade_marshal": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_parade_route": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_parasol_bearer": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_piggyback": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_pilgrim_road": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_pole_vault": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_portrait_of_a_lady": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_postern_watch": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_private_booth": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_prompt_corner": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_queens_holiday": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_quickstep": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_quiet_cloister": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_rabbits_foot": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_red_sky_morning": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_regroup_at_camp": {
+  "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
+ },
+ "op_reserved_table": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_revolving_door": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_river_breakup": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_rolling_gantry": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_roof_pigeon": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_royal_barter": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_rummage_sale": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_run_for_eggs": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_salt_from_the_coast": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_sampler_platter": {
+  "action": "keep: guaranteed three cards; the coin variant now rolls a tier higher on heads"
+ },
+ "op_sandbag_hurdle": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_sap_run": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_second_harvest": {
+  "action": "REBALANCED: latest threshold now pays 2 rerolls; Slow Burn no longer strictly dominates"
+ },
+ "op_second_thoughts": {
+  "action": "REBALANCED: band retreats now run twice; the any-file Tactical Withdrawal no longer strictly dominates"
+ },
+ "op_servants_entrance": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_set_change": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_sidestep_and_bow": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_siege_survey": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_siege_wagon": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_signal_rocket": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_silk_curtain": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_slow_burn": {
+  "action": "keep: early single reroll; Second Harvest now pays double later"
+ },
+ "op_smugglers_lane": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_snowdrop": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_soups_on": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_special_order": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_spice_run": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_squires_errand": {
+  "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
+ },
+ "op_stable_gate": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_stable_groom": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_stable_swap": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_stage_left": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_star_dressing_room": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_starboard_chart": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_store_credit": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "op_storm_door": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_tactical_withdrawal": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_tango_dip": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_tea_leaves": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_threat_ledger": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_ticker_tape": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "op_tower_inspection": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_tower_torches": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_tower_warden": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_towpath": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_trapdoor_exit": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_understudy_list": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_vaulting_horse": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_victory_lap": {
+  "action": "keep: first-capture trigger vs Exchange Student's first-crossing trigger"
+ },
+ "op_viziers_errand": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_wall_sentries": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "op_waltz_left": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_wet_floor_sign": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_window_washer": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "op_wishbone": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "op_zebra_crossing": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "opposite_day": {
+  "action": "keep: approach-denial axis at T4"
+ },
+ "oracles_eye": {
+  "action": "keep: bank-improvement axis at T2"
+ },
+ "ov_algorithm_boost": {
+  "action": "REBALANCED: adds a draft reroll; Hero's Journey (three cards plus bank improvement, lower tier) no longer strictly dominates"
+ },
+ "ov_coupon": {
+  "action": "REDESIGNED post-audit: reroll plus a patience dividend at draft 3 (was a flat reroll duplicating Peek)"
+ },
+ "ov_growth_spurt": {
+  "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
+ },
+ "ov_patch_notes": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "ov_player_trade": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "ov_season_pass": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "ov_tasting_flight": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "ov_the_menu": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "ov_tiny_trebuchet": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "ov_upper_shelf": {
+  "action": "keep: tier-up axis vs Algorithm Boost's card-count axis"
+ },
+ "ov_velcro_gloves": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "overtime_whistle": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "overwhelm": {
+  "action": "keep: extra-move ladder T6 (3 moves)"
+ },
+ "palsied_hands": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "pawn_shield": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "peace_of_the_grave": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "peasant_levy": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "peek": {
+  "action": "keep: T1 flat reroll baseline"
+ },
+ "piece_swap": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "pr_bsod": {
+  "action": "keep: clock-hit ladder T4"
+ },
+ "pr_defender_scan": {
+  "action": "keep: 'NerfChess' in the name is the game title, not a mechanic reference; audit false positive"
+ },
+ "pr_phishing": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf text); fully alive in nerf mode"
+ },
+ "prep": {
+  "action": "keep: T1 three-card offer baseline"
+ },
+ "promote_now": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "purge": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "purge_line": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "queens_apocalypse": {
+  "action": "keep: apex; signature collision with we_lightning_bolt is a heuristic false positive"
+ },
+ "queens_handicap": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "quick_glance": {
+  "action": "keep: reroll denial at T1"
+ },
+ "quiet_march": {
+  "action": "keep: backward step; distinct from Tempo Shuffle"
+ },
+ "regenerate": {
+  "action": "keep: revive ladder T3 (2 pawns)"
+ },
+ "reinforce": {
+  "action": "keep: the clean T2 baseline of the single-piece shield family"
+ },
+ "reprieve": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "respite": {
+  "action": "REBALANCED: now a free action used at the moment you choose; Paid Leave (6 turns) no longer strictly dominates"
+ },
+ "riddle_game": {
+  "action": "keep: draft-denial family T5 (skip 2, gated by combo tags)"
+ },
+ "rook_chancellor": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "rook_slide": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "round_table": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "royal_duty": {
+  "action": "keep: 1-turn king-only T3 baseline; Summons to Court now runs 2 turns"
+ },
+ "royal_restraint": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "royal_summons": {
+  "action": "keep: king-forcing axis at T5"
+ },
+ "rusted_hinges": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "sabbatical": {
+  "action": "REBALANCED: now a free action used at the moment you choose; The Hundred Days (12 turns) no longer strictly dominates"
+ },
+ "safe_passage": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "scout": {
+  "action": "keep: cheapest take-both, pays a reroll at T4"
+ },
+ "sealed_orders": {
+  "action": "keep: 2-offer filter T2 baseline; Paper Orders now filters 4 offers"
+ },
+ "second_army": {
+  "action": "keep: pocket-pawn ladder T4 (2)"
+ },
+ "seelie_blessing": {
+  "action": "REBALANCED: blessing now also melts freezes/stuns on the target; was a strict duplicate of Reinforce (T2) one tier up"
+ },
+ "sentinel_pawn": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "shackle_the_queen": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "slack_chain": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "slippery_grip": {
+  "action": "keep: tighter clamp for longer vs Creaky Axles' looser-shorter; a real trade"
+ },
+ "small_mercies": {
+  "action": "keep: relief-on-capture ladder T1 (2 procs)"
+ },
+ "sovereign_draft": {
+  "action": "REDESIGNED: was an exact duplicate of Greed (T6) one tier up; now take-both plus a one-tier offer lift"
+ },
+ "split_bishop": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "split_march": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "spooked_steeds": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "statue_garden": {
+  "action": "keep: minors walnut 3 turns; Stone Garden redesigned wider and briefer"
+ },
+ "steady_march": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "stiff_joints": {
+  "action": "REBALANCED: 3 turns; Cold Open (full queen freeze, 2 turns) no longer strictly dominates at T1"
+ },
+ "stone_clergy": {
+  "action": "keep: bishop walnut mirror of Granite Towers' rook walnut"
+ },
+ "stone_curse": {
+  "action": "keep: any-piece walnut 4 turns; Gargoyle Perch redesigned to two rooks"
+ },
+ "stream_sniper": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf text); fully alive in nerf mode"
+ },
+ "sugar_rush": {
+  "action": "keep: bigger burst with a real cost; White Monster now trades size for safety"
+ },
+ "summon_dragon": {
+  "action": "keep: T7 benchmark the T8 circle was rebalanced against"
+ },
+ "summoning_circle": {
+  "action": "REDESIGNED: 6-turn loaner queen (strictly worse than T7 Summon Dragon) is now a permanent Amazon (queen+knight moves) whose non-king killer dies with her"
+ },
+ "sundering": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "supply_drop": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "suppress": {
+  "action": "keep: suppress family T4 (pure category denial)"
+ },
+ "tempo_shuffle": {
+  "action": "keep: sideways step vs Quiet March's backward step; different geometry"
+ },
+ "third_eye": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf text); fully alive in nerf mode"
+ },
+ "throne_bound": {
+  "action": "keep: king-anchored leash; Royal Escort now chains her to the rooks instead"
+ },
+ "timid_king": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "toll_gate": {
+  "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+ },
+ "total_nullify": {
+  "action": "keep: nullify sweep T6"
+ },
+ "trench_line": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "twin_queens": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "unseelie_bargain": {
+  "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+ },
+ "vertigo": {
+  "action": "keep: diagonal-only constraint at T4, different geometry"
+ },
+ "wa_arcane_reroll": {
+  "action": "REBALANCED: grants two rerolls (was one, strictly dominated by Peek T1 with the identical effect)"
+ },
+ "wa_conjure_rook": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "wa_disjunction": {
+  "action": "keep: pocket-removal axis at T4"
+ },
+ "wa_disrupt_ritual": {
+  "action": "keep: draft-denial family T4 (skip 1 + self 3-card)"
+ },
+ "wa_far_step": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "wa_foresight": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf text); fully alive in nerf mode"
+ },
+ "wa_greed": {
+  "action": "keep: clean take-both at T6; sovereign redesign restores the ladder above it"
+ },
+ "wa_high_roll": {
+  "action": "keep: T4 rung of the forced-tier ladder (2->3->4->5->6 across T1->T5 with ov_window_shopping at the bottom)"
+ },
+ "wa_jinx": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "wa_mind_read": {
+  "action": "keep: nullify + reroll strip composite at T4"
+ },
+ "wa_omniscience": {
+  "action": "POOL: excluded from buff mode via NERF_REVEAL (nerf text); fully alive in nerf mode"
+ },
+ "wa_royal_aegis": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "wa_spelltheft": {
+  "action": "keep: steal family T5 variant with payment rider"
+ },
+ "wa_suppress_magic": {
+  "action": "keep: suppress family T3 (no-draft-cards + nullify)"
+ },
+ "waist_25": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "walnut_queen": {
+  "action": "keep: capture-triggered walnut (working as designed; the failing sim was asserting a retired instant design and was updated)"
+ },
+ "wardens_bribe": {
+  "action": "keep: 6 free turns vs Leave of Absence's 5 plus reroll; a real trade"
+ },
+ "warp_cataclysm": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "warp_field": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "warp_legion": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "warp_sovereign": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "watchtower": {
+  "action": "keep: T1 baseline; Thorn Hedge now runs 4 turns a tier up"
+ },
+ "watermelon_rind": {
+  "action": "keep: two-rank shield 2 turns; Wagon Circle now trades width for a third turn"
+ },
+ "wc_red_tape": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "wc_shy_pieces": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "wc_sticky_floor": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "we_cinder_strike": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "we_conflagration": {
+  "action": "keep: two minor removals vs Scorch's single removal with pawn splash; different shapes"
+ },
+ "we_hailstorm": {
+  "action": "keep: mass pawn freeze T4"
+ },
+ "we_lightning_bolt": {
+  "action": "keep: T4 targeted bolt"
+ },
+ "we_scorch": {
+  "action": "keep: removal with adjacency splash; distinct from Conflagration"
+ },
+ "we_thunder_step": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "white_monster": {
+  "action": "REBALANCED: crash removed (2 extra moves, no self-skip); was strictly worse than Sugar Rush at the same tier"
+ },
+ "withered_hands": {
+  "action": "keep: full capture ban T7; Veil of Moths now runs 4 turns on the half-board axis"
+ },
+ "ww_bombardment": {
+  "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+ },
+ "ww_dug_in_defense": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "ww_outriders": {
+  "action": "REBALANCED: escorts up to two different pawns forward, separating it from Summon Knight (T3)"
+ },
+ "ww_pincer_movement": {
+  "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+ },
+ "zodiac_wheel": {
+  "action": "keep: T4 three-card + fated-tier composite"
+ }
+}

@@ -207,7 +207,7 @@ export const FANTASY_FEY: Buff[] = [
       id: "seelie_blessing",
       name: "Seelie Blessing",
       description:
-        "The bright court smiles on one of your pieces: it cannot be captured for your opponent's next 3 turns.",
+        "The bright court smiles on one of your pieces: it cannot be captured for your opponent's next 3 turns, and any freeze or stun on it melts away as the blessing lands.",
       tier: 3,
       category: "protection",
       boon: true,
@@ -226,8 +226,14 @@ export const FANTASY_FEY: Buff[] = [
               ),
             },
       (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 3 });
+        const sq = picks[0]?.square;
+        if (sq != null) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+          // The blessing also melts any freeze/stun/walnut pinning the piece
+          // (the rider that separates this from plain Reinforce, tier 2).
+          api.bs.effects = api.bs.effects.filter(
+            (e) => !((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.me && e.sq === sq),
+          );
         }
       },
     ),

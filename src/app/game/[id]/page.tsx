@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { computeFxVisual } from "@/components/effects/fxZones";
+import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
@@ -558,7 +559,13 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
     // simultaneous hook activations each surface a visual for the watcher.
     for (const { color, index } of fired) {
       const inst = g?.buffs?.players[color].buffs[index];
-      if (inst?.id) fireSignature(inst.id);
+      if (!inst?.id) continue;
+      // Gambling cards: hand the rolled outcome (inst.state) to the play
+      // animation so watchers see what actually happened too.
+      if (inst.id.startsWith("gm_")) {
+        stashGamblingOutcome(inst.id, { ...inst.state, __spent: inst.spent === true });
+      }
+      fireSignature(inst.id);
     }
   };
 
@@ -639,6 +646,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
           // rebuild any past ply (see reviewDraftBoard below).
           setDtActions((prev) => [...prev, action]);
           // An activation (draft-used) is a card play the watcher must see.
+          // Gambling cards first stash their just-rolled outcome (inst.state,
+          // filled by the replayed activation above) for the true-branch art.
+          if (e.type === "draft-used" && e.used.card?.id.startsWith("gm_")) {
+            const inst = g.buffs.players[e.used.color].buffs[e.used.buffIndex];
+            if (inst?.id === e.used.card.id) {
+              stashGamblingOutcome(inst.id, { ...inst.state, __spent: inst.spent === true });
+            }
+          }
           if (e.type === "draft-used" && e.used.card) fireSignature(e.used.card.id);
           // An instant PICK also plays at pick time for the watcher (R10): the
           // player surfaces cast instant picks, so spectators must too.
@@ -1490,16 +1505,16 @@ function GameShell({
 }) {
   const stateBadge =
     headerState === "live" ? (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+      <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
         <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
         Live
       </span>
     ) : headerState === "final" ? (
-      <span className="inline-flex items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+      <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
         Final
       </span>
     ) : (
-      <span className="inline-flex items-center rounded-full border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
+      <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
         Waiting
       </span>
     );

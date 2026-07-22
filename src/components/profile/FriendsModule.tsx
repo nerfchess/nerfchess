@@ -574,7 +574,7 @@ function Identity({
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
           {tag && (
-            <span className="shrink-0 rounded-full border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
+            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
               {tag}
             </span>
           )}

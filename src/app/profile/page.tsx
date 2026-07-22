@@ -146,7 +146,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
               Guest
             </span>
           </div>
-          <p className="mt-2 text-sm text-parchment-400">
+          <p className="mt-2 text-[13px] text-parchment-400">
             A temporary account on this device. Rated games still count while it lasts.
           </p>
         </div>
@@ -176,7 +176,8 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
           {/* Achievements strip, linking to the full wall. */}
           <Link
             href="/achievements"
-            className="plate flex flex-wrap items-center justify-between gap-3 p-3 transition hover:border-gold/40"
+            className="flex flex-wrap items-center justify-between gap-3 border-y py-3 transition hover:bg-white/[0.02]"
+            style={{ borderColor: "var(--edge)" }}
           >
             <span className="flex items-center gap-2 font-display text-parchment-100">
               <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} aria-hidden /> Achievements
@@ -192,8 +193,9 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
 
           {/* Statistics: PlayerStatsPanel carries its own content-sized empty
               state for a zero-game account. */}
-          <div className="mt-6">
-            <h2 className="font-display text-2xl">Statistics</h2>
+          <div className="mt-10">
+            <div className="eyebrow">Record</div>
+            <h2 className="mt-1 font-display text-2xl">Statistics</h2>
             <div className="mt-3">
               {stats ? (
                 <PlayerStatsPanel

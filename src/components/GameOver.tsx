@@ -773,7 +773,7 @@ export function GameOver({
           {modeChip && (
             <span
               className={
-                "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] leading-none smallcaps " +
+                "inline-flex items-center rounded-[1px] border px-2 py-0.5 text-[11px] leading-none smallcaps " +
                 (mode === "nerf"
                   ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
                   : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow")

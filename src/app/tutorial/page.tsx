@@ -144,10 +144,10 @@ export default function TutorialPage() {
             tour points at everything as it happens, and you can skip it any time.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href={FIRST_GAME_TOUR_HREF} className="px-6 py-3 rounded-full btn-leaf font-display">
+            <Link href={FIRST_GAME_TOUR_HREF} className="px-6 py-3 rounded-[1px] btn-leaf font-display">
               Play your first draft
             </Link>
-            <Link href="/tutorial/walkthrough" className="px-6 py-3 rounded-full btn-ghost font-display">
+            <Link href="/tutorial/walkthrough" className="px-6 py-3 rounded-[1px] btn-ghost font-display">
               Interactive lessons
             </Link>
           </div>
@@ -193,19 +193,19 @@ export default function TutorialPage() {
         <div className="mt-9 flex flex-wrap gap-3">
           <Link
             href="/tutorial/walkthrough"
-            className="px-6 py-3 rounded-full btn-leaf font-display"
+            className="px-6 py-3 rounded-[1px] btn-leaf font-display"
           >
             Try the interactive lessons
           </Link>
           <Link
             href="/play"
-            className="px-6 py-3 rounded-full btn-ghost font-display"
+            className="px-6 py-3 rounded-[1px] btn-ghost font-display"
           >
             Skip and play
           </Link>
           <Link
             href="/codex"
-            className="px-6 py-3 rounded-full btn-ghost font-display"
+            className="px-6 py-3 rounded-[1px] btn-ghost font-display"
           >
             Browse all rules
           </Link>

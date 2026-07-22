@@ -173,6 +173,12 @@ export const PLUGIN_IDS: readonly string[] = [
   // casinoPlays.tsx (7)
   "cs_slot_machine", "cs_roulette", "cs_blackjack", "cs_scratch_card", "cs_let_it_ride", "cs_loot_box",
   "cs_poker_bluff",
+  // gamblingPlays.tsx (28)
+  "gm_penny_slots", "gm_heads_or_tails", "gm_claw_machine", "gm_raffle_ticket", "gm_card_counting", "gm_loaded_dice",
+  "gm_lootbox", "gm_three_card_monte", "gm_underdog_parlay", "gm_river_card", "gm_piece_roulette", "gm_jackpot_pawn",
+  "gm_double_down_draft", "gm_crash_game", "gm_blood_wager", "gm_progressive_jackpot", "gm_the_house", "gm_gacha_banner",
+  "gm_seven_cases", "gm_martingale", "gm_devils_deck", "gm_break_the_bank", "gm_wheel_of_the_cosmos", "gm_cursed_dice",
+  "gm_rigged_raffle", "gm_consolation_scratcher", "gm_hardship_jackpot", "gm_the_last_bet",
   // boonPlays.tsx (72)
   "bw2_ancient_custom", "bw2_hit_and_run", "bw2_cornered_king", "bw2_blood_duel", "bw2_divine_right", "bw2_pioneers_banner",
   "bw2_diplomatic_immunity", "bw2_deathless_oath", "bw2_spoils_of_war", "bw2_prisoner_exchange", "bw2_highwaymans_toll", "bw2_queens_testament",

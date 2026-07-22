@@ -26,7 +26,7 @@ export function AccountChip() {
     return (
       <Link
         href="/login"
-        className="px-3 py-1.5 rounded-full text-sm font-display border border-gold/40 text-gold-leaf hover:bg-gold/10 transition"
+        className="px-3 py-1.5 rounded-[1px] text-sm font-display border border-gold/40 text-gold-leaf hover:bg-gold/10 transition"
       >
         Sign in
       </Link>
@@ -57,7 +57,7 @@ export function AccountChip() {
   return (
     <Link
       href={`/u/${user.username}`}
-      className="inline-flex items-center gap-2 px-2 py-1 pr-3 rounded-full text-sm font-display border border-white/15 text-parchment hover:border-gold/50 hover:text-gold-leaf transition"
+      className="inline-flex items-center gap-2 px-2 py-1 pr-3 rounded-[1px] text-sm font-display border border-white/15 text-parchment hover:border-gold/50 hover:text-gold-leaf transition"
       title="Your profile"
     >
       <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />

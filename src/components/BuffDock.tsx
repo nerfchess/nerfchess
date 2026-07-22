@@ -105,12 +105,13 @@ export function useBuffTargeting({
       // No targeting needed: fire immediately. The card-used voice marks the
       // activation itself; the effect's own voice (shield, freeze, explosion...)
       // follows separately when it lands.
+      const usedId = game.buffs?.players[myColor]?.buffs[index]?.id;
       if (onUse) {
         onUse(index, []);
-        playCardUse();
+        playCardUse(usedId);
       } else if (activateBuff(game, myColor, index, [])) {
         onChanged?.();
-        playCardUse();
+        playCardUse(usedId);
       }
       return;
     }
@@ -128,7 +129,7 @@ export function useBuffTargeting({
         onChanged?.();
       }
       // Last target picked: the card is now cast. One card-used voice per use.
-      playCardUse();
+      playCardUse(game.buffs?.players[myColor]?.buffs[targeting.buffIndex]?.id);
       setTargeting(null);
     } else {
       setTargeting({ ...targeting, picks, target: next });
@@ -146,7 +147,7 @@ export function useBuffTargeting({
       onChanged?.();
     }
     // Finished early on a finishable step: the picks so far are cast now.
-    playCardUse();
+    playCardUse(game.buffs?.players[myColor]?.buffs[targeting.buffIndex]?.id);
     setTargeting(null);
   };
 
@@ -215,7 +216,7 @@ export function TargetingBanner({
         </span>
         {picked > 0 && (
           <span
-            className="shrink-0 rounded-full border border-[color:var(--edge-strong)] bg-white/[0.08] px-2 py-0.5 font-mono text-[12px] tabular-nums text-parchment-200"
+            className="shrink-0 rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.08] px-2 py-0.5 font-mono text-[12px] tabular-nums text-parchment-200"
             title={`${picked} target${picked === 1 ? "" : "s"} picked so far`}
           >
             {picked} picked

@@ -27,7 +27,7 @@ export function BuffUsedToast({
       <div className="flex items-center justify-between gap-3">
         <span className="smallcaps text-[10px] text-parchment-400">{label}</span>
         <span
-          className={`shrink-0 rounded-full border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
+          className={`shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
         >
           {TIER_ROMAN[tier]}
         </span>

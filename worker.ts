@@ -6720,6 +6720,8 @@ export class GameServer extends DurableObject<Env> {
         // so the count is not hidden info) so an inventory drop replays
         // identically on every replica even if a grant's replay path drifts.
         ...(ps.inventory ? { inventory: ps.inventory } : {}),
+        // Skip announcements (public): a blocked/dry draft round is explicit.
+        ...(ps.lastSkip ? { lastSkip: ps.lastSkip } : {}),
       };
     };
     return {

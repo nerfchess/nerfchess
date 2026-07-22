@@ -19,6 +19,7 @@ import { PLAYS as MEME_PLAYS } from "./memePlays";
 import { PLAYS as STUB_PLAYS } from "./stubPlays";
 import { PLAYS as PRANK_PLAYS } from "./prankPlays";
 import { PLAYS as CASINO_PLAYS } from "./casinoPlays";
+import { PLAYS as GAMBLING_PLAYS } from "./gamblingPlays";
 import { PLAYS as BOON_PLAYS } from "./boonPlays";
 import { PLAYS as CURSE_PLAYS } from "./cursePlays";
 
@@ -26,7 +27,7 @@ import { PLAYS as CURSE_PLAYS } from "./cursePlays";
 // the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set,
 // personal set, meme (brainrot batch 2) set, then the revived-stub, prank,
 // and casino sets.
-const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS, ...BOON_PLAYS, ...CURSE_PLAYS };
+const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS, ...GAMBLING_PLAYS, ...BOON_PLAYS, ...CURSE_PLAYS };
 
 // Publish the full SignatureConfig per plugin card id into the eager
 // registry, visual keyed back to this module. Deterministic: same inputs,

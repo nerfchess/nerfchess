@@ -12,7 +12,7 @@
 //    board/effects are stashed, pending offers are cancelled, buffs cannot be
 //    activated, and NO mythic is granted at cast time.
 // 4. Deciding the diff (king capture) restores the paused board and effects,
-//    hands ONLY the winner a guaranteed tier-10 mythic, and the match itself
+//    hands ONLY the winner a guaranteed tier-9 apex card, and the match itself
 //    keeps running. A clock flag (resolveDiffFlag) resolves the same way.
 // 5. The three amped mythics (Oblivion, Grand Army, Ascendancy) plus the
 //    Total War card resolve without stranding the opponent's king.
@@ -67,11 +67,9 @@ function countOffers(mode: DraftMode, rounds: number): Record<string, number> {
 for (const mode of ["buff", "nerf"] as DraftMode[]) {
   const tally = countOffers(mode, 4000);
   const diffCount = tally["chess_diff"] ?? 0;
-  // chess_diff's true baseline is the cards it is drawn AGAINST in the same
-  // pool. In buff mode that is every other tier-6 card; in nerf mode the draw
-  // is split into a hex bucket and a boon/item bucket (HEX_SHARE), and
-  // chess_diff (category "pieces", a boon) only ever competes inside the
-  // boon/item bucket, so its peers there are the other NON-hex tier-6 cards.
+  // FAIR RNG (overhaul): chess_diff has NO appearance multiplier anymore. It
+  // must roll at the same rate as any other eligible tier-6 peer in the same
+  // mode's pool (uniform draw), so the ratio to the peer average sits near 1.
   const peers = Object.entries(tally)
     .filter(([id]) => {
       const b = BUFF_BY_ID[id];
@@ -83,8 +81,8 @@ for (const mode of ["buff", "nerf"] as DraftMode[]) {
   const ratio = peerAvg ? diffCount / peerAvg : 0;
   check(diffCount > 0, `chess_diff is offered in ${mode} mode (${diffCount} hits)`);
   check(
-    ratio > 1.5 && ratio < 2.6,
-    `chess_diff rolls ~2x a bucket peer in ${mode} mode (ratio ${ratio.toFixed(2)}, over ${peers.length} peers)`,
+    ratio > 0.6 && ratio < 1.5,
+    `chess_diff rolls at a FAIR ~1x peer rate in ${mode} mode (ratio ${ratio.toFixed(2)}, over ${peers.length} peers)`,
   );
 }
 
@@ -191,12 +189,14 @@ function clearDiffBoard(game: NerfGame) {
   const blackHeld = nbs.players.b.buffs;
   const granted = blackHeld[blackHeld.length - 1];
   const grantedDef = granted && BUFF_BY_ID[granted.id];
+  // Balance pass contract: the diff's prize is a GUARANTEED tier-9 apex card
+  // (one band below the mythic it used to pay; see grantGuaranteedTier9).
   check(
-    blackHeld.length === 1 && grantedDef?.tier === 10 && grantedDef.special === true,
-    `the diff's WINNER is handed a guaranteed tier-10 mythic (${granted?.id})`,
+    blackHeld.length === 1 && grantedDef?.tier === 9 && grantedDef.special === true,
+    `the diff's WINNER is handed a guaranteed tier-9 apex (${granted?.id})`,
   );
   check(
-    nbs.players.w.buffs.every((b) => BUFF_BY_ID[b.id]?.tier !== 10),
+    nbs.players.w.buffs.every((b) => (BUFF_BY_ID[b.id]?.tier ?? 0) < 9),
     "the loser (the caster here) gets nothing",
   );
 }
@@ -211,8 +211,8 @@ function clearDiffBoard(game: NerfGame) {
   const blackHeld = bs.players.b.buffs;
   const granted = blackHeld[blackHeld.length - 1];
   check(
-    blackHeld.length === 1 && BUFF_BY_ID[granted?.id]?.tier === 10,
-    "the flagged side's opponent wins the diff's mythic",
+    blackHeld.length === 1 && BUFF_BY_ID[granted?.id]?.tier === 9,
+    "the flagged side's opponent wins the diff's apex prize",
   );
   check(game.board.turn === "b" && !boardIsStandardOpening(game), "the paused board and turn are restored after a flag");
 }

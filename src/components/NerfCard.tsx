@@ -92,7 +92,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
           </div>
         </div>
         <span
-          className={`font-display font-bold text-sm px-2.5 py-0.5 rounded-full border tier-bg-${nerf.tier} tier-${nerf.tier}`}
+          className={`font-display font-bold text-sm px-2.5 py-0.5 rounded-[1px] border tier-bg-${nerf.tier} tier-${nerf.tier}`}
           title={`Nerf difficulty ${TIER_ROMAN[nerf.tier]} (${nerf.tier} of 8): ${TIER_LABEL[nerf.tier]}`}
         >
           {TIER_ROMAN[nerf.tier]}

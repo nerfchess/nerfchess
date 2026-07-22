@@ -15,7 +15,8 @@ import {
 
 // Draft-buff categories, presented like the nerf categories. Nerf-relief boons
 // are deliberately absent (they only exist in Nerf mode's draft pool).
-const BUFF_CATEGORY_DEFS = [
+// Exported so the browser's active-filter chips can label a category id.
+export const BUFF_CATEGORY_DEFS = [
   { id: "movement", label: "Movement" },
   { id: "pieces", label: "Pieces" },
   { id: "tempo", label: "Tempo" },

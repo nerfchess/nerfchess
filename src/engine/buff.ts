@@ -123,8 +123,40 @@ export type FreezeSkin =
   | "stone"
   | "beartrap";
 
+/** The purely visual dressings a `cosmetic` effect can pin to a piece. Each
+ * skin names a client painting (Board's COSMETIC_SKINS table); the mechanic
+ * is always NOTHING. Overhaul cards use these for their comedy identities:
+ * a giant pawn, sunglasses, a name tag, slot reels on a Jackpot Pawn... */
+export type CosmeticSkin =
+  | "giant"
+  | "sunglasses"
+  | "nametag"
+  | "plush"
+  | "wooden"
+  | "matryoshka"
+  | "slotreels"
+  | "vampire"
+  | "gilded"
+  | "wings"
+  | "dunce"
+  | "checkers"
+  | "pigeon"
+  | "hat";
+
 export type ActiveEffect =
   | { kind: "freeze"; sq: Square; owner: Color; turns: number; skin?: FreezeSkin }
+  /** Pure visual dressing pinned to a piece: zero gameplay effect, ever.
+   * Follows the piece when its owner moves it and dies with the piece
+   * (pruned exactly like a freeze). `label` is optional hover text (a name
+   * tag's name, a joke caption). Overhaul primitive; see CosmeticSkin. */
+  | {
+      kind: "cosmetic";
+      sq: Square;
+      owner: Color;
+      turns: number | null;
+      skin: CosmeticSkin;
+      label?: string;
+    }
   | {
       kind: "shield";
       owner: Color;
@@ -180,6 +212,7 @@ export function effectTickColor(e: ActiveEffect): Color {
     case "nerf_suspended":
     case "timed_loss":
     case "short_leash":
+    case "cosmetic":
       return e.owner;
     case "shield":
     case "king_safe":
@@ -302,17 +335,17 @@ export interface PlayerBuffState {
    * were already folded in and their flags consumed at the first roll). Not
    * sent to clients; rebuilt on replay when the offer is rolled. */
   offerTiers?: Tier[];
-  /** The nerf-relief card ids (category "nerf") shown in this player's most
-   * recent offer, kept so the NEXT roll can tell which of them went unpicked
-   * (a pure read of the held-buff list). Like offerTiers, not sent to clients;
-   * rebuilt on replay as offers roll. */
+  /** The most recent draft round that SKIPPED this player and why: an
+   * opponent card blocked it ("blocked") or the pool ran dry ("dry").
+   * `atPly` stamps the board ply the round fired at, so clients can tell a
+   * fresh skip from an old one. Synced (dtState) so the skipped player gets
+   * an explicit popup instead of a silently missing draft (overhaul UX). */
+  lastSkip?: { atPly: number; reason: "blocked" | "dry" } | null;
+  /** LEGACY (fair-RNG overhaul): decline tracking was removed; these two
+   * fields remain only so saved states that carry them still parse. Never
+   * written with real values anymore and never read by the draft. */
   lastNerfOffered?: string[];
-  /** Running count of nerf-relief cards this player was offered but did not
-   * pick. Once it reaches the suppress threshold (see draft.ts) the nerf-relief
-   * category leaves this player's pool for the rest of the game, mirroring the
-   * reliefIsDead / nerfRemoved suppression (owner request: "once you ignore two
-   * of the nerf cards they should stop showing up"). Reconstructed as offers
-   * roll, so it never needs syncing. */
+  /** LEGACY: see lastNerfOffered. */
   nerfDeclines?: number;
 }
 
@@ -509,6 +542,10 @@ export interface Buff {
    * the normal draft roll and can only be obtained through a dedicated grant
    * (the gambling Jackpot card or banking at the top tier). */
   special?: boolean;
+  /** Opener cards: the tiny buff dealt as buff mode's OPENING pick (mirroring
+   * the opening nerf pair). Never offered by the normal cadence draft; only
+   * rollOpenerOffers deals them, as offer index 0 before the first move. */
+  opener?: boolean;
   category: BuffCategory;
   /** Part of nerf mode's boon pool. Category "nerf" cards are boons
    * implicitly (see isBoon); light general cards flagged here round the

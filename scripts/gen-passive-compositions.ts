@@ -448,17 +448,30 @@ function emit(rows: PassiveComposition[]): string {
   lines.push("");
   lines.push('import type { PassiveComposition } from "./spec";');
   lines.push("");
-  lines.push("export const PASSIVE_COMPOSITIONS: PassiveComposition[] = [");
-  for (const r of rows) {
-    const prims = r.primitives.map((p) => `"${p}"`).join(", ");
-    const sound = r.soundCue ? `, soundCue: ${JSON.stringify(r.soundCue)}` : "";
-    lines.push(
-      `  { cardId: ${JSON.stringify(r.cardId)}, cardFamily: ${JSON.stringify(r.cardFamily)}, tier: ${r.tier}, ` +
-        `family: ${JSON.stringify(r.family)}, primitives: [${prims}], targetType: ${JSON.stringify(r.targetType)}, ` +
-        `paletteRole: ${JSON.stringify(r.paletteRole)}, sigilIcon: ${JSON.stringify(r.sigilIcon)}${sound} },`,
-    );
+  // Chunked sub-arrays: a single literal this large trips TypeScript's
+  // "union type too complex" limit during contextual inference, so the table
+  // is emitted in bounded slices and concatenated.
+  const CHUNK = 400;
+  const chunkNames: string[] = [];
+  for (let start = 0; start < rows.length; start += CHUNK) {
+    const name = `CHUNK_${chunkNames.length + 1}`;
+    chunkNames.push(name);
+    lines.push(`const ${name}: PassiveComposition[] = [`);
+    for (const r of rows.slice(start, start + CHUNK)) {
+      const prims = r.primitives.map((p) => `"${p}"`).join(", ");
+      const sound = r.soundCue ? `, soundCue: ${JSON.stringify(r.soundCue)}` : "";
+      lines.push(
+        `  { cardId: ${JSON.stringify(r.cardId)}, cardFamily: ${JSON.stringify(r.cardFamily)}, tier: ${r.tier}, ` +
+          `family: ${JSON.stringify(r.family)}, primitives: [${prims}], targetType: ${JSON.stringify(r.targetType)}, ` +
+          `paletteRole: ${JSON.stringify(r.paletteRole)}, sigilIcon: ${JSON.stringify(r.sigilIcon)}${sound} },`,
+      );
+    }
+    lines.push("];");
+    lines.push("");
   }
-  lines.push("];");
+  lines.push(
+    `export const PASSIVE_COMPOSITIONS: PassiveComposition[] = [${chunkNames.map((n) => `...${n}`).join(", ")}];`,
+  );
   lines.push("");
   return lines.join("\n");
 }

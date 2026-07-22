@@ -93,12 +93,13 @@ function isSubsequence(needle: string, hay: string): boolean {
   return i === needle.length;
 }
 
-/** A nerf matches the query when every whitespace-separated token is a
+/** A card matches the query when every whitespace-separated token is a
  *  substring of its searchable text (name + description + flavor + category
  *  labels) OR a fuzzy subsequence of its name. Subsequence is deliberately
  *  restricted to the short name so a rare-letter query can't spuriously thread
- *  itself through a long description. Tokens combine with AND. */
-function matchesSearch(haystack: string, name: string, query: string): boolean {
+ *  itself through a long description. Tokens combine with AND. Exported so the
+ *  codex browser gives the buff families the same instant fuzzy name match. */
+export function matchesSearch(haystack: string, name: string, query: string): boolean {
   const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
   return tokens.every((t) => haystack.includes(t) || (t.length >= 3 && isSubsequence(t, name)));

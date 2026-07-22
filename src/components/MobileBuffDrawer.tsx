@@ -51,7 +51,7 @@ export function MobileBuffDrawer({
         className="fixed inset-x-0 bottom-11 z-40 plate overflow-hidden border-t border-[color:var(--edge)] sm:bottom-0"
         // Drawer geometry: rounded top corners, square bottom against the
         // screen edge. Inline so it reliably overrides the plate's 10px.
-        style={{ borderRadius: "2px 2px 0 0" }}
+        style={{ borderRadius: "1px 1px 0 0" }}
       >
         {/* Grab handle: a small pill centered on the top edge, the universal
             "this pulls up" affordance. */}

@@ -1,8 +1,5 @@
 import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
 import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
-import { FANTASY_CARDS } from "./buffs/fantasy";
-import { FUNNY_CARDS } from "./buffs/funny";
-import { PT_CARDS } from "./buffs/pt";
 import { APEX_MYTHIC_CHANCE, TIER9, TIER10 } from "./buffs/tier9";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
@@ -22,14 +19,23 @@ import { BoardState, Color, PieceType } from "./types";
 //   the shared roll for that round. It does not stack (cap +1).
 // ---------------------------------------------------------------------------
 
-// Info cards whose whole effect is reading the opponent's NERF. Buff mode has
-// no nerfs, so these are dead weight there and are filtered out of buff drafts.
-// (They stay in nerf mode: handicaps are still secret, so they still reveal
-// something real.) Watchtower left this set when it was reworked into a
-// knight ward; the former DEAD_REVEALS cards (Peek, Quick Glance, Draft
-// Insight, Foresight, Mind Read, Omniscience) rejoined the pools once each
-// was reworked into a live draft effect (see their defs in buffs/).
-const NERF_REVEAL = new Set(["extra_glance"]);
+// Cards whose TEXT or MECHANIC references the opponent's (or their own) NERF.
+// Buff mode has no nerfs (Core Requirement: buff mode must stand on its own,
+// with no dead nerf references in any visible text), so every one of these is
+// excluded from buff drafts. They are all boon-flagged and stay fully alive in
+// nerf mode, where the reference is real. extra_glance is the pure reveal; the
+// others are dual-effect cards whose nerf clause would be dead text in buff
+// mode (Phishing Email, Stream Sniper, Third Eye, Foresight, Omniscience, The
+// Long Truce's suspension rider). Enforced by scripts/test-buff-purity.ts.
+export const NERF_REVEAL = new Set([
+  "extra_glance",
+  "pr_phishing",
+  "stream_sniper",
+  "third_eye",
+  "wa_foresight",
+  "wa_omniscience",
+  "bw2_long_truce",
+]);
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
 // slower arc, 7 slows it further and delays high-tier cards. Set to 5 so
@@ -40,62 +46,21 @@ export const DEFAULT_CADENCE = 5;
 // moves, matching the buff-mode arc so the curses arrive steadily.
 export const NERF_MODE_CADENCE = 5;
 
-// Nerf mode pool composition: each card slot first rolls which bucket it
-// draws from. HEX_SHARE of draws prefer the hex bucket (curses cast on your
-// opponent, drawback intensifiers included); the rest prefer the boon/item
-// bucket (self-relief and consumables). When the preferred bucket has no
-// legal card at the rolled tier the slot falls back to the whole nerf-mode
-// pool, so composition bends rather than blocking a draft. The bucket roll
-// runs through the same draft RNG stream as the card pick, so offers stay
-// deterministic for a given seed.
-export const HEX_SHARE = 0.6;
-
-// Nerf-relief decline suppression (owner request): once a player has been
-// OFFERED this many nerf-relief / nerf-referencing cards (category "nerf")
-// without ever picking one, the category is dropped from that player's future
-// offers for the rest of the game. Mirrors the reliefIsDead / nerfRemoved
-// suppression already applied in inMode; a pure read of synced draft state, so
-// it stays deterministic and replay-safe. Buff mode never offers nerf cards, so
-// this only bites in nerf mode (and legacy merged games).
-export const NERF_DECLINE_LIMIT = 2;
-
 // ---------------------------------------------------------------------------
-// TEMPORARY draft weighting (owner request, pending a moderator panel).
-// The Funny, Fantasy, and "meta" collections should be offered about 50% more
-// often in the Buff draft. There is no separate "meta" collection: the
-// meta/deception cards (Computer Virus and friends) live in the Funny / meta
-// collection (see src/lib/cardCollections.ts), so boosting Funny covers both
-// funny and meta. Fantasy is its own collection.
-//
-// Implemented as deterministic draw multiplicity, NOT a float weight: a boosted
-// card enters the draw pool DRAFT_BOOST_MULT times and every other card
-// DRAFT_BASE_MULT times, so the odds ratio is exactly 3:2 = 1.5x. The pick is
-// still a single seeded rng.int(pool.length) draw, and both clients and the
-// server build the identical weighted pool from the same id set, so offers stay
-// byte-identical across replicas (desync-critical). To revert when the mod panel
-// lands: set DRAFT_BOOST_MULT === DRAFT_BASE_MULT (or delete the weighting block
-// in rollCards). Single knob, easy to flip.
-const DRAFT_BASE_MULT: number = 2;
-const DRAFT_BOOST_MULT: number = 3; // 3 / 2 = 1.5x more likely than a base card.
-
-// The boosted-collection card ids, built from the same source barrels
-// cardCollections resolves Funny (FUNNY + PT) and Fantasy membership from, so
-// this engine-side draft stays self-contained (no @/lib import) and cannot
-// drift in which cards each collection holds.
-const BOOSTED_COLLECTION_IDS = new Set<string>(
-  [...FUNNY_CARDS, ...PT_CARDS, ...FANTASY_CARDS].map((c) => c.id),
-);
-
-// Per-card appearance multipliers (owner request): these cards are offered at a
-// flat multiple of the normal rate, in BOTH sections (buff and nerf). Like the
-// collection boost above, this is deterministic draw multiplicity rather than a
-// float weight -- a listed card enters the draw pool this many extra times, so
-// every replica builds the identical weighted pool and the single seeded draw
-// stays byte-identical (desync-safe). Chess Diff shows up twice as often for
-// now; drop an id from this map (or set it to 1) to revert.
-const APPEARANCE_MULT = new Map<string, number>([
-  ["chess_diff", 2],
-]);
+// FAIR DRAFT RNG (overhaul, 2026-07-22): once a slot's tier is resolved, every
+// eligible card in that tier's pool has an EQUAL chance. All appearance
+// weighting was removed:
+//   - the Funny/Fantasy/PT collection 1.5x draw boost,
+//   - the per-card appearance multipliers (Chess Diff 2x),
+//   - the nerf-mode HEX_SHARE 60/40 bucket roll (hex/boon composition now
+//     emerges from pool sizes),
+//   - the streak-based nerf-relief decline suppression (NERF_DECLINE_LIMIT).
+// What remains is pool ELIGIBILITY, not weighting: tier progression + banking,
+// held-card and reroll exclusions, dead-draft guards (requires / dead reveals /
+// relief with no nerf to relieve), combo-tag exclusivity, and moderator
+// overrides. Enforced by scripts/test-draft-fairness.cjs (seeded chi-square
+// over thousands of rolls; normal, reroll, banked, both colors, both modes).
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Oppressive-combination guard: exclusive combo tags.
@@ -306,10 +271,6 @@ function rollCards(
   // their pool entirely: the draft must not offer an upgrade that eases a nerf
   // that is not in effect. Pure pool filter, computed once per roll.
   const reliefIsDead = nerfIsOff(bs, color);
-  // Decline suppression: after NERF_DECLINE_LIMIT unpicked nerf-relief offers
-  // this player never sees the category again. A pure read of the running
-  // counter maintained in rollOffer (see below), so it stays replay-safe.
-  const nerfDeclinesMaxed = (ps.nerfDeclines ?? 0) >= NERF_DECLINE_LIMIT;
   // Piece-eligibility guard: a card whose whole effect needs the caster to own
   // a specific piece type (Buff.requires) is a DEAD DRAFT when they have none
   // of it, so it leaves the pool. Computed once per roll from the synced board
@@ -327,6 +288,8 @@ function rollCards(
     for (const tag of COMBO_TAGS[held.id] ?? []) heldComboTags.add(tag);
   }
   const inMode = (b: Buff) => {
+    // Openers only ever come from the opening pick (rollOpenerOffers).
+    if (b.opener) return false;
     if (heldComboTags.size > 0 && (COMBO_TAGS[b.id] ?? []).some((t) => heldComboTags.has(t)))
       return false;
     // Apex cards (special / tier 9 apex / tier 10 mythic) are never in the
@@ -335,7 +298,7 @@ function rollCards(
     // single apex card; in both, every draw is a tier-9 card with an
     // APEX_MYTHIC_CHANCE (~10%) upgrade to a tier-10 mythic.
     if (b.special || b.tier === 9 || b.tier === 10) return false;
-    if ((reliefIsDead || nerfDeclinesMaxed) && b.category === "nerf") return false;
+    if (reliefIsDead && b.category === "nerf") return false;
     if (owned && b.requires && !b.requires.some((t) => owned.has(t))) return false;
     return bs.mode === "buff"
       ? b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id)
@@ -368,44 +331,11 @@ function rollCards(
       ].filter((b) => inMode(b) && !used.has(b.id) && (!suppressed || b.category !== "draft"));
     }
     if (pool.length === 0) break;
-    // Nerf mode composition: roll the slot's preferred bucket (HEX_SHARE of
-    // draws prefer hexes, the rest boons/items) and draw from it when it has
-    // cards; otherwise fall back to the full nerf-mode pool for this tier.
-    if (bs.mode === "nerf") {
-      const wantHex = rng.next() < HEX_SHARE;
-      const bucket = pool.filter((b) => (b.category === "hex") === wantHex);
-      if (bucket.length > 0) pool = bucket;
-    }
-    // TEMPORARY: bias the Buff draft toward the Funny / Fantasy / meta
-    // collections (see BOOSTED_COLLECTION_IDS above). Build a weighted draw
-    // pool by adding each boosted card DRAFT_BOOST_MULT times and every other
-    // card DRAFT_BASE_MULT times (a 3:2 = 1.5x odds ratio), then draw once. The
-    // single rng.int() below picks from this weighted pool, and because both
-    // replicas construct the same pool in the same order, the draw is identical
-    // (desync-safe). Buff mode only, so it never touches the nerf-mode buckets
-    // or hex/item odds. Revert by equalizing the two multipliers.
-    // Fold in the per-card appearance multipliers (APPEARANCE_MULT, e.g. Chess
-    // Diff at 2x) on top of the buff-mode collection boost. Both are plain draw
-    // multiplicity, so the weighted pool is identical on every replica and the
-    // single seeded draw below stays byte-equal (desync-safe). The buff-mode
-    // boost is skipped in nerf/legacy drafts, but the appearance multiplier
-    // still applies there, so a 2x card is 2x in every section.
-    let drawPool = pool;
-    const boostBuff = bs.mode === "buff" && DRAFT_BOOST_MULT !== DRAFT_BASE_MULT;
-    if (boostBuff || pool.some((b) => APPEARANCE_MULT.has(b.id))) {
-      const weighted: Buff[] = [];
-      for (const b of pool) {
-        let reps = boostBuff
-          ? BOOSTED_COLLECTION_IDS.has(b.id)
-            ? DRAFT_BOOST_MULT
-            : DRAFT_BASE_MULT
-          : 1;
-        reps *= APPEARANCE_MULT.get(b.id) ?? 1;
-        for (let r = 0; r < reps; r++) weighted.push(b);
-      }
-      drawPool = weighted;
-    }
-    const card = drawPool[rng.int(drawPool.length)];
+    // FAIR DRAW: one uniform seeded pick over the whole eligible pool. No
+    // buckets, no weights, no per-card multipliers (see the fairness note at
+    // the top of this file). Both replicas build the identical pool in the
+    // same order, so the single rng.int() draw stays byte-identical.
+    const card = pool[rng.int(pool.length)];
     used.add(card.id);
     cards.push({ id: card.id, tier: overriddenTier(card) });
   }
@@ -449,19 +379,8 @@ export function rollOffer(
   board?: BoardState,
 ): BuffOffer | null {
   const ps = bs.players[color];
-
-  // Reconcile the previous offer's nerf-relief declines before rolling the next
-  // one. The prior offer has already resolved (picked or banked) by now, so we
-  // read which of its nerf-relief cards the player never ended up holding: each
-  // such card is a decline. A pure read of the held-buff list, so both server
-  // and replica reach the same count. Past NERF_DECLINE_LIMIT declines inMode
-  // drops the category (owner request). See lastNerfOffered / nerfDeclines.
-  if (ps.lastNerfOffered && ps.lastNerfOffered.length) {
-    const held = new Set(ps.buffs.map((b) => b.id));
-    for (const id of ps.lastNerfOffered) {
-      if (!held.has(id)) ps.nerfDeclines = (ps.nerfDeclines ?? 0) + 1;
-    }
-  }
+  // (Nerf-relief decline tracking removed in the fairness overhaul: category
+  // eligibility no longer depends on a player's pick history.)
   ps.lastNerfOffered = undefined;
 
   const index = ps.draftsTaken + 1;
@@ -556,11 +475,6 @@ export function rollOffer(
   // reroll rolls the same number of cards at the same tiers.
   ps.offerTiers = slotTiers.slice(0, cards.length);
   ps.draftsTaken = index;
-  // Remember which nerf-relief cards this offer showed so the next roll can
-  // count any that go unpicked (see the reconciliation at the top).
-  ps.lastNerfOffered = cards
-    .filter((c) => BUFF_BY_ID[c.id]?.category === "nerf")
-    .map((c) => c.id);
 
   // One-shot reveals (Peek, Quick Glance, Draft Insight): the holder gets a
   // snapshot of this single offer, then the reveal expires.
@@ -577,6 +491,49 @@ export function rollOffer(
     watcher.flags.seeOppTier = undefined;
   }
   return offer;
+}
+
+// ---------------------------------------------------------------------------
+// The OPENING buff pick (owner feature, buff mode only): before the first
+// move each player is dealt 2 opener cards (Buff.opener) and picks one,
+// mirroring the opening nerf pair. Offer INDEX 0 marks it: draftsTaken stays
+// 0 so the cadence curve is untouched, rerolls are refused on it (a reroll
+// would leak normal pool cards into the opening), and banking it simply
+// declines (the normal +1 bank bonus applies, a fun consolation).
+// Deterministic: two uniform draws per color off the shared draft RNG, so
+// every replica and replay deals the identical pairs.
+// ---------------------------------------------------------------------------
+
+/** The opener pool: implemented opener-flagged cards. */
+export function openerPool(): Buff[] {
+  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true);
+}
+
+/** Deal both players' opening offers (buff mode). Call once right after
+ * enableDraftMode; a no-op when the pool is empty or offers already exist. */
+export function rollOpenerOffers(bs: BuffMatchState): void {
+  if (bs.mode !== "buff") return;
+  const pool = openerPool();
+  if (pool.length < 2) return;
+  const rng = drawRng(bs);
+  for (const color of ["w", "b"] as const) {
+    const ps = bs.players[color];
+    if (ps.offer || ps.draftsTaken > 0) continue;
+    const first = pool[rng.int(pool.length)];
+    let second = pool[rng.int(pool.length)];
+    // Distinct pair (single bounded re-draw keeps the stream deterministic).
+    for (let i = 0; second.id === first.id && i < 8; i++) second = pool[rng.int(pool.length)];
+    if (second.id === first.id) second = pool[(pool.indexOf(first) + 1) % pool.length];
+    ps.offer = {
+      cards: [
+        { id: first.id, tier: first.tier },
+        { id: second.id, tier: second.tier },
+      ],
+      index: 0,
+    };
+    ps.offerTiers = [first.tier, second.tier];
+  }
+  saveRng(bs, rng);
 }
 
 /** Skip the pending offer, banking +1 tier for the next one (capped). */
@@ -600,6 +557,9 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   const ps = bs.players[color];
   const offer = ps.offer;
   if (!offer || (ps.rerollsLeft ?? 0) <= 0) return false;
+  // The opening pick (index 0) cannot be rerolled: a reroll draws from the
+  // NORMAL pool and would leak cadence cards into the opening. Bank or pick.
+  if (offer.index === 0) return false;
   const slotTiers = (ps.offerTiers?.length ? ps.offerTiers : offer.cards.map((c) => c.tier)) as Tier[];
   // An apex offer (from banking at the top tier) never rolls off the normal
   // pool: rerolling it draws FRESH apex cards off the seeded RNG rather than
@@ -644,12 +604,6 @@ export function rerollOffer(bs: BuffMatchState, color: Color, board?: BoardState
   ps.rerollsLeft = (ps.rerollsLeft ?? 0) - 1;
   offer.cards = cards;
   offer.rerolled = (offer.rerolled ?? 0) + 1;
-  // Track the finally-shown nerf-relief cards (a reroll can add or drop them) so
-  // decline counting reflects what the player actually saw, not the pre-reroll
-  // cards.
-  ps.lastNerfOffered = cards
-    .filter((c) => BUFF_BY_ID[c.id]?.category === "nerf")
-    .map((c) => c.id);
   // Keep a still-pending opponent reveal (Peek / Quick Glance) honest: it
   // snapshotted this same offer index, so refresh it to the new cards/tier.
   const watcher = bs.players[color === "w" ? "b" : "w"];

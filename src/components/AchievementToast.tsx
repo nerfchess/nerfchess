@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trophy, X } from "lucide-react";
 import { fetchMe } from "@/lib/authClient";
+import { RARITY_THEME } from "@/lib/achievementTheme";
 import type { AchievementRarity } from "@/lib/achievements";
 
 // Desktop-only unlock toast: when an achievement lands (they are awarded
@@ -42,13 +43,6 @@ export function setAchievementToastsDisabled(off: boolean) {
     else window.localStorage.removeItem(OFF_KEY);
   } catch {}
 }
-
-const RARITY_TONE: Record<AchievementRarity, string> = {
-  common: "text-parchment-100 border-white/20",
-  rare: "text-gold-leaf border-gold/50",
-  epic: "text-[#a877d8] border-[#a877d8]/50",
-  legendary: "text-sun-glow border-sun/60",
-};
 
 export function AchievementToast() {
   const [queue, setQueue] = useState<Unlock[]>([]);
@@ -114,7 +108,7 @@ export function AchievementToast() {
   }, [current?.id]);
 
   if (disabled || !current) return null;
-  const tone = RARITY_TONE[current.rarity] ?? RARITY_TONE.common;
+  const theme = RARITY_THEME[current.rarity] ?? RARITY_THEME.common;
   return (
     // Desktop only (hidden below sm): on phones this corner is busy with
     // drawers and the moment can wait for the achievements page. Safe-area
@@ -130,18 +124,22 @@ export function AchievementToast() {
       <button
         type="button"
         onClick={() => setQueue((q) => q.slice(1))}
-        className={`plate animate-rise block w-full border p-3 text-left shadow-plate ${tone.split(" ")[1]}`}
+        className="plate animate-rise block w-full border p-3 text-left shadow-plate"
+        style={{ borderColor: theme.border }}
         title="Dismiss"
       >
         <span className="flex items-center gap-2.5">
-          <span className={`grid h-9 w-9 shrink-0 place-items-center border border-white/15 bg-white/[0.05] ${tone.split(" ")[0]}`}>
+          <span
+            className="grid h-9 w-9 shrink-0 place-items-center border"
+            style={{ borderColor: theme.border, background: theme.softBg, color: theme.color }}
+          >
             <Trophy size={17} strokeWidth={2} />
           </span>
           <span className="min-w-0">
             <span className="smallcaps block text-[11px] text-parchment-400">
               Achievement unlocked · {current.rarity}
             </span>
-            <span className={`block truncate font-display text-sm font-bold ${tone.split(" ")[0]}`}>
+            <span className="block truncate font-display text-sm font-bold" style={{ color: theme.color }}>
               {current.name}
             </span>
           </span>

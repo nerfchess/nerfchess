@@ -504,7 +504,7 @@ const FOCUS: Buff[] = [
       id: "white_monster",
       name: "White Monster",
       description:
-        "Crack the can: take 2 extra moves right now for a triple-move turn. Then the sugar crash hits and you skip your next turn. Once.",
+        "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
       tier: 4,
       category: "tempo",
       icon: "Zap",
@@ -516,7 +516,6 @@ const FOCUS: Buff[] = [
       freeAction: true,
       effect: (_inst, api) => {
         api.bs.extraMoves[api.me] += 2;
-        api.bs.skips[api.me] += 1;
       },
     },
   ),
@@ -958,7 +957,7 @@ const AFFECTION: Buff[] = [
       id: "ilovesmellingmygfshoodie",
       name: "I Love Smelling My GF's Hoodie",
       description:
-        "Wrap one of your pieces in the hoodie: it cannot be captured for your opponent's next 3 turns. Warm, safe, faintly of her.",
+        "Wrap one of your pieces in the hoodie: it and the friendly piece directly behind it cannot be captured for your opponent's next 3 turns. Warm, safe, faintly of her.",
       tier: 3,
       category: "protection",
       icon: "Shirt",
@@ -978,7 +977,17 @@ const AFFECTION: Buff[] = [
             },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq != null) addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+        if (sq == null) return;
+        // The hoodie is big enough for two: the friendly piece directly
+        // behind (toward your own back rank) shares it. The rider that
+        // separates this from plain Reinforce (tier 2).
+        const behind = sq + (api.me === "w" ? -8 : 8);
+        const squares = [sq];
+        if (behind >= 0 && behind <= 63) {
+          const p2 = api.board.pieces[behind];
+          if (p2 && p2.color === api.me) squares.push(behind);
+        }
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
       },
     ),
   ),

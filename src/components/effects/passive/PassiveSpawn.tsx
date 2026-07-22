@@ -65,8 +65,10 @@ export function PassiveSpawn({
   React.useEffect(() => {
     if (!play || !visual || cuePlayedRef.current) return;
     cuePlayedRef.current = true;
-    playPassiveCue(visual.soundCue);
-  }, [play, visual]);
+    // Per-card audio fingerprint: the family voice plus this card's own
+    // pitch/timbre/timing variation (see cueVariation in sounds.ts).
+    playPassiveCue(visual.soundCue, cardId);
+  }, [play, visual, cardId]);
 
   React.useEffect(() => {
     if (!play || !visual) return;

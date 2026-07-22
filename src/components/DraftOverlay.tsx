@@ -3,7 +3,7 @@
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDraftChime, playDraftUrgent } from "@/lib/sounds";
 import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
 import { haptic } from "@/lib/haptics";
@@ -413,6 +413,11 @@ export function DraftOverlay({
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
+  // The OPENING pick (offer index 0, buff mode's game-start pair) wears its
+  // own label everywhere the round number would show: "Opening pick" instead
+  // of "Buff draft #0".
+  const isOpeningPick = offer.index === 0;
+  const draftLabel = isOpeningPick ? "Opening pick" : `${nounCap} draft #${offer.index}`;
   const reduceMotion = useReducedMotion();
   // The board-effects dial also governs the draft spectacle: Off/Calm strips
   // the chest's particle/ray layers and stands down the shake + confetti.
@@ -696,10 +701,29 @@ export function DraftOverlay({
       return s === "sealed" ? "tearing" : s;
     });
 
+  // The one place onBank actually fires. Idempotent (bankFiredRef), so the
+  // slide timer, the unmount fallback, and the reduced-motion path can all
+  // call it without double-banking.
+  const bankFiredRef = useRef(false);
+  const fireBank = useCallback(() => {
+    if (bankFiredRef.current) return;
+    bankFiredRef.current = true;
+    onBank();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const bankingRef = useRef(false);
+
   useEffect(
     () => () => {
       if (bankTimer.current != null) window.clearTimeout(bankTimer.current);
+      // RACE PROOFING, mirroring the pick path's commit-on-minimize: banking
+      // marks the offer committed IMMEDIATELY but used to fire onBank only
+      // from the 750ms slide timer. If the overlay unmounts inside that
+      // window (game transition, parent teardown) the bank action was
+      // dropped while the UI looked resolved. Fire the pending bank now.
+      if (bankingRef.current) fireBank();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -804,8 +828,9 @@ export function DraftOverlay({
     haptic("medium");
     committedRef.current = true;
     setCommitted(true);
+    bankingRef.current = true;
     if (reduceMotion) {
-      onBank();
+      fireBank();
       return;
     }
     // Land the cards in the vault door that opens just above the button
@@ -817,7 +842,7 @@ export function DraftOverlay({
       }),
     );
     setBanking(true);
-    bankTimer.current = window.setTimeout(() => onBank(), 750);
+    bankTimer.current = window.setTimeout(fireBank, 750);
   };
 
   // Reroll: discard the current offer, roll fresh cards at the same tiers. The
@@ -971,7 +996,7 @@ export function DraftOverlay({
             <span className="flex min-w-0 items-center gap-1.5">
               <GripIcon className="text-parchment-500" />
               <span className="smallcaps truncate text-[12px] text-parchment-400">
-                {nounCap} draft #{offer.index}
+                {draftLabel}
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
@@ -1002,7 +1027,7 @@ export function DraftOverlay({
             <DraftChest
               tier={maxTier}
               count={offer.cards.length}
-              label={`${nounCap} draft #${offer.index}`}
+              label={draftLabel}
               stage={packStage}
               onOpen={tearPack}
               mini
@@ -1244,7 +1269,7 @@ export function DraftOverlay({
           <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{draftLabel}</div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1310,7 +1335,7 @@ export function DraftOverlay({
             <DraftChest
               tier={maxTier}
               count={offer.cards.length}
-              label={`${nounCap} draft #${offer.index}`}
+              label={draftLabel}
               stage={packStage}
               onOpen={tearPack}
               calm={fxCalm}

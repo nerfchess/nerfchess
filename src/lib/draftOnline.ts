@@ -138,6 +138,9 @@ export function mergeDraftState(bs: BuffMatchState, state: MPDraftState, myColor
     // Crazyhouse-style pocket: authoritative from the server so a drop never
     // desyncs. Legacy frames omit it; the replica then keeps its replayed value.
     if (ws.inventory) ps.inventory = ws.inventory as typeof ps.inventory;
+    // Skip announcements: carried so the skipped player's client can pop the
+    // reason instead of showing a silently missing draft.
+    if (ws.lastSkip !== undefined) ps.lastSkip = ws.lastSkip;
   }
 }
 

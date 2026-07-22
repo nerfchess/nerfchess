@@ -38,39 +38,13 @@ function clockLabel(timeSec: number, incrementSec: number): string {
   return `${Math.round(timeSec / 60)}+${incrementSec}`;
 }
 
-// Live-game list ordering. The first game under the active sort is the
-// featured board (unless the viewer pinned one).
-type TvSort = "watched" | "rated" | "newest" | "closest";
-const TV_SORTS: { id: TvSort; label: string; reason: string }[] = [
-  { id: "watched", label: "Most watched", reason: "the most-watched live game" },
-  { id: "rated", label: "Highest rated", reason: "the highest-rated live game" },
-  { id: "newest", label: "Newest", reason: "the freshest live game" },
-  { id: "closest", label: "Closest game", reason: "the closest rating matchup" },
-];
-
-function sortLiveGames(games: MPLobbyGame[], sort: TvSort): MPLobbyGame[] {
+// Live-game list ordering: one fixed default, most watched first (ties broken
+// by the stronger board). The first game is the featured board (unless the
+// viewer pinned one).
+function orderLiveGames(games: MPLobbyGame[]): MPLobbyGame[] {
   const best = (g: MPLobbyGame) =>
     Math.max(g.players.w.rating ?? 0, g.players.b.rating ?? 0);
-  const gap = (g: MPLobbyGame) =>
-    g.players.w.rating != null && g.players.b.rating != null
-      ? Math.abs(g.players.w.rating - g.players.b.rating)
-      : Number.POSITIVE_INFINITY;
-  const arr = [...games];
-  switch (sort) {
-    case "watched":
-      arr.sort((a, b) => b.watchers - a.watchers || best(b) - best(a));
-      break;
-    case "rated":
-      arr.sort((a, b) => best(b) - best(a) || b.watchers - a.watchers);
-      break;
-    case "newest":
-      arr.sort((a, b) => a.moves - b.moves || b.watchers - a.watchers);
-      break;
-    case "closest":
-      arr.sort((a, b) => gap(a) - gap(b) || b.watchers - a.watchers);
-      break;
-  }
-  return arr;
+  return [...games].sort((a, b) => b.watchers - a.watchers || best(b) - best(a));
 }
 
 // The shared player-identity unit (design system 7): avatar + linked name +
@@ -170,18 +144,16 @@ function TvView() {
     setPinnedId(null);
   }
 
-  const [sort, setSort] = useState<TvSort>("watched");
   const liveGames = useMemo(() => {
     const games = lobby?.games ?? [];
     const filtered = modeFilter ? games.filter((g) => g.mode === modeFilter) : games;
-    return sortLiveGames(filtered, sort);
-  }, [lobby, modeFilter, sort]);
+    return orderLiveGames(filtered);
+  }, [lobby, modeFilter]);
   // Eligible candidate ids in ranked order. A lobby game is listed only once it
   // is a watchable started game with both seats, so mode + rank is all the
   // directory-level filtering needed; the deeper "snapshot available + supported
   // version + subscribable" check happens as a real health check inside the tune.
   const candidateIds = useMemo(() => liveGames.map((g) => g.id), [liveGames]);
-  const activeSort = TV_SORTS.find((s) => s.id === sort) ?? TV_SORTS[0];
 
   // Featured selection + health-checked failover (shared with HeroTv). A pinned
   // pick is honored while eligible + healthy; anything that fails its health
@@ -273,20 +245,20 @@ function TvView() {
   if (fullscreen && !hasBoard) setFullscreen(false);
 
   const liveBadge = (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+    <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
       <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
       Live
     </span>
   );
   const finalBadge = (
-    <span className="inline-flex items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+    <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
       Final
     </span>
   );
   // The rerun marker: the LIVE badge's shape in the ember tint, so an archived
   // replay can never be mistaken for a running game.
   const replayBadge = (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[rgb(var(--energy-ember-rgb))]">
+    <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[rgb(var(--energy-ember-rgb))]">
       <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--energy-ember-rgb))]" aria-hidden />
       Replay
     </span>
@@ -490,7 +462,7 @@ function TvView() {
                     {pinnedStillLive && streamId === pinnedId
                       ? "You pinned this game."
                       : live
-                        ? `Featuring ${activeSort.reason}.`
+                        ? "Featuring the most-watched live game."
                         : "Rerun from the archive. A live game takes over when one starts."}
                   </span>
                   {shownId && (
@@ -540,34 +512,6 @@ function TvView() {
                     {liveGames.length}
                   </span>
                 )}
-              </div>
-              <div className="flex items-center gap-2 border-b border-[color:var(--edge)] px-3 py-2.5">
-                <label htmlFor="tv-sort" className="shrink-0 text-[12px] text-parchment-400">
-                  Sort
-                </label>
-                <div
-                  id="tv-sort"
-                  role="group"
-                  aria-label="Sort live games"
-                  className="flex min-w-0 flex-1 flex-wrap gap-1"
-                >
-                  {TV_SORTS.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      aria-pressed={sort === s.id}
-                      onClick={() => setSort(s.id)}
-                      className={
-                        "shrink-0 rounded-sm border px-2.5 py-1 text-[12px] font-medium transition-colors " +
-                        (sort === s.id
-                          ? "border-gold/50 bg-[rgb(var(--accent-rgb)/0.12)] text-gold-leaf"
-                          : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
-                      }
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
               </div>
               {!lobby ? (
                 lobbyFailed ? (

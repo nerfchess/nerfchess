@@ -525,15 +525,66 @@ export function playDrop() {
   knock({ filterFreq: 780, filterQ: 3, dur: 0.06, gain: 0.5, bodyFreq: 155, bodyGain: 0.42, bodyDur: 0.12 });
 }
 
+// --- Per-card audio fingerprints (overhaul) ----------------------------------
+// Every card keeps its FAMILY voice (recognizable class of sound) but wears a
+// deterministic per-card variation derived from its id: pitch ratio, timbre
+// brightness, a tiny timing offset, and an optional shimmer partial at a
+// hash-picked interval. Two cards in the same family therefore never sound
+// byte-identical, at zero asset cost. Pure function of the id string.
+
+export type CueVariation = {
+  /** Frequency multiplier for every tonal component (0.85..1.26). */
+  pitch: number;
+  /** Filter/brightness multiplier for percussive components (0.78..1.38). */
+  bright: number;
+  /** Extra onset delay in seconds (0..0.035). */
+  delay: number;
+  /** Interval ratio of the shimmer partial, or 0 for none (about half). */
+  shimmer: number;
+};
+
+export function cueVariation(cardId: string | undefined): CueVariation {
+  if (!cardId) return { pitch: 1, bright: 1, delay: 0, shimmer: 0 };
+  let h = 2166136261;
+  for (let i = 0; i < cardId.length; i++) {
+    h ^= cardId.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h >>>= 0;
+  const pitch = 0.85 + ((h & 0xff) / 255) * 0.41;
+  const bright = 0.78 + (((h >>> 8) & 0xff) / 255) * 0.6;
+  const delay = (((h >>> 16) & 0x3f) / 63) * 0.035;
+  const shimmerOn = ((h >>> 22) & 1) === 1;
+  const shimmer = shimmerOn ? [1.5, 2, 2.5, 3][(h >>> 23) & 3] : 0;
+  return { pitch, bright, delay, shimmer };
+}
+
+/** The shimmer partial: a quiet high sine at the variation's interval. */
+function shimmerTone(base: number, v: CueVariation, delay = 0) {
+  if (!v.shimmer) return;
+  tone({
+    freq: base * v.pitch * v.shimmer,
+    dur: 0.12,
+    type: "sine",
+    gain: 0.022,
+    attack: 0.008,
+    release: 0.14,
+    delay: delay + v.delay + 0.05,
+  });
+}
+
 /** Card used: a short, crisp "played" flick when you activate a buff/card. A
  * quick rising tick capped with a soft high confirm, deliberately lighter than
  * the effect voices (shields, freezes, explosions) that follow when the card's
  * effect actually lands, so "I played a card" and "the effect hit" stay
- * distinct. One shot per activation. */
-export function playCardUse() {
+ * distinct. One shot per activation. Pass the card id so each card's flick
+ * carries its own audio fingerprint (see cueVariation). */
+export function playCardUse(cardId?: string) {
   if (!fx()) return;
-  tone({ freq: 620, dur: 0.05, type: "triangle", gain: 0.1, sweep: 990, release: 0.05 });
-  tone({ freq: 1320, dur: 0.08, type: "sine", gain: 0.06, attack: 0.004, release: 0.1, delay: 0.04 });
+  const v = cueVariation(cardId);
+  tone({ freq: 620 * v.pitch, dur: 0.05, type: "triangle", gain: 0.1, sweep: 990 * v.pitch, release: 0.05, delay: v.delay });
+  tone({ freq: 1320 * v.pitch, dur: 0.08, type: "sine", gain: 0.06, attack: 0.004, release: 0.1, delay: 0.04 + v.delay });
+  shimmerTone(1320, v, 0.04);
 }
 
 /** Banana slip: a comedic falling whistle ending in a soft plop. */
@@ -802,6 +853,126 @@ export function playWall(count = 5) {
   }
 }
 
+// --- Gambling voices (gm_* overhaul set) --------------------------------------
+// One synthesized voice per gambling machine, matching the gamblingPlays.tsx
+// choreography beats (reel stops, wheel clacker, dice clatter, boom). Same
+// house rules as the other signature voices: knock/tone primitives only, no
+// samples, gated by fx(), short enough to never smear across plays.
+
+/** Slots: three reel-stop tick runs (one per reel, staggered like the art),
+ * then the payline ding, a bright two-note bell. */
+export function playSlots(count = 3) {
+  if (!fx()) return;
+  const reels = Math.max(1, Math.min(count, 3));
+  for (let r = 0; r < reels; r++) {
+    const stopAt = 0.35 + r * 0.24;
+    // Decelerating ticks that end at the reel's stop.
+    for (let i = 0; i < 5; i++) {
+      const t = stopAt - (5 - i) * (0.028 + i * 0.012);
+      if (t < 0) continue;
+      knock({ filterFreq: 2400, filterQ: 9, dur: 0.02, gain: 0.14 + i * 0.02, delay: t });
+    }
+    knock({ filterFreq: 900, filterQ: 4, dur: 0.05, gain: 0.3, bodyFreq: 180, bodyGain: 0.16, bodyDur: 0.05, delay: stopAt });
+  }
+  // Payline ding.
+  tone({ freq: 1568, dur: 0.16, type: "sine", gain: 0.1, attack: 0.004, release: 0.22, delay: 1.02 });
+  tone({ freq: 2093, dur: 0.2, type: "sine", gain: 0.07, attack: 0.004, release: 0.26, delay: 1.1 });
+}
+
+/** Wheel: a clacker rattling past pegs, gaps widening as the wheel dies,
+ * ending in a soft pocket settle. */
+export function playWheelSpin() {
+  if (!fx()) return;
+  let t = 0;
+  let gap = 0.045;
+  for (let i = 0; i < 14; i++) {
+    knock({ filterFreq: 3000 - i * 90, filterQ: 8, dur: 0.02, gain: 0.22 - i * 0.008, delay: t });
+    t += gap;
+    gap *= 1.18;
+  }
+  knock({ filterFreq: 520, filterQ: 3, dur: 0.07, gain: 0.3, bodyFreq: 150, bodyGain: 0.2, bodyDur: 0.08, delay: t + 0.05 });
+}
+
+/** Dice: two hard knuckle-bounces, a skitter, and the settle pair. */
+export function playDiceRoll() {
+  if (!fx()) return;
+  knock({ filterFreq: 1500, filterQ: 5, dur: 0.04, gain: 0.4, bodyFreq: 240, bodyGain: 0.2, bodyDur: 0.05 });
+  knock({ filterFreq: 1250, filterQ: 5, dur: 0.04, gain: 0.34, bodyFreq: 210, bodyGain: 0.18, bodyDur: 0.05, delay: 0.14 });
+  knock({ filterFreq: 1900, filterQ: 7, dur: 0.025, gain: 0.18, delay: 0.26 });
+  knock({ filterFreq: 1700, filterQ: 7, dur: 0.025, gain: 0.14, delay: 0.33 });
+  // The two dice settle a hair apart.
+  knock({ filterFreq: 1000, filterQ: 4, dur: 0.05, gain: 0.3, bodyFreq: 190, bodyGain: 0.2, bodyDur: 0.06, delay: 0.44 });
+  knock({ filterFreq: 950, filterQ: 4, dur: 0.05, gain: 0.26, bodyFreq: 175, bodyGain: 0.18, bodyDur: 0.06, delay: 0.52 });
+}
+
+/** Chips: a fast riffle of clay clicks climbing the stack, capped by a felt
+ * thump as the tower lands. */
+export function playChipRiffle(count = 6) {
+  if (!fx()) return;
+  const n = Math.max(3, Math.min(count + 2, 9));
+  for (let i = 0; i < n; i++) {
+    knock({ filterFreq: 2100 + (i % 3) * 260, filterQ: 8, dur: 0.02, gain: 0.16 + i * 0.012, delay: i * 0.045 });
+  }
+  knock({ filterFreq: 480, filterQ: 2.4, dur: 0.08, gain: 0.34, bodyFreq: 140, bodyGain: 0.26, bodyDur: 0.09, delay: n * 0.045 + 0.06 });
+}
+
+/** Coin flip: a bright ring that wobbles while the coin tumbles, then the
+ * clean catch snap. */
+export function playCoinFlip() {
+  if (!fx()) return;
+  tone({ freq: 2350, dur: 0.5, type: "sine", gain: 0.07, sweep: 2600, release: 0.3 });
+  tone({ freq: 3520, dur: 0.4, type: "sine", gain: 0.035, sweep: 3800, release: 0.26, delay: 0.02 });
+  // Tumble shimmer: quick alternating partials.
+  tone({ freq: 2800, dur: 0.06, type: "triangle", gain: 0.03, release: 0.05, delay: 0.16 });
+  tone({ freq: 3100, dur: 0.06, type: "triangle", gain: 0.03, release: 0.05, delay: 0.3 });
+  // The catch.
+  knock({ filterFreq: 1400, filterQ: 4, dur: 0.05, gain: 0.34, bodyFreq: 220, bodyGain: 0.2, bodyDur: 0.06, delay: 0.62 });
+}
+
+/** Vault: drill grind, the tumbler clank, then the two-tone alarm whoop. */
+export function playVaultHeist() {
+  if (!fx()) return;
+  tone({ freq: 95, dur: 0.4, type: "sawtooth", gain: 0.09, sweep: 130, release: 0.08 });
+  tone({ freq: 190, dur: 0.4, type: "square", gain: 0.04, sweep: 260, release: 0.08, delay: 0.02 });
+  knock({ filterFreq: 2400, filterQ: 9, dur: 0.05, gain: 0.3, bodyFreq: 200, bodyGain: 0.18, bodyDur: 0.06, delay: 0.46 });
+  knock({ filterFreq: 1700, filterQ: 8, dur: 0.06, gain: 0.26, delay: 0.56 });
+  // Alarm: two rising whoops.
+  tone({ freq: 620, dur: 0.16, type: "square", gain: 0.06, sweep: 940, release: 0.06, delay: 0.72 });
+  tone({ freq: 620, dur: 0.16, type: "square", gain: 0.06, sweep: 940, release: 0.06, delay: 0.94 });
+}
+
+/** Gacha: a rising star-chime arpeggio with a detuned glisten on top. */
+export function playGachaChime() {
+  if (!fx()) return;
+  const steps = [784, 988, 1319, 1760];
+  steps.forEach((f, i) => {
+    tone({ freq: f, dur: 0.16, type: "triangle", gain: 0.09, attack: 0.004, release: 0.2, delay: i * 0.09 });
+    tone({ freq: f * 2, dur: 0.14, type: "sine", gain: 0.03, attack: 0.006, release: 0.2, delay: i * 0.09 + 0.02 });
+  });
+  tone({ freq: 3520, dur: 0.24, type: "sine", gain: 0.045, attack: 0.01, release: 0.3, delay: 0.42 });
+}
+
+/** Crash rocket: a climbing whistle that keeps climbing... then the boom. */
+export function playCrashRocket() {
+  if (!fx()) return;
+  tone({ freq: 480, dur: 0.75, type: "sine", gain: 0.08, sweep: 1900, release: 0.05 });
+  tone({ freq: 240, dur: 0.75, type: "sawtooth", gain: 0.04, sweep: 950, release: 0.05, delay: 0.01 });
+  knock({ filterFreq: 200, filterQ: 0.8, dur: 0.26, gain: 0.6, bodyFreq: 75, bodyGain: 0.55, bodyDur: 0.24, delay: 0.82 });
+  knock({ filterFreq: 1500, filterQ: 0.7, dur: 0.12, gain: 0.26, delay: 0.84 });
+}
+
+/** Bust: the sad trombone. Three slumping slides, the last one long. */
+export function playBustTrombone() {
+  if (!fx()) return;
+  const wah = (freq: number, delay: number, dur: number, gain: number) => {
+    tone({ freq, dur, type: "sawtooth", gain, sweep: freq * 0.84, attack: 0.02, release: 0.1, delay });
+    tone({ freq: freq / 2, dur, type: "triangle", gain: gain * 0.6, sweep: (freq / 2) * 0.84, attack: 0.02, release: 0.1, delay });
+  };
+  wah(311, 0, 0.22, 0.07);
+  wah(294, 0.28, 0.22, 0.07);
+  wah(277, 0.56, 0.5, 0.075);
+}
+
 // --- Passive effect family cues --------------------------------------------
 // Every card's persistent effect (a nerf reveal, a buff/boon/hex acquisition)
 // carries one of nine sound families in its passive composition
@@ -816,78 +987,80 @@ export function playWall(count = 5) {
 
 /** Decree: rules of authority (movement bans, compulsions, most nerfs). A
  * dry stone gavel knock capped by a short, low authoritative fifth. */
-export function playCueDecree() {
+export function playCueDecree(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  knock({ filterFreq: 340, filterQ: 2.4, dur: 0.09, gain: 0.34, bodyFreq: 132, bodyGain: 0.3, bodyDur: 0.1, master: 0.8 });
-  tone({ freq: 196, dur: 0.14, type: "triangle", gain: 0.06, sweep: 147, release: 0.12, delay: 0.03, master: 0.8 * v });
+  const vol = getVolume();
+  knock({ filterFreq: 340 * v.bright, filterQ: 2.4, dur: 0.09, gain: 0.34, bodyFreq: 132, bodyGain: 0.3, bodyDur: 0.1, master: 0.8 });
+  tone({ freq: 196 * v.pitch, dur: 0.14, type: "triangle", gain: 0.06, sweep: 147 * v.pitch, release: 0.12, delay: 0.03 + v.delay, master: 0.8 * vol });
 }
 
 /** Strike: instant punishment / a hit lands. A sharp electric crack. */
-export function playCueStrike() {
+export function playCueStrike(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  knock({ filterFreq: 2200, filterQ: 1.2, dur: 0.05, gain: 0.36, master: 0.8 });
-  tone({ freq: 1400, dur: 0.1, type: "sawtooth", gain: 0.05, sweep: 300, release: 0.08, master: 0.75 * v });
+  const vol = getVolume();
+  knock({ filterFreq: 2200 * v.bright, filterQ: 1.2, dur: 0.05, gain: 0.36, master: 0.8 });
+  tone({ freq: 1400 * v.pitch, dur: 0.1, type: "sawtooth", gain: 0.05, sweep: 300 * v.pitch, release: 0.08, master: 0.75 * vol });
 }
 
 /** Bind: chains, freezes, locks, leashes. A metallic clink into a lock thunk. */
-export function playCueBind() {
+export function playCueBind(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  knock({ filterFreq: 2500, filterQ: 8, dur: 0.05, gain: 0.26, master: 0.8 });
-  knock({ filterFreq: 700, filterQ: 3, dur: 0.06, gain: 0.3, bodyFreq: 150, bodyGain: 0.24, bodyDur: 0.08, delay: 0.07, master: 0.8 });
+  knock({ filterFreq: 2500 * v.bright, filterQ: 8, dur: 0.05, gain: 0.26, master: 0.8 });
+  knock({ filterFreq: 700 * v.bright, filterQ: 3, dur: 0.06, gain: 0.3, bodyFreq: 150, bodyGain: 0.24, bodyDur: 0.08, delay: 0.07 + v.delay, master: 0.8 });
 }
 
 /** Territory: zones, walls, forbidden ground. A low airy sweep. */
-export function playCueTerritory() {
+export function playCueTerritory(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  tone({ freq: 220, dur: 0.28, type: "sine", gain: 0.08, sweep: 130, release: 0.14, master: 0.8 * v });
-  tone({ freq: 330, dur: 0.2, type: "sine", gain: 0.035, sweep: 180, release: 0.12, delay: 0.05, master: 0.7 * v });
+  const vol = getVolume();
+  tone({ freq: 220 * v.pitch, dur: 0.28, type: "sine", gain: 0.08, sweep: 130 * v.pitch, release: 0.14, master: 0.8 * vol });
+  tone({ freq: 330 * v.pitch, dur: 0.2, type: "sine", gain: 0.035, sweep: 180 * v.pitch, release: 0.12, delay: 0.05 + v.delay, master: 0.7 * vol });
 }
 
 /** Tempo: clocks, turn timing, cadence. A crisp clock tick into a soft chime. */
-export function playCueTempo() {
+export function playCueTempo(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  knock({ filterFreq: 3200, filterQ: 10, dur: 0.02, gain: 0.22, master: 0.8 });
-  tone({ freq: 1046, dur: 0.14, type: "sine", gain: 0.05, release: 0.14, delay: 0.06, master: 0.8 * v });
+  const vol = getVolume();
+  knock({ filterFreq: 3200 * v.bright, filterQ: 10, dur: 0.02, gain: 0.22, master: 0.8 });
+  tone({ freq: 1046 * v.pitch, dur: 0.14, type: "sine", gain: 0.05, release: 0.14, delay: 0.06 + v.delay, master: 0.8 * vol });
 }
 
 /** Blessing: boons, wards, buffs that help you. A warm rising chime. */
-export function playCueBlessing() {
+export function playCueBlessing(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  tone({ freq: 523, dur: 0.16, type: "triangle", gain: 0.08, sweep: 784, release: 0.14, master: 0.8 * v });
-  tone({ freq: 1046, dur: 0.16, type: "sine", gain: 0.045, attack: 0.01, release: 0.2, delay: 0.08, master: 0.8 * v });
+  const vol = getVolume();
+  tone({ freq: 523 * v.pitch, dur: 0.16, type: "triangle", gain: 0.08, sweep: 784 * v.pitch, release: 0.14, master: 0.8 * vol });
+  tone({ freq: 1046 * v.pitch, dur: 0.16, type: "sine", gain: 0.045, attack: 0.01, release: 0.2, delay: 0.08 + v.delay, master: 0.8 * vol });
 }
 
 /** Summon: pieces, spawns, portals. A soft rising whoosh into a poof. */
-export function playCueSummon() {
+export function playCueSummon(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  tone({ freq: 300, dur: 0.16, type: "sine", gain: 0.06, sweep: 620, release: 0.08, master: 0.8 * v });
-  knock({ filterFreq: 850, filterQ: 1, dur: 0.1, gain: 0.24, bodyFreq: 150, bodyGain: 0.2, bodyDur: 0.1, delay: 0.1, master: 0.8 });
+  const vol = getVolume();
+  tone({ freq: 300 * v.pitch, dur: 0.16, type: "sine", gain: 0.06, sweep: 620 * v.pitch, release: 0.08, master: 0.8 * vol });
+  knock({ filterFreq: 850 * v.bright, filterQ: 1, dur: 0.1, gain: 0.24, bodyFreq: 150, bodyGain: 0.2, bodyDur: 0.1, delay: 0.1 + v.delay, master: 0.8 });
 }
 
 /** Fracture: breaks, shatters, decay, losses. A glassy double crack. */
-export function playCueFracture() {
+export function playCueFracture(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  knock({ filterFreq: 3400, filterQ: 6, dur: 0.04, gain: 0.3, master: 0.8 });
-  knock({ filterFreq: 1800, filterQ: 5, dur: 0.05, gain: 0.2, delay: 0.03, master: 0.7 });
-  tone({ freq: 900, dur: 0.12, type: "sawtooth", gain: 0.03, sweep: 400, release: 0.1, delay: 0.02, master: 0.6 * v });
+  const vol = getVolume();
+  knock({ filterFreq: 3400 * v.bright, filterQ: 6, dur: 0.04, gain: 0.3, master: 0.8 });
+  knock({ filterFreq: 1800 * v.bright, filterQ: 5, dur: 0.05, gain: 0.2, delay: 0.03 + v.delay, master: 0.7 });
+  tone({ freq: 900 * v.pitch, dur: 0.12, type: "sawtooth", gain: 0.03, sweep: 400 * v.pitch, release: 0.1, delay: 0.02 + v.delay, master: 0.6 * vol });
 }
 
 /** Veil: shadow, hidden information, visibility effects. A muffled low hush. */
-export function playCueVeil() {
+export function playCueVeil(v: CueVariation = NEUTRAL_CUE) {
   if (!fx()) return;
-  const v = getVolume();
-  tone({ freq: 180, dur: 0.24, type: "sine", gain: 0.07, sweep: 120, release: 0.16, master: 0.8 * v });
-  knock({ filterFreq: 500, filterQ: 0.7, dur: 0.16, gain: 0.12, master: 0.6 });
+  const vol = getVolume();
+  tone({ freq: 180 * v.pitch, dur: 0.24, type: "sine", gain: 0.07, sweep: 120 * v.pitch, release: 0.16, master: 0.8 * vol });
+  knock({ filterFreq: 500 * v.bright, filterQ: 0.7, dur: 0.16, gain: 0.12, master: 0.6 });
 }
 
-const CUE_FN: Record<string, () => void> = {
+const NEUTRAL_CUE: CueVariation = { pitch: 1, bright: 1, delay: 0, shimmer: 0 };
+
+const CUE_FN: Record<string, (v: CueVariation) => void> = {
   decree: playCueDecree,
   strike: playCueStrike,
   bind: playCueBind,
@@ -911,7 +1084,7 @@ const CUE_MAX_IN_WINDOW = 4;
  * ("passive/<family>"). No-op for an unknown or absent cue. Rate-limited and
  * fully gated by the effects pref + mute; it reads (never resumes) the audio
  * clock, so it cannot autoplay before the first user gesture. */
-export function playPassiveCue(cue: string | undefined) {
+export function playPassiveCue(cue: string | undefined, cardId?: string) {
   if (!cue || !fx()) return;
   const fam = cue.startsWith("passive/") ? cue.slice("passive/".length) : cue;
   const fn = CUE_FN[fam];
@@ -922,5 +1095,7 @@ export function playPassiveCue(cue: string | undefined) {
   recentCueTimes = recentCueTimes.filter((t) => now - t < CUE_WINDOW_S);
   if (recentCueTimes.length >= CUE_MAX_IN_WINDOW) return;
   recentCueTimes.push(now);
-  fn();
+  // Per-card fingerprint: same family voice, card-specific pitch/timbre/
+  // timing/shimmer (see cueVariation), so no two cards sound identical.
+  fn(cueVariation(cardId));
 }

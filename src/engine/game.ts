@@ -15,7 +15,7 @@ import {
 import { grantGuaranteedTier9, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
-import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollSharedTiers } from "./draft";
+import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollOpenerOffers, rollSharedTiers } from "./draft";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "./types";
@@ -424,6 +424,7 @@ function effectPublicSquares(e: ActiveEffect, board: BoardState): number[] {
     case "freeze":
     case "walnut":
     case "timed_loss":
+    case "cosmetic":
       return [e.sq];
     case "barred":
     case "strike":
@@ -456,6 +457,7 @@ function effectPublicSides(e: ActiveEffect): { owner?: Color; against?: Color } 
     case "strike":
     case "bonk":
     case "short_leash":
+    case "cosmetic":
       return { owner: e.owner };
     case "barred":
     case "no_pawn_advance":
@@ -671,6 +673,11 @@ export function enableDraftMode(
   if (opts?.stackFor && opts.stackBoost && opts.stackBoost > 0) {
     game.buffs.players[opts.stackFor].flags.stackBoost = opts.stackBoost;
   }
+  // Buff mode's OPENING pick (owner feature): both players are dealt a pair
+  // of tiny opener cards before the first move, mirroring the opening nerf
+  // pair. Deterministic from the seed above, so every replica and every
+  // rebuild deals the identical pairs (replay-safe by construction).
+  rollOpenerOffers(game.buffs);
 }
 
 export function newGameAsColor(myNerf: Nerf, myColor: Color, mySeed: number): NerfGame {
@@ -750,7 +757,7 @@ function pruneOrphanedSquareEffects(game: NerfGame) {
   const bs = game.buffs;
   if (!bs) return;
   bs.effects = bs.effects.filter((e) => {
-    if (e.kind === "freeze" || e.kind === "walnut" || e.kind === "timed_loss") {
+    if (e.kind === "freeze" || e.kind === "walnut" || e.kind === "timed_loss" || e.kind === "cosmetic") {
       // A trade-off timer whose piece was captured (or otherwise vanished)
       // before it expired has nothing left to reclaim: drop it like a freeze.
       const p = game.board.pieces[e.sq];
@@ -1499,6 +1506,11 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       if (e.kind === "timed_loss" && e.owner === move.color && e.sq === move.from) {
         e.sq = move.to;
       }
+      // A cosmetic dressing rides its piece (a giant pawn stays giant when it
+      // advances). Pure visual: nothing else in the pipeline reads it.
+      if (e.kind === "cosmetic" && e.owner === move.color && e.sq === move.from) {
+        e.sq = move.to;
+      }
     }
     // Tick down effects whose timer runs on the mover's turns.
     for (const e of bs.effects) {
@@ -1590,8 +1602,12 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         if (ps.offer) continue;
         if ((ps.flags.blockedDrafts ?? 0) > 0) {
           ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
-        } else {
-          rollOffer(bs, color, tiers, game.board);
+          // Tell the victim explicitly (synced): their draft did not silently
+          // vanish, an opponent card blocked it this round.
+          ps.lastSkip = { atPly: game.board.history.length, reason: "blocked" };
+        } else if (!rollOffer(bs, color, tiers, game.board)) {
+          // Pool ran completely dry for this mode/tier: also announced.
+          ps.lastSkip = { atPly: game.board.history.length, reason: "dry" };
         }
       }
     }

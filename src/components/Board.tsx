@@ -30,6 +30,7 @@ import {
   BoltGlyph,
   BoundBuffMark,
   CastSpectacle,
+  CastTextFallback,
   castIntensity,
   ChainJail,
   DetonationBurst,
@@ -135,9 +136,15 @@ import {
   playAtomic,
   playBlitz,
   playBonk,
+  playBustTrombone,
   playCataclysm,
   playCathedral,
   playChains,
+  playChipRiffle,
+  playCoinFlip,
+  playCrashRocket,
+  playDiceRoll,
+  playGachaChime,
   playClockCage,
   playClockIce,
   playColossus,
@@ -159,11 +166,14 @@ import {
   playShieldUp,
   playSiege,
   playSlip,
+  playSlots,
   playSnooze,
   playStun,
   playSummon,
   playTransform,
+  playVaultHeist,
   playWall,
+  playWheelSpin,
 } from "@/lib/sounds";
 
 interface Visual {
@@ -686,6 +696,25 @@ function playSignature(id: string, count: number) {
       return playShades();
     case "wall":
       return playWall();
+    // Gambling voices (gm_* set): each machine has its own noise.
+    case "slots":
+      return playSlots();
+    case "wheel":
+      return playWheelSpin();
+    case "dice":
+      return playDiceRoll();
+    case "chips":
+      return playChipRiffle(count);
+    case "coinflip":
+      return playCoinFlip();
+    case "vault":
+      return playVaultHeist();
+    case "gacha":
+      return playGachaChime();
+    case "crashrocket":
+      return playCrashRocket();
+    case "bust":
+      return playBustTrombone();
     default:
       return playExplosion();
   }
@@ -2220,6 +2249,7 @@ export function Board({
   const entranceSeenRef = useRef<Map<string, number> | null>(null);
   const [entrance, setEntrance] = useState<{
     key: number;
+    cardId: string;
     category: BuffCategory;
     tier: number;
     icon: LucideIcon;
@@ -2256,6 +2286,7 @@ export function Board({
     entranceKeyRef.current += 1;
     setEntrance({
       key: entranceKeyRef.current,
+      cardId: def.id,
       category: def.category,
       tier: fresh.tier,
       icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
@@ -4220,6 +4251,18 @@ export function Board({
             bespoke={!!sigOf(cast.id) || PLUGIN_ID_SET.has(cast.id)}
           />
         )}
+        {/* Anim-off text fallback: the whole .fx-cast overlay above is
+            display:none under html[data-anim="off"], so this static sibling
+            (revealed only by that same CSS state) carries the play's name and
+            rule text. Reduced motion still communicates what happened. */}
+        {!fxHiddenPref && !fxCalmClock && cast && BUFF_BY_ID[cast.id]?.name && (
+          <CastTextFallback
+            key={`castfb-${cast.key}`}
+            name={BUFF_BY_ID[cast.id]!.name}
+            description={BUFF_BY_ID[cast.id]?.description}
+            tier={cast.tier}
+          />
+        )}
         {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,
             grant). Fired from the buff-list diff above; passives and
             off-board cards (clock drains, draft locks) announce themselves
@@ -4227,6 +4270,7 @@ export function Board({
         {!fxHiddenPref && !fxCalmClock && entrance && (
           <CardEntrance
             key={`ent-${entrance.key}`}
+            cardId={entrance.cardId}
             category={entrance.category}
             tier={entrance.tier}
             icon={entrance.icon}
