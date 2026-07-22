@@ -40,10 +40,12 @@ export function useRailWidth() {
   return { railWidth, resizeRail, railWidthStyle };
 }
 
-/** The draggable gutter between the command rail and the board: its own thin
- * grid column, with an oversized invisible hit area so it's easy to grab. Also
- * a keyboard separator — arrows nudge, Home/End jump, Enter or double-click
- * resets to the default width. */
+/** The draggable gutter between the command rail and the board: its own grid
+ * column, with the visible grip pinned to its LEFT edge so it reads as the
+ * sidebar's own resize edge (hugging the rail, not floating out by the board),
+ * and an oversized invisible hit area so it's easy to grab. Also a keyboard
+ * separator — arrows nudge, Home/End jump, Enter or double-click resets to the
+ * default width. */
 export function RailResizeHandle({
   railWidth,
   resizeRail,
@@ -62,7 +64,7 @@ export function RailResizeHandle({
       aria-valuenow={railWidth}
       tabIndex={0}
       title="Drag to resize the side panel · double-click to reset"
-      className="group relative hidden w-1 cursor-col-resize touch-none outline-none lg:block"
+      className="group relative hidden w-full cursor-col-resize touch-none outline-none lg:block"
       onPointerDown={(e) => {
         if (e.pointerType === "mouse" && e.button !== 0) return;
         e.preventDefault();
@@ -95,10 +97,10 @@ export function RailResizeHandle({
         e.preventDefault();
       }}
     >
-      <span aria-hidden className="absolute inset-y-0 -left-1.5 -right-1.5" />
+      <span aria-hidden className="absolute inset-y-0 -left-2 right-0" />
       <span
         aria-hidden
-        className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-gold/15 transition-colors group-hover:bg-gold/60 group-focus-visible:bg-gold/60"
+        className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-gold/25 transition-colors group-hover:bg-gold/70 group-focus-visible:bg-gold/70"
       />
     </div>
   );

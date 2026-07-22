@@ -1873,10 +1873,11 @@ function GamePage() {
           </div>
         )}
         <div
-          // The rail column tracks the draggable --match-rail-w and a thin
-          // resize-handle column sits between rail and board; the 6px gaps +
-          // 4px handle keep the same 16px gutter as before.
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto] lg:justify-center lg:gap-x-1.5"
+          // The rail column tracks the draggable --match-rail-w and a
+          // resize-handle column sits directly against the rail's right edge
+          // (no gap on the rail side, so the grip hugs the sidebar); the 1rem
+          // handle column carries the gutter to the board.
+          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_1rem_auto] lg:justify-center lg:gap-x-0"
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
