@@ -1734,7 +1734,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_griffins_brood", name: "Griffin's Brood", tier: 7, category: "protection", icon: "Egg",
-      description: "Your knights and bishops cannot be captured for your opponent's next 3 turns.",
+      description: "Your knights and bishops cannot be captured for your opponent's next 4 turns.",
       flavor: "Touch the nest. See what hatches.",
       fx: { motif: "ward", pieces: ["n", "b"], self: true } },
     shieldZone(
@@ -1743,7 +1743,7 @@ export const BOON_WAVE4B: Buff[] = [
           const t = api.board.pieces[sq]!.type;
           return t === "n" || t === "b";
         }),
-      3,
+      4,
     ),
   ),
   card(

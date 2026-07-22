@@ -1433,10 +1433,10 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 2 turns, used at the moment you choose.", tier: 2, category: "nerf" },
+    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 3 turns, used at the moment you choose.", tier: 2, category: "nerf" },
     {
       ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
       }),
       freeAction: true,
     },
@@ -1934,10 +1934,13 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "respite", name: "Respite", description: "Suspend your nerf for your next 5 turns.", tier: 4, category: "nerf" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
-    }),
+    { id: "respite", name: "Respite", description: "Free action: suspend your nerf for your next 5 turns, used at the moment you choose.", tier: 4, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
+      }),
+      freeAction: true,
+    },
   ),
   def(
     { id: "timely_lull", name: "Timely Lull", description: "Free action: a lull settles over the whole board: both players' nerfs are suspended for their next 3 turns, used at the moment you choose.", tier: 3, category: "nerf", flavor: "For three turns, it is just chess." },
@@ -3654,10 +3657,13 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "sabbatical", name: "Sabbatical", description: "Suspend your nerf for your next 10 turns.", tier: 7, category: "nerf" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
-    }),
+    { id: "sabbatical", name: "Sabbatical", description: "Free action: suspend your nerf for your next 10 turns, used at the moment you choose.", tier: 7, category: "nerf" },
+    {
+      ...activatedSimple((_inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+      }),
+      freeAction: true,
+    },
   ),
   def(
     { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn. You cannot capture the king on the bonus move: your opponent replies first.", tier: 7, category: "nerf" },

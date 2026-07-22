@@ -1146,10 +1146,10 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_thorn_hedge", name: "Thorn Hedge", tier: 2, category: "protection", icon: "Flower2",
-      description: "For your opponent's next 3 turns, their knights cannot move into your half of the board.",
+      description: "For your opponent's next 4 turns, their knights cannot move into your half of the board.",
       flavor: "Horses have strong opinions about brambles.",
       fx: { motif: "blindfold", pieces: ["n"] } },
-    timedOppFilter(3, (moves, _inst, api) =>
+    timedOppFilter(4, (moves, _inst, api) =>
       moves.filter((m) => !(m.piece === "n" && inHalf(api.me, m.to))),
     ),
   ),
@@ -2152,12 +2152,12 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_wagon_circle", name: "Wagon Circle", tier: 4, category: "protection", icon: "CircleDot",
-      description: "None of your pieces standing on your home rank can be captured for your opponent's next 2 turns.",
+      description: "None of your pieces standing on your home rank can be captured for your opponent's next 3 turns.",
       flavor: "Round up whatever rolls.",
       fx: { motif: "ward", pieces: "all", self: true } },
     shieldZone(
       (api) => mySquares(api.board, api.me).filter((sq) => RANK(sq) === ownRank(api.me, 0)),
-      2,
+      3,
     ),
   ),
   card(

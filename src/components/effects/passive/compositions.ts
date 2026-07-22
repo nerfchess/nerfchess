@@ -778,7 +778,7 @@ const CHUNK_2: PassiveComposition[] = [
   { cardId: "hx4_restless_blades", cardFamily: "buff", tier: 3, family: "strike", primitives: ["bolt", "shockRing"], targetType: "pieceClass", paletteRole: "buff", sigilIcon: "Sword", soundCue: "passive/strike" },
   { cardId: "hx4_river_watch", cardFamily: "buff", tier: 5, family: "territory", primitives: ["zoneSweep", "edgeBurn"], targetType: "zone", paletteRole: "buff", sigilIcon: "Waves", soundCue: "passive/territory" },
   { cardId: "hx4_rope_bridge", cardFamily: "buff", tier: 3, family: "territory", primitives: ["zoneSweep", "beamVertical"], targetType: "file", paletteRole: "buff", sigilIcon: "Cable", soundCue: "passive/territory" },
-  { cardId: "hx4_royal_escort", cardFamily: "buff", tier: 5, family: "bind", primitives: ["chainLink", "weightDrop"], targetType: "piece", paletteRole: "buff", sigilIcon: "Link", soundCue: "passive/bind" },
+  { cardId: "hx4_royal_escort", cardFamily: "buff", tier: 5, family: "decree", primitives: ["sigilStamp", "shockRing"], targetType: "piece", paletteRole: "buff", sigilIcon: "Link", soundCue: "passive/decree" },
   { cardId: "hx4_royal_nametag", cardFamily: "buff", tier: 1, family: "decree", primitives: ["sigilStamp"], targetType: "piece", paletteRole: "buff", sigilIcon: "Tag", soundCue: "passive/decree" },
   { cardId: "hx4_royal_quarantine", cardFamily: "buff", tier: 7, family: "veil", primitives: ["fogRoll", "drainFlow", "moonCircle"], targetType: "pieceClass", paletteRole: "buff", sigilIcon: "ShieldAlert", soundCue: "passive/veil" },
   { cardId: "hx4_rusted_crown", cardFamily: "buff", tier: 6, family: "bind", primitives: ["chainLink", "weightDrop"], targetType: "piece", paletteRole: "buff", sigilIcon: "Crown", soundCue: "passive/bind" },

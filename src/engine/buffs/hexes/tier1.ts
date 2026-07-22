@@ -51,8 +51,8 @@ export const HEXES_T1: Buff[] = [
     curse(3, (moves) => moves.filter((m) => !(m.piece === "q" && m.captured))),
   ),
   H(
-    { id: "stiff_joints", name: "Stiff Joints", description: "Your opponent's queen cannot move diagonally for their next 2 turns.", flavor: "Sideways or forward. Pick one.", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(2, (moves) =>
+    { id: "stiff_joints", name: "Stiff Joints", description: "Your opponent's queen cannot move diagonally for their next 3 turns.", flavor: "Sideways or forward. Pick one.", fx: { motif: "anchor", pieces: ["q"] } },
+    curse(3, (moves) =>
       moves.filter(
         (m) =>
           m.piece !== "q" ||

@@ -835,7 +835,7 @@ export const OVERHAUL_T5: Buff[] = [
     {
       id: "ov_algorithm_boost",
       name: "Algorithm Boost",
-      description: "The algorithm optimizes your feed: your next draft offers three cards.",
+      description: "The algorithm optimizes your feed: your next draft offers three cards, and you gain a draft reroll.",
       tier: 5,
       category: "draft",
       icon: "Cpu",
@@ -843,6 +843,7 @@ export const OVERHAUL_T5: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   // 118. Winter Palace ---------------------------------------------------------

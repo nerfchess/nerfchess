@@ -224,15 +224,18 @@ const STRANGE_GAITS: Array<
   { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between" },
   { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between" },
   { id: "giraffe_keeper", name: "Giraffe Keeper", flavor: "The enclosure was never going to hold her.", icon: "TreePalm", leaps: symLeaps(4, 1), how: "a giraffe leap, 4 by 1, in any direction" },
-  { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, one delivery, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only" },
+  { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, two deliveries, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only" },
   { id: "colts_gallop", name: "Colt's Gallop", flavor: "All legs, no brakes, forward only.", icon: "Sprout", leaps: symLeaps(3, 2), forward: true, how: "a zebra leap, 3 by 2, toward the enemy side only" },
   { id: "signal_rocket", name: "Signal Rocket", flavor: "Four squares of flight and a very confused landing.", icon: "Rocket", leaps: symLeaps(4, 0), how: "a launch of exactly 4 straight, clearing anything between" },
 ];
 
 function strangeGait(entry: (typeof STRANGE_GAITS)[number]): Buff {
+  // Forward-only gaits trade the lost directions for a second use, so the
+  // any-direction sibling never strictly dominates them.
+  const uses = entry.forward ? 2 : 1;
   return opener(
     entry,
-    `Once, one of your knights may make ${entry.how}. It may capture on landing.`,
+    `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}. It may capture on landing.`,
     augment((_moves, inst, api) => {
       const dir = api.me === "w" ? 1 : -1;
       const leaps = entry.forward
@@ -243,7 +246,7 @@ function strangeGait(entry: (typeof STRANGE_GAITS)[number]): Buff {
         out.push(...leapMoves(api.board, sq, leaps, inst.id));
       }
       return out;
-    }),
+    }, uses),
   );
 }
 
@@ -506,14 +509,14 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
 // step BACKWARD onto an empty square, once. Deeply unregulation.
 // ---------------------------------------------------------------------------
 
-const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean }> = [
+const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: number }> = [
   { id: "tactical_withdrawal", name: "Tactical Withdrawal", flavor: "It is only running away if someone writes it down.", icon: "Undo2" },
-  { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] },
-  { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] },
-  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] },
-  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] },
-  { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] },
-  { id: "squires_errand", name: "Squire's Errand", flavor: "The b- and g-pawns trot back to fetch the good lance.", icon: "Backpack", files: [1, 6] },
+  { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2 },
+  { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 2 },
+  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 2 },
+  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },
+  { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] , uses: 2 },
+  { id: "squires_errand", name: "Squire's Errand", flavor: "The b- and g-pawns trot back to fetch the good lance.", icon: "Backpack", files: [1, 6] , uses: 2 },
   { id: "sidestep_and_bow", name: "Sidestep and Bow", flavor: "Retreat diagonally and it counts as courtly manners.", icon: "Feather", diag: true },
 ];
 
@@ -524,9 +527,10 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
       : `on files ${entry.files.map((f) => FILE_NAMES[f]).join(", ")} `
     : "";
   const how = entry.diag ? "one square diagonally backward" : "one square straight backward";
+  const uses = entry.uses ?? 1;
   return opener(
     entry,
-    `Once, one of your pawns ${who}may step ${how} onto an empty square.`,
+    `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}`,
     augment((_moves, inst, api) => {
       const back = api.me === "w" ? -1 : 1;
       const out: Move[] = [];
@@ -541,7 +545,7 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
         }
       }
       return out;
-    }),
+    }, uses),
   );
 }
 

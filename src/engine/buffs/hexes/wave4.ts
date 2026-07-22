@@ -79,8 +79,18 @@ const T1: Buff[] = [
     curse(1, (moves) => moves.filter((m) => m.piece !== "p" || !m.captured)),
   ),
   H1(
-    { id: "hx4_blunted_horseshoes", name: "Blunted Horseshoes", description: "Your opponent's knights cannot capture for their next 2 turns.", flavor: "All trot, no trample.", icon: "Origami", fx: { motif: "muzzle", pieces: ["n"] } },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "n" || !m.captured)),
+    { id: "hx4_blunted_horseshoes", name: "Blunted Horseshoes", description: "For your opponent's next 3 turns, a knight of theirs that moved on their previous turn is too winded to capture.", flavor: "All trot, no trample.", icon: "Origami", fx: { motif: "muzzle", pieces: ["n"] } },
+    curse(3, (moves, api) => {
+      const hist = api.board.history;
+      for (let i = hist.length - 1; i >= 0; i--) {
+        if (hist[i].color === api.opp) {
+          const last = hist[i];
+          if (last.piece !== "n") return moves;
+          return moves.filter((m) => m.piece !== "n" || m.from !== last.to || !m.captured);
+        }
+      }
+      return moves;
+    }),
   ),
   H1(
     { id: "hx4_buttoned_scabbard", name: "Buttoned Scabbard", description: "Your opponent's king cannot capture anything for their next 2 turns.", flavor: "The royal sword is ceremonial this week.", icon: "Shield", fx: { motif: "muzzle" } },
@@ -132,8 +142,8 @@ const T1: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) <= 4)),
   ),
   H1(
-    { id: "hx4_homesick_queen", name: "Homesick Queen", description: "For your opponent's next 2 turns, their queen may not move into your half of the board.", flavor: "She misses the curtains, apparently.", icon: "House", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(2, (moves, api) => moves.filter((m) => m.piece !== "q" || relRank(api.opp, m.to) <= 4)),
+    { id: "hx4_homesick_queen", name: "Homesick Queen", description: "For your opponent's next 3 turns, their queen may not move into your half of the board.", flavor: "She misses the curtains, apparently.", icon: "House", fx: { motif: "anchor", pieces: ["q"] } },
+    curse(3, (moves, api) => moves.filter((m) => m.piece !== "q" || relRank(api.opp, m.to) <= 4)),
   ),
   H1(
     { id: "hx4_gnat_cloud", name: "Gnat Cloud", description: "For your opponent's next 3 turns, they may not move the same piece they moved on their previous turn. Their king is exempt.", flavor: "It followed the horse. Now it follows everyone.", icon: "Bug", fx: { motif: "slow", pieces: "all" } },
@@ -149,8 +159,8 @@ const T1: Buff[] = [
     }),
   ),
   H1(
-    { id: "hx4_polite_infantry", name: "Polite Infantry", description: "For your opponent's next 3 turns, their pawns may not capture toward the a side of the board. Captures toward the h side are still allowed.", flavor: "After you. No, after YOU.", icon: "HandHeart", fx: { motif: "muzzle", pieces: ["p"] } },
-    curse(3, (moves) =>
+    { id: "hx4_polite_infantry", name: "Polite Infantry", description: "For your opponent's next 4 turns, their pawns may not capture toward the a side of the board. Captures toward the h side are still allowed.", flavor: "After you. No, after YOU.", icon: "HandHeart", fx: { motif: "muzzle", pieces: ["p"] } },
+    curse(4, (moves) =>
       moves.filter((m) => m.piece !== "p" || !m.captured || FILE(m.to) > FILE(m.from)),
     ),
   ),
@@ -822,8 +832,8 @@ const T3: Buff[] = [
     },
   ),
   H3(
-    { id: "hx4_crooked_arrow", name: "Crooked Arrow", description: "For your opponent's next 3 turns, their rooks may only move an even number of squares: 2, 4 or 6.", flavor: "The fletcher was drunk. The rook is coping.", icon: "MoveDiagonal", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) % 2 === 0)),
+    { id: "hx4_crooked_arrow", name: "Crooked Arrow", description: "For your opponent's next 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7.", flavor: "The fletcher was drunk. The rook is coping.", icon: "MoveDiagonal", fx: { motif: "anchor", pieces: ["r"] } },
+    curse(4, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) % 2 === 1)),
   ),
   H3(
     { id: "hx4_night_soil", name: "Night Soil", description: "The first rank of your half of the board is freshly manured: your opponent's pieces cannot stop anywhere on it for their next 2 turns.", flavor: "Strategically vital. Nasally unbearable.", icon: "Tractor", fx: { motif: "blindfold" } },
@@ -1309,8 +1319,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_no_easy_pickings", name: "No Easy Pickings", description: "A code of honor is imposed for your opponent's next 3 turns: they may only capture your pieces that are defended by another of your pieces. Undefended stragglers are off limits.", flavor: "There is no glory in an unguarded purse.", icon: "Handshake", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) =>
+    { id: "hx4_no_easy_pickings", name: "No Easy Pickings", description: "A code of honor is imposed for your opponent's next 4 turns: they may only capture your pieces that are defended by another of your pieces. Undefended stragglers are off limits.", flavor: "There is no glory in an unguarded purse.", icon: "Handshake", fx: { motif: "muzzle", pieces: "all" } },
+    curse(4, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
         if (c == null) return true;
