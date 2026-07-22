@@ -282,3 +282,51 @@
    must read), so the whole overlay is hidden outright, matching the treatment
    effects.css gives one-shot flourishes. */
 html[data-anim="off"] .gsig-root { display: none !important; }
+
+/* --- Generated finishers (overhaul): the closing beat every generated play
+   now ends on, hash-picked per card (GenVisual.finisher). Transform/opacity
+   only, one-shot `both` fill; inside .gsig-root so the anim-off gate and the
+   data-anim speed clamps apply unchanged. */
+.gsig-fin-ring { opacity: 0; animation: gsig-fin-ring 520ms ease-out both; }
+@keyframes gsig-fin-ring {
+  0% { opacity: 0.85; transform: scale(0.55); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+.gsig-fin-shard { opacity: 0; transform-origin: 50% 260%; animation: gsig-fin-shard 460ms ease-out both; }
+@keyframes gsig-fin-shard {
+  0% { opacity: 0.9; transform: rotate(var(--r, 0deg)) translateY(-40%) scale(0.6); }
+  100% { opacity: 0; transform: rotate(var(--r, 0deg)) translateY(-160%) scale(1); }
+}
+.gsig-fin-mote { opacity: 0; animation: gsig-fin-mote 640ms ease-out both; }
+@keyframes gsig-fin-mote {
+  0% { opacity: 0.9; transform: translateY(0) scale(0.7); }
+  100% { opacity: 0; transform: translateY(-240%) scale(1.05); }
+}
+.gsig-fin-glow { opacity: 0; animation: gsig-fin-glow 700ms ease-in-out both; }
+@keyframes gsig-fin-glow {
+  0% { opacity: 0; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.gsig-fin-sparkx { opacity: 0; animation: gsig-fin-sparkx 380ms ease-out both; }
+@keyframes gsig-fin-sparkx {
+  0% { opacity: 0.95; transform: scaleX(0.1); }
+  60% { opacity: 0.8; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.15); }
+}
+.gsig-fin-echo { opacity: 0; animation: gsig-fin-echo 560ms ease-out both; }
+@keyframes gsig-fin-echo {
+  0% { opacity: 0.8; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+.gsig-fin-dust { opacity: 0; animation: gsig-fin-dust 720ms ease-in both; }
+@keyframes gsig-fin-dust {
+  0% { opacity: 0.85; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(190%); }
+}
+.gsig-fin-seal { opacity: 0; animation: gsig-fin-seal 540ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes gsig-fin-seal {
+  0% { opacity: 0; transform: scale(1.7) rotate(-8deg); }
+  55% { opacity: 0.9; transform: scale(0.92) rotate(2deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}

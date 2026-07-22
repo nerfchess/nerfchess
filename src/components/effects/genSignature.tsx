@@ -168,7 +168,32 @@ export interface GenVisual {
   rot: number;
   /** Emblem used by the lead flourish (and some family cores). */
   glyph: GenGlyph;
+  /** Ending flourish (overhaul): every generated play now closes with one of
+   * eight hash-picked finishers, so no two cards end the same way either. */
+  finisher: GenFinisher;
 }
+
+/** The eight generated ending flourishes (see GenFinisherLayer). */
+export type GenFinisher =
+  | "ringfade"
+  | "shardring"
+  | "risemotes"
+  | "afterglow"
+  | "sparkclose"
+  | "echopulse"
+  | "dustfall"
+  | "sealstamp";
+
+const FINISHERS: readonly GenFinisher[] = [
+  "ringfade",
+  "shardring",
+  "risemotes",
+  "afterglow",
+  "sparkclose",
+  "echopulse",
+  "dustfall",
+  "sealstamp",
+];
 
 /** Structurally mirrors BoardEffects' SignatureConfig, with GenVisual in the
  * `visual` slot. Everything except `visual` can be spread straight into the
@@ -460,6 +485,7 @@ export function genSignatureConfig(id: string, category: string, tier: number): 
     dir: pick(h, 8, 2) === 0 ? 1 : -1,
     rot: pick(h, 9, 360),
     glyph: def.glyphs[pick(h, 10, def.glyphs.length)],
+    finisher: FINISHERS[pick(h, 14, FINISHERS.length)],
   };
 
   const ordering: GenOrdering =
@@ -1657,9 +1683,75 @@ export function GenBurst({
     <span className="gsig-root pointer-events-none absolute inset-0 z-20" aria-hidden="true">
       <span className="absolute inset-0 block" style={v.scale === 1 ? undefined : { transform: `scale(${v.scale})` }}>
         <Fam v={v} delayMs={delayMs} />
+        <GenFinisherLayer v={v} delayMs={delayMs} />
       </span>
     </span>
   );
+}
+
+/** The ending flourish layer (overhaul): a short, distinct closing beat after
+ * the family scene, hash-picked per card (GenVisual.finisher). All
+ * transform/opacity keyframes (genSignature.css), one-shot `both` fill, and it
+ * lives inside gsig-root so the anim-off gate covers it unchanged. */
+function GenFinisherLayer({ v, delayMs }: { v: GenVisual; delayMs: number }) {
+  const start = delayMs + 620; // after the family scene's main beat
+  const c = `hsl(${v.hue} ${v.sat}% ${v.light}%)`;
+  const c2 = `hsl(${v.hue2} ${v.sat}% ${Math.min(78, v.light + 10)}%)`;
+  const d = (extra: number) => ({ animationDelay: `${start + extra}ms` });
+  switch (v.finisher) {
+    case "ringfade":
+      return (
+        <span className="gsig-fin-ring absolute left-1/2 top-1/2 block h-[70%] w-[70%] rounded-full" style={{ ...d(0), border: `2px solid ${c}`, marginLeft: "-35%", marginTop: "-35%" }} />
+      );
+    case "shardring":
+      return (
+        <span className="absolute inset-0 block">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span key={i} className="gsig-fin-shard absolute left-1/2 top-1/2 block h-[16%] w-[4%]" style={{ ...d(i * 30), background: i % 2 ? c2 : c, transform: `rotate(${i * 60 + v.rot}deg)` } as React.CSSProperties} />
+          ))}
+        </span>
+      );
+    case "risemotes":
+      return (
+        <span className="absolute inset-0 block">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span key={i} className="gsig-fin-mote absolute bottom-[18%] block h-[6%] w-[6%] rounded-full" style={{ ...d(i * 70), left: `${22 + i * 18}%`, background: i % 2 ? c : c2 }} />
+          ))}
+        </span>
+      );
+    case "afterglow":
+      return (
+        <span className="gsig-fin-glow absolute inset-[12%] block rounded-full" style={{ ...d(0), background: `radial-gradient(circle, ${c2}44, transparent 70%)` }} />
+      );
+    case "sparkclose":
+      return (
+        <span className="absolute inset-0 block">
+          <span className="gsig-fin-sparkx absolute left-1/2 top-1/2 block h-[2.5%] w-[52%]" style={{ ...d(0), background: c, marginLeft: "-26%" }} />
+          <span className="gsig-fin-sparkx absolute left-1/2 top-1/2 block h-[2.5%] w-[52%]" style={{ ...d(60), background: c2, marginLeft: "-26%", transform: "rotate(90deg)" }} />
+        </span>
+      );
+    case "echopulse":
+      return (
+        <span className="absolute inset-0 block">
+          <span className="gsig-fin-echo absolute left-1/2 top-1/2 block h-[46%] w-[46%] rounded-full" style={{ ...d(0), border: `2px solid ${c}`, marginLeft: "-23%", marginTop: "-23%" }} />
+          <span className="gsig-fin-echo absolute left-1/2 top-1/2 block h-[46%] w-[46%] rounded-full" style={{ ...d(140), border: `1.5px solid ${c2}`, marginLeft: "-23%", marginTop: "-23%" }} />
+        </span>
+      );
+    case "dustfall":
+      return (
+        <span className="absolute inset-0 block">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} className="gsig-fin-dust absolute top-[20%] block h-[4%] w-[4%] rounded-full" style={{ ...d(i * 45), left: `${18 + i * 15}%`, background: i % 2 ? c2 : c }} />
+          ))}
+        </span>
+      );
+    default:
+      return (
+        <span className="gsig-fin-seal absolute left-1/2 top-1/2 flex h-[34%] w-[34%] items-center justify-center" style={{ ...d(0), marginLeft: "-17%", marginTop: "-17%", color: c2 }}>
+          <svg viewBox="0 0 24 24" className="h-full w-full"><path d={GLYPHS[v.glyph]} fill="currentColor" fillRule="evenodd" /></svg>
+        </span>
+      );
+  }
 }
 
 // --- Dev self-check --------------------------------------------------------------------
@@ -1681,7 +1773,7 @@ export function runGenSelfCheck(bespokeIds: ReadonlySet<string>): void {
     const cfg = genSignatureConfig(b.id, b.category, b.tier);
     generated++;
     const w = cfg.visual;
-    const key = [w.family, w.variant, w.hue, w.hue2, w.particles, w.scale, w.dir, w.rot, w.glyph].join("|");
+    const key = [w.family, w.variant, w.hue, w.hue2, w.particles, w.scale, w.dir, w.rot, w.glyph, w.finisher].join("|");
     const prev = seen.get(key);
     if (prev !== undefined) {
       console.warn(`[genSignature] full visual collision: "${prev}" and "${b.id}" share ${key}`);

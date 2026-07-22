@@ -25,6 +25,7 @@
     "audit:cards": "npx -y tsx scripts/audit-cards.ts",
     "test:buff-purity": "npx -y tsx scripts/test-buff-purity.ts",
     "test:card-audit": "npx -y tsx scripts/audit-cards.ts --check",
+    "test:lab": "npx -y tsx scripts/lab-run-all.ts",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
