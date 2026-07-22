@@ -144,7 +144,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "photosynthesis",
       name: "Photosynthesis",
       description:
-        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). The auto-step only ever moves onto an empty square straight ahead, so it never captures, and it never auto-advances onto the promotion rank.",
+        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
       tier: 4,
       category: "tempo",
       flavor: "Just add sunlight.",

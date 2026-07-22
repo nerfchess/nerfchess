@@ -350,23 +350,14 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_loading_screen_tip",
       name: "Loading Screen Tip",
       description:
-        "A parody loading tip plays. After your opponent's next move, the spotlight lands on the cheapest undefended enemy piece; if everything is defended, it highlights their cheapest piece anyway.",
+        "A parody loading tip plays, then the spotlight lands on the cheapest undefended enemy piece. If everything is defended, it highlights their cheapest piece anyway.",
       tier: 2,
       category: "info",
       icon: "Loader",
       flavor: "Tip: pieces cannot be captured if you never move them. This tip is a lie.",
     },
-    // Delayed: the tip plays on use, but the spotlight only lands once the
-    // opponent has replied (it reads the board at that moment).
     {
-      kind: "activated",
-      freeAction: true,
-      spendOnUse: false,
-      effect: (inst) => {
-        inst.state.armed = true;
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (!inst.state.armed || move.color !== api.opp) return;
+      ...activatedSimple((_inst, api) => {
         const own = mySquares(api.board, api.opp);
         const undefended = undefendedPieces(api.board, api.opp).filter(
           (sq) => api.board.pieces[sq]!.type !== "k",
@@ -375,16 +366,14 @@ export const OVERHAUL_T2: Buff[] = [
           ? undefended
           : own.filter((sq) => api.board.pieces[sq]!.type !== "k");
         const final = pool.length ? pool : own;
-        if (final.length) {
-          let best = final[0];
-          for (const sq of final) {
-            if (VALUE[api.board.pieces[sq]!.type] < VALUE[api.board.pieces[best]!.type]) best = sq;
-          }
-          flashSquares(api, [best]);
+        if (!final.length) return;
+        let best = final[0];
+        for (const sq of final) {
+          if (VALUE[api.board.pieces[sq]!.type] < VALUE[api.board.pieces[best]!.type]) best = sq;
         }
-        inst.spent = true;
-      },
-      status: (inst) => (inst.state.armed ? "spotlight warming up" : "activate to play the tip"),
+        flashSquares(api, [best]);
+      }),
+      freeAction: true,
     },
   ),
   // 33. Sandbags --------------------------------------------------------------
@@ -424,7 +413,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_slingshot",
       name: "Slingshot",
       description:
-        "One of your pawns shoots down an enemy pawn up to 2 squares directly ahead of it. The shooter stays put. Using it consumes your next unused draft reroll, if any.",
+        "One of your pawns shoots down an enemy pawn up to 2 squares directly ahead of it. The shooter stays put.",
       tier: 2,
       category: "attack",
       icon: "Target",
@@ -458,6 +447,7 @@ export const OVERHAUL_T2: Buff[] = [
           flashSquares(api, [target], true);
           api.removePiece(target);
         }
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     ),
   ),

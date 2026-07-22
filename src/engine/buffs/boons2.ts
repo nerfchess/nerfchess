@@ -28,7 +28,6 @@ import {
   activated,
   activatedSimple,
   addEffect,
-  addNovel,
   augment,
   captureSquare,
   emptySquares,
@@ -187,41 +186,56 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_ancient_custom",
       name: "Ancient Custom",
       description:
-        "The old law never expired: once, one of your pawns may capture an enemy pawn standing directly beside it en passant, as though it had just double-stepped. (Reaching your last rank this way promotes to a queen.)",
+        "The old law never expired: once, one of your pawns may capture an enemy pawn standing directly beside it en passant, as though it had just double-stepped. That pawn is rooted and cannot move again on your next turn. (Reaching your last rank this way promotes to a queen.)",
       tier: 1,
       category: "movement",
       icon: "Scroll",
       flavor: "Look it up. Older editions only.",
       requires: ["p"],
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = api.me === "w" ? 1 : -1;
-      for (const from of mySquares(api.board, api.me, "p")) {
-        for (const df of [-1, 1]) {
-          const bf = FILE(from) + df;
-          if (!inBoard(bf, RANK(from))) continue;
-          const beside = SQ(bf, RANK(from));
-          const victim = api.board.pieces[beside];
-          if (!victim || victim.color !== api.opp || victim.type !== "p") continue;
-          const tr = RANK(from) + fwd;
-          if (!inBoard(bf, tr)) continue;
-          const to = SQ(bf, tr);
-          if (api.board.pieces[to]) continue;
-          out.push({
-            from,
-            to,
-            piece: "p",
-            color: api.me,
-            captured: "p",
-            capturedSquare: beside,
-            via: inst.id,
-            ...(pawnRankOk(to) ? {} : { promotion: "q" }),
-          } as Move);
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const fwd = api.me === "w" ? 1 : -1;
+        for (const from of mySquares(api.board, api.me, "p")) {
+          for (const df of [-1, 1]) {
+            const bf = FILE(from) + df;
+            if (!inBoard(bf, RANK(from))) continue;
+            const beside = SQ(bf, RANK(from));
+            const victim = api.board.pieces[beside];
+            if (!victim || victim.color !== api.opp || victim.type !== "p") continue;
+            const tr = RANK(from) + fwd;
+            if (!inBoard(bf, tr)) continue;
+            const to = SQ(bf, tr);
+            if (api.board.pieces[to]) continue;
+            out.push({
+              from,
+              to,
+              piece: "p",
+              color: api.me,
+              captured: "p",
+              capturedSquare: beside,
+              via: inst.id,
+              ...(pawnRankOk(to) ? {} : { promotion: "q" }),
+            } as Move);
+          }
         }
-      }
-      return out;
-    }, 1),
+        addNovel(moves, out);
+      },
+      // The arrival is rooted for the owner's next turn (a freeze ticks on the
+      // owner's own turns), so the pawn that struck cannot move again at once.
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id || !move.color) return;
+        addEffect(api, { kind: "freeze", sq: move.to, owner: api.me, turns: 1, skin: "stun" });
+        inst.spent = true;
+      },
+      status: () => null,
+    },
   ),
 
   // Protection from one specific threat, forever: regicide is above a pawn's
