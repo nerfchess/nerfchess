@@ -977,6 +977,17 @@ export const WILD_ARCANE: Buff[] = [
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // Balance: the loan also ends the instant the borrowed knight captures.
+        if (move.from === sq && move.color === api.me && move.captured) {
+          const cur = inst.state.sq as Square | undefined;
+          if (cur != null) {
+            const p = api.board.pieces[cur];
+            if (p && p.color === api.me && p.type === "n") api.setPieceColor(cur, api.opp);
+          }
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
         if (move.color !== api.me) return;
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
@@ -1109,7 +1120,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_glyph_seal",
       name: "Glyph Seal",
       description:
-        "Seal one file: pick any square and its whole file becomes impassable to your opponent for their next 2 turns, and every enemy piece already standing on it is bound in place for its next 2 turns.",
+        "Seal one file: pick any square and its whole file becomes impassable to your opponent for their next turn, and every enemy piece already standing on it is bound in place for its next turn.",
       tier: 4,
       category: "protection",
       flavor: "A line of warding runes down the board, and nothing crosses it or leaves it.",
@@ -1132,11 +1143,11 @@ export const WILD_ARCANE: Buff[] = [
         const file = FILE(c);
         const squares: Square[] = [];
         for (let r = 0; r < 8; r++) squares.push(SQ(file, r));
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 1 });
         for (const sq of squares) {
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "chains" });
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "chains" });
           }
         }
       },

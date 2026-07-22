@@ -216,7 +216,6 @@ export const OVERHAUL_T2: Buff[] = [
         if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
       },
       {
-        freeAction: true,
         // The activation is only offered when the moat can be dug, so a failed
         // attempt cannot occur; instead the charge expires the moment you next
         // move without having used it (glossary: a failed or illegal attempt
@@ -309,7 +308,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_second_breakfast",
       name: "Second Breakfast",
       description:
-        "One of your pawns may march two single steps forward as one move, once. Both squares must be empty; no capturing.",
+        "One of your pawns may march two single steps forward as your very next move: both squares must be empty, no capturing. Whether or not you take it, the charge is spent the moment you next move.",
       tier: 2,
       category: "movement",
       icon: "Croissant",
@@ -317,18 +316,33 @@ export const OVERHAUL_T2: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = fwdOf(api.me);
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const mid = sq + fwd, to = sq + fwd * 2;
-        if (to < 0 || to > 63 || !pawnRankOk(to)) continue;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
+    // The granted march is only ever offered when legal, so a failed attempt
+    // cannot occur; instead the charge expires the moment you next move, taken
+    // or not (glossary: a failed or illegal attempt still spends the charge).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const mid = sq + fwd, to = sq + fwd * 2;
+          if (to < 0 || to > 63 || !pawnRankOk(to)) continue;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || ((inst.state.charges as number) ?? 0) <= 0) return;
+        inst.state.charges = 0;
+        inst.spent = true;
+      },
+    },
   ),
   // 32. Loading Screen Tip ----------------------------------------------------
   card(

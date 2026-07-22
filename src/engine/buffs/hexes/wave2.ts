@@ -894,14 +894,14 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_queens_ransom",
       name: "Queen's Ransom",
       description:
-        "A ransom is set on her majesty's steps: for your opponent's next 5 turns, each time they move their queen, two other pieces of theirs (chosen by the curse) are seized as surety and frozen for 1 turn. The queen herself is never restrained: benching her costs nothing, using her taxes the court.",
+        "A ransom is set on her majesty's steps: for your opponent's next 4 turns, each time they move their queen, two other pieces of theirs (chosen by the curse) are seized as surety and frozen for 1 turn. The queen herself is never restrained: benching her costs nothing, using her taxes the court.",
       flavor: "Her majesty may walk wherever she pleases. The escort is billed.",
       fx: { motif: "slow", pieces: ["q"] },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 5;
+        inst.state.turns = 4;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.piece === "q") {
@@ -925,10 +925,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Statue Garden / Hex of Stone (fixed-length minor petrifies): the
   // court can be FREED early, but only by marching the king to the center of
   // the board — a real, risky cleansing action the opponent must weigh.
-  H5(
+  hex(
     {
       id: "hw2_bound_court",
       name: "Chains of the Court",
+      tier: 6,
       description:
         "Your opponent's knights and bishops are chained into stone for 4 of their turns (walnuts that shuffle one square at a time). The chains have a lock: if their KING steps onto one of the four center squares (d4, e4, d5, e5) while the curse holds, every petrified courtier is freed at once. Wait it out in safety, or walk the king into the open to break it early.",
       flavor: "The key was hung in the middle of the battlefield. Of course it was.",
@@ -984,7 +985,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gathering_storm",
       name: "Gathering Storm",
       description:
-        "A storm gathers over their army and worsens every two turns, for your opponent's next 6 turns. Turns 1 and 2: their pawns cannot advance (captures still allowed). Turns 3 and 4: their knights and bishops also cannot cross into your half. Turns 5 and 6: their bishops, rooks and queen are also capped at 2 squares per move. Then it breaks all at once. The early turns are the time to act.",
+        "A storm gathers over their army, holding off for one move: their next move is clear, then it worsens every two turns across your opponent's following 6 turns. Turns 1 and 2: their pawns cannot advance (captures still allowed). Turns 3 and 4: their knights and bishops also cannot cross into your half. Turns 5 and 6: their bishops, rooks and queen are also capped at 2 squares per move. Then it breaks all at once. The early turns are the time to act.",
       flavor: "You could see it coming for miles. That was the point.",
       fx: { motif: "anchor", pieces: "all" },
     },
@@ -992,8 +993,10 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
         const left = turnsLeft(inst);
         if (left <= 0 || moves.length === 0) return moves;
         const stage = left >= 5 ? 1 : left >= 3 ? 2 : 3;

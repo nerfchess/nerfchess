@@ -32,7 +32,6 @@ import {
   instant,
   activated,
   addEffect,
-  timedAugment,
   emptySquares,
   mySquares,
   inHalf,
@@ -156,7 +155,7 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Banknote",
       name: "Mortgage",
       description:
-        "Take out a loan against your home: summon a rook on any empty square. The bank keeps the deed, so you can never castle again for the rest of the game.",
+        "Take out a loan against your home: summon a rook on any empty square. Freshly built, the rook cannot capture until after your opponent has replied. The bank keeps the deed, so you can never castle again for the rest of the game.",
       tier: 5,
       category: "pieces",
       flavor: "Sold, to the player in a hurry.",
@@ -215,13 +214,39 @@ export const PT_TIME_CARDS: Buff[] = [
       icon: "Drumstick",
       name: "Last Meal",
       description:
-        "Your king ties on a napkin. For your next 3 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between.",
+        "Your king ties on a napkin. For your next 3 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between. The napkin is good for a single outing: the first time your king moves, whether it feasts or comes up empty, the meal is over.",
       tier: 5,
       category: "attack",
       flavor: "Fork, knife, and no table manners.",
       fx: { motif: "empower", pieces: ["k"], self: true },
     },
-    timedAugment(3, (_moves, inst, api) => feastCaptures(api, inst.id)),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        for (const m of feastCaptures(api, inst.id)) moves.push(m);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        if (move.color !== api.me) return;
+        // One bite only: the first time your king moves, the charge is spent,
+        // whether it took a feast capture or made any other move (a failed or
+        // wasted attempt still spends it). Moves by your other pieces do not
+        // spend it; the window otherwise lapses after 3 of your turns.
+        if (move.piece === "k") {
+          inst.state.turns = 0;
+          inst.spent = true;
+          return;
+        }
+        const left = ((inst.state.turns as number) ?? 3) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of your turns to feast`,
+    },
   ),
 
   // #24 Time Out -----------------------------------------------------------
