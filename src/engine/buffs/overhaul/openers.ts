@@ -46,6 +46,7 @@ import {
   slideMoves,
   teleportMoves,
   turnsLeft,
+  type Tier,
 } from "./shared";
 import { buildOpeners2 } from "./openers2";
 
@@ -54,6 +55,10 @@ export type OpenerMeta = {
   name: string;
   flavor: string;
   icon: string;
+  /** Balance-pass tier override. Openers default to tier 1; the opener pool
+   * ignores tier entirely (openerPool keys off `opener: true`), so this only
+   * changes the tier shown on the card face and in the codex. */
+  tier?: Tier;
 };
 
 const FILE_NAMES = "abcdefgh";
@@ -70,7 +75,7 @@ export function opener(
         id: `op_${meta.id}`,
         name: meta.name,
         description,
-        tier: 1,
+        tier: meta.tier ?? 1,
         category: mech.kind === "passive" ? "movement" : "item",
         icon: meta.icon,
         flavor: meta.flavor,
