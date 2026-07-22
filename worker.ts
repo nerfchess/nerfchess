@@ -2867,6 +2867,36 @@ export class GameServer extends DurableObject<Env> {
     };
   }
 
+  // Buff mode's opening pick: the opener offers are dealt at game CREATION
+  // (enableDraftMode -> rollOpenerOffers), before any move, so no commitMove
+  // ever opens their lock-in window. Without this, a starting buff game sent
+  // its start frames with no dtDeadline and a running clock: clients treated
+  // the free window as already expired (the draft mounted minimized on the
+  // red "On your clock" chip) and the seats burned clock from ply 0 while
+  // both players were still picking their opener. Call after match.startedAt
+  // is set and BEFORE the start frames go out, so they carry the deadline.
+  // No-op for non-draft games and for nerf mode (no openers), and once both
+  // openers are resolved settleDraftAction resumes the clock exactly like a
+  // mid-game round.
+  private async openStartDraftWindow(match: StoredMatch, now: number) {
+    if (!match.draft || !match.startedAt || match.result) return;
+    const game = await this.gameForPlay(match);
+    if (!game?.buffs) return;
+    if (!game.buffs.players.w.offer && !game.buffs.players.b.offer) return;
+    match.dtDeadline = now + draftLockInMs;
+    // Both clocks pause for the shared free window; enforceDraftDeadlines
+    // resumes them if the window expires with an offer still open.
+    match.runningSince = null;
+    this.syncOfferSeats(match, game);
+    // House seats resolve their opener inside the window: re-arm with the
+    // game in hand so the offer branch schedules a draft think instead of
+    // the move timer an earlier armBotAction(match, null) may have set.
+    if (match.bots) {
+      match.botActAt = null;
+      this.armBotAction(match, game, now);
+    }
+  }
+
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
     if (!match.setup.timeSec || match.result || !match.startedAt || match.runningSince === null) return clocks;
@@ -3282,6 +3312,8 @@ export class GameServer extends DurableObject<Env> {
     if (match.draft && match.mode !== "buff") return this.beginNerfDraft(match);
     match.startedAt = Date.now();
     match.runningSince = match.startedAt;
+    // Buff mode: the opening pick's free lock-in window opens with the game.
+    await this.openStartDraftWindow(match, match.startedAt);
     await this.saveMatch(match);
     this.sendStart(match, "w");
     this.sendStart(match, "b");
@@ -3316,6 +3348,8 @@ export class GameServer extends DurableObject<Env> {
         match.startedAt = Date.now();
         match.runningSince = match.startedAt;
         this.armBotAction(match, null, match.startedAt);
+        // Buff mode: the opening pick's free lock-in window opens with the game.
+        await this.openStartDraftWindow(match, match.startedAt);
         await this.saveMatch(match);
         this.sendStart(match, "w");
         this.sendStart(match, "b");
@@ -5484,6 +5518,8 @@ export class GameServer extends DurableObject<Env> {
     match.startedAt = now;
     match.runningSince = now;
     this.armBotAction(match, null, now);
+    // Buff mode: the opening pick's free lock-in window opens with the game.
+    await this.openStartDraftWindow(match, now);
     await this.saveMatch(match);
   }
 
@@ -5782,6 +5818,8 @@ export class GameServer extends DurableObject<Env> {
     match.startedAt = now;
     match.runningSince = now;
     this.armBotAction(match, null, now);
+    // Buff mode: the opening pick's free lock-in window opens with the game.
+    await this.openStartDraftWindow(match, now);
     await this.saveMatch(match);
     this.sendStart(match, "w");
     this.sendStart(match, "b");

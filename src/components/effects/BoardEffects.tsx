@@ -2955,8 +2955,12 @@ export function CastSpectacle({
         <CastEscalation tier={tier} color={theme.color} soft={theme.soft} />
         {/* the card's icon ARRIVES in its category's choreography (comet /
             curse circle / clock sweep / crate drop...) instead of being
-            stamped flat over the board */}
-        <span className="absolute left-[28%] top-[22%] block h-[44%] w-[44%]">
+            stamped flat over the board. fx-one-shot is the hard ceiling: many
+            arrival pieces END VISIBLE (the settled emblem, the crate, the
+            sigil) and rely on a wrapper fade — the entrance path has
+            .ce-scene for that, but this cast mount stays up until the NEXT
+            card plays, which left the icon stamped over the board forever. */}
+        <span className="fx-one-shot absolute left-[28%] top-[22%] block h-[44%] w-[44%]">
           <CategoryArrival category={category} icon={Icon} delayMs={90} />
         </span>
         {banner}
@@ -2989,8 +2993,10 @@ export function CastSpectacle({
           style={{ border: `3px solid ${theme.color}`, animationDelay: `${140 + i * 190}ms` }}
         />
       ))}
-      {/* marquee: the same category arrival at board-takeover scale */}
-      <span className="absolute left-[16%] top-[10%] block h-[64%] w-[64%]">
+      {/* marquee: the same category arrival at board-takeover scale, under
+          the same fx-one-shot ceiling as the grand stage (the arrival's
+          settled emblem otherwise sits on the board until the next cast). */}
+      <span className="fx-one-shot absolute left-[16%] top-[10%] block h-[64%] w-[64%]">
         <CategoryArrival category={category} icon={Icon} delayMs={140} />
       </span>
       <span
