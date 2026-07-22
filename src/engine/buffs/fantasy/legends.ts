@@ -257,7 +257,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "hold_the_bridge",
       name: "Hold the Bridge",
       description:
-        "One hero plants their feet: choose one of your knights, bishops, or rooks. It cannot be captured for your opponent's next 3 turns, but it stands its ground and cannot move for those turns either.",
+        "One hero plants their feet: choose one of your knights, bishops, or rooks. It cannot be captured for your opponent's next 2 turns, but it stands its ground and cannot move for those turns either.",
       tier: 4,
       category: "protection",
       requires: ["n", "b", "r"],
@@ -279,8 +279,11 @@ export const FANTASY_LEGENDS: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
-        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 3 });
+        // Balance pass: immunity shortened by one opponent turn (3 to 2); the
+        // matching hold (freeze) tracks it so the piece is protected exactly as
+        // long as it is rooted.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 2 });
       },
     ),
   ),

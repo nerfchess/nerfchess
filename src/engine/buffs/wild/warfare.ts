@@ -376,14 +376,18 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_last_reserves",
       name: "Last Reserves",
-      description: "Commit everything: up to two of your captured knights or bishops return to empty squares on your back rank, once.",
+      description: "Commit everything: pick empty squares on your back rank; after your opponent's next move, up to two of your captured knights or bishops return to them, once.",
       tier: 4,
       category: "pieces",
       flavor: "Pull the veterans off the bench. All of them.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
+    // Overhaul balance pass: the reserves no longer march up the instant you
+    // call them; they arrive only after your opponent has replied.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed || picks.length >= 2) return null;
         const pool =
           ((api.capturedFromMe.n ?? 0) - (api.mine.revived.n ?? 0)) +
           ((api.capturedFromMe.b ?? 0) - (api.mine.revived.b ?? 0));
@@ -400,24 +404,37 @@ export const WILD_WARFARE: Buff[] = [
           ...(picks.length > 0 ? { finishable: true } : {}),
         };
       },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square == null || api.board.pieces[k.square]) continue;
+      effect: (inst, _api, picks) => {
+        if (inst.state.armed) return;
+        inst.state.armed = true;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        const squares = (inst.state.squares as Square[] | undefined) ?? [];
+        for (const sq of squares) {
+          if (api.board.pieces[sq]) continue;
           const type = (["n", "b"] as const).find(
             (t) => (api.capturedFromMe[t] ?? 0) - (api.mine.revived[t] ?? 0) > 0,
           );
           if (type == null) break;
-          api.place(k.square, type, api.me);
+          api.place(sq, type, api.me);
           markRevived(api, type);
         }
+        inst.spent = true;
+        inst.state.squares = undefined;
       },
-    ),
+      status: (inst) =>
+        inst.state.armed
+          ? "the reserves march up after your opponent's reply"
+          : "activate to call up reserves",
+    },
   ),
   card(
     {
       id: "ww_recommission",
       name: "Recommission",
-      description: "Return one of your captured rooks to an empty square on your back rank. For the rest of the game the refitted rook may pass through one friendly piece on each move.",
+      description: "Return one of your captured rooks to an empty square on your back rank. For the rest of the game the refitted rook may pass through one friendly piece on each move, landing only on an empty square (it cannot capture on a phased move).",
       tier: 4,
       category: "pieces",
       flavor: "Back into service, and it phases through its own ranks now.",
