@@ -1411,9 +1411,53 @@ const TIER2: Buff[] = [
   ),
   def(
     // Bound-piece guard with no shield effect; ward is its only board paint.
-    { id: "anchor", name: "Anchor", description: "One piece cannot be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["p", "n", "b", "r", "q"], self: true } },
-    // The engine's relocate hook refuses enemy-buff pushes of the bound piece.
-    bindPiece("Choose the piece to anchor", bindCandidates(), {}),
+    { id: "anchor", name: "Anchor", description: "Choose one piece; after your opponent's next move it can no longer be pushed or swapped by enemy buffs, for the game.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["p", "n", "b", "r", "q"], self: true } },
+    // The engine's relocate hook refuses enemy-buff pushes of the piece whose
+    // square is recorded in this card's state.sq. To delay the guard until the
+    // opponent replies, the pick is parked in state.pendingSq at activation and
+    // only promoted to state.sq (arming the hook) once the opponent has moved.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null || inst.state.pendingSq != null
+          ? null
+          : { kind: "square", label: "Choose the piece to anchor", squares: bindCandidates()(api) },
+      effect: (inst, _api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null || inst.state.pendingSq != null) return;
+        inst.state.pendingSq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // While the guard is still pending, follow the piece and arm it once
+        // the opponent replies (or drop the card if the piece is captured first).
+        if (inst.state.pendingSq != null) {
+          const psq = inst.state.pendingSq as Square;
+          if (move.capturedSquare === psq && move.from !== psq) {
+            inst.state.pendingSq = null;
+            inst.spent = true;
+            return;
+          }
+          if (move.from === psq) {
+            inst.state.pendingSq = move.to;
+            return;
+          }
+          if (move.color === api.opp) {
+            inst.state.sq = inst.state.pendingSq;
+            inst.state.pendingSq = null;
+          }
+          return;
+        }
+        // Armed: follow the anchored piece and expire if it is captured.
+        trackBoundPiece(inst, move);
+      },
+      status: (inst) => {
+        const sq = (inst.state.sq ?? inst.state.pendingSq) as Square | undefined;
+        if (sq == null) return "activate to choose a piece";
+        const name = `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        return inst.state.sq != null ? `anchored at ${name}` : `arming at ${name} after their reply`;
+      },
+    },
   ),
   def(
     { id: "shadow_step", name: "Shadow Step", description: "One of your pieces slips through shadow to a nearby empty square and cannot be captured on your opponent's next turn, once.", tier: 3, category: "movement", fx: { motif: "ward", self: true } },

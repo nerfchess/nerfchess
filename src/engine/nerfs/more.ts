@@ -152,8 +152,9 @@ export const QUEEN_DISGUISE: Nerf = db({
 
 export const QUEEN_BEE: Nerf = db({
   id: "queen_bee", name: "Queen Bee", tier: 2, implemented: true,
-  description: "Once you capture with your queen, you can no longer move queens.",
+  description: "Once you capture with your queen, you can no longer move queens. This activates only after your move 3.",
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
     const captured = ctx.board.history.some((m) => m.color === ctx.me && m.piece === "q" && m.captured);
     return captured ? moves.filter((m) => m.piece !== "q") : moves;
   },
@@ -187,11 +188,26 @@ export const ROYAL_JUBILEE: Nerf = db({
 
 export const PRIMA_DONNA: Nerf = db({
   id: "prima_donna", name: "Prima Donna", tier: 2, implemented: true,
-  description: "Can't have more than one pawn on the same file.",
+  description: "Can't have more than one pawn on the same file, except one open file may hold doubled pawns: the file of your most advanced pawn (ties break to the lower file).",
   filterMoves: (moves, _s, ctx) => {
+    // One exempt ("open") file where doubling is allowed. A defender choice flow
+    // is not practical here, so we pick deterministically: the file of the most
+    // advanced pawn (the defender's most valuable affected pawn, nearest
+    // promotion); ties break to the lower file.
+    const pawns = pieceSquares(ctx.board, ctx.me, "p");
+    let exemptFile = -1;
+    let bestAdv = -1;
+    for (const sq of pawns) {
+      const adv = ctx.me === "w" ? RANK(sq) : 7 - RANK(sq);
+      if (adv > bestAdv || (adv === bestAdv && (exemptFile === -1 || FILE(sq) < exemptFile))) {
+        bestAdv = adv;
+        exemptFile = FILE(sq);
+      }
+    }
     return moves.filter((m) => {
       if (m.piece !== "p") return true;
       if (FILE(m.from) === FILE(m.to)) return true; // same file, fine
+      if (FILE(m.to) === exemptFile) return true; // the open file may double
       // Moving to a new file: check destination file has no other pawn (other than this)
       for (let r = 0; r < 8; r++) {
         const sq = SQ(FILE(m.to), r);
@@ -239,7 +255,7 @@ export const ESCORT_MISSION: Nerf = db({
 
 export const BATTLE_FATIGUE: Nerf = db({
   id: "battle_fatigue", name: "Battle Fatigue", tier: 2, implemented: true,
-  description: "After a piece captures, it can't capture again until it makes a non-capturing move.",
+  description: "After a piece captures, it can't capture again until it makes a non-capturing move. Capturing a piece that is checking your king is always allowed.",
   filterMoves: (moves, _s, ctx) => {
     // A piece at square sq is fatigued if its most recent move was a capture.
     const fatigued = new Set<number>();
@@ -253,7 +269,14 @@ export const BATTLE_FATIGUE: Nerf = db({
       seen.add(m.to);
       if (m.captured) fatigued.add(m.to);
     }
-    return moves.filter((m) => !(m.captured && fatigued.has(m.from)));
+    // A fatigued piece may still capture a piece that is checking our king.
+    const checkers = checkingSquares(ctx.board, ctx.me);
+    return moves.filter((m) => {
+      if (!m.captured) return true;
+      if (!fatigued.has(m.from)) return true;
+      const capSq = m.capturedSquare ?? m.to;
+      return checkers.has(capSq);
+    });
   },
 });
 
@@ -362,11 +385,22 @@ export const PROTECTED_PAWNS: Nerf = db({
 
 export const JUST_PASSING_THROUGH: Nerf = db({
   id: "just_passing_through", name: "Just Passing Through", tier: 2, implemented: true,
-  description: "Can't capture on a random rank.",
+  description: "Can't capture on a fixed random rank, shown on the board. The restriction never leaves you fewer than three legal moves.",
   init: (rng) => ({ rank: rng.int(8) }),
   filterMoves: (moves, state) => {
     const s = state as { rank: number };
-    return moves.filter((m) => !(m.captured && RANK(m.to) === s.rank));
+    const filtered = moves.filter((m) => !(m.captured && RANK(m.to) === s.rank));
+    return filtered.length >= 3 ? filtered : moves;
+  },
+  visual: (state) => {
+    const r = (state as { rank: number }).rank;
+    const sqs: number[] = [];
+    for (let f = 0; f < 8; f++) sqs.push(SQ(f, r));
+    return { highlightSquares: sqs };
+  },
+  hint: (state) => {
+    const r = (state as { rank: number }).rank;
+    return { text: `No captures on rank ${r + 1} this game.`, tone: "info" };
   },
 });
 

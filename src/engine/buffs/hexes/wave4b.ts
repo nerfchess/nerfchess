@@ -300,17 +300,30 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_drawn_curtain", name: "Drawn Curtain", description: "Seal one rank of your choice for your opponent's next turn: none of their pieces may stop on it or cross it. Your pieces pass freely.", flavor: "The stage is closed between acts.", icon: "Theater", fx: { motif: "blindfold" } },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
+    { id: "hx4_drawn_curtain", name: "Drawn Curtain", description: "Choose one rank. Your opponent's next move passes freely; then, for their following turn, none of their pieces may stop on it or cross it. Your pieces pass freely.", flavor: "The stage is closed between acts.", icon: "Theater", fx: { motif: "blindfold" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, _api, picks) =>
+        picks.length > 0 || inst.state.rank != null
           ? null
           : { kind: "square", label: "Pick any square on the rank to seal", squares: Array.from({ length: 64 }, (_, i) => i) },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) barNow(api, rankSquares(RANK(picks[0].square)), 1);
+      effect: (inst, _api, picks) => {
+        if (inst.state.rank != null) return;
+        if (picks[0]?.square != null) inst.state.rank = RANK(picks[0].square);
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.rank == null) return;
+        if (move.color === api.opp) {
+          barNow(api, rankSquares(inst.state.rank as number), 2);
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.rank == null ? "activate to choose the rank" : "seals after their next move",
+    },
   ),
+
   H5(
     { id: "hx4_leaden_boots", name: "Leaden Boots", description: "For your opponent's next 4 turns, none of their pieces may move more than 2 squares. Their king is exempt.", flavor: "Every step rings like an anvil.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
     curse(4, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 2)),
@@ -358,9 +371,15 @@ const T5: Buff[] = [
     walnutAll(["q"], 1),
   ),
   H5(
-    { id: "hx4_cold_reception", name: "Cold Reception", description: "For your opponent's next 3 turns, any pawn of theirs that enters your half of the board is frozen for 1 of their turns on arrival.", flavor: "No fire, no bread, no welcome.", icon: "ThermometerSnowflake", fx: { motif: "slow", pieces: ["p"] } },
-    onTheirMove(3, (move, api) => {
-      if (move.piece === "p" && relRank(api.opp, move.to) >= 5) sting(api, move.to, 1, "ice");
+    { id: "hx4_cold_reception", name: "Cold Reception", description: "For your opponent's next 3 turns, any pawn of theirs that enters your half of the board is frozen for 1 of their turns on arrival. The first pawn to cross slips through unfrozen; every pawn after it freezes.", flavor: "No fire, no bread, no welcome.", icon: "ThermometerSnowflake", fx: { motif: "slow", pieces: ["p"] } },
+    onTheirMove(3, (move, api, inst) => {
+      if (move.piece === "p" && relRank(api.opp, move.to) >= 5) {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          return;
+        }
+        sting(api, move.to, 1, "ice");
+      }
     }),
   ),
   H5(

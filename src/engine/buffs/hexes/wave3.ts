@@ -855,7 +855,7 @@ const T3: Buff[] = [
       id: "hw3_jammed_castle",
       name: "Jammed Portcullis",
       description:
-        "A hex sits over their castle gate for the next 10 of their turns: if your opponent castles, the portcullis jams behind them. Two of their turns later, the rook that castled grinds to a halt and is frozen for 3 of their turns. It is a delayed, fully visible price on castling; if they never castle, or accept a stranded rook, the curse simply idles. Kings are never frozen.",
+        "A hex sits over their castle gate for the next 10 of their turns: if your opponent castles, the portcullis jams behind them. Two of their turns later the portcullis begins to fall: the rook that castled may make one last move to relocate, then it grinds to a halt and is frozen for 3 of their turns. It is a delayed, fully visible price on castling; if they never castle, or accept a stranded rook, the curse simply idles. Kings are never frozen.",
       flavor: "The gate came down a heartbeat after the king was through.",
       fx: { motif: "slow", pieces: ["r"] },
     },
@@ -865,6 +865,7 @@ const T3: Buff[] = [
         inst.state.turns = 10;
         inst.state.rook = null;
         inst.state.delay = 0;
+        inst.state.escape = false;
       },
       onMovePlayed: (inst, move, api) => {
         // Arm on a castle.
