@@ -409,7 +409,7 @@ export const HEXES_T4: Buff[] = [
     {
       id: "ironbound_rook",
       name: "Ironbound Rook",
-      description: "Bind one enemy rook to its rank: for 4 of their turns it cannot leave the rank it stands on. It may still slide sideways.",
+      description: "Bind one enemy rook to its rank: for 4 of their turns it cannot leave the rank it stands on. Its first move may still break to any rank; after that it may only slide sideways along the rank it then holds.",
       flavor: "Banded, bolted, and rolled onto a rail.",
     },
     {
@@ -430,10 +430,13 @@ export const HEXES_T4: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 4;
+        // The bound rook keeps one legal escape move off its rank.
+        inst.state.escape = true;
       },
       filterOpponentMoves: (moves, inst, _api) => {
         const sq = inst.state.sq as number | undefined;
         if (sq == null || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        if (inst.state.escape) return moves; // the rook's one free break
         const kept = moves.filter((m) => m.from !== sq || RANK(m.to) === RANK(sq));
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
@@ -446,7 +449,11 @@ export const HEXES_T4: Buff[] = [
           inst.spent = true;
           return;
         }
-        if (move.from === sq) inst.state.sq = move.to;
+        if (move.from === sq) {
+          // The rook has taken its one escape move: bind it to its new rank.
+          inst.state.escape = false;
+          inst.state.sq = move.to;
+        }
         if (move.color === api.opp) {
           const t = ((inst.state.turns as number) ?? 0) - 1;
           inst.state.turns = t;

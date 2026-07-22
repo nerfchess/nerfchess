@@ -436,18 +436,36 @@ export const RISING_WATER: Nerf = db({
 export const FOG_OF_WAR: Nerf = db({
   id: "fog_of_war",
   name: "Fog of War",
-  description: "You can't see opponent's pieces (except when capturing, captures, or check).",
+  description: "Enemy pieces are hidden by fog. An enemy piece is marked (its square lit) only if it is checking your king or stands within two squares of one of your pieces; everything else stays hidden.",
   flavor: "Shapes in the mist.",
   tier: 6,
   icon: "cloud-fog",
   implemented: true,
-  visual: () => ({ fogged: true }),
+  visual: (_s, ctx) => {
+    // Reveal set: enemy pieces attacking your king, plus every enemy piece
+    // within two king-steps of one of your pieces. These squares are lit
+    // (highlightSquares is the only per-square channel the board honors); the
+    // rest of the enemy army stays under the fog flag.
+    const board = ctx.board;
+    const revealed = new Set<number>(checkingSquares(board, ctx.me));
+    const mine: number[] = [];
+    for (let sq = 0; sq < 64; sq++) {
+      const p = board.pieces[sq];
+      if (p && p.color === ctx.me) mine.push(sq);
+    }
+    for (let sq = 0; sq < 64; sq++) {
+      const p = board.pieces[sq];
+      if (!p || p.color === ctx.me) continue;
+      if (mine.some((ms) => cheb(ms, sq) <= 2)) revealed.add(sq);
+    }
+    return { fogged: true, highlightSquares: Array.from(revealed) };
+  },
 });
 
 export const COWARDLY: Nerf = db({
   id: "cowardly",
   name: "Cowardly",
-  description: "When opponent captures, you must move backward, or lose.",
+  description: "When the opponent captures, you must move backward. The first time you fail to retreat you get a one turn warning; fail to retreat a second time and you lose.",
   flavor: "Run away! Run away!",
   tier: 7,
   icon: "rewind",
@@ -460,25 +478,27 @@ export const COWARDLY: Nerf = db({
     return backward;
   },
   checkLoss: (_s, ctx) => {
-    // Mirror EYE_FOR_AN_EYE: judged right after my move. If the opponent's move
-    // just before it was a capture, mine had to be a retreat (a strictly
-    // backward step). filterMoves already forces backward moves whenever one
-    // exists, so this only fires when no backward move was available and the
-    // empty-filter safety net let me move otherwise: that is the promised loss,
-    // not a soft-lock.
-    const h = ctx.board.history;
-    const last = h[h.length - 1];
-    if (!last || last.color !== ctx.me) return null;
-    const prev = h[h.length - 2];
-    if (!prev || prev.color === ctx.me || !prev.captured) return null;
-    const dir = ctx.me === "w" ? -1 : 1;
-    const retreated = (RANK(last.to) - RANK(last.from)) * dir > 0;
-    return retreated ? null : { reason: "did not retreat after a capture" };
+    // Count how many times over the whole game I failed to retreat on a turn
+    // that followed an opponent capture. filterMoves forces a backward step
+    // whenever one exists, so a failure only happens when none was available
+    // and the empty-filter safety net let me move otherwise. The first such
+    // failure is a warning (see hint); the second loses.
+    const violations = retreatViolations(ctx.board, ctx.me);
+    return violations >= 2 ? { reason: "failed to retreat twice after a capture" } : null;
   },
   hint: (_s, ctx, legal) => {
+    const violations = retreatViolations(ctx.board, ctx.me);
+    if (violations >= 1 && !ctx.opponentLastMove?.captured) {
+      return {
+        text: "Warning: you failed to retreat once. Fail again and you lose.",
+        tone: "warn",
+      };
+    }
     if (!ctx.opponentLastMove?.captured) return null;
     return {
-      text: "They captured. You must retreat this turn or lose.",
+      text: violations >= 1
+        ? "They captured. Retreat now or lose: this is your second strike."
+        : "They captured. You must retreat this turn (first slip is only a warning).",
       squares: Array.from(new Set(legal.map((m) => m.from))),
       tone: "warn",
     };
