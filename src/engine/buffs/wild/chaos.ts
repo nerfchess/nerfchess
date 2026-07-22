@@ -307,13 +307,49 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_slip_on_ice",
       name: "Slip on Ice",
-      description: "Freeze one of your opponent's rooks in place for their next 2 turns.",
+      description: "Choose one of your opponent's rooks. It skates on: only after their next move does the ice bite, freezing that rook in place for their next 2 turns.",
       tier: 3,
       category: "tempo",
       flavor: "Legs out from under it, dignity gone.",
       fx: { motif: "jail", pieces: ["r"] },
     },
-    freezeTargetTyped(2, ["r"], "Choose an enemy rook to send skidding"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy rook to send skidding",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type === "r",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The freeze lands only after the opponent's next move. Added during
+        // their own move, so the shared post-move tick eats one turn at once:
+        // turns 3 here leaves 2 of their turns frozen.
+        const cur = inst.state.sq as Square;
+        addEffect(api, { kind: "freeze", sq: cur, owner: api.opp, turns: 3 });
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to grease the ice" : "the ice bites after their next move",
+    },
   ),
   card(
     {
@@ -1182,7 +1218,10 @@ export const WILD_CHAOS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const file = inst.state.file as number | undefined;
         if (file == null) return;
-        if (move.color !== api.opp || move.piece === "k" || FILE(move.to) !== file) return;
+        if (move.color !== api.opp || FILE(move.to) !== file) return;
+        // A king cannot be slipped or dazed (kings are never affected), but the
+        // attempt still spends the charge: it flattens the peels and walks on.
+        if (move.piece === "k") { inst.spent = true; return; }
         const p = api.board.pieces[move.to];
         if (!p || p.color !== api.opp) { inst.spent = true; return; }
         // The first enemy onto the greased file slips one rank back toward its

@@ -1026,16 +1026,46 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_kingmakers_pact",
       name: "Kingmaker's Pact",
       description:
-        "Sign with the power behind every throne: every one of your future drafts rolls one tier higher, for the rest of the game. In exchange you forfeit ALL of your draft rerolls, now and forever. The hand you are dealt is the hand you play.",
+        "Sign with the power behind every throne: for your opponent's next four turns, every one of your draft offers rolls one tier higher. In exchange you forfeit your draft rerolls now. The pact ends the moment your opponent spends a reroll.",
       tier: 7,
       category: "draft",
       icon: "ScrollText",
       flavor: "The pen was already warm when you picked it up.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.stackBoost = Math.min(3, (api.mine.flags.stackBoost ?? 0) + 1);
-      api.mine.rerollsLeft = 0;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.stackBoost = Math.min(3, (api.mine.flags.stackBoost ?? 0) + 1);
+        api.mine.rerollsLeft = 0;
+        inst.state.turns = 4;
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+        inst.state.lifted = true;
+      },
+      // The lift lasts four of the opponent's turns, and ends early the moment
+      // they spend a reroll (their rerollsLeft drops between your reads).
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.lifted) return;
+        const end = () => {
+          api.mine.flags.stackBoost = Math.max(0, (api.mine.flags.stackBoost ?? 0) - 1);
+          inst.state.lifted = false;
+          inst.spent = true;
+        };
+        if (api.theirs.rerollsLeft < ((inst.state.oppRerolls as number) ?? 0)) {
+          end();
+          return;
+        }
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = t;
+          if (t <= 0) end();
+        }
+      },
+      status: (inst) =>
+        inst.state.lifted
+          ? `higher drafts: ${(inst.state.turns as number) ?? 0} of their turns left`
+          : "spent",
+    },
   ),
 
   // A king-safety exception that only exists UNDER FIRE: the bolt-hole opens
@@ -1121,13 +1151,14 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_restitution",
       name: "Restitution",
       description:
-        "The scales demand balance: for every kind of piece where your opponent outnumbers you on the board, one of your captured pieces of that kind returns to the empty square nearest your home rank. Played from ahead, it restores nothing.",
+        "The scales demand balance: for every kind of piece where your opponent outnumbers you on the board, one of your captured pieces of that kind returns to the empty square nearest your home rank. The most valuable returning piece is rooted and cannot move on your next turn. Played from ahead, it restores nothing.",
       tier: 7,
       category: "pieces",
       icon: "Landmark",
       flavor: "The court finds in favor of the losing side.",
     },
     instant((_inst, api) => {
+      let firstSq: Square | null = null;
       for (const t of VALUE_ORDER) {
         const mine = mySquares(api.board, api.me, t).length;
         const theirs = mySquares(api.board, api.opp, t).length;
@@ -1136,6 +1167,13 @@ export const BOON_WAVE2: Buff[] = [
         if (sq == null) continue;
         api.place(sq, t, api.me);
         markRevived(api, t);
+        if (firstSq == null) firstSq = sq;
+      }
+      // The highest-value arrival (VALUE_ORDER runs queen-first) is rooted for
+      // your next turn. The engine has no capture-only lock, so a one-turn
+      // freeze holds it in place until after your opponent replies.
+      if (firstSq != null) {
+        addEffect(api, { kind: "freeze", sq: firstSq, owner: api.me, turns: 1, skin: "stone" });
       }
     }),
   ),

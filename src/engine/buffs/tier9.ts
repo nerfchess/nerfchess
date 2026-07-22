@@ -776,29 +776,15 @@ export const TIER10: Buff[] = [
       icon: "Castle",
       name: "Grand Army",
       description:
-        "A whole fresh army answers your call: a new queen, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
+        "A fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns.",
       category: "pieces",
       flavor: "Rank upon rank upon rank, out of nowhere.",
     },
-    activatedSimple((_inst, api) => {
-      const spots = backfillSpots(api);
-      spots.push(
-        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
-          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
-        ),
-      );
-      // Seat the heavy force first (no pawn-rank guard needed for these).
-      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
-      for (const type of force) {
-        const sq = spots.shift();
-        if (sq == null) break;
-        api.place(sq, type, api.me);
-      }
-      // Then flood the remaining legal squares of YOUR HALF with fresh pawns
-      // (the heavy force may spill past the river, the pawn tide never does).
-      for (const sq of spots) {
-        if (pawnRankOk(sq) && inHalf(api.me, sq)) api.place(sq, "p", api.me);
-      }
+    instant((_inst, api) => {
+      grantInventory(api, "q");
+      grantInventory(api, "r");
+      grantInventory(api, "b");
+      grantInventory(api, "n");
     }),
   ),
 
