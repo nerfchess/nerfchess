@@ -115,7 +115,7 @@ export default function InboxPage() {
                         </div>
                       </div>
                       {c.unread > 0 && (
-                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-full bg-oxblood-glow px-1.5 font-mono text-[11px] leading-[18px] text-white">
+                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-[1px] bg-oxblood-glow px-1.5 font-mono text-[11px] leading-[18px] text-white">
                           {c.unread}
                         </span>
                       )}

@@ -6,22 +6,26 @@ import { isBoon } from "@/engine/buff";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, SearchX, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, SearchX, SlidersHorizontal, X } from "lucide-react";
 import {
   EMPTY_FILTERS,
   filterAndSortNerfs,
   filtersFromQueryString,
   filtersToQueryString,
   hasActiveFilters,
+  matchesSearch,
   type CodexFilters,
 } from "@/lib/nerfFilter";
 import { cardText, hydrateCardText } from "@/lib/cardText";
-import { buffCollection } from "@/lib/cardCollections";
-import { FilterControls } from "./FilterControls";
+import { buffCollection, BUFF_COLLECTIONS, NERF_COLLECTIONS } from "@/lib/cardCollections";
+import { getCategoryLabel } from "@/lib/nerfCategories";
+import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { BUFF_CATEGORY_DEFS, FilterControls } from "./FilterControls";
 import { FilterSheet } from "./FilterSheet";
 import { CodexRow } from "./CodexRow";
 import { ExpandedCard } from "./ExpandedCard";
 import {
+  BEHAVIOUR_LABEL,
   DEFAULT_TAB,
   LIBRARY_NOUN_PLURAL,
   LIBRARY_TABS,
@@ -63,7 +67,10 @@ function sortBuffs(list: Buff[], sort: CodexFilters["sort"]): Buff[] {
 }
 
 function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour): Buff[] {
-  const q = filters.search.trim().toLowerCase();
+  // Same instant search as the nerf library: every token must be a substring
+  // of name/description/category OR a fuzzy subsequence of the name, so a
+  // near-miss spelling still finds the card.
+  const q = filters.search.trim();
   const list = source.filter(
     (b) =>
       (filters.tier === null || b.tier === filters.tier) &&
@@ -71,9 +78,11 @@ function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour
       (filters.collection === null || buffCollection(b) === filters.collection) &&
       (behaviour === "all" || b.kind === behaviour) &&
       (q === "" ||
-        b.name.toLowerCase().includes(q) ||
-        b.description.toLowerCase().includes(q) ||
-        b.category.includes(q)),
+        matchesSearch(
+          `${b.name} ${b.description} ${b.category}`.toLowerCase(),
+          b.name.toLowerCase(),
+          q,
+        )),
   );
   return sortBuffs(list, filters.sort);
 }
@@ -246,6 +255,49 @@ export function CodexBrowser() {
   const active = hasActiveFilters(filters) || behaviour !== "all";
   const visibleEntries = entries.slice(0, visible);
 
+  // One removable chip per active filter, so the reader always sees exactly
+  // what is narrowing the list and can drop any single filter in one click.
+  const activeChips: { key: string; label: string; clear: () => void }[] = [];
+  if (filters.search.trim()) {
+    activeChips.push({
+      key: "search",
+      label: `"${filters.search.trim()}"`,
+      clear: () => patch({ search: "" }),
+    });
+  }
+  if (filters.tier !== null) {
+    activeChips.push({
+      key: "tier",
+      label: `${tab === "rules" ? "Difficulty" : "Tier"} ${TIER_ROMAN[filters.tier]} (${TIER_LABEL[filters.tier]})`,
+      clear: () => patch({ tier: null }),
+    });
+  }
+  for (const cat of filters.categories) {
+    activeChips.push({
+      key: `cat:${cat}`,
+      label:
+        tab === "rules"
+          ? getCategoryLabel(cat)
+          : BUFF_CATEGORY_DEFS.find((c) => c.id === cat)?.label ?? cat,
+      clear: () => patch({ categories: filters.categories.filter((c) => c !== cat) }),
+    });
+  }
+  if (behaviour !== "all") {
+    activeChips.push({
+      key: "behaviour",
+      label: BEHAVIOUR_LABEL[behaviour],
+      clear: () => setBehaviour("all"),
+    });
+  }
+  if (filters.collection !== null) {
+    const pools = tab === "rules" ? NERF_COLLECTIONS : BUFF_COLLECTIONS;
+    activeChips.push({
+      key: "collection",
+      label: pools.find((c) => c.id === filters.collection)?.label ?? filters.collection,
+      clear: () => patch({ collection: null }),
+    });
+  }
+
   const filterControls = (layout: "inline" | "sheet") => (
     <FilterControls
       tab={tab}
@@ -333,31 +385,46 @@ export function CodexBrowser() {
                   ? "Could not load the library"
                   : `Loading the ${nounPlural}`}
             </p>
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-[color:var(--edge)] px-3 py-1.5 text-[13px] text-parchment-200 hover:bg-white/5 sm:hidden"
+            >
+              <SlidersHorizontal size={14} aria-hidden />
+              Filters
               {active && (
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  className="text-[13px] text-parchment-400 hover:text-parchment-100"
-                >
-                  Clear filters
-                </button>
+                <span className="grid h-4 min-w-4 place-items-center rounded-[1px] bg-[color:var(--accent)] px-1 text-[11px] font-bold text-ink-950">
+                  {activeChips.length}
+                </span>
               )}
+            </button>
+          </div>
+
+          {/* Active-filter chips: one per live filter, each with its own
+              one-click clear, plus a Clear-all at the end of the row. */}
+          {activeChips.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {activeChips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  onClick={chip.clear}
+                  aria-label={`Remove filter: ${chip.label}`}
+                  className="inline-flex items-center gap-1 rounded-[1px] border border-[color:var(--accent)]/40 bg-[rgb(var(--accent-rgb)/0.1)] px-2 py-1 text-[12px] text-parchment-100 transition-colors hover:border-[color:var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.18)]"
+                >
+                  {chip.label}
+                  <X size={12} aria-hidden className="text-parchment-300" />
+                </button>
+              ))}
               <button
                 type="button"
-                onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-[color:var(--edge)] px-3 py-1.5 text-[13px] text-parchment-200 hover:bg-white/5 sm:hidden"
+                onClick={clearAll}
+                className="px-1.5 py-1 text-[12px] text-parchment-400 underline-offset-2 hover:text-parchment-100 hover:underline"
               >
-                <SlidersHorizontal size={14} aria-hidden />
-                Filters
-                {active && (
-                  <span className="grid h-4 min-w-4 place-items-center rounded-full bg-[color:var(--accent)] px-1 text-[11px] font-bold text-ink-950">
-                    !
-                  </span>
-                )}
+                Clear all
               </button>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Results: the five async surface states. Loading and error are the

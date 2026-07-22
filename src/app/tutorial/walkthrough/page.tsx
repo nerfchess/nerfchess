@@ -125,7 +125,7 @@ export default function TutorialWalkthroughPage() {
         <Link href="/" className="font-display text-2xl tracking-tight shrink-0">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/tutorial" className="shrink-0 px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/tutorial" className="shrink-0 px-3 py-1.5 rounded-[1px] text-sm font-display hover:bg-white/5 text-parchment">
           Back to house rules
         </Link>
       </nav>
@@ -156,7 +156,7 @@ export default function TutorialWalkthroughPage() {
                 <p className="mt-2 text-parchment leading-relaxed">{step.closing}</p>
                 <button
                   onClick={nextStep}
-                  className="mt-4 w-full py-3 rounded-full btn-leaf font-display"
+                  className="mt-4 w-full py-3 rounded-[1px] btn-leaf font-display"
                 >
                   {stepIx + 1 < STEPS.length ? "Next lesson" : "Play a real game"}
                 </button>
@@ -171,7 +171,7 @@ export default function TutorialWalkthroughPage() {
                 </p>
                 <button
                   onClick={restart}
-                  className="mt-4 w-full py-2 rounded-full btn-ghost font-display text-sm"
+                  className="mt-4 w-full py-2 rounded-[1px] btn-ghost font-display text-sm"
                 >
                   Reset the position
                 </button>

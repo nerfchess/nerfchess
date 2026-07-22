@@ -1490,16 +1490,16 @@ function GameShell({
 }) {
   const stateBadge =
     headerState === "live" ? (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+      <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
         <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
         Live
       </span>
     ) : headerState === "final" ? (
-      <span className="inline-flex items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+      <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
         Final
       </span>
     ) : (
-      <span className="inline-flex items-center rounded-full border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
+      <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge)] px-2 py-0.5 text-[12px] font-medium text-parchment-400">
         Waiting
       </span>
     );

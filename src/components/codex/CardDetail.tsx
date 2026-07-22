@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GlossaryText } from "@/components/GlossaryText";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
+import { ALL_BUFFS } from "@/engine/buffs/library";
+import { ALL_NERFS } from "@/engine/nerfs/library";
 import {
   type CardType,
   type RelatedCard,
@@ -42,6 +45,122 @@ function CardBreadcrumbJsonLd({ section, name, path }: { section: string; name: 
   };
   return (
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+  );
+}
+
+// The codex tab each family opens on, so the breadcrumb's family link lands
+// on the right list. Items browse under the Buff tab, matching the browser.
+const SECTION_TAB: Record<string, string> = {
+  Buffs: "buffs",
+  Items: "buffs",
+  Hexes: "hexes",
+  Boons: "boons",
+  Nerfs: "rules",
+};
+
+// The visible breadcrumb trail: Codex > family > this card. Mirrors the
+// BreadcrumbList JSON-LD below so readers and crawlers see the same path.
+function CardBreadcrumb({ section, name }: { section: string; name: string }) {
+  const tab = SECTION_TAB[section] ?? "buffs";
+  const familyHref = tab === "buffs" ? "/codex" : `/codex?tab=${tab}`;
+  const sep = (
+    <span aria-hidden className="text-parchment-500">
+      /
+    </span>
+  );
+  return (
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[13px]">
+      <Link href="/" className="text-parchment-400 transition-colors hover:text-parchment-100">
+        Home
+      </Link>
+      {sep}
+      <Link href="/codex" className="text-parchment-400 transition-colors hover:text-parchment-100">
+        Codex
+      </Link>
+      {sep}
+      <Link href={familyHref} className="text-parchment-400 transition-colors hover:text-parchment-100">
+        {section}
+      </Link>
+      {sep}
+      <span aria-current="page" className="text-parchment-200">
+        {name}
+      </span>
+    </nav>
+  );
+}
+
+// Prev / next within the card's own family (alphabetical, the codex's A-Z
+// order), so a reader can leaf through the library without going back to the
+// list. Ends do not wrap; the missing side simply is not rendered.
+type NeighborCard = { name: string; path: string };
+
+function neighborsOf(
+  list: { id: string; name: string }[],
+  id: string,
+  pathOf: (i: number) => string,
+) {
+  const sorted = list
+    .map((c, i) => ({ id: c.id, name: c.name, i }))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  const at = sorted.findIndex((c) => c.id === id);
+  const prev = at > 0 ? sorted[at - 1] : null;
+  const next = at >= 0 && at < sorted.length - 1 ? sorted[at + 1] : null;
+  return {
+    prev: prev ? { name: prev.name, path: pathOf(prev.i) } : null,
+    next: next ? { name: next.name, path: pathOf(next.i) } : null,
+  };
+}
+
+function buffNeighbors(buff: Buff): { prev: NeighborCard | null; next: NeighborCard | null } {
+  const type = buffType(buff);
+  const family = ALL_BUFFS.filter((b) => {
+    const t = buffType(b);
+    // Items and buffs share the Buff tab, so they leaf together too.
+    if (type === "Buff" || type === "Item") return t === "Buff" || t === "Item";
+    return t === type;
+  });
+  return neighborsOf(family, buff.id, (i) => cardPath(family[i]));
+}
+
+function nerfNeighbors(nerf: Nerf): { prev: NeighborCard | null; next: NeighborCard | null } {
+  return neighborsOf(ALL_NERFS, nerf.id, (i) => `/codex/nerf/${ALL_NERFS[i].id}`);
+}
+
+function PrevNextNav({
+  prev,
+  next,
+  noun,
+}: {
+  prev: NeighborCard | null;
+  next: NeighborCard | null;
+  noun: string;
+}) {
+  if (!prev && !next) return null;
+  const cell =
+    "flex min-w-0 items-center gap-2 rounded-sm border border-white/10 px-3 py-2.5 transition hover:border-gold/40 hover:bg-white/5";
+  return (
+    <nav aria-label={`Browse ${noun} cards`} className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+      {prev ? (
+        <Link href={prev.path} className={cell}>
+          <ChevronLeft size={16} aria-hidden className="shrink-0 text-parchment-400" />
+          <span className="min-w-0">
+            <span className="block smallcaps text-[10px] text-parchment-400">Previous {noun}</span>
+            <span className="block truncate font-display text-[14px] text-parchment-100">{prev.name}</span>
+          </span>
+        </Link>
+      ) : (
+        <span aria-hidden className="hidden sm:block" />
+      )}
+      {next ? (
+        <Link href={next.path} className={cell + " justify-end text-right sm:col-start-2"}>
+          <span className="min-w-0">
+            <span className="block smallcaps text-[10px] text-parchment-400">Next {noun}</span>
+            <span className="block truncate font-display text-[14px] text-parchment-100">{next.name}</span>
+          </span>
+          <ChevronRight size={16} aria-hidden className="shrink-0 text-parchment-400" />
+        </Link>
+      ) : null}
+    </nav>
   );
 }
 
@@ -163,8 +282,16 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
     ? `You draft ${buff.name} in Nerf mode and cast it on your opponent.`
     : `You draft ${buff.name} in ${where === "Buff mode and Nerf mode" ? "either mode" : where}.`;
 
+  const { prev, next } = buffNeighbors(buff);
+
   return (
-    <InfoPageLayout eyebrow={`codex · ${type.toLowerCase()}`} title={buff.name} intro={<GlossaryText text={buff.description} />} extra={extra}>
+    <InfoPageLayout
+      eyebrow={`codex · ${type.toLowerCase()}`}
+      title={buff.name}
+      intro={<GlossaryText text={buff.description} />}
+      extra={extra}
+      breadcrumb={<CardBreadcrumb section={section} name={buff.name} />}
+    >
       <CardBreadcrumbJsonLd section={section} name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
 
@@ -195,6 +322,8 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
 
       <RelatedGrid title="Related cards" cards={relatedBuffs(buff)} />
 
+      <PrevNextNav prev={prev} next={next} noun={type.toLowerCase()} />
+
       <CardCtas
         guideHref={isHex || where === "Nerf mode" ? "/guide/nerf-mode" : "/guide/buff-mode"}
         guideLabel={isHex || where === "Nerf mode" ? "How Nerf mode works" : "How Buff mode works"}
@@ -206,9 +335,16 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
 export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
   const path = `/codex/nerf/${nerf.id}`;
   const cats = nerfCategoryLabels(nerf);
+  const { prev, next } = nerfNeighbors(nerf);
 
   return (
-    <InfoPageLayout eyebrow="codex · nerf" title={nerf.name} intro={<GlossaryText text={nerf.description} />} extra={extra}>
+    <InfoPageLayout
+      eyebrow="codex · nerf"
+      title={nerf.name}
+      intro={<GlossaryText text={nerf.description} />}
+      extra={extra}
+      breadcrumb={<CardBreadcrumb section="Nerfs" name={nerf.name} />}
+    >
       <CardBreadcrumbJsonLd section="Nerfs" name={nerf.name} path={path} />
       {!nerf.implemented && <NotDraftedNote />}
 
@@ -244,6 +380,8 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
       <HistoryTimeline kind="nerf" card={nerf} />
 
       <RelatedGrid title="Related nerfs" cards={relatedNerfs(nerf)} />
+
+      <PrevNextNav prev={prev} next={next} noun="nerf" />
 
       <CardCtas guideHref="/guide/nerf-mode" guideLabel="How Nerf mode works" />
     </InfoPageLayout>

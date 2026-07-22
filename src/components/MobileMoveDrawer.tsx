@@ -84,7 +84,7 @@ export function MobileMoveDrawer({
           <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
             Moves &amp; chat
             {unreadChat > 0 && (
-              <span className="grid h-4 min-w-[1rem] place-items-center rounded-full bg-gold px-1 font-mono text-[12px] font-bold text-ink-950">
+              <span className="grid h-4 min-w-[1rem] place-items-center rounded-[1px] bg-gold px-1 font-mono text-[12px] font-bold text-ink-950">
                 {unreadChat}
               </span>
             )}

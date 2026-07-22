@@ -1407,10 +1407,10 @@ html[data-anim="off"] .victory-burst { display: none; }
     0 0 16px -8px rgb(var(--accent-hi-rgb) / 0.55);
 }
 
-/* Relic icon housing: header/utility icon buttons sit in a circular rune
-   ring that warms on hover, replacing the bare hover-wash squares. */
+/* Relic icon housing: header/utility icon buttons sit in a square-edged rune
+   frame that warms on hover, matching the site's crisp 1px geometry. */
 .nav-icon-btn {
-  border-radius: 999px;
+  border-radius: 1px;
   border: 1px solid transparent;
   transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 130ms ease, box-shadow 180ms ease;
 }
@@ -2067,7 +2067,7 @@ html[data-anim="off"] .sq-check::after {
    (targeting banner, opponent notices, draft chips). Translucent, blurred,
    lit from the top edge — the "glass shiny" look. */
 .glass-chip {
-  border-radius: 999px;
+  border-radius: 1px;
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 45%, rgba(12, 18, 26, 0.25)),
     rgba(14, 20, 30, 0.62);
   backdrop-filter: blur(12px) saturate(1.3);
@@ -2219,7 +2219,7 @@ html[data-anim="off"] .sq-pickable {
   inset: 15%;
   pointer-events: none;
   border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.55);
-  border-radius: 2px;
+  border-radius: 1px;
   box-shadow: inset 0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.12);
   opacity: 0.8;
   animation: empower-rune-turn 16s linear infinite;
@@ -2253,7 +2253,7 @@ html[data-anim="off"] .sq-pickable {
   inset: 20%;
   pointer-events: none;
   border: 1px solid rgb(var(--tier-rgb, 216 181 110) / 0.6);
-  border-radius: 3px;
+  border-radius: 1px;
   transform: rotate(45deg);
   animation: empower-diamond-pulse 2.6s ease-in-out infinite;
 }
@@ -2678,7 +2678,7 @@ html[data-anim="off"] * { transition: none !important; }
 
 ::selection { background: rgb(var(--accent-gold-rgb) / 0.4); color: var(--text-on-accent); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(236,231,214,0.10); border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(236,231,214,0.10); border-radius: 1px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(236,231,214,0.22); }
 ::-webkit-scrollbar-track { background: transparent; }
 
@@ -3186,7 +3186,7 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   position: absolute;
   inset: -2px;
   z-index: 0;
-  border-radius: 2px;
+  border-radius: 1px;
   pointer-events: none;
   box-shadow:
     0 0 0 1px rgb(216 181 110 / 0.4),

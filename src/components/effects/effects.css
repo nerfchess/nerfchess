@@ -1348,6 +1348,13 @@ html[data-anim="off"] .fx-cast-stamp {
 html[data-anim="off"] .fx-cast {
   display: none !important;
 }
+/* The one thing a card play must NEVER lose under anim-off is its meaning:
+   the static text fallback (CastTextFallback) is hidden everywhere else and
+   revealed exactly here, replacing the hidden overlay's banner with a plain
+   readable chip. No keyframes anywhere in it. */
+html[data-anim="off"] .fx-cast-fallback {
+  display: flex !important;
+}
 /* Cast escalation chrome (tier 6+ edge pulse / vignette / letterbox bars)
    lives inside .fx-cast and is hidden with it; the ApexVeil is portaled to
    document.body, so it needs its own guard (it is ALSO never rendered by

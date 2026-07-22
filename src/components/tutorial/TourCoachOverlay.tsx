@@ -275,7 +275,7 @@ export function TourCoachOverlay({
               <button
                 type="button"
                 onClick={onBack}
-                className="btn-ghost rounded-full px-3 py-1.5 font-display text-sm"
+                className="btn-ghost rounded-[1px] px-3 py-1.5 font-display text-sm"
               >
                 Back
               </button>
@@ -284,7 +284,7 @@ export function TourCoachOverlay({
               <button
                 type="button"
                 onClick={onNext}
-                className="btn-leaf rounded-full px-4 py-1.5 font-display text-sm font-semibold"
+                className="btn-leaf rounded-[1px] px-4 py-1.5 font-display text-sm font-semibold"
               >
                 {step.nextLabel ?? "Next"}
               </button>

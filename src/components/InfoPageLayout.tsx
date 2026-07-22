@@ -13,6 +13,9 @@ type InfoPageLayoutProps = {
   // body. The codex detail pages pass the AffectedPieces strip here so it sits
   // in the same column as the detail instead of below the site footer.
   extra?: ReactNode;
+  // Optional breadcrumb trail rendered above the eyebrow, inside the reading
+  // column. The codex detail pages pass a Home / Codex / family trail here.
+  breadcrumb?: ReactNode;
 };
 
 export function InfoPageLayout({
@@ -21,6 +24,7 @@ export function InfoPageLayout({
   intro,
   children,
   extra,
+  breadcrumb,
 }: InfoPageLayoutProps) {
   return (
     <main className="min-h-screen pb-20">
@@ -29,6 +33,7 @@ export function InfoPageLayout({
       <SiteHeader />
 
       <section className="mx-auto max-w-[1100px] px-6 pt-4 sm:px-8">
+        {breadcrumb && <div className="mb-3">{breadcrumb}</div>}
         <div className="eyebrow">{eyebrow}</div>
         {/* Fluid display ramp instead of ad-hoc sizes; the prose column below
             stays narrower than the card grid so long lines remain readable. */}

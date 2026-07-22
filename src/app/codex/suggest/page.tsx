@@ -146,7 +146,7 @@ export default function SuggestRulePage() {
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/codex" className="px-3 py-1.5 rounded-full text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/codex" className="px-3 py-1.5 rounded-[1px] text-sm font-display hover:bg-white/5 text-parchment">
           ← All the rules
         </Link>
       </nav>
@@ -171,7 +171,7 @@ export default function SuggestRulePage() {
                 type="button"
                 onClick={() => setType(rt.id)}
                 aria-pressed={selected}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-display text-sm transition ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-[1px] font-display text-sm transition ${
                   selected ? activeClass : "btn-ghost"
                 }`}
               >
@@ -215,7 +215,7 @@ export default function SuggestRulePage() {
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 80))}
                 placeholder={cfg.namePlaceholder}
-                className="bg-ink-900/60 border border-white/15 rounded-full px-4 py-2 text-base font-display w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="bg-ink-900/60 border border-white/15 rounded-[1px] px-4 py-2 text-base font-display w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               />
             </div>
 
@@ -246,7 +246,7 @@ export default function SuggestRulePage() {
                 value={contact}
                 onChange={(e) => setContact(e.target.value.slice(0, 120))}
                 placeholder="username, email, discord…"
-                className="bg-ink-900/60 border border-white/15 rounded-full px-4 py-2 text-sm w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="bg-ink-900/60 border border-white/15 rounded-[1px] px-4 py-2 text-sm w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               />
             </div>
 

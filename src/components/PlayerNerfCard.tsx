@@ -179,7 +179,7 @@ export function PlayerNerfCard({
               </div>
             </div>
             <span
-              className={`shrink-0 rounded-full border px-2.5 py-0.5 font-display text-sm font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
+              className={`shrink-0 rounded-[1px] border px-2.5 py-0.5 font-display text-sm font-bold tier-bg-${nerf.tier} tier-${nerf.tier}`}
               title={`Tier ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
             >
               {TIER_ROMAN[nerf.tier]}
@@ -257,7 +257,7 @@ export function PlayerNerfCard({
                   </span>
                 )}
                 <span
-                  className={`ml-auto shrink-0 rounded-full border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${b.tier} tier-${b.tier}`}
+                  className={`ml-auto shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[9px] font-bold tier-bg-${b.tier} tier-${b.tier}`}
                 >
                   {TIER_ROMAN[b.tier]}
                 </span>

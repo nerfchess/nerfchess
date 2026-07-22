@@ -3,7 +3,7 @@
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDraftChime, playDraftUrgent } from "@/lib/sounds";
 import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
 import { haptic } from "@/lib/haptics";
@@ -696,10 +696,29 @@ export function DraftOverlay({
       return s === "sealed" ? "tearing" : s;
     });
 
+  // The one place onBank actually fires. Idempotent (bankFiredRef), so the
+  // slide timer, the unmount fallback, and the reduced-motion path can all
+  // call it without double-banking.
+  const bankFiredRef = useRef(false);
+  const fireBank = useCallback(() => {
+    if (bankFiredRef.current) return;
+    bankFiredRef.current = true;
+    onBank();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const bankingRef = useRef(false);
+
   useEffect(
     () => () => {
       if (bankTimer.current != null) window.clearTimeout(bankTimer.current);
+      // RACE PROOFING, mirroring the pick path's commit-on-minimize: banking
+      // marks the offer committed IMMEDIATELY but used to fire onBank only
+      // from the 750ms slide timer. If the overlay unmounts inside that
+      // window (game transition, parent teardown) the bank action was
+      // dropped while the UI looked resolved. Fire the pending bank now.
+      if (bankingRef.current) fireBank();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -804,8 +823,9 @@ export function DraftOverlay({
     haptic("medium");
     committedRef.current = true;
     setCommitted(true);
+    bankingRef.current = true;
     if (reduceMotion) {
-      onBank();
+      fireBank();
       return;
     }
     // Land the cards in the vault door that opens just above the button
@@ -817,7 +837,7 @@ export function DraftOverlay({
       }),
     );
     setBanking(true);
-    bankTimer.current = window.setTimeout(() => onBank(), 750);
+    bankTimer.current = window.setTimeout(fireBank, 750);
   };
 
   // Reroll: discard the current offer, roll fresh cards at the same tiers. The

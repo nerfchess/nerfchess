@@ -11,8 +11,10 @@ import { OVERHAUL_T6 } from "./t6";
 import { OVERHAUL_T7 } from "./t7";
 import { OVERHAUL_T8 } from "./t8";
 import { OVERHAUL_GAMBLING } from "./gambling";
+import { OPENER_CARDS } from "./openers";
 
 export const OVERHAUL_CARDS: Buff[] = [
+  ...OPENER_CARDS,
   ...OVERHAUL_T1,
   ...OVERHAUL_T2,
   ...OVERHAUL_T3,

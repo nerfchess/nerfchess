@@ -190,7 +190,7 @@
   content: "";
   position: absolute;
   inset: 3px;
-  border-radius: 999px;
+  border-radius: 1px;
   border: 1px solid rgb(255 138 52 / 0.6);
   pointer-events: none;
   animation: relic-ring 2.2s ease-in-out infinite;

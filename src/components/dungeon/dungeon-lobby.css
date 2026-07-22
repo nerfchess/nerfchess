@@ -131,7 +131,7 @@ html[data-perf="low"] .dgn-engrave__torch {
   overflow: hidden;
   isolation: isolate;
   border: 1px solid rgb(20 16 12);
-  border-radius: 2px;
+  border-radius: 1px;
   color: var(--paper);
   background:
     /* Torch pools burning at the two jambs. */
@@ -232,7 +232,7 @@ html[data-perf="low"] .dgn-chamber::after {
      the row. */
   border: 1px solid rgb(122 96 58 / 0.3);
   border-left: 3px solid rgb(var(--door-rgb) / 0.35);
-  border-radius: 2px;
+  border-radius: 1px;
   color: var(--paper);
   background:
     radial-gradient(80% 46% at 50% -8%, rgb(var(--energy-ember-rgb) / 0.07), transparent 70%),
@@ -292,7 +292,7 @@ html[data-theme="light"] .dgn-door {
      never a flat black rectangle. Gold stays reserved for the selected
      tablet, so selection is still the loudest thing in the grid. */
   border: 1px solid rgb(122 96 58 / 0.32);
-  border-radius: 2px;
+  border-radius: 1px;
   color: var(--paper);
   background:
     radial-gradient(90% 52% at 50% -10%, rgb(var(--energy-ember-rgb) / 0.08), transparent 72%),
@@ -334,7 +334,7 @@ html[data-theme="light"] .dgn-token[data-selected="true"] { color: #6a4d0f; }
 .dgn-seg {
   display: inline-flex;
   border: 1px solid rgba(0, 0, 0, 0.45);
-  border-radius: 2px;
+  border-radius: 1px;
   overflow: hidden;
   background: linear-gradient(180deg, var(--stone-hi), var(--stone-deep));
 }

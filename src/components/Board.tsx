@@ -30,6 +30,7 @@ import {
   BoltGlyph,
   BoundBuffMark,
   CastSpectacle,
+  CastTextFallback,
   castIntensity,
   ChainJail,
   DetonationBurst,
@@ -4218,6 +4219,18 @@ export function Board({
             description={BUFF_BY_ID[cast.id]?.description}
             cardIcon={BUFF_BY_ID[cast.id]?.icon}
             bespoke={!!sigOf(cast.id) || PLUGIN_ID_SET.has(cast.id)}
+          />
+        )}
+        {/* Anim-off text fallback: the whole .fx-cast overlay above is
+            display:none under html[data-anim="off"], so this static sibling
+            (revealed only by that same CSS state) carries the play's name and
+            rule text. Reduced motion still communicates what happened. */}
+        {!fxHiddenPref && !fxCalmClock && cast && BUFF_BY_ID[cast.id]?.name && (
+          <CastTextFallback
+            key={`castfb-${cast.key}`}
+            name={BUFF_BY_ID[cast.id]!.name}
+            description={BUFF_BY_ID[cast.id]?.description}
+            tier={cast.tier}
           />
         )}
         {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,

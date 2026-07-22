@@ -215,7 +215,7 @@ export function TargetingBanner({
         </span>
         {picked > 0 && (
           <span
-            className="shrink-0 rounded-full border border-[color:var(--edge-strong)] bg-white/[0.08] px-2 py-0.5 font-mono text-[12px] tabular-nums text-parchment-200"
+            className="shrink-0 rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.08] px-2 py-0.5 font-mono text-[12px] tabular-nums text-parchment-200"
             title={`${picked} target${picked === 1 ? "" : "s"} picked so far`}
           >
             {picked} picked

@@ -630,7 +630,7 @@ function SeatBadge({ kind }: { kind: SeatKind }) {
         : "border-white/15 text-parchment-400";
   const label = kind === "house" ? "house bot" : kind === "guest" ? "guest" : "anon";
   return (
-    <span className={`smallcaps text-[9px] px-1.5 py-px rounded-full border ${style}`}>{label}</span>
+    <span className={`smallcaps text-[9px] px-1.5 py-px rounded-[1px] border ${style}`}>{label}</span>
   );
 }
 
@@ -777,7 +777,7 @@ function GamesTab() {
                   </span>
                   <SeatBadge kind={g.black.kind} />
                   <ModeBadge mode={g.category === "nerf" || g.category === "buff" ? g.category : undefined} />
-                  <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/15 text-parchment-300">
+                  <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/15 text-parchment-300">
                     {g.rated ? "rated" : "casual"}
                   </span>
                   <span className="ml-auto text-xs text-parchment-400">{when(g.completedAt)}</span>
@@ -865,7 +865,7 @@ function ReportsTab() {
                 <Link href={`/u/${r.reported_name}`} className="font-display font-semibold text-gold-leaf hover:underline">
                   {r.reported_name}
                 </Link>
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/15 text-parchment-300">
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/15 text-parchment-300">
                   {r.reason}
                 </span>
                 <span className="text-parchment-400">
@@ -1495,17 +1495,17 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
               <span className="font-display font-semibold">{u.username}</span>
               {u.role !== "user" && <RoleBadge role={u.role} />}
               {!!u.is_guest && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-parchment-300">
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/20 text-parchment-300">
                   guest
                 </span>
               )}
               {u.banned_until && u.banned_until > now && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-oxblood-glow/20 text-oxblood-glow">
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] bg-oxblood-glow/20 text-oxblood-glow">
                   banned {untilLabel(u.banned_until)}
                 </span>
               )}
               {u.muted_until && u.muted_until > now && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full bg-bruise-glow/20 text-bruise-glow">
+                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] bg-bruise-glow/20 text-bruise-glow">
                   muted {untilLabel(u.muted_until)}
                 </span>
               )}
@@ -1525,7 +1525,7 @@ function UsersTab({ isAdmin }: { isAdmin: boolean }) {
             </Link>
             {selected.role !== "user" && <RoleBadge role={selected.role} />}
             {!!selected.is_guest && (
-              <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-parchment-300">
+              <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/20 text-parchment-300">
                 guest
               </span>
             )}
@@ -1727,7 +1727,7 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-full border transition ${
+      className={`px-3 py-1 rounded-[1px] border transition ${
         active ? "border-gold/50 text-gold-leaf" : "border-white/15 text-parchment-300 hover:text-parchment-100"
       }`}
     >
@@ -1738,7 +1738,7 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 
 function RoleBadge({ role }: { role: string }) {
   return (
-    <span className="smallcaps text-[10px] px-2 py-0.5 rounded-full border border-gold/40 text-gold-leaf">
+    <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf">
       {role === "admin" ? "Admin" : "Moderator"}
     </span>
   );

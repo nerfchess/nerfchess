@@ -2787,6 +2787,44 @@ function CastBanner({
   );
 }
 
+/** Animation-free cast announcement for anim-off / reduced-motion players.
+ *  The whole `.fx-cast` overlay (CastBanner included) is display:none under
+ *  html[data-anim="off"], which used to mean a card play resolved with NO
+ *  on-board feedback at all in that mode. This sibling renders the same
+ *  name + rule text as a static chip: hidden by default, revealed ONLY by
+ *  the data-anim="off" CSS rule (see effects.css), and auto-dismissed by a
+ *  plain timer (a timeout, not an animation, so it works with motion off).
+ *  Purely presentational; gameplay never waits on it. */
+export function CastTextFallback({
+  name,
+  description,
+  tier,
+}: {
+  name: string;
+  description?: string;
+  tier: number;
+}) {
+  const [gone, setGone] = React.useState(false);
+  React.useEffect(() => {
+    const id = window.setTimeout(() => setGone(true), 3600);
+    return () => window.clearTimeout(id);
+  }, []);
+  if (gone) return null;
+  return (
+    <span
+      className="fx-cast-fallback pointer-events-none absolute inset-x-[6%] top-[4%] z-40 hidden flex-col items-center rounded-sm border border-parchment-400/30 bg-[rgba(8,10,15,0.88)] px-3 py-1.5 text-center"
+      role="status"
+    >
+      <span className={`block font-display text-sm font-bold leading-tight tier-${tier}`}>{name}</span>
+      {description && (
+        <span className="mt-0.5 block max-h-[2.8em] overflow-hidden text-[10.5px] leading-snug text-parchment-200">
+          {description}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function CastSpectacle({
   category,
   tier,
