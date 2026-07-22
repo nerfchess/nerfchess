@@ -1072,11 +1072,14 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_forced_retreat",
       name: "Forced Retreat",
-      description: "Push one enemy piece one square directly away from your king, if that square is empty, once. Kings cannot be pushed.",
+      description: "Mark one enemy piece, a king aside: after your opponent's next move it is pushed one square directly away from your king, if that square is empty, once. Kings cannot be pushed.",
       tier: 3,
       category: "tempo",
       flavor: "Give ground, general's orders.",
     },
+    // Overhaul balance pass: the payoff is unchanged, but the push no longer
+    // lands the instant you mark the target: it waits until after your
+    // opponent has replied (the marked piece is followed if they move it).
     (() => {
       const destOf = (api: BuffApi, sq: Square): Square | null => {
         const k = mySquares(api.board, api.me, "k")[0];
@@ -1091,9 +1094,11 @@ export const WILD_WARFARE: Buff[] = [
         if (api.board.pieces[sq]?.type === "p" && !pawnRankOk(to)) return null;
         return to;
       };
-      return activated(
-        (_inst, api, picks) =>
-          picks.length > 0
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.armed
             ? null
             : {
                 kind: "square",
@@ -1102,13 +1107,34 @@ export const WILD_WARFARE: Buff[] = [
                   (sq) => api.board.pieces[sq]!.type !== "k" && destOf(api, sq) != null,
                 ),
               },
-        (_inst, api, picks) => {
+        effect: (inst, _api, picks) => {
+          if (inst.state.armed) return;
           const from = picks[0]?.square;
           if (from == null) return;
+          inst.state.armed = true;
+          inst.state.sq = from;
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.armed || inst.state.sq == null) return;
+          // The marked piece may be captured or moved before the push lands.
+          if (move.capturedSquare === inst.state.sq && move.from !== inst.state.sq) {
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          if (move.from === inst.state.sq) inst.state.sq = move.to;
+          if (move.color !== api.opp) return;
+          const from = inst.state.sq as Square;
           const to = destOf(api, from);
           if (to != null) api.relocate(from, to);
+          inst.spent = true;
+          inst.state.sq = undefined;
         },
-      );
+        status: (inst) =>
+          inst.state.armed
+            ? "the push lands after your opponent's reply"
+            : "activate to mark an enemy piece",
+      };
     })(),
   ),
 

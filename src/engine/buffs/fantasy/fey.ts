@@ -67,7 +67,7 @@ export const FANTASY_FEY: Buff[] = [
       id: "will_o_wisp",
       name: "Will-o'-Wisp",
       description:
-        "A cold flame dances ahead of one enemy piece and it follows: lure one enemy piece except a king one square diagonally forward, toward your side, onto an empty square you choose.",
+        "A cold flame dances ahead of one enemy piece and it follows: lure one enemy piece except a king one square diagonally forward, toward your side, onto an empty square you choose. Using it consumes your next unused reroll, if you have one.",
       tier: 3,
       category: "tempo",
       flavor: "Follow the light. The light knows a shortcut.",
@@ -106,6 +106,8 @@ export const FANTASY_FEY: Buff[] = [
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from == null || to == null) return;
         if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+        // Balance pass: using the lure consumes the next unused reroll, if any.
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
       },
     ),
   ),
@@ -114,7 +116,7 @@ export const FANTASY_FEY: Buff[] = [
       id: "glamour",
       name: "Glamour",
       description:
-        "The courts trade changelings: one enemy pawn you choose joins your army, and one of your pawns you choose joins theirs.",
+        "The courts trade changelings: one enemy pawn you choose joins your army, and one of your pawns you choose joins theirs. Using it consumes your next unused reroll, if you have one.",
       tier: 3,
       category: "pieces",
       requires: ["p"],
@@ -148,6 +150,8 @@ export const FANTASY_FEY: Buff[] = [
         if (mine != null && api.board.pieces[mine]?.color === api.me) {
           api.setPieceColor(mine, api.opp);
         }
+        // Balance pass: using the trade consumes the next unused reroll, if any.
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
       },
     ),
   ),
