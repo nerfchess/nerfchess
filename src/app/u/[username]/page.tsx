@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
+import { HouseBotBadge } from "@/components/HouseBotBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink } from "@/components/PlayerLink";
 import { PresenceBadge } from "@/components/PresenceBadge";
@@ -66,6 +67,8 @@ interface ProfileUser {
   showOnline: boolean;
   friendsVisibility: "public" | "private";
   friendCount: number;
+  // Engine-driven house account: the profile renders a HOUSE BOT label.
+  houseBot?: boolean;
 }
 
 interface CategoryRatingRow {
@@ -710,6 +713,7 @@ function ProfileHeader({
                 />
               )}
             </h1>
+            {user.houseBot && <HouseBotBadge className="!text-[12px] px-1.5 py-0.5" />}
             {user.role !== "user" && (
               <span className="rounded-full border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
                 {user.role === "admin" ? "Admin" : "Moderator"}

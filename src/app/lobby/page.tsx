@@ -10,6 +10,7 @@ import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
+import { HouseBotBadge } from "@/components/HouseBotBadge";
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
 import { FriendsPanel } from "@/components/FriendsPanel";
@@ -570,6 +571,7 @@ function LobbyInner() {
                             {p.rating}
                           </span>
                         )}
+                        {p.houseBot && <HouseBotBadge />}
                       </Link>
                       <StatusBadge status={p.status} />
                     </li>

@@ -56,6 +56,9 @@ export type MPPlayers = Record<
     rating: number | null;
     avatar?: string | null;
     provisional?: boolean;
+    /** True when this seat is an engine-driven house account. Clients render a
+     * HOUSE BOT chip beside the name wherever this seat shows. */
+    houseBot?: boolean;
   }
 >;
 
@@ -234,7 +237,14 @@ export type MPWatchStart = {
 };
 
 // One lobby snapshot: who is online and which games can be watched.
-export type MPLobbyPlayer = { name: string; rating: number | null; status: "online" | "searching" | "playing"; avatar?: string | null };
+export type MPLobbyPlayer = {
+  name: string;
+  rating: number | null;
+  status: "online" | "searching" | "playing";
+  avatar?: string | null;
+  /** Engine-driven house account; the online list renders a HOUSE BOT chip. */
+  houseBot?: boolean;
+};
 export type MPLobbyGame = {
   id: string;
   players: MPPlayers;
@@ -589,7 +599,12 @@ export class MPSession {
   // auto-reconnect and re-send the queue frame (the seat is not yet known, so
   // this keeps scheduleReconnect enabled during the search window).
   private searching = false;
-  private searchQueue: { pool: string; mode?: DraftMode; target?: { userId: string } } | null = null;
+  private searchQueue: {
+    pool: string;
+    mode?: DraftMode;
+    target?: { userId: string };
+    opponents?: "humans" | "any" | "bots";
+  } | null = null;
   private destroyed = false;
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
@@ -667,6 +682,9 @@ export class MPSession {
           // seeker is gone the server returns seek_gone rather than pairing a
           // stranger, preserving the "only this person" guarantee.
           ...(this.searchQueue.target ? { target: this.searchQueue.target } : {}),
+          // The opponent preference survives a reconnect too: a humans-only
+          // search must never silently degrade into a bot pickup mid-retry.
+          ...(this.searchQueue.opponents ? { opponents: this.searchQueue.opponents } : {}),
         });
     } catch {
       this.scheduleReconnect();
@@ -1105,13 +1123,19 @@ export class MPSession {
     pool: string,
     mode?: DraftMode,
     target?: { userId: string },
+    opponents?: "humans" | "any" | "bots",
   ): Promise<{ id: string; color: Color; token: string }> {
     // Remember the search (target included) so an auto-reconnect mid-search
     // re-sends the same queue frame, and keep scheduleReconnect enabled while
     // we have no seat yet. Persisting the target keeps a targeted seek answer
     // targeted across a drop instead of degrading to a random quick-pair.
     this.searching = true;
-    this.searchQueue = { pool, ...(mode ? { mode } : {}), ...(target ? { target } : {}) };
+    this.searchQueue = {
+      pool,
+      ...(mode ? { mode } : {}),
+      ...(target ? { target } : {}),
+      ...(opponents && opponents !== "any" ? { opponents } : {}),
+    };
     try {
       await this.connectWithRetry();
     } catch (e) {
@@ -1142,7 +1166,12 @@ export class MPSession {
           }
         }
       });
-      this.sendFrame("queue", { pool, ...(mode ? { mode } : {}), ...(target ? { target } : {}) });
+      this.sendFrame("queue", {
+        pool,
+        ...(mode ? { mode } : {}),
+        ...(target ? { target } : {}),
+        ...(opponents && opponents !== "any" ? { opponents } : {}),
+      });
     });
   }
 

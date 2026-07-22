@@ -51,6 +51,7 @@ import {
   housePersona,
   houseSeedRating,
   houseSeedRatingForMode,
+  houseStyle,
   houseThinkMs,
   isHouseUserId,
   pickHouseBotByDifficulty,
@@ -382,6 +383,10 @@ type QueueEntry = {
   vol?: number;
   avatar?: string | null;
   at: number;
+  /** Opponent preference: "humans" = never bot-picked-up, "bots" = paired with
+   * a house bot immediately (never stored as a waiting entry), "any"/absent =
+   * the classic behavior (humans instantly, a bot pickup after the wait). */
+  opponents?: "humans" | "any" | "bots";
 };
 type ClientFrame =
   | { t: "create"; d?: { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown } }
@@ -398,7 +403,7 @@ type ClientFrame =
   | { t: "takebackOffer" }
   | { t: "takebackAccept" }
   | { t: "takebackDecline" }
-  | { t: "queue"; d?: { pool?: unknown; mode?: unknown; target?: { userId?: unknown } } }
+  | { t: "queue"; d?: { pool?: unknown; mode?: unknown; target?: { userId?: unknown }; opponents?: unknown } }
   | { t: "playbot"; d?: { difficulty?: unknown; mode?: unknown; timeSec?: unknown; incrementSec?: unknown; color?: unknown } }
   | { t: "queueCancel" }
   | { t: "watch"; d?: { id?: unknown } }
@@ -526,7 +531,8 @@ const houseSeeksKey = "hp:seeks";
 // low tiers) so the active window can be 60-90 and cycle daily. The 150 new
 // handles are new hp_ ids, so re-run ensureHouseUsers to create their accounts
 // (rows, per-mode ratings, avatars, bios). Old accounts stay as-is.
-const houseSeededKey = "hp:seeded:v5";
+// v6: 2026-07 expansion — 300 new personas, legacy +300..400 rating uplift.
+const houseSeededKey = "hp:seeded:v6";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -569,7 +575,9 @@ const houseSeededKey = "hp:seeded:v5";
 // character/meme wave with new thematic HOUSE_PFP_ASSIGN picks, and the
 // catalog growth reshuffles every name-hashed assignment. Re-circulate so
 // users.avatar carries the new ids everywhere (lobby, TV, profiles).
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-5";
+// identity-6: 2026-07 expansion — legacy +300..400 rating uplift circulated to
+// existing accounts, expansion-wave bios landed.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-6";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
@@ -2119,8 +2127,10 @@ export class GameServer extends DurableObject<Env> {
             // Provisional (RD still wide) so clients can render "1500?".
             // Omitted when the seat snapshot predates rd tracking.
             ...(typeof user.rd === "number" ? { provisional: isProvisional({ rd: user.rd }) } : {}),
-            // No house flag leaves the server: house seats are shaped exactly
-            // like human seats (owner request: no bot trace anywhere).
+            // Engine-driven seats are labeled honestly: clients render a
+            // HOUSE BOT chip everywhere this seat's name shows (2026-07
+            // transparency change; the old no-trace presentation is retired).
+            ...(match.bots?.[color] ? { houseBot: true } : {}),
           }
         : { name: "Anonymous", rating: null, avatar: null };
     };
@@ -2500,13 +2510,14 @@ export class GameServer extends DurableObject<Env> {
   private publicSnapshotBits(match: StoredMatch, seq: number): PublicSnapshotBits {
     const seat = this.playersPayload(match);
     const player = (color: Color) => {
-      const s = seat[color] as { name: string; rating: number | null; provisional?: boolean };
+      const s = seat[color] as { name: string; rating: number | null; provisional?: boolean; houseBot?: boolean };
       return {
         name: s.name,
         rating: s.rating,
         ratingCategory: match.mode ?? null,
         title: null,
         ...(typeof s.provisional === "boolean" ? { provisional: s.provisional } : {}),
+        ...(s.houseBot ? { houseBot: true } : {}),
       };
     };
     // A nerf id is secret until the game ends or the seat reveals it. Buff mode
@@ -3760,13 +3771,17 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "auth_required", "Sign in to use quick pairing.");
     }
     if (await this.abortTimedOut(ws, session.userId)) return;
-    const req = (data as { pool?: unknown; mode?: unknown; target?: unknown } | undefined) ?? {};
+    const req = (data as { pool?: unknown; mode?: unknown; target?: unknown; opponents?: unknown } | undefined) ?? {};
     const poolName = String(req.pool || "3+2");
     const pool = QUEUE_POOLS[poolName];
     if (!pool) return error(ws, "bad_pool", "Unknown queue pool.");
     // Which of the two pools (Nerf or Buff) this seek enters. Older clients
     // send no mode and land in Buff, which is what the queue always ran.
     const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
+    // Opponent preference: "humans" (never a bot pickup), "bots" (pair with a
+    // house bot right away), or "any" (default; also what older clients send).
+    const opponents: "humans" | "any" | "bots" =
+      req.opponents === "humans" ? "humans" : req.opponents === "bots" ? "bots" : "any";
     // Answering a specific lobby seek carries that seeker's identity. A targeted
     // join must pair ONLY with that person (or that house persona) — never a
     // random pool waiter or a random bot. Untargeted frames (the main Quick
@@ -3867,6 +3882,56 @@ export class GameServer extends DurableObject<Env> {
       return this.createQueueMatch(ws, me, opponent, poolName, mode);
     }
 
+    // Bots only: never enter the human pool at all — pair with a free house
+    // persona near the seeker's rating right now. Honest failure ("bots are
+    // paused/busy") beats silently waiting; the player asked for a bot game.
+    if (opponents === "bots") {
+      if (!(await this.houseEnabled())) {
+        return error(ws, "bots_unavailable", "House bots are paused right now. Try Humans and bots instead.");
+      }
+      const houseBusy = new Set<string>();
+      for (const m of await this.loadLiveMatches()) {
+        if (m.result) continue;
+        for (const c of ["w", "b"] as Color[]) {
+          const bid = m.bots?.[c];
+          if (bid) houseBusy.add(bid);
+        }
+      }
+      const freeBots = activeHouseRoster(await this.houseCount(), this.houseDayIndex()).filter(
+        (p) => !houseBusy.has(p.userId),
+      );
+      if (!freeBots.length) {
+        return error(ws, "bots_unavailable", "Every house bot is in a game right now. Try again in a moment.");
+      }
+      // Closest advertised rating first; a small random draw among the closest
+      // five keeps repeat queues from always producing the same opponent.
+      const sorted = [...freeBots].sort(
+        (a, b) =>
+          Math.abs(houseSeedRatingForMode(a, mode) - rating) -
+          Math.abs(houseSeedRatingForMode(b, mode) - rating),
+      );
+      const persona = sorted[randomInt(Math.min(5, sorted.length))];
+      const meEntry: QueueEntry = {
+        attachmentId: session.id,
+        userId: session.userId,
+        username: session.username,
+        rating,
+        rd,
+        vol,
+        avatar,
+        at: Date.now(),
+      };
+      await this.pairHumanWithHouse(meEntry, ws, poolName, mode, persona, db);
+      // Retire the persona's advertised seek, if it had one, exactly like a
+      // targeted join: it stops showing as waiting the moment it is seated.
+      try {
+        const seeks = (await this.ctx.storage.get<HouseSeekEntry[]>(houseSeeksKey)) ?? [];
+        const remaining = seeks.filter((seek) => seek.userId !== persona.userId);
+        if (remaining.length !== seeks.length) await this.ctx.storage.put(houseSeeksKey, remaining);
+      } catch {}
+      return;
+    }
+
     const opponent = entries.shift();
     if (!opponent) {
       entries.push({
@@ -3878,16 +3943,19 @@ export class GameServer extends DurableObject<Env> {
         vol,
         avatar,
         at: Date.now(),
+        ...(opponents === "humans" ? { opponents } : {}),
       });
       await this.ctx.storage.put(key, entries);
       // Nobody was waiting: make sure the alarm fires soon so a house player
       // can pick this seek up if no human arrives (houseTick pairs a lone
       // human with a persona after ~4.5s; a human opponent queueing in the
-      // meantime still pairs instantly through this method).
+      // meantime still pairs instantly through this method). Humans-only
+      // seekers are never bot-picked-up (houseTick skips them), so their wait
+      // simply lasts until a human arrives or they cancel.
       try {
         await this.armAlarmBy(Date.now() + houseHumanPickupMs);
       } catch {}
-      return send(ws, "queued", { pool: poolName, mode });
+      return send(ws, "queued", { pool: poolName, mode, opponents });
     }
     await this.ctx.storage.put(key, entries);
     return this.createQueueMatch(ws, me, opponent, poolName, mode);
@@ -4072,11 +4140,15 @@ export class GameServer extends DurableObject<Env> {
     // Filler (bot-only) games pace slower via the multiplier passed INTO
     // houseThinkMs, so the slow pace is still bounded by the bot's own clock and
     // never flags it early (the multiply used to happen here, after the clamp).
+    // Persona tempo: each bot paces its thinks with a stable personal lean
+    // (houseStyle), so the roster never moves in lockstep after one delay.
+    const turnPersona = housePersona(match.bots[turn] ?? "");
     const think = houseThinkMs(
       randomInt,
       clocks[turn] + grace,
       match.setup.timeSec,
       this.isBotOnlyMatch(match) ? houseFillerThinkMultiplier : 1,
+      turnPersona ? houseStyle(turnPersona).tempo : 1,
     );
     match.botActAt = now + think;
   }
@@ -4508,7 +4580,9 @@ export class GameServer extends DurableObject<Env> {
             if (!entries.length) continue;
             const alive = entries.filter((entry) => this.socketForAttachment(entry.attachmentId));
             if (alive.length !== entries.length) await this.ctx.storage.put(key, alive);
-            const waiting = alive[0];
+            // Humans-only seekers are never handed a bot: honor the stated
+            // preference and let them wait for a real opponent (or cancel).
+            const waiting = alive.find((entry) => entry.opponents !== "humans");
             if (!waiting || now - waiting.at < houseHumanPickupMs - 500) continue;
             // Prefer the persona already seeking this pool+mode (the row the
             // human likely saw), then any seeking persona, then an idle one.
@@ -4525,7 +4599,7 @@ export class GameServer extends DurableObject<Env> {
             // human stays queued for the next tick instead of silently
             // sitting on "searching" forever.
             await this.pairHumanWithHouse(waiting, humanWs, poolName, mode, persona, db);
-            await this.ctx.storage.put(key, alive.slice(1));
+            await this.ctx.storage.put(key, alive.filter((entry) => entry !== waiting));
             pickedUp = true;
             break outer;
           } catch (err) {
@@ -4828,7 +4902,15 @@ export class GameServer extends DurableObject<Env> {
       if (!match.bots?.[color] || !game.buffs?.players[color].offer) continue;
       try {
         const choice = aiDraftChoice(game, color);
-        if (choice?.action === "pick") await this.resolveDraftPick(match, game, color, choice.index);
+        // Persona draft behavior: cautious personas sometimes bank a pickable
+        // offer to roll a higher tier next round (houseStyle().bankBias), so
+        // different bots run visibly different draft plans.
+        const draftPersona = housePersona(match.bots[color] ?? "");
+        const bankRoll =
+          draftPersona && choice?.action === "pick"
+            ? randomInt(100) < Math.round(houseStyle(draftPersona).bankBias * 100)
+            : false;
+        if (choice?.action === "pick" && !bankRoll) await this.resolveDraftPick(match, game, color, choice.index);
         else await this.resolveDraftBank(match, game, color);
       } catch (err) {
         console.error("house draft resolve failed, banking offer", match.id, err);
@@ -4866,7 +4948,7 @@ export class GameServer extends DurableObject<Env> {
     // applies its own worth-it gates; the extra coin keeps house players from
     // dumping every card the moment it clears the bar. A buff that throws
     // mid-activation must not wedge the bot or corrupt the move it plays next.
-    if (match.draft && game.buffs && randomInt(100) < 40) {
+    if (match.draft && game.buffs && randomInt(100) < Math.round(houseStyle(persona).activationChance * 100)) {
       try {
         const activation = aiChooseBuffActivation(game, color);
         if (activation) {
@@ -4978,7 +5060,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!move) {
       try {
-        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile);
+        move = pickHouseMove(game, persona.skill, randomInt, remaining, undefined, profile, persona);
       } catch (err) {
         console.error("house move pick failed, using a legal fallback", match.id, err);
       }
@@ -7618,7 +7700,7 @@ export class GameServer extends DurableObject<Env> {
 
     // Every signed-in account with an open socket, deduped; anonymous sockets
     // are only counted.
-    const seen = new Map<string, { name: string; rating: number | null; status: string; avatar: string | null }>();
+    const seen = new Map<string, { name: string; rating: number | null; status: string; avatar: string | null; houseBot?: boolean }>();
     let anonymous = 0;
     for (const [socket, session] of this.sessions) {
       if (socket.readyState !== WebSocket.OPEN) continue;
@@ -7791,6 +7873,11 @@ export class GameServer extends DurableObject<Env> {
     // alongside them; a lower cap would hide part of the presence set behind the
     // slice and make the shown count read low. Sorted by rating so the strongest
     // personas and humans lead the list.
+    // Label every house entry before shipping: the map key is the user id, so
+    // one pass marks bots regardless of which branch above added them.
+    for (const [id, entry] of seen) {
+      if (isHouseUserId(id)) entry.houseBot = true;
+    }
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, HOUSE_ONLINE_COUNT + 60);

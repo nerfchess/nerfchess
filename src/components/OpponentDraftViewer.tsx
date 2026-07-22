@@ -121,7 +121,7 @@ export function OpponentDraftViewer({
           </div>
 
           <p className="mt-4 text-center text-[12px] leading-snug text-parchment-400">
-            Live view — it updates if they reroll. Watching does not affect their draft.
+            Live view: it updates if they reroll. Watching does not affect their draft.
           </p>
         </motion.div>
       </div>

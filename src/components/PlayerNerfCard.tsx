@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Nerf, Tier } from "@/engine/nerf";
 import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
+import { HouseBotBadge } from "@/components/HouseBotBadge";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 import { GlossaryText } from "@/components/GlossaryText";
@@ -44,6 +45,11 @@ interface Props {
   // Tighter paddings/typography for the in-game rail, so the whole rail fits
   // beside the board without scrolling.
   compact?: boolean;
+  // Engine-driven house seat: a HOUSE BOT chip renders beside the name.
+  houseBot?: boolean;
+  // Live socket state for this seat, when the caller knows it: a small dot
+  // beside the name (green = connected, red = disconnected). Omitted = no dot.
+  connected?: boolean | null;
 }
 
 export function PlayerNerfCard({
@@ -62,6 +68,8 @@ export function PlayerNerfCard({
   boons,
   action,
   compact = false,
+  houseBot = false,
+  connected = null,
 }: Props) {
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
@@ -121,6 +129,17 @@ export function PlayerNerfCard({
                 ({Math.round(elo)}
                 {provisional ? "?" : ""})
               </span>
+            )}
+            {houseBot && <HouseBotBadge className="ml-1.5" />}
+            {connected !== null && (
+              <span
+                aria-label={connected ? "Connected" : "Disconnected"}
+                title={connected ? "Connected" : "Disconnected"}
+                className={
+                  "ml-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full align-middle " +
+                  (connected ? "bg-[rgb(var(--pos-rgb))]" : "bg-oxblood-glow")
+                }
+              />
             )}
           </div>
           <div className="mt-1 flex min-h-[1.4rem] min-w-0 items-center gap-1">

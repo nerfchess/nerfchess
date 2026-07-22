@@ -4,6 +4,7 @@ import { pgAll } from "@/lib/server/pg";
 import { currentLiveGameForUser } from "@/lib/server/gameServer";
 import { categoryForTimeControl } from "@/lib/speed";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { isHouseUserId } from "@/lib/server/bots";
 
 export const dynamic = "force-dynamic";
 
@@ -198,6 +199,8 @@ export async function GET(request: Request, props: { params: Promise<{ username:
       role: user.role,
       bio: user.bio,
       flair: user.flair,
+      // Engine-driven house account: profiles render a HOUSE BOT label.
+      houseBot: isHouseUserId(user.id),
       // last-seen is suppressed entirely when the player hides their presence.
       lastSeenAt: showOnline ? (user.last_seen_at ?? null) : null,
       showOnline,

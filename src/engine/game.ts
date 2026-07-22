@@ -278,6 +278,9 @@ export interface PublicPlayerInfo {
   ratingCategory?: string | null;
   title?: string | null;
   provisional?: boolean;
+  /** True when this seat is an engine-driven house account; viewers render a
+   * HOUSE BOT chip beside the name. */
+  houseBot?: boolean;
 }
 
 export interface PublicCaptureCounts {

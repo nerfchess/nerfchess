@@ -45,10 +45,13 @@ export function PlayerAvatar({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={imgSrc}
-      alt=""
+      // Meaningful alt text: the avatar names its player, so screen readers
+      // hear "coffeeknight's avatar" instead of skipping an unlabeled image.
+      alt={`${name}'s avatar`}
+      loading="lazy"
+      decoding="async"
       className={"shrink-0 overflow-hidden rounded-md border border-white/20 object-cover " + className}
       style={{ width: size, height: size }}
-      aria-hidden="true"
     />
   ) : (
     <PresetAvatar name={name} avatar={avatar} size={size} className={className} />

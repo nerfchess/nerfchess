@@ -14,6 +14,7 @@ import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/rati
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
 import { LaurelBadge } from "@/components/LaurelBadge";
+import { HouseBotBadge } from "@/components/HouseBotBadge";
 
 interface Row {
   username: string;
@@ -27,6 +28,7 @@ interface Row {
   losses: number;
   draws: number;
   guest?: boolean;
+  houseBot?: boolean;
 }
 
 type MeRow = Row & { rank: number };
@@ -349,6 +351,7 @@ function LeaderboardRow({
           <LaurelBadge rank={rank} title={`#${rank} on the ${label} board`} size={14} className="shrink-0" />
         )}
         {row.guest && <MetaChip>Guest</MetaChip>}
+        {row.houseBot && <HouseBotBadge />}
         {mine && (
           <span className="shrink-0 border border-gold/45 px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-gold-leaf">
             You

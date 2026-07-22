@@ -45,6 +45,14 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 ];
 
 const LAST_POOL_KEY = "dc:last-pool";
+const LAST_OPPONENTS_KEY = "dc:last-opponents";
+
+type OpponentsPref = "any" | "humans" | "bots";
+const OPPONENTS_OPTIONS: { value: OpponentsPref; label: string; hint: string }[] = [
+  { value: "any", label: "Humans and bots", hint: "Fastest match. A labeled house bot steps in when nobody is waiting." },
+  { value: "humans", label: "Humans only", hint: "Wait for a real opponent. Never paired with a bot." },
+  { value: "bots", label: "Bots only", hint: "Play a labeled house bot near your rating right away." },
+];
 
 export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const router = useRouter();
@@ -54,6 +62,7 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const [sharedMode, pickSharedMode] = useSharedMode();
   const mode = sharedMode;
   const [pool, setPool] = useState("3+2");
+  const [opponents, setOpponents] = useState<OpponentsPref>("any");
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   // Coarse socket health while searching, so a mid-queue drop shows a calm
@@ -172,6 +181,10 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
       try {
         const saved = window.localStorage.getItem(LAST_POOL_KEY);
         if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
+        const savedOpp = window.localStorage.getItem(LAST_OPPONENTS_KEY);
+        if (savedOpp === "humans" || savedOpp === "bots" || savedOpp === "any") {
+          setOpponents(savedOpp);
+        }
       } catch {}
     });
     return () => {
@@ -189,6 +202,13 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   };
 
   const pickMode = (m: DraftMode) => pickSharedMode(m);
+
+  const pickOpponents = (value: OpponentsPref) => {
+    setOpponents(value);
+    try {
+      window.localStorage.setItem(LAST_OPPONENTS_KEY, value);
+    } catch {}
+  };
 
   const startSearch = async () => {
     setError(null);
@@ -210,7 +230,7 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
       if (sessionRef.current === session) setConnection(s);
     });
     try {
-      const paired = await session.queue(pool, mode);
+      const paired = await session.queue(pool, mode, undefined, opponents);
       if (sessionRef.current !== session) return;
       setState("paired");
       saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
@@ -323,6 +343,30 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
               </span>
               <span className="text-xs font-medium uppercase tracking-wider text-gold-leaf">Change</span>
             </button>
+          </div>
+
+          {/* Step 3: opponents. Three-way preference; the default keeps the
+              classic fast pairing. A 3-column grid, never an orphan button. */}
+          <div className="mt-5">
+            <EngravedLabel>Opponents</EngravedLabel>
+            <div className="mt-2.5 grid grid-cols-3 gap-2" role="group" aria-label="Opponent preference">
+              {OPPONENTS_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => pickOpponents(option.value)}
+                  aria-pressed={opponents === option.value}
+                  data-selected={opponents === option.value || undefined}
+                  title={option.hint}
+                  className="dgn-token press flex min-h-[48px] items-center justify-center px-2 py-2 text-center text-[13px] leading-snug"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs leading-snug text-parchment-400">
+              {OPPONENTS_OPTIONS.find((o) => o.value === opponents)?.hint}
+            </p>
           </div>
 
           {/* The one primary action, forged as the same dungeon gate as the
