@@ -269,7 +269,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_polite_cough",
       name: "Polite Cough",
-      description: "Ahem. Steal 5 seconds from your opponent's clock.",
+      description:
+        "Ahem. Steal 10 seconds from your opponent's clock, flag the enemy piece that moved last until your opponent replies, and gain one draft reroll. In untimed games only the flag and the reroll apply.",
       tier: 1,
       category: "tempo",
       icon: "MessageCircle",
@@ -277,7 +278,13 @@ export const OVERHAUL_T1: Buff[] = [
     },
     {
       ...instant((_inst, api) => {
-        api.adjustClock({ stealFlatSec: 5, stealCapSec: 5 });
+        api.adjustClock({ stealFlatSec: 10, stealCapSec: 10 });
+        // The clock steal is a no-op in an untimed game, so always land two
+        // effects that need no clock: mark the last enemy mover (clears once
+        // they reply) and hand back a draft reroll.
+        const last = lastMoveBy(api.board, api.opp);
+        if (last) flashSquares(api, [last.to], true);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       }),
     },
   ),
@@ -314,7 +321,7 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_backwards_hat",
       name: "Backwards Hat",
-      description: "One pawn may capture straight ahead on its next move.",
+      description: "One pawn may capture straight ahead on its next move, and you gain 5 seconds when it does.",
       tier: 1,
       category: "movement",
       icon: "GraduationCap",
@@ -322,16 +329,24 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
-          if (m.captured) out.push(m);
+    {
+      ...augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+            if (m.captured) out.push(m);
+          }
         }
-      }
-      return out;
-    }),
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          api.adjustClock({ addSelfSec: 5 });
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 11. Squeaky Shoes ----------------------------------------------------------------------------------
   card(
