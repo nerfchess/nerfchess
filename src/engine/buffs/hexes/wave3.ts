@@ -884,16 +884,19 @@ const T3: Buff[] = [
           inst.state.rook = rook;
           if (rook == null) {
             inst.state.delay = 0;
+          } else if (move.color === api.opp && inst.state.escape) {
+            // The rook has had its one escape move; the portcullis slams shut now.
+            const p = api.board.pieces[rook];
+            if (p && p.color === api.opp && p.type === "r") {
+              addEffect(api, { kind: "freeze", sq: rook, owner: api.opp, turns: 3, skin: "rust" });
+            }
+            inst.spent = true;
+            return;
           } else if (move.color === api.opp && (inst.state.delay as number) > 0) {
             const d = (inst.state.delay as number) - 1;
             inst.state.delay = d;
             if (d <= 0) {
-              const p = api.board.pieces[rook];
-              if (p && p.color === api.opp && p.type === "r") {
-                addEffect(api, { kind: "freeze", sq: rook, owner: api.opp, turns: 3, skin: "rust" });
-              }
-              inst.spent = true;
-              return;
+              inst.state.escape = true; // grant the rook one legal move before it jams
             }
           }
         }
@@ -901,7 +904,9 @@ const T3: Buff[] = [
       },
       status: (inst) =>
         (inst.state.rook as Square | null) != null
-          ? `portcullis jams in ${(inst.state.delay as number) ?? 0} of their turns`
+          ? inst.state.escape
+            ? "the rook has one move before the portcullis jams"
+            : `portcullis jams in ${(inst.state.delay as number) ?? 0} of their turns`
           : `watching the gate, ${turnsLeft(inst)} of their turns left`,
     },
   ),

@@ -1346,7 +1346,7 @@ const TIER2: Buff[] = [
     },
   ),
   def(
-    { id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Regain castling rights, and queenside castling ignores the b-file square.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["k", "r"], self: true } },
+    { id: "long_castle_anywhere", name: "Long Castle Anywhere", description: "Regain castling rights, and queenside castling ignores the b-file square. When you castle, spend your next unused reroll, if any.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["k", "r"], self: true } },
     {
       kind: "passive",
       init: (_inst, api) => api.restoreCastling(),
@@ -1368,6 +1368,12 @@ const TIER2: Buff[] = [
             { from: SQ(4, hr), to: SQ(2, hr), piece: "k", color: api.me, castle: "q", via: inst.id },
           ]);
         }
+      },
+      // Exercising the regained castling costs a reroll (you castle at most
+      // once, so this fires a single time).
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.me || !move.castle) return;
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     },
   ),

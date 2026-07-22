@@ -397,8 +397,8 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_change_of_step", name: "Change of Step", description: "For your opponent's next 4 turns, each move they make must use a different piece type than their previous move. Their king is always allowed.", flavor: "The drillmaster forbids repetition.", icon: "Repeat2", fx: { motif: "slow", pieces: "all" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_change_of_step", name: "Change of Step", description: "For your opponent's next 4 turns, each move they make must use a different piece type than their previous move. Their king is always allowed. The first move the drill would forbid slips through once, then the rule binds fully.", flavor: "The drillmaster forbids repetition.", icon: "Repeat2", fx: { motif: "slow", pieces: "all" } },
+    escapeCurse(4, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
@@ -410,10 +410,17 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_frost_heave", name: "Frost Heave", description: "The ground in your half buckles with frost: every enemy pawn currently standing in your half of the board is frozen for 2 of their turns.", flavor: "The invasion is welded to the road.", icon: "Mountain", fx: { motif: "jail", pieces: ["p"] } },
+    { id: "hx4_frost_heave", name: "Frost Heave", description: "The ground in your half buckles with frost: every enemy pawn currently standing in your half of the board, except the first, is frozen for 2 of their turns. One pawn shakes free.", flavor: "The invasion is welded to the road.", icon: "Mountain", fx: { motif: "jail", pieces: ["p"] } },
     instant((_inst, api) => {
+      let spared = false;
       for (const sq of mySquares(api.board, api.opp, "p")) {
-        if (relRank(api.opp, sq) >= 5) freezeNow(api, sq, 2, "ice");
+        if (relRank(api.opp, sq) >= 5) {
+          if (!spared) {
+            spared = true;
+            continue;
+          }
+          freezeNow(api, sq, 2, "ice");
+        }
       }
     }),
   ),
@@ -475,8 +482,34 @@ const T5: Buff[] = [
     ),
   ),
   H5(
-    { id: "hx4_echo_of_bells", name: "Echo of Bells", description: "For your opponent's next 6 turns, every second turn (the 2nd, 4th and 6th) the bells toll and they may only move a pawn or their king.", flavor: "You cannot plan over that ringing.", icon: "Bell", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
-    cadenceCurse(6, (e) => e % 2 === 1, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
+    { id: "hx4_echo_of_bells", name: "Echo of Bells", description: "Your opponent's next move passes freely. Then, for their next 6 turns, every second turn (the 2nd, 4th and 6th) the bells toll and they may only move a pawn or their king.", flavor: "You cannot plan over that ringing.", icon: "Bell", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed) return moves;
+        const left = turnsLeft(inst);
+        if (left <= 0 || moves.length === 0) return moves;
+        if ((6 - left) % 2 !== 1) return moves;
+        const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `${turnsLeft(inst)} of their turns left`
+          : "the bells begin after their next move",
+    },
   ),
   H5(
     { id: "hx4_grooms_leash", name: "Groom's Leash", description: "For your opponent's next 3 turns, their knights may only land on squares adjacent to another of their own pieces. Stray leaps are forbidden.", flavor: "No horse rides out without a handler.", icon: "Grip", fx: { motif: "anchor", pieces: ["n"] } },

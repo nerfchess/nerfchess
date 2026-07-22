@@ -289,8 +289,9 @@ export const SNIPERS: Nerf = db({
 
 export const DIPLOMATIC_IMMUNITY: Nerf = db({
   id: "diplomatic_immunity", name: "Diplomatic Immunity", tier: 3, implemented: true,
-  description: "Can't capture a piece that just moved, unless that move was a capture.",
+  description: "Can't capture a piece that just moved, unless that move was a capture. While your king is in check, this restriction is paused for the move.",
   filterMoves: (moves, _s, ctx) => {
+    if (isInCheck(ctx.board, ctx.me)) return moves;
     const last = ctx.opponentLastMove;
     if (!last || last.captured) return moves;
     return moves.filter((m) => !(m.captured && m.to === last.to));
@@ -353,8 +354,9 @@ export const UNSPOOLING: Nerf = db({
 
 export const EVIL_TWIN: Nerf = db({
   id: "evil_twin", name: "Evil Twin", tier: 3, implemented: true,
-  description: "If you can capture a piece with a same-type piece, you must.",
-  filterMoves: (moves) => {
+  description: "If you can capture a piece with a same-type piece, you must. This activates only after your move 3.",
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
     const twins = moves.filter((m) => m.captured && m.piece === m.captured);
     return twins.length ? twins : moves;
   },
@@ -646,15 +648,22 @@ export const SHELLSHOCKED: Nerf = db({
 
 export const COMFORT_ZONE: Nerf = db({
   id: "comfort_zone", name: "Comfort Zone", tier: 3, implemented: true,
-  description: "If you can move to a random square X, you must.",
-  init: () => ({ target: 0 }),
-  onTurnStart: (_s, _ctx, rng) => ({ target: rng.int(64) }),
+  description: "If at least three of your moves reach the revealed random square, you must move to it. Next turn's square is shown a turn early.",
+  init: (rng) => ({ target: rng.int(64), next: rng.int(64) }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { target: number; next: number };
+    return { target: s.next, next: rng.int(64) };
+  },
   filterMoves: (moves, state) => {
     const s = state as { target: number };
     const hits = moves.filter((m) => m.to === s.target);
-    return hits.length ? hits : moves;
+    return hits.length >= 3 ? hits : moves;
   },
   visual: (state) => ({ highlightSquares: [(state as { target: number }).target] }),
+  hint: (state) => {
+    const s = state as { target: number; next: number };
+    return { text: `Comfort zone: this turn ${squareName(s.target)}, next turn ${squareName(s.next)}.`, tone: "info" };
+  },
 });
 
 export const LETHAL_ATTRACTION: Nerf = db({
@@ -750,7 +759,7 @@ export const GAMBLER: Nerf = db({
 
 export const BLINDED_BY_SUN: Nerf = db({
   id: "blinded_by_sun", name: "Blinded by the Sun", tier: 3, implemented: true,
-  description: "Can't end turn attacking a random square.",
+  description: "Can't end your turn attacking a fixed random square, shown on the board. The restriction never leaves you fewer than three legal moves.",
   init: (rng) => ({ sq: rng.int(64) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { sq: number };
@@ -758,9 +767,10 @@ export const BLINDED_BY_SUN: Nerf = db({
       const nb = makeMove(ctx.board, m);
       return !attackedBy(nb, ctx.me).has(s.sq);
     });
-    return legal.length ? legal : moves;
+    return legal.length >= 3 ? legal : moves;
   },
   visual: (state) => ({ bannedSquares: [(state as { sq: number }).sq] }),
+  hint: (state) => ({ text: `Don't end your turn attacking ${squareName((state as { sq: number }).sq)}.`, tone: "info" }),
 });
 
 export const BISHOP_FAN_CLUB: Nerf = db({
