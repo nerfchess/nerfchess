@@ -106,6 +106,9 @@ export type MPDraftPlayerState = {
   // Crazyhouse-style pocket: pieces this seat may drop onto an empty square.
   // Public (drops are public moves), synced so a drop replays identically.
   inventory?: Record<string, number>;
+  // The most recent draft round that skipped this seat (blocked by an
+  // opponent card, or the pool ran dry), so the client can announce it.
+  lastSkip?: { atPly: number; reason: "blocked" | "dry" } | null;
 };
 
 export type MPDraftState = {

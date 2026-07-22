@@ -1602,8 +1602,12 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
         if (ps.offer) continue;
         if ((ps.flags.blockedDrafts ?? 0) > 0) {
           ps.flags.blockedDrafts = (ps.flags.blockedDrafts ?? 0) - 1;
-        } else {
-          rollOffer(bs, color, tiers, game.board);
+          // Tell the victim explicitly (synced): their draft did not silently
+          // vanish, an opponent card blocked it this round.
+          ps.lastSkip = { atPly: game.board.history.length, reason: "blocked" };
+        } else if (!rollOffer(bs, color, tiers, game.board)) {
+          // Pool ran completely dry for this mode/tier: also announced.
+          ps.lastSkip = { atPly: game.board.history.length, reason: "dry" };
         }
       }
     }

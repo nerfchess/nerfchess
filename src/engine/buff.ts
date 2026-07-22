@@ -335,6 +335,12 @@ export interface PlayerBuffState {
    * were already folded in and their flags consumed at the first roll). Not
    * sent to clients; rebuilt on replay when the offer is rolled. */
   offerTiers?: Tier[];
+  /** The most recent draft round that SKIPPED this player and why: an
+   * opponent card blocked it ("blocked") or the pool ran dry ("dry").
+   * `atPly` stamps the board ply the round fired at, so clients can tell a
+   * fresh skip from an old one. Synced (dtState) so the skipped player gets
+   * an explicit popup instead of a silently missing draft (overhaul UX). */
+  lastSkip?: { atPly: number; reason: "blocked" | "dry" } | null;
   /** LEGACY (fair-RNG overhaul): decline tracking was removed; these two
    * fields remain only so saved states that carry them still parse. Never
    * written with real values anymore and never read by the draft. */

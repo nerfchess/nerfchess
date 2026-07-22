@@ -510,6 +510,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Enlarged view of the opponent's open offer while I wait for them to finish
   // drafting (their offer is public data — see the DraftOverlay opponent prop).
   const [oppDraftEnlarged, setOppDraftEnlarged] = useState(false);
+  // Skip popup (overhaul UX): fires exactly once per fresh engine-recorded
+  // skip (lastSkip.atPly changes), announcing WHY the draft round passed the
+  // player by, then auto-dismisses. Distinct from the passive waiting card.
+  const [skipToast, setSkipToast] = useState<null | { reason: "blocked" | "dry" }>(null);
+  const seenSkipPlyRef = useRef<number | null>(null);
+  useEffect(() => {
+    const skip = game?.buffs?.players[myColor]?.lastSkip;
+    if (!skip || skip.atPly === seenSkipPlyRef.current) return;
+    seenSkipPlyRef.current = skip.atPly;
+    setSkipToast({ reason: skip.reason });
+    const id = window.setTimeout(() => setSkipToast(null), 6500);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.buffs?.players[myColor]?.lastSkip?.atPly]);
   const [oppDrafting, setOppDrafting] = useState(() => {
     const opp = start.dtState?.players?.[start.color === "w" ? "b" : "w"];
     return !!opp?.offerPending || !!opp?.offer;
@@ -2134,16 +2148,29 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // runs is visible even with the draft panel hidden or tucked away.
   const myDraftCharging =
     isDraft && !!myOffer && !draftSubmitted && draftGraceOver && !game.result;
-  // Only call it a genuine skip with hard evidence: I have no offer, did not
-  // submit, did not resolve this round, AND a draft-block is still pending on
-  // me. A normal pick/bank never satisfies blockedDrafts (I got an offer), so
-  // this can no longer fire in the window right after I resolve. Anything short
-  // of that evidence falls through to a neutral "waiting for opponent".
+  // Skip detection (overhaul): the engine now records every skipped round
+  // explicitly on the victim (lastSkip: blocked by an opponent card, or the
+  // pool ran dry), synced through dtState. That replaces the old
+  // blockedDrafts>0 heuristic, which could never fire for a SINGLE blocked
+  // draft (the counter was already decremented to zero by the time the
+  // client looked). A skip is "this round" while I still have no offer and
+  // have not resolved one.
+  const myLastSkip = bsMine?.lastSkip ?? null;
   const genuinelySkipped =
     !myOffer &&
     !draftSubmitted &&
     !myDraftResolved &&
-    (bsMine?.flags.blockedDrafts ?? 0) > 0;
+    (myLastSkip != null || (bsMine?.flags.blockedDrafts ?? 0) > 0);
+  const skipReason: "blocked" | "dry" =
+    myLastSkip?.reason === "dry" ? "dry" : "blocked";
+  // What the opponent drafted this round, for the skipped player's reveal
+  // (their held list's newest card; identities are public in draft games).
+  const oppNewestCard = (() => {
+    const held = bsTheirs?.buffs;
+    if (!held?.length) return null;
+    const last = held[held.length - 1];
+    return last && !last.nullified ? BUFF_BY_ID[last.id] ?? null : null;
+  })();
   // The post-draft waiting overlay shows only once I have actually resolved my
   // own draft this round: I picked, I banked, or I was genuinely skipped. It
   // must NOT show merely because I have no offer yet. At the very start of a
@@ -3237,6 +3264,28 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           into a prominent, persistent top banner rather than an easily-missed
           corner pill. While oppDrafting is true this notice never fully
           disappears, so the player always knows the game is alive, not stuck. */}
+      {/* Skip popup: an explicit, animated announcement the moment a draft
+          round passes this player by (blocked by an opponent card or a dry
+          pool), so a missing draft is never confusing. Static-friendly: the
+          entrance is a short fade/slide and the body is plain text. */}
+      {skipToast && !game.result && (
+        <div className="pointer-events-none fixed inset-x-0 top-14 z-[46] flex justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            role="status"
+            aria-live="assertive"
+            className="plate flex max-w-[92vw] items-center gap-3 border-gold/50 px-4 py-2.5 shadow-plate"
+          >
+            <span className="font-display text-sm font-bold text-gold-leaf">Draft skipped</span>
+            <span className="text-[13px] text-parchment-200">
+              {skipToast.reason === "dry"
+                ? "The card pool ran dry this round."
+                : "An opponent card blocked your draft this round."}
+            </span>
+          </motion.div>
+        </div>
+      )}
       {showWaitingOverlay &&
         (draftGraceOver || waitingMinimized ? (
           <div className="pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4 sm:top-4">
@@ -3310,7 +3359,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               </h2>
               {genuinelySkipped && (
                 <p className="mt-1 text-[12px] leading-snug text-parchment-300">
-                  A card your opponent played skipped your draft this round.
+                  {skipReason === "dry"
+                    ? "The card pool ran dry this round, so there was nothing to deal you."
+                    : "A card your opponent played blocked your draft this round."}
+                </p>
+              )}
+              {/* The skipped player still sees what the round produced: the
+                  opponent's newest card, face up (draft games are public). */}
+              {genuinelySkipped && oppLockedIn && !oppBanked && oppNewestCard && (
+                <p className="mt-1.5 text-[12px] leading-snug text-parchment-200">
+                  {oppName} took{" "}
+                  <span className={`font-display font-semibold tier-${oppNewestCard.tier}`}>
+                    {oppNewestCard.name}
+                  </span>
+                  .
                 </p>
               )}
               <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
