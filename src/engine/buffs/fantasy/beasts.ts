@@ -104,13 +104,13 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Feather",
       name: "Wyvern's Dive",
       description:
-        "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches up to the first two enemy pieces it reaches, and lands just beyond, once.",
+        "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches the first enemy piece it reaches, and lands just beyond, once.",
       tier: 4,
       category: "attack",
       requires: ["n"],
       flavor: "The shriek comes a heartbeat before the talons.",
     },
-    lineSweep("n", ALL_DIRS, 2),
+    lineSweep("n", ALL_DIRS, 1),
   ),
   card(
     {
@@ -227,7 +227,7 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "PawPrint",
       name: "Direwolf Pack",
       description:
-        "Two spectral direwolves answer your howl: place two knights on empty squares in your half. The pack melts back into the mist after 5 of your turns.",
+        "Two spectral direwolves answer your howl: place two knights on empty squares in your half. The pack melts back into the mist after 5 of your turns. Using it consumes your next unused reroll, if you have one.",
       tier: 4,
       category: "pieces",
       flavor: "The pack always returns to the wild.",
@@ -251,6 +251,8 @@ export const FANTASY_BEASTS: Buff[] = [
           // 5 of your turns (pruned early if it is captured first).
           addEffect(api, { kind: "timed_loss", owner: api.me, sq: k.square, turns: 5, then: "remove" });
         }
+        // Balance pass: the howl consumes the next unused reroll, if any.
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
       },
     ),
   ),

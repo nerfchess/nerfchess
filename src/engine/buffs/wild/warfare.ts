@@ -907,14 +907,15 @@ export const WILD_WARFARE: Buff[] = [
       id: "ww_command_tent",
       icon: "Tent",
       name: "Command Tent",
-      description: "Your king may also move like a knight, for the game.",
+      description: "Your king may also leap like a knight to an empty square, without capturing, for the game.",
       tier: 4,
       category: "movement",
       flavor: "The general is never quite where they left him.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true },
     },
+    // Overhaul balance pass: the knight leaps may no longer capture.
     pieceBound("k", "Confirm your king takes command", (board, sq, via) =>
-      leapMoves(board, sq, KNIGHT_LEAPS, via),
+      leapMoves(board, sq, KNIGHT_LEAPS, via).filter((m) => !m.captured),
     ),
   ),
   card(
@@ -1444,12 +1445,55 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_defectors",
       name: "Defectors",
-      description: "Turn one enemy pawn or knight to your side for the rest of the game, once. Kings cannot be swayed.",
+      description: "Mark one enemy pawn or knight: after your opponent's next move it turns to your side for the rest of the game, once. Kings cannot be swayed.",
       tier: 4,
       category: "pieces",
       flavor: "Better pay, warmer tent.",
     },
-    convertEnemies(1, ["p", "n"], "Choose the enemy piece to win over"),
+    // Overhaul balance pass: the defection no longer resolves the moment you
+    // mark the piece; it crosses over only after your opponent has replied (the
+    // marked piece is followed if they move it first).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.armed
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to win over",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "p" || t === "n";
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.armed) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.armed = true;
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || inst.state.sq == null) return;
+        if (move.capturedSquare === inst.state.sq && move.from !== inst.state.sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === inst.state.sq) inst.state.sq = move.to;
+        if (move.color !== api.opp) return;
+        const sq = inst.state.sq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") api.setPieceColor(sq, api.me);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? "the defector crosses over after your opponent's reply"
+          : "activate to choose an enemy piece",
+    },
   ),
   card(
     {
