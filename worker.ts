@@ -528,7 +528,11 @@ const houseSeeksKey = "hp:seeks";
 // handles are new hp_ ids, so re-run ensureHouseUsers to create their accounts
 // (rows, per-mode ratings, avatars, bios). Old accounts stay as-is.
 // v6: 2026-07 expansion — 300 new personas, legacy +300..400 rating uplift.
-const houseSeededKey = "hp:seeded:v6";
+// v7: the 300 expansion personas were renamed to natural chess-site handles
+// before the wave ever shipped. New names mean new hp_ ids: re-run
+// ensureHouseUsers to create the renamed accounts; the v6 accounts (if any
+// deployment seeded them) stay orphaned in the DB, harmless as ever.
+const houseSeededKey = "hp:seeded:v7";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -573,7 +577,10 @@ const houseSeededKey = "hp:seeded:v6";
 // users.avatar carries the new ids everywhere (lobby, TV, profiles).
 // identity-6: 2026-07 expansion — legacy +300..400 rating uplift circulated to
 // existing accounts, expansion-wave bios landed.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-6";
+// identity-7: the expansion-wave rename (see houseSeededKey v7). The renamed
+// personas carry new name-hashed avatars and the same index-based bios, so
+// circulate identity once more onto the freshly seeded accounts.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-7";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
