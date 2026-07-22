@@ -1082,27 +1082,31 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_soldiers",
       name: "Stone Soldiers",
-      description: "One of your pawns is carved into a stone soldier: it cannot move and cannot be captured for your opponent's next 6 turns, then the stone crumbles and it wakes.",
+      description: "Up to four of your pieces (never your king) are carved into stone soldiers: each cannot move and cannot be captured for your opponent's next 6 turns, then the stone crumbles and they wake.",
       tier: 4,
       category: "protection",
-      requires: ["p"],
       flavor: "Cut from the bedrock. Returned to it, standing.",
-      fx: { motif: "ward", pieces: ["p"], self: true },
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     activated(
       (_inst, api, picks) =>
-        picks.length > 0
+        picks.length >= 4
           ? null
           : {
               kind: "square",
-              label: "Choose the pawn to carve into stone",
-              squares: mySquares(api.board, api.me, "p"),
+              label: `Choose a piece to carve into stone (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
             },
       (_inst, api, picks) => {
-        const sq = picks[0]?.square;
-        if (sq == null) return;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 6 });
-        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 6, skin: "stone" });
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 6 });
+          addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 6, skin: "stone" });
+        }
       },
     ),
   ),
@@ -1220,13 +1224,57 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_lightning_bolt",
       name: "Lightning Bolt",
       description:
-        "One queen looses a bolt down a diagonal, removing the first enemy piece it hits (never a king) and landing beyond it, once.",
+        "One queen charges a bolt down a diagonal; after your opponent's next move it fires, removing the first enemy piece in its path (never a king) and landing beyond it, once.",
       tier: 4,
       category: "attack",
       requires: ["q"],
       flavor: "One target, struck clean.",
     },
-    lineSweep("q", DIAG_DIRS, 1),
+    // The largest count/range/duration is already one (a single capture, once),
+    // so the balance pass delays the strike: aim the bolt now, it fires after
+    // the opponent's next move down the diagonal you committed to.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed === true || picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the queen that charges the bolt",
+            squares: mySquares(api.board, api.me, "q").filter((sq) => boltDests(api, sq).length > 0),
+          };
+        }
+        return { kind: "square", label: "Choose where the bolt lands", squares: boltDests(api, picks[0].square!) };
+      },
+      effect: (inst, _api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null || inst.state.armed === true) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        const from = inst.state.from as Square, to = inst.state.to as Square;
+        if (from != null && to != null && from !== to) {
+          const df = Math.sign(FILE(to) - FILE(from)), dr = Math.sign(RANK(to) - RANK(from));
+          let f = FILE(from) + df, r = RANK(from) + dr;
+          while (inBoard(f, r)) {
+            const sq = SQ(f, r);
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+            if (sq === to) break;
+            f += df; r += dr;
+          }
+          if (api.board.pieces[from]?.color === api.me && !api.board.pieces[to]) api.relocate(from, to);
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "bolt fires after your opponent moves" : "activate to charge the bolt",
+    },
   ),
   card(
     {
@@ -1258,7 +1306,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_static_field",
       name: "Static Field",
       description:
-        "Static builds on anything that runs: for your opponent's next 3 turns, any enemy piece except the king that travels 3 or more squares in one move is grounded, frozen for 1 turn where it lands.",
+        "Static builds on anything that runs: for your opponent's next 3 turns, any enemy piece except the king that travels 3 or more squares in one move without capturing is grounded, frozen for 1 turn where it lands.",
       tier: 3,
       category: "tempo",
       flavor: "The faster you move, the harder it bites.",
@@ -1278,7 +1326,7 @@ export const WILD_ELEMENTAL: Buff[] = [
           Math.abs(FILE(move.to) - FILE(move.from)),
           Math.abs(RANK(move.to) - RANK(move.from)),
         );
-        if (dist >= 3 && move.piece !== "k") {
+        if (dist >= 3 && move.piece !== "k" && !move.captured) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp) {
             // Added during their own move, so the shared post-move tick eats
