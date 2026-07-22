@@ -15,7 +15,7 @@
    "dominatedCandidates": 48,
    "misleading": 1,
    "broken": 0,
-   "untested": 1328,
+   "untested": 1325,
    "noAnimation": 0
   },
   "reviewed": 0
@@ -7286,7 +7286,9 @@
    "signature": "pieces|activated|effect+targets|unstated|self|advance,knight,pawn,place,square",
    "animation": "generated",
    "location": "src/engine/buffs/wild/warfare.ts",
-   "tests": [],
+   "tests": [
+    "test-balance-fixes.ts"
+   ],
    "flags": [],
    "action": "pending-review"
   },
@@ -11439,7 +11441,9 @@
    "signature": "draft|instant|effect|unstated|self|draft",
    "animation": "canvas",
    "location": "src/engine/buffs/library.ts",
-   "tests": [],
+   "tests": [
+    "test-balance-fixes.ts"
+   ],
    "flags": [
     "duplicate-signature(draft_insight,heros_journey,north_star,favorable_stars,wa_greed,wa_high_roll)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
@@ -12120,7 +12124,9 @@
    "signature": "pieces|activated|effect+targets+onMove|6-turns|self|pull,queen,square,summon",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/fantasy/summons.ts",
-   "tests": [],
+   "tests": [
+    "test-balance-fixes.ts"
+   ],
    "flags": [],
    "action": "pending-review"
   },

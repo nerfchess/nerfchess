@@ -2,7 +2,7 @@
 
 Total cards: 1366. buffs 596, hexes 244, boons 132, items 18, apex 16, nerfs 360.
 
-Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 misleading, 0 broken, 1328 without direct test references, 0 without any animation.
+Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 misleading, 0 broken, 1325 without direct test references, 0 without any animation.
 
 | id | name | kind | tier | trigger | duration | targets | animation | location | tests | flags | action |
 |----|------|------|------|---------|----------|---------|-----------|----------|-------|-------|--------|
@@ -444,7 +444,7 @@ Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 mi
 | ww_flanking_knights | Flanking Knights | buff | 4 | passive | unstated | self | bespoke+canvas+passive | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
 | ww_forward_observer | Forward Observer | buff | 4 | passive | 2-turns | enemy | canvas+passive | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
 | ww_last_reserves | Last Reserves | buff | 4 | activated | one-shot | self | generated | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
-| ww_outriders | Outriders | buff | 4 | activated | unstated | self | generated | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
+| ww_outriders | Outriders | buff | 4 | activated | unstated | self | generated | src/engine/buffs/wild/warfare.ts | 1 | - | pending-review |
 | ww_recommission | Recommission | buff | 4 | activated/lingering | permanent | self | canvas | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
 | ww_reserve_cavalry | Reserve Cavalry | buff | 4 | passive | unstated | enemy | canvas+passive | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
 | ww_shieldbearers | Shieldbearers | buff | 4 | passive | permanent | self | canvas+passive | src/engine/buffs/wild/warfare.ts | 0 | - | pending-review |
@@ -697,7 +697,7 @@ Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 mi
 | roost_of_rocs | Roost of Rocs | buff | 7 | activated | unstated | board | bespoke+canvas | src/engine/buffs/fantasy/beasts.ts | 0 | - | pending-review |
 | ruin | Ruin | buff | 7 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | soul_harvest | Soul Harvest | buff | 7 | activated | one-shot | enemy | bespoke+canvas | src/engine/buffs/fantasy/necromancy.ts | 0 | - | pending-review |
-| sovereign_draft | Sovereign Draft | buff | 7 | instant | unstated | self | canvas | src/engine/buffs/library.ts | 0 | duplicate-signature(draft_insight,heros_journey,north_star,favorable_stars,wa_greed,wa_high_roll) dominated-candidate(higher-tier-of-duplicate-pair) | pending-review |
+| sovereign_draft | Sovereign Draft | buff | 7 | instant | unstated | self | canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(draft_insight,heros_journey,north_star,favorable_stars,wa_greed,wa_high_roll) dominated-candidate(higher-tier-of-duplicate-pair) | pending-review |
 | summon_dragon | Summon Dragon | buff | 7 | activated/lingering | unstated | enemy | bespoke+canvas | src/engine/buffs/fantasy/summons.ts | 0 | - | pending-review |
 | time_freeze | Time Freeze | buff | 7 | instant | next-turn | enemy | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | triple_amazon | Triple Amazon | buff | 7 | passive | unstated | self | bespoke+canvas+passive | src/engine/buffs/library.ts | 0 | - | pending-review |
@@ -738,7 +738,7 @@ Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 mi
 | phoenix_rebirth | Phoenix Rebirth | buff | 8 | instant | one-shot | self | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | queen_storm | Queen Storm | buff | 8 | instant | unstated | self | canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | reality_warp | Reality Warp | buff | 8 | activated | unstated | self | canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
-| summoning_circle | Summoning Circle | buff | 8 | activated/lingering | 6-turns | self | bespoke+canvas | src/engine/buffs/fantasy/summons.ts | 0 | - | pending-review |
+| summoning_circle | Summoning Circle | buff | 8 | activated/lingering | 6-turns | self | bespoke+canvas | src/engine/buffs/fantasy/summons.ts | 1 | - | pending-review |
 | sundering | Sundering | buff | 8 | activated | permanent | unstated | canvas | src/engine/buffs/library.ts | 0 | duplicate-signature(fissure) dominated-candidate(higher-tier-of-duplicate-pair) | pending-review |
 | time_lock | Time Lock | buff | 8 | instant | next-turn | enemy | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | time_prison | Time Prison | buff | 8 | passive | unstated | enemy | bespoke+canvas+passive | src/engine/buffs/library.ts | 0 | - | pending-review |
