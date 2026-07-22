@@ -2856,7 +2856,7 @@ const TIER6: Buff[] = [
       id: "chess_diff",
       name: "Chess Diff",
       description:
-        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
+        "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no cards, no powers of any kind. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
       tier: 6,
       category: "pieces",
       boon: true,
@@ -4019,11 +4019,14 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position with your nerf removed, once.", tier: 8, category: "pieces" },
+    { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position, once. Every lingering effect is washed away.", tier: 8, category: "pieces" },
     activatedSimple((_inst, api) => {
       const BACK: PieceType[] = ["r", "n", "b", "q", "k", "b", "n", "r"];
       // Whole-board rewrite: uncounted, or the fresh armies would register
-      // as 32 captures and corrupt every revive pool and nerf condition.
+      // as 32 captures and corrupt every revive pool.
+      // (Buff-mode purity overhaul: the old "your nerf removed" rider is gone.
+      // Genesis is buff-mode only, where there is no nerf to remove; the rider
+      // was dead text there and an undocumented legacy-mode kindness.)
       for (let sq = 0; sq < 64; sq++) api.removePiece(sq, { uncounted: true });
       for (let f = 0; f < 8; f++) {
         api.place(SQ(f, 0), BACK[f], "w");
@@ -4036,7 +4039,6 @@ const TIER8: Buff[] = [
       api.board.castling.bk = api.board.castling.bq = true;
       api.board.epTarget = null;
       api.board.halfmove = 0;
-      api.removeMyNerf();
     }),
   ),
   // Nerf-modifiers (cross-cutting)

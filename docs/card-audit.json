@@ -13,9 +13,9 @@
    "duplicateSignature": 126,
    "nearDuplicate": 49,
    "dominatedCandidates": 48,
-   "misleading": 2,
+   "misleading": 1,
    "broken": 0,
-   "untested": 1327,
+   "untested": 1328,
    "noAnimation": 0
   },
   "reviewed": 0
@@ -399,9 +399,7 @@
    "signature": "info|instant|effect|permanent|enemy|see",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "test-draft-fairness.ts"
-   ],
+   "tests": [],
    "flags": [],
    "action": "pending-review"
   },
@@ -1963,7 +1961,7 @@
    "name": "Chess Diff",
    "kind": "boon",
    "tier": 6,
-   "effect": "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no nerfs, no buffs. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
+   "effect": "Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no cards, no powers of any kind. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "board",
@@ -11934,19 +11932,17 @@
    "name": "Genesis",
    "kind": "buff",
    "tier": 8,
-   "effect": "Reset the entire board to the opening position with your nerf removed, once.",
+   "effect": "Reset the entire board to the opening position, once. Every lingering effect is washed away.",
    "trigger": "activated",
    "duration": "one-shot",
-   "targets": "self",
-   "signature": "pieces|activated|effect|one-shot|self|move,remove",
+   "targets": "board",
+   "signature": "pieces|activated|effect|one-shot|board|",
    "animation": "canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "sim-capture-accounting.ts"
    ],
-   "flags": [
-    "misleading(nerf-reference-in-buff-mode-card)"
-   ],
+   "flags": [],
    "action": "pending-review"
   },
   {

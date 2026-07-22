@@ -19,14 +19,23 @@ import { BoardState, Color, PieceType } from "./types";
 //   the shared roll for that round. It does not stack (cap +1).
 // ---------------------------------------------------------------------------
 
-// Info cards whose whole effect is reading the opponent's NERF. Buff mode has
-// no nerfs, so these are dead weight there and are filtered out of buff drafts.
-// (They stay in nerf mode: handicaps are still secret, so they still reveal
-// something real.) Watchtower left this set when it was reworked into a
-// knight ward; the former DEAD_REVEALS cards (Peek, Quick Glance, Draft
-// Insight, Foresight, Mind Read, Omniscience) rejoined the pools once each
-// was reworked into a live draft effect (see their defs in buffs/).
-const NERF_REVEAL = new Set(["extra_glance"]);
+// Cards whose TEXT or MECHANIC references the opponent's (or their own) NERF.
+// Buff mode has no nerfs (Core Requirement: buff mode must stand on its own,
+// with no dead nerf references in any visible text), so every one of these is
+// excluded from buff drafts. They are all boon-flagged and stay fully alive in
+// nerf mode, where the reference is real. extra_glance is the pure reveal; the
+// others are dual-effect cards whose nerf clause would be dead text in buff
+// mode (Phishing Email, Stream Sniper, Third Eye, Foresight, Omniscience, The
+// Long Truce's suspension rider). Enforced by scripts/test-buff-purity.ts.
+export const NERF_REVEAL = new Set([
+  "extra_glance",
+  "pr_phishing",
+  "stream_sniper",
+  "third_eye",
+  "wa_foresight",
+  "wa_omniscience",
+  "bw2_long_truce",
+]);
 
 // Draft cadence in own moves. Tuning guide: 5 creates faster chaos, 6 is the
 // slower arc, 7 slows it further and delays high-tier cards. Set to 5 so

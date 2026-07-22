@@ -2,7 +2,7 @@
 
 Total cards: 1366. buffs 596, hexes 244, boons 132, items 18, apex 16, nerfs 360.
 
-Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 2 misleading, 0 broken, 1327 without direct test references, 0 without any animation.
+Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 1 misleading, 0 broken, 1328 without direct test references, 0 without any animation.
 
 | id | name | kind | tier | trigger | duration | targets | animation | location | tests | flags | action |
 |----|------|------|------|---------|----------|---------|-----------|----------|-------|-------|--------|
@@ -28,7 +28,7 @@ Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 2 mi
 | bw3_first_blood | First Blood | boon | 1 | passive | unstated | enemy | passive | src/engine/buffs/boons3.ts | 0 | - | pending-review |
 | bw3_postern_gate | Postern Gate | boon | 1 | instant | unstated | self | generated | src/engine/buffs/boons3.ts | 0 | - | pending-review |
 | deep_breath | Deep Breath | boon | 1 | activated/free | unstated | self | generated | src/engine/buffs/library.ts | 0 | - | pending-review |
-| extra_glance | Extra Glance | boon | 1 | instant | permanent | enemy | generated | src/engine/buffs/library.ts | 1 | - | pending-review |
+| extra_glance | Extra Glance | boon | 1 | instant | permanent | enemy | generated | src/engine/buffs/library.ts | 0 | - | pending-review |
 | holy_hell | Holy Hell | boon | 1 | passive | permanent | self | passive | src/engine/buffs/crossref.ts | 0 | - | pending-review |
 | pawn_shield | Pawn Shield | boon | 1 | activated | 4-turns | enemy | generated | src/engine/buffs/library.ts | 0 | near-duplicate(reinforce:0.80) | pending-review |
 | peek | Peek | boon | 1 | instant | unstated | unstated | generated | src/engine/buffs/library.ts | 0 | duplicate-signature(wa_arcane_reroll) | pending-review |
@@ -727,7 +727,7 @@ Flags: 126 duplicate-signature, 49 near-duplicate, 48 dominated-candidates, 2 mi
 | eternal_freeze | Eternal Freeze | buff | 8 | instant | 3-turns | enemy | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | extinction | Extinction | buff | 8 | instant | unstated | enemy | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | full_resurrection | Full Resurrection | buff | 8 | instant | unstated | self | bespoke+canvas | src/engine/buffs/library.ts | 0 | near-duplicate(grand_resurrection:0.80) | pending-review |
-| genesis | Genesis | buff | 8 | activated | one-shot | self | canvas | src/engine/buffs/library.ts | 1 | misleading(nerf-reference-in-buff-mode-card) | pending-review |
+| genesis | Genesis | buff | 8 | activated | one-shot | board | canvas | src/engine/buffs/library.ts | 1 | - | pending-review |
 | grand_reset | Grand Reset | buff | 8 | instant | unstated | self | bespoke+canvas | src/engine/buffs/library.ts | 0 | - | pending-review |
 | heavens_wrath | Heaven's Wrath | buff | 8 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/fantasy/divine.ts | 0 | - | pending-review |
 | i_love_my_gf | I Love My GF | buff | 8 | activated/free | 3-turns | enemy | bespoke | src/engine/buffs/personal.ts | 0 | - | pending-review |

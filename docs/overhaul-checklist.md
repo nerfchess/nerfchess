@@ -31,7 +31,7 @@ This file is the cross-session source of truth for overhaul progress. Update sta
 | 1 | Persistent checklist + roster docs in repo | IN PROGRESS |
 | 2 | Audit matrix of all existing cards (docs/card-audit.md + scripts/audit-cards.ts) | TOOLING DONE (1366 rows; 126 dup-sig, 49 near-dup, 48 dominated-candidates, 2 misleading flagged). Per-card actions land via scripts/card-actions.json in Phase 8. |
 | 3 | Draft RNG fairness + seeded distribution tests | DONE (draft.ts weighting removed; scripts/test-draft-fairness.ts, npm run test:draft-fairness, 23 checks green; sims updated to fair expectations) |
-| 4 | Buff-mode Nerf-reference purge | TODO |
+| 4 | Buff-mode Nerf-reference purge | DONE (genesis reworked to pure reset; chess_diff + glossary text neutralized; 6 dual-effect nerf-text boons excluded from buff pool via NERF_REVEAL; gate: npm run test:buff-purity) |
 | 5 | Broken/silent card fixes + dev diagnostics | TODO |
 | 6 | Animation primitives expansion + gambling primitives | TODO |
 | 7 | Card laboratory (dev-only) | TODO |

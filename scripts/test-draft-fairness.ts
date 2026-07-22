@@ -21,7 +21,7 @@
 
 import { newBuffMatchState } from "../src/engine/buff";
 import type { DraftMode } from "../src/engine/buff";
-import { rollOffer, rerollOffer, COMBO_TAGS } from "../src/engine/draft";
+import { rollOffer, rerollOffer, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
 import { ALL_BUFFS, BUFF_BY_ID } from "../src/engine/buffs/library";
 import { FUNNY_CARDS } from "../src/engine/buffs/funny";
 import { FANTASY_CARDS } from "../src/engine/buffs/fantasy";
@@ -47,7 +47,7 @@ function eligible(mode: DraftMode, b: Buff): boolean {
   if (b.special || b.tier === 9 || b.tier === 10) return false;
   if (!b.implemented) return false;
   if (mode === "buff") {
-    return b.category !== "nerf" && b.category !== "hex" && b.id !== "extra_glance";
+    return b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id);
   }
   return isBoon(b) || b.category === "hex" || b.category === "item";
 }

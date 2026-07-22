@@ -238,7 +238,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     group: "Playing a card",
     def: "A tier-6 card that pauses the game and spawns a fresh, completely normal game of 1+0 chess; the winner seizes an apex card.",
     detail:
-      "While the diff runs there are no drafts, no nerfs, and no buffs, and the standard chess rules return, so you may not move into check, and the diff is decided by checkmate, stalemate, or its 1-minute clocks. Only the diff's winner is handed a guaranteed apex (tier 9) card; a drawn diff grants nobody anything. The paused board, effects, and clocks then resume exactly where they left off.",
+      "While the diff runs there are no drafts and no card effects of any kind, and the standard chess rules return, so you may not move into check, and the diff is decided by checkmate, stalemate, or its 1-minute clocks. Only the diff's winner is handed a guaranteed apex (tier 9) card; a drawn diff grants nobody anything. The paused board, effects, and clocks then resume exactly where they left off.",
     related: ["apex", "tier", "capture-the-king"],
   },
 
