@@ -94,14 +94,43 @@ export const HEXES_T8: Buff[] = [
     {
       id: "abdication_edict",
       name: "Abdication Edict",
-      description: "For your opponent's next 3 turns they may move only their king. Every other piece is stuck fast.",
+      description: "For your opponent's next turn they may move only their king. For the two turns after that, they may also move their single most valuable non-king piece, chosen fresh each turn; every other piece stays stuck fast.",
       flavor: "The crown rules alone, and the court simply stops answering.",
-      // Board already paints king_only; fx carried for consistency.
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const left = turnsLeft(inst);
+        if (left <= 0 || moves.length === 0) return moves;
+        // First of their three turns: only the king may move.
+        if (left >= 3) {
+          const kept = moves.filter((m) => m.piece === "k");
+          return kept.length > 0 ? kept : moves;
+        }
+        // Turns two and three: the king plus one non-king piece, picked
+        // deterministically as the most valuable non-king piece with a legal
+        // move (ties broken by lowest square) and re-picked every turn.
+        const VAL: Record<string, number> = { q: 5, r: 4, b: 3, n: 3, p: 1, k: 0 };
+        let bestFrom: number | null = null;
+        let bestVal = -1;
+        for (const m of moves) {
+          if (m.piece === "k") continue;
+          const v = VAL[m.piece] ?? 0;
+          if (bestFrom === null || v > bestVal || (v === bestVal && m.from < bestFrom)) {
+            bestVal = v;
+            bestFrom = m.from;
+          }
+        }
+        const kept = moves.filter((m) => m.piece === "k" || m.from === bestFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- freeze all, and the cold LINGERS in their limbs after the thaw ------
@@ -113,20 +142,38 @@ export const HEXES_T8: Buff[] = [
     {
       id: "absolute_zero",
       name: "Absolute Zero",
-      description: "Freeze all of your opponent's pieces except their king for 2 of their turns. The cold outlives the ice: for their next 2 turns after the thaw, every piece they move can only step a single square.",
+      description: "Freeze all of your opponent's pieces except their king and pawns for 2 of their turns. The cold outlives the ice: for their next 2 turns after the thaw, each of those pieces can only step a single square. Kings and pawns move freely throughout.",
       flavor: "The ice lets go long before the cold does.",
-      // Board already paints freezes; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-      }
-      // 4 of their turns total: the leash is moot for the 2 frozen turns
-      // (only the one-square king moves anyway), then bites for 2 more.
-      addEffect(api, { kind: "short_leash", owner: api.opp, turns: 4 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        for (const sq of mySquares(api.board, api.opp)) {
+          const t = api.board.pieces[sq]!.type;
+          if (t === "k" || t === "p") continue;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        }
+        // 4 of their turns total: the one-square leash is moot for the 2 frozen
+        // turns, then bites for 2 more. Kings and pawns are always exempt.
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter(
+          (m) =>
+            m.piece === "k" ||
+            m.piece === "p" ||
+            Math.max(
+              Math.abs(FILE(m.to) - FILE(m.from)),
+              Math.abs(RANK(m.to) - RANK(m.from)),
+            ) <= 1,
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- petrify all minors, and the forest GRABS whoever walks among them ----
@@ -138,7 +185,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, and the forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
+      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may make one move before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
       flavor: "The trees were cavalry once. They still take prisoners.",
       // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -147,13 +194,32 @@ export const HEXES_T8: Buff[] = [
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 4;
-        for (const sq of mySquares(api.board, api.opp)) {
+        const minors = mySquares(api.board, api.opp).filter((sq) => {
           const t = api.board.pieces[sq]!.type;
-          if (t !== "n" && t !== "b") continue;
+          return t === "n" || t === "b";
+        });
+        // The first affected minor (lowest square) is spared for now: it may
+        // make one move before it too petrifies. Every other minor stones over
+        // at once.
+        const escapee = minors.length > 0 ? minors[0] : null;
+        inst.state.escapeSq = escapee;
+        for (const sq of minors) {
+          if (sq === escapee) continue;
           addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
         }
       },
       onMovePlayed: (inst, move, api) => {
+        const escapeSq = inst.state.escapeSq as number | null | undefined;
+        if (escapeSq != null && move.color === api.opp) {
+          if (move.from === escapeSq) {
+            // The spared minor used its one escape move: it petrifies now on its
+            // new square, for the rest of the forest's duration.
+            inst.state.escapeSq = null;
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: turnsLeft(inst) });
+          } else if (move.capturedSquare === escapeSq || move.to === escapeSq) {
+            inst.state.escapeSq = null;
+          }
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0) {
           // Stone trees: active walnuts standing on enemy minors (they shuffle
           // at most a king-step, so the live effect list tracks them exactly).
@@ -188,7 +254,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only ever shuffle one square at a time. Its gaze lingers, so any enemy piece that ends a move next to the statue is frozen for 1 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only ever shuffle one square at a time. Its gaze lingers, so any enemy piece that ends a move next to the statue is frozen for 3 of their turns. Kings cannot be targeted.",
       flavor: "Meet its eyes once and you are a garden ornament, and so is anyone who comes to help.",
     },
     activated(
@@ -230,7 +296,7 @@ export const HEXES_T8: Buff[] = [
             return;
           }
           // One of their pieces ended its move beside the statue: the gaze
-          // freezes it. Added on their move, so 2 leaves 1 of their turns.
+          // freezes it. Added on their move, so 4 leaves 3 of their turns.
           if (move.color === api.opp && move.to !== sq) {
             const step = Math.max(
               Math.abs(FILE(move.to) - FILE(sq)),
@@ -238,7 +304,7 @@ export const HEXES_T8: Buff[] = [
             );
             const p = api.board.pieces[move.to];
             if (step === 1 && p && p.color === api.opp && p.type !== "k") {
-              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 4 });
             }
           }
         },

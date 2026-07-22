@@ -42,7 +42,6 @@ import {
   inHalf,
   instant,
   leapMoves,
-  lineSweep,
   mySquares,
   pawnRankOk,
   phasingSlideMoves,
@@ -50,7 +49,6 @@ import {
   relRank,
   relocateMany,
   removeEnemies,
-  reviveOne,
   revivable,
   shieldArmy,
   shieldZone,
@@ -1773,7 +1771,7 @@ export const WILD_ELEMENTAL: Buff[] = [
     // standing directly in front of one of yours is rooted (frozen) for 1 turn.
     instant((_inst, api) => {
       const pawns = mySquares(api.board, api.me, "p");
-      addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 2 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 1 });
       const fwd = api.me === "w" ? 1 : -1;
       for (const sq of pawns) {
         const f = FILE(sq), r = RANK(sq) + fwd;

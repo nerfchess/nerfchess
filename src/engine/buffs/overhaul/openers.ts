@@ -968,8 +968,12 @@ function deadLetter(entry: (typeof DEAD_LETTERS)[number]): Buff {
         },
         onMovePlayed: (inst, move, api) => {
           if (move.via !== inst.id) return;
+          // The opponent seal ticks on their turns (one reply, then it lifts).
+          // The self seal ticks on MY turns, and this capture move is one of
+          // them, so it needs turns:2 to survive this move and still bar me on
+          // my next turn (a turns:1 self seal would be pruned immediately).
           addEffect(api, { kind: "barred", squares: [move.to], against: api.opp, turns: 1 });
-          addEffect(api, { kind: "barred", squares: [move.to], against: api.me, turns: 1 });
+          addEffect(api, { kind: "barred", squares: [move.to], against: api.me, turns: 2 });
           inst.state.charges = 0;
           inst.spent = true;
         },
