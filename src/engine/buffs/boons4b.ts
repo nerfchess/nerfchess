@@ -498,12 +498,48 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_falconers_glove", name: "Falconer's Glove", tier: 5, category: "movement", icon: "Bird",
-      description: "Choose one of your knights: for the rest of the game it may also step one square in any direction (capturing allowed).",
+      description: "Choose one of your knights: for the rest of the game it may also step one square in any direction (capturing allowed). Each time it takes that step, it cannot move again on your next turn.",
       flavor: "It comes back to the fist. Usually with something.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
-    pieceBound("n", "Choose the knight that wears the glove", (board, sq, via) =>
-      leapMoves(board, sq, ALL_DIRS, via),
-    ),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the knight that wears the glove",
+              squares: mySquares(api.board, api.me, "n"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me) return;
+        addNovel(moves, leapMoves(api.board, sq, ALL_DIRS, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq != null && move.via === inst.id && move.from === sq && move.color === api.me) {
+          // The glove-step arrival is grounded next turn. Added inside this
+          // move's hook, so the immediate same-turn tick eats one: ask for 2
+          // to leave 1 (see leashRider / funny/tradeoffs short_leash timing).
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.me, turns: 2, skin: "stun" });
+        }
+        trackBoundPiece(inst, move, { dieOnPromote: true });
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to choose a knight"
+          : `bound to ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     { id: "bn4_ghost_walk", name: "Ghost Walk", tier: 4, category: "movement", icon: "Ghost",

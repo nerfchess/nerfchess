@@ -338,7 +338,7 @@ const FIRST_BLOOD: Array<OpenerMeta & { what: string; ride: (move: Move, api: Bu
   { id: "victory_lap", name: "Victory Lap", flavor: "Jog the perimeter, wave to the pawns.", icon: "Trophy", what: "the capturing piece cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "champions_shades", name: "Champion's Shades", flavor: "The forecast is 100 percent glare.", icon: "Glasses", what: "the capturing piece puts on sunglasses, purely cosmetically, forever", ride: (move, api) => pinCosmetic(api, move.to, api.me, "sunglasses", null) },
   { id: "stoppage_time", name: "Stoppage Time", flavor: "The referee checks his watch and shrugs generously.", icon: "Timer", what: "gain 4 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 4 }) },
-  { id: "coachs_whistle", name: "Coach's Whistle", flavor: "One sharp blast and the whole defense is on the tactics board.", icon: "Megaphone", what: "every currently undefended enemy piece flashes until your opponent replies", ride: (_move, api) => flashSquares(api, undefendedPieces(api.board, api.opp)) },
+  { id: "coachs_whistle", name: "Coach's Whistle", flavor: "One sharp blast and the whole defense is on the tactics board.", icon: "Megaphone", what: "every currently undefended enemy piece flashes until your opponent replies, and any temporary shield protecting one of them is removed", ride: (_move, api) => { const sqs = undefendedPieces(api.board, api.opp); flashSquares(api, sqs); stripTempShields(api, sqs, api.opp); } },
   { id: "transfer_window", name: "Transfer Window", flavor: "A vacancy opens on the roster. Scouts descend.", icon: "RefreshCw", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "opposition_research", name: "Opposition Research", flavor: "The captured piece had a very informative diary.", icon: "Search", what: "you learn the tier of your opponent's next draft offer", ride: (_move, api) => { api.mine.flags.seeOppTier = true; } },
   { id: "locker_room_nickname", name: "Locker Room Nickname", flavor: "Score once and the name sticks for the season.", icon: "Medal", what: "the capturing piece is named Champ, purely cosmetically, forever", ride: (move, api) => pinCosmetic(api, move.to, api.me, "nametag", null, "Champ") },
@@ -365,7 +365,7 @@ function firstBlood(entry: (typeof FIRST_BLOOD)[number]): Buff {
 const OVERTURES: Array<OpenerMeta & { what: string; ride: (move: Move, api: BuffApi) => void }> = [
   { id: "opening_chord", name: "Opening Chord", flavor: "The hall goes quiet. The clock does not, but it slows.", icon: "Music", what: "gain 3 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 3 }) },
   { id: "stage_armor", name: "Stage Armor", flavor: "Prop steel, real confidence.", icon: "Shield", what: "the piece that gave check cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
-  { id: "golden_aria", name: "Golden Aria", flavor: "Hit the high note, keep the costume.", icon: "Star", what: "the piece that gave check is gilded, purely cosmetically, forever", ride: (move, api) => pinCosmetic(api, move.to, api.me, "gilded", null) },
+  { id: "golden_aria", name: "Golden Aria", flavor: "Hit the high note, keep the costume.", icon: "Star", what: "the piece that gave check is gilded, purely cosmetically, forever, every enemy piece it can capture flashes until your opponent replies, and you gain 5 seconds", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); const caps = capturesFrom(api, move.to, api.opp); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "understudy_list", name: "Understudy List", flavor: "Know exactly who is covering the lead tonight.", icon: "Drama", what: "every enemy piece defending the enemy king's square flashes until your opponent replies", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) flashSquares(api, attackersOf(api.board, api.opp, k)); } },
   { id: "intermission", name: "Intermission", flavor: "Stretch your legs, revisit the merchandise stand.", icon: "Ticket", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "house_lights_up", name: "House Lights Up", flavor: "Suddenly everyone can see exactly where the exits are.", icon: "Lamp", what: "every square around the enemy king flashes until your opponent replies", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) flashSquares(api, ringAround(k)); } },
@@ -389,12 +389,20 @@ function overture(entry: (typeof OVERTURES)[number]): Buff {
 // FAMILY: Housewarmings. A tiny rider on the moment you castle. One use.
 // ---------------------------------------------------------------------------
 
-const HOUSEWARMINGS: Array<OpenerMeta & { what: string; ride: (move: Move, api: BuffApi) => void }> = [
+const HOUSEWARMINGS: Array<
+  OpenerMeta & {
+    what: string;
+    ride: (move: Move, api: BuffApi) => void;
+    /** If you have not castled by this many of your moves, convert the unused
+     * charge into one draft reroll instead. */
+    fallbackBy?: number;
+  }
+> = [
   { id: "housewarming_gift", name: "Housewarming Gift", flavor: "A small casserole of seconds, still warm.", icon: "Gift", what: "gain 4 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 4 }) },
   { id: "new_locks", name: "New Locks", flavor: "First night in the new place, deadbolt thrown.", icon: "Lock", what: "your king cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
-  { id: "gilded_doorknob", name: "Gilded Doorknob", flavor: "Purely decorative. Devastatingly tasteful.", icon: "KeyRound", what: "your king is gilded, purely cosmetically, forever", ride: (move, api) => pinCosmetic(api, move.to, api.me, "gilded", null) },
+  { id: "gilded_doorknob", name: "Gilded Doorknob", flavor: "Purely decorative. Devastatingly tasteful.", icon: "KeyRound", what: "your king is gilded, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "meet_the_neighbors", name: "Meet the Neighbors", flavor: "Know exactly which houses on the street keep siege engines.", icon: "Binoculars", what: "every enemy queen and rook flashes until your opponent replies", ride: (_move, api) => flashSquares(api, [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")]) },
-  { id: "change_of_address", name: "Change of Address", flavor: "The draft catalogue gets forwarded with a bonus stamp.", icon: "Mailbox", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
+  { id: "change_of_address", name: "Change of Address", flavor: "The draft catalogue gets forwarded with a bonus stamp.", icon: "Mailbox", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, fallbackBy: 12 },
   { id: "home_office", name: "Home Office", flavor: "The rook finally gets a desk by the king.", icon: "Briefcase", what: "the castled rook is named Home Office, purely cosmetically, forever", ride: (move, api) => { const rookSq = move.castle === "k" ? move.to - 1 : move.to + 1; pinCosmetic(api, rookSq, api.me, "nametag", null, "Home Office"); } },
 ];
 

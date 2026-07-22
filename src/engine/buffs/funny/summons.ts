@@ -39,6 +39,10 @@ function cavalryCharge(): Mech {
     ...base,
     effect: (inst, api, picks) => {
       base.effect?.(inst, api, picks);
+      // The charge is a pure function of the board (no dice, no jackpot roll),
+      // so there is nothing to reroll on the charge itself: hand the player a
+      // draft reroll instead. Smashing the first two enemies stays its ceiling.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       const to = picks[1]?.square;
       if (to == null) return;
       const knight = api.board.pieces[to];
@@ -216,7 +220,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "cavalry_charge",
       icon: "Rabbit",
       name: "Cavalry Charge",
-      description: "Charge a knight straight along a rank or file: it smashes the first two enemy pieces it hits (never kings), then rolls on to the far side of them, stopping before the next piece or the edge. Its landing shock shoves every enemy a knight's leap away one square back toward home. A friendly piece or enemy king stops the charge. Once.",
+      description: "Charge a knight straight along a rank or file: it smashes the first two enemy pieces it hits (never kings), then rolls on to the far side of them, stopping before the next piece or the edge. Its landing shock shoves every enemy a knight's leap away one square back toward home. A friendly piece or enemy king stops the charge. The outcome is fixed, no dice, so you also take a draft reroll. Once.",
       tier: 5,
       category: "attack",
       requires: ["n"],

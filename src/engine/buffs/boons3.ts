@@ -1009,7 +1009,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_second_face",
       name: "Second Face",
       description:
-        "It learns a second way to move: choose one of your bishops, and for the rest of the game it may also leap like a knight, keeping all of its bishop moves as well.",
+        "It learns a second way to move: choose one of your bishops, and for your opponent's next 4 turns it may also leap like a knight, keeping all of its bishop moves as well. The second face falls away early if your opponent spends a draft reroll.",
       tier: 6,
       category: "movement",
       icon: "Drama",
@@ -1017,9 +1017,55 @@ export const BOON_WAVE3: Buff[] = [
       requires: ["b"],
       fx: { motif: "empower", pieces: ["b"], moveAs: "n", self: true },
     },
-    pieceBound("b", "Choose the bishop that takes a second face", (board, sq, via) =>
-      leapMoves(board, sq, KNIGHT_LEAPS, via),
-    ),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation binds the bishop; from then on it is a timed passive.
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the bishop that takes a second face",
+              squares: mySquares(api.board, api.me, "b"),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+        inst.state.turns = 4; // four of the opponent's turns
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || inst.spent) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me) return;
+        addNovel(moves, leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        trackBoundPiece(inst, move, { dieOnPromote: true });
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || inst.spent) return;
+        // Ends early if the opponent spends a draft reroll (their count drops).
+        const snap = inst.state.oppRerolls as number | undefined;
+        if (snap != null && api.theirs.rerollsLeft < snap) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+        // Runs for four of the opponent's turns.
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a bishop";
+        return `bound to ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}, ${(inst.state.turns as number) ?? 4} of their turns left`;
+      },
+    },
   ),
 
   // A rescue relocation: gather any one piece to your king's side in a blink.
@@ -1177,6 +1223,9 @@ export const BOON_WAVE3: Buff[] = [
         api.relocate(rsq, rto);
         api.relocate(ks, kto);
         api.restoreCastling();
+        // The rook that just castled cannot move again on your next turn (the
+        // king is never frozen). turns:2 survives the activation's own tick.
+        addEffect(api, { kind: "freeze", sq: rto, owner: api.me, turns: 2 });
       },
     ),
   ),

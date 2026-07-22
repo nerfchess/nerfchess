@@ -88,6 +88,51 @@ export function opener(
   };
 }
 
+/** Like `augment`, but "use it or lose it": whenever a turn passes on which the
+ * granted move was on offer yet the owner played something else, one charge is
+ * forfeit (the engine only ever offers the move when it is legal, so a genuinely
+ * failed attempt cannot occur; this is the faithful stand-in). Charges are also
+ * spent normally when a tagged move is played. */
+function lossyAugment(
+  gen: Parameters<typeof augment>[0],
+  charges = 1,
+): Parameters<typeof card>[1] {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.charges = charges;
+    },
+    augmentMoves: (moves, inst, api) => {
+      if (((inst.state.charges as number) ?? 0) <= 0) return;
+      const extra = gen(moves, inst, api);
+      if (extra.length > 0) inst.state.armed = true;
+      addNovel(moves, extra);
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (((inst.state.charges as number) ?? 0) <= 0) return;
+      if (move.color !== api.me) return;
+      if (move.via === inst.id) {
+        const left = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = left;
+        inst.state.armed = false;
+        if (left <= 0) inst.spent = true;
+        return;
+      }
+      // A turn passed with the move on offer but unplayed: forfeit one charge.
+      if (inst.state.armed) {
+        const left = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = left;
+        inst.state.armed = false;
+        if (left <= 0) inst.spent = true;
+      }
+    },
+    status: (inst) => {
+      const c = (inst.state.charges as number) ?? charges;
+      return c > 0 ? `${c} attempt${c > 1 ? "s" : ""} left` : null;
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // FAMILY: File Scouts. One named pawn file gets a single free sideways step
 // (one-shot, empty destination). 8 entries, one per file, each with its own

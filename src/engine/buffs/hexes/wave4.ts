@@ -179,17 +179,29 @@ const T1: Buff[] = [
     ),
   ),
   H1(
-    { id: "hx4_dunce_detail", name: "Dunce Detail", description: "One of your opponent's knights or bishops, chosen at random, is sent to remedial training: it wears the dunce cap for 4 of their turns and is frozen for 1.", flavor: "Report to the little desk in the corner.", icon: "GraduationCap", fx: { motif: "jail", pieces: ["n", "b"] } },
-    instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp).filter((sq) => {
-        const t = api.board.pieces[sq]!.type;
-        return t === "n" || t === "b";
-      });
-      for (const sq of drawRandom(api, pool, 1)) {
-        dressUp(api, sq, "dunce", 4);
-        freezeNow(api, sq, 1, "stun");
-      }
-    }),
+    { id: "hx4_dunce_detail", name: "Dunce Detail", description: "After your opponent's next move, one of their knights or bishops, chosen at random, is sent to remedial training: it wears the dunce cap for 4 of their turns and is frozen for 1.", flavor: "Report to the little desk in the corner.", icon: "GraduationCap", fx: { motif: "jail", pieces: ["n", "b"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          const pool = mySquares(api.board, api.opp).filter((sq) => {
+            const t = api.board.pieces[sq]!.type;
+            return t === "n" || t === "b";
+          });
+          for (const sq of drawRandom(api, pool, 1)) {
+            dressUp(api, sq, "dunce", 5);
+            sting(api, sq, 1, "stun");
+          }
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the summons is in the post" : null),
+    },
   ),
   H1(
     { id: "hx4_heavy_pockets", name: "Heavy Pockets", description: "For your opponent's next 3 turns, their pawns cannot make two square advances. Single steps only.", flavor: "Someone filled their coats with gravel.", icon: "Weight", fx: { motif: "slow", pieces: ["p"] } },
@@ -271,8 +283,29 @@ const T1: Buff[] = [
     }),
   ),
   H1(
-    { id: "hx4_cold_porridge", name: "Cold Porridge", description: "For your opponent's next 4 turns, the infantry refuses breakfast every other morning: on the 1st and 3rd of those turns their pawns cannot move.", flavor: "An army marches on its stomach, alternately.", icon: "Soup", fx: { motif: "slow", pieces: ["p"] } },
-    cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => m.piece !== "p")),
+    { id: "hx4_cold_porridge", name: "Cold Porridge", description: "Starting after your opponent's next move, for their following 4 turns the infantry refuses breakfast every other morning: on the 1st and 3rd of those turns their pawns cannot move.", flavor: "An army marches on its stomach, alternately.", icon: "Soup", fx: { motif: "slow", pieces: ["p"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.delay = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if ((inst.state.delay as number) > 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if ((4 - turnsLeft(inst)) % 2 !== 0) return moves;
+        const kept = moves.filter((m) => m.piece !== "p");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H1(
     { id: "hx4_slow_clap", name: "Slow Clap", description: "For your opponent's next 6 turns, castling draws sarcastic applause: if they castle in that window, on their following turn they may only move a pawn or their king.", flavor: "Bravo. Truly. A door, closed.", icon: "Hand", fx: { motif: "slow" } },
@@ -411,14 +444,26 @@ const T1: Buff[] = [
     ),
   ),
   H1(
-    { id: "hx4_court_jester", name: "Court Jester", description: "One of your opponent's pieces, chosen at random (never the king), is appointed court jester: it wears the hat for 5 of their turns and, mid bow, is frozen for 1.", flavor: "The bells are load bearing.", icon: "Sparkles", fx: { motif: "jail" } },
-    instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
-      for (const sq of drawRandom(api, pool, 1)) {
-        dressUp(api, sq, "hat", 5);
-        freezeNow(api, sq, 1, "charm");
-      }
-    }),
+    { id: "hx4_court_jester", name: "Court Jester", description: "After your opponent's next move, one of their pieces, chosen at random (never the king), is appointed court jester: it wears the hat for 5 of their turns and, mid bow, is frozen for 1.", flavor: "The bells are load bearing.", icon: "Sparkles", fx: { motif: "jail" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
+          for (const sq of drawRandom(api, pool, 1)) {
+            dressUp(api, sq, "hat", 6);
+            sting(api, sq, 1, "charm");
+          }
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the jester waits in the wings" : null),
+    },
   ),
   H1(
     { id: "hx4_early_frost", name: "Early Frost", description: "Your opponent's pawns cannot advance on their next turn. Diagonal captures still work. The first pawn to try advancing slips through as one escape, then the restriction holds.", flavor: "The furrows froze overnight.", icon: "Leaf", fx: { motif: "anchor", pieces: ["p"] } },
