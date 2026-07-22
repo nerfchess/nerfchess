@@ -48,10 +48,14 @@ export async function GET() {
     .all<TournamentDbRow>();
 
   const now = Date.now();
-  const tournaments: TournamentListRow[] = rows.results.map((row) => ({
-    ...row,
-    phase: tournamentPhase(row.starts_at, row.duration_min, now),
-  }));
+  // Hide staff testing events ("test"/"testing" in the name) from the public
+  // directory; the rows stay in the DB for the people running them.
+  const tournaments: TournamentListRow[] = rows.results
+    .filter((row) => !/\btest(ing)?\b/i.test(row.name))
+    .map((row) => ({
+      ...row,
+      phase: tournamentPhase(row.starts_at, row.duration_min, now),
+    }));
   return NextResponse.json({ tournaments });
 }
 

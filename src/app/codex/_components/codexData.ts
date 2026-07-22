@@ -34,6 +34,15 @@ export const LIBRARY_NOUN: Record<Library, string> = {
   boons: "boon",
 };
 
+// Proper plural forms ("hex" pluralizes to "hexes", not "hexs"), used anywhere
+// the browser talks about the family in the plural.
+export const LIBRARY_NOUN_PLURAL: Record<Library, string> = {
+  buffs: "buffs",
+  rules: "nerfs",
+  hexes: "hexes",
+  boons: "boons",
+};
+
 // A behaviour filter only makes sense for the buff families: nerfs are always
 // passive and secret, so the rules tab hides it. Values mirror Buff.kind.
 export type Behaviour = "all" | "passive" | "instant" | "activated";

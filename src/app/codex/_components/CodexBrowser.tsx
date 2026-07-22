@@ -23,7 +23,7 @@ import { CodexRow } from "./CodexRow";
 import { ExpandedCard } from "./ExpandedCard";
 import {
   DEFAULT_TAB,
-  LIBRARY_NOUN,
+  LIBRARY_NOUN_PLURAL,
   LIBRARY_TABS,
   TAB_LABEL,
   entryPath,
@@ -240,8 +240,7 @@ export function CodexBrowser() {
     copyTimer.current = setTimeout(() => setCopiedId(null), 1600);
   }, []);
 
-  const noun = LIBRARY_NOUN[tab];
-  const nounPlural = `${noun}s`;
+  const nounPlural = LIBRARY_NOUN_PLURAL[tab];
   const totalCount = currentSource.length;
   const shownCount = entries.length;
   const active = hasActiveFilters(filters) || behaviour !== "all";
@@ -300,12 +299,12 @@ export function CodexBrowser() {
           </div>
 
           <label className="relative mt-3 block">
-            <span className="sr-only">{`Search the ${nounPlural}`}</span>
+            <span className="sr-only">{`Search ${nounPlural}`}</span>
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-parchment-400" />
             <input
               value={filters.search}
               onChange={(e) => patch({ search: e.target.value })}
-              placeholder={`Search the ${nounPlural} by name or effect`}
+              placeholder={`Search ${nounPlural} by name or effect`}
               className="w-full rounded-sm border border-[color:var(--edge)] bg-ink-900/70 py-2.5 pl-9 pr-9 text-[14px] font-body text-parchment placeholder:text-parchment-400/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
             />
             {filters.search && (

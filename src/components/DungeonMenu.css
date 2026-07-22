@@ -151,9 +151,12 @@
 
 /* --- Items ----------------------------------------------------------------------- */
 /* Each destination flickers alight as the slab lands: a tiny staggered rise
-   (--i set inline). Kept fast so the menu never feels slow to open. */
+   (--i set inline, cumulative across groups). Kept fast so the menu never
+   feels slow to open. `backwards` (not `both`) so the resting state is the
+   natural fully-visible style — if the animation never runs (paused,
+   suppressed), items still end up visible instead of stuck at opacity 0. */
 .dgn-menu__item {
-  animation: dgn-item-in 0.3s ease-out both;
+  animation: dgn-item-in 0.3s ease-out backwards;
   animation-delay: calc(60ms + var(--i, 0) * 22ms);
 }
 @keyframes dgn-item-in {

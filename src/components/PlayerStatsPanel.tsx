@@ -111,12 +111,29 @@ function ExtremeCard({
   title,
   point,
   valueClass,
+  floor,
 }: {
   title: string;
   point: { rating: number; at: number; gameId: string } | null;
   valueClass: string;
+  /** Authoritative maintained value (user_ratings.peak) the displayed number
+   *  must never fall below. The games scan behind `point` can miss the true
+   *  peak (archive truncation, games outside the window), so when the floor is
+   *  higher we show it and keep the scanned game as "when it happened" context. */
+  floor?: number | null;
 }) {
+  const floorValue = floor != null && floor > 0 ? floor : null;
   if (!point) {
+    if (floorValue != null) {
+      return (
+        <div className="plate p-4">
+          <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+          <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>
+            {Math.round(floorValue)}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="plate p-4">
         <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
@@ -124,6 +141,7 @@ function ExtremeCard({
       </div>
     );
   }
+  const shown = floorValue != null ? Math.max(point.rating, floorValue) : point.rating;
   return (
     <Link
       href={`/game/${point.gameId}`}
@@ -131,13 +149,26 @@ function ExtremeCard({
       className="plate block p-4 no-underline transition-colors hover:border-gold/40"
     >
       <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
-      <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>{Math.round(point.rating)}</div>
-      <div className="mt-0.5 text-xs text-parchment-400">{formatDate(point.at)}</div>
+      <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>{Math.round(shown)}</div>
+      <div className="mt-0.5 text-xs text-parchment-400">
+        {shown > point.rating
+          ? `Best on record: ${Math.round(point.rating)} · ${formatDate(point.at)}`
+          : formatDate(point.at)}
+      </div>
     </Link>
   );
 }
 
-export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
+export function PlayerStatsPanel({
+  stats,
+  peakRating,
+}: {
+  stats: PlayerStats;
+  /** Highest maintained rating across the player's live mode buckets
+   *  (max of user_ratings.peak), when the caller has it. Guards the
+   *  "Highest rating" card against the games-scan undercounting. */
+  peakRating?: number | null;
+}) {
   const decided = stats.wins + stats.draws + stats.losses;
 
   if (stats.totalGames === 0) {
@@ -185,7 +216,12 @@ export function PlayerStatsPanel({ stats }: { stats: PlayerStats }) {
 
       {/* Rating extremes, each linking to the game that set it. */}
       <div className="grid gap-3 sm:grid-cols-2">
-        <ExtremeCard title="Highest rating" point={stats.highest} valueClass="text-gold-leaf" />
+        <ExtremeCard
+          title="Highest rating"
+          point={stats.highest}
+          valueClass="text-gold-leaf"
+          floor={peakRating}
+        />
         <ExtremeCard title="Lowest rating" point={stats.lowest} valueClass="text-parchment-200" />
       </div>
 

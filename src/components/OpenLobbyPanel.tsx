@@ -51,7 +51,7 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
     <section className={"plate energy-edge p-3 " + className} aria-label="Open lobby">
       <div className="flex items-center justify-between gap-2">
         <span className="rune-badge" style={{ ["--badge-rgb" as string]: "244 196 48" }}>
-          Open lobby
+          Open Lobby
         </span>
         {online !== null && (
           <span className="text-[12px] text-parchment-400">

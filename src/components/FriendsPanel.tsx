@@ -65,21 +65,28 @@ export function FriendsPanel() {
   const load = useCallback(async () => {
     setLoadFailed(false);
     try {
-      const res = await fetch("/api/friends");
+      // Every outcome below ends in exactly one of signed-out / failed /
+      // loaded. The timeout maps a hung request (proxy blackhole, stalled
+      // connection) to the failure state instead of an endless skeleton.
+      const res = await fetch("/api/friends", { signal: AbortSignal.timeout(10_000) });
       if (res.status === 401) {
         setSignedIn(false);
         return;
       }
-      if (res.ok) {
-        setSignedIn(true);
-        setData((await res.json()) as FriendsData);
+      if (!res.ok) {
+        // Non-401 error (e.g. 5xx) on the initial load: surface a retry
+        // instead of leaving signedIn undefined (an endless skeleton).
+        setLoadFailed(true);
         return;
       }
-      // Non-401 error (e.g. 5xx) on the initial load: surface a retry instead
-      // of leaving signedIn undefined (which would render an endless skeleton).
-      setLoadFailed(true);
+      // Parse before flipping signedIn, so a truncated/invalid body lands in
+      // the failure state rather than "signed in with no data".
+      const body = (await res.json()) as FriendsData;
+      setSignedIn(true);
+      setData(body);
     } catch {
-      // Offline: keep any last snapshot, but if we have none yet, show a retry.
+      // Offline / timeout / bad body: keep any last snapshot, but if we have
+      // none yet, show a retry.
       setLoadFailed(true);
     }
   }, []);

@@ -29,6 +29,7 @@ export function ClockPill({
   compact = false,
   startDelayMs = 0,
   warnLowTime = false,
+  draftRunning = false,
 }: {
   ms: number;
   active: boolean;
@@ -38,6 +39,10 @@ export function ClockPill({
   // as it ticks past 10s, and an urgent tick past 5s. Fires once per crossing
   // and re-arms only if time climbs back above the threshold (increment).
   warnLowTime?: boolean;
+  // An unresolved draft is charging this clock (the free pick window ended):
+  // a small DRAFT tag rides inside the pill so the reason the clock is
+  // running is visible right where the player watches the time.
+  draftRunning?: boolean;
 }) {
   const [displayMs, setDisplayMs] = useState(ms);
   const lowFiredRef = useRef(false);
@@ -132,6 +137,18 @@ export function ClockPill({
       >
         {formatClock(displayMs)}
       </span>
+      {draftRunning && (
+        <span
+          title="Your draft is unresolved and this clock is running"
+          aria-label="Draft unresolved: this clock is running"
+          className={
+            "smallcaps shrink-0 border border-oxblood-glow/60 bg-oxblood/20 font-display font-bold tracking-wide text-oxblood-glow animate-flicker " +
+            (compact ? "ml-1.5 px-1 text-[9px]" : "ml-2 px-1.5 text-[11px]")
+          }
+        >
+          Draft
+        </span>
+      )}
       {active && graceMs > 0 && (
         <span
           role="timer"

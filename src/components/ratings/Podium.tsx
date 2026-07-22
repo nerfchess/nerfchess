@@ -18,6 +18,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { LaurelBadge } from "@/components/LaurelBadge";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
+import { censorText } from "@/lib/profanity";
 import type { RatingCategoryId } from "@/lib/ratingCategories";
 
 export interface PodiumRow {
@@ -62,7 +63,7 @@ const MEDALS: Record<
     epithet: "Champion",
     avatar: 72,
     avatarNarrow: 52,
-    riser: "min-h-14 sm:min-h-20 md:min-h-24",
+    riser: "sm:min-h-12 md:min-h-14",
     wash: "bg-sun/[0.08]",
     motes: 7,
     beamA: 0.16,
@@ -75,7 +76,7 @@ const MEDALS: Record<
     epithet: "Runner-up",
     avatar: 56,
     avatarNarrow: 42,
-    riser: "min-h-8 sm:min-h-12",
+    riser: "sm:min-h-9",
     wash: "bg-white/[0.03]",
     motes: 3,
     beamA: 0.1,
@@ -88,7 +89,7 @@ const MEDALS: Record<
     epithet: "Third place",
     avatar: 56,
     avatarNarrow: 42,
-    riser: "min-h-6 sm:min-h-9",
+    riser: "sm:min-h-7",
     wash: "bg-white/[0.02]",
     motes: 2,
     beamA: 0.09,
@@ -267,6 +268,10 @@ export function Podium({
           const champion = rank === 1;
           const mine = !!isMe && !row.guest && isMe(row.username);
           const avatarSize = narrow ? medal.avatarNarrow : medal.avatar;
+          // Display-time defense: bios are censored at write time, but run
+          // them through the shared filter again so any pre-existing rows
+          // that slipped past still render clean on the podium.
+          const bio = row.bio ? censorText(row.bio).trim() : "";
 
           const card = (
             <div
@@ -404,27 +409,25 @@ export function Podium({
               <span aria-hidden="true" className="relative z-[1] -mb-3 mt-1.5">
                 <CeremonyBouquet petals={medal.petals} size={narrow ? 30 : 40} />
               </span>
-              {/* The dais riser: a carved stone block, tallest under the
-                  champion so the center rides high when the three align at
-                  their base (row layout only). It carries the player's bio
-                  when they have one. */}
-              <span
-                className={
-                  "mt-3 flex w-full items-start justify-center rounded-t-sm border-x border-t border-white/5 bg-gradient-to-b from-white/[0.04] via-white/[0.015] to-black/25 px-2 py-1.5 " +
-                  medal.riser
-                }
-                style={{
-                  boxShadow: "inset 0 1px 0 " + medal.metal + "1f, inset 0 -10px 16px -12px rgba(0,0,0,0.6)",
-                }}
-              >
-                {row.bio ? (
-                  // Bios only fit from `sm` up; on phones the riser stays as a
-                  // clean stone step so the columns keep the dais silhouette.
-                  <span className="hidden max-w-full text-[12px] leading-snug text-parchment-400 sm:line-clamp-3">
-                    {row.bio}
+              {/* The dais riser: a carved stone block carrying the player's
+                  bio. Bios only fit from `sm` up, so the riser renders only
+                  when there is a bio to show and only at those widths —
+                  otherwise it would just be an empty grey slab. */}
+              {bio ? (
+                <span
+                  className={
+                    "mt-3 hidden w-full items-start justify-center rounded-t-sm border-x border-t border-white/5 bg-gradient-to-b from-white/[0.04] via-white/[0.015] to-black/25 px-2 py-1.5 sm:flex " +
+                    medal.riser
+                  }
+                  style={{
+                    boxShadow: "inset 0 1px 0 " + medal.metal + "1f, inset 0 -10px 16px -12px rgba(0,0,0,0.6)",
+                  }}
+                >
+                  <span className="max-w-full text-[12px] leading-snug text-parchment-400 line-clamp-3">
+                    {bio}
                   </span>
-                ) : null}
-              </span>
+                </span>
+              ) : null}
             </div>
           );
 

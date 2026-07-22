@@ -67,14 +67,17 @@ export function SettingsBootstrap() {
 }
 
 // How LagWatch decides the device is struggling: rolling 4-second windows of
-// requestAnimationFrame gaps; a window is "bad" when more than a third of its
-// wall time is spent inside slow frames (a gap over 34ms means the device
-// dipped under ~30fps). Three bad windows in a row (~12s of sustained jank,
-// never a single hitch) trips the notice.
+// requestAnimationFrame gaps; a window is "bad" when nearly half of its wall
+// time is spent inside slow frames (a gap over 34ms means the device dipped
+// under ~30fps). Five bad windows in a row (~20s of sustained jank, never a
+// single hitch) trip the notice, and the first two windows after load are
+// discarded outright — page-load warm-up (hydration, JIT, asset decode) janks
+// every device for a few seconds and says nothing about steady-state pacing.
 const LAG_WINDOW_MS = 4000;
 const LAG_SLOW_FRAME_MS = 34;
-const LAG_BAD_RATIO = 0.34;
-const LAG_BAD_WINDOWS = 3;
+const LAG_BAD_RATIO = 0.45;
+const LAG_BAD_WINDOWS = 5;
+const LAG_WARMUP_WINDOWS = 2;
 const LAG_NOTICE_KEY = "dc:lag-notice"; // "dismissed" | "applied"
 
 /** Watches real frame pacing and, on sustained jank, offers performance mode
@@ -96,6 +99,7 @@ function LagWatch() {
     let windowStart = last;
     let slowMs = 0;
     let badWindows = 0;
+    let windowsSeen = 0;
     const tick = (now: number) => {
       const gap = now - last;
       last = now;
@@ -107,7 +111,12 @@ function LagWatch() {
       } else {
         if (gap > LAG_SLOW_FRAME_MS) slowMs += gap;
         if (now - windowStart >= LAG_WINDOW_MS) {
-          const bad = slowMs / (now - windowStart) > LAG_BAD_RATIO;
+          windowsSeen += 1;
+          // Warm-up windows never count: the first seconds after load jank
+          // everywhere (hydration, JIT, decoding) and would trip this on
+          // perfectly healthy desktops.
+          const bad =
+            windowsSeen > LAG_WARMUP_WINDOWS && slowMs / (now - windowStart) > LAG_BAD_RATIO;
           badWindows = bad ? badWindows + 1 : 0;
           windowStart = now;
           slowMs = 0;
@@ -138,8 +147,9 @@ function LagWatch() {
     >
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
-        This device looks like it&apos;s struggling to keep up. Performance mode keeps every
-        animation but trims the heaviest effects, and you can change it any time in Settings.
+        This device looks like it&apos;s struggling to keep up. Smooth it out turns on
+        performance mode (trims the heaviest effects) and sets move animations to fast. You can
+        change both anytime in Settings.
       </p>
       <div className="mt-2 flex justify-end gap-2">
         <button

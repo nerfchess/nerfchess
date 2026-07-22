@@ -4,7 +4,7 @@ import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { playDraftChime } from "@/lib/sounds";
+import { playDraftChime, playDraftUrgent } from "@/lib/sounds";
 import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
@@ -550,6 +550,64 @@ export function DraftOverlay({
     } catch {}
   };
 
+  // FREE WINDOW EXPIRY: the moment `minimized` flips on (the parent detected
+  // the free pick window ending), the draft must re-announce itself even if
+  // the player had hidden it — a hidden draft with the clock silently running
+  // was very easy to miss. On that transition we force the panel back open
+  // (clearing both `hidden` and `tucked`), pulse it, and play a distinct
+  // "time's up" sound. If a piece drag is mid-flight (Board advertises it via
+  // body[data-board-drag]), a sticky warning shows instead and the reopen
+  // lands the instant the drag does.
+  const [justExpired, setJustExpired] = useState(false);
+  const [reopenHold, setReopenHold] = useState(false);
+  const [expiryBeat, setExpiryBeat] = useState(0);
+  // Detect the minimized flip with the render-time adjust pattern (same as
+  // the offer reset above): the state updates land in the same render pass,
+  // and the sound rides a separate beat-keyed effect below.
+  const [prevMinimized, setPrevMinimized] = useState(minimized);
+  if (prevMinimized !== minimized) {
+    setPrevMinimized(minimized);
+    if (!minimized) {
+      setJustExpired(false);
+      setReopenHold(false);
+    } else if (!committed && chosen == null && !banking) {
+      setExpiryBeat((b) => b + 1);
+    }
+  }
+  // Each expiry edge: play the distinct "time's up" voice, then force the
+  // panel back open. All state writes happen inside timer callbacks (never
+  // the effect body). If a piece drag is mid-flight (Board advertises it via
+  // body[data-board-drag]) the sticky warning shows instead, and the reopen
+  // lands the moment the drag does — capped at 6s so a drag that dies without
+  // clearing (tab switch mid-drag) can never hold the reopen hostage.
+  useEffect(() => {
+    if (expiryBeat === 0) return;
+    playDraftUrgent();
+    const finish = () => {
+      window.clearInterval(poll);
+      window.clearTimeout(cap);
+      setReopenHold(false);
+      setHidden(false);
+      setTucked(false);
+      setJustExpired(true);
+    };
+    const poll = window.setInterval(() => {
+      if (document.body.dataset.boardDrag) setReopenHold(true);
+      else finish();
+    }, 120);
+    const cap = window.setTimeout(finish, 6000);
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(cap);
+    };
+  }, [expiryBeat]);
+  // The expiry pulse is a short one-shot; let the panel settle afterwards.
+  useEffect(() => {
+    if (!justExpired) return;
+    const id = window.setTimeout(() => setJustExpired(false), 3200);
+    return () => window.clearTimeout(id);
+  }, [justExpired]);
+
   // Once the player MANUALLY re-opens the tucked chip we keep this offer's panel
   // open. Without it, re-opening re-armed the auto-tuck and the panel minimized
   // itself again 5s later, so every open snapped shut on the player ("keeps on
@@ -818,6 +876,24 @@ export function DraftOverlay({
       }
       selectCard(i, at);
     };
+    // A piece drag was mid-flight when the free window expired: hold the
+    // forced reopen so the panel doesn't materialize under the pointer, and
+    // say so loudly — the clock IS running. The reopen fires the instant the
+    // drag lands (see the expiry effect above).
+    if (reopenHold && !settled) {
+      return (
+        <div role="alert" className="fixed inset-x-0 top-14 z-50 flex justify-center px-3">
+          <div className="plate plate-raised border-2 border-oxblood-glow/70 bg-ink-900/95 px-4 py-2.5 text-center shadow-plate">
+            <span className="block font-display text-sm font-bold text-oxblood-glow">
+              Free pick time ended. Your clock is now running.
+            </span>
+            <span className="block text-[11px] text-parchment-300">
+              The draft reopens as soon as you finish this move.
+            </span>
+          </div>
+        </div>
+      );
+    }
     // Tucked: the panel has stepped aside to a slim chip so it does not sit on
     // the board forever. It stays one tap from the cards (click re-opens) and a
     // new offer / reroll re-shows it automatically (deal effect clears tucked).
@@ -871,7 +947,12 @@ export function DraftOverlay({
           initial={dragging ? false : { opacity: 0, x: 80, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="plate plate-raised border-gold/40 p-3 shadow-plate"
+          className={
+            "plate plate-raised border-gold/40 p-3 shadow-plate" +
+            // Expiry announcement: a brief oxblood pulse so the forced reopen
+            // reads as "this needs you NOW", then the panel settles.
+            (justExpired ? " draft-expire-pulse" : "")
+          }
         >
           {/* Drag handle: grab the header (mouse or touch) to move the panel so
               it never covers the clock. touch-none stops the page scrolling
@@ -904,8 +985,11 @@ export function DraftOverlay({
           </div>
           {/* Why the draft moved: the free window ended, so it collapsed here
               rather than covering the board, and time now costs the player. */}
-          <p className="text-[11px] leading-snug text-parchment-400">
-            The free pick window ended. Your draft moved here and further thinking runs on your clock.
+          <p className="text-[12px] font-semibold leading-snug text-oxblood-glow">
+            Free pick time ended. Your clock is now running.
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-parchment-400">
+            Your draft moved here; further thinking costs your own time.
           </p>
           {takeBoth && (
             <p className="mt-1 text-[12px] font-semibold leading-snug text-gold-leaf">
@@ -1367,9 +1451,11 @@ export function DraftOverlay({
                       {
                         opacity: selected != null && selected !== i ? 0.55 : 1,
                         x: 0,
-                        y: selected === i ? -3 : 0,
+                        // The selected card rises a touch further and swells
+                        // slightly: a clear raised state without a redesign.
+                        y: selected === i ? -7 : 0,
                         rotate: 0,
-                        scale: 1,
+                        scale: selected === i ? 1.02 : 1,
                       }
                 }
                 transition={
@@ -1434,6 +1520,16 @@ export function DraftOverlay({
                 }}
               >
                 <span aria-hidden className="draft-fx__glow" />
+                {/* Selection seal: an unmistakable gold check on the selected
+                    card, over and above the brighter border, so "which card
+                    am I about to confirm" never needs a second look. */}
+                {selected === i && chosen == null && !banking && (
+                  <span aria-hidden className="draft-sel-check">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </span>
+                )}
                 {/* 3D flip: the back faces the viewer while dealing, then the
                     wrapper rotates to reveal the face (higher tier flips a
                     touch later). Banking rotates it face-down again. */}
@@ -1515,7 +1611,12 @@ export function DraftOverlay({
           <button
             onClick={confirmSelection}
             disabled={selected == null || chosen != null || banking}
-            className="btn-glass btn-glass--primary w-full touch-manipulation px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto"
+            className={
+              "btn-glass btn-glass--primary w-full touch-manipulation px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto" +
+              // With a card selected the commit is THE action: it picks up a
+              // gold ready-glow so it clearly outranks Reroll / Skip & bank.
+              (selected != null && chosen == null && !banking ? " draft-confirm-ready" : "")
+            }
           >
             {/* The commit names the selected card ("Confirm Holy Hell") so
                 the player always knows exactly what they are locking in. */}

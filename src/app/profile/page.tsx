@@ -196,7 +196,15 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
             <h2 className="font-display text-2xl">Statistics</h2>
             <div className="mt-3">
               {stats ? (
-                <PlayerStatsPanel stats={stats} />
+                <PlayerStatsPanel
+                  stats={stats}
+                  // Highest maintained peak across the live mode buckets, so
+                  // the "Highest rating" card never undercuts user_ratings.peak.
+                  peakRating={MODE_RATING_CATEGORIES.reduce<number | null>((max, c) => {
+                    const peak = ratings?.[c.id]?.peak;
+                    return peak != null && peak > (max ?? 0) ? peak : max;
+                  }, null)}
+                />
               ) : (
                 <div className="plate p-4 text-sm text-parchment-300">
                   No online games recorded yet. Win your first game and the numbers start here.
@@ -221,25 +229,25 @@ function GuestProfileSkeleton() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
       <div className="plate p-4">
-        <div className="skeleton h-5 w-2/3 rounded-[10px]" style={{ borderRadius: 10 }} />
+        <div className="skeleton h-5 w-2/3 rounded-[2px]" style={{ borderRadius: 2 }} />
       </div>
       <div className="mt-6 flex items-center gap-4">
         <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
         <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-[10px]" style={{ borderRadius: 10 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-[10px]" style={{ borderRadius: 10 }} />
+          <div className="skeleton h-9 w-48 max-w-full rounded-[2px]" style={{ borderRadius: 2 }} />
+          <div className="skeleton mt-2 h-4 w-40 rounded-[2px]" style={{ borderRadius: 2 }} />
         </div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-[10px]" style={{ borderRadius: 10 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-[10px]" style={{ borderRadius: 10 }} />
+            <div className="skeleton h-4 w-16 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-7 w-20 rounded-[2px]" style={{ borderRadius: 2 }} />
           </div>
         ))}
       </div>
       <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-[10px]" style={{ borderRadius: 10 }} />
+        <div className="skeleton h-24 w-full rounded-[2px]" style={{ borderRadius: 2 }} />
       </div>
     </section>
   );

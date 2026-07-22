@@ -106,7 +106,15 @@ export function MobileNavMenu({
   const hideClass = hideAt === "none" ? "" : hideAt === "md" ? "md:hidden" : "sm:hidden";
   const anchorClass = align === "left" ? "left-0" : "right-0";
 
-  const groups = buildGroups(user);
+  // Empty groups (all items conditional and absent) render nothing, not a
+  // stray header. Each group also carries a running item offset so the
+  // per-item entrance stagger (--i) is cumulative across groups — a fixed
+  // stride would collide once a group holds more items than the stride.
+  const visibleGroups = buildGroups(user).filter((group) => group.items.length > 0);
+  const groups = visibleGroups.map((group, gi) => ({
+    ...group,
+    offset: visibleGroups.slice(0, gi).reduce((n, g) => n + g.items.length, 0),
+  }));
 
   return (
     <div className={"relative " + hideClass}>
@@ -168,7 +176,7 @@ export function MobileNavMenu({
                 "Sign in"
               )}
             </Link>
-            {groups.map((group, gi) => (
+            {groups.map((group) => (
               <div key={group.header}>
                 <div className="dgn-menu__rule mx-3 mb-1 mt-2 h-px bg-white/10" />
                 <div className="dgn-menu__header smallcaps px-4 pb-1 pt-0.5 text-[11px] text-parchment-400">{group.header}</div>
@@ -180,7 +188,7 @@ export function MobileNavMenu({
                       href={item.href}
                       onClick={() => setOpen(false)}
                       aria-current={activeItem ? "page" : undefined}
-                      style={{ ["--i" as string]: gi * 4 + ii }}
+                      style={{ ["--i" as string]: group.offset + ii }}
                       className={
                         "dgn-menu__item flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
                         (activeItem ? "border-gold-leaf bg-white/5 pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +

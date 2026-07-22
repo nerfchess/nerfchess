@@ -213,7 +213,7 @@ export function TourCoachOverlay({
       <div className="pointer-events-none fixed inset-0 z-[45]" aria-hidden>
         {rect ? (
           <div
-            className="absolute rounded-[10px] border border-gold/70 motion-safe:transition-all motion-safe:duration-300"
+            className="absolute rounded-[2px] border border-gold/70 motion-safe:transition-all motion-safe:duration-300"
             style={{
               top: rect.top - SPOT_PAD,
               left: rect.left - SPOT_PAD,

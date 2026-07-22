@@ -14,6 +14,7 @@ import { HeroBoard } from "@/components/HeroBoard";
 import { ModeBadge } from "@/components/ModeBadge";
 import { Piece } from "@/components/Pieces";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { ProvisionalMark } from "@/components/ratings/ProvisionalMark";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useLobbySnapshotStatus } from "@/lib/lobbyClient";
 import { MPLobbyGame } from "@/lib/multiplayer";
@@ -104,11 +105,11 @@ function PlayerIdentity({
           }
         >
           {name}
-          {provisional && <span className="text-parchment-400">?</span>}
         </span>
         {rating != null && (
-          <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
+          <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[12px] tabular-nums text-parchment-400">
             {rating}
+            {provisional && <ProvisionalMark />}
           </span>
         )}
       </span>
@@ -309,6 +310,37 @@ function TvView() {
     </div>
   );
 
+  // One player row per color, placed to match the board's orientation
+  // (white plays up from the bottom): black hugs the top edge, white the
+  // bottom — the same convention as playing a game, instead of both players
+  // sharing one header line.
+  const seatRow = (color: "w" | "b") =>
+    shownPlayers ? (
+      <div className="flex items-center justify-between gap-2 py-1">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <span
+            className={
+              "h-2.5 w-2.5 shrink-0 rounded-full " +
+              (color === "w"
+                ? "border border-black/40 bg-[#e8e6e1]"
+                : "border border-white/30 bg-[#1a1a22]")
+            }
+            aria-hidden
+          />
+          <PlayerIdentity
+            name={shownPlayers[color].name}
+            rating={shownPlayers[color].rating}
+            avatar={shownPlayers[color].avatar}
+            provisional={shownPlayers[color].provisional}
+            strong
+          />
+        </span>
+        {headerClocks && (
+          <ClockPill ms={headerClocks[color]} active={clockTurn === color} compact />
+        )}
+      </div>
+    ) : null;
+
   // The board region, always in the same aspect-square footprint: the live/replay
   // board, the designed empty state, or a board-shaped skeleton with a status
   // line (never a spinner page).
@@ -409,43 +441,10 @@ function TvView() {
               {/* Header row: identity units + controls */}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 flex-col gap-2">
-                  {shownPlayers ? (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/40 bg-[#e8e6e1]"
-                          aria-hidden
-                        />
-                        <PlayerIdentity
-                          name={shownPlayers.w.name}
-                          rating={shownPlayers.w.rating}
-                          avatar={shownPlayers.w.avatar}
-                          provisional={shownPlayers.w.provisional}
-                          strong
-                        />
-                        {headerClocks && (
-                          <ClockPill ms={headerClocks.w} active={clockTurn === "w"} compact />
-                        )}
-                      </span>
-                      <span className="text-[12px] text-parchment-500">vs</span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full border border-white/30 bg-[#1a1a22]"
-                          aria-hidden
-                        />
-                        <PlayerIdentity
-                          name={shownPlayers.b.name}
-                          rating={shownPlayers.b.rating}
-                          avatar={shownPlayers.b.avatar}
-                          provisional={shownPlayers.b.provisional}
-                          strong
-                        />
-                        {headerClocks && (
-                          <ClockPill ms={headerClocks.b} active={clockTurn === "b"} compact />
-                        )}
-                      </span>
-                    </div>
-                  ) : (
+                  {/* Identities moved to per-color rows hugging the board
+                      (black above, white below, matching the board's
+                      orientation) — the header keeps only the meta chips. */}
+                  {!shownPlayers && (
                     <h1 className="flex items-center gap-2 font-display text-[15px] font-semibold text-parchment-50">
                       <Radio size={16} className="text-gold-leaf" aria-hidden /> {title}
                     </h1>
@@ -474,8 +473,12 @@ function TvView() {
                 </div>
               </div>
 
-              {/* Board */}
-              <div className="mx-auto mt-3 w-full max-w-[560px]">{boardRegion}</div>
+              {/* Board, framed by the per-color player rows */}
+              <div className="mx-auto mt-3 w-full max-w-[560px]">
+                {seatRow("b")}
+                {boardRegion}
+                {seatRow("w")}
+              </div>
 
               {/* Below-board bar: only rendered when a board is actually
                   showing. The "Featuring the most-watched live game" caption
@@ -665,31 +668,12 @@ function TvView() {
           >
             <X size={20} aria-hidden />
           </button>
-          <div className="flex w-full max-w-[min(92vw,88vh)] flex-col gap-3">
-            {shownPlayers && (
-              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                <PlayerIdentity
-                  name={shownPlayers.w.name}
-                  rating={shownPlayers.w.rating}
-                  avatar={shownPlayers.w.avatar}
-                  provisional={shownPlayers.w.provisional}
-                  strong
-                />
-                {headerClocks && <ClockPill ms={headerClocks.w} active={clockTurn === "w"} compact />}
-                <span className="text-[12px] text-parchment-500">vs</span>
-                <PlayerIdentity
-                  name={shownPlayers.b.name}
-                  rating={shownPlayers.b.rating}
-                  avatar={shownPlayers.b.avatar}
-                  provisional={shownPlayers.b.provisional}
-                  strong
-                />
-                {headerClocks && <ClockPill ms={headerClocks.b} active={clockTurn === "b"} compact />}
-              </div>
-            )}
+          <div className="flex w-full max-w-[min(92vw,82vh)] flex-col gap-1">
+            {seatRow("b")}
             <div className="w-full">
               <HeroBoard board={board} lastMove={lastMove} />
             </div>
+            {seatRow("w")}
           </div>
         </div>
       )}

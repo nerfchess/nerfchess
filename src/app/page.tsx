@@ -81,7 +81,7 @@ export default function HomePage() {
             href="/lobby"
             className="mt-5 hidden w-full items-center justify-center px-6 py-7 font-display text-4xl font-bold tracking-wide no-underline sm:text-5xl lg:flex"
           >
-            Open lobby
+            Open Lobby
           </DungeonGateButton>
 
           {/* Two quieter ways in, one step below the big button. No mode
