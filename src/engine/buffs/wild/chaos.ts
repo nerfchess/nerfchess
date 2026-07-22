@@ -745,7 +745,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_deal_with_the_devil",
       name: "Deal with the Devil",
-      description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns.",
+      description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
       tier: 5,
       category: "pieces",
       requires: ["p"],
@@ -766,6 +766,8 @@ export const WILD_CHAOS: Buff[] = [
         if (sq == null) return;
         api.setPieceType(sq, "q");
         api.bs.skips[api.me] += 2;
+        // The devil also collects your next unused draft reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     ),
   ),
@@ -1000,7 +1002,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_yeet",
       name: "Yeet",
-      description: "Wind up and launch one of your own pieces deep into enemy territory: send it to any empty square in your opponent's half, once. Your king stays put.",
+      description: "Wind up and launch one of your own pieces deep into enemy territory: send it to any empty square in your opponent's half, once. Your king stays put. Launching it burns your next unused draft reroll, if you have one.",
       tier: 4,
       category: "movement",
       flavor: "It is going to be fine, probably.",
@@ -1033,6 +1035,8 @@ export const WILD_CHAOS: Buff[] = [
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from != null && to != null && api.board.pieces[from] && !api.board.pieces[to]) {
           api.relocate(from, to);
+          // Using the launch spends the next unused draft reroll, if any.
+          if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
         }
       },
     ),
@@ -1152,7 +1156,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_banana_peel_trail",
       icon: "Banana",
       name: "Banana Peel Trail",
-      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn.",
+      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn. An enemy king is too dignified to slip, but it still treads the peels flat and spends them.",
       tier: 4,
       category: "tempo",
       flavor: "Whoops. Whoops. Whoops.",

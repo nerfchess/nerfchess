@@ -1045,7 +1045,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_bolt_hole",
       name: "Bolt Hole",
       description:
-        "Old castles keep old secrets: while your king is in check, it may escape through the walls to any empty square within 2 squares of where it stands. The passage bears 2 such escapes, then collapses.",
+        "Old castles keep old secrets: while your king is in check, it, or one other of your pieces, may escape through the walls to any empty square within 2 squares of where the king stands. The passage bears 2 such escapes, then collapses.",
       tier: 7,
       category: "movement",
       icon: "DoorOpen",
@@ -1062,7 +1062,17 @@ export const BOON_WAVE2: Buff[] = [
         const d = Math.max(Math.abs(FILE(sq) - FILE(ks)), Math.abs(RANK(sq) - RANK(ks)));
         if (d >= 1 && d <= 2) dests.push(sq);
       }
-      return teleportMoves(api.board, ks, dests, inst.id);
+      // The king's own escapes, plus one additional piece of yours may slip
+      // through the same passage: any non-king piece, to the same destinations
+      // (a pawn never onto a first or last rank).
+      const out: Move[] = teleportMoves(api.board, ks, dests, inst.id);
+      for (const from of mySquares(api.board, api.me)) {
+        if (from === ks) continue;
+        for (const m of teleportMoves(api.board, from, dests, inst.id)) {
+          if (m.piece !== "p" || pawnRankOk(m.to)) out.push(m);
+        }
+      }
+      return out;
     }, 2),
   ),
 
