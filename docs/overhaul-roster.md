@@ -271,4 +271,9 @@ Conventions:
 
 Owner amendment: 300 hexes + 300 boons. Tier split each: T1-T4 38 per tier, T5-T8 37 per tier (4x38 + 4x37 = 300).
 Owner explicitly allows deriving many from buff mechanics (mirrored into curse/relief form) and reusing/copying their animations.
-Designs must be board-focused, not time-focused. Recorded in `docs/overhaul-hexes-boons.md` as implemented; each entry: id | name | tier | effect.
+Designs must be board-focused, not time-focused.
+
+STATUS: IMPLEMENTED.
+- Hexes: `src/engine/buffs/hexes/wave4.ts` (tiers 1-4) + `wave4b.ts` (tiers 5-8 and the wave-shared helper kit). 300 `hx4_*` cards, tier split verified 38/38/38/38/37/37/37/37, all `category:"hex"`. Static hex validation green (no soft-locks, kings never frozen or walnutted, count-target termination checked).
+- Boons: `src/engine/buffs/boons4.ts` + `boons4b.ts`. 300 `bn4_*` cards, same tier split, 101 nerf-relief plus 199 boon-flagged improvements.
+- The full per-card record (id | name | tier | effect) lives in `docs/card-audit.md`, which is regenerated from the live libraries and covers every one of these cards; a separate hand-written list would drift, so the audit matrix is the record.

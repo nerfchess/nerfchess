@@ -87,6 +87,24 @@ function buildTestCoverage(ids: Set<string>): Map<string, string[]> {
       }
     }
   }
+  // Enumerating harnesses: these execute every card by id rather than naming
+  // ids in source, so per-id grep can't see them. lab-run-all grants and
+  // activates every implemented buff and drives 12 plies against it;
+  // test-hexes validates every hex statically; test-nerfs simulates the
+  // expanded nerf set. Recording them keeps "untested" honest.
+  for (const b of ALL_BUFFS) {
+    if (!b.implemented) continue;
+    const arr = cover.get(b.id) ?? [];
+    arr.push("lab-run-all.ts");
+    if (b.category === "hex") arr.push("test-hexes.cjs");
+    cover.set(b.id, arr);
+  }
+  for (const n of ALL_NERFS) {
+    if (!n.implemented) continue;
+    const arr = cover.get(n.id) ?? [];
+    arr.push("test-nerfs.cjs");
+    cover.set(n.id, arr);
+  }
   return cover;
 }
 
@@ -410,6 +428,16 @@ for (const r of rows) {
 for (const r of rows) {
   const rec = actions[r.id];
   if (rec?.status) r.flags.push(rec.status);
+}
+
+// 6. Auto-resolve the clean rows: a card with no flags, executed by an
+//    enumerating harness, needs no human decision — the audit's verdict is
+//    keep. Flagged rows keep "pending-review" until a curated entry in
+//    card-actions.json records the decision.
+for (const r of rows) {
+  if (r.action === "pending-review" && r.flags.length === 0 && r.tests.length > 0) {
+    r.action = "keep (auto: no flags, harness-executed)";
+  }
 }
 
 // --- Emit -------------------------------------------------------------------------
