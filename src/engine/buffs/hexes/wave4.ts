@@ -157,9 +157,18 @@ const T1: Buff[] = [
     escapeCurse(2, (m) => m.piece !== "k" || !m.captured),
   ),
   H1(
-    { id: "hx4_dusty_boots", name: "Dusty Boots", description: "One of your opponent's pawns, chosen at random, becomes a walnut for 1 of their turns: it can only shuffle a single square.", flavor: "March enough miles and you become the road.", icon: "Nut", fx: { motif: "anchor", pieces: ["p"] } },
+    { id: "hx4_dusty_boots", name: "Dusty Boots", description: "One of your opponent's pawns, chosen at random, becomes a walnut for 1 of their turns: it can only shuffle a single square. Their most advanced pawn is spared and is never chosen.", flavor: "March enough miles and you become the road.", icon: "Nut", fx: { motif: "anchor", pieces: ["p"] } },
     instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp, "p");
+      const pawns = mySquares(api.board, api.opp, "p");
+      if (pawns.length === 0) return;
+      // Defender's immunity: exempt their most advanced pawn (ties by lowest square).
+      const spared = pawns
+        .slice()
+        .sort((a, b) => {
+          const dv = relRank(api.opp, b) - relRank(api.opp, a);
+          return dv !== 0 ? dv : a - b;
+        })[0];
+      const pool = pawns.filter((sq) => sq !== spared);
       for (const sq of drawRandom(api, pool, 1)) nutNow(api, sq, 1);
     }),
   ),
@@ -438,13 +447,36 @@ const T1: Buff[] = [
     escapeCurse(3, (m, api) => relRank(api.opp, m.to) !== 8),
   ),
   H1(
-    { id: "hx4_mild_sting", name: "Mild Sting", description: "A wasp circles their camp, in plain sight: after 3 of your opponent's turns, one of their pawns, chosen at random, is stung and frozen for 1 of their turns.", flavor: "You always hear it long before it lands.", icon: "Bug", fx: { motif: "slow", pieces: ["p"] } },
-    onTheirMove(3, (_move, api, inst) => {
-      if (turnsLeft(inst) === 1) {
-        const pool = mySquares(api.board, api.opp, "p");
-        for (const sq of drawRandom(api, pool, 1)) sting(api, sq, 1, "glue");
-      }
-    }),
+    { id: "hx4_mild_sting", name: "Mild Sting", description: "A wasp circles their camp, in plain sight: after 3 of your opponent's turns it settles on one of their pawns, chosen at random. That pawn gets one legal escape move, then is stung and frozen for 1 of their turns.", flavor: "You always hear it long before it lands.", icon: "Bug", fx: { motif: "slow", pieces: ["p"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.wait = 3;
+        inst.state.sq = null;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const sq = (inst.state.sq as Square | null | undefined) ?? null;
+        if (sq != null) {
+          // The pawn's next move is its one legal escape; the freeze bites right
+          // after, wherever it lands (or in place if another piece moved).
+          const now = followSq(sq, move);
+          if (now != null) sting(api, now, 1, "glue");
+          inst.spent = true;
+          return;
+        }
+        inst.state.wait = (inst.state.wait as number) - 1;
+        if ((inst.state.wait as number) <= 0) {
+          const pick = drawRandom(api, mySquares(api.board, api.opp, "p"), 1)[0];
+          if (pick != null) inst.state.sq = pick;
+          else inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq != null
+          ? "the wasp has landed, one escape move remains"
+          : `${inst.state.wait as number} of their turns until it stings`,
+    },
   ),
   H1(
     { id: "hx4_squeaky_wheel", name: "Squeaky Wheel", description: "Your opponent's rooks cannot capture for their next 2 turns.", flavor: "Hard to ambush anyone at that volume.", icon: "Volume2", fx: { motif: "muzzle", pieces: ["r"] } },

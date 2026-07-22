@@ -626,7 +626,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_pathfinders", name: "Pathfinders", tier: 5, category: "movement", icon: "Compass",
-      description: "For your next 3 turns, your knights may also make a long leap: three squares one way and one square the other (capturing allowed).",
+      description: "For your next 3 turns, your knights may also make a long leap to an empty square: three squares one way and one square the other. The leap cannot capture.",
       flavor: "The map said no road. The horses said watch this.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
     timedAugment(3, (_moves, inst, api) => {
@@ -635,7 +635,7 @@ export const BOON_WAVE4B: Buff[] = [
         [3, 1], [1, 3], [-3, 1], [-1, 3], [3, -1], [1, -3], [-3, -1], [-1, -3],
       ] as const;
       for (const from of mySquares(api.board, api.me, "n")) {
-        out.push(...leapMoves(api.board, from, leaps, inst.id));
+        out.push(...leapMoves(api.board, from, leaps, inst.id).filter((m) => !m.captured));
       }
       return out;
     }),

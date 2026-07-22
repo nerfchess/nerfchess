@@ -291,7 +291,7 @@ function firstStep(entry: (typeof FIRST_STEPS)[number]): Buff {
 const COUNTRY_ROADS: Array<OpenerMeta & { file: number }> = [
   { id: "towpath", name: "Towpath", flavor: "The barge horse knows exactly two speeds. This is the fast one.", icon: "Ship", file: 0 },
   { id: "bridle_path", name: "Bridle Path", flavor: "Two lengths at a canter, then back to plodding.", icon: "Route", file: 1 },
-  { id: "corduroy_road", name: "Corduroy Road", flavor: "Logs laid crosswise. Bumpy, but you cover ground.", icon: "TreePine", file: 2 },
+  { id: "corduroy_road", name: "Corduroy Road", flavor: "Logs laid crosswise. Bumpy, but you cover ground.", icon: "TreePine", file: 2, tier: 2 },
   { id: "old_post_road", name: "Old Post Road", flavor: "The mail coach never stopped for scenery.", icon: "Milestone", file: 3 },
   { id: "pilgrim_road", name: "Pilgrim Road", flavor: "Long strides for the faithful of the e-file.", icon: "Footprints", file: 4 },
   { id: "ferry_crossing", name: "Ferry Crossing", flavor: "Two squares for one coin. The ferryman keeps the change.", icon: "Sailboat", file: 5 },
@@ -301,23 +301,27 @@ const COUNTRY_ROADS: Array<OpenerMeta & { file: number }> = [
 
 function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
   const fileName = FILE_NAMES[entry.file];
+  const lossy = entry.id === "bridle_path";
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const out: Move[] = [];
+    const fwd = fwdOf(api.me);
+    for (const sq of mySquares(api.board, api.me, "p")) {
+      if (FILE(sq) !== entry.file) continue;
+      const mid = sq + fwd, to = sq + fwd * 2;
+      if (to < 0 || to > 63) continue;
+      if (!pawnRankOk(to)) continue;
+      if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+        out.push(...teleportMoves(api.board, sq, [to], inst.id));
+      }
+    }
+    return out;
+  };
   return opener(
     entry,
-    `Once, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.`,
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = fwdOf(api.me);
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (FILE(sq) !== entry.file) continue;
-        const mid = sq + fwd, to = sq + fwd * 2;
-        if (to < 0 || to > 63) continue;
-        if (!pawnRankOk(to)) continue;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
-        }
-      }
-      return out;
-    }),
+    `Once, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.${
+      lossy ? " If the advance is on offer on your turn but you play something else, the charge is spent." : ""
+    }`,
+    lossy ? lossyAugment(gen) : augment(gen),
   );
 }
 
