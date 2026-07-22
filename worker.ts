@@ -739,7 +739,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "bot-rating-consistency-1";
+const buildVersion = "lobby-diagnostics-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -1454,13 +1454,53 @@ export class GameServer extends DurableObject<Env> {
       // arena (last authenticated sync / last sync that actually carried a
       // game). All in-memory reads; no D1 work is done here.
       const nowMs = Date.now();
+      // The EXACT payload a lobby poll would serve right now, reduced to
+      // counts. This is the last observability gap: internal state (seeks in
+      // storage, arena games in memory) can look healthy while the assembled
+      // payload drops them behind some gate — comparing these counts against
+      // what a browser's /api/lobby shows bisects server vs edge/client in
+      // one look. Cost is one lobby build per healthz hit at most (the 2s
+      // shared lobbyCache absorbs it when viewers are polling anyway).
+      let lobbySnapshot: Record<string, unknown>;
+      try {
+        const p = (await this.buildLobbyPayload()) as {
+          players?: unknown[];
+          anonymous?: number;
+          games?: unknown[];
+          seeks?: unknown[];
+          challenges?: unknown[];
+        };
+        lobbySnapshot = {
+          players: p.players?.length ?? 0,
+          anonymous: p.anonymous ?? 0,
+          games: p.games?.length ?? 0,
+          seeks: p.seeks?.length ?? 0,
+          challenges: p.challenges?.length ?? 0,
+        };
+      } catch (err) {
+        lobbySnapshot = { error: err instanceof Error ? err.message : String(err) };
+      }
       return Response.json({
         ok: true,
         version: buildVersion,
         sockets: this.sessions.size,
         games: liveMatches.length,
+        // How long this isolate has been alive: in-memory stats (presence
+        // stamps, arena stamps, error fields) all reset with it, so their
+        // absence only means something when the uptime says the isolate has
+        // been up long enough to have seen the traffic in question.
+        uptimeMs: nowMs - this.bootedAt,
         alarmAt, // ms epoch of the next scheduled maintenance pass, if any
         alarmInMs: alarmAt ? alarmAt - Date.now() : null,
+        // What a lobby poll would return RIGHT NOW (counts only), plus the
+        // flags that gate its contents.
+        lobby: lobbySnapshot,
+        flags: {
+          houseOn: await this.houseEnabled(),
+          arenaLobbyEnabled: this.env.ARENA_LOBBY_ENABLED === "true",
+          arenaIngestEnabled: this.env.ARENA_INGEST_ENABLED === "true",
+          arenaOwnsFiller: this.env.ARENA_OWNS_FILLER === "true",
+        },
         db: {
           // true = schema ensured; false = last attempt failed (retrying);
           // null = not attempted yet this isolate.
