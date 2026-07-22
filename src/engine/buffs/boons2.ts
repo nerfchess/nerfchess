@@ -819,29 +819,21 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_prisoner_exchange",
       name: "Prisoner Exchange",
       description:
-        "Envoys meet at the river: the finest captured piece of EACH side returns to the board at once, each placed on the empty square nearest its own home rank (queens first, then rooks, bishops, knights, pawns). Your opponent's piece comes back too, so trade wisely.",
+        "Envoys meet at the river: your finest captured piece returns to the board, placed on the empty square nearest your home rank (queens first, then rooks, bishops, knights, pawns).",
       tier: 6,
       category: "pieces",
       icon: "Scale",
       flavor: "Both banks watched. Neither waved.",
     },
     instant((_inst, api) => {
+      // One fewer piece returns now: only your own finest prisoner comes back;
+      // the opponent's is no longer released.
       for (const t of VALUE_ORDER) {
         if (revivable(api, t) > 0) {
           const sq = autoPlaceSquare(api, api.me, t);
           if (sq != null) {
             api.place(sq, t, api.me);
             markRevived(api, t);
-          }
-          break;
-        }
-      }
-      for (const t of VALUE_ORDER) {
-        if ((api.capturedByMe[t] ?? 0) - (api.theirs.revived[t] ?? 0) > 0) {
-          const sq = autoPlaceSquare(api, api.opp, t);
-          if (sq != null) {
-            api.place(sq, t, api.opp);
-            api.theirs.revived[t] = (api.theirs.revived[t] ?? 0) + 1;
           }
           break;
         }

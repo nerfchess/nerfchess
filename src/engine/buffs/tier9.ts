@@ -399,47 +399,100 @@ export const TIER9: Buff[] = [
 
   // --- Devastating hexes (cast on the opponent) -----------------------------
 
-  // Blackout: the lights go out on your opponent for four whole turns - four free
-  // moves in a row is enough to march a decisive attack home unopposed.
+  // Blackout: trimmed in the apex pass from three skipped turns to one skip plus
+  // two crippled turns. The lights flicker back on slowly: for the opponent's
+  // next two moves only a single non-pawn move is allowed in total, everything
+  // else must be a pawn. spendOnUse:false so it lingers to run its filter, and it
+  // self-retires when the two restricted turns tick down.
   apex(
     {
       id: "blackout",
       icon: "PowerOff",
       name: "Blackout",
-      description: "The lights go out: your opponent's next 3 turns are skipped entirely.",
+      description:
+        "Your opponent's next turn is skipped. For their following two turns they may make only a single non-pawn move in total; otherwise they must move a pawn.",
       category: "hex",
       flavor: "Nobody home.",
       fx: { motif: "slow", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      api.bs.skips[api.opp] += 3;
-    }),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        api.bs.skips[api.opp] += 1;
+        inst.state.turns = 2;
+        inst.state.nonPawn = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        if (((inst.state.nonPawn as number) ?? 0) > 0) return moves;
+        // Non-pawn budget spent: only pawn moves remain (safety net keeps them
+        // from being stranded if no pawn can move).
+        const pawnOnly = moves.filter((m) => m.piece === "p");
+        return pawnOnly.length > 0 ? pawnOnly : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.turns == null || turnsLeft(inst) <= 0 || move.color !== api.opp) return;
+        if (move.piece !== "p") {
+          const left = ((inst.state.nonPawn as number) ?? 0) - 1;
+          inst.state.nonPawn = left < 0 ? 0 : left;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        turnsLeft(inst) > 0
+          ? `${turnsLeft(inst)} restricted turn${turnsLeft(inst) === 1 ? "" : "s"} left`
+          : null,
+    },
   ),
 
-  // Mass Petrify: every enemy queen, rook, knight and bishop turns to stone (a
-  // walnut) for 4 turns; a petrified piece can only shuffle a single square while
-  // it lasts. Only the enemy pawns and king can still act, so the opponent's
-  // whole heavy army is dead weight for four full turns - but the king stays
-  // free, so they are never stranded.
+  // Mass Petrify: trimmed in the apex pass. Choose up to five enemy non-king
+  // pieces to turn to stone (a walnut) for two turns; a petrified piece can only
+  // shuffle one square. The defender's two most valuable affected pieces resist
+  // (a deterministic stand-in for a defender choice, since the caster picks the
+  // targets), so they are spared the walnut.
   apex(
     {
       id: "mass_petrify",
       icon: "Gem",
       name: "Mass Petrify",
       description:
-        "Every enemy queen, rook, knight and bishop turns to stone for your opponent's next 3 turns. A petrified piece may only shuffle one square.",
+        "Choose up to five enemy pieces other than the king to turn to stone for your opponent's next 2 turns; the two most valuable among them resist and are spared. A petrified piece may only shuffle one square.",
       category: "hex",
       flavor: "Do not meet its gaze.",
-      fx: { motif: "jail", pieces: ["q", "r", "n", "b"] },
+      fx: { motif: "jail", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        const t = api.board.pieces[sq]!.type;
-        if (t === "q" || t === "r" || t === "n" || t === "b") {
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 5
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to petrify (${picks.length + 1}/5)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const value: Record<PieceType, number> = { q: 5, r: 4, b: 3, n: 3, p: 1, k: 0 };
+        const chosen = picks
+          .map((k) => k.square)
+          .filter(
+            (s): s is Square =>
+              s != null && api.board.pieces[s]?.color === api.opp && api.board.pieces[s]?.type !== "k",
+          );
+        // The defender's two most valuable affected pieces resist: highest value
+        // first, ties broken by lowest square index.
+        const resisters = [...chosen]
+          .sort((a, b) => value[api.board.pieces[b]!.type] - value[api.board.pieces[a]!.type] || a - b)
+          .slice(0, 2);
+        for (const sq of chosen) {
+          if (resisters.includes(sq)) continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
         }
-      }
-    }),
+      },
+    ),
   ),
 
   // Purge: at the start of each of your next 2 turns, a random enemy piece
