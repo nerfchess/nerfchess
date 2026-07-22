@@ -376,6 +376,11 @@ export const BOON_WAVE4B: Buff[] = [
             },
       effect: (_inst, api, picks) => {
         susp(api, 4);
+        // Turn-consuming activation: the engine ticks owner effects once for
+        // the activation turn (and compensates shield / king_safe with +1 but
+        // not nerf_suspended), so add 1 here to keep the full 4 of your turns.
+        const last = api.bs.effects[api.bs.effects.length - 1];
+        if (last && last.kind === "nerf_suspended" && last.turns != null) last.turns += 1;
         const zone: Square[] = [];
         let kingChosen = false;
         for (const k of picks) {

@@ -980,18 +980,42 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_flank_march",
       name: "Flank March",
-      description: "For your next 3 turns, each of your bishops may also step one square straight in any direction.",
+      description: "For up to your next 3 turns, each of your bishops may also step one square straight in any direction. This ends the first turn you play without taking one of those steps.",
       tier: 3,
       category: "movement",
       requires: ["b"],
       flavor: "Off the diagonal and around the wing.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true },
     },
-    timedAugment(3, (_m, inst, api) =>
-      mySquares(api.board, api.me, "b").flatMap((sq) =>
-        slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1),
-      ),
-    ),
+    // Overhaul balance pass: the granted step is unchanged, but the window now
+    // burns out the first of your turns you play without taking one of these
+    // steps (a wasted turn spends the charge just as a failed attempt would).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "b").flatMap((sq) =>
+            slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1),
+          ),
+        );
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        if (move.via === inst.id) {
+          const t = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        } else {
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of your turns left`,
+    },
   ),
   card(
     {

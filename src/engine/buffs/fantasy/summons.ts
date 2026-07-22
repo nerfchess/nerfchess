@@ -25,6 +25,98 @@ import {
   RANK,
 } from "./shared";
 
+// Balance pass: wrap an activated mechanic so resolving it also consumes the
+// caster's next unused reroll, if they have one. The base effect is preserved.
+function consumesReroll(base: Mech): Mech {
+  const inner = base.effect;
+  return {
+    ...base,
+    effect: (inst, api, picks) => {
+      inner?.(inst, api, picks);
+      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+    },
+  };
+}
+
+// Balance pass: a temporary summon (summonTemp) whose piece does not arrive at
+// once, but only AFTER the opponent's next move. You pick the square now; the
+// piece materializes on the opponent's reply (or on a deterministic empty
+// square of the zone if the chosen one filled), then serves and fades as usual.
+function delayedSummonTemp(
+  type: Exclude<PieceType, "p" | "k">,
+  turns: number,
+  zone: (api: BuffApi) => (sq: Square) => boolean,
+): Mech {
+  return {
+    kind: "activated",
+    spendOnUse: false,
+    targets: (inst, api, picks) =>
+      picks.length > 0 || inst.state.sq != null || inst.state.pending != null
+        ? null
+        : {
+            kind: "square",
+            label: "Choose where your conjured piece will appear",
+            squares: emptySquares(api.board, zone(api)),
+          },
+    effect: (inst, _api, picks) => {
+      const sq = picks[0]?.square;
+      if (sq == null || inst.state.sq != null || inst.state.pending != null) return;
+      inst.state.pending = sq;
+    },
+    onMovePlayed: (inst, move, api) => {
+      // Delayed arrival: hold until the opponent has replied, then materialize.
+      if (inst.state.pending != null && inst.state.sq == null) {
+        if (move.color !== api.opp) return;
+        let sq = inst.state.pending as Square;
+        if (api.board.pieces[sq]) {
+          const alt = emptySquares(api.board, zone(api))[0];
+          if (alt == null) {
+            inst.state.pending = undefined;
+            inst.spent = true;
+            return;
+          }
+          sq = alt;
+        }
+        api.place(sq, type, api.me);
+        inst.state.sq = sq;
+        inst.state.turns = turns;
+        inst.state.pending = undefined;
+        return;
+      }
+      const sq = inst.state.sq as Square | undefined;
+      if (sq == null) return;
+      // Follow the conjured piece; retire it if captured or overrun.
+      if (move.capturedSquare === sq && move.from !== sq) {
+        inst.spent = true;
+        inst.state.sq = undefined;
+        return;
+      }
+      if (move.from === sq) {
+        inst.state.sq = move.to;
+      } else if (move.to === sq && move.from !== sq) {
+        inst.spent = true;
+        inst.state.sq = undefined;
+        return;
+      }
+      if (move.color !== api.me) return;
+      const left = ((inst.state.turns as number) ?? 0) - 1;
+      inst.state.turns = left;
+      if (left <= 0) {
+        const cur = inst.state.sq as Square | undefined;
+        if (cur != null && api.board.pieces[cur]) api.removePiece(cur, { uncounted: true });
+        inst.spent = true;
+        inst.state.sq = undefined;
+      }
+    },
+    status: (inst) =>
+      inst.state.pending != null && inst.state.sq == null
+        ? "arrives after your opponent's next move"
+        : inst.state.sq == null
+          ? "activate to summon"
+          : `conjured piece fades in ${(inst.state.turns as number) ?? 0} of your turns`,
+  };
+}
+
 export const FANTASY_SUMMONS: Buff[] = [
   card(
     {
@@ -32,12 +124,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Cat",
       name: "Imp Familiar",
       description:
-        "A smug little imp perches on an empty square of your back rank and fights as a bishop for 3 of your turns, then scampers back through the veil.",
+        "A smug little imp perches on an empty square of your back rank and fights as a bishop for 3 of your turns, then scampers back through the veil. Using it consumes your next unused reroll, if you have one.",
       tier: 2,
       category: "pieces",
       flavor: "Mostly loyal and entirely smug.",
     },
-    summonTemp("b", 3, backRankZone),
+    consumesReroll(summonTemp("b", 3, backRankZone)),
   ),
   card(
     {
@@ -45,12 +137,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "ShieldHalf",
       name: "Phantom Guardian",
       description:
-        "Call up a phantom guardian that fights beside you as a bishop for 5 of your turns, then dissolves back into the aether.",
+        "Call up a phantom guardian: after your opponent's next move it appears and fights beside you as a bishop for 5 of your turns, then dissolves back into the aether.",
       tier: 4,
       category: "pieces",
       flavor: "Half here, half somewhere colder.",
     },
-    summonTemp("b", 5, myHalfZone),
+    delayedSummonTemp("b", 5, myHalfZone),
   ),
   card(
     {
