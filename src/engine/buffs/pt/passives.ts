@@ -438,7 +438,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Megaphone",
       name: "Fan Club",
       description:
-        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops.",
+        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops. Once two of those back-rank pawns have made a capture, the crowd goes home and the shield ends for good.",
       tier: 4,
       category: "protection",
       requires: ["p"],
@@ -453,9 +453,23 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       // with zero legal moves. onMovePlayed only mirrors the live condition into
       // state so the status line can read it (status has no api).
       kind: "passive",
-      onMovePlayed: (inst, _move, api) => {
+      onMovePlayed: (inst, move, api) => {
         inst.state.holding =
           mySquares(api.board, api.me).length >= mySquares(api.board, api.opp).length;
+        // The shield ends after two of the protected back-rank pawns capture.
+        // Count captures made BY one of your pawns starting from your back three
+        // ranks (relative rank <= 3); at the second such capture the card is
+        // spent, which drops it from heldBuffs so the filter stops guarding.
+        if (
+          move.color === api.me &&
+          move.piece === "p" &&
+          !!move.captured &&
+          relRank(api.me, move.from) <= 3
+        ) {
+          const caps = ((inst.state.caps as number) ?? 0) + 1;
+          inst.state.caps = caps;
+          if (caps >= 2) inst.spent = true;
+        }
       },
       filterOpponentMoves: (moves, _inst, api) => {
         if (mySquares(api.board, api.me).length < mySquares(api.board, api.opp).length) {

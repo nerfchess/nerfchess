@@ -15,6 +15,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   advancePawn,
   attackersOf,
   augment,

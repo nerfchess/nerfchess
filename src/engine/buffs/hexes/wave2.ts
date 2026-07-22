@@ -520,7 +520,7 @@ export const HEX_WAVE2: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 4;
+        inst.state.turns = 3;
         inst.state.touched = [] as Square[];
       },
       onMovePlayed: (inst, move, api) => {
@@ -554,10 +554,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Ball and Chain / Groundhog Day (which FORCE or FORBID repetition) and
   // not Rust (which punishes idleness): the third move of any single piece
   // inside the window drops it — riding one strong piece is what breaks.
-  H4(
+  hex(
     {
       id: "hw2_weight_of_toil",
       name: "Weight of Toil",
+      tier: 5,
       description:
         "The curse counts every errand: for your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns (shuffling one square at a time). Spreading the work across the army avoids it entirely. Kings never collapse.",
       flavor: "The willing horse is the one that founders.",
@@ -604,7 +605,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_compounding_misery",
       name: "Compounding Misery",
       description:
-        "Misery multiplies: freeze one enemy piece you target for 1 of their turns, plus 1 more turn for every other curse-effect already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 4 turns total. Cast onto a clean board it is a small chill; stacked on other hexes it bites deep. Kings cannot be targeted.",
+        "Misery multiplies: freeze one enemy piece you target for 1 of their turns, plus 1 more turn for every other curse-effect already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 3 turns total. Cast onto a clean board it is a small chill; stacked on other hexes it bites deep. Kings cannot be targeted.",
       flavor: "One leech is a nuisance. The third one finds the vein.",
     },
     {
@@ -633,7 +634,7 @@ export const HEX_WAVE2: Buff[] = [
           )
             count++;
         }
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: Math.min(4, 1 + count) });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: Math.min(3, 1 + count) });
       },
     },
   ),

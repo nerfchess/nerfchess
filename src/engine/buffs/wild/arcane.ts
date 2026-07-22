@@ -441,18 +441,54 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_camel_rider",
       name: "Camel Rider",
       description:
-        "All your knights also make a longer 3-by-1 camel leap for the rest of the game.",
+        "Each of your knights on the board right now gains one longer 3-by-1 camel leap, usable once. Knights that arrive later gain none.",
       tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "A whole troop crossing the sand.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "n").flatMap((sq) =>
-        leapMoves(api.board, sq, CAMEL_LEAPS, inst.id),
-      ),
-    ),
+    // Balance: no longer a permanent army-wide grant. Only the knights present
+    // when the card lands are trained, and each carries a single camel-leap
+    // charge; future knights (promotions, summons) get nothing.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.knights = mySquares(api.board, api.me, "n").map((sq) => ({ sq, charges: 1 }));
+      },
+      augmentMoves: (moves, inst, api) => {
+        const knights = inst.state.knights as { sq: Square; charges: number }[] | undefined;
+        if (!knights) return;
+        for (const k of knights) {
+          if (k.charges <= 0) continue;
+          const p = api.board.pieces[k.sq];
+          if (!p || p.color !== api.me || p.type !== "n") continue;
+          addNovel(moves, leapMoves(api.board, k.sq, CAMEL_LEAPS, inst.id));
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        let knights = inst.state.knights as { sq: Square; charges: number }[] | undefined;
+        if (!knights) return;
+        // Drop a tracked knight that was just captured.
+        knights = knights.filter((k) => !(move.capturedSquare === k.sq && move.from !== k.sq));
+        // Follow a tracked knight that moved; spend its charge if it used the leap.
+        for (const k of knights) {
+          if (k.sq === move.from && move.from !== move.to) {
+            if (move.via === inst.id) k.charges -= 1;
+            k.sq = move.to;
+          }
+        }
+        knights = knights.filter((k) => k.charges > 0);
+        inst.state.knights = knights;
+        if (knights.length === 0) inst.spent = true;
+        void api;
+      },
+      status: (inst) => {
+        const knights = inst.state.knights as { sq: Square; charges: number }[] | undefined;
+        const n = knights?.filter((k) => k.charges > 0).length ?? 0;
+        return n > 0 ? `${n} knight${n === 1 ? "" : "s"} still hold a camel leap` : null;
+      },
+    },
   ),
   card(
     {
