@@ -91,31 +91,58 @@ test("buff-mode bot game: moves, draft pick, card in dock", async ({ page }) => 
   const dock = page.locator("aside [data-buff-dock]");
   await expect(dock).toBeVisible({ timeout: 30_000 });
 
-  // Five own moves. The countdown chip ("Next draft in N moves") appears
-  // with the first move and decrements exactly when the bot's reply lands,
-  // so waiting for "Next draft in <5-k> moves" after our k-th move both
-  // confirms the bot moved and that it is our turn again.
-  const used = new Set<string>();
-  for (let k = 1; k <= 5; k++) {
-    await playOneMove(page, used);
-    if (k < 5) {
-      const left = 5 - k;
-      await expect(
-        dock.getByText(`Next draft in ${left} move${left === 1 ? "" : "s"}`),
-      ).toBeVisible({ timeout: 45_000 });
+  // Five own moves, retried across rematches. NerfChess allows king capture
+  // (no check enforcement), and this helper deliberately plays quiet moves
+  // that ignore threats, so an unlucky bot king-hunt can end the game before
+  // the ply-10 draft ever fires. When that happens the Defeat/Victory dialog
+  // offers Rematch: take it and play the five moves again (fresh board, same
+  // deterministic candidates). Two extra attempts make the flake vanish
+  // without hiding a real regression (a broken draft fails all three).
+  const heading = page.getByRole("heading", { name: /choose a buff/i });
+  const gameOver = page.getByRole("dialog").getByText("Game over");
+  attempts: for (let attempt = 1; attempt <= 3; attempt++) {
+    const used = new Set<string>();
+    for (let k = 1; k <= 5; k++) {
+      await playOneMove(page, used);
+      if (k < 5) {
+        const left = 5 - k;
+        // The countdown chip ("Next draft in N moves") appears with the first
+        // move and decrements exactly when the bot's reply lands, so waiting
+        // for it both confirms the bot moved and that it is our turn again.
+        // A game-over dialog instead means the bot captured our king.
+        await expect(
+          dock
+            .getByText(`Next draft in ${left} move${left === 1 ? "" : "s"}`)
+            .or(gameOver),
+        ).toBeVisible({ timeout: 45_000 });
+        if (await gameOver.isVisible()) {
+          expect(attempt, "bot ended the game before the draft three times").toBeLessThan(3);
+          await page.getByRole("button", { name: "Rematch" }).click();
+          await expect(dock.getByText("Next draft in 5 moves")).toBeHidden({ timeout: 15_000 });
+          continue attempts;
+        }
+      }
     }
+
+    // After the fifth own move (and the bot's reply) the shared draft fires:
+    // the overlay deals an offer of buff cards. Generous timeout: the bot's AI
+    // search runs in-page and a cold first run (dev server + JIT warmup) can
+    // be slow to reach the draft, so give it margin before the CI retry kicks
+    // in. Same king-capture caveat as above on this final bot reply.
+    await expect(heading.or(gameOver)).toBeVisible({ timeout: 75_000 });
+    if (await gameOver.isVisible()) {
+      expect(attempt, "bot ended the game before the draft three times").toBeLessThan(3);
+      await page.getByRole("button", { name: "Rematch" }).click();
+      await expect(dock.getByText("Next draft in 5 moves")).toBeHidden({ timeout: 15_000 });
+      continue attempts;
+    }
+    break;
   }
+  await expect(heading).toBeVisible();
 
-  // After the fifth own move (and the bot's reply) the shared draft fires:
-  // the overlay deals an offer of buff cards. Generous timeout: the bot's AI
-  // search runs in-page and a cold first run (dev server + JIT warmup) can be
-  // slow to reach the draft, so give it margin before the CI retry kicks in.
-  await expect(
-    page.getByRole("heading", { name: /choose a buff/i }),
-  ).toBeVisible({ timeout: 75_000 });
-
-  // Pick the first card: one click selects it, the explicit Confirm button
-  // button locks it in (exempt from the double-click guard).
+  // Pick the first card: one click selects it, the explicit confirm button
+  // (which names the selected card, e.g. "Confirm Holy Hell") locks it in
+  // (exempt from the double-click guard).
   const dealGrid = page.locator(".draft-deal-grid");
   await expect(dealGrid).toBeVisible();
   const firstCard = dealGrid.locator(".draft-card-front > button").first();
@@ -126,9 +153,7 @@ test("buff-mode bot game: moves, draft pick, card in dock", async ({ page }) => 
   expect(cardName.length).toBeGreaterThan(0);
 
   await firstCard.click();
-  // The commit button names the selected card ("Confirm Holy Hell"), so match
-  // the stable "Confirm ..." prefix rather than a literal label.
-  const confirm = page.getByRole("button", { name: /^confirm /i });
+  const confirm = page.getByRole("button", { name: `Confirm ${cardName}` });
   await expect(confirm).toBeEnabled();
   await confirm.click();
 
