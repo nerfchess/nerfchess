@@ -1117,7 +1117,7 @@ const T4: Buff[] = [
       id: "hw3_pilgrimage",
       name: "Forced Pilgrimage",
       description:
-        "Lay a geas on one enemy piece and name a shrine square it must reach: if that piece stands on the shrine within 6 of their turns, the geas lifts. If the deadline passes and it has not, the piece collapses in exhaustion and is frozen for 3 of their turns. Its other pieces are free; the victim can walk the pilgrim to the shrine, trade it, or let it fall. Kings take no geas.",
+        "Lay a geas on one enemy piece and name a shrine square it must reach: if that piece stands on the shrine within 5 of their turns, the geas lifts. If the deadline passes and it has not, the piece collapses in exhaustion and is frozen for 3 of their turns. Its other pieces are free; the victim can walk the pilgrim to the shrine, trade it, or let it fall. Kings take no geas.",
       flavor: "Reach the shrine or sleep where you stand. Choose.",
       fx: { motif: "anchor" },
     },
@@ -1148,7 +1148,7 @@ const T4: Buff[] = [
         if (sq == null || target == null) return;
         inst.state.sq = sq;
         inst.state.target = target;
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       onMovePlayed: (inst, move, api) => {
         let sq = (inst.state.sq as Square | null | undefined) ?? null;
@@ -1223,7 +1223,7 @@ const T4: Buff[] = [
       id: "hw3_miasma",
       name: "Miasma",
       description:
-        "A sickly fog settles over their ranks: for your opponent's next 6 turns, each time they move a piece so it ends adjacent to another of their pieces, that piece breathes in the miasma and grows more sick. On its third breath it succumbs and is frozen for 2 of their turns, and its lungs clear again. Keeping their pieces spread apart is the whole cure. Kings do not sicken.",
+        "A sickly fog settles over their ranks: for your opponent's next 5 turns, each time they move a piece so it ends adjacent to another of their pieces, that piece breathes in the miasma and grows more sick. On its third breath it succumbs and is frozen for 2 of their turns, and its lungs clear again. Keeping their pieces spread apart is the whole cure. Kings do not sicken.",
       flavor: "Crowd together for safety and share the same bad air.",
       fx: { motif: "slow", pieces: "all" },
     },

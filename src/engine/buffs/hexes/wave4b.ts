@@ -429,13 +429,13 @@ const T5: Buff[] = [
     cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => !m.captured)),
   ),
   H5(
-    { id: "hx4_high_water", name: "High Water", description: "For your opponent's next 4 turns, their rooks and queen may not enter your half of the board.", flavor: "Heavy wagons wait for the flood to pass.", icon: "CloudRain", fx: { motif: "anchor", pieces: ["r", "q"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_high_water", name: "High Water", description: "For your opponent's next 4 turns, their rooks and queen may not enter your half of the board. The first piece the flood would stop may cross once; after that it binds fully.", flavor: "Heavy wagons wait for the flood to pass.", icon: "CloudRain", fx: { motif: "anchor", pieces: ["r", "q"] } },
+    escapeCurse(4, (moves, api) =>
       moves.filter((m) => (m.piece !== "r" && m.piece !== "q") || relRank(api.opp, m.to) <= 4),
     ),
   ),
   H5(
-    { id: "hx4_gargoyle_perch", name: "Gargoyle Perch", description: "Up to two enemy rooks you target turn into walnuts for 2 of their turns: they can only shuffle one square at a time.", flavor: "Towers make excellent roosts.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
+    { id: "hx4_gargoyle_perch", name: "Gargoyle Perch", description: "Up to two enemy rooks you target turn into walnuts for 1 of their turns: they can only shuffle one square at a time.", flavor: "Towers make excellent roosts.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
     activated(
       (_inst, api, picks) => {
         if (picks.length >= 2) return null;
@@ -451,7 +451,7 @@ const T5: Buff[] = [
       },
       (_inst, api, picks) => {
         for (const pk of picks) {
-          if (pk.square != null) addEffect(api, { kind: "walnut", sq: pk.square, owner: api.opp, turns: 2 });
+          if (pk.square != null) addEffect(api, { kind: "walnut", sq: pk.square, owner: api.opp, turns: 1 });
         }
       },
     ),

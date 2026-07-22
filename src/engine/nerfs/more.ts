@@ -1593,8 +1593,9 @@ function bestHeuristicMove(moves: Move[]): Move | null {
 export const ICHTHYOPHOBE: Nerf = db({
   id: "ichthyophobe", name: "Ichthyophobe", tier: 3, implemented: true,
   description:
-    "Each turn you can't play the move a simple greedy engine would pick (its single best move by a one ply look: the most valuable safe capture, or a basic developing move when there is no capture). Every other legal move is fine; if that one move is your only legal move, you may still play it.",
-  filterMoves: (moves) => {
+    "Each turn you can't play the move a simple greedy engine would pick (its single best move by a one ply look: the most valuable safe capture, or a basic developing move when there is no capture). Every other legal move is fine; if that one move is your only legal move, you may still play it. This activates only after your move 3.",
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
     const best = bestHeuristicMove(moves);
     if (!best) return moves;
     const filtered = moves.filter((m) => !(m.from === best.from && m.to === best.to && m.promotion === best.promotion));
@@ -1869,18 +1870,20 @@ export const LEADING_THE_CHARGE: Nerf = db({
 
 export const ACTIVE_VOLCANO: Nerf = db({
   id: "active_volcano", name: "Active Volcano", tier: 4, implemented: true,
-  description: "Can't move onto or orthogonally adjacent to a random square.",
+  description: "Can't move onto or orthogonally adjacent to a fixed random square, shown on the board. The restriction never leaves you fewer than three legal moves.",
   init: (rng) => ({ sq: rng.int(64) }),
   filterMoves: (moves, state) => {
     const s = state as { sq: number };
-    return moves.filter((m) => {
+    const filtered = moves.filter((m) => {
       if (m.to === s.sq) return false;
       const df = Math.abs(FILE(m.to) - FILE(s.sq));
       const dr = Math.abs(RANK(m.to) - RANK(s.sq));
       return !((df === 0 && dr === 1) || (df === 1 && dr === 0));
     });
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => ({ bannedSquares: [(state as { sq: number }).sq] }),
+  hint: (state) => ({ text: `Volcano: avoid ${squareName((state as { sq: number }).sq)} and its orthogonal neighbors.`, tone: "info" }),
 });
 
 export const NURTURER: Nerf = db({

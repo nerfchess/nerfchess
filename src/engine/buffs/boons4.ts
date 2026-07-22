@@ -49,8 +49,10 @@ import {
   relocateMany,
   shieldZone,
   teleportMoves,
+  tickTurns,
   timedAugment,
   timedOppFilter,
+  turnsLeft,
 } from "./helpers";
 import {
   advanceablePawns,
@@ -316,9 +318,9 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_first_light", name: "First Light", tier: 1, category: "nerf", icon: "Sun",
-      description: "The first capture you make suspends your nerf for your next 2 turns.",
+      description: "The first capture you make suspends your nerf for your next turn.",
       flavor: "One clean cut and the morning opens." },
-    reliefOn(1, 2, (m, api) => m.color === api.me && !!m.captured && m.captured !== "k", "dawn"),
+    reliefOn(1, 1, (m, api) => m.color === api.me && !!m.captured && m.captured !== "k", "dawn"),
   ),
   card(
     { id: "bn4_kind_omen", name: "Kind Omen", tier: 1, category: "nerf", icon: "Bird",
