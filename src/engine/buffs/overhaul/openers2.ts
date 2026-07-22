@@ -242,20 +242,42 @@ const SLOW_SEASONS: Array<
 ];
 
 function slowSeason(entry: (typeof SLOW_SEASONS)[number]): Buff {
-  return opener(entry, `After your ${entry.after}th move, ${entry.what}.`, {
+  let desc = `After your ${entry.after}th move, ${entry.what}.`;
+  if (entry.revealEarly) desc += " You are shown the pending reward one of your moves before it lands.";
+  if (entry.expireAfterDrafts != null)
+    desc += ` If left unused, the reveal lapses after ${entry.expireAfterDrafts} of your drafts.`;
+  return opener(entry, desc, {
     kind: "passive",
     init: (inst) => {
       inst.state.turns = entry.after;
     },
     onMovePlayed: (inst, move, api) => {
       if (move.color !== api.me) return;
-      const t = ((inst.state.turns as number) ?? 0) - 1;
-      inst.state.turns = t;
-      if (t > 0) return;
-      entry.pay(api);
-      inst.spent = true;
+      if (!inst.state.paid) {
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t > 0) return;
+        entry.pay(api);
+        if (entry.expireAfterDrafts == null) {
+          inst.spent = true;
+          return;
+        }
+        // Keep the card alive to enforce the reveal's expiry window.
+        inst.state.paid = true;
+        inst.state.draftMark = api.mine.draftsTaken + entry.expireAfterDrafts;
+        return;
+      }
+      if (api.mine.draftsTaken >= (inst.state.draftMark as number)) {
+        if (api.mine.flags.seeOppTier) api.mine.flags.seeOppTier = false;
+        inst.spent = true;
+      }
     },
-    status: (inst) => `ripens in ${turnsLeft(inst)} of your moves`,
+    status: (inst) => {
+      if (entry.revealEarly && !inst.state.paid && turnsLeft(inst) === 1) {
+        return `ready next move: ${entry.what}`;
+      }
+      return `ripens in ${turnsLeft(inst)} of your moves`;
+    },
   });
 }
 

@@ -241,8 +241,8 @@ const T1: Buff[] = [
     ),
   ),
   H1(
-    { id: "hx4_hiccups", name: "Hiccups", description: "On your opponent's next turn, they may only move pieces standing in their own half of the board.", flavor: "Hic. Sorry. Hic. As you were.", icon: "MessageCircleWarning", fx: { motif: "slow", pieces: "all" } },
-    curse(1, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) <= 4)),
+    { id: "hx4_hiccups", name: "Hiccups", description: "On your opponent's next turn, they may only move pieces standing in their own half of the board. The first piece from your half slips through as one escape, then the restriction holds.", flavor: "Hic. Sorry. Hic. As you were.", icon: "MessageCircleWarning", fx: { motif: "slow", pieces: "all" } },
+    escapeCurse(1, (m, api) => relRank(api.opp, m.from) <= 4),
   ),
   H1(
     { id: "hx4_royal_nametag", name: "Royal Name Tag", description: "Their queen is issued a conference name tag reading SUSAN for 5 of their turns, and the indignity shows: she cannot capture on their next turn.", flavor: "HELLO my name is regicide, apparently not today.", icon: "Tag", fx: { motif: "muzzle", pieces: ["q"] } },
@@ -357,8 +357,8 @@ const T1: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "b" || FILE(m.to) < FILE(m.from))),
   ),
   H1(
-    { id: "hx4_matins_bell", name: "Matins Bell", description: "On your opponent's next turn, their pieces standing on the queenside files (a to d) may not capture: they are at morning prayers.", flavor: "Violence resumes after the second hymn.", icon: "Church", fx: { motif: "muzzle", pieces: "all" } },
-    curse(1, (moves) => moves.filter((m) => !m.captured || FILE(m.from) > 3)),
+    { id: "hx4_matins_bell", name: "Matins Bell", description: "On your opponent's next turn, their pieces standing on the queenside files (a to d) may not capture: they are at morning prayers. The first such capture slips through as one escape, then the restriction holds.", flavor: "Violence resumes after the second hymn.", icon: "Church", fx: { motif: "muzzle", pieces: "all" } },
+    escapeCurse(1, (m) => !m.captured || FILE(m.from) > 3),
   ),
   H1(
     { id: "hx4_borrowed_boots", name: "Borrowed Boots", description: "For your opponent's next 3 turns, their king cannot step diagonally, straight steps only. The first diagonal step slips through as one escape, then the restriction holds.", flavor: "Two sizes too big and pointed the wrong way.", icon: "Footprints", fx: { motif: "anchor" } },
@@ -385,8 +385,8 @@ const T1: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "r" || !m.captured)),
   ),
   H1(
-    { id: "hx4_hopscotch", name: "Hopscotch", description: "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
-    curse(1, (moves) => moves.filter((m) => m.piece !== "p" || sqShade(m.from) !== 1)),
+    { id: "hx4_hopscotch", name: "Hopscotch", description: "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move. The first such pawn slips through as one escape, then the restriction holds.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
+    escapeCurse(1, (m) => m.piece !== "p" || sqShade(m.from) !== 1),
   ),
   H1(
     { id: "hx4_overslept_officers", name: "Overslept Officers", description: "On your opponent's next turn, their knights and bishops cannot move. The officers overslept.", flavor: "The trumpeter also overslept. It compounds.", icon: "AlarmClockOff", fx: { motif: "slow", pieces: ["n", "b"] } },

@@ -480,11 +480,17 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_leave_of_absence", name: "Leave of Absence", tier: 5, category: "nerf", icon: "CalendarOff",
-      description: "Free action: suspend your nerf for your next 5 turns and gain 1 draft reroll, used at the moment you choose.",
+      description: "Free action: suspend your nerf for your next 5 turns and gain 1 draft reroll, used at the moment you choose. On the last of those turns you may only step one square (a king step).",
       flavor: "The form has two boxes. Tick both." },
-    suspendFree(5, (api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    {
+      ...activatedSimple((inst, api) => {
+        armMoveOnlyFinal(api, inst, 5);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      }),
+      freeAction: true,
+      spendOnUse: false,
+      onMovePlayed: leashRider,
+    },
   ),
 
   // --- movement (5) ---

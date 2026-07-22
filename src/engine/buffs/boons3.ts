@@ -814,7 +814,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_tunnelers",
       name: "Tunnelers",
       description:
-        "It digs its own lines: choose one of your rooks, and for the rest of the game it may slide straight through your own pieces (never capturing them) to any empty square beyond.",
+        "It digs its own lines: choose one of your rooks, and for the rest of the game it may slide straight through your own pieces to any empty square beyond. The tunneling slide can never capture, friend or foe.",
       tier: 5,
       category: "movement",
       icon: "Pickaxe",
@@ -823,7 +823,9 @@ export const BOON_WAVE3: Buff[] = [
       fx: { motif: "empower", pieces: ["r"], moveAs: "r", self: true },
     },
     pieceBound("r", "Choose the rook that tunnels", (board, sq, via) =>
-      phasingSlideMoves(board, sq, ORTHO_DIRS, via, 8),
+      // The special move cannot capture: keep only slides that land on an empty
+      // square beyond a friendly screen (the rook's normal moves still capture).
+      phasingSlideMoves(board, sq, ORTHO_DIRS, via, 8).filter((m) => !m.captured),
     ),
   ),
 
@@ -898,7 +900,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_watchword",
       name: "Watchword",
       description:
-        "A pawn's protection is absolute: any of your pieces (your king aside) that is defended by one of your pawns cannot be captured. Remove the pawn and the shelter goes with it.",
+        "A pawn's protection covers only so many: up to four of your pieces (your king aside) that are defended by one of your pawns cannot be captured. When more than four qualify, the four most valuable are the ones sheltered, and removing a piece's pawn drops its shelter.",
       tier: 5,
       category: "protection",
       icon: "Eye",

@@ -280,34 +280,40 @@ export const FUNNY_PRANKS: Buff[] = [
       id: "pr_ratiod",
       name: "Ratio'd",
       description:
-        "Nobody asked, plus you fell off: if your opponent captured a piece on their last turn, that piece gets bonked straight back toward its own side by up to 2 squares.",
+        "Nobody asked, plus you fell off: after your opponent's next move, if that move captured one of your pieces, the capturing piece gets bonked straight back toward its own side by up to 2 squares.",
       tier: 4,
       category: "attack",
       flavor: "L + ratio + skill issue + it is your move now.",
     },
-    instant((_inst, api) => {
-      const hist = api.board.history;
-      const last = hist[hist.length - 1];
-      if (!last || last.color !== api.opp || !last.captured) return;
-      const sq = last.to;
-      const p = api.board.pieces[sq];
-      if (!p || p.color !== api.opp || p.type === "k") return;
-      // "Home" is the opponent's own back rank: rank 0 for white, rank 7 for
-      // black. Walk straight back along the file to the farthest empty square
-      // within 2 squares, stopping at the first blocker; never park a pawn on a
-      // back rank (illegal), and never move if fully boxed in.
-      const dir = api.opp === "w" ? -1 : 1;
-      const f = FILE(sq);
-      let best: Square | null = null;
-      for (let step = 1; step <= 2; step++) {
-        const r = RANK(sq) + dir * step;
-        if (!inBoard(f, r)) break;
-        const to = SQ(f, r);
-        if (api.board.pieces[to]) break;
-        if (p.type === "p" && !pawnRankOk(to)) break;
-        best = to;
-      }
-      if (best != null) api.relocate(sq, best);
-    }),
+    // Delayed a beat: instead of punishing the capture they already made, wait
+    // for the opponent's next move, then bonk it back if THAT move captured.
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        inst.spent = true; // one shot, resolved on their next move either way
+        if (!move.captured) return;
+        const sq = move.to;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.opp || p.type === "k") return;
+        // "Home" is the opponent's own back rank: rank 0 for white, rank 7 for
+        // black. Walk straight back along the file to the farthest empty square
+        // within 2 squares, stopping at the first blocker; never park a pawn on
+        // a back rank (illegal), and never move if fully boxed in.
+        const dir = api.opp === "w" ? -1 : 1;
+        const f = FILE(sq);
+        let best: Square | null = null;
+        for (let step = 1; step <= 2; step++) {
+          const r = RANK(sq) + dir * step;
+          if (!inBoard(f, r)) break;
+          const to = SQ(f, r);
+          if (api.board.pieces[to]) break;
+          if (p.type === "p" && !pawnRankOk(to)) break;
+          best = to;
+        }
+        if (best != null) api.relocate(sq, best);
+      },
+      status: () => "waiting to ratio their next capture",
+    },
   ),
 ];
