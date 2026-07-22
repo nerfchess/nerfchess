@@ -17,6 +17,7 @@ import {
   BuffApi,
   BuffCategory,
   BuffInstance,
+  BuffPick,
   CardFx,
 } from "../buff";
 import { Tier } from "../nerf";
@@ -1326,6 +1327,35 @@ export const NEWJEANS_CARDS: Buff[] = [
           return [sq];
         });
       };
+      // A shielded piece must not also be giving check: the guard and a check
+      // are mutually exclusive. Does a `type` piece standing on `from` attack
+      // the enemy king from there?
+      const givesCheck = (api: BuffApi, from: Square, type: PieceType): boolean => {
+        const ek = mySquares(api.board, api.opp, "k")[0];
+        if (ek == null) return false;
+        switch (type) {
+          case "p": {
+            const dr = fwd(api.me);
+            return [
+              [1, dr],
+              [-1, dr],
+            ].some(([df, d]) => {
+              const f = FILE(from) + df, r = RANK(from) + d;
+              return inBoard(f, r) && SQ(f, r) === ek;
+            });
+          }
+          case "n":
+            return leapMoves(api.board, from, KNIGHT_LEAPS, "").some((m) => m.to === ek);
+          case "b":
+            return slideMoves(api.board, from, DIAG_DIRS, "").some((m) => m.to === ek);
+          case "r":
+            return slideMoves(api.board, from, ORTHO_DIRS, "").some((m) => m.to === ek);
+          case "q":
+            return slideMoves(api.board, from, ALL_DIRS, "").some((m) => m.to === ek);
+          default:
+            return false;
+        }
+      };
       return activated(
         (_inst, api, picks) =>
           picks.length === 0
@@ -1352,8 +1382,12 @@ export const NEWJEANS_CARDS: Buff[] = [
           const landed = mover.type !== "p" || pawnRankOk(prey);
           if (landed) api.relocate(from, prey);
           addEffect(api, { kind: "strike", squares: [prey], owner: api.me, turns: 1 });
-          // buffed: the pouncer lands shielded for the opponent's next turn.
-          if (landed) addEffect(api, { kind: "shield", owner: api.me, squares: [prey], turns: 1 });
+          // The pouncer lands shielded for the opponent's next turn, UNLESS the
+          // pounce gives check: a checker never gets the shield (it cannot both
+          // be uncapturable and be delivering check).
+          if (landed && !givesCheck(api, prey, mover.type)) {
+            addEffect(api, { kind: "shield", owner: api.me, squares: [prey], turns: 1 });
+          }
         },
       );
     })(),
@@ -1470,14 +1504,24 @@ const NAMED: Buff[] = [
       id: "fur_elise",
       name: "Fur Elise",
       description:
-        "Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands.",
+        "Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands. Using it spends your next unused draft reroll, if you have one.",
       tier: 5,
       category: "attack",
       requires: ["b"],
       icon: "Piano",
       flavor: "Every capture, a falling note.",
     },
-    lineSweep("b", DIAG_DIRS, 3),
+    (() => {
+      const base = lineSweep("b", DIAG_DIRS, 3);
+      return {
+        ...base,
+        // Preserve the sweep, but using it spends your next unused reroll.
+        effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+          base.effect?.(inst, api, picks);
+          if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+        },
+      };
+    })(),
   ),
 
   card(

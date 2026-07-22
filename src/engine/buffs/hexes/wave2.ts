@@ -300,7 +300,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tarnished_crown",
       name: "Tarnished Crown",
       description:
-        "Their coronations are cursed: for your opponent's next 6 turns, any pawn they promote arrives exhausted: the new piece is frozen for 2 of their turns the moment it is crowned. They can wait the curse out or pay the price knowingly.",
+        "Their coronations are cursed, all but the first: for your opponent's next 6 turns, any pawn they promote arrives exhausted, frozen for 2 of their turns the moment it is crowned. The first pawn to promote escapes the curse and arrives free; every coronation after it pays the price.",
       flavor: "The crown fits. It just weighs like a gravestone.",
       fx: { motif: "slow", pieces: ["p"] },
     },
@@ -308,13 +308,19 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.escaped = false;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.promotion) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp && p.type !== "k") {
-            // Added during their own move: 3 leaves exactly 2 of their turns.
-            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "rust" });
+            if (!inst.state.escaped) {
+              // One legal escape move: the first coronation arrives un-exhausted.
+              inst.state.escaped = true;
+            } else {
+              // Added during their own move: 3 leaves exactly 2 of their turns.
+              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "rust" });
+            }
           }
         }
         tickTurns(inst, move, api.opp);
@@ -335,25 +341,25 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tolling_bell",
       name: "Tolling Bell",
       description:
-        "A cracked bell hangs over their army: starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), its toll deafens the long arms: their bishops, rooks and queen cannot move on tolling turns. On the quiet turns in between, everything moves freely. Fades after their 6th turn.",
+        "A cracked bell hangs over their army: starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), its toll deafens the long arms: their bishops, rooks and queen cannot move on tolling turns. On the quiet turns in between, everything moves freely. Fades after their 5th turn.",
       flavor: "You learn to march between the tolls.",
       fx: { motif: "slow", pieces: ["b", "r", "q"] },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst) => {
-        // Tolling turns are those with an EVEN count remaining (6, 4, 2):
+        // Tolling turns are those with an ODD count remaining (5, 3, 1):
         // their 1st, 3rd and 5th turns under the curse.
-        if (turnsLeft(inst) <= 0 || turnsLeft(inst) % 2 !== 0 || moves.length === 0) return moves;
+        if (turnsLeft(inst) <= 0 || turnsLeft(inst) % 2 === 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.piece !== "b" && m.piece !== "r" && m.piece !== "q");
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
       status: (inst) =>
-        turnsLeft(inst) % 2 === 0
+        turnsLeft(inst) % 2 !== 0
           ? `the bell tolls this turn, ${turnsLeft(inst)} of their turns left`
           : `quiet turn, ${turnsLeft(inst)} of their turns left`,
     },
@@ -363,10 +369,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Trapdoor / Riptide / Lava Floor (knockback from PLACES): the recoil
   // is triggered by the act of CAPTURING, anywhere — the capture stands, but
   // the piece never keeps the square it won.
-  H3(
+  hex(
     {
       id: "hw2_curse_of_recoil",
       name: "Curse of Recoil",
+      tier: 4,
       description:
         "Their weapons kick like cannons: for your opponent's next 3 turns, any piece of theirs that captures is flung straight back to the square it attacked from (the victim is still taken, but the ground is not). Captures that promote are too heavy to throw back.",
       flavor: "The blow lands. The armsman does not.",

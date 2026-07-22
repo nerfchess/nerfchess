@@ -664,10 +664,9 @@ export const PT_CURSE_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 2;
         // Roll the sneeze schedule once, deterministically, at cast time.
         inst.state.schedule = [
-          api.rng.next() < 0.6,
           api.rng.next() < 0.6,
           api.rng.next() < 0.6,
         ];
@@ -679,7 +678,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp) return moves;
         const schedule = (inst.state.schedule as boolean[]) ?? [];
-        const idx = 3 - turnsLeft(inst); // 0 on the first restricted turn, then 1, 2
+        const idx = 2 - turnsLeft(inst); // 0 on the first restricted turn, then 1
         if (!schedule[idx]) return moves; // no sneeze this turn
         const kept = moves.filter((m) => m.from !== sq); // the sneezing piece is stuck
         return kept.length > 0 ? kept : moves;
@@ -709,7 +708,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "necromancer",
       name: "Necromancer",
       description:
-        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 6 of your turns. If nothing of yours has been captured, nothing rises.",
+        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 5 of your turns. If nothing of yours has been captured, nothing rises.",
       tier: 7,
       category: "pieces",
       flavor: "The grave was more of a suggestion.",
@@ -734,7 +733,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (type === "p" && !pawnRankOk(sq)) return;
         api.place(sq, type, api.me);
         markRevived(api, type);
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 6, then: "remove" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 5, then: "remove" });
       },
     ),
   ),
@@ -772,7 +771,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "understaffed",
       name: "Understaffed",
       description:
-        "Half the office calls in sick: for their next 2 turns your opponent cannot move any piece standing on files a through d.",
+        "Half the office calls in sick. The first piece your opponent moves gets out freely; then for their next 2 turns they cannot move any piece standing on files a through d.",
       tier: 3,
       category: "hex",
       flavor: "Gone to break, back never.",
@@ -784,13 +783,24 @@ export const PT_CURSE_CARDS: Buff[] = [
         inst.state.turns = 2;
       },
       filterOpponentMoves: (moves, inst) => {
+        // The first affected piece gets one legal escape move: their opening
+        // move under the sickout is unrestricted, then the lockdown bites for
+        // its full duration.
+        if (!inst.state.escaped) return moves;
         if (turnsLeft(inst) <= 0) return moves;
         const kept = moves.filter((m) => FILE(m.from) >= 4);
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.escaped) {
+          inst.state.escaped = true; // the escape move; the timer has not started
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.escaped ? `${turnsLeft(inst)} of their turns left` : "one free escape, then lockdown",
     },
   ),
 
