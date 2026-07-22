@@ -324,9 +324,35 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_kind_omen", name: "Kind Omen", tier: 1, category: "nerf", icon: "Bird",
-      description: "The first time your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.",
+      description: "The first time your opponent captures one of your pieces, your nerf is suspended for your next 2 turns. If that has not happened by your twelfth turn, the unused charge becomes 1 draft reroll instead.",
       flavor: "The sparrow watched the whole thing and disagreed." },
-    reliefOn(1, 2, (m, api) => m.color === api.opp && !!m.captured && m.captured !== "k", "omens"),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.myTurns = 0;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        if (move.color === api.opp && !!move.captured && move.captured !== "k") {
+          susp(api, 2);
+          inst.state.charges = left - 1;
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.me) {
+          const t = ((inst.state.myTurns as number) ?? 0) + 1;
+          inst.state.myTurns = t;
+          if (t >= 12) {
+            api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+            inst.state.charges = left - 1;
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 1} omens left`,
+    },
   ),
   card(
     { id: "bn4_pawns_lullaby", name: "Pawn's Lullaby", tier: 2, category: "nerf", icon: "Music",
@@ -336,9 +362,9 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_castle_quiet", name: "Castle Quiet", tier: 1, category: "nerf", icon: "Castle",
-      description: "When you castle, your nerf is suspended for your next 3 turns.",
+      description: "When you castle, your nerf is suspended for your next 2 turns.",
       flavor: "Thick walls. Thicker silence." },
-    reliefOn(1, 3, (m, api) => m.color === api.me && isCastle(m), "castlings"),
+    reliefOn(1, 2, (m, api) => m.color === api.me && isCastle(m), "castlings"),
   ),
   card(
     { id: "bn4_two_breaths", name: "Two Breaths", tier: 1, category: "nerf", icon: "Wind",
@@ -382,9 +408,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_grace_note", name: "Grace Note", tier: 1, category: "nerf", icon: "Feather",
-      description: "Free action: suspend your nerf for your next turn and gain 5 seconds on your clock, used at the moment you choose.",
+      description: "Free action: suspend your nerf for your next turn, gain 10 seconds on your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer, used at the moment you choose. In untimed games the clock gain does nothing.",
       flavor: "A tiny ornament, played exactly on time." },
-    suspendFree(1, (api) => api.adjustClock({ addSelfSec: 5 })),
+    suspendFree(1, (api) => {
+      api.adjustClock({ addSelfSec: 10 });
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
+    }),
   ),
   card(
     { id: "bn4_shared_silence", name: "Shared Silence", tier: 1, category: "nerf", icon: "Handshake",

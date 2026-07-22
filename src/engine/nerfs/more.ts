@@ -585,9 +585,14 @@ export const RECONNAISSANCE: Nerf = db({
 
 export const CONTROL_CENTER: Nerf = db({
   id: "control_center", name: "Control Center", tier: 4, implemented: true,
-  description: "Non-capturing moves must go to files c, d, e, or f.",
+  description: "Non-capturing moves must go to files c, d, e, or f, unless the piece already starts on those files, in which case it may leave normally.",
   filterMoves: (moves) =>
-    moves.filter((m) => m.captured || (FILE(m.to) >= 2 && FILE(m.to) <= 5)),
+    moves.filter(
+      (m) =>
+        m.captured ||
+        (FILE(m.from) >= 2 && FILE(m.from) <= 5) ||
+        (FILE(m.to) >= 2 && FILE(m.to) <= 5),
+    ),
 });
 
 export const HAUNTED: Nerf = db({
@@ -790,9 +795,11 @@ export const BISHOP_FAN_CLUB: Nerf = db({
 
 export const CHIVALRY: Nerf = db({
   id: "chivalry", name: "Chivalry", tier: 4, implemented: true,
-  description: "Can only capture heavies (rooks, queens) with a knight.",
-  filterMoves: (moves) =>
-    moves.filter((m) => !((m.captured === "r" || m.captured === "q") && m.piece !== "n")),
+  description: "Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3.",
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
+    return moves.filter((m) => !((m.captured === "r" || m.captured === "q") && m.piece !== "n"));
+  },
 });
 
 export const SPREAD_OUT: Nerf = db({
@@ -1175,11 +1182,30 @@ export const COWERING_IN_FEAR: Nerf = db({
 
 export const BARBARIAN_RAGE: Nerf = db({
   id: "barbarian_rage", name: "Barbarian Rage", tier: 4, implemented: true,
-  description: "If you captured last move, you must capture this move if able.",
+  description: "If you captured last move, you must capture this move if able. Once per game, when every available capture would lose material, the rage relents and you may play any move; that exemption is used up the first time you make a non-capturing move while enraged.",
   filterMoves: (moves, _s, ctx) => {
-    if (!ctx.myLastMove?.captured) return moves;
+    if (!ctx.myLastMove?.captured) return moves; // not enraged
     const caps = moves.filter((m) => m.captured);
-    return caps.length ? caps : moves;
+    if (!caps.length) return moves; // nothing to force
+    // Once-per-game exemption: if it hasn't been spent and every available
+    // capture would lose material, let the rage relent this turn. The exemption
+    // is treated as spent the first time an enraged turn ends in a non-capture
+    // (reconstructed from history, since move choice is not stored in state).
+    const mine = ctx.board.history.filter((m) => m.color === ctx.me);
+    let exemptionSpent = false;
+    for (let i = 1; i < mine.length; i++) {
+      if (mine[i - 1].captured && !mine[i].captured) { exemptionSpent = true; break; }
+    }
+    if (!exemptionSpent) {
+      const opp = ctx.me === "w" ? "b" : "w";
+      const hasCompliant = caps.some((m) => {
+        if (m.captured && PIECE_VAL[m.captured] >= PIECE_VAL[m.piece]) return true;
+        const nb = makeMove(ctx.board, m);
+        return !attackedBy(nb, opp).has(m.to);
+      });
+      if (!hasCompliant) return moves; // exemption applies this turn
+    }
+    return caps;
   },
 });
 

@@ -744,16 +744,15 @@ const TIER1: Buff[] = [
       // The swap is deferred, so the card must live past its activation to fire.
       spendOnUse: false,
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.pending
+        picks.length > 0 || inst.state.pawnSq != null
           ? null
           : { kind: "square", label: "Choose the pawn your king swaps with", squares: mySquares(api.board, api.me, "p") },
       effect: (inst, _api, picks) => {
-        if (inst.state.pending || picks[0]?.square == null) return;
-        inst.state.pending = true;
+        if (inst.state.pawnSq != null || picks[0]?.square == null) return;
         inst.state.pawnSq = picks[0].square;
       },
       onMovePlayed: (inst, move, api) => {
-        if (!inst.state.pending || move.color !== api.opp) return;
+        if (inst.state.pawnSq == null || move.color !== api.opp) return;
         // The opponent has replied: perform the delayed swap now, using the
         // king's current square and the chosen pawn if it is still standing.
         const pawnSq = inst.state.pawnSq as Square;
@@ -764,11 +763,11 @@ const TIER1: Buff[] = [
           api.board.pieces[kingSq] = pawn;
           api.bs.historyDiverged = true;
         }
-        inst.state.pending = false;
+        inst.state.pawnSq = null;
         inst.spent = true;
       },
       status: (inst) =>
-        inst.state.pending ? "swap pending after their reply" : "activate to choose a pawn",
+        inst.state.pawnSq != null ? "swap pending after their reply" : "activate to choose a pawn",
     },
   ),
   def(
@@ -781,7 +780,7 @@ const TIER1: Buff[] = [
       kind: "activated",
       spendOnUse: false,
       targets: (inst, api, picks) => {
-        if (picks.length > 0 || inst.state.pending) return null;
+        if (picks.length > 0 || inst.state.dest != null) return null;
         const revivablePawn = revivable(api, "p") > 0;
         return {
           kind: "square",
@@ -792,12 +791,11 @@ const TIER1: Buff[] = [
         };
       },
       effect: (inst, api, picks) => {
-        if (inst.state.pending || picks[0]?.square == null || revivable(api, "p") <= 0) return;
-        inst.state.pending = true;
+        if (inst.state.dest != null || picks[0]?.square == null || revivable(api, "p") <= 0) return;
         inst.state.dest = picks[0].square;
       },
       onMovePlayed: (inst, move, api) => {
-        if (!inst.state.pending || move.color !== api.opp) return;
+        if (inst.state.dest == null || move.color !== api.opp) return;
         const dest = inst.state.dest as Square;
         if (
           revivable(api, "p") > 0 &&
@@ -808,11 +806,11 @@ const TIER1: Buff[] = [
           api.place(dest, "p", api.me);
           markRevived(api, "p");
         }
-        inst.state.pending = false;
+        inst.state.dest = null;
         inst.spent = true;
       },
       status: (inst) =>
-        inst.state.pending ? "returning after their reply" : "activate to choose a square",
+        inst.state.dest != null ? "returning after their reply" : "activate to choose a square",
     },
   ),
   def(

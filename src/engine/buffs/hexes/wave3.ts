@@ -1192,7 +1192,7 @@ const T4: Buff[] = [
       id: "hw3_aging_blade",
       name: "Aging Blade",
       description:
-        "Every kill costs them a little youth: for your opponent's next 6 turns, whenever a queen, rook or bishop captures, it ages one rank on the spot - a queen becomes a rook, a rook a bishop, a bishop a knight. Knights and pawns are already too humble to age, so trading with them is safe. Capturing with their heavy pieces slowly grinds the army down.",
+        "Every kill costs them a little youth, once the curse settles in: it takes hold only after your opponent's next move, and then for their next 6 turns, whenever a queen, rook or bishop captures, it ages one rank on the spot - a queen becomes a rook, a rook a bishop, a bishop a knight. Knights and pawns are already too humble to age, so trading with them is safe. Capturing with their heavy pieces slowly grinds the army down.",
       flavor: "The sword drinks, and the hand that holds it withers.",
       fx: { motif: "muzzle", pieces: ["q", "r", "b"] },
     },
@@ -1200,8 +1200,13 @@ const T4: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.started = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.started) {
+          inst.state.started = true; // the blight takes hold only after their next move
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured && !move.promotion) {
           const into = DEMOTE[move.piece];
           const p = api.board.pieces[move.to];
@@ -1230,7 +1235,7 @@ const T4: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
         inst.state.sick = {} as Record<number, number>;
       },
       onMovePlayed: (inst, move, api) => {

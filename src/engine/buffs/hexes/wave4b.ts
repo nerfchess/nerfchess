@@ -512,8 +512,8 @@ const T5: Buff[] = [
     },
   ),
   H5(
-    { id: "hx4_grooms_leash", name: "Groom's Leash", description: "For your opponent's next 3 turns, their knights may only land on squares adjacent to another of their own pieces. Stray leaps are forbidden.", flavor: "No horse rides out without a handler.", icon: "Grip", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(3, (moves, api) =>
+    { id: "hx4_grooms_leash", name: "Groom's Leash", description: "For your opponent's next 3 turns, their knights may only land on squares adjacent to another of their own pieces. Stray leaps are forbidden. The first stray leap slips through once, then the leash binds fully.", flavor: "No horse rides out without a handler.", icon: "Grip", fx: { motif: "anchor", pieces: ["n"] } },
+    escapeCurse(3, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece !== "n" ||
@@ -526,16 +526,16 @@ const T5: Buff[] = [
     curse(4, (moves) => moves.filter((m) => m.piece !== "b" || moveDist(m) <= 1)),
   ),
   H5(
-    { id: "hx4_court_in_session", name: "Court in Session", description: "For your opponent's next 3 turns, any of their pieces standing adjacent to their own king may not move. The king itself is free to go.", flavor: "Nobody leaves while the king is speaking.", icon: "Gavel", fx: { motif: "jail", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_court_in_session", name: "Court in Session", description: "For your opponent's next 2 turns, any of their pieces standing adjacent to their own king may not move. The king itself is free to go.", flavor: "Nobody leaves while the king is speaking.", icon: "Gavel", fx: { motif: "jail", pieces: "all" } },
+    curse(2, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       return moves.filter((m) => m.piece === "k" || cheb(m.from, k) > 1);
     }),
   ),
   H5(
-    { id: "hx4_ford_crossing", name: "Ford Crossing", description: "For your opponent's next 4 turns, any move that crosses the midline into your half must stop on the first rank of your half. Deeper landings are forbidden. Their king is exempt.", flavor: "Everyone wades. Nobody swims.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
-    curse(4, (moves, api) =>
+    { id: "hx4_ford_crossing", name: "Ford Crossing", description: "For your opponent's next 4 turns, any move that crosses the midline into your half must stop on the first rank of your half. Deeper landings are forbidden. Their king is exempt. The first piece the ford would stop may make one forbidden crossing, then it binds fully.", flavor: "Everyone wades. Nobody swims.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
+    escapeCurse(4, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece === "k" ||
