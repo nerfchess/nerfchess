@@ -9,6 +9,7 @@
 import { Buff } from "./shared";
 import {
   tierHexes,
+  hex,
   curse,
   walnutTarget,
   freezeAllEnemies,
@@ -35,12 +36,15 @@ export const HEXES_T5: Buff[] = [
     {
       id: "burned_dispatches",
       name: "Burned Dispatches",
-      description: "Your opponent's next draft is skipped outright, and the draft after that arrives nullified and inert.",
+      description: "Your opponent's next draft is skipped outright, and in return they gain one draft reroll for a later offer.",
       flavor: "Two orders lost: one to the fire, one to the smudge.",
     },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      // One denied draft now, not two: the victim banks a reroll in return,
+      // spent on a later offer (the skipped one never rolls, so a reroll on
+      // it would be wasted anyway).
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
 

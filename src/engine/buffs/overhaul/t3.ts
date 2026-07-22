@@ -20,6 +20,8 @@ import {
   Square,
   activated,
   addEffect,
+  advanceablePawns,
+  advancePawn,
   augment,
   bindCandidates,
   bindPiece,

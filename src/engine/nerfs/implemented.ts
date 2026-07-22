@@ -948,12 +948,15 @@ export const HOLD_THEM_BACK: Nerf = db({
 export const DEER_IN_HEADLIGHTS: Nerf = db({
   id: "deer_in_headlights",
   name: "Deer in the Headlights",
-  description: "You can't move pieces that are currently under attack.",
+  description: "From your fourth move onward, you can't move pieces that are currently under attack. Your first three moves are free so the opening cannot be soft-locked.",
   flavor: "Frozen.",
   tier: 7,
   icon: "zap",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    // Grace period: the rule only bites once you have three moves behind you,
+    // so it kicks in on your fourth move.
+    if (ctx.moveNumber < 3) return moves;
     const opp = ctx.me === "w" ? "b" : "w";
     const attacked = attackedBy(ctx.board, opp);
     const safe = moves.filter((m) => !attacked.has(m.from));
@@ -1005,7 +1008,7 @@ export const RESPECTFUL: Nerf = db({
 export const SIEGE: Nerf = db({
   id: "siege",
   name: "Siege",
-  description: "You must capture at least one enemy rook by move 20, or you lose.",
+  description: "You must capture at least one enemy rook by move 20. Miss the deadline and you get a one turn warning; if you still have no rook by move 21, you lose.",
   flavor: "Break their towers, or fall with them.",
   tier: 6,
   icon: "sword",
@@ -1015,18 +1018,26 @@ export const SIEGE: Nerf = db({
     max: 1,
     label: ctx.capturedByMe.r >= 1
       ? "Siege complete"
-      : `${Math.max(0, 20 - ctx.moveNumber)} turns to take a rook`,
+      : `${Math.max(0, 21 - ctx.moveNumber)} turns to take a rook`,
   }),
   checkLoss: (_s, ctx) => {
-    if (ctx.moveNumber < 20) return null;
+    // Deadline is move 20, but the first miss only warns: the loss lands one
+    // turn later (move 21) if there is still no rook to your name.
+    if (ctx.moveNumber < 21) return null;
     return ctx.capturedByMe.r >= 1 ? null : { reason: "failed siege" };
   },
   hint: (_s, ctx) => {
-    if (ctx.moveNumber >= 20 || ctx.capturedByMe.r >= 1) return null;
+    if (ctx.moveNumber >= 21 || ctx.capturedByMe.r >= 1) return null;
+    if (ctx.moveNumber >= 20) {
+      return {
+        text: "Final warning: capture a rook this turn or you lose.",
+        tone: "warn",
+      };
+    }
     const remaining = 20 - ctx.moveNumber;
     if (remaining > 8) return null;
     return {
-      text: `Capture a rook within ${remaining} more turn${remaining === 1 ? "" : "s"} or lose.`,
+      text: `Capture a rook within ${remaining} more turn${remaining === 1 ? "" : "s"} or face the warning.`,
       tone: "warn",
     };
   },
