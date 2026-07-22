@@ -22,6 +22,8 @@
     "test:sound": "node scripts/check-sound-coverage.cjs",
     "test:card-registry": "npx -y tsx scripts/gen-card-registry.ts --check",
     "test:draft-fairness": "npx -y tsx scripts/test-draft-fairness.ts",
+    "audit:cards": "npx -y tsx scripts/audit-cards.ts",
+    "test:card-audit": "npx -y tsx scripts/audit-cards.ts --check",
     "test:desync": "npm run server:build && node scripts/test-desync.cjs",
     "test:apex": "npm run server:build && node scripts/test-apex.cjs",
     "test:snapshot": "npm run server:build && node scripts/test-snapshot.cjs",
