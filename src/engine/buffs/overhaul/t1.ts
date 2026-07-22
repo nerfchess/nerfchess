@@ -28,6 +28,7 @@ import {
   pinCosmetic,
   relRank,
   slideMoves,
+  spendOnVia,
   teleportMoves,
   tickTurns,
   timedOppFilter,
@@ -42,7 +43,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_pigeon_post",
       name: "Pigeon Post",
       description:
-        "For your next 3 turns, every enemy piece attacking your queen is marked by a landing pigeon.",
+        "For your next 3 turns, every enemy piece attacking your queen is marked by a landing pigeon and loses any temporary shield covering it.",
       tier: 1,
       category: "info",
       icon: "Bird",
@@ -57,7 +58,18 @@ export const OVERHAUL_T1: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp) {
           const q = mySquares(api.board, api.me, "q")[0];
-          if (q != null) flashSquares(api, attackersOf(api.board, api.opp, q), true);
+          if (q != null) {
+            const marked = attackersOf(api.board, api.opp, q);
+            flashSquares(api, marked, true);
+            // Strip any temporary (non-permanent) enemy shield from the marked
+            // attackers. Whole-army shields (squares === null) cannot exempt a
+            // single piece, so they are left untouched.
+            for (const e of api.bs.effects) {
+              if (e.kind === "shield" && e.owner === api.opp && e.turns != null && e.squares != null) {
+                e.squares = e.squares.filter((s) => !marked.includes(s));
+              }
+            }
+          }
         }
         tickTurns(inst, move, api.me);
       },
@@ -69,7 +81,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_pebble_toss",
       name: "Pebble Toss",
-      description: "Choose an unmoved enemy pawn; it loses its two-square first move.",
+      description:
+        "Choose an unmoved enemy pawn; it loses its two-square first move on your opponent's next turn. The pebble is spent after that turn even if the pawn stays put.",
       tier: 1,
       category: "attack",
       icon: "Mountain",
@@ -103,9 +116,10 @@ export const OVERHAUL_T1: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
-        // Once the pawn moves (single-step now) or dies, the pebble's work is done.
-        if (move.from === sq || move.to === sq || move.capturedSquare === sq) inst.spent = true;
-        void api;
+        // The pebble denies the double-step for the opponent's very next move
+        // only: any opponent move spends the charge, whether or not they moved
+        // (or ignored) the bonked pawn. A failed or illegal attempt still counts.
+        if (move.color === api.opp) inst.spent = true;
       },
       status: (inst) => (inst.state.sq != null ? "pebble delivered" : "pick a pawn"),
     },
@@ -140,7 +154,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_warmup_stretch",
       name: "Warm-Up Stretch",
-      description: "One knight's next move may be a long camel leap (3,1) instead.",
+      description:
+        "One knight's next move may be a long camel leap (3,1) instead. When it makes the leap, gain one draft reroll.",
       tier: 1,
       category: "movement",
       icon: "Dumbbell",
@@ -148,16 +163,24 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const CAMEL = [
-        [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
-      ] as const;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "n")) {
-        out.push(...leapMoves(api.board, sq, CAMEL, inst.id));
-      }
-      return out;
-    }),
+    {
+      ...augment((_moves, inst, api) => {
+        const CAMEL = [
+          [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
+        ] as const;
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "n")) {
+          out.push(...leapMoves(api.board, sq, CAMEL, inst.id));
+        }
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 5. Free Sample ---------------------------------------------------------------
   card(
@@ -182,7 +205,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_lucky_penny",
       name: "Lucky Penny",
       description:
-        "Pick a pawn and flip the coin. Heads, half the time: it advances one square now. Tails: it stays put.",
+        "Pick a pawn and flip the coin: 50% heads, the pawn advances one square now (the jackpot); tails, it stays put and the failed flip is banked as two draft rerolls.",
       tier: 1,
       category: "movement",
       icon: "Coins",
@@ -203,8 +226,14 @@ export const OVERHAUL_T1: Buff[] = [
         if (sq == null) return;
         const heads = api.rng.next() < 0.5;
         inst.state.result = heads ? "heads" : "tails";
-        if (heads) advancePawn(api, sq);
-        else flashSquares(api, [sq], true);
+        if (heads) {
+          advancePawn(api, sq);
+        } else {
+          flashSquares(api, [sq], true);
+          // Bank the failed flip: two draft rerolls as consolation (works in
+          // both timed and untimed play, unlike a clock payout).
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+        }
       },
       { freeAction: true },
     ),
