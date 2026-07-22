@@ -1246,12 +1246,59 @@ export const WILD_ARCANE: Buff[] = [
       icon: "Ban",
       name: "Banish",
       description:
-        "Banish one enemy pawn, knight, or bishop from the board, once.",
+        "Mark one enemy pawn, knight, or bishop: after your opponent replies, it is banished from the board, once.",
       tier: 3,
       category: "attack",
       flavor: "Sent somewhere with no squares at all.",
     },
-    removeEnemies(1, ["p", "n", "b"]),
+    // Balance: the banish no longer fires on the spot. You mark a piece now and
+    // it is removed only after the opponent has played one reply move.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy pawn, knight, or bishop to banish",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "p" || t === "n" || t === "b";
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq != null) inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Follow the marked piece; if it is captured first, the banish fizzles.
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        // Fire once the opponent has replied.
+        if (move.color !== api.opp) return;
+        const cur = inst.state.sq as Square | undefined;
+        if (cur != null && api.board.pieces[cur]?.color === api.opp) api.removePiece(cur);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to mark a piece for banishment"
+          : "banishes after your opponent replies",
+    },
   ),
   card(
     {

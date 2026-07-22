@@ -1015,7 +1015,15 @@ export const HEX_WAVE2: Buff[] = [
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move is clear; the storm breaks over
+          // them after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => {
         const left = turnsLeft(inst);
         const stage = left >= 5 ? 1 : left >= 3 ? 2 : 3;
