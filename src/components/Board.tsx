@@ -2040,6 +2040,16 @@ export function Board({
   const [promotionMove, setPromotionMove] = useState<Move[] | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [hoverSq, setHoverSq] = useState<Square | null>(null);
+  // Advertise an in-flight piece drag to interested overlays (the draft panel
+  // defers its forced reopen until the drag lands) without threading a prop
+  // through every host: a body dataset flag, cleared on unmount for safety.
+  useEffect(() => {
+    if (drag) document.body.dataset.boardDrag = "1";
+    else delete document.body.dataset.boardDrag;
+    return () => {
+      delete document.body.dataset.boardDrag;
+    };
+  }, [drag]);
   // Refused input: the square whose move/target was just rejected. Drives a
   // brief oxblood inner ring on that square (plus a 150ms transform-only shake
   // applied imperatively, see flagInvalid) and unmounts right after. Purely

@@ -1932,10 +1932,13 @@ html[data-theme="nebula"] .mode-def-card {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* Desktop (sm+), lichess-style: the field rolls out LEFTWARD from the search
-   icon instead of dropping down. Width is animated (not transform) so the input
-   never looks squashed; clamped so it can't run off small screens. */
-@media (min-width: 640px) {
+/* Wide desktop (lg+), lichess-style: the field rolls out LEFTWARD from the
+   search icon instead of dropping down. Below lg the drop-under panel above is
+   kept even once the inline nav appears (md), because a 17rem leftward rollout
+   at tablet widths lands on top of the "Rules"/"Leaderboard" links. Width is
+   animated (not transform) so the input never looks squashed; clamped so it
+   can't run off small screens. */
+@media (min-width: 1024px) {
   .header-search-panel {
     width: min(17rem, calc(100vw - 8.5rem));
     animation: search-grow 0.24s var(--ease-out) both;

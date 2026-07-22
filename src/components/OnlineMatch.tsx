@@ -2125,6 +2125,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const bsMine = isDraft ? game.buffs?.players[myColor] : undefined;
   const bsTheirs = isDraft ? game.buffs?.players[oppColor] : undefined;
   const myOffer = bsMine?.offer ?? null;
+  // My unresolved draft is past its free window and eating my clock: the
+  // ClockPill surfaces a DRAFT tag next to the time so the reason the clock
+  // runs is visible even with the draft panel hidden or tucked away.
+  const myDraftCharging =
+    isDraft && !!myOffer && !draftSubmitted && draftGraceOver && !game.result;
   // Only call it a genuine skip with hard evidence: I have no offer, did not
   // submit, did not resolve this round, AND a draft-block is still pending on
   // me. A normal pick/bank never satisfies blockedDrafts (I got an offer), so
@@ -2998,6 +3003,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     active={chargedColor === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     warnLowTime={uiSettings.lowTimeWarning}
+                    draftRunning={myDraftCharging}
                     compact
                   />
                 )}
@@ -3055,6 +3061,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       ms={myColor === "w" ? whiteMs : blackMs}
                       active={chargedColor === myColor}
                       startDelayMs={clockStartDelay(myColor)}
+                      draftRunning={myDraftCharging}
                       compact
                     />
                     <span

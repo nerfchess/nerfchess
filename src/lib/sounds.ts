@@ -385,6 +385,20 @@ export function playDraftChime() {
   }
 }
 
+// Draft free window over: the clock is now eating into the player's own time.
+// Distinct from the gentle draft chime — a firm two-note descending "time's
+// up" knock so it cuts through even when the draft was hidden behind the
+// board. Deliberately darker (minor third down) than the notify dong.
+export function playDraftUrgent() {
+  if (!soundPrefs.enabled) return;
+  if (isMuted()) return;
+  tone({ freq: 740, dur: 0.14, type: "square", gain: 0.09, attack: 0.004, release: 0.12 });
+  tone({ freq: 740, dur: 0.14, type: "sine", gain: 0.14, attack: 0.004, release: 0.12 });
+  tone({ freq: 622, dur: 0.26, type: "square", gain: 0.08, attack: 0.004, release: 0.24, delay: 0.16 });
+  tone({ freq: 622, dur: 0.26, type: "sine", gain: 0.15, attack: 0.004, release: 0.24, delay: 0.16 });
+  tone({ freq: 311, dur: 0.3, type: "sine", gain: 0.08, attack: 0.004, release: 0.28, delay: 0.16 });
+}
+
 // Incoming challenge: the lichess social notify (what lichess plays when a
 // challenge lands in your inbox).
 export function playChallenge() {

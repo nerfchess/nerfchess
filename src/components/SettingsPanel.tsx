@@ -1,8 +1,9 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import type { CSSProperties } from "react";
-import { X } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { ChevronDown, X } from "lucide-react";
 import {
   ACCENT_THEMES,
   AccentColor,
@@ -38,11 +39,17 @@ import "./SettingsPanel.css";
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** Set when a live game is in progress; when omitted, the panel infers it
+   *  from the route (game pages live under /game and /play). */
+  liveGame?: boolean;
 }
 
-export function SettingsPanel({ open, onClose }: Props) {
+export function SettingsPanel({ open, onClose, liveGame }: Props) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
+  const pathname = usePathname();
+  const inLiveGame =
+    liveGame ?? (pathname != null && (pathname.startsWith("/game") || pathname.startsWith("/play")));
 
   // Re-sync from storage each time the panel opens, matching the previous
   // behaviour where values were reloaded on open. Also start back on the
@@ -212,6 +219,13 @@ export function SettingsPanel({ open, onClose }: Props) {
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Gentle reminder for players who open Settings mid-game. */}
+        {inLiveGame && (
+          <p className="shrink-0 border-b border-[color:var(--edge)] px-5 py-1.5 text-[12px] text-gold-leaf/80">
+            Heads up: the game clock keeps running while Settings is open.
+          </p>
+        )}
 
         {/* Body: sconce rail (left on desktop, chip row on mobile) + the
             scrolling content pane. The pane height is fixed per viewport so
@@ -487,6 +501,49 @@ function CustomBackgroundControl({
   );
 }
 
+/** Compact disclosure for the large theme galleries: rests as a single row
+ *  showing the current pick (name + small swatch); expanding reveals the full
+ *  grid. Keeps the Layout/Motion controls below within easy reach. */
+function PickerDisclosure({
+  prompt,
+  selectedName,
+  swatch,
+  children,
+}: {
+  /** Action label on the collapsed row, e.g. "Choose piece set". */
+  prompt: string;
+  selectedName: string;
+  swatch: ReactNode;
+  children: ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((v) => !v)}
+        className="press flex min-h-[44px] w-full items-center gap-2.5 rounded-[1px] border border-[color:var(--edge)] p-2 text-left transition-colors hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]"
+      >
+        {swatch}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-[13px] leading-tight text-parchment">
+            {selectedName}
+          </span>
+          <span className="block text-[12px] leading-tight text-parchment-400">
+            {expanded ? "Hide options" : prompt}
+          </span>
+        </span>
+        <ChevronDown
+          aria-hidden
+          className={"h-4 w-4 shrink-0 text-parchment-400 transition-transform " + (expanded ? "rotate-180" : "")}
+        />
+      </button>
+      {expanded && <div className="mt-2">{children}</div>}
+    </div>
+  );
+}
+
 /** The board-theme swatch grid — a live control that spans a full row. */
 function BoardThemePicker({
   value,
@@ -495,8 +552,21 @@ function BoardThemePicker({
   value: BoardTheme;
   onChange: (theme: BoardTheme) => void;
 }) {
+  const current = BOARD_THEMES[value];
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <PickerDisclosure
+      prompt="Choose board theme"
+      selectedName={current.label}
+      swatch={
+        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+          <span style={{ background: current.light }} />
+          <span style={{ background: current.dark }} />
+          <span style={{ background: current.dark }} />
+          <span style={{ background: current.light }} />
+        </span>
+      }
+    >
+      <div className="grid grid-cols-2 gap-2">
       {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
         const t = BOARD_THEMES[k];
         const selected = value === k;
@@ -521,7 +591,8 @@ function BoardThemePicker({
           </button>
         );
       })}
-    </div>
+      </div>
+    </PickerDisclosure>
   );
 }
 
@@ -533,8 +604,36 @@ function PieceThemePicker({
   value: PieceTheme;
   onChange: (theme: PieceTheme) => void;
 }) {
+  const current = PIECE_THEMES[value];
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <PickerDisclosure
+      prompt="Choose piece set"
+      selectedName={current.label}
+      swatch={
+        <span
+          aria-hidden
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
+          style={
+            {
+              "--piece-w-fill": current.wFill,
+              "--piece-w-stroke": current.wStroke,
+              "--piece-b-fill": current.bFill,
+              "--piece-b-stroke": current.bStroke,
+            } as CSSProperties
+          }
+        >
+          {current.assetSet ? (
+            <span
+              className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+              style={{ backgroundImage: `url("/piece/lichess/${current.assetSet}/wN.svg")` }}
+            />
+          ) : (
+            <Piece type="n" color="w" size={16} />
+          )}
+        </span>
+      }
+    >
+      <div className="grid grid-cols-2 gap-2">
       {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
         const t = PIECE_THEMES[k];
         const selected = value === k;
@@ -582,7 +681,8 @@ function PieceThemePicker({
           </button>
         );
       })}
-    </div>
+      </div>
+    </PickerDisclosure>
   );
 }
 

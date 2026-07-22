@@ -341,15 +341,29 @@ function DockSectionHeader({
   label,
   count,
   accent,
+  open,
+  onToggle,
 }: {
   icon: LucideIcon;
   label: string;
   count: number;
   accent?: SectionAccent;
+  /** When onToggle is given, the whole header becomes a toggle button for its
+   * section body (chevron driven by `open`). Session-only state, upstream. */
+  open?: boolean;
+  onToggle?: () => void;
 }) {
   const a = accent ? SECTION_ACCENT[accent] : null;
-  return (
-    <div className="flex items-center gap-1.5">
+  const inner = (
+    <>
+      {onToggle && (
+        <ChevronRight
+          aria-hidden
+          size={12}
+          strokeWidth={2.4}
+          className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+        />
+      )}
       <span
         aria-hidden
         className={
@@ -365,8 +379,21 @@ function DockSectionHeader({
       <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
         {count}
       </span>
-    </div>
+    </>
   );
+  if (onToggle) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-1.5 text-left"
+      >
+        {inner}
+      </button>
+    );
+  }
+  return <div className="flex items-center gap-1.5">{inner}</div>;
 }
 
 /** Hoverable card name for the Latest pocket: mousing over (or tapping, on
@@ -433,6 +460,39 @@ function UsedBadge({ nullified }: { nullified: boolean }) {
   ) : (
     <span className="smallcaps shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[12px] font-semibold text-parchment-200">
       Used
+    </span>
+  );
+}
+
+/** Textual passive marker: names the state outright where only the gold dot
+ * hinted at it before. Same quiet gold family as the dot it replaces. */
+function PassiveChip() {
+  return (
+    <span
+      title="Passive: always in effect"
+      className="smallcaps shrink-0 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
+    >
+      Passive
+    </span>
+  );
+}
+
+/** Compact status chip for a COLLAPSED row so remaining time reads without
+ * expanding: a countdown status renders as "Temp · N turns" with the little
+ * clock, any other live status (e.g. "bound to e4") shows its own text. The
+ * full status line still lives in the expanded body. */
+function StatusChip({ status }: { status: string }) {
+  const m = /(\d+)\s*turn/i.exec(status);
+  const text = m ? `Temp · ${m[1]} turn${m[1] === "1" ? "" : "s"}` : status;
+  return (
+    <span
+      title={pliesTitle(status) ?? status}
+      // Shrinkable (not shrink-0): a long status must squeeze itself, never
+      // the card name sitting in the same row.
+      className="smallcaps inline-flex min-w-0 max-w-[8rem] shrink items-center gap-1 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
+    >
+      {m && <Clock aria-hidden size={9} strokeWidth={2.4} className="shrink-0" />}
+      <span className="min-w-0 truncate">{text}</span>
     </span>
   );
 }
@@ -621,15 +681,44 @@ interface Props {
 
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
   const finePointer = useFinePointer();
-  // Per-card expand/collapse, remembered for the whole game. A missing key
-  // falls back to the default: your own cards start expanded, the opponent's
-  // start collapsed (see defaultOpen). Keyed by owner + index, both stable
-  // (used cards are marked spent, never removed, so indices never shift).
+  // Per-card expand/collapse, remembered for the whole game. Every row now
+  // starts collapsed to a one-line summary (name + state chips) so the rail
+  // stays lean as cards accumulate; the full description is one tap away.
+  // Keyed by owner + index, both stable (used cards are marked spent, never
+  // removed, so indices never shift).
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const defaultOpen = (key: string) => key.startsWith("mine-");
   const toggle = (key: string) =>
-    setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? defaultOpen(key)) }));
+    setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? false) }));
   const reduceMotion = useReducedMotion();
+
+  // Whole-section collapse for the two arsenals (session state only; nothing
+  // persisted). Headers keep their count chips so a folded section still says
+  // how much it holds.
+  const [myOpen, setMyOpen] = useState(true);
+  const [oppOpen, setOppOpen] = useState(true);
+
+  // Latest pocket auto-minimize: ~5s after the newest card landed (keyed by
+  // the hand sizes, which only grow) the pocket folds to a one-line strip.
+  // A manual toggle pins the pocket (the timer stops overriding it) until the
+  // next card arrives and resets the cycle.
+  const bs0 = game.buffs;
+  const latestKey = bs0
+    ? `${bs0.players[myColor].buffs.length}:${bs0.players[myColor === "w" ? "b" : "w"].buffs.length}`
+    : "";
+  const [latestMinState, setLatestMinState] = useState({ key: latestKey, min: false, pinned: false });
+  // A fresh card reopens the pocket: adjust during render (same pattern as
+  // useBuffTargeting's deactivation) so no stale minimized frame ever paints.
+  if (latestMinState.key !== latestKey) {
+    setLatestMinState({ key: latestKey, min: false, pinned: false });
+  }
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setLatestMinState((s) => (s.key === latestKey && !s.pinned ? { ...s, min: true } : s));
+    }, 5000);
+    return () => window.clearTimeout(t);
+  }, [latestKey]);
+  const latestMin = latestMinState.key === latestKey && latestMinState.min;
+  const toggleLatest = () => setLatestMinState({ key: latestKey, min: !latestMin, pinned: true });
 
   const bs = game.buffs;
   if (!bs) return null;
@@ -670,6 +759,39 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const theirsLive = theirsShown.filter(({ inst }) => !isDead(inst));
   const theirsDead = theirsShown.filter(({ inst }) => isDead(inst)).sort(byTierDesc);
 
+  // Fold duplicates: the same card id in the same state (same spent/nullified/
+  // used flags and the same live status line) renders as ONE row wearing a
+  // "×N" count chip instead of N identical plates. The representative keeps
+  // the first copy's index, so Use fires that copy; the next copy surfaces on
+  // the same row once the first is spent (its state, and so its group, changes).
+  const groupRows = <T extends { inst: (typeof mine)[number]; i: number }>(entries: T[]) => {
+    const seen = new Map<string, T & { count: number }>();
+    const out: (T & { count: number })[] = [];
+    for (const e of entries) {
+      const def = BUFF_BY_ID[e.inst.id];
+      const k = [
+        e.inst.id,
+        e.inst.tier,
+        e.inst.spent ? 1 : 0,
+        e.inst.nullified ? 1 : 0,
+        e.inst.usedActivation ? 1 : 0,
+        def?.status?.(e.inst) ?? "",
+      ].join("|");
+      const g = seen.get(k);
+      if (g) g.count += 1;
+      else {
+        const fresh = { ...e, count: 1 };
+        seen.set(k, fresh);
+        out.push(fresh);
+      }
+    }
+    return out;
+  };
+  const mineLiveRows = groupRows(mineLive);
+  const mineDeadRows = groupRows(mineDead);
+  const theirsLiveRows = groupRows(theirsLive);
+  const theirsDeadRows = groupRows(theirsDead);
+
   const lastMine = mine[mine.length - 1] ?? null;
   const lastMineDef = lastMine ? BUFF_BY_ID[lastMine.id] : undefined;
   const lastTheirs = theirs[theirs.length - 1] ?? null;
@@ -692,7 +814,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   // Constraints currently running against me (see againstYouRows above).
   const againstRows = againstYouRows(game, myColor);
 
-  const myRow = ({ inst, i }: { inst: (typeof mine)[number]; i: number }) => {
+  const myRow = ({ inst, i, count }: { inst: (typeof mine)[number]; i: number; count: number }) => {
     const def = BUFF_BY_ID[inst.id];
     if (!def) return null;
     // usedActivation retires an activated card the same as spent for the Use
@@ -705,9 +827,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const usable = canAct && activatable;
     const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
     const key = `mine-${i}`;
-    // Your own live cards start expanded; used ones land in the pile compact
-    // (collapsed) and only open on demand.
-    const open = expanded[key] ?? !dead;
+    // Every row starts collapsed to its one-line summary; tap to open the
+    // full description (and the Use button for activated cards).
+    const open = expanded[key] ?? false;
     return (
       <motion.div
         key={i}
@@ -745,6 +867,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           type="button"
           onClick={() => toggle(key)}
           aria-expanded={open}
+          title={open ? undefined : def.description}
           className={"flex w-full items-center gap-1.5 px-2 py-1.5 text-left " + (usable ? "pl-3" : "")}
         >
           <ChevronRight
@@ -755,7 +878,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           />
           <span
             className={
-              "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
+              "min-w-[3.5rem] flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
               (dead
                 ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                 : `tier-${inst.tier}`)
@@ -763,16 +886,20 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           >
             {def.name}
           </span>
-          {/* Placeholder passive marker: a small persistent dot flags an
-              always-on card until the effects task gives passives their real
-              treatment. Hidden once the card is spent/nullified. */}
-          {def.kind === "passive" && !dead && (
+          {count > 1 && (
             <span
-              aria-hidden
-              title="Passive: always in effect"
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-leaf/70"
-            />
+              title={`${count} copies, same state`}
+              className="shrink-0 rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.08] px-1 py-px font-mono text-[11px] tabular-nums text-parchment-200"
+            >
+              ×{count}
+            </span>
           )}
+          {/* Textual passive marker (was a bare gold dot). Hidden once the
+              card is spent/nullified. */}
+          {def.kind === "passive" && !dead && <PassiveChip />}
+          {/* Collapsed rows carry the live countdown/status right on the
+              one-liner; the expanded body repeats it in full. */}
+          {!open && status && <StatusChip status={status} />}
           <TurnCostBadge cost={turnCost(def)} short />
           {usable && (
             <span className="smallcaps shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[12px] font-semibold text-verdigris-glow">
@@ -788,6 +915,11 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         </button>
         {open && (
           <div className="px-2 pb-1.5">
+            {count > 1 && (
+              <div className="smallcaps mb-1 text-[11px] text-parchment-400">
+                {count} identical copies · Use plays one at a time
+              </div>
+            )}
             {status && (
               <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[12px] text-gold/80">
                 {status}
@@ -842,7 +974,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     );
   };
 
-  const oppEntry = ({ inst, i }: { inst: (typeof theirs)[number]; i: number }) => {
+  const oppEntry = ({ inst, i, count }: { inst: (typeof theirs)[number]; i: number; count: number }) => {
     const def = BUFF_BY_ID[inst.id];
     const dead = inst.spent || inst.nullified || inst.usedActivation;
     // Hidden identities render nothing here; the aggregate "N hidden" sign
@@ -851,6 +983,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const key = `opp-${i}`;
     // The opponent's cards start collapsed; click to reveal the rule text.
     const open = expanded[key] ?? false;
+    const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
     return (
       <motion.div
         key={i}
@@ -871,6 +1004,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           type="button"
           onClick={() => toggle(key)}
           aria-expanded={open}
+          title={open ? undefined : def.description}
           className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left"
         >
           <ChevronRight
@@ -883,7 +1017,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               what threatens you is the thing worth seeing clearly at a glance. */}
           <span
             className={
-              "min-w-0 flex-1 truncate font-display text-[13px] font-semibold leading-tight " +
+              "min-w-[3.5rem] flex-1 truncate font-display text-[13px] font-semibold leading-tight " +
               (dead
                 ? "text-parchment-200 line-through decoration-1 decoration-parchment-400/70"
                 : `tier-${inst.tier}`)
@@ -891,13 +1025,16 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           >
             {def.name}
           </span>
-          {def.kind === "passive" && !dead && (
+          {count > 1 && (
             <span
-              aria-hidden
-              title="Passive: always in effect"
-              className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold-leaf/70"
-            />
+              title={`${count} copies, same state`}
+              className="shrink-0 rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.08] px-1 py-px font-mono text-[11px] tabular-nums text-parchment-200"
+            >
+              ×{count}
+            </span>
           )}
+          {def.kind === "passive" && !dead && <PassiveChip />}
+          {!open && status && <StatusChip status={status} />}
           <TurnCostBadge cost={turnCost(def)} short />
           {dead && <UsedBadge nullified={!!inst.nullified} />}
           <span
@@ -908,9 +1045,19 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         </button>
         {open && (
           /* Rule text on demand: what a revealed card does is one click away. */
-          <p className={"px-2 pb-1.5 text-[12px] leading-snug text-parchment-300"}>
-            {def.description}
-          </p>
+          <div className="px-2 pb-1.5">
+            {count > 1 && (
+              <div className="smallcaps mb-1 text-[11px] text-parchment-400">
+                {count} identical copies
+              </div>
+            )}
+            {status && (
+              <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[12px] text-gold/80">
+                {status}
+              </div>
+            )}
+            <p className={"text-[12px] leading-snug text-parchment-300"}>{def.description}</p>
+          </div>
         )}
       </motion.div>
     );
@@ -965,15 +1112,55 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             opponent's side shows a face-down card while hidden. */}
         {(lastMine || lastTheirs) && (
           <div className="sticky top-0 z-10 -mx-3 border-b border-[color:var(--edge)] bg-inherit px-3 pb-2 pt-2">
-            {/* The pocket: a rounded slot that flashes a brief mint/sun glow
+            {latestMin ? (
+              /* Minimized strip: the pocket folds to one line ~5s after the
+                 newest card landed. Names stay readable (truncated); one tap
+                 reopens the full pocket with its hover popovers. */
+              <button
+                type="button"
+                onClick={toggleLatest}
+                aria-expanded={false}
+                title="Show latest cards"
+                className="dock-card flex w-full items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1 text-left"
+              >
+                <Inbox aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-sun/70" />
+                <span className="smallcaps shrink-0 text-[11px] text-sun/80">Latest</span>
+                <span className="min-w-0 flex-1 truncate text-[11px] text-parchment-300">
+                  {[
+                    lastMine ? lastMineDef?.name ?? "Banked" : null,
+                    lastTheirs && !lastTheirsHidden ? BUFF_BY_ID[lastTheirs.id]?.name ?? null : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+                <ChevronRight aria-hidden size={11} strokeWidth={2.4} className="shrink-0 text-parchment-400" />
+              </button>
+            ) : (
+            /* The pocket: a rounded slot that flashes a brief mint/sun glow
                 whenever a fresh card lands (keying by the card counts remounts
-                it, replaying the one-shot CSS animation). */}
+                it, replaying the one-shot CSS animation). */
             <div
               key={`pocket-${mine.length}-${theirs.length}`}
               className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1.5"
             >
-              <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
-              <span className="smallcaps shrink-0 text-[12px] text-sun/90">Latest</span>
+              {/* The label doubles as the fold control (the card names beside
+                  it keep their own popover buttons, so they stay separate). */}
+              <button
+                type="button"
+                onClick={toggleLatest}
+                aria-expanded
+                title="Minimize"
+                className="flex shrink-0 items-center gap-2"
+              >
+                <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
+                <span className="smallcaps shrink-0 text-[12px] text-sun/90">Latest</span>
+                <ChevronRight
+                  aria-hidden
+                  size={11}
+                  strokeWidth={2.4}
+                  className="shrink-0 rotate-90 text-parchment-400"
+                />
+              </button>
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
@@ -1008,6 +1195,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               </motion.span>
             )}
             </div>
+            )}
           </div>
         )}
 
@@ -1058,7 +1246,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                     <div className="flex items-center gap-1.5">
                       <span
                         className={
-                          "min-w-0 flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
+                          "min-w-[3.5rem] flex-1 truncate font-display text-[12px] font-semibold leading-tight " +
                           (t ? `tier-${t}` : "text-oxblood-glow")
                         }
                       >
@@ -1112,22 +1300,27 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           label={`Your ${nounPlural}`}
           count={mine.length}
           accent="mine"
+          open={myOpen}
+          onToggle={() => setMyOpen((o) => !o)}
         />
         {/* The next-draft chip above already says when cards arrive; repeating
-            it here went stale after banks ("your first draft" forever). */}
-        {mine.length === 0 && <p className="text-[12px] text-parchment-400">None yet.</p>}
+            it here went stale after banks ("your first draft" forever). An
+            empty section costs one quiet line, never a tall blank plate. */}
+        {myOpen && mine.length === 0 && (
+          <p className="text-[12px] text-parchment-400">None yet.</p>
+        )}
         {/* A thin blue spine brackets your arsenal so "these are mine" is
             unmistakable next to the opponent's coral rows (blue = your buffs).
             Live cards sit up top; your spent ones gather under a "Used" rule at
             the foot of the same section (tier descending), so used cards stay
             clearly YOURS. */}
-        {mine.length > 0 && (
+        {myOpen && mine.length > 0 && (
           <div className="space-y-1 border-l border-mode-buff/30 pl-2">
-            {mineLive.map(myRow)}
-            {mineDead.length > 0 && (
+            {mineLiveRows.map(myRow)}
+            {mineDeadRows.length > 0 && (
               <>
                 <UsedDivider />
-                {mineDead.map(myRow)}
+                {mineDeadRows.map(myRow)}
               </>
             )}
           </div>
@@ -1141,20 +1334,24 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 label={`Opponent's ${nounPlural}`}
                 count={theirsShown.length}
                 accent="opponent"
+                open={oppOpen}
+                onToggle={() => setOppOpen((o) => !o)}
               />
             </div>
             {/* Opponent's cards mirror yours: live rows first, then their used
                 ones under the same "Used" rule, kept in the opponent's own
                 section rather than blended into a shared pile. */}
+            {oppOpen && (
             <div className="space-y-1">
-              {theirsLive.map(oppEntry)}
-              {theirsDead.length > 0 && (
+              {theirsLiveRows.map(oppEntry)}
+              {theirsDeadRows.length > 0 && (
                 <>
                   <UsedDivider />
-                  {theirsDead.map(oppEntry)}
+                  {theirsDeadRows.map(oppEntry)}
                 </>
               )}
             </div>
+            )}
             {/* Opponent hidden cards render nothing at all: no face-down minis
                 and no "N hidden" count. Cards summoned via the owner god panel
                 (and any still-masked card) stay fully invisible to the

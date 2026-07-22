@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
 import { currentLiveGameForUser } from "@/lib/server/gameServer";
-import { categoryForTimeControl } from "@/lib/speed";
+import { MODE_CATEGORIES, categoryForTimeControl } from "@/lib/speed";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -148,6 +148,16 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   const ratings: Record<string, (typeof categoryRows.results)[number]> = {};
   for (const row of categoryRows.results) ratings[row.category] = row;
 
+  // The top-level `rating` mirrors bestLiveRatingSql (src/lib/server/ratingSql.ts):
+  // the ACTIVE (most-played) live mode bucket, ties broken by the higher number,
+  // falling back to the legacy frozen users.rating column only when neither live
+  // bucket exists yet. Keeps the profile's headline number consistent with the
+  // header chip, lobby, and search instead of surfacing the frozen legacy value.
+  const liveRows = categoryRows.results
+    .filter((r) => (MODE_CATEGORIES as readonly string[]).includes(r.category))
+    .sort((a, b) => b.games - a.games || b.rating - a.rating);
+  const displayRating = liveRows[0]?.rating ?? user.rating;
+
   const recentGames = await pgAll(
     `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
             white_user_id, black_user_id,
@@ -159,11 +169,13 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     [user.id, user.id],
   );
 
-  // Rating after each rated game, oldest first — powers the profile's
-  // rating-history graph (a la Lichess). Each point carries its speed
-  // category so the chart can show one bucket at a time; rows recorded
-  // before the category column existed fall back to the time control.
-  const ratingHistory = await pgAll<{
+  // Rating after each rated game — powers the profile's rating-history graph
+  // (a la Lichess). Each point carries its speed category so the chart can
+  // show one bucket at a time; rows recorded before the category column
+  // existed fall back to the time control. Take the NEWEST 300 rows (then
+  // restore chronological order in JS): the old ASC LIMIT froze the chart on
+  // a prolific player's oldest 300 games and never showed current history.
+  const ratingHistoryDesc = await pgAll<{
     at: number;
     category: string | null;
     time_sec: number;
@@ -174,9 +186,10 @@ export async function GET(request: Request, props: { params: Promise<{ username:
             CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
      FROM games
      WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
-     ORDER BY completed_at ASC LIMIT 300`,
+     ORDER BY completed_at DESC LIMIT 300`,
     [user.id, user.id, user.id],
   );
+  const ratingHistory = ratingHistoryDesc.reverse();
 
   // Authoritative "is this player in a live game right now" lookup, resolved
   // from the game-server DO's live-seat index rather than the stale lobby cache.
@@ -187,7 +200,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   return NextResponse.json({
     user: {
       username: user.username,
-      rating: user.rating,
+      rating: displayRating,
       rd: user.rd,
       games: user.games,
       wins: user.wins,

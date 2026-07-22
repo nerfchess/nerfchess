@@ -146,8 +146,10 @@ export function ChatPanel({
     <div
       ref={rootRef}
       className={
+        // Muted: the body is a single line, so drop the fixed expanded height
+        // and let the panel shrink-wrap instead of reserving empty space.
         "plate flex min-h-0 flex-col p-2 " +
-        (collapsible ? expandedClassName + " " : "") +
+        (collapsible && !muted ? expandedClassName + " " : "") +
         className
       }
     >
@@ -176,7 +178,7 @@ export function ChatPanel({
         </span>
       </div>
       {muted ? (
-        <div className="min-h-0 flex-1 px-1 text-[12px] text-parchment-400/60">
+        <div className="shrink-0 px-1 pb-1 text-[12px] text-parchment-400/60">
           Chat is muted.
         </div>
       ) : (

@@ -302,6 +302,24 @@ function ProfileContent() {
   if (!profile) return <ProfileSkeleton />;
 
   const user = profile.user;
+  // Authoritative current rating: the ACTIVE (most-played) live mode bucket,
+  // ties broken by the higher number — the same rule as bestLiveRatingSql and
+  // the profile API's top-level `rating` (itself derived the same way, with
+  // the frozen legacy column only as a last resort for bucket-less accounts).
+  let bestLiveRow: CategoryRatingRow | null = null;
+  for (const c of MODE_RATING_CATEGORIES) {
+    const r = profile.ratings?.[c.id];
+    if (r && (!bestLiveRow || r.games > bestLiveRow.games || (r.games === bestLiveRow.games && r.rating > bestLiveRow.rating))) {
+      bestLiveRow = r;
+    }
+  }
+  const bestLiveRating = bestLiveRow?.rating ?? (user.rating || null);
+  // Highest maintained peak across the live buckets, for the stats panel's
+  // "Highest rating" card (the games scan alone can undercount).
+  const peakRating = MODE_RATING_CATEGORIES.reduce<number | null>((max, c) => {
+    const peak = profile.ratings?.[c.id]?.peak;
+    return peak != null && peak > (max ?? 0) ? peak : max;
+  }, null);
   const ratingHistory = profile.ratingHistory as HistoryPoint[];
   const currentRatings: Record<string, number | undefined> = Object.fromEntries(
     ACTIVE_RATING_CATEGORIES.map((c) => [c.id, profile.ratings?.[c.id]?.rating]),
@@ -411,11 +429,7 @@ function ProfileContent() {
           username={user.username}
           avatar={user.avatar ?? null}
           bio={user.bio}
-          rating={
-            profile.ratings?.nerf?.rating ??
-            profile.ratings?.buff?.rating ??
-            (user.rating || null)
-          }
+          rating={bestLiveRating}
           onIdentity={(nextName, nextAvatar) => {
             if (nextName.toLowerCase() !== user.username.toLowerCase()) {
               router.push(`/u/${encodeURIComponent(nextName)}`);
@@ -441,11 +455,7 @@ function ProfileContent() {
         <RatingEditor
           key={user.username}
           username={user.username}
-          current={
-            profile.ratings?.nerf?.rating ??
-            profile.ratings?.buff?.rating ??
-            (user.rating || null)
-          }
+          current={bestLiveRating}
           onApplied={(appliedUsername, rating) => {
             setProfile((p) => {
               // Ignore a stale save that resolved after the viewer navigated to a
@@ -536,7 +546,7 @@ function ProfileContent() {
               <div className="mt-6">
                 <h2 className="font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
-                  <PlayerStatsPanel stats={stats} />
+                  <PlayerStatsPanel stats={stats} peakRating={peakRating} />
                 </div>
               </div>
             )}
@@ -1514,27 +1524,27 @@ function ProfileSkeleton() {
       <div className="flex items-center gap-4">
         <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
         <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-[10px]" style={{ borderRadius: 10 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-[10px]" style={{ borderRadius: 10 }} />
+          <div className="skeleton h-9 w-48 max-w-full rounded-[2px]" style={{ borderRadius: 2 }} />
+          <div className="skeleton mt-2 h-4 w-40 rounded-[2px]" style={{ borderRadius: 2 }} />
         </div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-[10px]" style={{ borderRadius: 10 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-[10px]" style={{ borderRadius: 10 }} />
-            <div className="skeleton mt-3 h-3 w-32 rounded-[10px]" style={{ borderRadius: 10 }} />
+            <div className="skeleton h-4 w-16 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-7 w-20 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-3 w-32 rounded-[2px]" style={{ borderRadius: 2 }} />
           </div>
         ))}
       </div>
       <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-[10px]" style={{ borderRadius: 10 }} />
+        <div className="skeleton h-24 w-full rounded-[2px]" style={{ borderRadius: 2 }} />
       </div>
       <div className="plate mt-8 p-5">
-        <div className="skeleton h-5 w-28 rounded-[10px]" style={{ borderRadius: 10 }} />
+        <div className="skeleton h-5 w-28 rounded-[2px]" style={{ borderRadius: 2 }} />
         <div className="mt-4 space-y-2.5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-9 rounded-[10px]" style={{ borderRadius: 10 }} />
+            <div key={i} className="skeleton h-9 rounded-[2px]" style={{ borderRadius: 2 }} />
           ))}
         </div>
       </div>

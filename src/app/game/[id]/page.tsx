@@ -10,6 +10,7 @@ import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
+import { ProvisionalMark } from "@/components/ratings/ProvisionalMark";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { GameOver, type TimelineCardEvent } from "@/components/GameOver";
 import { MoveList } from "@/components/MoveList";
@@ -831,10 +832,16 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       headerState={result ? "final" : setup.started ? "live" : "waiting"}
       watchers={watchers}
       statusLabel={
-        <>
-          {reconnecting ? "Reconnecting… · " : ""}
-          {result ? describeResult(result) : setup.started ? "Live game" : "Waiting for players"}
-        </>
+        // The Live/Final/Waiting state badge already carries the game state —
+        // only spell out extra detail (result text, reconnect note) so the
+        // header doesn't read "Live · Live game".
+        reconnecting
+          ? "Reconnecting…"
+          : result
+            ? describeResult(result)
+            : setup.started
+              ? null
+              : "Waiting for players"
       }
       nerfs={nerfs}
       visual={
@@ -1392,11 +1399,11 @@ function HeaderIdentity({
         title={`View ${seat.name}'s profile`}
       >
         {seat.name}
-        {seat.provisional && <span className="text-parchment-400">?</span>}
       </a>
       {seat.rating != null && (
-        <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
+        <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[12px] tabular-nums text-parchment-400">
           {seat.rating}
+          {seat.provisional && <ProvisionalMark />}
         </span>
       )}
     </span>

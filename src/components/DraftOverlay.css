@@ -62,9 +62,59 @@ html[data-anim="off"] .draft-fx:hover .card-juicy {
 .draft-fx--selected .draft-fx__glow {
   opacity: 1;
   box-shadow:
-    0 0 0 2px rgb(var(--accent-hi-rgb, 216 181 110) / 0.95),
-    0 0 0 3px rgb(var(--tier-rgb, 216 181 110) / 0.4),
-    0 12px 26px -14px rgba(0, 0, 0, 0.85);
+    0 0 0 3px rgb(var(--accent-hi-rgb, 216 181 110) / 1),
+    0 0 0 5px rgb(var(--tier-rgb, 216 181 110) / 0.55),
+    0 0 18px 2px rgb(var(--accent-hi-rgb, 216 181 110) / 0.35),
+    0 16px 30px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* Selection seal: gold check badge pinned to the selected card's top-right
+   corner (paired with the brighter ring above). */
+.draft-sel-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgb(20 16 10 / 0.9);
+  border-radius: 1px;
+  background: rgb(var(--accent-hi-rgb, 216 181 110));
+  color: #191309;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: draft-sel-check-in 0.16s ease-out both;
+  pointer-events: none;
+}
+@keyframes draft-sel-check-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Free-window expiry: the reopened compact panel pulses oxblood a few times
+   so the forced reopen (and the now-running clock) cannot be missed. */
+.draft-expire-pulse {
+  animation: draft-expire-pulse 1s ease-in-out 3;
+}
+@keyframes draft-expire-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(190 60 48 / 0); }
+  50% {
+    box-shadow:
+      0 0 0 4px rgb(190 60 48 / 0.6),
+      0 0 26px 4px rgb(190 60 48 / 0.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
+}
+
+/* Confirm with a card selected: the one primary in the region gets a steady
+   gold ready-glow so it visually outranks the quiet Reroll/Bank secondaries. */
+.draft-confirm-ready {
+  box-shadow:
+    0 0 0 1px rgb(216 181 110 / 0.85),
+    0 0 16px 1px rgb(216 181 110 / 0.35);
 }
 
 /* ---------------------------------------------------------------------------

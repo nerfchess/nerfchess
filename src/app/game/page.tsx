@@ -1481,6 +1481,10 @@ function GamePage() {
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
   const myOffer = bsMine?.offer ?? null;
+  // Free pick window over with the offer still open: the draft is charging my
+  // clock, and the ClockPill carries a DRAFT tag saying so.
+  const myDraftCharging =
+    !game.result && !!myOffer && offerOnClockIndex === myOffer.index;
   // The opponent's rule shows if you peeked, once the game ends, or when a
   // reveal buff (Extra Glance / Watchtower) was drafted.
   const oppRevealed =
@@ -2102,6 +2106,7 @@ function GamePage() {
                     ms={myColor === "w" ? whiteMs : blackMs}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     warnLowTime={uiSettings.lowTimeWarning}
+                    draftRunning={myDraftCharging}
                     compact
                   />
                 )}
@@ -2155,6 +2160,7 @@ function GamePage() {
                   ms={myColor === "w" ? whiteMs : blackMs}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                   warnLowTime={uiSettings.lowTimeWarning}
+                  draftRunning={myDraftCharging}
                 />
               )}
               <div className="flex justify-end pt-1">

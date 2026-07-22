@@ -17,6 +17,10 @@ export async function GET(_request: Request, props: { params: Promise<{ username
     .first<{ id: string; username: string }>();
   if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
+  // Take the NEWEST 5000 games (then restore the chronological order
+  // computePlayerStats expects): the old ASC LIMIT kept only a prolific
+  // player's oldest games, so stats like "Highest rating" were frozen years
+  // in the past. DESC + reverse always includes recent games instead.
   const games = await pgAll<StatsGameRow>(
     `SELECT id, rated, winner, reason,
             white_user_id, black_user_id, white_name, black_name,
@@ -28,9 +32,10 @@ export async function GET(_request: Request, props: { params: Promise<{ username
                  ELSE LENGTH(moves) - LENGTH(REPLACE(moves, ' ', '')) + 1 END AS move_count
      FROM games
      WHERE white_user_id = ? OR black_user_id = ?
-     ORDER BY completed_at ASC LIMIT 5000`,
+     ORDER BY completed_at DESC LIMIT 5000`,
     [user.id, user.id],
   );
+  games.reverse();
 
   return NextResponse.json({
     username: user.username,

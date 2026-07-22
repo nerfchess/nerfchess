@@ -363,11 +363,12 @@ export function SiteHeader({ active }: { active?: string }) {
             <Search size={18} />
           </button>
           {menu === "search" && (
-            // Mobile: a full-width dropdown UNDER the bar (fixed inset-x/top),
-            // so the field can never roll off the left edge the way the desktop
-            // leftward rollout did on a narrow screen. Desktop (sm+): the
-            // lichess-style field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[4.75rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:absolute sm:inset-x-auto sm:right-full sm:top-1/2 sm:mr-1 sm:-translate-y-1/2">
+            // Below lg: a full-width dropdown UNDER the bar (fixed inset-x/top),
+            // so the field can never roll off the left edge or cover the inline
+            // nav links (which appear at md and would sit under a leftward
+            // rollout at tablet widths). Wide desktop (lg+): the lichess-style
+            // field that rolls out to the LEFT of the search icon.
+            <div className="header-search-panel fixed inset-x-3 top-[4.75rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[5rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}
