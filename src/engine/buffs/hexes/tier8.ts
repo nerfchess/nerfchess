@@ -558,26 +558,27 @@ export const HEXES_T8: Buff[] = [
     {
       id: "poisoned_counsel",
       name: "Poisoned Counsel",
-      description: "Your opponent's next drafted card arrives nullified and does nothing, and the venom drawn from their counsel sweetens yours: your next draft rolls one tier higher.",
-      flavor: "Every advisor whispers rot, and the rot pays its way to the other tent.",
+      description: "Your opponent's next drafted card arrives nullified and does nothing.",
+      flavor: "Every advisor whispers rot, and the next order they hand down comes to nothing.",
     },
-    // Rebalance: nullifying their next two drafts plus lifting your own tier was
-    // a heavy two-sided swing. The nullify drops to a single card
-    // (nullifyIncoming +2 -> +1); the self tier lift is kept.
+    // Rebalance: affect one draft only. The card no longer lifts your own next
+    // draft; it just nullifies the opponent's next drafted card. It carries no
+    // board-control rider, so the opponent is owed no protected offer.
     instant((_inst, api) => {
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 
   // --- no captures for 3 turns AND a sealed ring around your own king ------
-  H(
+  hex(
     {
       id: "peace_of_the_grave",
       name: "Peace of the Grave",
       description: "Your opponent cannot capture with any piece for their next 3 turns, and for those turns they cannot move any piece onto a square next to your king.",
       flavor: "A forced truce enforced by the dead, with a cordon drawn around the crown.",
       fx: { motif: "muzzle", pieces: "all" },
+      // Retiered 8 -> 9 (apex): the full three-turn duration is unchanged.
+      tier: 9,
     },
     {
       kind: "passive",

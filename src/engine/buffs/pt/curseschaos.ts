@@ -134,7 +134,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "AlarmClockOff",
       name: "Snooze Button",
       description:
-        "Pump sleeping gas down one file you pick: every enemy piece except the king standing on that file falls asleep and cannot move for their next 2 turns.",
+        "Pump sleeping gas down one file you pick: every enemy piece except the king standing on that file falls asleep and cannot move for their next turn.",
       tier: 4,
       category: "tempo",
       flavor: "Five more minutes.",
@@ -157,7 +157,7 @@ export const PT_CURSE_CARDS: Buff[] = [
           const sq = SQ(f, r);
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "sleep" });
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
           }
         }
       },
@@ -305,7 +305,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Dog",
       name: "Werewolf",
       description:
-        "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. If it promotes or is captured the curse lifts.",
+        "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. The first transformation holds until your opponent replies. If it promotes or is captured the curse lifts.",
       tier: 6,
       category: "pieces",
       requires: ["p"],
@@ -353,6 +353,26 @@ export const PT_CURSE_CARDS: Buff[] = [
           inst.state.sq = undefined;
           return;
         }
+        // Flip the werewolf between pawn and knight forms, guarding sync and the
+        // back rank exactly as before.
+        const doTransform = () => {
+          const form = inst.state.form as PieceType;
+          const next: PieceType = form === "p" ? "n" : "p";
+          const p = api.board.pieces[sq!];
+          if (!p || p.color !== api.me || p.type !== form) return; // out of sync
+          if (next === "p" && !pawnRankOk(sq!)) return; // never a pawn on the back rank
+          api.setPieceType(sq!, next);
+          inst.state.form = next;
+        };
+        // The very first transformation is delayed until the opponent replies:
+        // when the countdown first reaches zero we arm `pending` instead of
+        // flipping, then the opponent's next move resolves it. Every later
+        // transformation fires immediately on the turn its countdown ends.
+        if (inst.state.pending && move.color === api.opp) {
+          inst.state.pending = false;
+          doTransform();
+          return;
+        }
         if (move.color !== api.me) return;
         const left = ((inst.state.turns as number) ?? 5) - 1;
         if (left > 0) {
@@ -360,13 +380,12 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         inst.state.turns = 5;
-        const form = inst.state.form as PieceType;
-        const next: PieceType = form === "p" ? "n" : "p";
-        const p = api.board.pieces[sq];
-        if (!p || p.color !== api.me || p.type !== form) return; // out of sync
-        if (next === "p" && !pawnRankOk(sq)) return; // never a pawn on the back rank
-        api.setPieceType(sq, next);
-        inst.state.form = next;
+        if (!inst.state.firstDone) {
+          inst.state.firstDone = true;
+          inst.state.pending = true;
+          return;
+        }
+        doTransform();
       },
       status: (inst) =>
         inst.state.sq == null
@@ -476,7 +495,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "hot_potato",
       name: "Hot Potato",
       description:
-        "Curse one enemy piece other than the king into a hot potato: for their next 4 turns your opponent must move that piece if it has any legal move.",
+        "Curse one enemy piece other than the king into a hot potato: after your opponent's next move, for their following 4 turns they must move that piece if it has any legal move.",
       tier: 4,
       category: "hex",
       flavor: "Hot hot hot, pass it on.",
@@ -501,8 +520,10 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 4;
+        inst.state.pending = true; // delay the forced-move rule one opponent reply
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (inst.state.pending) return moves; // not active until after their next move
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
@@ -520,10 +541,20 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // Their next move is the free delay turn: consume `pending` and do not
+        // start the timer until the move after it.
+        if (move.color === api.opp && inst.state.pending) {
+          inst.state.pending = false;
+          return;
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to choose the potato" : `hot potato: ${turnsLeft(inst)} of their turns left`,
+        inst.state.sq == null
+          ? "activate to choose the potato"
+          : inst.state.pending
+            ? "hot potato: takes hold after their next move"
+            : `hot potato: ${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -536,7 +567,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "stinky",
       name: "Stinky",
       description:
-        "One enemy piece other than the king reeks: for your opponent's next 3 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
+        "One enemy piece other than the king reeks: after your opponent's next move, for their following 3 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
       tier: 3,
       category: "hex",
       flavor: "Somebody skipped bath day.",
@@ -561,8 +592,10 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 3;
+        inst.state.pending = true; // delay the stink cloud one opponent reply
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (inst.state.pending) return moves; // not active until after their next move
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
@@ -581,10 +614,19 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // Their next move is the free delay turn; the cloud starts after it.
+        if (move.color === api.opp && inst.state.pending) {
+          inst.state.pending = false;
+          return;
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to choose the stinker" : `stink cloud: ${turnsLeft(inst)} of their turns left`,
+        inst.state.sq == null
+          ? "activate to choose the stinker"
+          : inst.state.pending
+            ? "stink cloud: settles after their next move"
+            : `stink cloud: ${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -598,7 +640,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "allergies",
       name: "Allergies",
       description:
-        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 3 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
+        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 2 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
       tier: 3,
       category: "hex",
       flavor: "Bless you.",

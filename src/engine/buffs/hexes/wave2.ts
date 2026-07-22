@@ -20,8 +20,8 @@
 import type { Buff, BuffApi, BuffInstance, Move, Square } from "./shared";
 import {
   addEffect,
-  curse,
   emptySquares,
+  hex,
   isInCheck,
   mySquares,
   relRank,
@@ -79,7 +79,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_witchs_veto",
       name: "Witch's Veto",
       description:
-        "The witch forbids revenge: for your opponent's next 4 turns, they cannot capture the piece you moved on your previous turn. Everything else is fair game: they can attack other pieces, or simply wait a turn for the veto to move on.",
+        "The witch forbids revenge, with one loophole: their first move under the curse ignores the veto, one free strike, then for the rest of your opponent's next 4 turns they cannot capture the piece you moved on your previous turn. Everything else is always fair game: they can attack other pieces, or simply wait a turn for the veto to move on.",
       flavor: "You may not strike back. Those are the rules of the feud.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -87,9 +87,13 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // One legal escape move: the first affected piece slips the veto. Until
+        // the opponent has taken a move under the curse, nothing is forbidden.
+        if (!inst.state.escaped) return moves;
         // The piece I moved last: my most recent history entry's destination.
         const hist = api.board.history;
         let veto: Square | null = null;
@@ -104,7 +108,11 @@ export const HEX_WAVE2: Buff[] = [
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Their first move under the curse spends the one escape.
+        if (move.color === api.opp && !inst.state.escaped) inst.state.escaped = true;
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -150,7 +158,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_cold_footprints",
       name: "Cold Footprints",
       description:
-        "The ground remembers their tread: for your opponent's next 5 turns, whenever they move a piece, the square it left is frozen over for their following turn, and no enemy piece may step onto it. Retracing their own steps is what the curse hates most.",
+        "The ground remembers their tread, but wakes a beat late: their next move passes untouched, then for their following 5 turns, whenever they move a piece, the square it left is frozen over for their next turn, and no enemy piece may step onto it. Retracing their own steps is what the curse hates most.",
       flavor: "Walk away and the door ices shut behind you.",
       fx: { motif: "blindfold" },
     },
@@ -158,8 +166,15 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 5;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched; the curse
+          // arms after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.from !== move.to) {
           // Added during their own move, so the shared post-move tick eats one
           // turn immediately: 2 here seals the square for exactly 1 turn.
@@ -184,7 +199,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_long_road_home",
       name: "The Long Road Home",
       description:
-        "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank; otherwise it fades after 6 of their turns. Their other pieces are free; the victim can simply obey, stand still, or be played around.",
+        "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank; otherwise it fades after 5 of their turns. Their other pieces are free; the victim can simply obey, stand still, or be played around.",
       flavor: "Its name is spoken at the hearth, and its feet must answer.",
     },
     {
@@ -206,7 +221,7 @@ export const HEX_WAVE2: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -249,9 +264,9 @@ export const HEX_WAVE2: Buff[] = [
   H2(
     {
       id: "hw2_blood_price",
-      name: "Blood Price",
+      name: "Blood IOU",
       description:
-        "A price is set on your blood: the next time your opponent captures one of your pieces within their next 6 turns, they must skip their following turn while the debt is collected. If they hold their blades for 6 turns, the price expires unpaid.",
+        "A price is set on your blood: the next time your opponent captures one of your pieces within their next 6 turns, the debt comes due at once. They lose 12 seconds from their clock (nothing in an untimed game) and, if they still hold one, a draft reroll. If they hold their blades for 6 turns, the price expires unpaid.",
       flavor: "Take what you like. The collector calls the same evening.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -262,7 +277,11 @@ export const HEX_WAVE2: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
-          api.bs.skips[api.opp] += 1;
+          // The IOU is collected: 12 seconds off their clock (a no-op in
+          // untimed games), plus one draft reroll so the debt still bites when
+          // there is no clock to dock.
+          api.adjustClock({ subOppSec: 12 });
+          api.theirs.rerollsLeft = Math.max(0, (api.theirs.rerollsLeft ?? 0) - 1);
           inst.spent = true;
           return;
         }

@@ -715,30 +715,37 @@ const FOCUS: Buff[] = [
       id: "onett",
       name: "Onett",
       description:
-        "A townsperson reports for duty: a new pawn takes the nearest open square on your pawn line, or just ahead of it if the line is packed.",
+        "After your opponent's next move, a townsperson reports for duty: a new pawn takes the nearest open square on your pawn line, or just ahead of it if the line is packed.",
       tier: 2,
       category: "pieces",
       icon: "Home",
       flavor: "Population small, spirit enormous.",
     },
-    instant((_inst, api) => {
-      const homeRank = api.me === "w" ? 1 : 6;
-      const dr = fwd(api.me);
-      for (let step = 0; step < 6; step++) {
-        const r = homeRank + dr * step;
-        if (r < 0 || r > 7) break;
-        // Nearest to the center file (3), tie-break toward file 3.
-        const spots = [0, 1, 2, 3, 4, 5, 6, 7]
-          .map((f) => SQ(f, r))
-          .filter((sq) => !api.board.pieces[sq] && pawnRankOk(sq))
-          .sort((a, b) => Math.abs(FILE(a) - 3) - Math.abs(FILE(b) - 3) || a - b);
-        if (spots.length) {
-          api.place(spots[0], "p", api.me);
-          addEffect(api, { kind: "strike", squares: [spots[0]], owner: api.me, turns: 1 });
-          return;
+    {
+      kind: "passive",
+      // Delayed arrival: the townsperson reports only after your opponent's
+      // next move, not the instant the card is drafted.
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const homeRank = api.me === "w" ? 1 : 6;
+        const dr = fwd(api.me);
+        for (let step = 0; step < 6; step++) {
+          const r = homeRank + dr * step;
+          if (r < 0 || r > 7) break;
+          // Nearest to the center file (3), tie-break toward file 3.
+          const spots = [0, 1, 2, 3, 4, 5, 6, 7]
+            .map((f) => SQ(f, r))
+            .filter((sq) => !api.board.pieces[sq] && pawnRankOk(sq))
+            .sort((a, b) => Math.abs(FILE(a) - 3) - Math.abs(FILE(b) - 3) || a - b);
+          if (spots.length) {
+            api.place(spots[0], "p", api.me);
+            addEffect(api, { kind: "strike", squares: [spots[0]], owner: api.me, turns: 1 });
+            break;
+          }
         }
-      }
-    }),
+        inst.spent = true;
+      },
+    },
   ),
 
   card(
@@ -746,13 +753,49 @@ const FOCUS: Buff[] = [
       id: "bee_swarm_simulator",
       name: "Bee Swarm Simulator",
       description:
-        "Release the hive: drop 3 bee pawns on empty squares of the two center ranks, a buzzing swarm that harasses both armies from no-mans-land.",
+        "Release the hive: choose 3 empty squares on the two center ranks, and after your opponent's next move a buzzing swarm of 3 bee pawns lands there, harassing both armies from no-mans-land.",
       tier: 5,
       category: "pieces",
       icon: "Bug",
       flavor: "Everybody buzz in, the hive is hiring.",
     },
-    placePieces(["p", "p", "p"], () => (sq: Square) => RANK(sq) === 3 || RANK(sq) === 4),
+    (() => {
+      const inZone = (sq: Square) => RANK(sq) === 3 || RANK(sq) === 4;
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        // Pick the three landing squares now; the bees only materialize after
+        // your opponent's next move (any square taken by then is skipped).
+        targets: (inst, api, picks) => {
+          if (inst.state.pending != null || picks.length >= 3) return null;
+          return {
+            kind: "square",
+            label: `Choose where a bee will land (${picks.length + 1}/3)`,
+            squares: emptySquares(api.board, inZone).filter(
+              (sq) => !picks.some((k) => k.square === sq),
+            ),
+          };
+        },
+        effect: (inst, _api, picks) => {
+          if (inst.state.pending != null) return;
+          inst.state.pending = picks
+            .map((k) => k.square)
+            .filter((s): s is Square => s != null);
+        },
+        onMovePlayed: (inst, move, api) => {
+          const pending = inst.state.pending as Square[] | undefined;
+          if (pending == null || inst.spent || move.color !== api.opp) return;
+          for (const sq of pending) {
+            if (!api.board.pieces[sq]) api.place(sq, "p", api.me);
+          }
+          inst.spent = true;
+        },
+        status: (inst) =>
+          inst.state.pending == null
+            ? "activate to ready the swarm"
+            : "the swarm arrives after your opponent moves",
+      };
+    })(),
   ),
 ];
 
@@ -959,28 +1002,34 @@ const AFFECTION: Buff[] = [
       id: "ihatemyex",
       name: "I Hate My Ex",
       description:
-        "Freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
+        "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
       tier: 1,
       category: "tempo",
       icon: "HeartCrack",
       flavor: "Blocked, deleted, and still living rent free in my head.",
     },
-    instant((_inst, api) => {
-      const ek = mySquares(api.board, api.opp, "k")[0];
-      const theirPawns = mySquares(api.board, api.opp, "p");
-      if (ek != null && theirPawns.length) {
-        const t = theirPawns
-          .slice()
-          .sort((a, b) => dist(a, ek) - dist(b, ek) || a - b)[0];
-        addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "glue" });
-      }
-      const mk = mySquares(api.board, api.me, "k")[0];
-      const myPawns = mySquares(api.board, api.me, "p");
-      if (mk != null && myPawns.length) {
-        const s = myPawns.slice().sort((a, b) => dist(a, mk) - dist(b, mk) || a - b)[0];
-        addEffect(api, { kind: "freeze", sq: s, owner: api.me, turns: 2, skin: "glue" });
-      }
-    }),
+    {
+      kind: "passive",
+      // Delayed payoff: the freezes only bite after your opponent's next move.
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const ek = mySquares(api.board, api.opp, "k")[0];
+        const theirPawns = mySquares(api.board, api.opp, "p");
+        if (ek != null && theirPawns.length) {
+          const t = theirPawns
+            .slice()
+            .sort((a, b) => dist(a, ek) - dist(b, ek) || a - b)[0];
+          addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "glue" });
+        }
+        const mk = mySquares(api.board, api.me, "k")[0];
+        const myPawns = mySquares(api.board, api.me, "p");
+        if (mk != null && myPawns.length) {
+          const s = myPawns.slice().sort((a, b) => dist(a, mk) - dist(b, mk) || a - b)[0];
+          addEffect(api, { kind: "freeze", sq: s, owner: api.me, turns: 2, skin: "glue" });
+        }
+        inst.spent = true;
+      },
+    },
   ),
 
   card(
@@ -1147,7 +1196,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "minji",
       name: "Minji",
       description:
-        "Leader's guard: every one of your pieces standing within two squares of your king links arms and cannot be captured for your opponent's next 5 turns.",
+        "Leader's guard: every one of your pieces standing within two squares of your king links arms and cannot be captured for your opponent's next 5 turns, but the guard drops the instant two of the protected pieces have captured.",
       tier: 5,
       category: "protection",
       icon: "Crown",
@@ -1156,20 +1205,72 @@ export const NEWJEANS_CARDS: Buff[] = [
     },
     // Activated (not instant) on purpose: an activated card can sit in a hand,
     // so the god panel may summon it and the player picks the moment the
-    // guard snaps in.
-    activatedSimple((_inst, api) => {
-      const k = mySquares(api.board, api.me, "k")[0];
-      if (k == null) return;
-      // buffed: the guard now reaches allies within two squares of the king
-      // (was one), while still never covering the king's own square.
-      const squares = neighbors24(k).filter((sq) => {
-        const p = api.board.pieces[sq];
-        return !!p && p.color === api.me;
-      });
-      if (squares.length) {
-        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 5 });
-      }
-    }),
+    // guard snaps in. The guard is a card-owned move filter (not a board
+    // shield effect) so the card can end it early after two protected captures.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        if (inst.state.squares != null) return;
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null) {
+          inst.spent = true;
+          return;
+        }
+        // The guard reaches allies within two squares of the king, while still
+        // never covering the king's own square.
+        const squares = neighbors24(k).filter((sq) => {
+          const p = api.board.pieces[sq];
+          return !!p && p.color === api.me;
+        });
+        inst.state.squares = squares;
+        inst.state.turns = 5; // opponent turns
+        inst.state.caps = 0;
+        if (squares.length === 0) inst.spent = true;
+      },
+      filterOpponentMoves: (moves, inst, _api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares || squares.length === 0 || ((inst.state.turns as number) ?? 0) <= 0) {
+          return moves;
+        }
+        const guarded = new Set(squares);
+        const kept = moves.filter((m) => {
+          const cap = captureSquare(m);
+          return cap == null || !guarded.has(cap);
+        });
+        // Never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (squares == null || squares.length === 0) return;
+        if (move.color === api.me) {
+          const idx = squares.indexOf(move.from);
+          if (idx >= 0) {
+            // A protected piece moved: count its capture and let the guard
+            // follow it to its new square.
+            if (move.captured && move.captured !== "k") {
+              inst.state.caps = ((inst.state.caps as number) ?? 0) + 1;
+            }
+            squares[idx] = move.to;
+            if (((inst.state.caps as number) ?? 0) >= 2) {
+              inst.state.squares = [];
+              inst.spent = true;
+              return;
+            }
+          }
+        }
+        if (move.color === api.opp) {
+          inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
+          if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (squares == null) return "activate to raise the guard";
+        return `guard up, ${(inst.state.caps as number) ?? 0}/2 captures spent`;
+      },
+    },
   ),
 
   card(
@@ -1177,7 +1278,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "hyein",
       name: "Hyein",
       description:
-        "Long legs: for the game each of your pawns may also stride straight forward to the first, second, or third empty square ahead, springing over anything in between.",
+        "Long legs: for the game each of your pawns may also stride straight forward to the first or second empty square ahead, springing over anything in between.",
       tier: 5,
       category: "movement",
       requires: ["p"],
@@ -1188,11 +1289,10 @@ export const NEWJEANS_CARDS: Buff[] = [
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const dr = fwd(api.board.pieces[sq]!.color);
-        // buffed: the stride now reaches up to the third empty square ahead.
+        // The stride reaches up to the second empty square ahead.
         const tos = [
           [FILE(sq), RANK(sq) + dr],
           [FILE(sq), RANK(sq) + dr * 2],
-          [FILE(sq), RANK(sq) + dr * 3],
         ]
           .filter(([f, r]) => inBoard(f, r))
           .map(([f, r]) => SQ(f, r))
@@ -1207,7 +1307,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "haerin",
       name: "Haerin",
       description:
-        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board, land yours on its square, and it stands shielded, uncapturable for your opponent's next turn.",
+        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board, land yours on its square, and it stands shielded, uncapturable for your opponent's next turn, unless landing there gives check.",
       tier: 5,
       category: "attack",
       icon: "Cat",
