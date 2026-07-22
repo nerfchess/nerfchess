@@ -326,9 +326,13 @@ export const HEXES_T5: Buff[] = [
     {
       id: "hexed_satchel",
       name: "Hexed Satchel",
-      description: "Your opponent's next 2 drafted cards arrive nullified and do nothing.",
+      description: "Your opponent's next drafted card arrives nullified and does nothing, and in return they gain one draft reroll for a later offer.",
       flavor: "Every card they draw is already dead in the hand.",
     },
-    nullifyDrafts(2),
+    instant((_inst, api) => {
+      // One nullified draft now, not two: the victim banks a reroll in return.
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+    }),
   ),
 ];

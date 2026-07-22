@@ -151,16 +151,22 @@ export const NERFS_T7: Nerf[] = [
       }),
     },
   ),
-  N(
+  nerf(
     {
       id: "predatory_knights",
       name: "Predatory Knights",
-      description: "Your knights can only move by capturing an enemy piece.",
+      description: "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
       flavor: "The horses hunt or stand still.",
       icon: "sword",
+      tier: 6,
     },
     {
-      filterMoves: filter((m) => !(m.piece === "n" && !m.captured)),
+      // Knights are capture-only, but on every third owner turn (moves 3, 6, 9,
+      // ...) a non-capturing knight move is allowed as well.
+      filterMoves: (moves, _state, ctx) => {
+        if (ctx.moveNumber % 3 === 0) return moves;
+        return moves.filter((m) => !(m.piece === "n" && !m.captured));
+      },
     },
   ),
   N(

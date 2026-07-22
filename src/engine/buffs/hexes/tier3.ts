@@ -92,7 +92,7 @@ export const HEXES_T3: Buff[] = [
     {
       id: "petrified_towers",
       name: "Petrified Towers",
-      description: "Turn one enemy rook you target into a walnut for 2 of their turns, and while the tower stands petrified your opponent cannot castle at all.",
+      description: "Turn one enemy rook you target into a walnut for 1 of their turns, and while the tower stands petrified your opponent cannot castle at all.",
       flavor: "Stone towers do not roll, and no king shelters behind one.",
     },
     {
@@ -111,8 +111,8 @@ export const HEXES_T3: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 2;
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
+        inst.state.turns = 1;
+        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 1 });
       },
       filterOpponentMoves: (moves, inst) => {
         if (inst.state.sq == null || ((inst.state.turns as number) ?? 0) <= 0) return moves;
