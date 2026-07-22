@@ -160,8 +160,14 @@ function pieceBoundImmunity(): Mech {
         inst.spent = true;
         return;
       }
-      if (move.from === sq) inst.state.sq = move.to;
-      else if (move.to === sq && move.from !== sq) inst.spent = true;
+      if (move.from === sq) {
+        // Protection ends the moment the envoy itself makes a capture.
+        if (move.captured) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = move.to;
+      } else if (move.to === sq && move.from !== sq) inst.spent = true;
     },
     status: (inst) => {
       const sq = inst.state.sq as Square | undefined;
@@ -655,7 +661,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_diplomatic_immunity",
       name: "Diplomatic Immunity",
       description:
-        "Appoint one of your pieces (your king excepted) as an envoy: it cannot be captured while it stands in your opponent's half of the board, for the rest of the game. In your own half it is fair game.",
+        "Appoint one of your pieces (your king excepted) as an envoy: it cannot be captured while it stands in your opponent's half of the board, for the rest of the game, but the protection ends the moment the envoy makes a capture. In your own half it is fair game.",
       tier: 5,
       category: "protection",
       icon: "Landmark",

@@ -384,15 +384,17 @@ export const PHOBIA_OF_EDGES: Nerf = db({
 export const SACRED_FILE: Nerf = db({
   id: "sacred_file",
   name: "Sacred File",
-  description: "A random file is sacred. You can't capture on it.",
+  description: "A random file is sacred, shown from the start. From your second turn on, you can't capture on it, unless the ban would leave you fewer than three legal moves.",
   flavor: "Hallowed ground.",
   tier: 2,
   icon: "shield-question",
   implemented: true,
   init: (rng) => ({ file: rng.int(8) }),
-  filterMoves: (moves, state) => {
+  filterMoves: (moves, state, ctx) => {
     const s = state as { file: number };
-    return moves.filter((m) => !m.captured || FILE(m.to) !== s.file);
+    if (ctx.moveNumber < 1) return moves; // revealed from the start, but the ban waits one turn
+    const filtered = moves.filter((m) => !m.captured || FILE(m.to) !== s.file);
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => {
     const s = state as { file: number };
@@ -472,12 +474,13 @@ export const VANISHING_POINT: Nerf = db({
 export const ECHO_CHAMBER: Nerf = db({
   id: "echo_chamber",
   name: "Echo Chamber",
-  description: "You must move to the same rank as your last move's destination.",
+  description: "Starting on move 4, you must move to the same rank as your last move's destination.",
   flavor: "It bounces around in here.",
   tier: 6,
   icon: "audio-waveform",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const last = ctx.myLastMove;
     if (!last) return moves;
     const filtered = moves.filter((m) => RANK(m.to) === RANK(last.to));
@@ -488,7 +491,7 @@ export const ECHO_CHAMBER: Nerf = db({
 export const TRIPWIRE: Nerf = db({
   id: "tripwire",
   name: "Tripwire",
-  description: "A random rank is a tripwire. You can't cross it backwards.",
+  description: "A random rank is a tripwire, shown from the start. From your second turn on, you can't cross it backwards, unless the ban would leave you fewer than three legal moves.",
   flavor: "Snap.",
   tier: 4,
   icon: "trip",
@@ -496,13 +499,15 @@ export const TRIPWIRE: Nerf = db({
   init: (rng) => ({ rank: 1 + rng.int(6) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { rank: number };
+    if (ctx.moveNumber < 1) return moves; // revealed from the start, but the ban waits one turn
     const dir = ctx.me === "w" ? -1 : 1;
-    return moves.filter((m) => {
+    const filtered = moves.filter((m) => {
       // backwards crossing of the rank
       const r1 = RANK(m.from), r2 = RANK(m.to);
       if (dir === -1) return !(r1 > s.rank && r2 <= s.rank);
       return !(r1 < s.rank && r2 >= s.rank);
     });
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => {
     const s = state as { rank: number };
@@ -515,7 +520,7 @@ export const TRIPWIRE: Nerf = db({
 export const PROMOTION_PHOBIA: Nerf = db({
   id: "promotion_phobia",
   name: "Promotion Phobia",
-  description: "Your pawns can't promote. They get stuck on the back rank.",
+  description: "Your pawns can't promote, so they can't advance onto the back rank. A pawn already on the back rank may still move away normally.",
   flavor: "Stage fright.",
   tier: 3,
   icon: "x-circle",

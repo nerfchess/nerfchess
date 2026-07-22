@@ -564,9 +564,11 @@ export const DEADLINE_QUEEN: Nerf = db({
 
 export const DAISY_CHAIN: Nerf = db({
   id: "wn_daisy_chain", name: "Daisy Chain", tier: 6, icon: "spline", implemented: true,
-  description: "The piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
+  description: "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
   flavor: "Link every step to the last.",
   filterMoves: (moves, _s, ctx) => {
+    // The rule starts on move 4 so the opening cannot be soft-locked.
+    if (ctx.moveNumber < 3) return moves;
     const last = ctx.myLastMove;
     if (!last) return moves;
     const chained = moves.filter((m) => m.from === last.to || adj(m.from, last.to));
@@ -654,14 +656,18 @@ export const PIN_CUSHION: Nerf = db({
 
 export const ROYAL_MERIDIAN: Nerf = db({
   id: "wn_royal_meridian", name: "Royal Meridian", tier: 7, icon: "plus", implemented: true,
-  description: "Every piece you move must land on your king's file or your king's rank.",
+  description: "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
   flavor: "All roads run through the crown.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const kf = FILE(ks), kr = RANK(ks);
     const ok = moves.filter((m) => FILE(m.to) === kf || RANK(m.to) === kr);
-    return ok.length ? ok : moves;
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening the whole
+    // board back up.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 

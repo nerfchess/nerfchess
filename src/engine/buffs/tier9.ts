@@ -321,15 +321,15 @@ export const TIER9: Buff[] = [
 
 
   // Second Coming: a fresh queen descends onto a square you choose in your half,
-  // and your whole army is untouchable for the opponent's next 2 turns - two
-  // full turns to attack with total impunity while a brand-new queen joins in.
+  // and your whole army is untouchable for the opponent's next turn - trimmed
+  // from two turns to one in the apex soft-nerf pass.
   apex(
     {
       id: "second_coming",
       icon: "Sparkle",
       name: "Second Coming",
       description:
-        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next 2 turns.",
+        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next turn.",
       category: "pieces",
       flavor: "Foretold, and right on time.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -346,25 +346,29 @@ export const TIER9: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq != null && !api.board.pieces[sq]) api.place(sq, "q", api.me);
-        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
       },
     ),
   ),
 
-  // Iron Legion: a whole relief force marches in. Place a queen, a rook and two
-  // knights on empty squares in your half - a full striking force, not just a
-  // patch. A second comeback lifeline, now heavy enough to swing the game alone.
+  // Iron Legion: a relief force reports to your pocket to drop on later turns.
+  // Trimmed in the apex pass to a rook and a knight, with the queen added only
+  // when yours has already been lost - a comeback patch, not a raw power spike.
   apex(
     {
       id: "iron_legion",
       icon: "Castle",
       name: "Iron Legion",
       description:
-        "A relief force arrives: place a queen, a rook and a knight on empty squares in your half.",
+        "A rook and a knight join your pocket to drop onto empty squares in your half on later turns; a queen joins them only if your queen has already been captured.",
       category: "pieces",
       flavor: "Reinforcements, at last.",
     },
-    placePieces(["q", "r", "n"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "r");
+      grantInventory(api, "n");
+      if ((api.capturedFromMe.q ?? 0) > 0) grantInventory(api, "q");
+    }),
   ),
 
   // Living God: promoted from tier 8 into the apex band (owner request). One

@@ -818,7 +818,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_smoke_ring",
       name: "Smoke Ring",
       description:
-        "Blow a smoke ring over a 2x2 area. The smoke turns enemy pieces away: they cannot end a move inside it for your opponent's next 2 turns.",
+        "Blow a smoke ring over a 2x2 area. The smoke turns enemy pieces away: they cannot end a move inside it for your opponent's next 2 turns. Use it before your next move, or the charge is spent unused.",
       tier: 2,
       category: "protection",
       icon: "Cloud",
@@ -845,6 +845,15 @@ export const OVERHAUL_T2: Buff[] = [
           turns: 2,
         });
       },
+      {
+        // The activation is only offered when the smoke can be placed, so a
+        // failed attempt cannot occur; instead the charge expires the moment
+        // you next move without having used it (glossary: a failed or illegal
+        // attempt still spends the charge).
+        onMovePlayed: (inst, move, api) => {
+          if (move.color === api.me && !inst.usedActivation) inst.spent = true;
+        },
+      },
     ),
   ),
   // 46. Tandem Bike --------------------------------------------------------------
@@ -853,7 +862,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_tandem_bike",
       name: "Tandem Bike",
       description:
-        "Two of your pawns standing side by side advance one square together, as your move for this turn. Both squares ahead must be empty.",
+        "Two of your pawns standing side by side advance one square together, as your move for this turn. Both squares ahead must be empty: neither pawn may capture.",
       tier: 2,
       category: "movement",
       icon: "Bike",
@@ -901,7 +910,7 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_rubber_stamp",
       name: "Rubber Stamp",
-      description: "For your next 3 turns, every pawn move you make refunds 3 seconds.",
+      description: "For your next 3 turns, every pawn move you make refunds 8 seconds.",
       tier: 2,
       category: "tempo",
       icon: "Stamp",
@@ -915,7 +924,7 @@ export const OVERHAUL_T2: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && move.piece === "p") {
-          api.adjustClock({ addSelfSec: 3 });
+          api.adjustClock({ addSelfSec: 8 });
         }
         tickTurns(inst, move, api.me);
       },
