@@ -29,6 +29,7 @@ import {
   addEffect,
   curse,
   emptySquares,
+  hex,
   isInCheck,
   mySquares,
   relRank,
@@ -157,8 +158,9 @@ function activeCurseCount(api: BuffApi): number {
 const T1: Buff[] = [
   // vs: No Reins (slider momentum), Tolling Bell (alternating slider lock).
   // Neither constrains the SQUARE COLOR of destinations. A geometry distortion.
-  H1(
+  hex(
     {
+      tier: 2,
       id: "hw3_wrong_foot",
       name: "Wrong Foot",
       description:
@@ -188,11 +190,11 @@ const T1: Buff[] = [
       id: "hw3_no_retreat",
       name: "No Retreat",
       description:
-        "A banner of no surrender is nailed up: for your opponent's next 5 turns, none of their pieces may move toward their own back rank (no retreating or sidestepping backward). They may advance or move straight across; the king is exempt, and a piece with no forward move is freed for that turn. Wait it out, or press forward on the curse's own terms.",
+        "A banner of no surrender is nailed up: for your opponent's next 4 turns, none of their pieces may move toward their own back rank (no retreating or sidestepping backward). They may advance or move straight across; the king is exempt, and a piece with no forward move is freed for that turn. Wait it out, or press forward on the curse's own terms.",
       flavor: "The bridge behind them is already burning.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(5, (moves, api) =>
+    curse(4, (moves, api) =>
       moves.filter(
         (m) => m.piece === "k" || relRank(api.opp, m.to) >= relRank(api.opp, m.from),
       ),
@@ -206,7 +208,7 @@ const T1: Buff[] = [
       id: "hw3_overexertion",
       name: "Overexertion",
       description:
-        "The curse hates a workhorse: for your opponent's next 5 turns, whenever they move the same piece they moved on their previous turn, it seizes up and is frozen for 1 of their turns. Simply alternating which piece they develop avoids it completely. Kings never seize.",
+        "The curse hates a workhorse, but bides its time: it takes hold only after your opponent's next move, and then for their next 5 turns, whenever they move the same piece they moved on their previous turn, it seizes up and is frozen for 1 of their turns. Simply alternating which piece they develop avoids it completely. Kings never seize.",
       flavor: "One more errand, it sighed, and sat straight down.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -215,8 +217,13 @@ const T1: Buff[] = [
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.last = null;
+        inst.state.started = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.started) {
+          inst.state.started = true; // activation waits until after their next move
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.from !== move.to) {
           const last = inst.state.last as Square | null | undefined;
           if (last != null && move.from === last && move.piece !== "k") {
@@ -235,8 +242,9 @@ const T1: Buff[] = [
 
   // vs: The Hollow Crown (king-move taxes the NEXT turn to pawn/king). This
   // taxes CROSSING the midline into your half - a toll on invasion, timed.
-  H1(
+  hex(
     {
+      tier: 2,
       id: "hw3_toll_road",
       name: "Toll Road",
       description:
@@ -381,8 +389,9 @@ const T2: Buff[] = [
   // vs: Death Knell (doomed piece REMOVED unless it captures) and Pauper's
   // Crown (queen->rook). This POISONS a Q/R/B to wither one rung DOWN on a
   // 4-turn fuse unless it draws blood - a demote timer with a capture cure.
-  H2(
+  hex(
     {
+      tier: 3,
       id: "hw3_slow_poison",
       name: "Slow Poison",
       description:
@@ -457,14 +466,14 @@ const T2: Buff[] = [
       id: "hw3_bloodlust",
       name: "Bloodlust",
       description:
-        "A taste for blood takes hold: for your opponent's next 4 turns, any piece that captures is seized by frenzy and, on their very next turn, must capture again if any capture is open to it. If that piece has no capture available, the frenzy passes and they move freely. Capturing with a piece that cannot follow up, or not capturing at all, keeps them in control.",
+        "A taste for blood takes hold: for your opponent's next 3 turns, any piece that captures is seized by frenzy and, on their very next turn, must capture again if any capture is open to it. If that piece has no capture available, the frenzy passes and they move freely. Capturing with a piece that cannot follow up, or not capturing at all, keeps them in control.",
       flavor: "The first kill is a choice. The second is an appetite.",
       fx: { motif: "muzzle", pieces: "all" },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 4;
+        inst.state.turns = 3;
         inst.state.rage = null;
       },
       filterOpponentMoves: (moves, inst) => {
@@ -491,7 +500,7 @@ const T2: Buff[] = [
       id: "hw3_curse_hop",
       name: "Handed Down",
       description:
-        "A clinging curse settles on one enemy piece: for your opponent's next 6 turns the bearer is hobbled and may move at most 2 squares at a time. Trading it away does not end the curse - the moment you capture the bearer, the curse leaps to whichever of their pieces is nearest. To be rid of it they must strand the bearer far from the rest of the army, then let it die alone. Kings never take it.",
+        "A clinging curse settles on one enemy piece: for your opponent's next 5 turns the bearer is hobbled and may move at most 2 squares at a time. Trading it away does not end the curse - the moment you capture the bearer, the curse leaps to whichever of their pieces is nearest. To be rid of it they must strand the bearer far from the rest of the army, then let it die alone. Kings never take it.",
       flavor: "Nobody wanted it. Everybody passed it along.",
       fx: { motif: "anchor" },
     },
@@ -513,7 +522,7 @@ const T2: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst) => {
         const sq = inst.state.sq as Square | undefined;
@@ -563,7 +572,7 @@ const T3: Buff[] = [
       id: "hw3_wandering_sentry",
       name: "Wandering Sentry",
       description:
-        "Conjure a spectral sentry that paces a rank in your opponent's half: the square it stands on is barred to their pieces, and every turn it steps one file across, turning back when it reaches the edge. It patrols for 5 of their turns, then dissolves. Its beat is fixed and fully visible - time your moves through the gap behind it.",
+        "Conjure a spectral sentry that paces a rank in your opponent's half: the square it stands on is barred to their pieces, and every turn it steps one file across, turning back when it reaches the edge. It patrols for 4 of their turns, then dissolves. Its beat is fixed and fully visible - time your moves through the gap behind it.",
       flavor: "Back and forth, back and forth, and it never once blinks.",
       fx: { motif: "blindfold" },
     },
@@ -579,7 +588,7 @@ const T3: Buff[] = [
         const sq = cands[0];
         inst.state.sq = sq;
         inst.state.dir = 1;
-        inst.state.turns = 5;
+        inst.state.turns = 4;
         // Added on my turn: 1 covers exactly the victim's next turn. Only the
         // current square is ever barred, so the sentry stays a single tile.
         addEffect(api, { kind: "barred", squares: [sq], against: api.opp, turns: 1 });
@@ -618,7 +627,7 @@ const T3: Buff[] = [
       id: "hw3_bloodbond",
       name: "Blood Bond",
       description:
-        "Bind two enemy pieces in a bond of shared pain: for your opponent's next 6 turns, whenever one of the pair captures anything, the other is frozen for 2 of their turns. They may march the pair around all they like; only fighting with one punishes the other. Trade either away and the bond is cut. Kings cannot be bound.",
+        "Bind two enemy pieces in a bond of shared pain: for your opponent's next 6 turns, whenever one of the pair captures anything, the other is frozen for 2 of their turns, though the very first capture by either is free and spares its partner. They may march the pair around all they like; only fighting with one punishes the other. Trade either away and the bond is cut. Kings cannot be bound.",
       flavor: "Strike with the left hand and the right hand bleeds.",
       fx: { motif: "slow" },
     },
@@ -686,7 +695,7 @@ const T3: Buff[] = [
       id: "hw3_exiles_mark",
       name: "Exile's Mark",
       description:
-        "Brand one enemy knight, bishop or rook as an exile: every move it makes must carry it closer to your side of the board, and if it has not set foot in your half within 6 of their turns, it crumbles to dust. The mark lifts the instant it stands in your half. They can march it forward into danger, trade it away, or spend the other pieces while it withers. Kings are never exiled.",
+        "Brand one enemy knight, bishop or rook as an exile: every move it makes must carry it closer to your side of the board, and if it has not set foot in your half within 5 of their turns, it crumbles to dust. The mark lifts the instant it stands in your half. They can march it forward into danger, trade it away, or spend the other pieces while it withers. Kings are never exiled.",
       flavor: "Cross the line or be scattered to the wind. Those are the terms.",
       fx: { motif: "anchor" },
     },
@@ -709,8 +718,8 @@ const T3: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 6;
-        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 6, then: "remove" });
+        inst.state.turns = 5;
+        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 5, then: "remove" });
       },
       filterOpponentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -758,8 +767,9 @@ const T3: Buff[] = [
   // NEGLECT: a marked piece runs up a "debt" every turn it is left idle, and
   // collects it as a freeze the moment it finally moves. Move it often (cheap)
   // or bench it forever (a dead piece).
-  H3(
+  hex(
     {
+      tier: 4,
       id: "hw3_debtors_mark",
       name: "Debtor's Mark",
       description:
@@ -880,8 +890,9 @@ const T3: Buff[] = [
 
   // vs: Tarnished Crown (freezes the PROMOTED piece itself). This taxes the
   // COURT instead: a coronation freezes a DIFFERENT one of their pieces.
-  H3(
+  hex(
     {
+      tier: 4,
       id: "hw3_coronation_tax",
       name: "Coronation Tax",
       description:
@@ -923,7 +934,7 @@ const T4: Buff[] = [
       id: "hw3_mutiny",
       name: "Mutiny",
       description:
-        "Sow mutiny in the cavalry: for your opponent's next 6 turns, the first time one of their knights captures a piece, it turns its coat on the spot and fights for you for your next 3 turns, then rides back to them. They can deny it by capturing with anything but a knight, or by keeping their knights out of the fray. If it is captured while it serves you, the mutiny simply ends.",
+        "Sow mutiny in the cavalry: it takes hold only after your opponent's next move, and then for their next 6 turns, the first time one of their knights captures a piece, it turns its coat on the spot and fights for you for your next 3 turns, then rides back to them. They can deny it by capturing with anything but a knight, or by keeping their knights out of the fray. If it is captured while it serves you, the mutiny simply ends.",
       flavor: "A knight that will kill for pay will kill for a better offer.",
       fx: { motif: "jail", pieces: ["n"] },
     },
@@ -932,11 +943,16 @@ const T4: Buff[] = [
       init: (inst) => {
         inst.state.turns = 6;
         inst.state.armed = false;
+        inst.state.started = false;
         inst.state.sq = null;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.state.armed) {
           if (tickDefect(inst, move, api) === "ended") inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp && !inst.state.started) {
+          inst.state.started = true; // the mutiny takes hold only after their next move
           return;
         }
         if (

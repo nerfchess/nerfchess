@@ -20,6 +20,7 @@ import {
   emptySquares,
   freezeAllEnemies,
   freezeTarget,
+  hex,
   instant,
   isInCheck,
   mySquares,
@@ -158,6 +159,53 @@ export function cadenceCurse(
   };
 }
 
+/** Like curse(), but before the curse fully binds, the first affected piece
+ * (the lowest-square opponent piece that has a move the curse would forbid) may
+ * make one such move. Taking that escape spends the reprieve; the curse then
+ * binds fully for the rest of the duration. */
+export function escapeCurse(
+  turns: number,
+  filter: (moves: Move[], api: BuffApi) => Move[],
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.escaped = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      const kept = filter(moves, api);
+      if (kept.length === 0) return moves;
+      if (inst.state.escaped) return kept;
+      const keptSet = new Set(kept);
+      const blocked = moves.filter((m) => !keptSet.has(m));
+      if (blocked.length === 0) return kept;
+      let escapeFrom = blocked[0].from;
+      for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+      const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+      inst.state.escapeFrom = escapeFrom;
+      inst.state.escapeTos = escapeMoves.map((m) => m.to);
+      return [...kept, ...escapeMoves];
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (
+        move.color === api.opp &&
+        turnsLeft(inst) > 0 &&
+        !inst.state.escaped &&
+        inst.state.escapeFrom != null &&
+        move.from === inst.state.escapeFrom &&
+        Array.isArray(inst.state.escapeTos) &&
+        (inst.state.escapeTos as Square[]).includes(move.to)
+      ) {
+        inst.state.escaped = true;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) => `${turnsLeft(inst)} of their turns left`,
+  };
+}
+
 /** Squares the caster's pawns currently attack (their capture diagonals). */
 export function myPawnThreats(api: BuffApi): Set<Square> {
   const out = new Set<Square>();
@@ -240,9 +288,9 @@ export function drawRandom(api: BuffApi, pool: Square[], n: number): Square[] {
 // Solid curses: multi-turn class locks, first zone seals, telegraphed traps.
 
 const T5: Buff[] = [
-  H5(
-    { id: "hx4_glacier_gate", name: "Glacier Gate", description: "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next 2 turns.", flavor: "The crossroads froze overnight.", icon: "Snowflake", fx: { motif: "blindfold" } },
-    instant((_inst, api) => barNow(api, CENTER4, 2)),
+  hex(
+    { id: "hx4_glacier_gate", name: "Glacier Gate", description: "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.", flavor: "The crossroads froze overnight.", icon: "Snowflake", fx: { motif: "blindfold" }, tier: 6 },
+    instant((_inst, api) => barNow(api, CENTER4, 1)),
   ),
   H5(
     { id: "hx4_honey_spill", name: "Honey Spill", description: "A barrel of honey bursts over the stables: all of your opponent's knights are stuck fast and cannot move for 2 of their turns.", flavor: "Sweetest trap ever set.", icon: "Droplet", fx: { motif: "jail", pieces: ["n"] } },

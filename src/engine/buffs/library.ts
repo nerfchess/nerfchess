@@ -524,6 +524,32 @@ function pushPawnMoves(out: Move[], api: BuffApi, from: Square, to: Square, via:
   }
 }
 
+/** A one-charge move augment that runs `onResolve` (a clock or reroll garnish)
+ * once its granted move is actually played, then spends the charge. Mirrors the
+ * charge/spend shape of the shared `augment` helper. */
+function augmentThenResolve(
+  gen: (moves: Move[], inst: BuffInstance, api: BuffApi) => Move[],
+  onResolve: (api: BuffApi) => void,
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.charges = 1;
+    },
+    augmentMoves: (moves, inst, api) => {
+      if (((inst.state.charges as number) ?? 0) <= 0) return;
+      addNovel(moves, gen(moves, inst, api));
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.via !== inst.id || !move.color) return;
+      onResolve(api);
+      const charges = ((inst.state.charges as number) ?? 1) - 1;
+      inst.state.charges = charges;
+      if (charges <= 0) inst.spent = true;
+    },
+  };
+}
+
 /** The 16 starting squares for `me`, paired with the piece type each holds. */
 function homeSquares(me: Color): [Square, PieceType][] {
   const hr = me === "w" ? 0 : 7;
@@ -592,11 +618,13 @@ const TIER1: Buff[] = [
     pieceBound("r", "Choose the rook", (board, sq, via) => slideMoves(board, sq, DIAG_DIRS, via, 1)),
   ),
   def(
-    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally, once per game.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
+    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally to an empty square, once per game. It cannot capture.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
     augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "k").flatMap((sq) =>
-        leapMoves(api.board, sq, [[2, 2], [2, -2], [-2, 2], [-2, -2]], inst.id),
-      ),
+      mySquares(api.board, api.me, "k")
+        .flatMap((sq) =>
+          leapMoves(api.board, sq, [[2, 2], [2, -2], [-2, 2], [-2, -2]], inst.id),
+        )
+        .filter((m) => !m.captured),
     ),
   ),
   def(
@@ -638,34 +666,39 @@ const TIER1: Buff[] = [
     instant((_inst, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }),
   ),
   def(
-    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th.", tier: 1, category: "pieces" },
-    augment((_m, inst, api) => {
-      const out: Move[] = [];
-      const fwd = fwdOf(api.me);
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const ahead = sq + fwd;
-        if (ahead < 0 || ahead > 63) continue;
-        if (relRank(api.me, ahead) !== 7 || api.board.pieces[ahead]) continue;
-        for (const promo of ["q", "r", "b", "n"] as PieceType[]) {
-          out.push({ ...pawnMove(api, sq, ahead, inst.id), promotion: promo });
+    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. Gain 5 seconds when it promotes.", tier: 1, category: "pieces" },
+    augmentThenResolve(
+      (_m, inst, api) => {
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const ahead = sq + fwd;
+          if (ahead < 0 || ahead > 63) continue;
+          if (relRank(api.me, ahead) !== 7 || api.board.pieces[ahead]) continue;
+          for (const promo of ["q", "r", "b", "n"] as PieceType[]) {
+            out.push({ ...pawnMove(api, sq, ahead, inst.id), promotion: promo });
+          }
         }
-      }
-      return out;
-    }),
-  ),
-  def(
-    { id: "quiet_march", requires: ["p"], name: "Quiet March", description: "One pawn can move backward one square, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
-        const back = sq - fwdOf(api.me);
-        return back >= 0 && back < 64 && !api.board.pieces[back] && pawnRankOk(back)
-          ? [pawnMove(api, sq, back, inst.id)]
-          : [];
-      }),
+        return out;
+      },
+      (api) => api.adjustClock({ addSelfSec: 5 }),
     ),
   ),
   def(
-    { id: "little_leap", requires: ["p"], name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    { id: "quiet_march", requires: ["p"], name: "Quiet March", description: "One pawn can move backward one square, once. Gain 5 seconds when it resolves.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    augmentThenResolve(
+      (_m, inst, api) =>
+        mySquares(api.board, api.me, "p").flatMap((sq) => {
+          const back = sq - fwdOf(api.me);
+          return back >= 0 && back < 64 && !api.board.pieces[back] && pawnRankOk(back)
+            ? [pawnMove(api, sq, back, inst.id)]
+            : [];
+        }),
+      (api) => api.adjustClock({ addSelfSec: 5 }),
+    ),
+  ),
+  def(
+    { id: "little_leap", requires: ["p"], name: "Little Leap", description: "One pawn jumps a single blocking piece directly ahead, twice.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -675,7 +708,7 @@ const TIER1: Buff[] = [
         }
       }
       return out;
-    }),
+    }, 2),
   ),
   def(
     // Reworked for the full-transparency era (held buffs are public, so the
@@ -705,32 +738,106 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "escape_hatch", requires: ["p"], name: "Escape Hatch", description: "Your king swaps places with one of its own pawns, once.", tier: 1, category: "movement" },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    { id: "escape_hatch", requires: ["p"], name: "Escape Hatch", description: "Choose one of your pawns; after your opponent's next move, your king swaps places with it, once.", tier: 1, category: "movement" },
+    {
+      kind: "activated",
+      // The swap is deferred, so the card must live past its activation to fire.
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.pending
           ? null
           : { kind: "square", label: "Choose the pawn your king swaps with", squares: mySquares(api.board, api.me, "p") },
-      (_inst, api, picks) => {
-        const pawnSq = picks[0]?.square;
-        const kingSq = mySquares(api.board, api.me, "k")[0];
-        if (pawnSq == null || kingSq == null) return;
-        const pawn = api.board.pieces[pawnSq];
-        api.board.pieces[pawnSq] = api.board.pieces[kingSq];
-        api.board.pieces[kingSq] = pawn;
-        api.bs.historyDiverged = true;
+      effect: (inst, _api, picks) => {
+        if (inst.state.pending || picks[0]?.square == null) return;
+        inst.state.pending = true;
+        inst.state.pawnSq = picks[0].square;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        // The opponent has replied: perform the delayed swap now, using the
+        // king's current square and the chosen pawn if it is still standing.
+        const pawnSq = inst.state.pawnSq as Square;
+        const kingSq = mySquares(api.board, api.me, "k")[0];
+        const pawn = api.board.pieces[pawnSq];
+        if (kingSq != null && pawn && pawn.color === api.me && pawn.type === "p") {
+          api.board.pieces[pawnSq] = api.board.pieces[kingSq];
+          api.board.pieces[kingSq] = pawn;
+          api.bs.historyDiverged = true;
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "swap pending after their reply" : "activate to choose a pawn",
+    },
   ),
   def(
-    { id: "second_wind", name: "Second Wind", description: "One captured pawn returns to an empty square on your 2nd rank, once.", tier: 1, category: "pieces" },
-    reviveOne(["p"], (api) => (sq) => RANK(sq) === (api.me === "w" ? 1 : 6)),
+    { id: "second_wind", name: "Second Wind", description: "One captured pawn returns to an empty square on your 2nd rank after your opponent's next move, once.", tier: 1, category: "pieces" },
+    // Preserve the revive payoff (a captured pawn back on the 2nd rank), but the
+    // trigger is delayed: you pick the square now and the pawn appears only once
+    // the opponent has replied. If that square is filled by then, the revive
+    // fizzles and the charge is still spent.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.pending) return null;
+        const revivablePawn = revivable(api, "p") > 0;
+        return {
+          kind: "square",
+          label: "Choose where the revived pawn returns",
+          squares: revivablePawn
+            ? emptySquares(api.board, (sq) => RANK(sq) === (api.me === "w" ? 1 : 6)).filter(pawnRankOk)
+            : [],
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.pending || picks[0]?.square == null || revivable(api, "p") <= 0) return;
+        inst.state.pending = true;
+        inst.state.dest = picks[0].square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const dest = inst.state.dest as Square;
+        if (
+          revivable(api, "p") > 0 &&
+          !api.board.pieces[dest] &&
+          pawnRankOk(dest) &&
+          RANK(dest) === (api.me === "w" ? 1 : 6)
+        ) {
+          api.place(dest, "p", api.me);
+          markRevived(api, "p");
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "returning after their reply" : "activate to choose a square",
+    },
   ),
   def(
-    { id: "diagonal_step", name: "Diagonal Step", description: "Your king moves like a bishop for one move.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
-    ),
+    { id: "diagonal_step", name: "Diagonal Step", description: "Your king moves like a bishop on your very next move only: whether or not you take it, the charge is then spent.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
+    // The granted move is only ever offered when legal, so a failed attempt
+    // cannot occur; instead the charge expires the moment you next move, taken
+    // or not (glossary directive: a failed or illegal attempt still spends it).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
+        );
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || ((inst.state.charges as number) ?? 0) <= 0) return;
+        inst.state.charges = 0;
+        inst.spent = true;
+      },
+    },
   ),
   def(
     // An actual dodge, not a flat shield: the chosen piece slips one square to
@@ -778,20 +885,24 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "tempo_shuffle", requires: ["p"], name: "Tempo Shuffle", description: "Move one pawn sideways one square, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) =>
-        [-1, 1].flatMap((df) => {
-          const f = FILE(sq) + df;
-          if (!inBoard(f, RANK(sq))) return [];
-          const to = SQ(f, RANK(sq));
-          return api.board.pieces[to] ? [] : [pawnMove(api, sq, to, inst.id)];
-        }),
-      ),
+    { id: "tempo_shuffle", requires: ["p"], name: "Tempo Shuffle", description: "Move one pawn sideways one square, once. Gain one draft reroll when it resolves.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    augmentThenResolve(
+      (_m, inst, api) =>
+        mySquares(api.board, api.me, "p").flatMap((sq) =>
+          [-1, 1].flatMap((df) => {
+            const f = FILE(sq) + df;
+            if (!inBoard(f, RANK(sq))) return [];
+            const to = SQ(f, RANK(sq));
+            return api.board.pieces[to] ? [] : [pawnMove(api, sq, to, inst.id)];
+          }),
+        ),
+      (api) => {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      },
     ),
   ),
   def(
-    { id: "bishop_polish", requires: ["b"], name: "Bishop Polish", description: "One bishop can jump exactly one piece, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["b"], self: true } },
+    { id: "bishop_polish", requires: ["b"], name: "Bishop Polish", description: "One bishop can jump exactly one piece, twice.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["b"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "b")) {
