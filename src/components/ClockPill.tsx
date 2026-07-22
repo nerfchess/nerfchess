@@ -116,7 +116,9 @@ export function ClockPill({
             : low
             ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40 clock-pulse-soft"
             : "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
-          : "opacity-60")
+          // Idle clocks stay clearly readable; the gold border/glow on the
+          // running clock (not heavy dimming) is what marks whose turn it is.
+          : "opacity-80")
       }
     >
       <span

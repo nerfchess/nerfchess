@@ -12,6 +12,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
+import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { DraftNotice } from "@/components/DraftNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
@@ -361,6 +362,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       return next;
     });
   };
+  // The rail can also be dragged wider/narrower by its right edge (desktop);
+  // --match-rail-w feeds both the grid column and the board sizing math.
+  const { railWidth, resizeRail, railWidthStyle } = useRailWidth();
   const [revealedOppNerf, setRevealedOppNerf] = useState<Nerf | null>(() => {
     const oppId = start.revealed?.[start.color === "w" ? "b" : "w"];
     return oppId ? IMPLEMENTED_BY_ID[oppId] ?? null : null;
@@ -2286,22 +2290,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Board sizing: the square board must fit BOTH the available height (an
   // h-dvh layout, now including the always-visible player bars above and below
   // the board) and the width left over after the rails present at each
-  // breakpoint, so it can never push a rail off-screen. The 2026-07 layout
-  // pass made the board the clear priority: the left command rail narrowed
-  // from 440/500px to 320/340px, so each min() term now reserves: none below
-  // sm, the right move rail (~288px + gaps + page padding = 344px) at sm,
-  // the narrowed left rail added at lg (700px total) and xl (720px total).
-  // With the rail collapsed (railCollapsed) only the right rail is reserved,
-  // so the board grows to its height/cap limit. At 1363x936 this yields a
-  // ~640px board expanded and ~710px collapsed (was ~480-540px).
+  // breakpoint, so it can never push a rail off-screen. Each min() term
+  // reserves: none below sm, the right move rail (~288px + gaps + page
+  // padding = 344px) at sm, and at lg the draggable left rail on top of that
+  // (380px + the rail's live width, --match-rail-w, default 320px). With the
+  // rail collapsed (railCollapsed) only the right rail is reserved, so the
+  // board grows to its height/cap limit.
+  // The below-sm height reserve is 13rem (16rem with a hint): the nav, both
+  // player-bar/clock strips, and the bottom drawer really do stack ~13rem of
+  // chrome on short landscape viewports, and the old 7rem reserve let the
+  // board push the bottom clock off-screen / under the drawer there.
   // Literal class strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
     ? railCollapsed
-      ? "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
-      : "w-[min(calc(100vw-8px),calc(100dvh-10rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-720px))] max-w-full"
+      ? "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
+      : "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
     : railCollapsed
-    ? "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-7rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-700px))] xl:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-720px))] max-w-full";
+    ? "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
+    : "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2640,12 +2646,15 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             (and inside the draft overlay while my own pick is open). */}
         <div
           className={
-            "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-4 " +
+            // Expanded, the rail column tracks the draggable --match-rail-w and
+            // a thin resize-handle column sits between rail and board; the
+            // 6px gaps + 4px handle keep the same 16px gutter as before.
+            "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-1.5 " +
             (railCollapsed
               ? "lg:grid-cols-[auto]"
-              : "lg:grid-cols-[320px_auto] xl:grid-cols-[340px_auto]")
+              : "lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto]")
           }
-          style={railHeightStyle}
+          style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
@@ -2760,6 +2769,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               {ratingStakes && <RatingStakes stakes={ratingStakes} />}
             </div>
           </aside>
+          {!railCollapsed && !recordingLayout && (
+            <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
+          )}
           <div className="match-board-col flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="match-board-shell min-h-0 min-w-0 sm:flex-none">
               {/* Player bars at every breakpoint (2026-07 layout pass): the
