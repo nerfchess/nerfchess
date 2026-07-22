@@ -62,6 +62,7 @@ import {
 import { BoardState, Color, Move, PieceType, Square } from "@/engine/types";
 import {
   applyDraftAction,
+  cardEventsFromDtActions,
   draftZones,
   mergeDraftState,
   playReplicaMove,
@@ -354,6 +355,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     rank: number;
   } | null>(null);
   const [chatMessages, setChatMessages] = useState<MPChatMessage[]>(() => start.chat ?? []);
+  // The full public draft-action record for THIS viewer: seeded from the start
+  // payload (so refreshes and reconnects keep the whole history) and appended
+  // as resolved/used frames arrive. Feeds the result screen's match timeline;
+  // without it a finished draft game wrongly read "no card record".
+  const dtActionLogRef = useRef<MPDraftAction[]>(start.dtActions ? [...start.dtActions] : []);
   const [rematchStatus, setRematchStatus] = useState<"none" | "offered" | "incoming">("none");
   // Abandonment claims: opponentGone arrived and no sign of life since; after
   // CLAIM_DELAY_AFTER_GONE_MS the claim buttons appear (server re-checks).
@@ -877,6 +883,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // game as usual (this is also how the draft screen hands over once
         // both picks are in).
         setNerfDraft(e.setup.nerfDraft ?? null);
+        // The replayed start carries the authoritative action record: reset the
+        // local log to it so the timeline never double-counts after a reconnect.
+        dtActionLogRef.current = e.setup.dtActions ? [...e.setup.dtActions] : [];
         applyGame(e.setup.nerfDraft ? null : buildGameFromStart(e.setup));
       } else if (e.type === "nerf-picked") {
         // Progress only: never the card. My own echo is just an ack.
@@ -1138,6 +1147,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             ? { ply: g.board.history.length, color: e.resolved.color, a: "pick", cards: e.resolved.cards ?? [] }
             : { ply: g.board.history.length, color: e.resolved.color, a: "bank" };
         applyDraftAction(g, action);
+        dtActionLogRef.current = [...dtActionLogRef.current, action];
         // Shared reveal moment: hold this side's resolution; once both sides
         // of the round are in (either order), fire the banner. The server
         // already filtered `cards` for this seat (masked entries carry only a
@@ -1185,14 +1195,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "draft-used") {
         const g = gameRef.current;
         if (!g?.buffs) return;
-        applyDraftAction(g, {
+        const useAction: MPDraftAction = {
           ply: g.board.history.length,
           color: e.used.color,
           a: "use",
           buffIndex: e.used.buffIndex,
           picks: e.used.picks,
           card: e.used.card,
-        });
+        };
+        applyDraftAction(g, useAction);
+        dtActionLogRef.current = [...dtActionLogRef.current, useAction];
         if (e.used.color !== myColor) {
           playNerf();
           if (e.used.card) showOppUsedCard(e.used.card, `Opponent used a ${draftCardNoun(start.mode)}`);
@@ -3432,6 +3444,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // the board on a reconnected client).
           onReview={() => handleHistoryPlyChange(0)}
           moves={game.board.history}
+          // The full public card history (picks, uses) with plies, so the match
+          // timeline shows the real record instead of "no card record".
+          cardEvents={isDraft ? cardEventsFromDtActions(dtActionLogRef.current) : undefined}
           playerNames={{
             w: myColor === "w" ? myName : oppName,
             b: myColor === "b" ? myName : oppName,

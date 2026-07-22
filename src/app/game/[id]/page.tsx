@@ -27,6 +27,7 @@ import {
   applyDraftAction,
   buildSpectatorDraftGame,
   buildSpectatorDraftGameAtPly,
+  cardEventsFromDtActions,
   draftZones,
   mergeDraftState,
   playReplicaMove,
@@ -1375,23 +1376,9 @@ function ReplayView({ game }: { game: ReplayGame }) {
 
 // ---------------- shared read-only layout ----------------
 
-// Card markers for the result-screen timeline, drawn from the spectator-safe
-// public action stream: "use" activations and instant "pick"s are the moments a
-// card visibly landed on the board (masked/held picks never reach this stream).
-function cardEventsFromDtActions(actions: MPDraftAction[]): TimelineCardEvent[] {
-  const out: TimelineCardEvent[] = [];
-  for (const a of actions) {
-    if (a.a === "use" && a.card?.id) {
-      out.push({ ply: a.ply, color: a.color, cardId: a.card.id, tier: a.card.tier });
-    } else if (a.a === "pick") {
-      for (const c of a.cards) {
-        const card = c as MPDraftCard;
-        if (card.id) out.push({ ply: a.ply, color: a.color, cardId: card.id, tier: card.tier });
-      }
-    }
-  }
-  return out;
-}
+// Card markers for the result-screen timeline now come from the shared helper
+// in lib/draftOnline (cardEventsFromDtActions), so live games, spectating, and
+// archived replays all tell the same card history.
 
 function describeResult(result: { winner: Color | "draw" | null; reason: string }): string {
   const head =

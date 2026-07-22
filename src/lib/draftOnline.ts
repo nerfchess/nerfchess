@@ -488,3 +488,24 @@ export function draftZones(game: NerfGame, myColor: Color): DraftZones {
   }
   return zones;
 }
+
+// Card markers for the result-screen match timeline, drawn from the public
+// action stream this viewer holds: "use" activations and revealed "pick"s are
+// the moments a card visibly landed (masked/held picks never reach this
+// stream with an id). Shared by the live game view, the spectator view, and
+// archived replays so all three screens tell the same card history.
+export function cardEventsFromDtActions(
+  actions: MPDraftAction[],
+): { ply: number; color?: Color; cardId?: string; tier?: number }[] {
+  const out: { ply: number; color?: Color; cardId?: string; tier?: number }[] = [];
+  for (const a of actions) {
+    if (a.a === "use" && a.card?.id) {
+      out.push({ ply: a.ply, color: a.color, cardId: a.card.id, tier: a.card.tier });
+    } else if (a.a === "pick") {
+      for (const c of a.cards) {
+        if ("id" in c && c.id) out.push({ ply: a.ply, color: a.color, cardId: c.id, tier: c.tier });
+      }
+    }
+  }
+  return out;
+}
