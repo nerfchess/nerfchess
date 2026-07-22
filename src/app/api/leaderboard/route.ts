@@ -30,14 +30,13 @@ interface LeaderboardRow {
 // the UI can pin it.
 //
 // House players (the engine-driven roster in lib/server/bots.ts) are always
-// shown on the board, ranked alongside human accounts, and every one carries
-// an explicit `houseBot: true` flag so the UI renders its HOUSE BOT chip
-// (2026-07 transparency change; the old no-trace presentation is retired).
-// They are included with their seeded rating even before they have finished a
-// rated game (the OR arm). Their user ids are all prefixed "hp_"; real
-// accounts use random hex ids, so the prefix match is collision-free. The
-// underscore is escaped because it is a LIKE wildcard. Keep this prefix in
-// sync with bots.ts (HOUSE_ROSTER userId shape).
+// shown on the board, ranked alongside human accounts, and the response gives
+// no way to tell them apart: no bot flag leaves the server (owner request:
+// no trace anywhere on the site). They are included with their seeded rating
+// even before they have finished a rated game (the OR arm). Their user ids
+// are all prefixed "hp_"; real accounts use random hex ids, so the prefix
+// match is collision-free. The underscore is escaped because it is a LIKE
+// wildcard. Keep this prefix in sync with bots.ts (HOUSE_ROSTER userId shape).
 const HOUSE_ID_MATCH = "hp\\_%";
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -56,21 +55,16 @@ export async function GET(request: Request) {
   const db = await getDb();
   const rows = await db
     .prepare(
-      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.bio, u.is_guest AS guest,
-              (u.id LIKE ? ESCAPE '\\') AS house_bot
+      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.bio, u.is_guest AS guest
        FROM user_ratings r JOIN users u ON u.id = r.user_id
        WHERE r.category = ? AND ${houseFilter}
          AND (u.banned_until IS NULL OR u.banned_until <= ?)
        ORDER BY r.rating DESC, r.games DESC LIMIT 250`,
     )
-    .bind(HOUSE_ID_MATCH, category, HOUSE_ID_MATCH, Date.now())
-    .all<LeaderboardRow & { house_bot: number }>();
+    .bind(category, HOUSE_ID_MATCH, Date.now())
+    .all<LeaderboardRow>();
 
-  const players = rows.results.map(({ house_bot, ...row }) => ({
-    ...row,
-    guest: !!row.guest,
-    houseBot: !!house_bot,
-  }));
+  const players = rows.results.map((row) => ({ ...row, guest: !!row.guest }));
 
   // The viewer own standing in this category, even when outside the top 250.
   let me: (Omit<LeaderboardRow, "guest"> & { guest: boolean; rank: number }) | null = null;

@@ -1350,9 +1350,9 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // one from the catalog. Stable per persona and varied across the roster.
   avatar: personaAvatar(name),
   // Legacy personas keep their /mod-editor location label. The 2026-07
-  // expansion wave carries NO fictional location: the bots are openly labeled
-  // House Bot site-wide, so inventing hometowns for them would be pointless
-  // deception.
+  // expansion wave carries NO fictional location: a blank location is the
+  // commonest shape on real chess sites anyway, and it keeps the expansion
+  // personas from accumulating invented biography beyond their short bios.
   location: isExpansionPersona(name) ? "" : HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
 }));
 

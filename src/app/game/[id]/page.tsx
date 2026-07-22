@@ -8,7 +8,6 @@ import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board
 import { computeFxVisual } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
-import { HouseBotBadge } from "@/components/HouseBotBadge";
 import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
@@ -90,9 +89,6 @@ interface ReplayGame {
   black_rating_after: number | null;
   started_at: number;
   completed_at: number;
-  // House-bot seats, labeled in replays exactly like live games.
-  white_house_bot?: boolean;
-  black_house_bot?: boolean;
   // Draft games only: the spectator-safe public action stream from the archived
   // draft record, so the replay reconstructs board rewrites exactly like a live
   // spectator. Absent for classic games and legacy (recordless) rows, which keep
@@ -1262,16 +1258,8 @@ function ReplayView({ game }: { game: ReplayGame }) {
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
 
   const players: MPPlayers = {
-    w: {
-      name: game.white_name,
-      rating: game.white_rating_before ? Math.round(game.white_rating_before) : null,
-      ...(game.white_house_bot ? { houseBot: true } : {}),
-    },
-    b: {
-      name: game.black_name,
-      rating: game.black_rating_before ? Math.round(game.black_rating_before) : null,
-      ...(game.black_house_bot ? { houseBot: true } : {}),
-    },
+    w: { name: game.white_name, rating: game.white_rating_before ? Math.round(game.white_rating_before) : null },
+    b: { name: game.black_name, rating: game.black_rating_before ? Math.round(game.black_rating_before) : null },
   };
   const whiteNerf = IMPLEMENTED_BY_ID[game.white_nerf_id];
   const blackNerf = IMPLEMENTED_BY_ID[game.black_nerf_id];
@@ -1392,7 +1380,7 @@ function describeResult(result: { winner: Color | "draw" | null; reason: string 
 function HeaderIdentity({
   seat,
 }: {
-  seat: { name: string; rating: number | null; provisional?: boolean; houseBot?: boolean };
+  seat: { name: string; rating: number | null; provisional?: boolean };
 }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -1411,7 +1399,6 @@ function HeaderIdentity({
           {seat.rating}
         </span>
       )}
-      {seat.houseBot && <HouseBotBadge />}
     </span>
   );
 }
@@ -1551,7 +1538,6 @@ function GameShell({
                 elo={players.b.rating}
                 avatar={players.b.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
-                houseBot={!!players.b.houseBot}
               />
               {clockEnabled && <ClockPill ms={blackMs} active={activeColor === "b"} compact />}
             </div>
@@ -1582,7 +1568,6 @@ function GameShell({
                 elo={players.w.rating}
                 avatar={players.w.avatar}
                 className="min-w-0 flex-1 !px-0 !py-1"
-                houseBot={!!players.w.houseBot}
               />
               {clockEnabled && <ClockPill ms={whiteMs} active={activeColor === "w"} compact />}
             </div>

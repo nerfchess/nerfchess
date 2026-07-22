@@ -2,12 +2,10 @@
 
 The "house players" are a fixed roster of engine-driven accounts that keep the
 lobby and TV alive: they sit in the queues so a new player always finds a game,
-pick up humans who queue, and play each other when nobody needs them. They hold
-real accounts (ratings, profiles, leaderboard rows) and — since the 2026-07
-transparency change — are **openly labeled**: a HOUSE BOT chip renders beside
-their name on profiles, the leaderboard, the lobby online list, the in-game
-HUD, spectating views, and archived replays. The old "indistinguishable from
-humans" presentation is retired.
+pick up humans who queue, and play each other when nobody needs them. They look
+like ordinary players everywhere (real accounts, ratings, profiles, leaderboard):
+no bot flag ever leaves the server, in any payload or API (owner request: no
+trace anywhere on the site).
 
 TL;DR of the moving parts (2026-07 expansion):
 
@@ -28,9 +26,6 @@ TL;DR of the moving parts (2026-07 expansion):
 - **Availability**: never the whole roster at once. The ACTIVE window breathes
   daily between 180 and 240 personas, the ONLINE window shows at most 280, and
   both rotate daily through the full roster.
-- **Matchmaking preference**: quick match offers Humans and bots (default),
-  Humans only (never bot-picked-up), or Bots only (paired with a free labeled
-  bot near your rating immediately).
 - Each move is chosen by a **local chess engine** (a small alpha-beta search in
   `src/engine/ai.ts`) with a **hard 80ms budget** so it can never stall the
   server. It is NOT Maia and nothing is outsourced (see "Notes vs the original

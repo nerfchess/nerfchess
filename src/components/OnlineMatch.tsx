@@ -2703,8 +2703,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               hideNerf={hideOppNerfCard}
               ownerLabel=""
               compact
-              houseBot={!!start.players?.[oppColor]?.houseBot}
-              connected={start.players?.[oppColor]?.houseBot ? true : !opponentGone}
+              connected={!opponentGone}
             />
             </div>
             <div
@@ -2750,7 +2749,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 progress={myNerf.progress?.(myState, myCtx) ?? null}
                 boons={myHeldBoons}
                 compact
-                houseBot={!!start.players?.[myColor]?.houseBot}
                 connected={!connectionLost}
               />
               </div>
@@ -2791,8 +2789,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   avatar={start.players?.[oppColor]?.avatar}
                   linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
-                  houseBot={!!start.players?.[oppColor]?.houseBot}
-                  connected={start.players?.[oppColor]?.houseBot ? true : !opponentGone}
+                  connected={!opponentGone}
                 />
                 {clockEnabled && (
                   <ClockPill
@@ -2989,7 +2986,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   avatar={start.players?.[myColor]?.avatar}
                   linkProfile={false}
                   className="min-w-0 flex-1 !px-0 !py-1"
-                  houseBot={!!start.players?.[myColor]?.houseBot}
                   connected={!connectionLost}
                 />
                 {clockEnabled && (
