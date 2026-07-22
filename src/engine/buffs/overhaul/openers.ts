@@ -505,7 +505,7 @@ const BALLROOM: Array<OpenerMeta & { df: number; dr: number; hop?: boolean }> = 
   { id: "tango_dip", name: "Tango Dip", flavor: "Two squares forward and to the left, with feeling.", icon: "Flame", df: -1, dr: 1 },
   { id: "foxtrot_slide", name: "Foxtrot Slide", flavor: "Smooth, forward, and slightly to the right of expectations.", icon: "PawPrint", df: 1, dr: 1 },
   { id: "grand_march", name: "Grand March", flavor: "Straight up the hall while the band still remembers the tune.", icon: "Flag", df: 0, dr: 1 },
-  { id: "do_si_do", name: "Do-Si-Do", flavor: "Swing your partner, land on the far side.", icon: "Repeat", df: 0, dr: 0, hop: true },
+  { id: "do_si_do", name: "Do-Si-Do", flavor: "Swing your partner, land on the far side.", icon: "Repeat", df: 0, dr: 0, hop: true, tier: 2 },
 ];
 
 function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
@@ -772,25 +772,65 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
     : "";
   const how = entry.diag ? "one square diagonally backward" : "one square straight backward";
   const uses = entry.uses ?? 1;
-  return opener(
-    entry,
-    `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}`,
-    augment((_moves, inst, api) => {
-      const back = api.me === "w" ? -1 : 1;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (entry.files && !entry.files.includes(FILE(sq))) continue;
-        for (const df of entry.diag ? [-1, 1] : [0]) {
-          const f = FILE(sq) + df, r = RANK(sq) + back;
-          if (!inBoard(f, r)) continue;
-          const to = SQ(f, r);
-          if (!pawnRankOk(to)) continue;
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
-        }
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const back = api.me === "w" ? -1 : 1;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, "p")) {
+      if (entry.files && !entry.files.includes(FILE(sq))) continue;
+      for (const df of entry.diag ? [-1, 1] : [0]) {
+        const f = FILE(sq) + df, r = RANK(sq) + back;
+        if (!inBoard(f, r)) continue;
+        const to = SQ(f, r);
+        if (!pawnRankOk(to)) continue;
+        out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
-      return out;
-    }, uses),
-  );
+    }
+    return out;
+  };
+  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}`;
+  if (entry.id === "edge_of_the_map") {
+    // Preserve the narrow (edge-file) identity; if the retreat is never used by
+    // the owner's 12th move, the remaining charge converts into one draft reroll.
+    return opener(
+      entry,
+      `${baseDesc} If unused by your 12th move, the remaining charge becomes one draft reroll.`,
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = uses;
+          inst.state.moves = 0;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          addNovel(moves, gen(moves, inst, api));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via === inst.id && move.color) {
+            const left = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.charges = left;
+            if (left <= 0) inst.spent = true;
+          }
+          if (move.color === api.me) {
+            inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
+            if (
+              ((inst.state.moves as number) ?? 0) >= 12 &&
+              ((inst.state.charges as number) ?? 0) > 0 &&
+              !inst.spent
+            ) {
+              api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+              inst.state.charges = 0;
+              inst.spent = true;
+            }
+          }
+        },
+        status: (inst) => {
+          const c = (inst.state.charges as number) ?? uses;
+          return c > 0 ? `${c} left, reroll at your 12th move` : null;
+        },
+      },
+    );
+  }
+  return opener(entry, baseDesc, augment(gen, uses));
 }
 
 // ---------------------------------------------------------------------------
@@ -842,7 +882,7 @@ const SITE_WORKS: Array<
   { id: "painters_lift", name: "Painter's Lift", flavor: "Her majesty rises past the workmen without spilling her tea.", icon: "Paintbrush", type: "q", line: "fwd", through: 1 },
   { id: "crane_swing", name: "Crane Swing", flavor: "The load swings diagonally over everyone's hard hats.", icon: "Construction", type: "q", line: "diag", through: 1 },
   { id: "window_washer", name: "Window Washer", flavor: "The bishop squeegees straight past the tenants.", icon: "Sparkles", type: "b", line: "diag", through: 1 },
-  { id: "chimney_sweep", name: "Chimney Sweep", flavor: "Two flues, one brush, zero apologies.", icon: "Brush", type: "b", line: "diag", through: 2 },
+  { id: "chimney_sweep", name: "Chimney Sweep", flavor: "Two flues, one brush, zero apologies.", icon: "Brush", type: "b", line: "diag", through: 2, tier: 2 },
 ];
 
 function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {

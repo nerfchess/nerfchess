@@ -783,9 +783,20 @@ function velvetRope(entry: (typeof VELVET_ROPES)[number]): Buff {
 // one square on its own.
 // ---------------------------------------------------------------------------
 
-const SPRING_THAW: Array<OpenerMeta & { after: number; files: number[] | null; who: string }> = [
+const SPRING_THAW: Array<
+  OpenerMeta & {
+    after: number;
+    files: number[] | null;
+    who: string;
+    /** On a failed roll (no eligible pawn yet), bank it and retry each later
+     * move until one can advance, instead of spending the card. */
+    bankRetry?: boolean;
+    /** Seconds granted the first time a bankRetry roll fails. */
+    consolationSec?: number;
+  }
+> = [
   { id: "snowdrop", name: "Snowdrop", flavor: "The first green thing on the queenside every year.", icon: "Flower2", after: 6, files: [0, 1, 2, 3], who: "queenside (files a through d)" },
-  { id: "first_robin", name: "First Robin", flavor: "It lands kingside and declares the season open.", icon: "Bird", after: 6, files: [4, 5, 6, 7], who: "kingside (files e through h)" },
+  { id: "first_robin", name: "First Robin", flavor: "It lands kingside and declares the season open.", icon: "Bird", after: 6, files: [4, 5, 6, 7], who: "kingside (files e through h)", bankRetry: true, consolationSec: 15 },
   { id: "river_breakup", name: "River Breakup", flavor: "When the center ice cracks, something always floats forward.", icon: "Waves", after: 7, files: [2, 3, 4, 5], who: "central (files c through f)" },
   { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)" },
   { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file" },
@@ -793,28 +804,44 @@ const SPRING_THAW: Array<OpenerMeta & { after: number; files: number[] | null; w
 ];
 
 function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
-  return opener(
-    entry,
-    `After your ${entry.after}th move, one of your ${entry.who} pawns with an empty square ahead, chosen at random, advances one square automatically.`,
-    {
-      kind: "passive",
-      init: (inst) => {
-        inst.state.turns = entry.after;
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (move.color !== api.me) return;
-        const t = ((inst.state.turns as number) ?? 0) - 1;
+  const base = `After your ${entry.after}th move, one of your ${entry.who} pawns with an empty square ahead, chosen at random, advances one square automatically.`;
+  const desc = entry.bankRetry
+    ? `${base} It always fires when at least one such pawn exists (that is the jackpot). If none can advance the turn it ripens, you gain ${entry.consolationSec} seconds and the card keeps trying after each of your later moves until one can.`
+    : base;
+  return opener(entry, desc, {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = entry.after;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color !== api.me) return;
+      if ((inst.state.turns as number) > 0) {
+        const t = (inst.state.turns as number) - 1;
         inst.state.turns = t;
         if (t > 0) return;
-        const candidates = advanceablePawns(api).filter(
-          (sq) => entry.files == null || entry.files.includes(FILE(sq)),
-        );
-        if (candidates.length > 0) advancePawn(api, candidates[api.rng.int(candidates.length)]);
+      }
+      // At or past the ripening move: try to advance an eligible pawn.
+      const candidates = advanceablePawns(api).filter(
+        (sq) => entry.files == null || entry.files.includes(FILE(sq)),
+      );
+      if (candidates.length > 0) {
+        advancePawn(api, candidates[api.rng.int(candidates.length)]);
         inst.spent = true;
-      },
-      status: (inst) => `sprouts in ${turnsLeft(inst)} of your moves`,
+        return;
+      }
+      // Failed roll.
+      if (!entry.bankRetry) {
+        inst.spent = true;
+        return;
+      }
+      if (!inst.state.consoled) {
+        inst.state.consoled = true;
+        if (entry.consolationSec) api.adjustClock({ addSelfSec: entry.consolationSec });
+      }
+      // Otherwise keep the card alive and retry on a later move.
     },
-  );
+    status: (inst) => `sprouts in ${turnsLeft(inst)} of your moves`,
+  });
 }
 
 // ---------------------------------------------------------------------------

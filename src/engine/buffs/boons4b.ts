@@ -818,12 +818,30 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_heralds_truce", name: "Herald's Truce", tier: 5, category: "protection", icon: "Scroll",
-      description: "For your opponent's next turn, none of your pieces can be captured and your king cannot be taken.",
+      description: "Choose one of your pieces (your king excepted): for your opponent's next turn it cannot be captured and your king cannot be taken.",
       flavor: "One trumpet note buys one quiet morning." },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
-    }),
+    {
+      kind: "activated",
+      targets: (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece the truce shields",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (_inst, api, picks) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.me && p.type !== "k") {
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+        }
+      },
+    },
   ),
   card(
     { id: "bn4_quartermasters_lock", name: "Quartermaster's Lock", tier: 5, category: "protection", icon: "Lock",
