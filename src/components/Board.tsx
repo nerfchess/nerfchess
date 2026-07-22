@@ -2221,6 +2221,7 @@ export function Board({
   const entranceSeenRef = useRef<Map<string, number> | null>(null);
   const [entrance, setEntrance] = useState<{
     key: number;
+    cardId: string;
     category: BuffCategory;
     tier: number;
     icon: LucideIcon;
@@ -2257,6 +2258,7 @@ export function Board({
     entranceKeyRef.current += 1;
     setEntrance({
       key: entranceKeyRef.current,
+      cardId: def.id,
       category: def.category,
       tier: fresh.tier,
       icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
@@ -4240,6 +4242,7 @@ export function Board({
         {!fxHiddenPref && !fxCalmClock && entrance && (
           <CardEntrance
             key={`ent-${entrance.key}`}
+            cardId={entrance.cardId}
             category={entrance.category}
             tier={entrance.tier}
             icon={entrance.icon}

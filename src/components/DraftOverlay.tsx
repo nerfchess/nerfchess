@@ -413,6 +413,11 @@ export function DraftOverlay({
 }: Props) {
   const noun = cardNoun;
   const nounCap = noun.charAt(0).toUpperCase() + noun.slice(1);
+  // The OPENING pick (offer index 0, buff mode's game-start pair) wears its
+  // own label everywhere the round number would show: "Opening pick" instead
+  // of "Buff draft #0".
+  const isOpeningPick = offer.index === 0;
+  const draftLabel = isOpeningPick ? "Opening pick" : `${nounCap} draft #${offer.index}`;
   const reduceMotion = useReducedMotion();
   // The board-effects dial also governs the draft spectacle: Off/Calm strips
   // the chest's particle/ray layers and stands down the shake + confetti.
@@ -991,7 +996,7 @@ export function DraftOverlay({
             <span className="flex min-w-0 items-center gap-1.5">
               <GripIcon className="text-parchment-500" />
               <span className="smallcaps truncate text-[12px] text-parchment-400">
-                {nounCap} draft #{offer.index}
+                {draftLabel}
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5">
@@ -1022,7 +1027,7 @@ export function DraftOverlay({
             <DraftChest
               tier={maxTier}
               count={offer.cards.length}
-              label={`${nounCap} draft #${offer.index}`}
+              label={draftLabel}
               stage={packStage}
               onOpen={tearPack}
               mini
@@ -1264,7 +1269,7 @@ export function DraftOverlay({
           <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{nounCap} draft #{offer.index}</div>
+          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{draftLabel}</div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1330,7 +1335,7 @@ export function DraftOverlay({
             <DraftChest
               tier={maxTier}
               count={offer.cards.length}
-              label={`${nounCap} draft #${offer.index}`}
+              label={draftLabel}
               stage={packStage}
               onOpen={tearPack}
               calm={fxCalm}
