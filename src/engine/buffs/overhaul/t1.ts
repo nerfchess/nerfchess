@@ -401,15 +401,34 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_coupon",
       name: "Coupon",
-      description: "Clip it: gain one extra draft reroll.",
+      description:
+        "Clip it: gain one draft reroll. Thrifty shopper bonus: if you still hold an unused reroll when your third draft arrives, gain another.",
       tier: 1,
       category: "draft",
       icon: "Scissors",
       flavor: "Expires never. Void nowhere.",
     },
-    instant((_inst, api) => {
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    // (Distinct from Peek, tier 1 flat reroll: the coupon pays a patience
+    // dividend. Overhaul duplicate-resolution.)
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        void inst;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        if ((api.mine.rerollsLeft ?? 0) <= 0) {
+          inst.spent = true; // spent the rerolls: no dividend
+          return;
+        }
+        if ((api.mine.draftsTaken ?? 0) >= 3) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "dividend pending: hold a reroll until draft 3"),
+    },
   ),
   // 16. Nightlight ---------------------------------------------------------------------------------------------
   card(
