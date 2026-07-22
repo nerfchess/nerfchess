@@ -76,6 +76,7 @@ import {
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
+  chunkIds,
   type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
@@ -5153,30 +5154,46 @@ export class GameServer extends DurableObject<Env> {
     const gamesById = new Map<string, number>();
     if (db) {
       try {
-        const ids = HOUSE_ROSTER.map((p) => p.userId);
-        const placeholders = ids.map(() => "?").join(",");
-        const [rows, users] = await Promise.all([
-          db
-            .prepare(
-              `SELECT user_id, category, rating, games FROM user_ratings
-               WHERE category IN ('nerf','buff') AND user_id IN (${placeholders})`,
-            )
-            .bind(...ids)
-            .all<{ user_id: string; category: string; rating: number; games: number }>(),
-          db
-            .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${placeholders})`)
-            .bind(...ids)
-            .all<{ id: string; username: string; avatar: string | null }>(),
+        // Chunked (chunkIds): the 210-id roster exceeds D1's 100-bound-params
+        // cap in one IN(), which made BOTH queries throw on every call — the
+        // catch below then silently pinned every seek and filler seat to its
+        // baked name and seed rating forever (the reported "renamed a bot but
+        // the lobby never updates").
+        const chunks = chunkIds(HOUSE_ROSTER.map((p) => p.userId));
+        const [ratingChunks, userChunks] = await Promise.all([
+          Promise.all(
+            chunks.map((chunk) =>
+              db
+                .prepare(
+                  `SELECT user_id, category, rating, games FROM user_ratings
+                   WHERE category IN ('nerf','buff') AND user_id IN (${chunk.map(() => "?").join(",")})`,
+                )
+                .bind(...chunk)
+                .all<{ user_id: string; category: string; rating: number; games: number }>(),
+            ),
+          ),
+          Promise.all(
+            chunks.map((chunk) =>
+              db
+                .prepare(`SELECT id, username, avatar FROM users WHERE id IN (${chunk.map(() => "?").join(",")})`)
+                .bind(...chunk)
+                .all<{ id: string; username: string; avatar: string | null }>(),
+            ),
+          ),
         ]);
-        for (const row of rows.results) {
-          if (row.category !== "nerf" && row.category !== "buff") continue;
-          const entry = byId.get(row.user_id) ?? {};
-          entry[row.category as DraftMode] = Math.round(row.rating);
-          byId.set(row.user_id, entry);
-          gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
+        for (const rows of ratingChunks) {
+          for (const row of rows.results) {
+            if (row.category !== "nerf" && row.category !== "buff") continue;
+            const entry = byId.get(row.user_id) ?? {};
+            entry[row.category as DraftMode] = Math.round(row.rating);
+            byId.set(row.user_id, entry);
+            gamesById.set(row.user_id, (gamesById.get(row.user_id) ?? 0) + (row.games ?? 0));
+          }
         }
-        for (const row of users.results) {
-          identity.set(row.id, { username: row.username, avatar: row.avatar });
+        for (const users of userChunks) {
+          for (const row of users.results) {
+            identity.set(row.id, { username: row.username, avatar: row.avatar });
+          }
         }
       } catch {
         // Fall back to seed ratings / baked identity; retry after the TTL.
@@ -7863,37 +7880,49 @@ export class GameServer extends DurableObject<Env> {
     const ratedIds = [...seen.keys()];
     if (db && ratedIds.length > 0) {
       try {
-        const placeholders = ratedIds.map(() => "?").join(",");
+        // Chunked (chunkIds): with the full ~210-bot presence set online, one
+        // IN() over every id exceeds D1's 100-bound-params cap, so this whole
+        // canonicalization pass threw on EVERY lobby build and the catch below
+        // swallowed it — the online list then showed baked usernames and seed
+        // ratings forever (the reported "renamed an account / rating moved but
+        // the online panel never updates, inconsistent with profiles").
+        //
         // The player's ACTIVE bucket (most games played; ties broken by the
         // higher number), not MAX(nerf, buff): the max rule meant a player who
         // only plays one mode and loses kept displaying the other bucket's
         // untouched 1500 seed forever — the "online list shows the wrong elo
         // and never updates" report. Falls back to the legacy users.rating
         // only when neither mode bucket exists yet.
-        const rows = await db
-          .prepare(
-            `SELECT u.id, u.username,
-                    COALESCE(
-                      (SELECT r.rating FROM user_ratings r
-                        WHERE r.user_id = u.id AND r.category IN ('nerf','buff')
-                        ORDER BY r.games DESC, r.rating DESC LIMIT 1),
-                      u.rating
-                    ) AS rating,
-                    u.avatar
-             FROM users u WHERE u.id IN (${placeholders})`,
-          )
-          .bind(...ratedIds)
-          .all<{ id: string; username: string; rating: number; avatar: string | null }>();
-        for (const row of rows.results) {
-          const entry = seen.get(row.id);
-          if (entry) {
-            // The users row wins for the whole identity, not just rating and
-            // avatar: for humans it's the same string the session carries, and
-            // for house personas it's where an admin rename from /mod/house
-            // lands — so an idle renamed bot never shows its baked name.
-            entry.name = row.username;
-            entry.rating = Math.round(row.rating);
-            entry.avatar = row.avatar;
+        const rowChunks = await Promise.all(
+          chunkIds(ratedIds).map((chunk) =>
+            db
+              .prepare(
+                `SELECT u.id, u.username,
+                        COALESCE(
+                          (SELECT r.rating FROM user_ratings r
+                            WHERE r.user_id = u.id AND r.category IN ('nerf','buff')
+                            ORDER BY r.games DESC, r.rating DESC LIMIT 1),
+                          u.rating
+                        ) AS rating,
+                        u.avatar
+                 FROM users u WHERE u.id IN (${chunk.map(() => "?").join(",")})`,
+              )
+              .bind(...chunk)
+              .all<{ id: string; username: string; rating: number; avatar: string | null }>(),
+          ),
+        );
+        for (const rows of rowChunks) {
+          for (const row of rows.results) {
+            const entry = seen.get(row.id);
+            if (entry) {
+              // The users row wins for the whole identity, not just rating and
+              // avatar: for humans it's the same string the session carries, and
+              // for house personas it's where an admin rename from /mod/house
+              // lands — so an idle renamed bot never shows its baked name.
+              entry.name = row.username;
+              entry.rating = Math.round(row.rating);
+              entry.avatar = row.avatar;
+            }
           }
         }
       } catch {}

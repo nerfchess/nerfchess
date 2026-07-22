@@ -1083,6 +1083,22 @@ export function houseSeedRating(persona: HousePersona): number {
   return Math.max(100, houseSeedBase(persona));
 }
 
+/** D1 allows at most 100 bound parameters per query, and the roster is 210
+ * deep — so any `IN (...)` bound over the FULL roster always throws, and since
+ * every such call site catches defensively, the failure is silent: names fall
+ * back to the baked persona constants and ratings to the seeds (the reported
+ * "renamed a bot / rating moved, but the lobby's online list never updates").
+ * Every roster-sized id list must be queried in chunks of this size and the
+ * results merged. */
+export const D1_MAX_IN_IDS = 90;
+
+/** Split an id list into D1-safe chunks (see D1_MAX_IN_IDS). */
+export function chunkIds<T>(ids: readonly T[], size = D1_MAX_IN_IDS): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size) as T[]);
+  return out;
+}
+
 /** Batch a large statement list in bounded chunks (the 210-deep roster produces
  * ~630 statements; D1 batches have practical size limits, so never send them all
  * at once). Order within a chunk is preserved; chunks run sequentially. */
@@ -1159,14 +1175,18 @@ export const HOUSE_ROSTER_SIZE = HOUSE_ROSTER.length;
  * (a freshly grown roster, or a partial/failed prior seed) and ensureHouseUsers
  * must run to create them — the fix for "house bots with no account (ghosts)". */
 export async function countSeededHouseUsers(db: D1Database): Promise<number> {
-  const ids = HOUSE_ROSTER.map((p) => p.userId);
-  const placeholders = ids.map(() => "?").join(",");
   try {
-    const row = await db
-      .prepare(`SELECT COUNT(*) AS n FROM users WHERE id IN (${placeholders})`)
-      .bind(...ids)
-      .first<{ n: number }>();
-    return row?.n ?? 0;
+    // Chunked: the 210-id roster exceeds D1's bound-parameter cap in one IN().
+    let n = 0;
+    for (const chunk of chunkIds(HOUSE_ROSTER.map((p) => p.userId))) {
+      const placeholders = chunk.map(() => "?").join(",");
+      const row = await db
+        .prepare(`SELECT COUNT(*) AS n FROM users WHERE id IN (${placeholders})`)
+        .bind(...chunk)
+        .first<{ n: number }>();
+      n += row?.n ?? 0;
+    }
+    return n;
   } catch {
     // A read failure reads as "assume missing" so seeding runs rather than skips.
     return 0;
@@ -1462,18 +1482,22 @@ export async function countUnderpopulatedClubs(db: D1Database): Promise<number> 
       .all<{ id: string; slug: string }>();
     const targets = clubs.results.filter((c) => c.slug !== OG_CLUB_SLUG);
     if (!targets.length) return 0;
-    const ids = HOUSE_ROSTER.map((p) => p.userId);
-    const placeholders = ids.map(() => "?").join(",");
-    const rows = await db
-      .prepare(
-        `SELECT cm.club_id AS club_id, COUNT(*) AS n
-         FROM club_members cm JOIN users u ON u.id = cm.user_id
-         WHERE cm.user_id IN (${placeholders})
-         GROUP BY cm.club_id`,
-      )
-      .bind(...ids)
-      .all<{ club_id: string; n: number }>();
-    const byClub = new Map(rows.results.map((r) => [r.club_id, r.n]));
+    // Chunked: the 210-id roster exceeds D1's bound-parameter cap in one IN();
+    // per-club counts from each chunk sum to the same total.
+    const byClub = new Map<string, number>();
+    for (const chunk of chunkIds(HOUSE_ROSTER.map((p) => p.userId))) {
+      const placeholders = chunk.map(() => "?").join(",");
+      const rows = await db
+        .prepare(
+          `SELECT cm.club_id AS club_id, COUNT(*) AS n
+           FROM club_members cm JOIN users u ON u.id = cm.user_id
+           WHERE cm.user_id IN (${placeholders})
+           GROUP BY cm.club_id`,
+        )
+        .bind(...chunk)
+        .all<{ club_id: string; n: number }>();
+      for (const r of rows.results) byClub.set(r.club_id, (byClub.get(r.club_id) ?? 0) + r.n);
+    }
     let short = 0;
     for (const club of targets) {
       if ((byClub.get(club.id) ?? 0) < clubBotTargetCount(club.slug)) short++;
