@@ -413,31 +413,75 @@ export const HEXES_T8: Buff[] = [
     {
       id: "scorched_earth",
       name: "Scorched Earth",
-      description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns.",
+      description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns, except the first piece to try, which may step there once before the ban takes hold.",
       flavor: "A cratered killing field where no army dares set foot.",
-      // Board already paints barred squares; square-scoped, no pieces field.
       fx: { motif: "blindfold" },
     },
-    instant((_inst, api) => {
-      const squares: number[] = [];
-      for (let sq = 0; sq < 64; sq++) {
-        const r = relRank(api.opp, sq);
-        if (r >= 4 && r <= 6) squares.push(sq);
-      }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.escapeUsed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const barred = (to: number) => {
+          const r = relRank(api.opp, to);
+          return r >= 4 && r <= 6;
+        };
+        if (inst.state.escapeUsed) {
+          const kept = moves.filter((m) => !barred(m.to));
+          return kept.length > 0 ? kept : moves;
+        }
+        // Escape unused: the first affected piece (lowest square with a barred
+        // destination) may still step into the band; all others are blocked.
+        let escapeFrom: number | null = null;
+        for (const m of moves) {
+          if (barred(m.to) && (escapeFrom === null || m.from < escapeFrom)) escapeFrom = m.from;
+        }
+        const kept = moves.filter((m) => !barred(m.to) || m.from === escapeFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.escapeUsed && move.color === api.opp) {
+          const r = relRank(api.opp, move.to);
+          if (r >= 4 && r <= 6) inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
-  // --- permanent filter: the opponent's rooks can never move again ---------
+  // --- freeze the rooks briefly, then cap them at three squares forever -----
   H(
     {
       id: "sealed_ramparts",
       name: "Sealed Ramparts",
-      description: "Your opponent's rooks can never move again for the rest of the game. Their other pieces are unaffected.",
-      flavor: "The gates are bricked over for good; the towers will never open.",
+      description: "Your opponent's rooks are frozen for their next 2 turns, then for the rest of the game each rook may move at most three squares in a single move. They are never fully disabled.",
+      flavor: "The gates are bricked shut, then cracked open just a sliver for good.",
       fx: { motif: "jail", pieces: ["r"] },
     },
-    permaOppFilter((moves) => moves.filter((m) => m.piece !== "r")),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        for (const sq of mySquares(api.board, api.opp, "r")) {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        }
+      },
+      filterOpponentMoves: (moves) => {
+        if (moves.length === 0) return moves;
+        const kept = moves.filter((m) => {
+          if (m.piece !== "r") return true;
+          const dist = Math.max(
+            Math.abs(FILE(m.to) - FILE(m.from)),
+            Math.abs(RANK(m.to) - RANK(m.from)),
+          );
+          return dist <= 3;
+        });
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // --- timed filter: every piece hobbled to one square for 3 turns ---------
@@ -445,12 +489,12 @@ export const HEXES_T8: Buff[] = [
     {
       id: "leaden_limbs",
       name: "Leaden Limbs",
-      description: "Your opponent may move each piece at most one square in any direction for their next 3 turns.",
+      description: "Your opponent may move each piece at most one square in any direction for their next 2 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",
       // "all" is right: the filter also strips castling off the king.
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves) =>
+    curse(2, (moves) =>
       moves.filter(
         (m) =>
           Math.max(
@@ -466,12 +510,15 @@ export const HEXES_T8: Buff[] = [
   // WEATHER SYSTEM. The pierced piece is iced for 4 of their turns, and for
   // those turns your opponent cannot move anything onto the squares around
   // it, so the frozen piece cannot be defended or huddled behind.
-  H(
+  hex(
     {
       id: "everfrost_shard",
       name: "Everfrost Shard",
       description: "Freeze one enemy piece you target for 4 of their turns. The shard radiates: for those 4 turns your opponent cannot move any piece onto a square beside it. Kings cannot be targeted.",
       flavor: "Nothing grows near it. Nothing stands near it. Nothing helps it.",
+      // Retiered 8 -> 6: a single-target freeze plus a small barred ring does
+      // not fill an Unhinged slot without a second board impact.
+      tier: 6,
     },
     activated(
       (_inst, api, picks) =>

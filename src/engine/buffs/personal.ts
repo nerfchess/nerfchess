@@ -258,7 +258,12 @@ const GYM: Buff[] = [
         let r = RANK(from) + dr;
         while (r >= 0 && r < 8) {
           const sq = SQ(FILE(from), r);
-          if (!api.board.pieces[sq] && (p.type !== "p" || pawnRankOk(sq))) out.push(sq);
+          const occ = api.board.pieces[sq];
+          if (!occ) {
+            if (p.type !== "p" || pawnRankOk(sq)) out.push(sq);
+          } else if (occ.color === api.opp) {
+            break; // the launch phases past friendlies but cannot pass an enemy
+          }
           r += dr;
         }
         return out;
@@ -297,7 +302,7 @@ const GYM: Buff[] = [
       id: "i_love_abs",
       name: "I Love Abs",
       description:
-        "Brace your core. Every one of your pieces standing in the central 16 squares becomes uncapturable for your opponent's next 3 turns.",
+        "Brace your core. Every one of your pieces standing in the central 16 squares becomes uncapturable for your opponent's next 2 turns.",
       tier: 4,
       category: "protection",
       icon: "ShieldPlus",
@@ -309,7 +314,7 @@ const GYM: Buff[] = [
         mySquares(api.board, api.me).filter(
           (sq) => FILE(sq) >= 2 && FILE(sq) <= 5 && RANK(sq) >= 2 && RANK(sq) <= 5,
         ),
-      3,
+      2,
     ),
   ),
 
@@ -482,7 +487,7 @@ const GYM: Buff[] = [
       id: "forearm_veins",
       name: "Forearm Veins",
       description:
-        "Veins run dead straight up the forearm: for the game, each of your pawns may also capture the enemy piece directly ahead of it, one square straight forward.",
+        "Veins run dead straight up the forearm: after your opponent's next move, each of your pawns may also capture the enemy piece directly ahead of it, one square straight forward, for the rest of the game.",
       tier: 4,
       category: "attack",
       requires: ["p"],
@@ -490,20 +495,33 @@ const GYM: Buff[] = [
       flavor: "Dead straight, no curve, full grip.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
-        const dr = fwd(api.board.pieces[sq]!.color);
-        const f = FILE(sq), r = RANK(sq) + dr;
-        if (!inBoard(f, r)) return [];
-        const to = SQ(f, r);
-        const t = api.board.pieces[to];
-        // Only the straight-ahead CAPTURE is new (plain forward pushes are
-        // normal pawn moves); back-rank landings stay off the menu so the
-        // grant never has to reason about promotion.
-        if (!t || t.color !== api.opp || t.type === "k" || !pawnRankOk(to)) return [];
-        return leapMoves(api.board, sq, [[0, dr]], inst.id);
-      }),
-    ),
+    {
+      kind: "passive",
+      // Delayed grant: the forward grip only comes online after your opponent's
+      // next move.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active && move.color === api.opp) inst.state.active = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.active) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "p").flatMap((sq) => {
+            const dr = fwd(api.board.pieces[sq]!.color);
+            const f = FILE(sq), r = RANK(sq) + dr;
+            if (!inBoard(f, r)) return [];
+            const to = SQ(f, r);
+            const t = api.board.pieces[to];
+            // Only the straight-ahead CAPTURE is new (plain forward pushes are
+            // normal pawn moves); back-rank landings stay off the menu so the
+            // grant never has to reason about promotion.
+            if (!t || t.color !== api.opp || t.type === "k" || !pawnRankOk(to)) return [];
+            return leapMoves(api.board, sq, [[0, dr]], inst.id);
+          }),
+        );
+      },
+      status: (inst) => (inst.state.active ? null : "grip sets in after your opponent replies"),
+    },
   ),
 ];
 
@@ -538,14 +556,14 @@ const FOCUS: Buff[] = [
       id: "monkeytype",
       name: "Monkeytype",
       description:
-        "Type at full speed: relocate up to 3 of your pieces, each exactly one square, in a rapid burst of keystrokes. Kings sit this test out.",
+        "Type at full speed: relocate up to 2 of your pieces, each exactly one square, in a rapid burst of keystrokes. Kings sit this test out.",
       tier: 3,
       category: "movement",
       icon: "Keyboard",
       flavor: "Accuracy 100 percent, patience zero.",
       fx: { motif: "rally", self: true },
     },
-    relocateMany(3, stepDest),
+    relocateMany(2, stepDest),
   ),
 
   card(
