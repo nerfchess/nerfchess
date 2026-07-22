@@ -74,7 +74,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "gravity_well",
       name: "Gravity Well",
       description:
-        "Your king bends space around it: enemy pieces standing within two squares of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
+        "Your king bends space around it: enemy pieces standing within one square of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
       tier: 6,
       category: "tempo",
       flavor: "What goes near, stays near.",
@@ -87,7 +87,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (k == null) return moves;
         const kept = moves.filter((m) => {
           if (m.piece === "k") return true; // never trap the enemy king
-          if (dist(m.from, k) > 2) return true; // only pieces already in orbit
+          if (dist(m.from, k) > 1) return true; // only pieces already in orbit
           return dist(m.to, k) <= dist(m.from, k); // may not drift outward
         });
         return kept.length > 0 ? kept : moves;
@@ -364,7 +364,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "HandHeart",
       name: "Guardian Angel",
       description:
-        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half.",
+        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half. The returning piece needs a moment to find its feet and cannot move (so it cannot capture) until after your opponent replies.",
       tier: 6,
       category: "protection",
       flavor: "Someone up there is watching.",
@@ -385,6 +385,12 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         ).sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b)[0];
         if (safe == null) return; // nowhere safe right now: keep the save for later
         api.place(safe, type, api.me);
+        // The rescued piece settles for one turn: a freeze it owns, added on the
+        // opponent's capturing move, holds through your very next turn (it ticks
+        // on YOUR completed moves, not this opponent one) and thaws only after
+        // your opponent has replied. Never a king (king captures are excluded
+        // above), so this can never restrict your own king.
+        addEffect(api, { kind: "freeze", sq: safe, owner: api.me, turns: 1, skin: "bubble" });
         inst.state.saves = left - 1;
         if (left - 1 <= 0) inst.spent = true;
       },

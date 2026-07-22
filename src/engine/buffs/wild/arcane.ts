@@ -466,7 +466,7 @@ export const WILD_ARCANE: Buff[] = [
           addNovel(moves, leapMoves(api.board, k.sq, CAMEL_LEAPS, inst.id));
         }
       },
-      onMovePlayed: (inst, move, api) => {
+      onMovePlayed: (inst, move) => {
         let knights = inst.state.knights as { sq: Square; charges: number }[] | undefined;
         if (!knights) return;
         // Drop a tracked knight that was just captured.
@@ -481,7 +481,6 @@ export const WILD_ARCANE: Buff[] = [
         knights = knights.filter((k) => k.charges > 0);
         inst.state.knights = knights;
         if (knights.length === 0) inst.spent = true;
-        void api;
       },
       status: (inst) => {
         const knights = inst.state.knights as { sq: Square; charges: number }[] | undefined;
@@ -495,7 +494,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_arcane_conduit",
       name: "Arcane Conduit",
       description:
-        "One of your rooks may also move up to two squares diagonally for the rest of the game.",
+        "One of your rooks may also move up to two squares diagonally, but never to capture, for the rest of the game.",
       tier: 4,
       category: "movement",
       requires: ["r"],
@@ -503,7 +502,7 @@ export const WILD_ARCANE: Buff[] = [
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true },
     },
     pieceBound("r", "Choose the rook to channel the conduit", (board, sq, via) =>
-      slideMoves(board, sq, DIAG_DIRS, via, 2),
+      slideMoves(board, sq, DIAG_DIRS, via, 2).filter((m) => !m.captured),
     ),
   ),
 
@@ -567,7 +566,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_spectral_minors",
       name: "Spectral Retinue",
       description:
-        "Your retinue turns spectral and re-forms: every one of your knights becomes a bishop, and every one of your bishops becomes a knight, where they stand.",
+        "Your retinue turns spectral and re-forms: your knights and bishops swap forms where they stand, knights becoming bishops and bishops becoming knights, but one of them is spared whenever more than one would change.",
       tier: 3,
       category: "pieces",
       flavor: "Same souls, new silhouettes.",
@@ -575,8 +574,16 @@ export const WILD_ARCANE: Buff[] = [
     instant((_inst, api) => {
       const knights = mySquares(api.board, api.me, "n");
       const bishops = mySquares(api.board, api.me, "b");
-      for (const sq of knights) api.setPieceType(sq, "b");
-      for (const sq of bishops) api.setPieceType(sq, "n");
+      const changes: { sq: Square; to: PieceType }[] = [
+        ...knights.map((sq) => ({ sq, to: "b" as PieceType })),
+        ...bishops.map((sq) => ({ sq, to: "n" as PieceType })),
+      ];
+      if (changes.length === 0) return;
+      // Balance: one piece is spared (minimum one still transforms). Spare the
+      // lowest-indexed affected square deterministically so replicas agree.
+      changes.sort((a, b) => a.sq - b.sq);
+      const applied = changes.length > 1 ? changes.slice(1) : changes;
+      for (const c of applied) api.setPieceType(c.sq, c.to);
     }),
   ),
   card(

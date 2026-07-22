@@ -72,15 +72,18 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_broom_sweep",
       name: "Broom Sweep",
       description:
-        "Pick a rank: every enemy pawn on it is swept one square back toward its own side, wherever the square behind it is empty.",
+        "Pick a rank. After your opponent's next move, every enemy pawn on it is swept one square back toward its own side, wherever the square behind it is empty.",
       tier: 2,
       category: "attack",
       icon: "Brush",
       flavor: "This board was filthy with pawns.",
     },
+    // Delayed: you pick the rank now, but the broom only sweeps once the
+    // opponent has replied (it sweeps whichever enemy pawns sit on that rank
+    // at that moment).
     activated(
-      (_inst, api, picks) => {
-        if (picks.length > 0) return null;
+      (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.rank != null) return null;
         const ranks = new Set<number>();
         for (const sq of mySquares(api.board, api.opp, "p")) {
           if (retreatSquare(api, sq) != null) ranks.add(RANK(sq));
@@ -89,16 +92,26 @@ export const OVERHAUL_T2: Buff[] = [
         for (let sq = 0; sq < 64; sq++) if (ranks.has(RANK(sq))) squares.push(sq);
         return { kind: "square", label: "Pick any square on the rank to sweep", squares };
       },
-      (_inst, api, picks) => {
-        if (picks[0]?.square == null) return;
-        const rank = RANK(picks[0].square);
-        for (const sq of mySquares(api.board, api.opp, "p")) {
-          if (RANK(sq) !== rank) continue;
-          const back = retreatSquare(api, sq);
-          if (back != null) api.relocate(sq, back);
-        }
+      (inst, _api, picks) => {
+        if (picks[0]?.square == null || inst.state.rank != null) return;
+        inst.state.rank = RANK(picks[0].square);
       },
-      { freeAction: true },
+      {
+        freeAction: true,
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          if (inst.state.rank == null || move.color !== api.opp) return;
+          const rank = inst.state.rank as number;
+          for (const sq of mySquares(api.board, api.opp, "p")) {
+            if (RANK(sq) !== rank) continue;
+            const back = retreatSquare(api, sq);
+            if (back != null) api.relocate(sq, back);
+          }
+          inst.spent = true;
+        },
+        status: (inst) =>
+          inst.state.rank != null ? "sweeping after their reply" : "pick a rank to sweep",
+      },
     ),
   ),
   // 27. Grappling Hook --------------------------------------------------------
@@ -107,15 +120,21 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_grappling_hook",
       name: "Grappling Hook",
       description:
-        "Pull one enemy piece (not the king) one square toward you along its file. The destination must be empty.",
+        "Mark one enemy piece (not the king). After your opponent's next move, pull it one square toward you along its file, if it is still there and the square behind it is empty.",
       tier: 2,
       category: "attack",
       icon: "Anchor",
       flavor: "Get over here. Slightly.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Nothing here counts, ranges, or lasts more than one (one piece, one
+    // square), so the balance pass delays the whole effect instead: you aim
+    // the hook now and it reels in only after the opponent has replied, which
+    // gives the target a chance to slip away.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -128,13 +147,27 @@ export const OVERHAUL_T2: Buff[] = [
                 return p.type !== "p" || pawnRankOk(dest);
               }),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
-        const dest = sq - fwdOf(api.me);
-        if (dest >= 0 && dest <= 63 && !api.board.pieces[dest]) api.relocate(sq, dest);
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        flashSquares(api, [sq], true);
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || move.color !== api.opp) return;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          const dest = sq - fwdOf(api.me);
+          if (dest >= 0 && dest <= 63 && !api.board.pieces[dest] && (p.type !== "p" || pawnRankOk(dest))) {
+            api.relocate(sq, dest);
+          }
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.sq != null ? "reeling in after their reply" : "activate to hook a piece",
+    },
   ),
   // 28. Moat Digger -----------------------------------------------------------
   card(

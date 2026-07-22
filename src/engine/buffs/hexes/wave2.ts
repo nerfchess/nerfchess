@@ -648,7 +648,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_twinned_torment",
       name: "Twinned Torment",
       description:
-        "Stitch two enemy pieces into one fate: for your opponent's next 6 turns, whenever one of the bound pair moves, the other seizes up and is frozen for 1 turn. They can still use one of the two freely, but only by leaving its twin nailed down. A captured twin slips the bond and frees the other. Kings cannot be bound.",
+        "Stitch two enemy pieces into one fate: their next move slips the fresh bond, then for their following 6 turns, whenever one of the bound pair moves, the other seizes up and is frozen for 1 turn. They can still use one of the two freely, but only by leaving its twin nailed down. A captured twin slips the bond and frees the other. Kings cannot be bound.",
       flavor: "Two dolls, one thread. Pull either arm.",
     },
     {
@@ -672,6 +672,7 @@ export const HEX_WAVE2: Buff[] = [
         inst.state.a = a;
         inst.state.b = b;
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
         let a = (inst.state.a as Square | null | undefined) ?? null;
@@ -686,6 +687,12 @@ export const HEX_WAVE2: Buff[] = [
         if (a == null && b == null) {
           // Both twins are gone; the thread is cut.
           inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move slips the fresh bond; it
+          // tightens after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
           return;
         }
         if (move.color === api.opp && turnsLeft(inst) > 0 && (movedA || movedB)) {
@@ -724,7 +731,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_cursed_coin",
       name: "Cursed Coin",
       description:
-        "Press a cursed coin into one enemy piece's hand: for your opponent's next 8 turns the holder cannot capture and can move at most 2 squares. The coin is eager to be passed: whenever the holder ends a move beside another of their pieces, or one of their pieces ends a move beside the holder, the coin jumps to that piece. Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin. Kings never take the coin.",
+        "Press a cursed coin into one enemy piece's hand: the holder's first move slips free, then for the rest of your opponent's next 8 turns the holder cannot capture and can move at most 2 squares. The coin is eager to be passed: whenever the holder ends a move beside another of their pieces, or one of their pieces ends a move beside the holder, the coin jumps to that piece. Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin. Kings never take the coin.",
       flavor: "Everyone swears they will not hold it long.",
     },
     {
