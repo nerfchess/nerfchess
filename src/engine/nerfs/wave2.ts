@@ -339,19 +339,23 @@ const GRANDSTANDING: Nerf = nerf(
     name: "Grandstanding",
     tier: 7,
     icon: "sparkles",
-    description: "Every move you make must be one of the longest available this turn: no legal move may travel farther (in king-steps) than the one you pick.",
+    description: "Every move you make must be one of the longest available this turn: no legal move may travel farther (in king-steps) than the one you pick. If no full-length move exists, your king may move to any square instead.",
     flavor: "Why walk when the crowd wants to see you fly?",
   },
   {
     // Distinct from metronome (locked to your own last distance) and
     // going_the_distance (opponent-relative minimum): an absolute maximum
     // each turn. Counterplay is real: keep your lines closed so the longest
-    // available move stays short. Never empties the list (the maximum is
-    // always achieved by at least one move).
+    // available move stays short. The maximum is always achieved by at least
+    // one move, so the king escape below is a defensive net that essentially
+    // never fires; when it does, only the king (not the whole army) is freed.
     filterMoves: (moves) => {
       let max = 0;
       for (const m of moves) max = Math.max(max, cheb(m.from, m.to));
-      return moves.filter((m) => cheb(m.from, m.to) === max);
+      const longest = moves.filter((m) => cheb(m.from, m.to) === max);
+      if (longest.length) return longest;
+      const kingMoves = moves.filter((m) => m.piece === "k");
+      return kingMoves.length ? kingMoves : moves;
     },
     hint: (_s, _ctx, legal) => {
       if (!legal.length) return null;
@@ -377,7 +381,7 @@ const KILLING_SPREE: Nerf = nerf(
     name: "Killing Spree",
     tier: 8,
     icon: "swords",
-    description: "Once you capture, the spree begins: every one of your following turns must also capture. If you start a turn mid-spree with no capture available, you lose. Capturing the enemy king ends the spree in victory.",
+    description: "Once you capture, the spree begins: every one of your following turns must also capture, or you lose. Declining a capture that was available, or starting a turn mid-spree with no capture at all, loses immediately. Capturing the enemy king ends the spree in victory.",
     flavor: "The first taste is free. After that, the hunger owns you.",
   },
   {
@@ -385,17 +389,15 @@ const KILLING_SPREE: Nerf = nerf(
     // loses, tier 4) and eye_for_an_eye (OPPONENT's capture obliges yours,
     // tier 5): here your own first capture commits you until the king falls.
     // Managed line: play pacifist (total_pacifism at tier 8 proves that is
-    // survivable) until you can count a chain that ends on the king.
-    filterMoves: (moves, _s, ctx) => {
-      if (!ctx.myLastMove?.captured) return moves;
-      const caps = moves.filter((m) => m.captured);
-      return caps.length ? caps : moves;
-    },
+    // survivable) until you can count a chain that ends on the king. The spree
+    // is enforced as a loss condition, not a move filter: non-captures stay
+    // legal but end the game, so declining an available capture loses just the
+    // same as running out of captures to make.
     checkLoss: (_s, ctx) => {
       // Judged right after my move (a king capture already ended the game via
-      // the king-capture check, which runs first). filterMoves forces captures
-      // whenever one exists, so this only fires when none was available: the
-      // promised loss, not a soft-lock.
+      // the king-capture check, which runs first). Mid-spree, ANY move that is
+      // not a capture loses now, whether the capture was declined or none was
+      // available.
       const mine = ctx.board.history.filter((m) => m.color === ctx.me);
       const h = ctx.board.history;
       if (!h.length || h[h.length - 1].color !== ctx.me) return null;
