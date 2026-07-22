@@ -42,7 +42,6 @@ import {
   reviveOne,
   revivable,
   shieldZone,
-  skipOpponent,
   slideMoves,
   teleportMoves,
   timedAugment,

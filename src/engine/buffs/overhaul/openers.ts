@@ -851,6 +851,197 @@ const DEAD_LETTERS: Array<OpenerMeta & { file: number }> = [
 
 function deadLetter(entry: (typeof DEAD_LETTERS)[number]): Buff {
   const fileName = FILE_NAMES[entry.file];
+
+  if (entry.id === "airmail") {
+    // Expand eligibility one adjacent file inward: the a- OR b-file pawn.
+    return opener(
+      entry,
+      "Once, your a- or b-file pawn may capture the enemy piece directly in front of it.",
+      augment((_moves, inst, api) => {
+        const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== 0 && FILE(sq) !== 1) continue;
+          for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+            if (m.captured) out.push(m);
+          }
+        }
+        return out;
+      }),
+    );
+  }
+
+  if (entry.id === "bulk_postage") {
+    // Capture straight ahead; if the a-file square beside the landing is empty
+    // the pawn slides on to it (a single move: capture at the front square,
+    // finishing one file toward the a-file).
+    return opener(
+      entry,
+      "Once, your b-file pawn may capture the enemy piece directly ahead; if the a-file square beside it is empty, the pawn slides there instead of stopping.",
+      augment((_moves, inst, api) => {
+        const fwd = fwdOf(api.me);
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== 1) continue;
+          const front = sq + fwd;
+          if (front < 0 || front > 63) continue;
+          const target = api.board.pieces[front];
+          if (!target || target.color !== api.opp) continue;
+          const slide = SQ(0, RANK(front));
+          const landing = !api.board.pieces[slide] && pawnRankOk(slide) ? slide : front;
+          out.push({
+            from: sq,
+            to: landing,
+            piece: "p",
+            color: api.me,
+            captured: target.type,
+            capturedSquare: front,
+            via: inst.id,
+          });
+        }
+        return out;
+      }),
+    );
+  }
+
+  if (entry.id === "certified_letter") {
+    // Capture straight ahead only if the target is defended; the pawn is then
+    // uncapturable until the opponent replies.
+    return opener(
+      entry,
+      "Once, your c-file pawn may capture the enemy piece directly ahead only if that piece is defended. After the capture the pawn cannot be captured until your opponent replies.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 2) continue;
+            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+              if (!m.captured) continue;
+              const front = m.capturedSquare ?? m.to;
+              if (attackersOf(api.board, api.opp, front).length > 0) out.push(m);
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id) return;
+          addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 });
+          inst.state.charges = 0;
+          inst.spent = true;
+        },
+        status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "certified delivery" : null),
+      },
+    );
+  }
+
+  if (entry.id === "dead_letter_office") {
+    // Capture straight ahead; the captured square (where the pawn now stands) is
+    // sealed to both players until the owner's next turn, so nothing may move
+    // onto it (the pawn cannot be recaptured there).
+    return opener(
+      entry,
+      "Once, your d-file pawn may capture the enemy piece directly ahead; the square it lands on is sealed to both players until your next turn, so nothing may move onto it.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 3) continue;
+            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+              if (m.captured) out.push(m);
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id) return;
+          addEffect(api, { kind: "barred", squares: [move.to], against: api.opp, turns: 1 });
+          addEffect(api, { kind: "barred", squares: [move.to], against: api.me, turns: 1 });
+          inst.state.charges = 0;
+          inst.spent = true;
+        },
+        status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "special delivery" : null),
+      },
+    );
+  }
+
+  if (entry.id === "express_courier") {
+    // Capture straight ahead; on that pawn's following move it may then advance
+    // two squares forward if both are empty.
+    return opener(
+      entry,
+      "Once, your e-file pawn may capture the enemy piece directly ahead; on its following move that pawn may then advance two squares forward if both are empty.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          const fwd = fwdOf(api.me);
+          const out: Move[] = [];
+          if (((inst.state.charges as number) ?? 0) > 0) {
+            const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+            for (const sq of mySquares(api.board, api.me, "p")) {
+              if (FILE(sq) !== 4) continue;
+              for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+                if (m.captured) out.push(m);
+              }
+            }
+          }
+          const boost = inst.state.boost as number | undefined;
+          if (boost != null) {
+            const p = api.board.pieces[boost];
+            if (p && p.color === api.me && p.type === "p") {
+              const mid = boost + fwd,
+                to = boost + fwd * 2;
+              if (to >= 0 && to <= 63 && pawnRankOk(to) && !api.board.pieces[mid] && !api.board.pieces[to]) {
+                out.push(...teleportMoves(api.board, boost, [to], inst.id));
+              }
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.color !== api.me) return;
+          if (inst.state.boost != null) {
+            const b = inst.state.boost as number;
+            if (captureSquare(move) === b && move.from !== b) {
+              inst.spent = true;
+              inst.state.boost = undefined;
+              return;
+            }
+            if (move.from === b) {
+              inst.spent = true;
+              inst.state.boost = undefined;
+            }
+            return;
+          }
+          if (move.via === inst.id && move.captured) {
+            inst.state.charges = 0;
+            inst.state.boost = move.to;
+          }
+        },
+        status: (inst) =>
+          inst.state.boost != null
+            ? "one long stride ready"
+            : ((inst.state.charges as number) ?? 0) > 0
+              ? "express delivery"
+              : null,
+      },
+    );
+  }
+
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may capture the enemy piece directly in front of it.`,
