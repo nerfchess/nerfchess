@@ -18,7 +18,19 @@ import { MPLobby } from "./multiplayer";
 // leaves the numbers untouched (see arenaLobby.ts, Tier 3). Throws on a non-OK
 // response so callers keep their last snapshot.
 export async function fetchLobbySnapshot(): Promise<MPLobby> {
-  const res = await fetch("/api/lobby", { headers: { accept: "application/json" } });
+  // Rotating cache-buster + no-store: production served a DAYS-old pinned
+  // copy of the bare /api/lobby URL (empty games/seeks while the DO held 70+
+  // live games), from some cache layer between the browser and the worker
+  // that ignored the response's 3s TTL. The bucketed query param makes every
+  // ~3s window a fresh URL, so no URL-keyed cache in front of the worker can
+  // ever pin the lobby again; the worker's own edge cache maps ANY query to
+  // its shared per-window key (worker.ts handleLobbyEdge), so this adds no
+  // load on the game server — a crowd still costs ~1 DO hit per window.
+  const bucket = Math.floor(Date.now() / 3000);
+  const res = await fetch(`/api/lobby?fresh=${bucket}`, {
+    headers: { accept: "application/json" },
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error(`lobby ${res.status}`);
   const raw = (await res.json()) as MPLobby;
   return withArenaLobby(raw);

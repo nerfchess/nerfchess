@@ -8195,17 +8195,50 @@ export class GameServer extends DurableObject<Env> {
 
 // Edge-cached lobby snapshot. The payload is public and identical for every
 // viewer, so one cached copy per colo serves the whole browsing crowd and the DO
-// sees ~1 request per cache window (s-maxage) instead of a WebSocket poll per
-// viewer. A FIXED cache key (query stripped) stops a cache-busting query string
-// from stampeding the DO. Fails soft: a stale cached copy on DO error, then the
-// DO's own error response, so the client keeps its last snapshot either way.
+// sees ~1 request per cache window instead of a WebSocket poll per viewer.
+// Fails soft: the DO's own error response passes through, so the client keeps
+// its last snapshot either way.
+//
+// STALENESS IS BOUNDED BY THE CACHE KEY, NOT BY TTL HEADERS. The first cut
+// stored one FIXED key with `s-maxage=3` and trusted expiry — and production
+// served a DAYS-old copy of that key while the DO underneath held 70+ live
+// games (verified side by side: /healthz `lobby.games: 72` vs an /api/lobby
+// body whose ratings matched a screenshot from days earlier, with the DO's
+// /lobby handler never invoked — `lastLobbyHttpAgoMs: null` across a 5-minute
+// isolate while a browser polled every 10s). Whatever layer pinned it (an
+// ambient Cache API TTL quirk, a zone-level cache rule in front of the
+// worker), the lesson is the same: never let a cache's expiry policy be the
+// only thing standing between viewers and a frozen lobby. So:
+//   • The stored key rotates every LOBBY_EDGE_BUCKET_MS: once the bucket
+//     rolls, the old entry is UNREACHABLE regardless of how long some layer
+//     keeps it, so staleness is capped at one bucket even if TTLs are ignored.
+//   • The response served to the client is `no-store`: browsers and any
+//     CDN/zone cache in FRONT of the worker are told to never keep a copy, so
+//     the only shared cache is the one under our key control right here.
+const LOBBY_EDGE_BUCKET_MS = 3000;
 async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promise<Response> {
   // `caches.default` is a Workers-runtime global not present on the DOM
   // CacheStorage type this file is compiled against; cast to reach it.
   const cache = (caches as unknown as { default: Cache }).default;
-  const cacheKey = new Request(`${url.origin}/api/lobby`, { method: "GET" });
+  // Time-bucketed key: bounds staleness by construction (see header comment).
+  // The bucket also absorbs client cache-busting query strings — whatever the
+  // browser appends, every request in the same window maps to this one key,
+  // so a crowd still costs the DO ~1 hit per bucket.
+  const bucket = Math.floor(Date.now() / LOBBY_EDGE_BUCKET_MS);
+  const cacheKey = new Request(`${url.origin}/api/lobby?bucket=${bucket}`, { method: "GET" });
+  const clientHeaders = {
+    "content-type": "application/json",
+    // Downstream caches (browser, CDN, any zone rule in front of the worker)
+    // must never hold this: the shared caching happens above, under our
+    // rotating key, where staleness is provably bounded.
+    "cache-control": "no-store",
+  };
   const cached = await cache.match(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    // Re-wrap: the stored copy carries the cacheable header set; the client
+    // must receive the no-store set.
+    return new Response(await cached.arrayBuffer(), { status: 200, headers: clientHeaders });
+  }
   let doResp: Response;
   try {
     const id = env.GAME_SERVER.idFromName(globalServerName);
@@ -8215,31 +8248,17 @@ async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promi
     return new Response("lobby unavailable", { status: 503 });
   }
   if (!doResp.ok) return doResp;
-  // Re-wrap with cache headers; s-maxage bounds how often the DO is hit,
-  // stale-while-revalidate lets the edge serve the old copy during a refresh.
-  // s-maxage=3 caps DO lobby load at ~1 hit / 3s TOTAL (shared across every
-  // viewer, independent of viewer count) while keeping a freshly-posted or
-  // just-answered challenge no more than ~3s + the client poll interval stale.
-  //
-  // Tradeoff: the edge cache is what protects the single global lobby DO, so we
-  // keep it (dropping s-maxage would expose the DO to every poll from every
-  // client and risk overload). But two clients in different colos can be served
-  // snapshots up to (s-maxage + stale-while-revalidate) apart, so we keep SWR
-  // small: s-maxage=3 + swr=1 caps cross-colo snapshot-age skew at ~4s instead
-  // of the ~9s a larger SWR window would allow. The lobby count is intentionally
-  // eventually-consistent (all colos converge within ~4s) rather than
-  // per-request random — the payload is deterministic, so every colo that hits
-  // the DO in a given window serves the identical snapshot.
   const body = await doResp.arrayBuffer();
-  const resp = new Response(body, {
+  // Stored copy: cacheable so cache.put accepts it. The TTL is hygiene (lets
+  // the runtime evict rolled-over buckets promptly); correctness comes from
+  // the key rotation, which caps effective staleness at one bucket no matter
+  // how long this entry actually lives.
+  const stored = new Response(body, {
     status: 200,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "public, s-maxage=3, stale-while-revalidate=1",
-    },
+    headers: { "content-type": "application/json", "cache-control": "public, s-maxage=5" },
   });
-  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
-  return resp;
+  ctx.waitUntil(cache.put(cacheKey, stored));
+  return new Response(body, { status: 200, headers: clientHeaders });
 }
 
 export default {
