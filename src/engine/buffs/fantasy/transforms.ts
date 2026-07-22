@@ -130,7 +130,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "Trophy",
       name: "Apotheosis",
       description:
-        "Raise one of your knights, bishops, or rooks to godhood: it leaves the board for a higher plane, and a queen joins your pocket to descend in its place on a later turn.",
+        "Raise one of your knights, bishops, or rooks to godhood: it leaves the board for a higher plane, and a queen joins your pocket to descend in its place on a later turn. In exchange, you skip your next draft.",
       tier: 5,
       category: "pieces",
       requires: ["n", "b", "r"],
@@ -155,6 +155,8 @@ export const FANTASY_TRANSFORMS: Buff[] = [
         if (t !== "n" && t !== "b" && t !== "r") return;
         api.removePiece(sq, { uncounted: true });
         grantInventory(api, "q", 1);
+        // Balance pass: ascending costs you your next draft.
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       },
     ),
   ),

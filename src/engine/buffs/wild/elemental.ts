@@ -860,16 +860,18 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_hailstorm",
       icon: "CloudRain",
       name: "Hailstorm",
-      description: "Freeze every one of your opponent's pawns for their next 2 turns.",
+      description: "After your opponent replies, freeze every one of their pawns for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "The whole front line, pinned under ice.",
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       for (const sq of mySquares(api.board, api.opp, "p")) {
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        // Resolves during the opponent's reply, so the shared post-move tick
+        // eats one turn immediately: 3 here leaves 2 of their turns frozen.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3 });
       }
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
@@ -1003,7 +1005,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_stone_grip",
       name: "Stone Grip",
       description:
-        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns.",
+        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns. Using this spends your next draft reroll, if you have one.",
       tier: 3,
       category: "tempo",
       flavor: "The ground closes over its feet, and the rock spreads.",
@@ -1042,6 +1044,8 @@ export const WILD_ELEMENTAL: Buff[] = [
         inst.state.beside = beside;
         inst.state.turns = 2;
         inst.state.active = true;
+        // Using this spends your next draft reroll, if you have one.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       filterOpponentMoves: (moves, inst) => {
         const beside = inst.state.beside as Square[] | undefined;
