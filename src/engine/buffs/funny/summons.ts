@@ -96,7 +96,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "pizza_delivery",
       icon: "Pizza",
       name: "Pizza Delivery",
-      description: "The delivery scooter double-parks and the boxes pile up: choose three empty squares; your opponent's pieces cannot move onto them for their next 3 turns.",
+      description: "The delivery scooter double-parks and the boxes pile up: choose three empty squares; your opponent's pieces cannot move onto them for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Thirty minutes or the roadblock is free.",
@@ -117,7 +117,7 @@ export const FUNNY_SUMMONS: Buff[] = [
           .map((k) => k.square)
           .filter((s): s is Square => s != null);
         if (squares.length) {
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
         }
       },
     ),

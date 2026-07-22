@@ -908,29 +908,43 @@ export const BOON_WAVE3: Buff[] = [
       requires: ["p"],
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    oppFilter((moves, _inst, api) =>
-      nonEmpty(
+    oppFilter((moves, _inst, api) => {
+      // Gather my pawn-defended non-king pieces (a friendly pawn one rank toward
+      // home, diagonally adjacent, could recapture there), then shelter at most
+      // the four most valuable of them (value order, then square: deterministic).
+      const back = api.me === "w" ? -1 : 1;
+      const defended: Square[] = [];
+      for (const sq of mySquares(api.board, api.me)) {
+        const p = api.board.pieces[sq]!;
+        if (p.type === "k") continue;
+        const pr = RANK(sq) + back;
+        if (pr < 0 || pr > 7) continue;
+        let guarded = false;
+        for (const df of [-1, 1]) {
+          const pf = FILE(sq) + df;
+          if (pf < 0 || pf > 7) continue;
+          const q = api.board.pieces[SQ(pf, pr)];
+          if (q && q.color === api.me && q.type === "p") {
+            guarded = true;
+            break;
+          }
+        }
+        if (guarded) defended.push(sq);
+      }
+      defended.sort((a, b) => {
+        const va = VALUE_ORDER.indexOf(api.board.pieces[a]!.type);
+        const vb = VALUE_ORDER.indexOf(api.board.pieces[b]!.type);
+        return va !== vb ? va - vb : a - b;
+      });
+      const guardedSet = new Set(defended.slice(0, 4));
+      return nonEmpty(
         moves.filter((m) => {
           const cs = captureSquare(m);
-          if (cs == null) return true;
-          const p = api.board.pieces[cs];
-          if (!p || p.color !== api.me || p.type === "k") return true;
-          // A friendly pawn defends cs if it sits one rank toward home,
-          // diagonally adjacent (the square from which it could recapture).
-          const back = api.me === "w" ? -1 : 1;
-          const pr = RANK(cs) + back;
-          if (pr < 0 || pr > 7) return true;
-          for (const df of [-1, 1]) {
-            const pf = FILE(cs) + df;
-            if (pf < 0 || pf > 7) continue;
-            const q = api.board.pieces[SQ(pf, pr)];
-            if (q && q.color === api.me && q.type === "p") return false;
-          }
-          return true;
+          return cs == null ? true : !guardedSet.has(cs);
         }),
         moves,
-      ),
-    ),
+      );
+    }),
   ),
 
   // Friendly terrain plus king safety: consecrate one empty haven the enemy can
@@ -1118,7 +1132,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_castle_in_the_storm",
       name: "Castle in the Storm",
       description:
-        "Throw up the walls mid-battle: choose one of your rooks on your king's rank with an empty path to the king, and castle toward it at once (king two squares over, rook to the square it passed) even if your king or that rook has already moved.",
+        "Throw up the walls mid-battle: choose one of your rooks on your king's rank with an empty path to the king, and castle toward it at once (king two squares over, rook to the square it passed) even if your king or that rook has already moved. The rook that just castled cannot move again on your next turn.",
       tier: 6,
       category: "movement",
       icon: "Castle",

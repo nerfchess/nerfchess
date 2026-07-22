@@ -287,29 +287,45 @@ function slowSeason(entry: (typeof SLOW_SEASONS)[number]): Buff {
 // soothing, exactly the right size for an opener.
 // ---------------------------------------------------------------------------
 
-const FINE_PRINT: Array<OpenerMeta & { files: number[] | null; who: string }> = [
-  { id: "full_coverage", name: "Full Coverage", flavor: "Clause 1: no funny business in passing. Clause 2: see clause 1.", icon: "ShieldCheck", files: null, who: "pawns" },
+const FINE_PRINT: Array<
+  OpenerMeta & { files: number[] | null; who: string; delay?: boolean }
+> = [
+  { id: "full_coverage", name: "Full Coverage", flavor: "Clause 1: no funny business in passing. Clause 2: see clause 1.", icon: "ShieldCheck", tier: 2, files: null, who: "pawns", delay: true },
   { id: "homestead_clause", name: "Homestead Clause", flavor: "West of the d-file, passing trades are void.", icon: "House", files: [0, 1, 2, 3], who: "pawns on files a through d" },
   { id: "harborside_rider", name: "Harborside Rider", flavor: "Kingside cargo may not be seized mid-voyage.", icon: "Anchor", files: [4, 5, 6, 7], who: "pawns on files e through h" },
-  { id: "downtown_premium", name: "Downtown Premium", flavor: "Central property, central protections.", icon: "Building2", files: [2, 3, 4, 5], who: "pawns on files c through f" },
-  { id: "frontier_waiver", name: "Frontier Waiver", flavor: "Out past the b- and g-files, the usual tolls do not apply.", icon: "Signpost", files: [0, 1, 6, 7], who: "pawns on the outer files a, b, g and h" },
-  { id: "crown_indemnity", name: "Crown Indemnity", flavor: "The d- and e-pawns march under royal seal.", icon: "Landmark", files: [3, 4], who: "d- and e-file pawns" },
+  { id: "downtown_premium", name: "Downtown Premium", flavor: "Central property, central protections.", icon: "Building2", tier: 2, files: [2, 3, 4, 5], who: "pawns on files c through f", delay: true },
+  { id: "frontier_waiver", name: "Frontier Waiver", flavor: "Out past the b- and g-files, the usual tolls do not apply.", icon: "Signpost", tier: 2, files: [0, 1, 6, 7], who: "pawns on the outer files a, b, g and h", delay: true },
+  { id: "crown_indemnity", name: "Crown Indemnity", flavor: "The d- and e-pawns march under royal seal.", icon: "Landmark", tier: 2, files: [3, 4], who: "d- and e-file pawns" },
 ];
 
 function finePrint(entry: (typeof FINE_PRINT)[number]): Buff {
+  const covered = (m: Move) =>
+    m.isEnPassant &&
+    m.capturedSquare != null &&
+    (entry.files == null || entry.files.includes(FILE(m.capturedSquare)));
+  if (!entry.delay) {
+    return opener(
+      entry,
+      `Your ${entry.who} can never be captured en passant.`,
+      oppFilter((moves, _inst, _api) => moves.filter((m) => !covered(m))),
+    );
+  }
+  // Delayed cover: inactive on the opponent's first reply, then in force.
   return opener(
     entry,
-    `Your ${entry.who} can never be captured en passant.`,
-    oppFilter((moves, _inst, _api) =>
-      moves.filter(
-        (m) =>
-          !(
-            m.isEnPassant &&
-            m.capturedSquare != null &&
-            (entry.files == null || entry.files.includes(FILE(m.capturedSquare)))
-          ),
-      ),
-    ),
+    `Starting after your opponent's next turn, your ${entry.who} can never be captured en passant.`,
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.started = false;
+      },
+      filterOpponentMoves: (moves, inst, _api) =>
+        inst.state.started ? moves.filter((m) => !covered(m)) : moves,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp) inst.state.started = true;
+      },
+      status: (inst) => (inst.state.started ? "in force" : "arms after their next turn"),
+    },
   );
 }
 

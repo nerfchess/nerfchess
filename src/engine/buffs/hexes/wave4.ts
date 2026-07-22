@@ -421,8 +421,8 @@ const T1: Buff[] = [
     }),
   ),
   H1(
-    { id: "hx4_early_frost", name: "Early Frost", description: "Your opponent's pawns cannot advance on their next turn. Diagonal captures still work.", flavor: "The furrows froze overnight.", icon: "Leaf", fx: { motif: "anchor", pieces: ["p"] } },
-    instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 1 })),
+    { id: "hx4_early_frost", name: "Early Frost", description: "Your opponent's pawns cannot advance on their next turn. Diagonal captures still work. The first pawn to try advancing slips through as one escape, then the restriction holds.", flavor: "The furrows froze overnight.", icon: "Leaf", fx: { motif: "anchor", pieces: ["p"] } },
+    escapeCurse(1, (m) => m.piece !== "p" || FILE(m.from) !== FILE(m.to)),
   ),
 ];
 

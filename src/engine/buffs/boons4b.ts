@@ -19,6 +19,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   augment,
   bindCandidates,
   bindPiece,
