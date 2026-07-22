@@ -65,14 +65,13 @@ export const OVERHAUL_T3: Buff[] = [
   // 51. Focus Group -----------------------------------------------------------
   // ADAPTED: no power-score infrastructure exists to star-rate an offer, so
   // the focus group delivers intel that does exist: you see the cards of the
-  // OPPONENT'S next draft, plus one extra reroll of your own to act on the
-  // findings. The description says exactly that.
+  // OPPONENT'S next draft. The description says exactly that.
   card(
     {
       id: "ov_focus_group",
       name: "Focus Group",
       description:
-        "The focus group files its report: you see the cards of your opponent's next draft, and they hand you one extra reroll coupon on the way out.",
+        "The focus group files its report: you see the cards of your opponent's next draft.",
       tier: 3,
       category: "draft",
       icon: "Users",
@@ -80,7 +79,6 @@ export const OVERHAUL_T3: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.seeOppCards = true;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   // 52. Frog Prince -----------------------------------------------------------
@@ -311,7 +309,7 @@ export const OVERHAUL_T3: Buff[] = [
       id: "ov_backseat_gamer",
       name: "Backseat Gamer",
       description:
-        "A suggested move flashes on your opponent's board. If their next move is anything else, you gain 8 seconds for being ignored.",
+        "A suggested move flashes on your opponent's board. If their next move is anything else, you gain 13 seconds for being ignored, one of your pawns advances one square for free, and you gain one draft reroll. In untimed games only the free pawn step and the reroll apply.",
       tier: 3,
       category: "info",
       icon: "Gamepad2",
@@ -332,7 +330,15 @@ export const OVERHAUL_T3: Buff[] = [
         if (move.color !== api.opp) return;
         const f = inst.state.from as Square | undefined;
         const t = inst.state.to as Square | undefined;
-        if (!(f === move.from && t === move.to)) api.adjustClock({ addSelfSec: 8 });
+        if (!(f === move.from && t === move.to)) {
+          api.adjustClock({ addSelfSec: 13 });
+          // The clock gain is a no-op in an untimed game, so always land two
+          // effects that need no clock: a free non-capturing pawn step and a
+          // draft reroll.
+          const cands = advanceablePawns(api);
+          if (cands.length > 0) advancePawn(api, cands[api.rng.int(cands.length)]);
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
         inst.spent = true;
       },
       status: () => "advice posted, judging their next move",

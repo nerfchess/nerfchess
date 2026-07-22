@@ -53,25 +53,38 @@ export const HEXES_T5: Buff[] = [
     {
       id: "medusas_verdict",
       name: "Medusa's Verdict",
-      description: "Your opponent's queen turns to a walnut for 4 of their turns, and every enemy piece standing next to her is frozen for 1 of their turns.",
+      description: "After your opponent's next move, their queen turns to a walnut for 4 of their turns, and every enemy piece then standing next to her is frozen for 1 of their turns.",
       flavor: "The lady meets a colder gaze than her own, and it spills onto her guard.",
       // Board already paints the walnut and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type !== "q") continue;
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
-        for (const asq of mySquares(api.board, api.opp)) {
-          if (asq === sq) continue;
-          const t = api.board.pieces[asq]!.type;
-          if (t === "k") continue;
-          if (Math.max(Math.abs(FILE(asq) - FILE(sq)), Math.abs(RANK(asq) - RANK(sq))) === 1) {
-            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1 });
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.done) return;
+        if (move.color !== api.opp) return;
+        // Delayed one opponent move. Applied during their move, so the shared
+        // post-move tick eats one turn immediately: 5 leaves exactly 4 of
+        // their turns for the queen and 2 leaves exactly 1 for her guard
+        // (both durations preserved).
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type !== "q") continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 5 });
+          for (const asq of mySquares(api.board, api.opp)) {
+            if (asq === sq) continue;
+            const t = api.board.pieces[asq]!.type;
+            if (t === "k") continue;
+            if (Math.max(Math.abs(FILE(asq) - FILE(sq)), Math.abs(RANK(asq) - RANK(sq))) === 1) {
+              addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2 });
+            }
           }
         }
-      }
-    }),
+        inst.state.done = true;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.done ? "verdict passed" : "verdict: after their next move",
+    },
   ),
 
   // --- petrify both rooks 3 turns AND seal their own back two ranks 2 turns -
@@ -79,7 +92,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "granite_ramparts",
       name: "Granite Ramparts",
-      description: "Your opponent's rooks turn to walnuts for 3 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks.",
+      description: "Your opponent's rooks turn to walnuts for 2 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks.",
       flavor: "The towers set into bedrock and the ground behind them seals shut.",
       // Board paints the walnuts and barred ranks; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -87,7 +100,8 @@ export const HEXES_T5: Buff[] = [
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         if (api.board.pieces[sq]!.type === "r") {
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+          // Longest duration trimmed by one: the rook petrify was 3, now 2.
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
         }
       }
       const squares: number[] = [];

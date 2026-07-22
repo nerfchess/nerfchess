@@ -105,8 +105,32 @@ export const HEXES_T1: Buff[] = [
     escapeCurse(6, (m) => !m.castle),
   ),
   H(
-    { id: "stage_fright", name: "Stage Fright", description: "Your opponent cannot promote a pawn for their next 4 turns.", flavor: "The understudy freezes at the footlights.", fx: { motif: "slow", pieces: ["p"] } },
-    curse(4, (moves) => moves.filter((m) => !m.promotion)),
+    { id: "stage_fright", name: "Promotion Anxiety", description: "Your opponent's first pawn promotion within their next 4 turns is held back one of their turns; the poised pawn stays on its seventh rank. Promotions after the first go through.", flavor: "The understudy freezes at the footlights.", fx: { motif: "slow", pieces: ["p"] } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 4;
+        inst.state.armed = true;
+        inst.state.poised = poisedToPromote(api);
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || !inst.state.armed || moves.length === 0) return moves;
+        const kept = moves.filter((m) => !m.promotion);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || turnsLeft(inst) <= 0) return;
+        // The block bit this turn only if a pawn was already poised on the 7th
+        // at the turn's start: that is the one promotion we delay.
+        if (inst.state.armed && inst.state.poised) inst.state.armed = false;
+        inst.state.poised = poisedToPromote(api);
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `holding one promotion, ${turnsLeft(inst)} of their turns left`
+          : "spent",
+    },
   ),
   H(
     { id: "butterfingers", name: "Butterfingers", description: "Your opponent's queen cannot capture for their next 2 turns.", flavor: "Everything she grabs squirts free.", fx: { motif: "muzzle", pieces: ["q"] } },
@@ -122,8 +146,8 @@ export const HEXES_T1: Buff[] = [
         RANK(m.to) === RANK(m.from),
     ),
   ),
-  H(
-    { id: "crossed_wires", name: "Crossed Wires", description: "Your opponent's knights cannot capture for their next 2 turns.", flavor: "The cavalry charges the wrong hill.", fx: { motif: "muzzle", pieces: ["n"] } },
+  hex(
+    { id: "crossed_wires", name: "Crossed Wires", tier: 2, description: "Your opponent's knights cannot capture for their next 2 turns.", flavor: "The cavalry charges the wrong hill.", fx: { motif: "muzzle", pieces: ["n"] } },
     curse(2, (moves) => moves.filter((m) => !(m.piece === "n" && m.captured))),
   ),
   H(

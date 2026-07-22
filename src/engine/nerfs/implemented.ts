@@ -1046,7 +1046,7 @@ export const SIEGE: Nerf = db({
 export const SCENT_OF_BLOOD: Nerf = db({
   id: "scent_of_blood",
   name: "The Scent of Blood",
-  description: "Any of your pieces that has a capture available can't make a non-capturing move; if you move that piece, it must capture. You may still move a different piece that has no capture.",
+  description: "Any of your pieces that has a capture available can't make a non-capturing move; if you move that piece, it must capture. You may still move a different piece that has no capture. No card effect can grant such a piece a quiet move it would otherwise be denied.",
   flavor: "Once they smell it, nothing else matters.",
   tier: 6,
   icon: "droplet",
@@ -1075,7 +1075,7 @@ export const SCENT_OF_BLOOD: Nerf = db({
 export const NURTURER: Nerf = db({
   id: "nurturer",
   name: "Nurturer",
-  description: "Can't capture the enemy king until you've promoted a pawn.",
+  description: "Can't capture the enemy king until you've promoted a pawn. No card effect can make that capture legal any sooner.",
   flavor: "Raise something of your own before you take a life.",
   tier: 6,
   icon: "sprout",
