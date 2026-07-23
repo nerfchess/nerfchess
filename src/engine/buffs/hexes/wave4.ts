@@ -847,8 +847,8 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_deja_vu", name: "Deja Vu", description: "For your opponent's next 3 turns, they may not move any piece standing on the same file as the piece they moved last turn. Their king is exempt.", flavor: "Have we not done this exact thing before?", icon: "RotateCcw", fx: { motif: "slow", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_deja_vu", name: "Deja Vu", description: "For your opponent's next 3 turns, they may not move any piece standing on the same file as the piece they moved last turn. The first such piece slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "Have we not done this exact thing before?", icon: "RotateCcw", fx: { motif: "slow", pieces: "all" } },
+    escapeCurseBoard(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
