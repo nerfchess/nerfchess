@@ -738,8 +738,27 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_sticky_floorboards", name: "Sticky Floorboards", description: "On your opponent's next turn, their pieces standing on their own back rank cannot move. Someone waxed the throne room.", flavor: "The varnish was advertised as quick drying.", icon: "Paintbrush", fx: { motif: "jail", pieces: "all" } },
-    curse(1, (moves, api) => moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) !== 1)),
+    { id: "hx4_sticky_floorboards", name: "Sticky Floorboards", description: "On your opponent's next turn, their pieces standing on their own back rank cannot move, except their most valuable such piece, which stays free. Someone waxed the throne room.", flavor: "The varnish was advertised as quick drying.", icon: "Paintbrush", fx: { motif: "jail", pieces: "all" } },
+    curse(1, (moves, api) => {
+      // One-turn effect: no defender choice flow fits a curse(), so exempt the
+      // defender's most valuable back-rank piece deterministically (ties by
+      // lowest square).
+      const affected = mySquares(api.board, api.opp).filter(
+        (sq) => api.board.pieces[sq]!.type !== "k" && relRank(api.opp, sq) === 1,
+      );
+      let exempt: Square | null = null;
+      for (const sq of affected) {
+        if (
+          exempt == null ||
+          PIECE_VAL[api.board.pieces[sq]!.type] > PIECE_VAL[api.board.pieces[exempt]!.type]
+        ) {
+          exempt = sq;
+        }
+      }
+      return moves.filter(
+        (m) => m.piece === "k" || relRank(api.opp, m.from) !== 1 || m.from === exempt,
+      );
+    }),
   ),
   H2(
     { id: "hx4_shrunken_shoes", name: "Shrunken Shoes", description: "On your opponent's next turn, none of their pieces may move more than 3 squares.", flavor: "The quartermaster washed everything on hot.", icon: "Shrink", fx: { motif: "anchor", pieces: "all" } },
@@ -1108,8 +1127,8 @@ const T3: Buff[] = [
     },
   ),
   H3(
-    { id: "hx4_carrion_crows", name: "Carrion Crows", description: "For your opponent's next 3 turns, any piece of theirs that captures inside your half of the board is mobbed by crows and frozen for 1 of their turns.", flavor: "The flock takes its share of every foreign kill.", icon: "Bird", fx: { motif: "muzzle", pieces: "all" } },
-    onTheirMove(3, (move, api) => {
+    { id: "hx4_carrion_crows", name: "Carrion Crows", description: "For your opponent's next 2 turns, any piece of theirs that captures inside your half of the board is mobbed by crows and frozen for 1 of their turns.", flavor: "The flock takes its share of every foreign kill.", icon: "Bird", fx: { motif: "muzzle", pieces: "all" } },
+    onTheirMove(2, (move, api) => {
       const c = capSq(move);
       if (c != null && move.piece !== "k" && relRank(api.opp, c) >= 5) sting(api, move.to, 1, "tar");
     }),
@@ -1241,8 +1260,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_cold_shoulder", name: "Cold Shoulder", description: "For your opponent's next 4 turns, their king may not end a move adjacent to any of your pieces.", flavor: "Royalty does not mingle with the enemy. Officially.", icon: "UserX", fx: { motif: "anchor" } },
-    curse(4, (moves, api) =>
+    { id: "hx4_cold_shoulder", name: "Cold Shoulder", description: "For your opponent's next 3 turns, their king may not end a move adjacent to any of your pieces.", flavor: "Royalty does not mingle with the enemy. Officially.", icon: "UserX", fx: { motif: "anchor" } },
+    curse(3, (moves, api) =>
       moves.filter(
         (m) => m.piece !== "k" || !mySquares(api.board, api.me).some((s) => cheb(s, m.to) <= 1),
       ),
