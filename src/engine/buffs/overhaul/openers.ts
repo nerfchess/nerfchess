@@ -381,117 +381,6 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
       },
     );
   }
-  if (entry.id === "harborside_h") {
-    // Names a target (the h-file pawn), so eligibility widens one adjacent file.
-    // The h-file is an edge file, so it widens inward to include the g-file.
-    return opener(
-      entry,
-      "Your g-file or h-file pawn may step one square sideways, once. The destination must be empty.",
-      augment((_moves, inst, api) => {
-        const out: Move[] = [];
-        for (const sq of mySquares(api.board, api.me, "p")) {
-          if (FILE(sq) !== 6 && FILE(sq) !== 7) continue;
-          const tos: Square[] = [];
-          if (FILE(sq) > 0) tos.push(sq - 1);
-          if (FILE(sq) < 7) tos.push(sq + 1);
-          out.push(...teleportMoves(api.board, sq, tos, inst.id));
-        }
-        return out;
-      }),
-    );
-  }
-  if (entry.id === "market_lane") {
-    // Reworked identity: the b-file pawn sidesteps inward to the c-file; on that
-    // pawn's next move this card re-injects both forward-diagonal captures, so a
-    // side another effect has closed off is reopened.
-    return opener(
-      entry,
-      "Once, your b-file pawn may sidestep one square inward to the c-file (empty destination, not a capture). On that pawn's next move this card grants both forward-diagonal captures, reopening a side another effect has closed.",
-      {
-        kind: "passive",
-        init: (inst) => {
-          inst.state.charges = 1;
-          inst.state.pawn = null;
-        },
-        augmentMoves: (moves, inst, api) => {
-          const out: Move[] = [];
-          if (((inst.state.charges as number) ?? 0) > 0) {
-            for (const sq of mySquares(api.board, api.me, "p")) {
-              if (FILE(sq) !== 1) continue;
-              out.push(...teleportMoves(api.board, sq, [sq + 1], inst.id));
-            }
-          }
-          const pawn = inst.state.pawn as number | null;
-          if (pawn != null) {
-            const dir = api.me === "w" ? 1 : -1;
-            const p = api.board.pieces[pawn];
-            if (p && p.color === api.me && p.type === "p") {
-              for (const df of [-1, 1]) {
-                const f = FILE(pawn) + df, r = RANK(pawn) + dir;
-                if (!inBoard(f, r)) continue;
-                const dest = SQ(f, r);
-                const victim = api.board.pieces[dest];
-                if (victim && victim.color === api.opp && pawnRankOk(dest)) {
-                  out.push({
-                    from: pawn,
-                    to: dest,
-                    piece: "p",
-                    color: api.me,
-                    captured: victim.type,
-                    capturedSquare: dest,
-                    via: inst.id,
-                  });
-                }
-              }
-            }
-          }
-          addNovel(moves, out);
-        },
-        onMovePlayed: (inst, move, api) => {
-          if (move.color !== api.me) return;
-          const pawn = inst.state.pawn as number | null;
-          if (pawn != null) {
-            if (move.from === pawn) {
-              inst.state.pawn = null;
-              inst.spent = true;
-            }
-            return;
-          }
-          if (move.via === inst.id) {
-            inst.state.charges = 0;
-            inst.state.pawn = move.to;
-          }
-        },
-        status: (inst) =>
-          inst.state.pawn != null
-            ? "diagonal captures granted"
-            : ((inst.state.charges as number) ?? 0) > 0
-              ? "one sidestep ready"
-              : null,
-      },
-    );
-  }
-  if (entry.id === "parade_route") {
-    // Reworked identity: any pawn still on its starting rank may sidestep one
-    // square to an empty square. Taking it is your move for the turn, so no
-    // other pawn can make a special move that turn (one move per turn).
-    return opener(
-      entry,
-      "Once, any pawn still on its starting rank may step one square sideways to an empty square. Taking this sidestep is your move for the turn, so no other pawn makes a special move that turn.",
-      augment((_moves, inst, api) => {
-        const home = ownRank(api.me, 1);
-        const out: Move[] = [];
-        for (const sq of mySquares(api.board, api.me, "p")) {
-          if (RANK(sq) !== home) continue;
-          const tos: Square[] = [];
-          if (FILE(sq) > 0) tos.push(sq - 1);
-          if (FILE(sq) < 7) tos.push(sq + 1);
-          out.push(...teleportMoves(api.board, sq, tos, inst.id));
-        }
-        return out;
-      }),
-    );
-  }
   return opener(
     entry,
     `Your ${fileName}-file pawn may step one square sideways, once. The destination must be empty.`,
@@ -515,7 +404,7 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const FIRST_STEPS: Array<OpenerMeta & { after: number; prize: "reroll" | "peek" | "seconds" }> = [
-  { id: "slow_burn", name: "Slow Burn", flavor: "Patience is a position too.", icon: "FlameKindling", after: 6, prize: "reroll", tier: 2 },
+  { id: "slow_burn", name: "Slow Burn", flavor: "Patience is a position too.", icon: "FlameKindling", after: 6, prize: "reroll" },
   { id: "early_bird", name: "Early Bird", flavor: "It does not catch the worm. It reads the worm's mail.", icon: "Sunrise", after: 4, prize: "peek" },
   { id: "second_wind_sip", name: "Water Break", flavor: "Hydration wins endgames.", icon: "GlassWater", after: 8, prize: "seconds" },
 ];
@@ -570,11 +459,11 @@ const COUNTRY_ROADS: Array<OpenerMeta & { file: number }> = [
 
 function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
   const fileName = FILE_NAMES[entry.file];
-  const lossy = entry.id === "bridle_path" || entry.id === "old_post_road";
+  const lossy = entry.id === "bridle_path";
   // These entries' directive forbids capturing outright. The two-square advance
   // already lands only when both squares are empty, so this filter is explicit
   // insurance that matches the "cannot capture" wording rather than a change.
-  const noCapture = entry.id === "ferry_crossing" || entry.id === "goat_track" || entry.id === "pilgrim_road";
+  const noCapture = entry.id === "ferry_crossing" || entry.id === "goat_track";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const out: Move[] = [];
     const fwd = fwdOf(api.me);
@@ -589,60 +478,6 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
     }
     return noCapture ? out.filter((m) => !m.captured) : out;
   };
-  if (entry.id === "towpath") {
-    // Names a target (the a-file pawn), so eligibility widens one adjacent file.
-    // The a-file is an edge file, so it widens inward to include the b-file.
-    return opener(
-      entry,
-      "Once, your a-file or b-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.",
-      augment((_moves, inst, api) => {
-        const out: Move[] = [];
-        const fwd = fwdOf(api.me);
-        for (const sq of mySquares(api.board, api.me, "p")) {
-          if (FILE(sq) !== 0 && FILE(sq) !== 1) continue;
-          const mid = sq + fwd, to = sq + fwd * 2;
-          if (to < 0 || to > 63) continue;
-          if (!pawnRankOk(to)) continue;
-          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-            out.push(...teleportMoves(api.board, sq, [to], inst.id));
-          }
-        }
-        return out;
-      }),
-    );
-  }
-  if (entry.id === "smugglers_lane") {
-    // Preserve the narrow h-file identity, but grant a second charge. The effect
-    // names a target (the h-file pawn), so the repeated advance must start from a
-    // different square than the first.
-    return opener(
-      entry,
-      `Twice, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. The second advance must start from a different square than the first.`,
-      {
-        kind: "passive",
-        init: (inst) => {
-          inst.state.charges = 2;
-          inst.state.usedFrom = null;
-        },
-        augmentMoves: (moves, inst, api) => {
-          if (((inst.state.charges as number) ?? 0) <= 0) return;
-          const usedFrom = inst.state.usedFrom as number | null;
-          addNovel(moves, gen(moves, inst, api).filter((m) => usedFrom == null || m.from !== usedFrom));
-        },
-        onMovePlayed: (inst, move, api) => {
-          if (move.via !== inst.id || move.color !== api.me) return;
-          inst.state.usedFrom = move.from;
-          const left = ((inst.state.charges as number) ?? 2) - 1;
-          inst.state.charges = left;
-          if (left <= 0) inst.spent = true;
-        },
-        status: (inst) => {
-          const c = (inst.state.charges as number) ?? 2;
-          return c > 0 ? `${c} advance${c > 1 ? "s" : ""} left` : null;
-        },
-      },
-    );
-  }
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.${
@@ -684,12 +519,12 @@ const STRANGE_GAITS: Array<
 > = [
   { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction", capture: "none" },
   { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction" },
-  { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between", capture: "none" },
-  { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between", tier: 2 },
+  { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between" },
+  { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between" },
   { id: "viziers_errand", name: "Vizier's Errand", flavor: "One dignified step. No hopping. There are appearances.", icon: "Crown", leaps: symLeaps(1, 0), how: "a single step to an adjacent square, straight only" },
-  { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square", tier: 2 },
-  { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between", capture: "none" },
-  { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between", capture: "none" },
+  { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square" },
+  { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between" },
+  { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between" },
   { id: "giraffe_keeper", name: "Giraffe Keeper", flavor: "The enclosure was never going to hold her.", icon: "TreePalm", leaps: symLeaps(4, 1), how: "a giraffe leap, 4 by 1, in any direction", capture: "none" },
   { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, two deliveries, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only", capture: "only" },
   { id: "colts_gallop", name: "Colt's Gallop", flavor: "All legs, no brakes, forward only.", icon: "Sprout", leaps: symLeaps(3, 2), forward: true, how: "a zebra leap, 3 by 2, toward the enemy side only", lossy: true },
@@ -724,33 +559,11 @@ function strangeGait(entry: (typeof STRANGE_GAITS)[number]): Buff {
     }
     return out;
   };
-  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}.${captureNote}${lossyNote}`;
-  if (entry.id === "signal_rocket") {
-    // Preserve the payoff, but delay its first trigger: the leap is not offered
-    // until after the opponent's next move.
-    return opener(entry, `${baseDesc} The leap becomes available only after your opponent's next move.`, {
-      kind: "passive",
-      init: (inst) => {
-        inst.state.charges = uses;
-        inst.state.ready = false;
-      },
-      augmentMoves: (moves, inst, api) => {
-        if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
-        addNovel(moves, gen(moves, inst, api));
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
-        if (move.via === inst.id && move.color === api.me) {
-          const left = ((inst.state.charges as number) ?? 1) - 1;
-          inst.state.charges = left;
-          if (left <= 0) inst.spent = true;
-        }
-      },
-      status: (inst) =>
-        !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one leap ready" : null,
-    });
-  }
-  return opener(entry, baseDesc, entry.lossy ? lossyAugment(gen, uses) : augment(gen, uses));
+  return opener(
+    entry,
+    `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}.${captureNote}${lossyNote}`,
+    entry.lossy ? lossyAugment(gen, uses) : augment(gen, uses),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -771,10 +584,10 @@ const LEAPFROGS: Array<
     what: string;
   }
 > = [
-  { id: "leapfrog_lesson", name: "Leapfrog Lesson", flavor: "Hands on the shoulders, eyes on the diagonal.", icon: "Rabbit", mover: "b", over: "p", dirs: DIAG_DIRS, what: "One of your bishops may hop over an adjacent friendly pawn on its diagonal", tier: 2 },
+  { id: "leapfrog_lesson", name: "Leapfrog Lesson", flavor: "Hands on the shoulders, eyes on the diagonal.", icon: "Rabbit", mover: "b", over: "p", dirs: DIAG_DIRS, what: "One of your bishops may hop over an adjacent friendly pawn on its diagonal" },
   { id: "vaulting_horse", name: "Vaulting Horse", flavor: "For once, the horse is the obstacle.", icon: "Dumbbell", mover: "b", over: "n", dirs: DIAG_DIRS, what: "One of your bishops may hop over an adjacent friendly knight on its diagonal" },
-  { id: "sandbag_hurdle", name: "Sandbag Hurdle", flavor: "Sappers stack them; towers clear them.", icon: "Layers", mover: "r", over: "p", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly pawn on its rank or file", tier: 2 },
-  { id: "stable_gate", name: "Stable Gate", flavor: "The rook took the fence like it owed him money.", icon: "DoorOpen", mover: "r", over: "n", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly knight on its rank or file", tier: 2 },
+  { id: "sandbag_hurdle", name: "Sandbag Hurdle", flavor: "Sappers stack them; towers clear them.", icon: "Layers", mover: "r", over: "p", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly pawn on its rank or file" },
+  { id: "stable_gate", name: "Stable Gate", flavor: "The rook took the fence like it owed him money.", icon: "DoorOpen", mover: "r", over: "n", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly knight on its rank or file" },
   { id: "garden_hedge", name: "Garden Hedge", flavor: "Her majesty does not walk around topiary.", icon: "Shrub", mover: "q", over: "p", dirs: ALL8, what: "Your queen may hop over an adjacent friendly pawn in any direction" },
   { id: "piggyback", name: "Piggyback", flavor: "Infantry regulations are silent on the matter.", icon: "Baby", mover: "p", over: "p", dirs: [[0, 1]], oriented: true, what: "One of your pawns may hop over the friendly pawn directly ahead of it" },
   { id: "silk_curtain", name: "Silk Curtain", flavor: "She stepped through the bishop's shadow and out the other side.", icon: "Wand", mover: "q", over: "b", dirs: DIAG_DIRS, what: "Your queen may hop over an adjacent friendly bishop on a diagonal" },
@@ -801,10 +614,9 @@ function leapfrog(entry: (typeof LEAPFROGS)[number]): Buff {
     return out;
   };
   const baseDesc = `${entry.what}, landing on the square directly beyond, once. The landing square must be empty.`;
-  if (entry.id === "garden_hedge" || entry.id === "piggyback") {
+  if (entry.id === "garden_hedge") {
     // Preserve the payoff, but delay its first trigger: the hop is not offered
-    // until after the opponent's next move. (Piggyback's counts are all one, so
-    // the directive's fallback applies: delay until after the opponent replies.)
+    // until after the opponent's next move.
     return opener(entry, `${baseDesc} The hop becomes available only after your opponent's next move.`, {
       kind: "passive",
       init: (inst) => {
@@ -840,7 +652,7 @@ const BACKSTAGE: Array<OpenerMeta & { type: "n" | "b" | "r" | "q"; dist: number 
   { id: "green_room", name: "Green Room", flavor: "The knight slides one seat down the sofa.", icon: "Sofa", type: "n", dist: 1 },
   { id: "stage_left", name: "Stage Left", flavor: "Exit knight, pursued by absolutely nothing.", icon: "Theater", type: "n", dist: 2 },
   { id: "prompt_corner", name: "Prompt Corner", flavor: "The bishop shuffles over to whisper the next line.", icon: "MessageSquare", type: "b", dist: 1 },
-  { id: "trapdoor_exit", name: "Bishop's Hatch", flavor: "The bishop vanishes and reappears two boards over.", icon: "DoorClosed", type: "b", dist: 2 },
+  { id: "trapdoor_exit", name: "Trapdoor", flavor: "The bishop vanishes and reappears two boards over.", icon: "DoorClosed", type: "b", dist: 2 },
   { id: "star_dressing_room", name: "Star Dressing Room", flavor: "Two doors down, better lighting, same queen.", icon: "Star", type: "q", dist: 2 },
   { id: "set_change", name: "Set Change", flavor: "The tower is scenery. Scenery moves between acts.", icon: "Hammer", type: "r", dist: 2 },
 ];
@@ -884,20 +696,6 @@ function backstagePass(entry: (typeof BACKSTAGE)[number]): Buff {
       },
       status: (inst) =>
         !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
-    });
-  }
-  if (entry.id === "prompt_corner") {
-    // Preserve the hop; taking it consumes your next unused reroll, if any.
-    return opener(entry, `${baseDesc} Taking this hop consumes your next unused reroll, if any.`, {
-      ...augment(gen),
-      onMovePlayed: (inst, move, api) => {
-        if (move.via === inst.id && move.color === api.me) {
-          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
-          const left = ((inst.state.charges as number) ?? 1) - 1;
-          inst.state.charges = left;
-          if (left <= 0) inst.spent = true;
-        }
-      },
     });
   }
   return opener(entry, baseDesc, augment(gen));
@@ -963,44 +761,6 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
     }
     return out;
   };
-  if (entry.id === "quickstep") {
-    // Preserve the narrow king-dash identity; if unused by the owner's 12th
-    // move, the charge converts into one draft reroll.
-    return opener(entry, `${desc} If unused by your 12th move, the charge becomes one draft reroll.`, {
-      kind: "passive",
-      init: (inst) => {
-        inst.state.charges = 1;
-        inst.state.moves = 0;
-      },
-      augmentMoves: (moves, inst, api) => {
-        if (((inst.state.charges as number) ?? 0) <= 0) return;
-        addNovel(moves, gen(moves, inst, api));
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (move.via === inst.id && move.color) {
-          const left = ((inst.state.charges as number) ?? 1) - 1;
-          inst.state.charges = left;
-          if (left <= 0) inst.spent = true;
-        }
-        if (move.color === api.me) {
-          inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
-          if (
-            ((inst.state.moves as number) ?? 0) >= 12 &&
-            ((inst.state.charges as number) ?? 0) > 0 &&
-            !inst.spent
-          ) {
-            api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-            inst.state.charges = 0;
-            inst.spent = true;
-          }
-        }
-      },
-      status: (inst) => {
-        const c = (inst.state.charges as number) ?? 1;
-        return c > 0 ? "1 left, reroll at your 12th move" : null;
-      },
-    });
-  }
   if (entry.id === "grand_march") {
     return opener(entry, desc, lossyAugment(gen));
   }
@@ -1032,15 +792,15 @@ const GUARDIANS: Array<OpenerMeta & { file?: number; piece?: "q" | "r" | "b" | "
   { id: "harbor_gull", name: "Harbor Gull", flavor: "Nobody ambushes a pawn under a screaming gull.", icon: "Bird", file: 0, tier: 2 },
   { id: "alley_cat", name: "Alley Cat", flavor: "The b-file belongs to the cat. The pawn just lives there.", icon: "Cat", file: 1, tier: 2 },
   { id: "cloister_bell", name: "Cloister Bell", flavor: "One toll, and the c-file pawn is suddenly elsewhere in spirit.", icon: "Bell", file: 2, tier: 2 },
-  { id: "market_dog", name: "Market Dog", flavor: "Fed by every stall on the d-file. Repays in barking.", icon: "Dog", file: 3, tier: 2 },
-  { id: "parade_marshal", name: "Parade Marshal", flavor: "Nobody touches the e-file pawn on the marshal's watch.", icon: "Shield", file: 4, tier: 2 },
+  { id: "market_dog", name: "Market Dog", flavor: "Fed by every stall on the d-file. Repays in barking.", icon: "Dog", file: 3 },
+  { id: "parade_marshal", name: "Parade Marshal", flavor: "Nobody touches the e-file pawn on the marshal's watch.", icon: "Shield", file: 4 },
   { id: "garden_scarecrow", name: "Garden Scarecrow", flavor: "It works on crows. It works on rooks. Mostly.", icon: "Wheat", file: 5, tier: 2 },
   { id: "gallery_docent", name: "Gallery Docent", flavor: "Please do not touch the g-file exhibit.", icon: "Frame", file: 6, tier: 2 },
-  { id: "lighthouse_keeper", name: "Lighthouse Keeper", flavor: "The lamp swings round the moment trouble sails in.", icon: "Flashlight", file: 7, tier: 2 },
-  { id: "lady_in_waiting", name: "Lady in Waiting", flavor: "She steps in front of the first blade, exactly once.", icon: "Crown", piece: "q", tier: 2 },
-  { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r", tier: 2 },
+  { id: "lighthouse_keeper", name: "Lighthouse Keeper", flavor: "The lamp swings round the moment trouble sails in.", icon: "Flashlight", file: 7 },
+  { id: "lady_in_waiting", name: "Lady in Waiting", flavor: "She steps in front of the first blade, exactly once.", icon: "Crown", piece: "q" },
+  { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r" },
   { id: "chapel_warden", name: "Chapel Warden", flavor: "The first heckler finds the pulpit warded.", icon: "Church", piece: "b", tier: 2 },
-  { id: "stable_groom", name: "Stable Groom", flavor: "Touch the horse and answer to the groom.", icon: "PawPrint", piece: "n", tier: 2 },
+  { id: "stable_groom", name: "Stable Groom", flavor: "Touch the horse and answer to the groom.", icon: "PawPrint", piece: "n" },
 ];
 
 function guardian(entry: (typeof GUARDIANS)[number]): Buff {
@@ -1160,44 +920,6 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
     );
   }
 
-  if (entry.id === "lady_in_waiting") {
-    // Retier + "ends after preventing one capture": the one-turn guard lasts
-    // through the opponent's single reply, turning that capture aside, then ends.
-    return opener(
-      entry,
-      `The first time an enemy piece attacks ${what}, that queen cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
-      filterGuard({}),
-    );
-  }
-
-  if (entry.id === "lighthouse_keeper") {
-    // Retier + "ends after preventing one capture": the one-turn guard lasts
-    // through the opponent's single reply, turning that capture aside, then ends.
-    return opener(
-      entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
-      filterGuard({}),
-    );
-  }
-
-  if (entry.id === "market_dog") {
-    // Retier + the shield does not stop pawn captures.
-    return opener(
-      entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
-      filterGuard({ exceptPawns: true }),
-    );
-  }
-
-  if (entry.id === "parade_marshal") {
-    // Retier + the protection ends the moment the guarded pawn makes a capture.
-    return opener(
-      entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.`,
-      filterGuard({ endOnCapture: true }),
-    );
-  }
-
   const standardMech: Parameters<typeof card>[1] = {
     kind: "passive",
     onMovePlayed: (inst, move, api) => {
@@ -1233,7 +955,7 @@ const SIDE_DOORS: Array<OpenerMeta & { files?: number[]; mode?: "in" | "out" }> 
   { id: "palace_gate", name: "Palace Gate", flavor: "The d- and e-pawns bow once and step through sideways.", icon: "Landmark", files: [3, 4] },
   { id: "cellar_hatch", name: "Cellar Hatch", flavor: "The edge files hide a trapdoor under the barrels.", icon: "Archive", files: [0, 1, 6, 7] },
   { id: "drawbridge_in", name: "Drawbridge", flavor: "Lowered once, toward the middle of things.", icon: "Castle", mode: "in" },
-  { id: "storm_door", name: "Storm Door", flavor: "When weather comes, pawns angle for the walls.", icon: "CloudRain", mode: "out", tier: 2 },
+  { id: "storm_door", name: "Storm Door", flavor: "When weather comes, pawns angle for the walls.", icon: "CloudRain", mode: "out" },
 ];
 
 function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
@@ -1250,10 +972,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
       : entry.mode === "out"
         ? " The step must angle toward the board's edge."
         : "";
-  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape" || entry.id === "palace_gate";
-  // The diagonal step already lands only on an empty square (teleportMoves), so
-  // this filter is explicit insurance matching the "cannot capture" wording.
-  const noCapture = entry.id === "revolving_door";
+  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const out: Move[] = [];
@@ -1273,7 +992,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
         out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
     }
-    return noCapture ? out.filter((m) => !m.captured) : out;
+    return out;
   };
   return opener(
     entry,
@@ -1293,8 +1012,8 @@ const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: nu
   { id: "tactical_withdrawal", name: "Tactical Withdrawal", flavor: "It is only running away if someone writes it down.", icon: "Undo2" },
   { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2, tier: 2 },
   { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 1 },
-  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 1 },
-  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 1 },
+  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 2 },
+  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },
   { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] , uses: 2 },
   { id: "squires_errand", name: "Squire's Errand", flavor: "The b- and g-pawns trot back to fetch the good lance.", icon: "Backpack", files: [1, 6] , uses: 2 },
   { id: "sidestep_and_bow", name: "Sidestep and Bow", flavor: "Retreat diagonally and it counts as courtly manners.", icon: "Feather", diag: true },
@@ -1308,12 +1027,6 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
     : "";
   const how = entry.diag ? "one square diagonally backward" : "one square straight backward";
   const uses = entry.uses ?? 1;
-  // The backward step already lands only on an empty square (teleportMoves), so
-  // this filter is explicit insurance matching the "cannot capture" wording.
-  const noCapture = entry.id === "sidestep_and_bow" || entry.id === "tactical_withdrawal";
-  // "A failed or illegal attempt still spends the charge": a turn where the
-  // retreat is on offer but not taken forfeits one charge (lossy stand-in).
-  const lossy = entry.id === "squires_errand";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const back = api.me === "w" ? -1 : 1;
     const out: Move[] = [];
@@ -1327,11 +1040,9 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
         out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
     }
-    return noCapture ? out.filter((m) => !m.captured) : out;
+    return out;
   };
-  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}${
-    lossy ? " If the retreat is on offer on your turn but you play something else, the charge is spent." : ""
-  }`;
+  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}`;
   if (entry.id === "edge_of_the_map") {
     // Preserve the narrow (edge-file) identity; if the retreat is never used by
     // the owner's 12th move, the remaining charge converts into one draft reroll.
@@ -1374,7 +1085,7 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
       },
     );
   }
-  return opener(entry, baseDesc, lossy ? lossyAugment(gen, uses) : augment(gen, uses));
+  return opener(entry, baseDesc, augment(gen, uses));
 }
 
 // ---------------------------------------------------------------------------
@@ -1661,49 +1372,6 @@ function deadLetter(entry: (typeof DEAD_LETTERS)[number]): Buff {
     );
   }
 
-  if (entry.id === "homing_pigeon") {
-    // Preserve the narrow h-file identity, but grant a second charge. The effect
-    // names a target (the piece directly ahead), so the repeated use must land
-    // on a different square than the first.
-    return opener(
-      entry,
-      "Twice, your h-file pawn may capture the enemy piece directly in front of it. The second capture must be on a different square than the first.",
-      {
-        kind: "passive",
-        init: (inst) => {
-          inst.state.charges = 2;
-          inst.state.usedTarget = null;
-        },
-        augmentMoves: (moves, inst, api) => {
-          if (((inst.state.charges as number) ?? 0) <= 0) return;
-          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
-          const used = inst.state.usedTarget as number | null;
-          const out: Move[] = [];
-          for (const sq of mySquares(api.board, api.me, "p")) {
-            if (FILE(sq) !== entry.file) continue;
-            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
-              if (!m.captured) continue;
-              if (used != null && (m.capturedSquare ?? m.to) === used) continue;
-              out.push(m);
-            }
-          }
-          addNovel(moves, out);
-        },
-        onMovePlayed: (inst, move, api) => {
-          if (move.via !== inst.id || move.color !== api.me) return;
-          inst.state.usedTarget = move.capturedSquare ?? move.to;
-          const left = ((inst.state.charges as number) ?? 2) - 1;
-          inst.state.charges = left;
-          if (left <= 0) inst.spent = true;
-        },
-        status: (inst) => {
-          const c = (inst.state.charges as number) ?? 2;
-          return c > 0 ? `${c} capture${c > 1 ? "s" : ""} left` : null;
-        },
-      },
-    );
-  }
-
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may capture the enemy piece directly in front of it.`,
@@ -1744,9 +1412,6 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     entry.line === "fwd" ? "straight forward" : entry.line === "lat" ? "sideways along its rank" : "along its diagonals";
   const owner = entry.type === "q" ? "your queen" : `one of your ${names[entry.type]}`;
   const lossy = entry.id === "freight_elevator";
-  // Painter's Lift and Rolling Gantry keep their phasing identity but may not
-  // capture on landing.
-  const noCapture = entry.id === "painters_lift" || entry.id === "rolling_gantry";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const dirs: readonly (readonly [number, number])[] =
@@ -1755,13 +1420,11 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     for (const sq of mySquares(api.board, api.me, entry.type)) {
       out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, entry.through));
     }
-    return noCapture ? out.filter((m) => !m.captured) : out;
+    return out;
   };
   return opener(
     entry,
-    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond${
-      noCapture ? " on an empty square; it cannot capture on landing" : " as normal"
-    }.${
+    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond as normal.${
       lossy ? " If the slide is on offer on your turn but you play something else, the charge is spent." : ""
     }`,
     lossy ? lossyAugment(gen) : augment(gen),
