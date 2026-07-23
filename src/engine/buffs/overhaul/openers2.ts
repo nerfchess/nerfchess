@@ -825,16 +825,19 @@ const SPRING_THAW: Array<
   { id: "snowdrop", name: "Snowdrop", flavor: "The first green thing on the queenside every year.", icon: "Flower2", after: 6, files: [0, 1, 2, 3], who: "queenside (files a through d)" },
   { id: "first_robin", name: "First Robin", flavor: "It lands kingside and declares the season open.", icon: "Bird", after: 6, files: [4, 5, 6, 7], who: "kingside (files e through h)", bankRetry: true, consolationSec: 15 },
   { id: "river_breakup", name: "River Breakup", flavor: "When the center ice cracks, something always floats forward.", icon: "Waves", after: 7, files: [2, 3, 4, 5], who: "central (files c through f)" },
-  { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)" },
+  { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)", doubleRoll: true, jackpotAlt: (api) => { api.mine.flags.seeOppTier = true; api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If none can advance, you instead learn the tier of your opponent's next draft offer and gain a draft reroll." },
   { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file" },
-  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "(any file)" },
+  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "(any file)", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "Each eligible pawn is equally likely. If none can advance, the guaranteed floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns." },
 ];
 
 function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
   const base = `After your ${entry.after}th move, one of your ${entry.who} pawns with an empty square ahead, chosen at random, advances one square automatically.`;
-  const desc = entry.bankRetry
-    ? `${base} It always fires when at least one such pawn exists (that is the jackpot). If none can advance the turn it ripens, you gain ${entry.consolationSec} seconds and the card keeps trying after each of your later moves until one can.`
-    : base;
+  let desc = entry.doubleRoll
+    ? `After your ${entry.after}th move, two of your ${entry.who} pawns with an empty square ahead are rolled independently and uniformly at random, and the one nearer promotion advances one square (ties go to the first roll). While at least one such pawn can advance this always fires: that is the jackpot.`
+    : entry.bankRetry
+      ? `${base} It always fires when at least one such pawn exists (that is the jackpot). If none can advance the turn it ripens, you gain ${entry.consolationSec} seconds and the card keeps trying after each of your later moves until one can.`
+      : base;
+  if (entry.altDesc) desc += ` ${entry.altDesc}`;
   return opener(entry, desc, {
     kind: "passive",
     init: (inst) => {
