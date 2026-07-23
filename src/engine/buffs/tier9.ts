@@ -154,11 +154,13 @@ export const TIER9: Buff[] = [
   // execution. She cannot be captured for the opponent's next 2 turns, and every
   // enemy piece touching the king (kings excepted) freezes for the same 2 turns,
   // so nothing can block or trade off the threat. The king itself stays free to
-  // run, so the opponent is never stranded. Retiered 9 -> 8 in the apex pass and
-  // given a second relocation, but the moved pieces are chain-guarded off the
-  // king until the opponent replies, so it sets up the kill rather than landing
-  // it outright. Built explicitly (not via apex()) so it can carry tier 8 while
-  // staying grant-only in the apex pool.
+  // run, so the opponent is never stranded. Soft-nerfed in the apex pass with a
+  // second relocation, but the moved pieces are chain-guarded off the king until
+  // the opponent replies, so it sets up the kill rather than landing it outright.
+  // Stays a tier-9 apex card (the whole apex band is tier 9/10, grant-only): the
+  // soft-nerf is mechanical, not a tier demotion, so it keeps the apex offer and
+  // every apex grant a pure tier-9/10 pull. Built explicitly (not via apex())
+  // only because it needs the two-target pick flow and the chain-king guard.
   {
     id: "regicide",
     icon: "Crown",
@@ -166,7 +168,7 @@ export const TIER9: Buff[] = [
     description:
       "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
     category: "attack",
-    tier: 8,
+    tier: 9,
     special: true,
     implemented: true,
     requires: ["q"],
