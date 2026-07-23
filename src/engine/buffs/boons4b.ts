@@ -2754,15 +2754,63 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_hall_of_doors", name: "Hall of Doors", tier: 8, category: "movement", icon: "DoorOpen",
-      description: "For your next 5 turns, your king may step through any door: he may move to any empty square in your half of the board.",
+      description: "For your next 5 turns, your king may step through any door: he may move to any empty square in your half of the board. Once, one other piece of yours (your king excepted) may also step to any empty square in your half.",
       flavor: "Every room is the throne room if he is in it.",
       fx: { motif: "empower", pieces: ["k"], self: true } },
-    timedAugment(5, (_moves, inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return [];
-      const dests = emptySquares(api.board, (sq) => inHalf(api.me, sq) && sq !== ks);
-      return teleportMoves(api.board, ks, dests, inst.id);
-    }),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      init: (inst) => {
+        inst.state.turns = 5;
+      },
+      // Activation moves the one additional piece; the king door-step is a
+      // passive augment that runs from the moment the card is played.
+      targets: (inst, api, picks) => {
+        if (inst.state.moved) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose one other piece to send through a door",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k",
+            ),
+          };
+        }
+        if (picks.length >= 2) return null;
+        const isPawn = api.board.pieces[picks[0].square!]?.type === "p";
+        return {
+          kind: "square",
+          label: "Choose the door it steps to",
+          squares: emptySquares(
+            api.board,
+            (sq) => inHalf(api.me, sq) && (!isPawn || pawnRankOk(sq)),
+          ),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.moved) return;
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null || from === to) return;
+        const p = api.board.pieces[from];
+        if (!p || p.color !== api.me || p.type === "k") return;
+        if (api.board.pieces[to] || !inHalf(api.me, to)) return;
+        if (p.type === "p" && !pawnRankOk(to)) return;
+        api.relocate(from, to);
+        inst.state.moved = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks == null) return;
+        const dests = emptySquares(api.board, (sq) => inHalf(api.me, sq) && sq !== ks);
+        addNovel(moves, teleportMoves(api.board, ks, dests, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        inst.state.turns = ((inst.state.turns as number) ?? 5) - 1;
+      },
+      status: (inst) => `${Math.max(0, (inst.state.turns as number) ?? 5)} of your turns of open doors`,
+    },
   ),
 
   // --- pieces (6) ---
@@ -2936,23 +2984,33 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_guardian_of_the_line", name: "Guardian of the Line", tier: 8, category: "protection", icon: "ShieldCheck",
-      description: "For the rest of the game, your queen cannot be captured while she stands beside your king.",
+      description: "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
       flavor: "Two crowns, one shadow between them, no way through it.", requires: ["q"],
       fx: { motif: "ward", pieces: ["q"], self: true } },
-    oppFilter((moves, _inst, api) =>
-      nonEmpty(
-        moves.filter((m) => {
-          const cs = captureSquare(m);
-          if (cs == null) return true;
-          const p = api.board.pieces[cs];
-          if (!p || p.color !== api.me || p.type !== "q") return true;
-          const ks = kingSquare(api.board, api.me);
-          if (ks == null) return true;
-          return !adjSquares(ks).includes(cs);
-        }),
-        moves,
-      ),
-    ),
+    {
+      // Shortened by one opponent turn: the (otherwise permanent) protection
+      // does not cover the opponent's first turn; it arms after their reply.
+      kind: "passive",
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        return nonEmpty(
+          moves.filter((m) => {
+            const cs = captureSquare(m);
+            if (cs == null) return true;
+            const p = api.board.pieces[cs];
+            if (!p || p.color !== api.me || p.type !== "q") return true;
+            const ks = kingSquare(api.board, api.me);
+            if (ks == null) return true;
+            return !adjSquares(ks).includes(cs);
+          }),
+          moves,
+        );
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed && move.color === api.opp) inst.state.armed = true;
+      },
+      status: (inst) => (inst.state.armed ? "the guard stands" : "the guard forms after their reply"),
+    },
   ),
   card(
     { id: "bn4_wall_of_faith", name: "Wall of Faith", tier: 8, category: "protection", icon: "BrickWall",

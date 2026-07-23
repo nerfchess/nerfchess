@@ -683,10 +683,10 @@ const STRANGE_GAITS: Array<
   }
 > = [
   { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction", capture: "none" },
-  { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction" },
+  { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction", capture: "none" },
   { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between", capture: "none" },
   { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between", tier: 2 },
-  { id: "viziers_errand", name: "Vizier's Errand", flavor: "One dignified step. No hopping. There are appearances.", icon: "Crown", leaps: symLeaps(1, 0), how: "a single step to an adjacent square, straight only" },
+  { id: "viziers_errand", name: "Vizier's Errand", flavor: "One dignified step. No hopping. There are appearances.", icon: "Crown", leaps: symLeaps(1, 0), how: "a single step to an adjacent square, straight only", lossy: true },
   { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square", tier: 2 },
   { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between", capture: "none" },
   { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between", capture: "none" },
@@ -825,6 +825,20 @@ function leapfrog(entry: (typeof LEAPFROGS)[number]): Buff {
       },
       status: (inst) =>
         !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
+    });
+  }
+  if (entry.id === "vaulting_horse") {
+    // Preserve the hop; taking it consumes your next unused reroll, if any.
+    return opener(entry, `${baseDesc} Taking this hop consumes your next unused reroll, if any.`, {
+      ...augment(gen),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
     });
   }
   return opener(entry, baseDesc, augment(gen));
@@ -973,7 +987,7 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
     }
     return out;
   };
-  if (entry.id === "quickstep") {
+  if (entry.id === "quickstep" || entry.id === "waltz_left") {
     // Preserve the narrow king-dash identity; if unused by the owner's 12th
     // move, the charge converts into one draft reroll.
     return opener(entry, `${desc} If unused by your 12th move, the charge becomes one draft reroll.`, {
@@ -1788,9 +1802,10 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     entry.line === "fwd" ? "straight forward" : entry.line === "lat" ? "sideways along its rank" : "along its diagonals";
   const owner = entry.type === "q" ? "your queen" : `one of your ${names[entry.type]}`;
   const lossy = entry.id === "freight_elevator";
-  // Painter's Lift and Rolling Gantry keep their phasing identity but may not
-  // capture on landing.
-  const noCapture = entry.id === "painters_lift" || entry.id === "rolling_gantry";
+  // Painter's Lift, Rolling Gantry, and Window Washer keep their phasing
+  // identity but may not capture on landing.
+  const noCapture =
+    entry.id === "painters_lift" || entry.id === "rolling_gantry" || entry.id === "window_washer";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const dirs: readonly (readonly [number, number])[] =
