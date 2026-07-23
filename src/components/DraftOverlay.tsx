@@ -1651,11 +1651,14 @@ export function DraftOverlay({
                       {
                         opacity: selected != null && selected !== i ? 0.55 : 1,
                         x: 0,
-                        // The selected card rises a touch further and swells
-                        // slightly: a clear raised state without a redesign.
-                        y: selected === i ? -7 : 0,
+                        // The picked card holds its slot: selection reads through
+                        // the gold ring, glow, and check seal alone. A lift/swell
+                        // here pushed the selected card's title and edges out of
+                        // line with its sibling (same-height grid), which looked
+                        // like a layout bug — so it stays put and aligned.
+                        y: 0,
                         rotate: 0,
-                        scale: selected === i ? 1.02 : 1,
+                        scale: 1,
                       }
                 }
                 transition={
