@@ -1243,7 +1243,7 @@ const TIER2: Buff[] = [
     shieldTarget(2),
   ),
   def(
-    { id: "pawn_storm", requires: ["p"], name: "Pawn Storm", description: "Every one of your pawns still on its starting square advances one square, if the square ahead is empty.", tier: 2, category: "movement", flavor: "The whole front moves at dawn." },
+    { id: "pawn_storm", requires: ["p"], name: "Pawn Storm", description: "Every one of your pawns still on its starting square advances one square, if the square ahead is empty. It resolves at once and is spent even if no pawn can advance.", tier: 2, category: "movement", flavor: "The whole front moves at dawn." },
     instant((_inst, api) => {
       const fwd = fwdOf(api.me);
       const home = api.me === "w" ? 1 : 6;
@@ -1780,7 +1780,7 @@ const TIER3: Buff[] = [
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "pin_breaker", name: "Pin Breaker", description: "One of your pieces breaks free with a knight's leap to an empty square, once.", tier: 3, category: "movement" },
+    { id: "pin_breaker", name: "Pin Breaker", description: "One of your pieces breaks free with a knight's leap to an empty square, once. Using it spends the card even if the leap cannot resolve.", tier: 3, category: "movement" },
     // Nerf chess is won by king capture, so there are no true pins; the card
     // instead lets any piece jump clear of whatever is holding it, knight-style.
     activated(
@@ -2209,7 +2209,7 @@ const TIER4: Buff[] = [
     removeEnemies(1, ["p", "n", "b", "r"]),
   ),
   def(
-    { id: "mind_nudge", name: "Mind Nudge", description: "Force one enemy pawn to advance one square where empty, once.", tier: 2, category: "attack" },
+    { id: "mind_nudge", name: "Mind Nudge", description: "Force one enemy pawn to advance one square where empty, once. Using it spends the card even if the push cannot resolve.", tier: 2, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0

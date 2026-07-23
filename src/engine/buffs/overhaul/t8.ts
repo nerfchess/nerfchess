@@ -933,32 +933,63 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_terraform",
       name: "Terraform",
       description:
-        "Claim up to three empty squares as your homeland, permanently: enemy pieces may never enter them again.",
+        "Claim up to three empty squares as your homeland for your opponent's next 4 turns: enemy pieces cannot enter them, though the enemy may capture a piece standing on a claimed square once to break that square. Occupied squares cannot be claimed.",
       tier: 8,
       category: "protection",
       icon: "Globe2",
       flavor: "The land remembers who planted the flag.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
-          ? null
-          : {
-              kind: "square",
-              label: `Claim square ${picks.length + 1} of up to 3`,
-              squares: emptySquares(api.board).filter(
-                (sq) => !picks.some((k) => k.square === sq),
-              ),
-              ...(picks.length > 0 ? { finishable: true } : {}),
-            },
-      (_inst, api, picks) => {
-        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
-        if (squares.length) {
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: null });
-          flashSquares(api, squares);
+    // Balance pass: the claim is temporary (four opponent turns) and now has a
+    // counter. The enemy cannot step into a claimed square, but a capture onto
+    // one (only possible when a piece is sheltering there) breaks that square.
+    // Enforced through filterOpponentMoves rather than a barred effect so the
+    // capture exception can be allowed (a plain barred blocks captures too).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.claimed != null || picks.length >= 3) return null;
+        return {
+          kind: "square",
+          label: `Claim square ${picks.length + 1} of up to 3`,
+          squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.claimed != null) return;
+        const claimed = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.claimed = claimed;
+        inst.state.turns = 4;
+        if (claimed.length) {
+          addEffect(api, { kind: "strike", squares: claimed, owner: api.me, turns: 4 });
+          flashSquares(api, claimed);
         }
       },
-    ),
+      filterOpponentMoves: (moves, inst) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (!claimed || claimed.length === 0 || ((inst.state.turns as number) ?? 0) <= 0) {
+          return moves;
+        }
+        return moves.filter((m) => !claimed.includes(m.to) || m.captured != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (!claimed || move.color !== api.opp) return;
+        if (claimed.includes(move.to)) {
+          inst.state.claimed = claimed.filter((sq) => sq !== move.to);
+          flashSquares(api, [move.to], true);
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0 || (inst.state.claimed as Square[]).length === 0) inst.spent = true;
+      },
+      status: (inst) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (claimed == null) return "activate to claim your homeland";
+        return `${claimed.length} claimed for ${turnsLeft(inst)} of their turns`;
+      },
+    },
   ),
   // 194. Standing Ovation ---------------------------------------------------------------------------------------------------------
   card(
