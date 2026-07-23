@@ -529,7 +529,7 @@ function firstStep(entry: (typeof FIRST_STEPS)[number]): Buff {
         ? earlyBird
           ? "see your opponent's next draft offer and gain 5 seconds"
           : "see your opponent's next draft offer"
-        : "gain 6 seconds";
+        : "gain 11 seconds, one draft reroll, and see the tier of your opponent's next draft offer";
   return opener(entry, `After your ${entry.after}th move, ${what}.`, {
     kind: "passive",
     init: (inst) => {
@@ -544,7 +544,14 @@ function firstStep(entry: (typeof FIRST_STEPS)[number]): Buff {
       else if (entry.prize === "peek") {
         api.mine.flags.seeOppCards = true;
         if (earlyBird) api.adjustClock({ addSelfSec: 5 });
-      } else api.adjustClock({ addSelfSec: 6 });
+      } else {
+        // Water Break: the printed 6s gain rises by 5 to 11s (a no-op in
+        // untimed play), and it always also grants a draft reroll and reveals
+        // the tier of the opponent's next offer, so untimed games still pay out.
+        api.adjustClock({ addSelfSec: 11 });
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        api.mine.flags.seeOppTier = true;
+      }
       inst.spent = true;
     },
     status: (inst) => `pays out in ${turnsLeft(inst)} of your moves`,
