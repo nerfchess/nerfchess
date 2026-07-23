@@ -878,7 +878,7 @@ export const EVEN_KEELED: Nerf = db({
 
 export const SOCIAL_DISTANCING: Nerf = db({
   id: "social_distancing", name: "Social Distancing", tier: 4, implemented: true,
-  description: "Can't make non-capturing moves to squares adjacent to opponent pieces.",
+  description: "Can't make non-capturing moves to squares adjacent to opponent pieces. The forbidden ring around enemy pieces is shown on the board.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
     return moves.filter((m) => {
@@ -889,6 +889,23 @@ export const SOCIAL_DISTANCING: Nerf = db({
       }
       return true;
     });
+  },
+  // Reveal the restricted region: every square adjacent to an enemy piece.
+  visual: (_s, ctx) => {
+    const opp = ctx.me === "w" ? "b" : "w";
+    const ring = new Set<number>();
+    for (let sq = 0; sq < 64; sq++) {
+      const p = ctx.board.pieces[sq];
+      if (!p || p.color !== opp) continue;
+      const f0 = FILE(sq), r0 = RANK(sq);
+      for (let df = -1; df <= 1; df++) for (let dr = -1; dr <= 1; dr++) {
+        if (df === 0 && dr === 0) continue;
+        const f = f0 + df, r = r0 + dr;
+        if (f < 0 || f > 7 || r < 0 || r > 7) continue;
+        ring.add(SQ(f, r));
+      }
+    }
+    return { bannedSquares: Array.from(ring) };
   },
 });
 
@@ -977,13 +994,26 @@ export const SCOUTING_AHEAD: Nerf = db({
 
 export const WARLORD: Nerf = db({
   id: "warlord", name: "Warlord", tier: 4, implemented: true,
-  description: "From turn 12 onward, your king can't be on your first two ranks.",
+  description: "From turn 12 onward, your king can't be on your first two ranks. From turn 11, while your king is still on those ranks, you are warned one move early.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 12) return null;
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return null;
     const home = ctx.me === "w" ? [0, 1] : [6, 7];
     return home.includes(RANK(ks)) ? { reason: "king on home ranks" } : null;
+  },
+  // Reveal the coming restriction one move early: warn while the king still
+  // sits on the first two ranks as the deadline nears.
+  hint: (_s, ctx) => {
+    if (ctx.moveNumber < 11) return null;
+    const ks = findKing(ctx.board, ctx.me);
+    if (ks == null) return null;
+    const home = ctx.me === "w" ? [0, 1] : [6, 7];
+    if (!home.includes(RANK(ks))) return null;
+    if (ctx.moveNumber < 12) {
+      return { text: "Next turn your king may not be on your first two ranks. March it forward.", squares: [ks], tone: "warn" };
+    }
+    return { text: "Your king must leave your first two ranks or you lose.", squares: [ks], tone: "warn" };
   },
 });
 
@@ -1311,16 +1341,25 @@ export const BOASTFUL: Nerf = db({
 
 export const WINDS_OF_FATE: Nerf = db({
   id: "winds_of_fate", name: "Winds of Fate", tier: 4, implemented: true,
-  description: "Each turn, randomly can't move left or can't move right.",
-  init: () => ({ banned: "l" as "l" | "r" }),
-  onTurnStart: (_s, _ctx, rng) => ({ banned: rng.int(2) === 0 ? "l" : "r" }),
+  description: "Each turn you randomly can't move left or can't move right, revealed a turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+  init: (rng) => ({ banned: rng.int(2) === 0 ? "l" : "r", next: rng.int(2) === 0 ? "l" : "r" }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { banned: "l" | "r"; next: "l" | "r" };
+    return { banned: s.next, next: rng.int(2) === 0 ? "l" : "r" };
+  },
   filterMoves: (moves, state) => {
-    const s = state as { banned: "l" | "r" };
-    return moves.filter((m) => {
+    const s = state as { banned: "l" | "r"; next: "l" | "r" };
+    const filtered = moves.filter((m) => {
       const dx = FILE(m.to) - FILE(m.from);
       if (s.banned === "l") return dx >= 0;
       return dx <= 0;
     });
+    return filtered.length >= 3 ? filtered : moves;
+  },
+  hint: (state) => {
+    const s = state as { banned: "l" | "r"; next: "l" | "r" };
+    const name = (d: "l" | "r") => (d === "l" ? "left" : "right");
+    return { text: `Winds of Fate: no moving ${name(s.banned)} this turn, ${name(s.next)} next turn.`, tone: "warn" };
   },
 });
 
@@ -1552,12 +1591,22 @@ export const JUMPY: Nerf = db({
 
 export const HOPSCOTCH: Nerf = db({
   id: "hopscotch", name: "Hopscotch", tier: 5, implemented: true,
-  description: "Must alternate light/dark destination squares.",
+  description: "Must alternate light/dark destination squares. The required destination color is shown each turn.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
     const lastColor = (FILE(last.to) + RANK(last.to)) % 2;
     return moves.filter((m) => (FILE(m.to) + RANK(m.to)) % 2 !== lastColor);
+  },
+  // Reveal the restricted region: the destination color required this turn.
+  hint: (_s, ctx) => {
+    const last = ctx.myLastMove;
+    if (!last) {
+      return { text: "Hopscotch: your first move is free, then you must alternate square colors.", tone: "info" };
+    }
+    const lastColor = (FILE(last.to) + RANK(last.to)) % 2;
+    const need = 1 - lastColor === 1 ? "light" : "dark";
+    return { text: `Hopscotch: this turn you must land on a ${need} square.`, tone: "info" };
   },
 });
 
@@ -1573,16 +1622,21 @@ export const LEAPS_AND_BOUNDS: Nerf = db({
 
 export const COLORBLIND: Nerf = db({
   id: "colorblind", name: "Colorblind", tier: 5, implemented: true,
-  description: "Can't move to one random color of squares, re-randomized each turn.",
-  init: () => ({ banned: 0 as 0 | 1 }),
-  onTurnStart: (_s, _ctx, rng) => ({ banned: rng.int(2) as 0 | 1 }),
+  description: "Can't move to one random color of squares, re-randomized each turn and revealed one turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+  init: (rng) => ({ banned: rng.int(2) as 0 | 1, next: rng.int(2) as 0 | 1 }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { banned: 0 | 1; next: 0 | 1 };
+    return { banned: s.next, next: rng.int(2) as 0 | 1 };
+  },
   filterMoves: (moves, state) => {
-    const s = state as { banned: 0 | 1 };
-    return moves.filter((m) => (FILE(m.to) + RANK(m.to)) % 2 !== s.banned);
+    const s = state as { banned: 0 | 1; next: 0 | 1 };
+    const filtered = moves.filter((m) => (FILE(m.to) + RANK(m.to)) % 2 !== s.banned);
+    return filtered.length >= 3 ? filtered : moves;
   },
   hint: (state) => {
-    const s = state as { banned: 0 | 1 };
-    return { text: `This turn you can't move to ${s.banned === 1 ? "light" : "dark"} squares.`, tone: "warn" };
+    const s = state as { banned: 0 | 1; next: 0 | 1 };
+    const name = (c: 0 | 1) => (c === 1 ? "light" : "dark");
+    return { text: `Colorblind: no moving to ${name(s.banned)} squares this turn, ${name(s.next)} next turn.`, tone: "warn" };
   },
 });
 
@@ -1873,11 +1927,12 @@ export const HAND_AND_GIGABRAIN: Nerf = db({
 
 export const CRENELLATIONS: Nerf = db({
   id: "crenellations", name: "Crenellations", tier: 5, implemented: true,
-  description: "Pawns can only move to a random color of squares.",
+  description: "Pawns can only move to a fixed random color of squares, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
   init: (rng) => ({ color: rng.int(2) as 0 | 1 }),
   filterMoves: (moves, state) => {
     const s = state as { color: 0 | 1 };
-    return moves.filter((m) => m.piece !== "p" || (FILE(m.to) + RANK(m.to)) % 2 === s.color);
+    const filtered = moves.filter((m) => m.piece !== "p" || (FILE(m.to) + RANK(m.to)) % 2 === s.color);
+    return filtered.length >= 3 ? filtered : moves;
   },
   hint: (state) => {
     const s = state as { color: 0 | 1 };
@@ -1971,7 +2026,7 @@ export const ABSOLUTION: Nerf = db({
 export const QUICKSAND: Nerf = db({
   id: "quicksand", name: "Quicksand", tier: 4, implemented: true,
   description:
-    "The 4th and 5th ranks are quicksand. If one of your pieces lands on the same 4th or 5th rank square for the second time in the game (tracing that piece's own path, not necessarily on consecutive moves), it is stuck and can never move from that square again.",
+    "The 4th and 5th ranks are quicksand, shown on the board. If one of your pieces lands on the same 4th or 5th rank square for the second time in the game (tracing that piece's own path, not necessarily on consecutive moves), it is stuck and can never move from that square again. A piece one visit from being stuck is flagged the move before.",
   filterMoves: (moves, _s, ctx) => {
     // A piece is stuck if that SAME piece has ended on this middle-rank square
     // (rank 3 or 4) at least twice. Follow the current piece's own move chain
@@ -1993,6 +2048,31 @@ export const QUICKSAND: Nerf = db({
       if (landingsHere >= 2) stuck.add(sq);
     }
     return moves.filter((m) => !stuck.has(m.from));
+  },
+  // Reveal the quicksand ranks (the restricted region) on the board.
+  visual: () => {
+    const sqs: number[] = [];
+    for (let f = 0; f < 8; f++) { sqs.push(SQ(f, 3)); sqs.push(SQ(f, 4)); }
+    return { highlightSquares: sqs };
+  },
+  // Warn a move early: a piece already sitting on a middle-rank square it has
+  // visited once will be stuck if it ever returns there.
+  hint: (_s, ctx) => {
+    const mine = ctx.board.history.filter((m) => m.color === ctx.me);
+    const primed: number[] = [];
+    for (const sq of pieceSquares(ctx.board, ctx.me)) {
+      const r = RANK(sq);
+      if (r !== 3 && r !== 4) continue;
+      let pos = sq;
+      let landings = 0;
+      for (let i = mine.length - 1; i >= 0; i--) {
+        const m = mine[i];
+        if (m.to === pos) { if (m.to === sq) landings++; pos = m.from; }
+      }
+      if (landings === 1) primed.push(sq);
+    }
+    if (!primed.length) return null;
+    return { text: "Quicksand: a flagged piece will be stuck if it ever returns to this square.", squares: primed, tone: "warn" };
   },
 });
 

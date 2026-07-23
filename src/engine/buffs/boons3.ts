@@ -37,6 +37,7 @@ import {
   captureSquare,
   emptySquares,
   explodeAt,
+  grantInventory,
   inHalf,
   instant,
   leapMoves,
@@ -1132,40 +1133,29 @@ export const BOON_WAVE3: Buff[] = [
     ),
   ),
 
-  // A draft gamble that fishes for the very top of the deck. Neighbours:
-  // Ascetic's Bargain (skip one, then prep + bank), Kingmaker's Pact
-  // (persistent lift). Distinct: the only boon to arm `bankedTier8`, so it
-  // delivers a genuine apex-tier offer (the same two-card apex pull that
-  // banking past a tier-8 grants) at the price of two skipped drafts. Balance
-  // review: retiered T6 -> T7 and the apex bug fixed. As authored it also set
-  // `prepThree`, but rollOffer's apex promotion is gated on `!prepping`
-  // (a prepThree offer is never collapsed into apex), so the advertised apex
-  // could NEVER fire and the card silently degraded to a fat three-card offer
-  // with a dead flag. Dropping prepThree makes the apex real; T7 reflects that
-  // a guaranteed apex pull is a top-end effect, not a T6 draft trick.
+  // A clean draft acquisition: keep both cards of your next offer at the usual
+  // tier. Neighbours: Double Down (three cards once, then a skip), Scout (take
+  // both, spend a reroll). Distinct: a two-kept-cards grab with no draft skipped
+  // and no tier bump. Balance review: the old apex-bank package (two skipped
+  // drafts, then a banked apex pull) is replaced by two kept cards at the
+  // current tier, so a skipped enemy draft is never combined with a full
+  // premium offer.
   boon(
     {
       id: "bw3_futures_market",
       name: "Futures Market",
       description:
-        "Mortgage the near future for one shot at the very top: your next 2 drafts are skipped, and the draft that follows them deals a rare apex-tier offer, letting you take one of two apex cards.",
+        "Take the whole of the next hand: your next draft deals its two cards at the usual tier and you keep both of them, with no draft skipped.",
       tier: 7,
       category: "draft",
       icon: "TrendingUp",
-      flavor: "Buy the rumor. Skip the news. Twice.",
+      flavor: "Buy the whole hand outright. No mortgage, no waiting.",
     },
     instant((_inst, api) => {
-      // Arm a banked apex pull (bankBonus + bankedTier8: exactly the state the
-      // "bank an offer that held a tier-8" path produces) and pay for it with
-      // two skipped drafts. prepThree is deliberately NOT set - rollOffer only
-      // promotes a banked roll to an apex offer when it is NOT a prepThree
-      // (three-card) offer, so setting it would silently cancel the apex. The
-      // two blockedDrafts are consumed first; the apex offer then rolls on the
-      // next non-skipped draft (bankBonus / bankedTier8 persist unconsumed
-      // across the skips until a real roll reads them).
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-      api.mine.flags.bankedTier8 = true;
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+      // Two kept cards at the current tier: your next offer keeps both of its
+      // cards at the usual tier. No enemy draft is skipped and no premium/apex
+      // promotion is stacked on top - the two are never combined.
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
     }),
   ),
 

@@ -174,7 +174,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Repeat",
       name: "Groundhog Day",
       description:
-        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn, they must move that same piece again on the two turns after. If that piece can no longer move, the loop is skipped.",
+        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn is caught in a loop. Their very next turn after that is one free escape and they may move anything, but on the turn after it they must move that same piece again. If that piece can no longer move, the loop is skipped.",
       tier: 6,
       category: "hex",
       flavor: "Didn't we just do this?",

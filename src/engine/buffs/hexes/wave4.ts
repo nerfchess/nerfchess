@@ -282,16 +282,56 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_puddle", name: "The Puddle", description: "Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it.", flavor: "It looks shallow. It is not.", icon: "Droplet", fx: { motif: "blindfold" } },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    { id: "hx4_puddle", name: "The Puddle", description: "Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it. The first piece the puddle would turn away may step in once, then it binds fully.", flavor: "It looks shallow. It is not.", icon: "Droplet", fx: { motif: "blindfold" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : { kind: "square", label: "Choose the puddle square", squares: emptySquares(api.board) },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) barNow(api, [picks[0].square], 2);
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 2;
+        inst.state.escaped = false;
       },
-    ),
+      filterOpponentMoves: (moves, inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.to !== sq);
+        if (kept.length === 0) return moves;
+        if (inst.state.escaped) return kept;
+        const keptSet = new Set(kept);
+        const blocked = moves.filter((m) => !keptSet.has(m));
+        if (blocked.length === 0) return kept;
+        let escapeFrom = blocked[0].from;
+        for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+        const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+        inst.state.escapeFrom = escapeFrom;
+        inst.state.escapeTos = escapeMoves.map((m) => m.to);
+        return [...kept, ...escapeMoves];
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null) return;
+        if (
+          move.color === api.opp &&
+          turnsLeft(inst) > 0 &&
+          !inst.state.escaped &&
+          inst.state.escapeFrom != null &&
+          move.from === inst.state.escapeFrom &&
+          Array.isArray(inst.state.escapeTos) &&
+          (inst.state.escapeTos as Square[]).includes(move.to)
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to choose the puddle" : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H1(
     { id: "hx4_hiccups", name: "Hiccups", description: "On your opponent's next turn, they may only move pieces standing in their own half of the board. The first piece from your half slips through as one escape, then the restriction holds.", flavor: "Hic. Sorry. Hic. As you were.", icon: "MessageCircleWarning", fx: { motif: "slow", pieces: "all" } },
@@ -317,11 +357,29 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_sleepy_sentry", name: "Sleepy Sentry", description: "One of your opponent's pawns on the a or h file, chosen at random, falls asleep at its post and is frozen for 2 of their turns. If no edge pawn remains, nothing happens.", flavor: "The wall watches itself, probably.", icon: "Moon", fx: { motif: "jail", pieces: ["p"] } },
-    instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp, "p").filter((sq) => FILE(sq) === 0 || FILE(sq) === 7);
-      for (const sq of drawRandom(api, pool, 1)) freezeNow(api, sq, 2, "sleep");
-    }),
+    { id: "hx4_sleepy_sentry", name: "Sleepy Sentry", description: "One of your opponent's pawns on the a or h file, chosen at random, gets drowsy. It has one legal escape move, then falls asleep at its post and is frozen for 2 of their turns. If no edge pawn remains, nothing happens.", flavor: "The wall watches itself, probably.", icon: "Moon", fx: { motif: "jail", pieces: ["p"] } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const pool = mySquares(api.board, api.opp, "p").filter((sq) => FILE(sq) === 0 || FILE(sq) === 7);
+        inst.state.sq = drawRandom(api, pool, 1)[0] ?? null;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const sq = (inst.state.sq as Square | null | undefined) ?? null;
+        if (sq == null) {
+          inst.spent = true;
+          return;
+        }
+        // The sentry's first move is its one legal escape; the sleep bites right
+        // after, wherever it lands (or in place if another piece moved).
+        const now = followSq(sq, move);
+        if (now != null) sting(api, now, 2, "sleep");
+        inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.spent && inst.state.sq != null ? "one escape move remains, then it sleeps" : null,
+    },
   ),
   H1(
     { id: "hx4_cold_porridge", name: "Cold Porridge", description: "Starting after your opponent's next move, for their following 4 turns the infantry refuses breakfast every other morning: on the 1st and 3rd of those turns their pawns cannot move.", flavor: "An army marches on its stomach, alternately.", icon: "Soup", fx: { motif: "slow", pieces: ["p"] } },
@@ -515,8 +573,8 @@ const T1: Buff[] = [
     curse(1, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 2)),
   ),
   H1(
-    { id: "hx4_second_thoughts", name: "Second Thoughts", description: "For your opponent's next 4 turns, they cannot castle. The king keeps re reading the paperwork.", flavor: "Clause four is troubling, said the king, again.", icon: "FileQuestion", fx: { motif: "slow" } },
-    curse(4, (moves) => moves.filter((m) => !m.castle)),
+    { id: "hx4_second_thoughts", name: "Second Thoughts", description: "Starting after your opponent's next move, for their following 4 turns they cannot castle. The king keeps re reading the paperwork.", flavor: "Clause four is troubling, said the king, again.", icon: "FileQuestion", fx: { motif: "slow" } },
+    delayedCurse(4, (moves) => moves.filter((m) => !m.castle)),
   ),
   H1(
     { id: "hx4_beneath_her_dignity", name: "Beneath Her Dignity", description: "For your opponent's next 3 turns, their queen refuses to capture pawns.", flavor: "One does not fence with the help.", icon: "Crown", fx: { motif: "muzzle", pieces: ["q"] } },
