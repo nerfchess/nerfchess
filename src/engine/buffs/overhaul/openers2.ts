@@ -237,7 +237,7 @@ const SLOW_SEASONS: Array<
   { id: "bumper_crop", name: "Bumper Crop", flavor: "Some years the cart simply comes back fuller.", icon: "Wheat", tier: 2, after: 7, what: "your next draft offers three cards instead of two", pay: (api) => { api.mine.flags.prepThree = true; }, revealEarly: true },
   { id: "compost_heap", name: "Future Compost", flavor: "Give it seven moves. Good things rot upward.", icon: "Recycle", after: 7, what: "your next draft offer rolls one tier higher", pay: (api) => { api.mine.flags.bankBonus = 1; }, revealEarly: true },
   { id: "trellis", name: "Trellis", flavor: "The climbing pawn gets one lattice of protection.", icon: "Fence", after: 6, what: "your most advanced pawn cannot be captured during your opponent's next turn", pay: (api) => { const p = vanguardPawn(api); if (p != null) shield1(api, p); } },
-  { id: "late_bloom", name: "Late Bloom", flavor: "Ten moves of patience, one burst of gold leaf.", icon: "Flower", after: 10, what: "your queen is gilded, purely cosmetically, forever", pay: (api) => { const q = mySquares(api.board, api.me, "q")[0]; if (q != null) { pinCosmetic(api, q, api.me, "gilded", null); flashSquares(api, [q], true); } } },
+  { id: "late_bloom", name: "Late Bloom", flavor: "Ten moves of patience, one burst of gold leaf.", icon: "Flower", after: 10, what: "your queen is gilded, purely cosmetically, forever, and since that reveals nothing you could act on you also gain a draft reroll and learn the tier of your next draft offer", pay: (api) => { const q = mySquares(api.board, api.me, "q")[0]; if (q != null) { pinCosmetic(api, q, api.me, "gilded", null); flashSquares(api, [q], true); } api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "second_harvest", name: "Second Harvest", flavor: "The field you already reaped owes you two more rows.", icon: "Tractor", after: 12, what: "gain 2 draft rerolls", pay: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2; } },
 ];
 
@@ -291,7 +291,7 @@ const FINE_PRINT: Array<
   OpenerMeta & { files: number[] | null; who: string; delay?: boolean }
 > = [
   { id: "full_coverage", name: "Full Coverage", flavor: "Clause 1: no funny business in passing. Clause 2: see clause 1.", icon: "ShieldCheck", tier: 2, files: null, who: "pawns", delay: true },
-  { id: "homestead_clause", name: "Homestead Clause", flavor: "West of the d-file, passing trades are void.", icon: "House", files: [0, 1, 2, 3], who: "pawns on files a through d" },
+  { id: "homestead_clause", name: "Homestead Clause", flavor: "West of the d-file, passing trades are void.", icon: "House", tier: 2, files: [0, 1, 2, 3], who: "pawns on files a through d", delay: true },
   { id: "harborside_rider", name: "Harborside Rider", flavor: "Kingside cargo may not be seized mid-voyage.", icon: "Anchor", files: [4, 5, 6, 7], who: "pawns on files e through h" },
   { id: "downtown_premium", name: "Downtown Premium", flavor: "Central property, central protections.", icon: "Building2", tier: 2, files: [2, 3, 4, 5], who: "pawns on files c through f", delay: true },
   { id: "frontier_waiver", name: "Frontier Waiver", flavor: "Out past the b- and g-files, the usual tolls do not apply.", icon: "Signpost", tier: 2, files: [0, 1, 6, 7], who: "pawns on the outer files a, b, g and h", delay: true },
@@ -372,16 +372,27 @@ const OVERTURES: Array<OpenerMeta & { what: string; ride: (move: Move, api: Buff
 ];
 
 function overture(entry: (typeof OVERTURES)[number]): Buff {
-  return opener(entry, `The first time you give check, ${entry.what}. One use.`, {
+  const charges = entry.charges ?? 1;
+  const when = charges > 1 ? `The first ${charges} times you give check` : "The first time you give check";
+  const uses = charges > 1 ? `${charges} uses.` : "One use.";
+  return opener(entry, `${when}, ${entry.what}. ${uses}`, {
     kind: "passive",
+    init: (inst) => {
+      inst.state.charges = charges;
+    },
     onMovePlayed: (inst, move, api) => {
       if (inst.spent || move.color !== api.me) return;
       const k = kingSquare(api.board, api.opp);
       if (k == null || attackersOf(api.board, api.me, k).length === 0) return;
       entry.ride(move, api);
-      inst.spent = true;
+      const left = ((inst.state.charges as number) ?? charges) - 1;
+      inst.state.charges = left;
+      if (left <= 0) inst.spent = true;
     },
-    status: () => "awaiting your first check",
+    status: (inst) => {
+      const c = (inst.state.charges as number) ?? charges;
+      return c > 1 ? `${c} checks left` : "awaiting your first check";
+    },
   });
 }
 
@@ -398,12 +409,12 @@ const HOUSEWARMINGS: Array<
     fallbackBy?: number;
   }
 > = [
-  { id: "housewarming_gift", name: "Housewarming Gift", flavor: "A small casserole of seconds, still warm.", icon: "Gift", what: "gain 4 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 4 }) },
+  { id: "housewarming_gift", name: "Housewarming Gift", flavor: "A small casserole of seconds, still warm.", icon: "Gift", what: "gain 9 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 9 }) },
   { id: "new_locks", name: "New Locks", flavor: "First night in the new place, deadbolt thrown.", icon: "Lock", what: "your king cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "gilded_doorknob", name: "Gilded Doorknob", flavor: "Purely decorative. Devastatingly tasteful.", icon: "KeyRound", what: "your king is gilded, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "meet_the_neighbors", name: "Meet the Neighbors", flavor: "Know exactly which houses on the street keep siege engines.", icon: "Binoculars", what: "every enemy queen and rook flashes until your opponent replies", ride: (_move, api) => flashSquares(api, [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")]) },
   { id: "change_of_address", name: "Change of Address", flavor: "The draft catalogue gets forwarded with a bonus stamp.", icon: "Mailbox", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, fallbackBy: 12 },
-  { id: "home_office", name: "Home Office", flavor: "The rook finally gets a desk by the king.", icon: "Briefcase", what: "the castled rook is named Home Office, purely cosmetically, forever", ride: (move, api) => { const rookSq = move.castle === "k" ? move.to - 1 : move.to + 1; pinCosmetic(api, rookSq, api.me, "nametag", null, "Home Office"); } },
+  { id: "home_office", name: "Home Office", flavor: "The rook finally gets a desk by the king.", icon: "Briefcase", what: "the castled rook is named Home Office, purely cosmetically, forever, and you gain a draft reroll", ride: (move, api) => { const rookSq = move.castle === "k" ? move.to - 1 : move.to + 1; pinCosmetic(api, rookSq, api.me, "nametag", null, "Home Office"); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
 ];
 
 function housewarming(entry: (typeof HOUSEWARMINGS)[number]): Buff {
@@ -508,32 +519,40 @@ const WATCHTOWER: Array<
     mark: (move: Move, api: BuffApi) => Square[] | null;
     comedic?: boolean;
     perk?: (api: BuffApi, marked: Square[]) => void;
+    charges?: number;
   }
 > = [
   { id: "tripwire_bell", name: "Tripwire Bell", flavor: "One thread of catgut across the whole border.", icon: "BellRing", what: "The first enemy piece to end a move in your half is marked until you reply", mark: (move, api) => (inHalf(api.me, move.to) ? [move.to] : null) },
-  { id: "hoofbeat_log", name: "Hoofbeat Log", flavor: "Entry one: hooves. Entry two: see entry one.", icon: "PawPrint", what: "The first enemy knight to move is marked until you reply", mark: (move) => (move.piece === "n" ? [move.to] : null) },
+  { id: "hoofbeat_log", name: "Hoofbeat Log", flavor: "Entry one: hooves. Entry two: see entry one.", icon: "PawPrint", what: "The first enemy knight to move is marked until you reply, every one of your pieces it could capture flashes, and you gain 5 seconds", mark: (move) => (move.piece === "n" ? [move.to] : null), perk: (api, marked) => { const caps = capturesFrom(api, marked[0], api.me); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "chaperone", name: "Chaperone", flavor: "Approach her majesty and a throat clears meaningfully.", icon: "Eye", what: "The first enemy piece to move into an attack on your queen is marked until you reply, and you gain a draft reroll", mark: (move, api) => { const q = mySquares(api.board, api.me, "q")[0]; return q != null && attacksSquare(api.board, move.to, q) ? [move.to] : null; }, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "gate_ledger", name: "Gate Ledger", flavor: "Every siege engine signs out at the gate.", icon: "ScrollText", what: "The first enemy bishop, rook, or queen to leave its back rank is marked until you reply, and any temporary shield protecting it is removed", mark: (move, api) => ((move.piece === "b" || move.piece === "r" || move.piece === "q") && relRank(api.opp, move.from) === 1 ? [move.to] : null), perk: (api, marked) => stripTempShields(api, marked, api.opp) },
   { id: "border_stamp", name: "Border Stamp", flavor: "Passport, please. Purpose of visit: menace.", icon: "Stamp", what: "The first enemy pawn to reach its fifth rank is marked until you reply; since that mark changes no legal decision, you also gain a draft reroll and learn the tier of your next draft offer", mark: (move, api) => (move.piece === "p" && relRank(api.opp, move.to) === 5 ? [move.to] : null), perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "town_square_sentry", name: "Town Square Sentry", flavor: "Loitering in the center is noted in triplicate.", icon: "MapPin", what: "The first enemy piece to end a move on the four center squares is marked until you reply", mark: (move) => (CENTER4.includes(move.to) ? [move.to] : null) },
   { id: "harbor_horn", name: "Harbor Horn", flavor: "One long blast means company on the kingside water.", icon: "Megaphone", what: "The first enemy piece to enter your half on the kingside files (e through h) is marked until you reply, and you gain a draft reroll", mark: (move, api) => (inHalf(api.me, move.to) && FILE(move.to) >= 4 ? [move.to] : null), perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "postern_watch", name: "Postern Watch", flavor: "The small queenside door has the most attentive guard.", icon: "DoorClosed", what: "The first enemy piece to enter your half on the queenside files (a through d) is marked until you reply", mark: (move, api) => (inHalf(api.me, move.to) && FILE(move.to) <= 3 ? [move.to] : null) },
-  { id: "incident_report", name: "Incident Report", flavor: "Filed while the dust is still airborne.", icon: "FileText", what: "When the enemy makes their first capture, the capturer and every one of your pieces attacking it are marked until you reply", mark: (move, api) => (move.captured ? [move.to, ...attackersOf(api.board, api.me, move.to)] : null) },
+  { id: "incident_report", name: "Incident Report", flavor: "Filed while the dust is still airborne.", icon: "FileText", what: "When the enemy makes their first capture, the capturer and every one of your pieces attacking it are marked until you reply, every one of your pieces the capturer could capture flashes, and you gain 5 seconds", mark: (move, api) => (move.captured ? [move.to, ...attackersOf(api.board, api.me, move.to)] : null), perk: (api, marked) => { const caps = capturesFrom(api, marked[0], api.me); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "alarm_lantern", name: "Alarm Lantern", flavor: "It only lights for royalty in distress.", icon: "Flashlight", what: "The first time the enemy gives check, every checking piece is marked until you reply, and you gain a draft reroll", mark: (_move, api) => { const k = kingSquare(api.board, api.me); if (k == null) return null; const checkers = attackersOf(api.board, api.opp, k); return checkers.length > 0 ? checkers : null; }, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
-  { id: "keys_copied", name: "Keys Copied", flavor: "They moved into a castle. You made arrangements.", icon: "KeyRound", what: "When your opponent castles, you gain a draft reroll", mark: (move) => (move.castle ? [move.to] : null), comedic: true, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
+  { id: "keys_copied", name: "Keys Copied", flavor: "They moved into a castle. You made arrangements.", icon: "KeyRound", what: "When your opponent castles, you gain a draft reroll", mark: (move) => (move.castle ? [move.to] : null), comedic: true, perk: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, charges: 2 },
   { id: "regina_dossier", name: "Regina Dossier", flavor: "Page one: she moved. Page two: worry.", icon: "BookMarked", what: "The first time the enemy queen moves, she is marked until you reply", mark: (move) => (move.piece === "q" ? [move.to] : null) },
 ];
 
 function watchtower(entry: (typeof WATCHTOWER)[number]): Buff {
-  return opener(entry, `${entry.what}. One use.`, {
+  const charges = entry.charges ?? 1;
+  const uses = charges > 1 ? `${charges} uses.` : "One use.";
+  return opener(entry, `${entry.what}. ${uses}`, {
     kind: "passive",
+    init: (inst) => {
+      inst.state.charges = charges;
+    },
     onMovePlayed: (inst, move, api) => {
       if (inst.spent || move.color !== api.opp) return;
       const squares = entry.mark(move, api);
       if (!squares || squares.length === 0) return;
       flashSquares(api, squares, entry.comedic);
       entry.perk?.(api, squares);
-      inst.spent = true;
+      const left = ((inst.state.charges as number) ?? charges) - 1;
+      inst.state.charges = left;
+      if (left <= 0) inst.spent = true;
     },
     status: () => "watching",
   });
@@ -592,7 +611,7 @@ const GRADUATIONS: Array<
   }
 > = [
   { id: "first_day_badge", name: "First Day Badge", flavor: "Rank four! The pin is enormous on so small a chest.", icon: "BadgeCheck", tier: 2, what: "The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn, and the guard ends the moment that pawn makes a capture", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 4, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true },
-  { id: "honor_roll", name: "Honor Roll", flavor: "Fifth rank, first honors, gold trim.", icon: "Award", what: "The first of your pawns to reach your fifth rank is gilded, purely cosmetically, forever", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 5, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); flashSquares(api, [move.to], true); } },
+  { id: "honor_roll", name: "Honor Roll", flavor: "Fifth rank, first honors, gold trim.", icon: "Award", what: "The first of your pawns to reach your fifth rank is gilded, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 5, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); flashSquares(api, [move.to], true); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "riding_certificate", name: "Riding Certificate", flavor: "Licensed for forward operations at last.", icon: "FileCheck", what: "The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn", cond: (move, api) => move.piece === "n" && relRank(api.me, move.to) >= 4, pay: (move, api) => shield1(api, move.to) },
   { id: "exchange_student", name: "Exchange Student", flavor: "First semester abroad comes with an escort.", icon: "Backpack", tier: 2, what: "The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn, except by a pawn", cond: (move, api) => inHalf(api.opp, move.to), pay: (move, api) => shield1(api, move.to), guardExceptPawns: true },
   { id: "debutante_ball", name: "Debutante Ball", flavor: "Her first appearance is, by decree, uninterruptible.", icon: "Sparkles", tier: 2, what: "When your queen makes her first move, she cannot be captured during your opponent's turn after next (the guard begins only after their next reply)", cond: (move) => move.piece === "q", pay: (move, api) => shield1(api, move.to), guardDelay: true },
@@ -686,7 +705,7 @@ function graduation(entry: (typeof GRADUATIONS)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const SUPERSTITIONS: Array<
-  OpenerMeta & { what: string; cond: (move: Move) => boolean; pay: (move: Move, api: BuffApi) => void }
+  OpenerMeta & { what: string; cond: (move: Move) => boolean; pay: (move: Move, api: BuffApi) => void; note?: string }
 > = [
   { id: "threshold_blessing", name: "Threshold Blessing", flavor: "Cross boldly and the doorframe looks after you.", icon: "DoorOpen", what: "If your first move is a pawn double-step, that pawn cannot be captured during your opponent's next turn", cond: (move) => !!move.isDoublePawn, pay: (move, api) => shield1(api, move.to) },
   { id: "lucky_stirrup", name: "Lucky Stirrup", flavor: "Mount from the left and the horse forgives everything.", icon: "Medal", what: "If your first move is a knight move, that knight becomes a plush toy, purely cosmetically, forever", cond: (move) => move.piece === "n", pay: (move, api) => { pinCosmetic(api, move.to, api.me, "plush", null); flashSquares(api, [move.to], true); } },
@@ -724,12 +743,12 @@ const NIGHT_WATCH: Array<
     extra?: string;
   }
 > = [
-  { id: "ladys_escort", name: "Lady's Escort", flavor: "Two paces behind the queen, eyes everywhere.", icon: "Moon", turns: 4, where: "next to your queen", cond: (to, api) => { const q = mySquares(api.board, api.me, "q")[0]; return q != null && ringAround(q).includes(to); } },
+  { id: "ladys_escort", name: "Lady's Escort", flavor: "Two paces behind the queen, eyes everywhere.", icon: "Moon", turns: 4, where: "next to your queen", cond: (to, api) => { const q = mySquares(api.board, api.me, "q")[0]; return q != null && ringAround(q).includes(to); }, extra: " and loses any temporary shield", onMark: (to, api) => stripTempShields(api, [to], api.opp) },
   { id: "curfew_patrol", name: "Curfew Patrol", flavor: "After the bell, every visitor gets a lantern in the face.", icon: "Flashlight", turns: 5, where: "in your half", cond: (to, api) => inHalf(api.me, to), extra: ", every one of your pieces it could capture flashes, and you gain 5 seconds", onMark: (to, api) => { const caps = capturesFrom(api, to, api.me); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "wall_sentries", name: "Wall Sentries", flavor: "The back two ranks are walked all night, boots echoing.", icon: "BrickWall", turns: 6, where: "on your back two ranks", cond: (to, api) => relRank(api.me, to) <= 2 },
   { id: "plaza_lantern", name: "Plaza Lantern", flavor: "The town square is lit whether the town likes it or not.", icon: "Lamp", turns: 4, where: "on the four center squares", cond: (to) => CENTER4.includes(to) },
   { id: "tower_torches", name: "Tower Torches", flavor: "Anything that sidles up to a rook gets torchlight and questions.", icon: "Flame", turns: 4, where: "next to one of your rooks", cond: (to, api) => mySquares(api.board, api.me, "r").some((r) => ringAround(r).includes(to)) },
-  { id: "kings_road_watch", name: "King's Road Watch", flavor: "The file the king stands on is a royal road, and patrolled like one.", icon: "Eye", turns: 5, where: "on your king's file", cond: (to, api) => { const k = kingSquare(api.board, api.me); return k != null && FILE(k) === FILE(to); } },
+  { id: "kings_road_watch", name: "King's Road Watch", flavor: "The file the king stands on is a royal road, and patrolled like one.", icon: "Eye", turns: 5, where: "on your king's file", cond: (to, api) => { const k = kingSquare(api.board, api.me); return k != null && FILE(k) === FILE(to); }, extra: " and loses any temporary shield", onMark: (to, api) => stripTempShields(api, [to], api.opp) },
 ];
 
 function nightWatch(entry: (typeof NIGHT_WATCH)[number]): Buff {
@@ -759,20 +778,20 @@ function nightWatch(entry: (typeof NIGHT_WATCH)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const VELVET_ROPES: Array<
-  OpenerMeta & { rule: string; keep: (move: Move, api: BuffApi) => boolean }
+  OpenerMeta & { rule: string; keep: (move: Move, api: BuffApi) => boolean; note?: string }
 > = [
   { id: "no_horses_on_lawn", name: "No Horses on the Lawn", flavor: "The groundskeeper's glare stops cavalry cold.", icon: "PawPrint", rule: "enemy knights cannot end a move in your half", keep: (m, api) => !(m.piece === "n" && inHalf(api.me, m.to)) },
   { id: "walking_pace", name: "Walking Pace, Please", flavor: "This is a respectable board, not a racetrack.", icon: "Snail", rule: "enemy pawns cannot make two-square moves", keep: (m) => !m.isDoublePawn },
   { id: "fresh_sod", name: "Fresh Sod", flavor: "The groundsman just laid the center. Walk around it.", icon: "Sprout", rule: "enemy pieces cannot end a non-capturing move on the four center squares (a capture may still land there)", keep: (m) => !(CENTER4.includes(m.to) && !m.captured) },
   { id: "personal_space", name: "Personal Space", flavor: "His majesty requires one full square of polite distance.", icon: "CircleSlash", rule: "enemy pieces cannot end a move next to your king", keep: (m, api) => { const k = kingSquare(api.board, api.me); return k == null || !ringAround(k).includes(m.to); } },
   { id: "quiet_cloister", name: "Quiet Cloister", flavor: "Visiting clergy may not sermonize on this side of the board.", icon: "Church", rule: "enemy bishops cannot end a move in your half", keep: (m, api) => !(m.piece === "b" && inHalf(api.me, m.to)) },
-  { id: "invitation_only", name: "Invitation Only", flavor: "The back two ranks are a private function.", icon: "Ticket", rule: "enemy pieces cannot end a move on your back two ranks", keep: (m, api) => relRank(api.me, m.to) > 2 },
+  { id: "invitation_only", name: "Invitation Only", flavor: "The back two ranks are a private function.", icon: "Ticket", rule: "enemy pieces cannot end a move on your back two ranks", keep: (m, api) => relRank(api.me, m.to) > 2, note: "The ban is spent on that one opponent turn whether or not it actually turns a move away." },
 ];
 
 function velvetRope(entry: (typeof VELVET_ROPES)[number]): Buff {
   return opener(
     entry,
-    `On your opponent's next turn, ${entry.rule}.`,
+    `On your opponent's next turn, ${entry.rule}.${entry.note ? ` ${entry.note}` : ""}`,
     timedOppFilter(1, (moves, _inst, api) => moves.filter((m) => entry.keep(m, api))),
   );
 }

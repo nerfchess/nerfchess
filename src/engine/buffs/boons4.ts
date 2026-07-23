@@ -675,13 +675,14 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_understudy", name: "Understudy", tier: 1, category: "pieces", icon: "Drama",
-      description: "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn.",
+      description: "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn, and you gain 5 seconds on your clock. In untimed games the clock gain does nothing.",
       flavor: "Someone always knows the lines.", requires: ["p"] },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.opp || move.captured !== "p") return;
         grantInventory(api, "p", 1);
+        api.adjustClock({ addSelfSec: 5 });
         inst.spent = true;
       },
       status: () => "waiting in the wings",
@@ -898,11 +899,12 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_watchmans_lantern", name: "Watchman's Lantern", tier: 1, category: "info", icon: "Lamp",
-      description: "Every enemy piece currently aiming at your king lights up until your opponent replies.",
+      description: "Every enemy piece currently aiming at your king lights up until your opponent replies, and you gain 1 draft reroll.",
       flavor: "The light does not stop them. It does spoil the surprise." },
     instant((_inst, api) => {
       const ks = kingSquare(api.board, api.me);
       if (ks != null) flashSquares(api, attackersOf(api.board, api.opp, ks));
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
 
@@ -1030,11 +1032,25 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_barter_calm", name: "Bartered Calm", tier: 2, category: "nerf", icon: "Scale",
-      description: "Suspend your nerf for your next 4 turns. In exchange, your next draft is skipped.",
+      description: "After your opponent's next move, your nerf is suspended for your next 4 turns. In exchange, your next draft is skipped.",
       flavor: "Peace, sold by the pound." },
-    suspendNow(4, (api) => {
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.delay = 1;
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const d = (inst.state.delay as number) ?? 1;
+        inst.state.delay = d - 1;
+        if (d - 1 <= 0) {
+          susp(api, 4);
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "calm begins after their reply"),
+    },
   ),
   card(
     { id: "bn4_knights_vigil", name: "Knight's Vigil", tier: 2, category: "nerf", icon: "Sword",
@@ -1056,12 +1072,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_angelus_bell", name: "Angelus Bell", tier: 2, category: "nerf", icon: "Bell",
-      description: "Every 5th move you make, the bell tolls: your nerf is suspended for your next turn. Lasts the rest of the game.",
+      description: "Every 5th move you make, the bell tolls: your nerf is suspended for your next turn. Lasts the rest of the game. In exchange, your next 2 drafts are skipped.",
       flavor: "You can set your suffering by it." },
     {
       kind: "passive",
-      init: (inst) => {
+      init: (inst, api) => {
         inst.state.count = 0;
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me) return;
@@ -1092,9 +1109,34 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_cold_compress", name: "Cold Compress", tier: 2, category: "nerf", icon: "Snowflake",
-      description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.",
+      description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next 2 turns, beginning after your opponent's following move.",
       flavor: "For the swelling. There is always swelling." },
-    reliefOn(2, 2, (m, api) => m.color === api.opp && !!m.captured && m.captured !== "k", "compresses"),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+        inst.state.pending = 0;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // A suspension armed by an earlier capture begins now, after this reply.
+        if (((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          susp(api, 2);
+        }
+        // A fresh capture of one of your pieces arms a suspension that begins
+        // after the opponent's following move.
+        const left = (inst.state.charges as number) ?? 0;
+        if (left > 0 && !!move.captured && move.captured !== "k") {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+          inst.state.charges = left - 1;
+        }
+        if (((inst.state.charges as number) ?? 0) <= 0 && ((inst.state.pending as number) ?? 0) <= 0) {
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} compresses left`,
+    },
   ),
   card(
     { id: "bn4_hermits_hour", name: "Hermit's Hour", tier: 3, category: "nerf", icon: "Mountain",

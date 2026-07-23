@@ -689,7 +689,7 @@ export const KINGPIN: Nerf = db({
 
 export const HOUSE_OF_CARDS: Nerf = db({
   id: "wn_house_of_cards", name: "House of Cards", tier: 8, icon: "layers", implemented: true,
-  description: "From your 6th move on, you lose if you end one of your turns with any of your pieces (other than the king) attacked and undefended.",
+  description: "From your 5th move on, you lose if you end one of your turns with any of your pieces or pawns (other than the king) attacked and undefended.",
   flavor: "One loose card and the whole thing falls.",
   // Rebalance 2026-07: judged only after YOUR OWN move. Previously an
   // opponent move that created the attack toppled the house immediately, with
@@ -698,7 +698,7 @@ export const HOUSE_OF_CARDS: Nerf = db({
   // to defend, trade, or retreat the loose card; failing to end your turn
   // clean is still the promised tier-8 loss.
   checkLoss: (_s, ctx) => {
-    if (ctx.moveNumber < 5) return null;
+    if (ctx.moveNumber < 4) return null;
     const h = ctx.board.history;
     const last = h[h.length - 1];
     if (!last || last.color !== ctx.me) return null;
@@ -713,7 +713,7 @@ export const HOUSE_OF_CARDS: Nerf = db({
     return null;
   },
   hint: (_s, ctx) => {
-    if (ctx.moveNumber < 5) return null;
+    if (ctx.moveNumber < 4) return null;
     const oppAtk = attackedBy(ctx.board, other(ctx.me));
     const myDef = attackedBy(ctx.board, ctx.me);
     const loose: number[] = [];
@@ -763,13 +763,21 @@ export const PERFECT_DEFENSE: Nerf = db({
 
 export const FLOOR_IS_LAVA: Nerf = db({
   id: "wn_floor_is_lava", name: "The Floor Is Lava", tier: 8, icon: "flame", implemented: true,
-  description: "Each turn, four random ranks turn to lava; you can't move a piece from or onto those ranks this turn.",
+  description: "Each turn, three random ranks turn to lava; you can't move a piece from or onto those ranks this turn. Next turn's lava ranks are revealed a turn early, and while any of your pieces stands on a rank that will ignite next turn, your move must take a piece off an igniting rank, or you lose.",
   flavor: "Mind your step.",
-  init: () => ({ ranks: [] as number[] }),
-  onTurnStart: (_s, _ctx, rng) => {
+  init: (rng) => {
+    const roll = () => {
+      const set = new Set<number>();
+      while (set.size < 3) set.add(rng.int(8));
+      return Array.from(set);
+    };
+    return { ranks: roll(), next: roll() };
+  },
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { ranks: number[]; next: number[] };
     const set = new Set<number>();
-    while (set.size < 4) set.add(rng.int(8));
-    return { ranks: Array.from(set) };
+    while (set.size < 3) set.add(rng.int(8));
+    return { ranks: s.next, next: Array.from(set) };
   },
   filterMoves: (moves, state) => {
     const s = state as { ranks: number[] };
@@ -777,11 +785,37 @@ export const FLOOR_IS_LAVA: Nerf = db({
     const ok = moves.filter((m) => !set.has(RANK(m.from)) && !set.has(RANK(m.to)));
     return ok.length ? ok : moves;
   },
+  checkLoss: (state, ctx) => {
+    // Judged only after YOUR OWN move: the reveal gives you the turn's warning,
+    // and you must spend the move evacuating a rank that ignites next turn.
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    const s = state as { next: number[] };
+    const igniting = new Set(s.next);
+    const onIgniting = pieceSquares(ctx.board, ctx.me).some((sq) => igniting.has(RANK(sq)));
+    if (!onIgniting) return null;
+    // You survive if this move left an igniting rank; otherwise the floor claims you.
+    const left = igniting.has(RANK(last.from)) && !igniting.has(RANK(last.to));
+    return left ? null : { reason: "a piece was left on a rank about to ignite" };
+  },
   visual: (state) => {
-    const s = state as { ranks: number[] };
+    const s = state as { ranks: number[]; next: number[] };
     const sqs: number[] = [];
     for (const r of s.ranks) for (let f = 0; f < 8; f++) sqs.push(SQ(f, r));
-    return { bannedSquares: sqs };
+    const highlight: number[] = [];
+    for (const r of s.next) for (let f = 0; f < 8; f++) highlight.push(SQ(f, r));
+    return { bannedSquares: sqs, highlightSquares: highlight };
+  },
+  hint: (state, ctx) => {
+    const s = state as { ranks: number[]; next: number[] };
+    const igniting = new Set(s.next);
+    if (!pieceSquares(ctx.board, ctx.me).some((sq) => igniting.has(RANK(sq)))) return null;
+    const ranks = s.next.map((r) => r + 1).sort((a, b) => a - b).join(", ");
+    return {
+      text: `Ranks ${ranks} ignite next turn: take a piece off one of them or lose.`,
+      tone: "warn",
+    };
   },
 });
 

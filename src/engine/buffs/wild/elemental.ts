@@ -35,7 +35,6 @@ import {
   barLine,
   captureExplosion,
   emptySquares,
-  explodeAt,
   freezeAllEnemies,
   freezeTarget,
   grantInventory,
@@ -631,7 +630,7 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_immolation",
       name: "Immolation",
-      description: "Offer one of your own pawns to the flame: it is consumed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the fire.",
+      description: "Offer one of your own pawns to the flame: it is consumed, and the blast removes up to seven enemy pieces (never kings) on the 8 squares around it. If all eight squares hold enemies, one is spared. Shielded pieces resist the fire.",
       tier: 6,
       category: "attack",
       requires: ["p"],
@@ -650,7 +649,28 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || api.board.pieces[sq]?.type !== "p") return;
         api.removePiece(sq, { uncounted: true });
-        explodeAt(api, sq);
+        // The blast still spares kings and shielded pieces, but its maximum
+        // removals drop from eight to seven: when all 8 surrounding squares hold
+        // eligible enemies, one is spared (deterministic: the highest square).
+        const isShielded = (t: Square): boolean =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              (e.turns == null || e.turns > 0) &&
+              (e.squares == null || e.squares.includes(t)),
+          );
+        const targets: Square[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const t = SQ(f, r);
+          const p = api.board.pieces[t];
+          if (p && p.color === api.opp && p.type !== "k" && !isShielded(t)) targets.push(t);
+        }
+        targets.sort((a, b) => a - b);
+        if (targets.length > 7) targets.pop();
+        for (const t of targets) api.removePiece(t);
       },
     ),
   ),
@@ -722,34 +742,60 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_hellfire_beam",
       name: "Hellfire Beam",
       description:
-        "The beam scorches an X across the board: pick any square, and both diagonals through it stay burning: your opponent cannot move onto them for their next 3 turns.",
+        "The beam scorches one diagonal: pick a square and choose one of the two diagonals through it. Every empty square along it burns: your opponent cannot move onto them for their next 2 turns. Any enemy piece already on the diagonal may leave normally.",
       tier: 6,
       category: "hex",
       flavor: "The ground remembers the beam.",
       fx: { motif: "blindfold" },
     },
     activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the square the beam crosses",
-              squares: Array.from({ length: 64 }, (_, i) => i),
-            },
       (_inst, api, picks) => {
-        const c = picks[0]?.square;
-        if (c == null) return;
-        const squares: Square[] = [c];
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the square the beam crosses",
+            squares: Array.from({ length: 64 }, (_, i) => i),
+          };
+        }
+        // Offer both diagonals through the chosen square; the pick selects which
+        // single diagonal burns (one, not both).
+        const c = picks[0].square!;
+        const opts: Square[] = [];
         for (const [df, dr] of DIAG_DIRS) {
           let f = FILE(c) + df, r = RANK(c) + dr;
           while (inBoard(f, r)) {
-            squares.push(SQ(f, r));
+            opts.push(SQ(f, r));
             f += df;
             r += dr;
           }
         }
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+        return { kind: "square", label: "Choose which diagonal burns", squares: opts };
+      },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square, d = picks[1]?.square;
+        if (c == null || d == null) return;
+        // The picked square shares an axis sign with the one diagonal that burns:
+        // same-sign file/rank offset picks the "\" axis, opposite-sign the "/".
+        const sameAxis = Math.sign(FILE(d) - FILE(c)) === Math.sign(RANK(d) - RANK(c));
+        const dirs = sameAxis
+          ? ([[1, 1], [-1, -1]] as const)
+          : ([[1, -1], [-1, 1]] as const);
+        // Occupied squares are left open so pieces already on the diagonal may
+        // leave normally: only the empty squares of the chosen diagonal burn.
+        const squares: Square[] = api.board.pieces[c] ? [] : [c];
+        for (const [df, dr] of dirs) {
+          let f = FILE(c) + df, r = RANK(c) + dr;
+          while (inBoard(f, r)) {
+            const sq = SQ(f, r);
+            if (!api.board.pieces[sq]) squares.push(sq);
+            f += df;
+            r += dr;
+          }
+        }
+        if (squares.length) {
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+        }
       },
     ),
   ),
