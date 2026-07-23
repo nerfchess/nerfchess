@@ -1548,8 +1548,38 @@ const T7: Buff[] = [
     }),
   ),
   H7(
-    { id: "hx4_castle_of_sand", name: "Castle of Sand", description: "Both of your opponent's rooks crumble into walnuts for 4 of their turns: heavy husks that can only shuffle one square at a time.", flavor: "The tide always finds the towers.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
-    walnutAll(["r"], 4),
+    { id: "hx4_castle_of_sand", name: "Castle of Sand", description: "Both of your opponent's rooks crumble into walnuts for 4 of their turns: heavy husks that can only shuffle one square at a time. The first tower the sand would claim may make one move, then it too crumbles.", flavor: "The tide always finds the towers.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const rooks = mySquares(api.board, api.opp, "r");
+        if (rooks.length === 0) {
+          inst.spent = true;
+          return;
+        }
+        let esc = rooks[0];
+        for (const r of rooks) if (r < esc) esc = r;
+        for (const r of rooks) if (r !== esc) nutNow(api, r, 4);
+        inst.state.sq = esc;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null || move.color !== api.opp) return;
+        const before = inst.state.sq as Square;
+        if (move.from === before) {
+          const now = followSq(before, move);
+          if (now != null) nutSting(api, now, 4);
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(before, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+      },
+      status: (inst) => (inst.spent ? "the towers are sand" : "one tower still stands, for one move"),
+    },
   ),
   H7(
     { id: "hx4_veil_of_moths", name: "Veil of Moths", description: "A living veil settles over your half of the board: for your opponent's next 4 turns, they cannot capture anything standing in your half.", flavor: "A thousand wings between the blade and the mark.", icon: "Bug", fx: { motif: "muzzle", pieces: "all" } },
@@ -1560,9 +1590,9 @@ const T7: Buff[] = [
       }),
     ),
   ),
-  H7(
-    { id: "hx4_choke_point", name: "Choke Point", description: "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next 2 turns. Their king picks its way through freely.", flavor: "The middle of the map is mostly spikes now.", icon: "Hexagon", fx: { motif: "blindfold", pieces: "all" } },
-    curse(2, (moves) =>
+  hex(
+    { id: "hx4_choke_point", name: "Choke Point", description: "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.", flavor: "The middle of the map is mostly spikes now.", icon: "Hexagon", fx: { motif: "blindfold", pieces: "all" }, tier: 8 },
+    curse(1, (moves) =>
       moves.filter((m) => {
         if (m.piece === "k") return true;
         const f = FILE(m.to);

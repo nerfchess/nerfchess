@@ -1298,7 +1298,7 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
       },
     );
   }
-  return opener(entry, baseDesc, augment(gen, uses));
+  return opener(entry, baseDesc, lossy ? lossyAugment(gen, uses) : augment(gen, uses));
 }
 
 // ---------------------------------------------------------------------------

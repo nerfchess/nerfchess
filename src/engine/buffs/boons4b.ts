@@ -2001,9 +2001,25 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_marshals_baton", name: "Marshal's Baton", tier: 7, category: "movement", icon: "Wand",
-      description: "Redraw the whole line: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board.",
+      description: "Redraw the whole line: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board. The first piece you move cannot be captured on your opponent's next turn.",
       flavor: "One sweep of the baton and the map apologizes." },
-    relocateMany(3, (api) => emptySquares(api.board)),
+    ((base) => ({
+      ...base,
+      // Keep the original relocation, then shield the first arrival for one
+      // opponent turn (turns: 1 is auto-compensated for the activation turn).
+      effect: (inst: BuffInstance, api: BuffApi, picks) => {
+        base.effect!(inst, api, picks);
+        for (let i = 0; i + 1 < picks.length; i += 2) {
+          const to = picks[i + 1].square;
+          if (to == null) continue;
+          const p = api.board.pieces[to];
+          if (p && p.color === api.me) {
+            addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 1 });
+            break;
+          }
+        }
+      },
+    }))(relocateMany(3, (api) => emptySquares(api.board))),
   ),
   card(
     { id: "bn4_royal_barge", name: "Royal Barge", tier: 6, category: "movement", icon: "Sailboat",
