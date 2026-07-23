@@ -1218,8 +1218,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_cracked_bell", name: "Cracked Bell", description: "For your opponent's next 5 turns, the truce bell rings on their 2nd and 4th turns: on those turns they cannot capture.", flavor: "It rings when it likes. The law is the law.", icon: "Bell", fx: { motif: "muzzle", pieces: "all" } },
-    cadenceCurse(5, (e) => e === 1 || e === 3, (moves) => moves.filter((m) => !m.captured)),
+    { id: "hx4_cracked_bell", name: "Cracked Bell", description: "For your opponent's next 4 turns, the truce bell rings on their 2nd and 4th turns: on those turns they cannot capture.", flavor: "It rings when it likes. The law is the law.", icon: "Bell", fx: { motif: "muzzle", pieces: "all" } },
+    cadenceCurse(4, (e) => e === 1 || e === 3, (moves) => moves.filter((m) => !m.captured)),
   ),
   hex(
     { id: "hx4_moth_eaten_gloves", name: "Moth Eaten Gloves", description: "For your opponent's next 4 turns, their queen may only capture on light squares. Her dark glove is full of holes.", flavor: "One cannot strangle anyone in THESE.", icon: "Hand", fx: { motif: "muzzle", pieces: ["q"] }, tier: 4 },
@@ -1419,8 +1419,8 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_fear_of_open_ground", name: "Fear of Open Ground", description: "For your opponent's next 4 turns, their rooks may not stop on a file that holds no pawns of either color. Open ground makes them itch.", flavor: "A tower without walls is just a target.", icon: "Binoculars", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_fear_of_open_ground", name: "Fear of Open Ground", description: "For your opponent's next 3 turns, their rooks may not stop on a file that holds no pawns of either color. Open ground makes them itch.", flavor: "A tower without walls is just a target.", icon: "Binoculars", fx: { motif: "anchor", pieces: ["r"] } },
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "r") return true;
         const f = FILE(m.to);
@@ -1454,8 +1454,8 @@ const T3: Buff[] = [
     },
   ),
   H3(
-    { id: "hx4_leaking_boats", name: "Leaking Boats", description: "For your opponent's next 4 turns, their pieces standing on the a and h files are too busy bailing water to fight: they cannot capture.", flavor: "The flank fleet is mostly bucket.", icon: "Sailboat", fx: { motif: "muzzle", pieces: "all" } },
-    curse(4, (moves) =>
+    { id: "hx4_leaking_boats", name: "Leaking Boats", description: "For your opponent's next 3 turns, their pieces standing on the a and h files are too busy bailing water to fight: they cannot capture.", flavor: "The flank fleet is mostly bucket.", icon: "Sailboat", fx: { motif: "muzzle", pieces: "all" } },
+    curse(3, (moves) =>
       moves.filter((m) => !m.captured || (FILE(m.from) !== 0 && FILE(m.from) !== 7)),
     ),
   ),
