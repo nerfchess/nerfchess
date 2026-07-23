@@ -961,8 +961,8 @@ const T2: Buff[] = [
     delayedCurse(3, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 4)),
   ),
   H2(
-    { id: "hx4_frost_footprints", name: "Frost Footprints", description: "For your opponent's next 2 turns, every square one of their pieces leaves ices over behind it: no piece of theirs may stop there on their following turn.", flavor: "You cannot go home by the road you froze.", icon: "Snowflake", fx: { motif: "blindfold", pieces: "all" } },
-    onTheirMove(2, (move, api) => {
+    { id: "hx4_frost_footprints", name: "Frost Footprints", description: "Starting after your opponent's next move, for their following 2 turns, every square one of their pieces leaves ices over behind it: no piece of theirs may stop there on their following turn.", flavor: "You cannot go home by the road you froze.", icon: "Snowflake", fx: { motif: "blindfold", pieces: "all" } },
+    delayedOnTheirMove(2, (move, api) => {
       if (move.from !== move.to) {
         addEffect(api, { kind: "barred", squares: [move.from], against: api.opp, turns: 2 });
       }
@@ -981,8 +981,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_halo_of_the_crown", name: "Halo of the Crown", description: "A faint halo guards your court: for your opponent's next 3 turns, they cannot capture any piece standing adjacent to your king.", flavor: "Some borders are drawn in light.", icon: "Sun", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_halo_of_the_crown", name: "Halo of the Crown", description: "A faint halo guards your court: for your opponent's next 3 turns, they cannot capture any piece standing adjacent to your king. The first such capture slips through as one escape, then the restriction holds.", flavor: "Some borders are drawn in light.", icon: "Sun", fx: { motif: "muzzle", pieces: "all" } },
+    escapeCurseBoard(3, (moves, api) => {
       const k = myKing(api);
       if (k == null) return moves;
       return moves.filter((m) => {
@@ -1009,8 +1009,8 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_mirror_manners", name: "Mirror Manners", description: "For your opponent's next 2 turns, they may not capture with the same type of piece you moved on your previous turn.", flavor: "Copying is rude. Especially with swords.", icon: "Copy", fx: { motif: "muzzle", pieces: "all" } },
-    curse(2, (moves, api) => {
+    { id: "hx4_mirror_manners", name: "Mirror Manners", description: "For your opponent's next 2 turns, they may not capture with the same type of piece you moved on your previous turn. The first such capture slips through as one escape, then the restriction holds.", flavor: "Copying is rude. Especially with swords.", icon: "Copy", fx: { motif: "muzzle", pieces: "all" } },
+    escapeCurseBoard(2, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.me) {
@@ -1021,8 +1021,8 @@ const T2: Buff[] = [
       return moves;
     }),
   ),
-  H2(
-    { id: "hx4_heavy_dew", name: "Heavy Dew", description: "A freezing dew settles at dawn: every enemy piece standing on its owner's fourth rank is frozen for 1 of their turns.", flavor: "The forward camp woke up crunchy.", icon: "Droplets", fx: { motif: "jail", pieces: "all" } },
+  hex(
+    { id: "hx4_heavy_dew", name: "Heavy Dew", description: "A freezing dew settles at dawn: every enemy piece standing on its owner's fourth rank is frozen for 1 of their turns.", flavor: "The forward camp woke up crunchy.", icon: "Droplets", fx: { motif: "jail", pieces: "all" }, tier: 3 },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         if (relRank(api.opp, sq) === 4) freezeNow(api, sq, 1, "ice");
