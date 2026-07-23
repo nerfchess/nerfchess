@@ -54,7 +54,6 @@ import {
   spendOnVia,
   timedAugment,
   timedOppFilter,
-  voidSquares,
 } from "../helpers";
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -287,17 +286,24 @@ function barNeighbors(barTurns: number, freezeTurns: number, label: string): Mec
     (_inst, api, picks) => {
       const c = picks[0]?.square;
       if (c == null) return;
-      const squares: Square[] = [];
+      const ring: Square[] = [];
       for (const [df, dr] of ALL_DIRS) {
         const f = FILE(c) + df, r = RANK(c) + dr;
-        if (inBoard(f, r)) squares.push(SQ(f, r));
+        if (inBoard(f, r)) ring.push(SQ(f, r));
       }
-      if (squares.length) {
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: barTurns });
+      // The defender's bridge: one ring square is left open so the wall never
+      // fully seals the ring. A live defender choice is not practical in this
+      // activated (caster-driven) shape, so the gap is picked deterministically:
+      // the lowest square by coordinate.
+      const barred = ring.slice().sort((a, b) => a - b);
+      barred.shift();
+      if (barred.length) {
+        addEffect(api, { kind: "barred", squares: barred, against: api.opp, turns: barTurns });
       }
-      // The thorns bite: any enemy piece already caught in the ring is snared
-      // and cannot move for `freezeTurns` of their turns.
-      for (const sq of squares) {
+      // The thorns bite: any enemy piece already caught in the ring (the bridge
+      // square included) is snared and cannot move for `freezeTurns` of their
+      // turns.
+      for (const sq of ring) {
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") {
           addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: freezeTurns, skin: "vines" });
@@ -1604,12 +1610,56 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_flood",
       name: "Flood",
       description:
-        "Three floodwaters spread over empty squares: the first enemy piece to step onto each (never a king) is swept off the board. They stay for 2 of your turns.",
+        "Three floodwaters spread over empty squares: the first enemy piece to step onto one with a non-capturing move (never a king) is swept off the board. A piece that captures its way onto the water is not swept. They stay for 2 of your turns.",
       tier: 6,
       category: "attack",
       flavor: "The water finds the low ground first.",
     },
-    voidSquares(3, 2),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once the floodwaters are placed they never move.
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.squares != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a floodwater square (${picks.length + 1}/3)`,
+              squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.squares != null) return;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.turns = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return;
+        // The floodwater only sweeps a piece that steps onto open water: a piece
+        // that captures its way onto a flood square is not swept.
+        if (
+          move.color === api.opp &&
+          squares.includes(move.to) &&
+          move.piece !== "k" &&
+          !move.captured
+        ) {
+          api.removePiece(move.to);
+        }
+        if (move.color === api.me) {
+          const left = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return "activate to place";
+        const names = squares
+          .map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`)
+          .join(", ");
+        return `flooding at ${names}, ${(inst.state.turns as number) ?? 0} of your turns left`;
+      },
+    },
   ),
 
   // ===================== GROWTH =====================
@@ -1833,7 +1883,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_thorn_barrier",
       name: "Thorn Barrier",
       description:
-        "A hedge of thorns bursts up on an empty square: your opponent cannot enter any of the 8 squares around it for their next 3 turns, and any enemy piece already caught in that ring is snared and cannot move for its next 2 turns.",
+        "A hedge of thorns bursts up on an empty square: your opponent cannot enter the squares around it, save one gap left open as a bridge, for their next 3 turns, and any enemy piece already caught in that ring is snared and cannot move for its next 2 turns.",
       tier: 6,
       category: "protection",
       flavor: "Grown too fast to climb, and it grabs what it can reach.",
