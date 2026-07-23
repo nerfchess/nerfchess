@@ -128,7 +128,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_frost_wyrm",
       name: "Frost Wyrm",
       description:
-        "An ice dragon sweeps a chosen rank: every enemy piece on it (king excluded) is frozen for 2 turns, and its empty squares become ice walls your opponent cannot enter for their next 2 turns.",
+        "An ice dragon sweeps a chosen rank: every enemy piece on it (king excluded) is frozen for 2 turns, and its empty squares become ice walls your opponent cannot enter for their next turn.",
       tier: 6,
       category: "tempo",
       icon: "Snowflake",
@@ -162,7 +162,7 @@ export const OVERHAUL_T6: Buff[] = [
             addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
           }
         }
-        if (walls.length) addEffect(api, { kind: "barred", squares: walls, against: api.opp, turns: 2 });
+        if (walls.length) addEffect(api, { kind: "barred", squares: walls, against: api.opp, turns: 1 });
       },
     ),
   ),
@@ -465,7 +465,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_grand_illusionist",
       name: "Grand Illusionist",
       description:
-        "For your opponent's next 2 turns, they cannot capture your knights or bishops. Which one was the real one again?",
+        "For your opponent's next 2 turns, they cannot capture your knights or bishops, and using it spends one of your unused draft rerolls if you have any. Which one was the real one again?",
       tier: 6,
       category: "protection",
       icon: "VenetianMask",
@@ -473,9 +473,21 @@ export const OVERHAUL_T6: Buff[] = [
       requires: ["n", "b"],
       fx: { motif: "muzzle" },
     },
-    timedOppFilter(2, (moves) =>
-      moves.filter((m) => m.captured !== "n" && m.captured !== "b"),
-    ),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 2;
+        // Using the illusion spends the next unused reroll, if any.
+        if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const filtered = moves.filter((m) => m.captured !== "n" && m.captured !== "b");
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   // 137. Emergency Patch --------------------------------------------------------------------------------
   card(
@@ -863,7 +875,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_feng_shui_plot",
       name: "Feng Shui Plot",
       description:
-        "Claim a 2x2 plot for 6 of your turns: your pieces standing inside it may also step one square in any direction.",
+        "Claim a 2x2 plot for 6 of your turns: your pieces standing inside it may also step one square in any direction, but that step cannot capture.",
       tier: 6,
       category: "movement",
       icon: "Home",
@@ -898,6 +910,7 @@ export const OVERHAUL_T6: Buff[] = [
           const p = api.board.pieces[sq];
           if (!p || p.color !== api.me) continue;
           for (const m of slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)) {
+            if (m.captured) continue;
             if (p.type === "p" && !pawnRankOk(m.to)) continue;
             if (!moves.some((x) => x.from === m.from && x.to === m.to)) moves.push(m);
           }

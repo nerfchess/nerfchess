@@ -1040,11 +1040,10 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_velvet_queue", name: "Velvet Queue", tier: 5, category: "draft", icon: "Ribbon",
-      description: "Your next draft offer is fated to deal tier 6 cards. Skipping the line costs you the draft after it, which is skipped.",
+      description: "Your next draft offer is fated to deal tier 6 cards.",
       flavor: "The rope lifts for you. The rope remembers." },
     instant((_inst, api) => {
       api.mine.flags.forceTier = 6;
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
@@ -1087,9 +1086,9 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_guards_change", name: "Changing of the Guard", tier: 6, category: "nerf", icon: "Shield",
-      description: "Suspend your nerf for your next 6 turns, and none of your pieces can be captured on your opponent's next turn.",
+      description: "Suspend your nerf for your next 5 turns, and none of your pieces can be captured on your opponent's next turn.",
       flavor: "For one ceremony, everything stands still and safe." },
-    suspendNow(6, (api) => {
+    suspendNow(5, (api) => {
       addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
     }),
   ),
@@ -1110,12 +1109,16 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_hollow_crown", name: "Hollow Crown", tier: 6, category: "nerf", icon: "Crown",
-      description: "While your opponent's queen is off the board, your nerf is suspended.",
+      description: "Beginning after your opponent's next move, your nerf is suspended while their queen is off the board.",
       flavor: "Their court is quieter now. Yours is lighter." },
-    reliefWhile(
-      (api) => mySquares(api.board, api.opp, "q").length === 0,
-      "watching their empty throne",
-    ),
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (mySquares(api.board, api.opp, "q").length === 0) susp(api, 1);
+      },
+      status: () => "watching their empty throne",
+    },
   ),
   card(
     { id: "bn4_tower_toll", name: "Tower Toll", tier: 6, category: "nerf", icon: "TowerControl",
