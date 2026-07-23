@@ -1080,9 +1080,20 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_long_holiday", name: "Long Holiday", tier: 6, category: "nerf", icon: "Palmtree",
-      description: "Suspend your nerf for your next 8 turns.",
+      description: "After your opponent's next move, your nerf is suspended for your next 8 turns.",
       flavor: "Out of office. Out of reach. Out of excuses to return." },
-    suspendNow(8),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        // Delayed start: the holiday begins only after the opponent replies.
+        // nerf_suspended ticks on MY turns, so this opponent move does not
+        // consume one of the 8 (no compensation needed).
+        susp(api, 8);
+        inst.spent = true;
+      },
+      status: () => "the holiday begins after their reply",
+    },
   ),
   card(
     { id: "bn4_guards_change", name: "Changing of the Guard", tier: 6, category: "nerf", icon: "Shield",
@@ -1094,18 +1105,38 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_spymasters_leave", name: "Spymaster's Leave", tier: 6, category: "nerf", icon: "VenetianMask",
-      description: "Suspend your nerf for your next 5 turns, learn the tier of your opponent's next draft offer, and gain 2 draft rerolls.",
+      description: "Suspend your nerf for your next 5 turns, learn the tier of your opponent's next draft offer, and gain 2 draft rerolls. On the last of those turns you may only step one square (a king step).",
       flavor: "Even on vacation, the letters keep arriving." },
-    suspendNow(5, (api) => {
-      api.mine.flags.seeOppTier = true;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        armMoveOnlyFinal(api, inst, 5);
+        api.mine.flags.seeOppTier = true;
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+      },
+      onMovePlayed: leashRider,
+      status: () => "the final turn tightens the leash",
+    },
   ),
   card(
     { id: "bn4_ministers_seal", name: "Minister's Seal", tier: 6, category: "nerf", icon: "Stamp",
-      description: "Free action: suspend your nerf for your next 7 turns, used at the moment you choose.",
+      description: "Free action, used at the moment you choose: your nerf is suspended for your next 7 turns, beginning after your opponent's next reply.",
       flavor: "Wax, ribbon, and the full weight of the cabinet." },
-    suspendFree(7),
+    {
+      ...activatedSimple((inst, _api) => {
+        inst.state.armed = true;
+      }),
+      freeAction: true,
+      spendOnUse: false,
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || inst.spent || move.color !== api.opp) return;
+        // Delayed start: the seal takes hold only after the opponent replies.
+        susp(api, 7);
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed ? "the seal takes hold after their reply" : "free action: use when you choose",
+    },
   ),
   card(
     { id: "bn4_hollow_crown", name: "Hollow Crown", tier: 6, category: "nerf", icon: "Crown",
@@ -1122,7 +1153,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_tower_toll", name: "Tower Toll", tier: 6, category: "nerf", icon: "TowerControl",
-      description: "Tear down one of your rooks (it is removed and truly lost): your nerf is suspended for your next 15 turns.",
+      description: "Tear down one of your rooks (it is removed and truly lost): your nerf is suspended for your next 14 turns.",
       flavor: "Stone by stone, the debt comes down.", requires: ["r"] },
     activated(
       (_inst, api, picks) =>
@@ -1139,7 +1170,7 @@ export const BOON_WAVE4B: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "r") return;
         api.removePiece(sq);
-        susp(api, 15);
+        susp(api, 14);
       },
     ),
   ),
@@ -1215,11 +1246,17 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_quiet_coup", name: "Quiet Coup", tier: 6, category: "nerf", icon: "Feather",
-      description: "Suspend your nerf for your next 6 turns, and your next draft offer rolls one tier higher.",
+      description: "Suspend your nerf for your next 6 turns, and your next draft offer rolls one tier higher. On the last of those turns you may only step one square (a king step).",
       flavor: "No shots fired. Several chairs reassigned." },
-    suspendNow(6, (api) => {
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        armMoveOnlyFinal(api, inst, 6);
+        api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+      },
+      onMovePlayed: leashRider,
+      status: () => "the final turn tightens the leash",
+    },
   ),
 
   // --- movement (5) ---

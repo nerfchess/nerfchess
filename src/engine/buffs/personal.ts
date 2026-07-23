@@ -416,14 +416,14 @@ const GYM: Buff[] = [
       };
       return {
         kind: "activated",
-        // buffed: capacity raised from 3 to 4 shoved pieces (kings stay immune,
+        // Nerf: capacity reduced from 4 to 3 shoved pieces (kings stay immune,
         // no captures, per pushDest above).
         targets: (_inst, api, picks) =>
-          picks.length >= 4
+          picks.length >= 3
             ? null
             : {
                 kind: "square",
-                label: `Choose an enemy piece to shove back (${picks.length + 1}/4)`,
+                label: `Choose an enemy piece to shove back (${picks.length + 1}/3)`,
                 squares: mySquares(api.board, api.opp).filter(
                   (sq) => pushDest(api, sq) != null && !picks.some((k) => k.square === sq),
                 ),
@@ -444,17 +444,80 @@ const GYM: Buff[] = [
       id: "full_planche",
       name: "Full Planche",
       description:
-        "Lock one of your pieces into a perfect hold. It hovers uncapturable for your opponent's next 5 turns and slides like a rook along every open rank and file for the game.",
+        "Lock one of your pieces into a perfect hold. It slides like a rook along every open rank and file for the game, and hovers uncapturable for your opponent's next 5 turns, until the moment it makes a capture, which ends the immunity early.",
       tier: 6,
       category: "protection",
       icon: "StretchHorizontal",
       flavor: "Dead still, arms locked, feet floating.",
       fx: { motif: "ward", moveAs: "r", self: true },
     },
-    bindPiece("Choose a piece to hold in a planche", bindCandidates(), {
-      shieldTurns: 5,
-      gen: (b, sq, via) => slideMoves(b, sq, ORTHO_DIRS, via),
-    }),
+    (() => {
+      // Like bindPiece(shieldTurns:5) but the immunity ends the instant the
+      // held piece captures. The rook-slide movement stays for the game.
+      const gen = (b: BoardState, sq: Square, via: string) =>
+        slideMoves(b, sq, ORTHO_DIRS, via);
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.sq != null
+            ? null
+            : {
+                kind: "square",
+                label: "Choose a piece to hold in a planche",
+                squares: bindCandidates()(api),
+              },
+        effect: (inst, api, picks) => {
+          const sq = picks[0]?.square;
+          if (sq == null || inst.state.sq != null) return;
+          inst.state.sq = sq;
+          inst.state.shielded = true;
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 5 });
+        },
+        augmentMoves: (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          addNovel(moves, gen(api.board, sq, inst.id));
+        },
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          // The hold breaks the moment the planche piece captures: drop its
+          // shield early (the shield square still reads move.from here, since
+          // shields follow the piece only after these hooks run).
+          if (
+            sq != null &&
+            inst.state.shielded &&
+            move.color === api.me &&
+            move.from === sq &&
+            move.captured
+          ) {
+            for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+              const e = api.bs.effects[i];
+              if (
+                e.kind === "shield" &&
+                e.owner === api.me &&
+                e.squares &&
+                e.squares.length === 1 &&
+                e.squares[0] === sq
+              ) {
+                api.bs.effects.splice(i, 1);
+              }
+            }
+            inst.state.shielded = false;
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return "activate to choose a piece";
+          return inst.state.shielded
+            ? `held at ${sqLabel(sq)}, immune`
+            : `sliding at ${sqLabel(sq)}`;
+        },
+      };
+    })(),
   ),
 
   card(
@@ -462,7 +525,7 @@ const GYM: Buff[] = [
       id: "fingertip_maltese",
       name: "Fingertip Maltese",
       description:
-        "Elite fingertip hold on one enemy piece: it freezes for their next 3 turns and the eight squares around it are sealed, so nothing can rescue or relieve it.",
+        "Elite fingertip hold on one enemy piece: it freezes for their next 3 turns and the empty squares around it are sealed, so no fresh piece can move in to rescue it, though pieces already beside it may leave normally.",
       tier: 7,
       category: "attack",
       icon: "Hand",
@@ -486,7 +549,15 @@ const GYM: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stun" });
-        addEffect(api, { kind: "barred", squares: neighbors8(sq), against: api.opp, turns: 3 });
+        // Nerf: only the EMPTY surrounding squares are sealed, so a piece
+        // already standing beside the pinned one is never trapped in and may
+        // leave normally; the seal still blocks any fresh piece moving in.
+        addEffect(api, {
+          kind: "barred",
+          squares: neighbors8(sq).filter((n) => !api.board.pieces[n]),
+          against: api.opp,
+          turns: 3,
+        });
       },
     ),
   ),
@@ -625,7 +696,7 @@ const FOCUS: Buff[] = [
       id: "rubiks_cube",
       name: "Rubik's Cube",
       description:
-        "Scramble the cube: make up to 3 twists, each swapping the spots of two of your own pieces standing within 2 squares of each other. Kings never twist.",
+        "Scramble the cube: choose up to 3 twists, each swapping the spots of two of your own pieces standing within 2 squares of each other. Kings never twist. The twists only resolve after your opponent's next move.",
       tier: 5,
       category: "movement",
       icon: "Box",
@@ -639,8 +710,9 @@ const FOCUS: Buff[] = [
       };
       return {
         kind: "activated",
-        targets: (_inst, api, picks) => {
-          if (picks.length >= 6) return null;
+        spendOnUse: false,
+        targets: (inst, api, picks) => {
+          if (inst.state.pending != null || picks.length >= 6) return null;
           const onFirstOfPair = picks.length % 2 === 0;
           if (onFirstOfPair) {
             // Pick piece A: any of my non-king pieces that has a legal partner.
@@ -684,9 +756,19 @@ const FOCUS: Buff[] = [
             ),
           };
         },
-        effect: (_inst, api, picks) => {
-          for (let i = 0; i + 1 < picks.length; i += 2) {
-            const a = picks[i].square, b = picks[i + 1].square;
+        // Nerf: the twists no longer resolve on activation. Bank the chosen
+        // pairs and apply them only after the opponent's next move.
+        effect: (inst, _api, picks) => {
+          if (inst.state.pending != null) return;
+          inst.state.pending = picks
+            .map((k) => k.square)
+            .filter((s): s is Square => s != null);
+        },
+        onMovePlayed: (inst, move, api) => {
+          const pending = inst.state.pending as Square[] | undefined;
+          if (pending == null || inst.spent || move.color !== api.opp) return;
+          for (let i = 0; i + 1 < pending.length; i += 2) {
+            const a = pending[i], b = pending[i + 1];
             if (a == null || b == null) continue;
             const pa = api.board.pieces[a], pb = api.board.pieces[b];
             if (!pa || !pb || pa.color !== api.me || pb.color !== api.me) continue;
@@ -695,7 +777,12 @@ const FOCUS: Buff[] = [
             api.setPieceType(a, tb);
             api.setPieceType(b, ta);
           }
+          inst.spent = true;
         },
+        status: (inst) =>
+          inst.state.pending == null
+            ? "activate to scramble the cube"
+            : "the twists resolve after your opponent moves",
       };
     })(),
   ),
@@ -863,7 +950,7 @@ const AFFECTION: Buff[] = [
       id: "i_love_my_gf",
       name: "I Love My GF",
       description:
-        "Your whole army, king included, cannot be captured for your opponent's next 3 turns, and you take two extra moves right now.",
+        "Your pieces standing in your own half cannot be captured for your opponent's next turn, and you take one bonus move right now. Your king shares the shield only if it is currently in check.",
       tier: 8,
       category: "protection",
       icon: "Heart",
@@ -874,9 +961,16 @@ const AFFECTION: Buff[] = [
       kind: "activated",
       freeAction: true,
       effect: (_inst, api) => {
-        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
-        api.bs.extraMoves[api.me] += 2;
+        // Nerf: shield only the pieces in your own half, for a single opponent
+        // turn, plus one bonus move. The king is covered only when in check.
+        const squares = mySquares(api.board, api.me).filter(
+          (sq) => inHalf(api.me, sq) && api.board.pieces[sq]!.type !== "k",
+        );
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
+        if (isInCheck(api.board, api.me)) {
+          addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        }
+        api.bs.extraMoves[api.me] += 1;
       },
     },
   ),
@@ -889,7 +983,7 @@ const AFFECTION: Buff[] = [
       id: "i_love_cam",
       name: "I Love Cami",
       description:
-        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured. If she is ever taken, her captor is frozen for 2 turns.",
+        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
       tier: 6,
       category: "pieces",
       icon: "Crosshair",
@@ -914,6 +1008,9 @@ const AFFECTION: Buff[] = [
         if (sq == null || api.board.pieces[sq] || !inHalf(api.me, sq)) return;
         api.place(sq, "q", api.me);
         inst.state.sq = sq;
+        // Nerf: Devotion is no longer permanent. The group immunity runs for
+        // the opponent's next 3 turns (counted down in onMovePlayed).
+        inst.state.devote = 3;
         addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
       },
       // Amazon movement: queen slides and the king-guard step are native to
@@ -933,6 +1030,8 @@ const AFFECTION: Buff[] = [
         if (sq == null) return moves;
         const her = api.board.pieces[sq];
         if (!her || her.color !== api.me || her.type !== "q") return moves;
+        // Devotion only guards while the timed window is open.
+        if (((inst.state.devote as number) ?? 0) <= 0) return moves;
         const guarded = new Set(
           neighbors8(sq).filter((n) => {
             const p = api.board.pieces[n];
@@ -948,6 +1047,11 @@ const AFFECTION: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
+        // Count down the Devotion window on the opponent's own turns.
+        if (sq != null && move.color === api.opp) {
+          const left = (inst.state.devote as number) ?? 0;
+          if (left > 0) inst.state.devote = left - 1;
+        }
         // Vengeance: the piece that takes Cami is frozen for 2 of its
         // owner's turns. Kings shrug it off (kings are never frozen).
         if (sq != null && move.color === api.opp && move.to === sq && move.from !== sq) {
