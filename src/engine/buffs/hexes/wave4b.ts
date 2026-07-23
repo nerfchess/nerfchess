@@ -2457,14 +2457,10 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_wall_of_teeth", name: "Wall of Teeth", description: "Your two back ranks grow a wall of teeth: your opponent's pieces cannot stop anywhere on them for their next 3 turns. No infiltration, no promotion.", flavor: "The fortress smiled, and the siege reconsidered.", icon: "Fence", fx: { motif: "blindfold", pieces: "all" } },
-    instant((_inst, api) => {
-      const squares: number[] = [];
-      for (let sq = 0; sq < 64; sq++) {
-        if (relRank(api.opp, sq) >= 7) squares.push(sq);
-      }
-      barNow(api, squares, 3);
-    }),
+    { id: "hx4_wall_of_teeth", name: "Wall of Teeth", description: "Your two back ranks grow a wall of teeth: for your opponent's next 3 turns their pieces cannot stop anywhere on them, though any piece already standing there may still move freely. No infiltration, no promotion.", flavor: "The fortress smiled, and the siege reconsidered.", icon: "Fence", fx: { motif: "blindfold", pieces: "all" } },
+    curse(3, (moves, api) =>
+      moves.filter((m) => relRank(api.opp, m.to) < 7 || relRank(api.opp, m.from) >= 7),
+    ),
   ),
   hex(
     { id: "hx4_black_lotus", name: "Black Lotus", description: "The lotus blooms once over their army: one random pawn, knight, bishop, rook and queen of theirs (one of each they still have) is frozen for 2 of their turns.", flavor: "Five petals, five sleepers.", icon: "Flower", fx: { motif: "jail" }, tier: 6 },
@@ -2476,15 +2472,21 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_tithe_of_silence", name: "Tithe of Silence", description: "For your opponent's next 6 turns, shouting at a king is taxed: each of their first 2 checks against your king costs them their following turn, skipped outright.", flavor: "You may speak. You may not be heard.", icon: "MicOff", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_tithe_of_silence", name: "Tithe of Silence", description: "Your opponent's next move passes freely. Then, for their following 6 turns, shouting at a king is taxed: each of their first 2 checks against your king costs them their following turn, skipped outright.", flavor: "You may speak. You may not be heard.", icon: "MicOff", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
         inst.state.paid = 0;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && turnsLeft(inst) > 0 && isInCheck(api.board, api.me)) {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        if (turnsLeft(inst) > 0 && isInCheck(api.board, api.me)) {
           const paid = ((inst.state.paid as number) ?? 0) + 1;
           inst.state.paid = paid;
           api.bs.skips[api.opp] += 1;
@@ -2495,7 +2497,10 @@ const T8: Buff[] = [
         }
         tickTurns(inst, move, api.opp);
       },
-      status: (inst) => `${(inst.state.paid as number) ?? 0}/2 tithes, ${turnsLeft(inst)} of their turns left`,
+      status: (inst) =>
+        inst.state.armed
+          ? `${(inst.state.paid as number) ?? 0}/2 tithes, ${turnsLeft(inst)} of their turns left`
+          : "the tithe begins after their next move",
     },
   ),
   H8(
@@ -2506,11 +2511,11 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_tolling_thirds", name: "The Tolling Thirds", description: "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, their most valuable piece (never the king) is frozen for 1 of their turns as the bell tolls.", flavor: "It knows exactly whom it tolls for.", icon: "Bell", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_tolling_thirds", name: "The Tolling Thirds", description: "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns as the bell tolls. Their single most valuable piece (never the king) is immune, so the bell instead takes their next most valuable piece.", flavor: "It knows exactly whom it tolls for.", icon: "Bell", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(6, (_move, api, inst) => {
       if (turnsLeft(inst) % 3 === 1) {
         const best = victimByValue(api);
-        if (best.length > 0) sting(api, best[0], 1, "stun");
+        if (best.length > 1) sting(api, best[1], 1, "stun");
       }
     }),
   ),
