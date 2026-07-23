@@ -2196,7 +2196,7 @@ const T8: Buff[] = [
       id: "hw3_martyrs_crown",
       name: "Martyr's Crown",
       description:
-        "A patient briar guards your king for your opponent's next 6 turns. A single check passes unpunished, but on the second time they place your king in check, the thorns lash out: every enemy piece standing next to your king is frozen for 2 of their turns, and the count resets. Persistent, hammering checks are what trigger it - a single decisive check, or threats aimed elsewhere, cost them nothing.",
+        "A patient briar guards your king for your opponent's next 6 turns. A single check passes unpunished, but on the second time they place your king in check, the thorns lash out: every enemy piece standing next to your king is frozen for 2 of their turns, and the count resets. The defender resists with their two most valuable pieces next to your king: those two are spared, the rest are caught. Persistent, hammering checks are what trigger it - a single decisive check, or threats aimed elsewhere, cost them nothing.",
       flavor: "Crown me in thorns. I will wear them, and so will you.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -2214,12 +2214,19 @@ const T8: Buff[] = [
               (sq) => api.board.pieces[sq]!.type === "k",
             );
             if (myKing != null) {
-              for (const sq of mySquares(api.board, api.opp)) {
-                if (api.board.pieces[sq]!.type === "k") continue;
-                if (cheb(sq, myKing) === 1) {
-                  // Added during their own move: 3 leaves exactly 2 of their turns.
-                  addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "vines" });
-                }
+              // Adjacent enemy non-kings, minus the defender's two resisters
+              // (their two most valuable such pieces, deterministic tie-break by
+              // lowest square index) - no defender-choice flow fits a passive.
+              const ring = mySquares(api.board, api.opp)
+                .filter((sq) => api.board.pieces[sq]!.type !== "k" && cheb(sq, myKing) === 1)
+                .sort((a, b) => {
+                  const va = VAL[api.board.pieces[a]!.type];
+                  const vb = VAL[api.board.pieces[b]!.type];
+                  return vb - va || a - b;
+                });
+              for (const sq of ring.slice(2)) {
+                // Added during their own move: 3 leaves exactly 2 of their turns.
+                addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "vines" });
               }
             }
             inst.state.thorns = 0;

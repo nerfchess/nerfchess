@@ -118,7 +118,7 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Eye",
       name: "Basilisk's Gaze",
       description:
-        "Turn one enemy piece to stone: it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted.",
+        "Turn one enemy piece to stone. It may make one last legal move to escape; then it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted.",
       tier: 3,
       category: "hex",
       flavor: "Do not, under any circumstance, look back.",
@@ -137,34 +137,48 @@ export const FANTASY_BEASTS: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      effect: (inst, api, picks) => {
+      // Balance pass: the first affected piece gets one legal escape move. The
+      // gaze marks the target now but does not petrify it until it has taken one
+      // move; the walnut then bites where it lands for the full 4 of their turns.
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         inst.state.sq = sq;
         inst.state.turns = 4;
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+        inst.state.escaped = false;
       },
       // While petrified the stone piece may still take its one-square shuffle,
       // but never as a capture: strip its captures from the cursed side's moves.
+      // No restriction until the escape move has been spent.
       filterOpponentMoves: (moves, inst) => {
         const sq = inst.state.sq as Square | undefined;
-        if (sq == null || turnsLeft(inst) <= 0) return moves;
+        if (sq == null || !inst.state.escaped || turnsLeft(inst) <= 0) return moves;
         const kept = moves.filter((m) => !(m.from === sq && m.captured));
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
-        // The petrified piece was captured or overrun: the gaze ends.
+        // The marked piece was captured or overrun: the gaze ends.
         if (move.to === sq && move.from !== sq) {
           inst.spent = true;
           inst.state.sq = undefined;
           return;
         }
-        // Follow it if its owner manages to shuffle it one square.
-        if (move.from === sq) inst.state.sq = move.to;
-        // Tick on the petrified side's own turns, in step with the walnut.
-        if (move.color !== api.opp) return;
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (!inst.state.escaped && move.color === api.opp) {
+            // That was the one legal escape: the stone takes hold where it
+            // lands. turns:5 nets 4 of their turns after the immediate tick a
+            // walnut added on the petrified side's own move receives.
+            inst.state.escaped = true;
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 5 });
+            return;
+          }
+        }
+        // Tick on the petrified side's own turns, in step with the walnut, only
+        // once the escape has been spent.
+        if (move.color !== api.opp || !inst.state.escaped) return;
         const left = turnsLeft(inst) - 1;
         inst.state.turns = left;
         if (left <= 0) {
@@ -175,7 +189,9 @@ export const FANTASY_BEASTS: Buff[] = [
       status: (inst) =>
         inst.state.sq == null
           ? "activate to petrify"
-          : `petrified, ${turnsLeft(inst)} of their turns left`,
+          : inst.state.escaped
+            ? `petrified, ${turnsLeft(inst)} of their turns left`
+            : "the gaze waits: one escape move remains",
     },
   ),
   card(

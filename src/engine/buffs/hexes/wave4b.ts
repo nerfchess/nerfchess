@@ -749,8 +749,8 @@ const T6: Buff[] = [
       for (const sq of mySquares(api.board, api.opp, "r")) freezeNow(api, sq, 2, "rust");
     }),
   ),
-  H6(
-    { id: "hx4_crown_malaise", name: "Crown Malaise", description: "For your opponent's next 4 turns, their queen is bedridden every other turn (the 1st and 3rd) and cannot move on those turns.", flavor: "The physicians prescribe rest and defeat.", icon: "Thermometer", fx: { motif: "slow", pieces: ["q"] } },
+  hex(
+    { id: "hx4_crown_malaise", name: "Crown Malaise", description: "For your opponent's next 4 turns, their queen is bedridden every other turn (the 1st and 3rd) and cannot move on those turns.", flavor: "The physicians prescribe rest and defeat.", icon: "Thermometer", fx: { motif: "slow", pieces: ["q"] }, tier: 7 },
     cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
   H6(
@@ -758,8 +758,23 @@ const T6: Buff[] = [
     skipOpponent(1),
   ),
   H6(
-    { id: "hx4_chain_gang", name: "Chain Gang", description: "On your opponent's next turn, every piece they own may move at most 1 square. King captures are always allowed.", flavor: "Shuffle together, clink together.", icon: "Link2", fx: { motif: "anchor", pieces: "all" } },
-    instant((_inst, api) => addEffect(api, { kind: "short_leash", owner: api.opp, turns: 1 })),
+    { id: "hx4_chain_gang", name: "Chain Gang", description: "On your opponent's next turn, every piece they own may move at most 1 square, except their single most valuable piece, which the chains spare. King captures are always allowed.", flavor: "Shuffle together, clink together.", icon: "Link2", fx: { motif: "anchor", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 1;
+        const strong = victimByValue(api);
+        inst.state.free = strong.length > 0 ? strong[0] : null;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const free = inst.state.free as Square | null;
+        const kept = moves.filter((m) => m.captured === "k" || moveDist(m) <= 1 || (free != null && m.from === free));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H6(
     { id: "hx4_hall_of_mirrors", name: "Hall of Mirrors", description: "For your opponent's next 4 turns, every piece must land on a square of the same color it started from. Knights, whose every leap changes color, cannot move at all. Their king is exempt.", flavor: "Step only where your reflection already stands.", icon: "Copy", fx: { motif: "anchor", pieces: "all" } },

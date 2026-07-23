@@ -614,9 +614,10 @@ function leapfrog(entry: (typeof LEAPFROGS)[number]): Buff {
     return out;
   };
   const baseDesc = `${entry.what}, landing on the square directly beyond, once. The landing square must be empty.`;
-  if (entry.id === "garden_hedge") {
+  if (entry.id === "garden_hedge" || entry.id === "piggyback") {
     // Preserve the payoff, but delay its first trigger: the hop is not offered
-    // until after the opponent's next move.
+    // until after the opponent's next move. (Piggyback's counts are all one, so
+    // the directive's fallback applies: delay until after the opponent replies.)
     return opener(entry, `${baseDesc} The hop becomes available only after your opponent's next move.`, {
       kind: "passive",
       init: (inst) => {
