@@ -424,9 +424,32 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_small_ritual", name: "Small Ritual", tier: 1, category: "nerf", icon: "Flame",
-      description: "The next 3 times you move your king, your nerf is suspended for your next turn.",
+      description: "The next 3 times you move your king, your nerf is suspended for one of your turns, beginning after your opponent's following move.",
       flavor: "One step, one candle." },
-    reliefOn(3, 1, (m, api) => m.color === api.me && m.piece === "k", "rites"),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+        inst.state.pending = 0;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // A suspension armed by an earlier king move begins now, after this reply.
+        if (move.color === api.opp && ((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          susp(api, 1);
+        }
+        // Moving the king arms a suspension that begins after the next reply.
+        const left = (inst.state.charges as number) ?? 0;
+        if (left > 0 && move.color === api.me && move.piece === "k") {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+          inst.state.charges = left - 1;
+        }
+        if (((inst.state.charges as number) ?? 0) <= 0 && ((inst.state.pending as number) ?? 0) <= 0) {
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} rites left`,
+    },
   ),
   card(
     { id: "bn4_grace_note", name: "Grace Note", tier: 1, category: "nerf", icon: "Feather",
@@ -440,12 +463,28 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_shared_silence", name: "Shared Silence", tier: 1, category: "nerf", icon: "Handshake",
-      description: "Both players' nerfs are suspended for their next turn.",
+      description: "After your opponent's next move, both players' nerfs are suspended for their following turn.",
       flavor: "Neither of you mentions it. It is nicer that way." },
-    instant((_inst, api) => {
-      susp(api, 1);
-      susp(api, 1, api.opp);
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const d = (inst.state.delay as number) ?? 1;
+        inst.state.delay = d - 1;
+        if (d - 1 <= 0) {
+          // Suspend both, beginning after this reply. The opponent's own timer
+          // ticks on their moves, so it needs turns:2 to survive this one and
+          // still cover their following turn (yours is not ticked here).
+          susp(api, 1);
+          susp(api, 2, api.opp);
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "silence begins after their reply"),
+    },
   ),
   card(
     { id: "bn4_check_valve", name: "Check Valve", tier: 1, category: "nerf", icon: "ShieldAlert",
