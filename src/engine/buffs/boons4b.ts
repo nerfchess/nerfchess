@@ -3172,15 +3172,30 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_long_winter", name: "The Long Winter", tier: 8, category: "tempo", icon: "Snowflake",
-      description: "Every enemy piece (their king excepted) is frozen for your opponent's next 2 turns, and your king cannot be captured on their next turn.",
+      description: "Every enemy piece (their king excepted) is frozen for your opponent's next 2 turns, and your king cannot be captured on their next turn, unless your king makes a capture, which ends that safety.",
       flavor: "The whole country holds its breath under the snow." },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
-      }
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
-    }),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "k") continue;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+        }
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+      },
+      onMovePlayed: (_inst, move, api) => {
+        // The only protection is the king's safety; it lifts the moment the
+        // protected piece (your king) makes a capture.
+        if (move.color !== api.me || move.piece !== "k" || !move.captured || move.captured === "k") {
+          return;
+        }
+        for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+          const e = api.bs.effects[i];
+          if (e.kind === "king_safe" && e.owner === api.me) api.bs.effects.splice(i, 1);
+        }
+      },
+      status: () => "winter holds",
+    },
   ),
   card(
     { id: "bn4_hourglass_throne", name: "Hourglass Throne", tier: 6, category: "tempo", icon: "Hourglass",
@@ -3229,12 +3244,38 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_midas_charter", name: "Midas Charter", tier: 8, category: "draft", icon: "Coins",
-      description: "Every one of your future drafts rolls one tier higher, for the rest of the game. The gold rush costs your next 2 drafts, which are skipped.",
+      description: "For your opponent's next 4 turns, every one of your drafts rolls one tier higher; it ends early if your opponent spends a draft reroll. The gold rush costs your next 2 drafts, which are skipped.",
       flavor: "Everything you touch turns to tier." },
-    instant((_inst, api) => {
-      api.mine.flags.stackBoost = Math.min(3, (api.mine.flags.stackBoost ?? 0) + 1);
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.stackBoost = Math.min(3, (api.mine.flags.stackBoost ?? 0) + 1);
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+        inst.state.turns = 4;
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        // End early if the opponent spent a draft reroll (their reroll count
+        // dropped since the last move we observed).
+        const prev = (inst.state.oppRerolls as number) ?? api.theirs.rerollsLeft;
+        let end = api.theirs.rerollsLeft < prev;
+        inst.state.oppRerolls = api.theirs.rerollsLeft;
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 4) - 1;
+          inst.state.turns = t;
+          if (t <= 0) end = true;
+        }
+        if (end) {
+          // Remove only this card's tier lift, leaving any other source intact.
+          api.mine.flags.stackBoost = Math.max(0, (api.mine.flags.stackBoost ?? 1) - 1);
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.spent ? "the charter has lapsed" : `${(inst.state.turns as number) ?? 4} of their turns of gold`,
+    },
+  ),
   ),
   card(
     { id: "bn4_deck_of_kings", name: "Deck of Kings", tier: 8, category: "draft", icon: "Layers",

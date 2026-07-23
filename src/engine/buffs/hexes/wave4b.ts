@@ -2073,8 +2073,8 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_puppet_court", name: "Puppet Court", description: "Every officer's strings are cut: for your opponent's next 3 turns they may move only pawns and their king.", flavor: "The puppeteer stepped out for a smoke.", icon: "Drama", fx: { motif: "jail", pieces: ["n", "b", "r", "q"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
+    { id: "hx4_puppet_court", name: "Puppet Court", description: "Every officer's strings are cut: for your opponent's next 3 turns they may move only pawns and their king. The first officer the strings would bind may make one move, then it binds fully.", flavor: "The puppeteer stepped out for a smoke.", icon: "Drama", fx: { motif: "jail", pieces: ["n", "b", "r", "q"] } },
+    escapeCurse(3, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
   ),
   hex(
     { id: "hx4_avalanche_pass", name: "Avalanche Pass", description: "Snow buries both central files: your opponent's pieces cannot stop on the d or e file for their next 2 turns, while yours climb freely. Pieces already standing there may leave freely.", flavor: "The mountain closed the road on purpose.", icon: "MountainSnow", fx: { motif: "blindfold" }, tier: 6 },
@@ -2230,16 +2230,16 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_no_quarter", name: "No Quarter", description: "Your half of the board rejects the invasion: every enemy piece currently standing in your half becomes a walnut for 2 of their turns.", flavor: "The land itself refuses them.", icon: "ShieldBan", fx: { motif: "anchor", pieces: "all" } },
+    { id: "hx4_no_quarter", name: "No Quarter", description: "Your half of the board rejects the invasion: every enemy piece currently standing in your half becomes a walnut for 1 of their turns.", flavor: "The land itself refuses them.", icon: "ShieldBan", fx: { motif: "anchor", pieces: "all" } },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
-        if (relRank(api.opp, sq) >= 5) nutNow(api, sq, 2);
+        if (relRank(api.opp, sq) >= 5) nutNow(api, sq, 1);
       }
     }),
   ),
   H8(
-    { id: "hx4_pawn_embargo", name: "Pawn Embargo", description: "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The infantry is stopped at the border.", flavor: "Papers, please. Denied.", icon: "FileX2", fx: { motif: "anchor", pieces: ["p"] } },
-    curse(6, (moves, api) => moves.filter((m) => m.piece !== "p" || relRank(api.opp, m.to) <= 4)),
+    { id: "hx4_pawn_embargo", name: "Pawn Embargo", description: "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.", flavor: "Papers, please. Denied.", icon: "FileX2", fx: { motif: "anchor", pieces: ["p"] } },
+    escapeCurse(6, (moves, api) => moves.filter((m) => m.piece !== "p" || relRank(api.opp, m.to) <= 4)),
   ),
   H8(
     { id: "hx4_tempest", name: "Tempest", description: "A storm tears across the board: 6 random empty squares become impassable wreckage your opponent cannot stop on for their next 3 turns, and 2 of their pieces, chosen at random, are stunned frozen for 1 of their turns.", flavor: "The sky finally picked a side.", icon: "CloudLightning", fx: { motif: "blindfold", pieces: "all" } },
@@ -2288,14 +2288,39 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_reapers_due", name: "Reaper's Due", description: "The reaper collects from the front line: your opponent's 3 most advanced pieces (never the king) are frozen for 2 of their turns.", flavor: "The scythe starts with the tallest wheat.", icon: "Scissors", fx: { motif: "jail", pieces: "all" } },
-    instant((_inst, api) => {
-      const front = mySquares(api.board, api.opp)
-        .filter((sq) => api.board.pieces[sq]!.type !== "k")
-        .sort((a, b) => relRank(api.opp, b) - relRank(api.opp, a) || a - b)
-        .slice(0, 3);
-      for (const sq of front) freezeNow(api, sq, 2, "stone");
-    }),
+    { id: "hx4_reapers_due", name: "Reaper's Due", description: "The reaper collects from the front line: your opponent's 3 most advanced pieces (never the king) are frozen for 2 of their turns. The most advanced of them may make one move before it freezes.", flavor: "The scythe starts with the tallest wheat.", icon: "Scissors", fx: { motif: "jail", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const front = mySquares(api.board, api.opp)
+          .filter((sq) => api.board.pieces[sq]!.type !== "k")
+          .sort((a, b) => relRank(api.opp, b) - relRank(api.opp, a) || a - b)
+          .slice(0, 3);
+        // The two rearmost of the front freeze at once; the most advanced piece
+        // gets one escape move before the scythe reaches it.
+        for (let i = 1; i < front.length; i++) freezeNow(api, front[i], 2, "stone");
+        inst.state.sq = front.length > 0 ? front[0] : null;
+        if (inst.state.sq == null) inst.spent = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null || move.color !== api.opp) return;
+        const before = inst.state.sq as Square;
+        if (move.from === before) {
+          const now = followSq(before, move);
+          if (now != null) sting(api, now, 2, "stone");
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(before, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "the harvest is in" : inst.spent ? "the harvest is in" : "one escape move, then it freezes",
+    },
   ),
   H8(
     { id: "hx4_burned_keep", name: "The Burned Keep", description: "Their castle burns to the ground: your opponent may never castle again this game, and both of their rooks, busy fighting the fire, are frozen for 1 of their turns.", flavor: "Insurance does not cover acts of hex.", icon: "FlameKindling", fx: { motif: "jail", pieces: ["r", "k"] } },
@@ -2313,11 +2338,11 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_sated_blades", name: "Sated Blades", description: "For your opponent's next 4 turns, each of their pieces may kill only once: a piece that captures in that window cannot capture again until the curse lifts.", flavor: "A full blade is a lazy blade.", icon: "Utensils", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_sated_blades", name: "Sated Blades", description: "For your opponent's next 3 turns, each of their pieces may kill only once: a piece that captures in that window cannot capture again until the curse lifts.", flavor: "A full blade is a lazy blade.", icon: "Utensils", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 4;
+        inst.state.turns = 3;
         inst.state.sated = [] as Square[];
       },
       filterOpponentMoves: (moves, inst) => {
