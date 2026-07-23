@@ -1328,7 +1328,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "i_love_newjeans",
       name: "I Love NewJeans",
       description:
-        "Harmony: for the game, every non-king piece of yours that stands next to a friendly piece may also step one square in any direction.",
+        "Harmony: for the game, every non-king piece of yours that stands next to a friendly piece may also step one square in any direction onto an empty square, but this step cannot capture.",
       tier: 6,
       category: "movement",
       icon: "Users",
@@ -1336,16 +1336,19 @@ export const NEWJEANS_CARDS: Buff[] = [
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true },
     },
     permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me).flatMap((sq) => {
-        const p = api.board.pieces[sq]!;
-        // buffed: pawns now share the harmony step too (only the king is barred).
-        if (p.type === "k") return [];
-        const grouped = neighbors8(sq).some((n) => {
-          const q = api.board.pieces[n];
-          return !!q && q.color === api.me;
-        });
-        return grouped ? slideMoves(api.board, sq, ALL_DIRS, inst.id, 1) : [];
-      }),
+      mySquares(api.board, api.me)
+        .flatMap((sq) => {
+          const p = api.board.pieces[sq]!;
+          // buffed: pawns now share the harmony step too (only the king is barred).
+          if (p.type === "k") return [];
+          const grouped = neighbors8(sq).some((n) => {
+            const q = api.board.pieces[n];
+            return !!q && q.color === api.me;
+          });
+          return grouped ? slideMoves(api.board, sq, ALL_DIRS, inst.id, 1) : [];
+        })
+        // Nerf: the harmony step cannot capture, only slide onto empty ground.
+        .filter((m) => !m.captured),
     ),
   ),
 

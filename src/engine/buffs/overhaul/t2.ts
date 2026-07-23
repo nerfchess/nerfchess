@@ -497,17 +497,22 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_traffic_cone",
       name: "Traffic Cone",
       description:
-        "Drop cones on up to 3 squares of one file in your half: enemy pieces may pass over them but cannot end a move on them for your opponent's next 2 turns.",
+        "Drop cones on up to 3 empty squares of one file in your half: enemy pieces may pass over them but cannot end a move on them for your opponent's next 2 turns.",
       tier: 2,
       category: "protection",
       icon: "Cone",
       flavor: "Respected by knights, feared by rooks, ignored by pigeons.",
     },
+    // Balance pass: the special action cannot capture. The cone-drop is this
+    // card's only special action and it grants the owner no move, so the
+    // faithful reading is that dropping a cone can never land on (and thus
+    // never capture or displace) a piece: cones may only be placed on EMPTY
+    // squares of your half.
     activated(
       (_inst, api, picks) => {
         if (picks.length >= 3) return null;
-        const myHalf = Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) =>
-          inHalf(api.me, sq),
+        const myHalf = Array.from({ length: 64 }, (_, i) => i as Square).filter(
+          (sq) => inHalf(api.me, sq) && !api.board.pieces[sq],
         );
         if (picks.length === 0) {
           return { kind: "square", label: "Drop the first cone", squares: myHalf };

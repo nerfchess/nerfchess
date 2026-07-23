@@ -1644,32 +1644,63 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_winter_palace", name: "Winter Palace", tier: 6, category: "protection", icon: "Snowflake",
-      description: "Your king cannot be captured for your opponent's next 3 turns, and none of your pieces on your home rank can be captured on their next turn.",
+      description: "Your king cannot be captured for your opponent's next 3 turns, and up to four pieces of your choice on your home rank cannot be captured on their next turn.",
       flavor: "Cold rooms, colder welcome for visitors." },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
-      const squares = mySquares(api.board, api.me).filter(
-        (sq) => RANK(sq) === ownRank(api.me, 0),
-      );
-      if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
-    }),
+    {
+      kind: "activated",
+      targets: (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to shelter (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) =>
+                  RANK(sq) === ownRank(api.me, 0) &&
+                  api.board.pieces[sq]!.type !== "k" &&
+                  !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (_inst, api, picks) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+        const zone: Square[] = [];
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me && p.type !== "k") zone.push(sq);
+        }
+        if (zone.length) addEffect(api, { kind: "shield", owner: api.me, squares: zone, turns: 1 });
+      },
+    },
   ),
 
   // --- tempo (3) ---
 
   card(
     { id: "bn4_relay_baton", name: "Relay Baton", tier: 6, category: "tempo", icon: "Zap",
-      description: "The next time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first.",
+      description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. Each later castle or promotion instead adds 8 seconds to your clock and grants 1 draft reroll.",
       flavor: "Pass the baton. Keep running anyway." },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
-        if (inst.spent || move.color !== api.me) return;
+        if (move.color !== api.me) return;
         if (!isCastle(move) && !move.promotion) return;
-        api.bs.extraMoves[api.me] += 1;
-        inst.spent = true;
+        if (!inst.state.first) {
+          // First handoff: the full extra move.
+          inst.state.first = true;
+          api.bs.extraMoves[api.me] += 1;
+          return;
+        }
+        // Later handoffs pay a smaller reward. The engine cannot tell a timed
+        // game from an untimed one, so grant both: the seconds (a no-op in
+        // untimed play) and a reroll (the untimed substitute, useful in both).
+        api.adjustClock({ addSelfSec: 8 });
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       },
-      status: () => "waiting on the handoff",
+      status: (inst) =>
+        inst.state.first ? "later handoffs pay time and a reroll" : "waiting on the handoff",
     },
   ),
   card(
