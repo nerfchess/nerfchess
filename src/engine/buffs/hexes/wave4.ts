@@ -904,11 +904,9 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_no_full_retreat", name: "No Full Retreat", description: "For your opponent's next 3 turns, no piece may retreat more than 2 squares toward its own back rank in a single move.", flavor: "Walk backwards with dignity, or not at all.", icon: "Undo2", fx: { motif: "anchor", pieces: "all" } },
-    curse(3, (moves, api) =>
-      moves.filter(
-        (m) => m.piece === "k" || relRank(api.opp, m.to) >= relRank(api.opp, m.from) || moveDist(m) <= 2,
-      ),
+    { id: "hx4_no_full_retreat", name: "No Full Retreat", description: "For your opponent's next 3 turns, no piece may retreat more than 2 squares toward its own back rank in a single move. The first piece to try slips through as one escape, then the restriction holds.", flavor: "Walk backwards with dignity, or not at all.", icon: "Undo2", fx: { motif: "anchor", pieces: "all" } },
+    escapeCurse(3, (m, api) =>
+      m.piece === "k" || relRank(api.opp, m.to) >= relRank(api.opp, m.from) || moveDist(m) <= 2,
     ),
   ),
   H2(
@@ -1040,11 +1038,11 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_clumsy_heralds", name: "Clumsy Heralds", description: "For your opponent's next 3 turns, every check they give is followed by apologies: on their following turn they may only move a pawn or their king.", flavor: "The herald announced the attack to the wrong tent.", icon: "Megaphone", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_clumsy_heralds", name: "Clumsy Heralds", description: "For your opponent's next 2 turns, every check they give is followed by apologies: on their following turn they may only move a pawn or their king.", flavor: "The herald announced the attack to the wrong tent.", icon: "Megaphone", fx: { motif: "slow", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
         inst.state.tax = 0;
       },
       filterOpponentMoves: (moves, inst) => {
