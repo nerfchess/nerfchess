@@ -163,6 +163,23 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
+        // Delayed dominion: seize the named piece only after the opponent has
+        // replied. If they moved it on that reply, follow it to its new square;
+        // if it is no longer an enemy rook or queen, the orb fizzles (spent).
+        if (inst.state.pending != null && inst.state.sq == null) {
+          if (move.color !== api.opp) return;
+          let target = inst.state.pending as number;
+          if (move.from === target) target = move.to;
+          const p = api.board.pieces[target];
+          if (p && p.color === api.opp && (p.type === "q" || p.type === "r")) {
+            api.setPieceColor(target, api.me);
+            inst.state.sq = target;
+          } else {
+            inst.spent = true;
+          }
+          inst.state.pending = undefined;
+          return;
+        }
         const sq = inst.state.sq as number | undefined;
         if (sq == null) return;
         // Follow the dominated piece; if it is captured or overrun the orb goes
@@ -180,7 +197,11 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         }
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to dominate" : "the orb holds a champion",
+        inst.state.sq != null
+          ? "the orb holds a champion"
+          : inst.state.pending != null
+            ? "the orb gathers light, seizing after their reply"
+            : "activate to dominate",
     },
   ),
   card(

@@ -262,14 +262,25 @@ export const FANTASY_BEASTS: Buff[] = [
       icon: "Egg",
       name: "Roost of Rocs",
       description:
-        "Three titanic rocs descend and perch along the board's edge: place three knights on empty squares of the outer rim.",
+        "Three titanic rocs descend and perch along the board's edge: place three knights on empty squares of the outer rim, then skip your next draft.",
       tier: 7,
       category: "pieces",
       flavor: "Their shadows blot out the board.",
     },
-    placePieces(["n", "n", "n"], () => (sq: Square) => {
-      const f = sq % 8, r = Math.floor(sq / 8);
-      return f === 0 || f === 7 || r === 0 || r === 7;
-    }),
+    // Balance pass: preserve all three spawns and their placement, but placing
+    // them costs you your next draft.
+    (() => {
+      const base = placePieces(["n", "n", "n"], () => (sq: Square) => {
+        const f = sq % 8, r = Math.floor(sq / 8);
+        return f === 0 || f === 7 || r === 0 || r === 7;
+      });
+      return {
+        ...base,
+        effect: (inst, api, picks) => {
+          base.effect?.(inst, api, picks);
+          api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+        },
+      };
+    })(),
   ),
 ];

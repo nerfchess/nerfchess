@@ -459,11 +459,11 @@ const COUNTRY_ROADS: Array<OpenerMeta & { file: number }> = [
 
 function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
   const fileName = FILE_NAMES[entry.file];
-  const lossy = entry.id === "bridle_path";
+  const lossy = entry.id === "bridle_path" || entry.id === "old_post_road";
   // These entries' directive forbids capturing outright. The two-square advance
   // already lands only when both squares are empty, so this filter is explicit
   // insurance that matches the "cannot capture" wording rather than a change.
-  const noCapture = entry.id === "ferry_crossing" || entry.id === "goat_track";
+  const noCapture = entry.id === "ferry_crossing" || entry.id === "goat_track" || entry.id === "pilgrim_road";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const out: Move[] = [];
     const fwd = fwdOf(api.me);
@@ -972,7 +972,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
       : entry.mode === "out"
         ? " The step must angle toward the board's edge."
         : "";
-  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape";
+  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape" || entry.id === "palace_gate";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const out: Move[] = [];
@@ -1012,7 +1012,7 @@ const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: nu
   { id: "tactical_withdrawal", name: "Tactical Withdrawal", flavor: "It is only running away if someone writes it down.", icon: "Undo2" },
   { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2, tier: 2 },
   { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 1 },
-  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 2 },
+  { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 1 },
   { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },
   { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] , uses: 2 },
   { id: "squires_errand", name: "Squire's Errand", flavor: "The b- and g-pawns trot back to fetch the good lance.", icon: "Backpack", files: [1, 6] , uses: 2 },
@@ -1412,6 +1412,8 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     entry.line === "fwd" ? "straight forward" : entry.line === "lat" ? "sideways along its rank" : "along its diagonals";
   const owner = entry.type === "q" ? "your queen" : `one of your ${names[entry.type]}`;
   const lossy = entry.id === "freight_elevator";
+  // Painter's Lift keeps its phasing identity but may not capture on landing.
+  const noCapture = entry.id === "painters_lift";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const dirs: readonly (readonly [number, number])[] =
@@ -1420,11 +1422,13 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     for (const sq of mySquares(api.board, api.me, entry.type)) {
       out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, entry.through));
     }
-    return out;
+    return noCapture ? out.filter((m) => !m.captured) : out;
   };
   return opener(
     entry,
-    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond as normal.${
+    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond${
+      noCapture ? " on an empty square; it cannot capture on landing" : " as normal"
+    }.${
       lossy ? " If the slide is on offer on your turn but you play something else, the charge is spent." : ""
     }`,
     lossy ? lossyAugment(gen) : augment(gen),
