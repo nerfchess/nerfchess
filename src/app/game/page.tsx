@@ -411,12 +411,12 @@ function GamePage() {
             saved.game.black.nerf.kind === "custom" ? saved.game.black.nerf.spec : null;
           lastSeenMoveCount.current = restored.board.history.length;
           sawResult.current = !!restored.result;
-          // A draft whose decision window had already expired stays expired
-          // across a refresh (the compact pending panel returns, the clock
-          // keeps charging in timed games). A draft still inside its window
-          // restarts preparation and receives a complete fresh window: the
-          // sequence machine re-arms the deadline once the cards re-deal.
-          setOfferOnClockIndex(saved.draftOnClockIndex ?? null);
+          // Deterministic timeout recovery replaced the "expired draft stays
+          // parked" model: an unresolved draft always restarts preparation on
+          // restore and receives a complete fresh window, at the end of which
+          // it auto-resolves. There is no on-clock pending state to restore, so
+          // a refresh can never strand a draft (or silently charge for one).
+          setOfferOnClockIndex(null);
           return;
         }
       }
@@ -2295,21 +2295,14 @@ function GamePage() {
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}
           onCardsReady={draftSeq.reportCardsReady}
-          minimized={offerOnClockIndex === myOffer.index}
+          // Deterministic timeout recovery: never park a bot-game draft in a
+          // "resolve me later" pending panel. When the decision window ends the
+          // overlay auto-confirms the selected card, or picks one of the offered
+          // cards at random (never Skip & Bank). onPick then clears the offer,
+          // and the pause-resume effect shifts the turn start forward so the
+          // pick still cost no clock time. minimized is therefore always off.
+          minimized={false}
           cardNoun={draftCardNoun(game.buffs?.mode)}
-          onExpire={() => {
-            // Free window over: keep the offer open, slide the panel aside,
-            // and resume the clock — the pick now costs the player's time.
-            const offer = game.buffs?.players[myColor].offer;
-            if (!offer) return;
-            if (offerPausedAt != null) {
-              turnStartedAtRef.current +=
-                Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
-            }
-            setOfferPausedAt(null);
-            setOfferDeadline(null);
-            setOfferOnClockIndex(offer.index);
-          }}
           onPick={(i) => {
             const before = game.buffs?.players[myColor].buffs.length ?? 0;
             pickDraftCard(game, myColor, i);

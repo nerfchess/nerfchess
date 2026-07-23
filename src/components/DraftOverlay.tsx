@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 import { playDecisionStart, playDraftChime, playDraftUrgent } from "@/lib/sounds";
 import { pushUiHold } from "@/lib/uiInterrupts";
 import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftReveal";
+import { resolveDraftTimeout } from "@/lib/draftTimeout";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
@@ -40,10 +41,20 @@ interface Props {
    * decision countdown on this signal and never before. Re-fires after a
    * reroll's fresh deal, so every reroll earns a complete new window. */
   onCardsReady?: (offerKey: string) => void;
-  /** Called once when the free lock-in window ends. The offer stays open:
-   * the parent minimizes this overlay to the side and resumes the clock, so
-   * further deliberation costs the player's own time. */
+  /** Legacy fallback, fired only when the decision window ends AND there is
+   * nothing left to auto-resolve (an empty offer). With deterministic
+   * auto-resolution on (the default) the draft resolves itself instead of
+   * being parked, so this is effectively unused; kept as a safety hook. */
   onExpire?: () => void;
+  /** Deterministic timeout recovery. When the decision window expires the
+   * draft resolves itself rather than collapsing into a "resolve me later"
+   * pending panel: a selected card is auto-confirmed, otherwise one of the
+   * offered cards is chosen via `rng`. Skip & Bank is NEVER granted this way.
+   * Defaults to true; pass false to keep the legacy `onExpire` parking. */
+  autoResolveOnExpire?: boolean;
+  /** Authoritative RNG (in [0,1)) used to pick a card when the window expires
+   * with no selection. Defaults to Math.random. */
+  rng?: () => number;
   /** Free window over: render as a compact side panel instead of a blocking
    * overlay. The board is visible again and picking still works. */
   minimized?: boolean;
@@ -471,6 +482,8 @@ export function DraftOverlay({
   deadline,
   onCardsReady,
   onExpire,
+  autoResolveOnExpire = true,
+  rng,
   minimized,
   cardNoun = "buff",
   oppLockedIn,
@@ -1015,12 +1028,58 @@ export function DraftOverlay({
     [],
   );
 
-  // Free window over: the pick stays open, but from here on it runs on the
-  // player's own clock. The parent minimizes the overlay to the side.
-  const handleExpire = () => {
-    if (committedRef.current || chosen != null || banking) return;
-    onExpire?.();
-  };
+  // DETERMINISTIC TIMEOUT RECOVERY. When the decision window expires the draft
+  // resolves itself instead of collapsing into a "resolve me later" pending
+  // panel: a selected card is auto-confirmed, otherwise one of the offered
+  // cards is chosen via the authoritative RNG. Skip & Bank is never granted
+  // here — only an explicit press does that. Idempotent per offer version
+  // (autoResolvedRef, reset on each deal) AND per commit (committedRef inside
+  // confirmCard), so a refresh, a doubled interval tick, or the render-branch
+  // race below can never grant two cards. `selected` is read through a ref so
+  // the deadline backstop always sees the latest highlight.
+  const autoResolvedRef = useRef(false);
+  useEffect(() => {
+    autoResolvedRef.current = false;
+  }, [dealKey]);
+  // A latest-closure ref (assigned in an effect, never during render) so the
+  // deadline backstop below stays keyed on `deadline` alone yet always runs
+  // against the current selection / commit state.
+  const autoResolveRef = useRef(() => {});
+  useEffect(() => {
+    autoResolveRef.current = () => {
+      if (autoResolvedRef.current || committedRef.current || chosen != null || banking) return;
+      autoResolvedRef.current = true;
+      if (autoResolveOnExpire === false) {
+        onExpire?.();
+        return;
+      }
+      const res = resolveDraftTimeout({
+        offeredCount: offer.cards.length,
+        selectedIndex: selected,
+        random: rng,
+      });
+      if (res) confirmCard(res.index);
+      else onExpire?.();
+    };
+  });
+  const handleExpire = () => autoResolveRef.current();
+  // Backstop the countdown's own onExpire: a parent that minimizes the overlay
+  // at the same instant (OnlineMatch's separate grace timer) would otherwise
+  // unmount the full-overlay countdown before it fired, stranding the draft.
+  // This deadline-keyed poll resolves regardless of which branch is on screen;
+  // autoResolvedRef makes the two paths mutually idempotent. The clock read
+  // lives in the deferred tick (same pattern as useCountdown), never in the
+  // effect body.
+  useEffect(() => {
+    if (autoResolveOnExpire === false || deadline == null) return;
+    let id = 0;
+    const tick = () => {
+      if (deadline - Date.now() <= 0) autoResolveRef.current();
+      else id = window.setTimeout(tick, 120);
+    };
+    id = window.setTimeout(tick, 120);
+    return () => window.clearTimeout(id);
+  }, [deadline, autoResolveOnExpire]);
 
   if (minimized) {
     // A committed pick renders the panel inert while the server (or engine)

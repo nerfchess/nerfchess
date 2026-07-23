@@ -96,6 +96,22 @@ const nextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      {
+        // Content-hashed build output (JS, CSS, media): the filename changes
+        // whenever the bytes change, so it is safe — and correct — to cache it
+        // for a year and never revalidate. These were being served
+        // `public, max-age=0, must-revalidate`, forcing a revalidation round
+        // trip on every hashed chunk. `immutable` tells the browser not to
+        // even conditionally re-request. HTML and data routes are deliberately
+        // left out of this rule (see the security-headers rule above) so their
+        // freshness is unaffected. A matching Cloudflare-assets-layer rule
+        // lives in public/_headers for requests the ASSETS binding serves
+        // before the worker ever runs.
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
     ];
   },
   async redirects() {
