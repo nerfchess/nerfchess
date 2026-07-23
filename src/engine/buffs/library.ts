@@ -5529,11 +5529,34 @@ const TIER8: Buff[] = [
     // two turns literally nothing of yours can be taken. The engine's
     // invulnerable-attacker guard still bars shielded pieces from delivering
     // the king capture, so it defends without ending the game by itself.
-    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces cannot be captured for 2 full turns, and this time that includes your king.", tier: 8, category: "protection", boon: true },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
-    }),
+    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces cannot be captured for 2 full turns, and this time that includes your king. But each protected piece loses its protection once it makes a capture.", tier: 8, category: "protection", boon: true },
+    // Rebalance: keep the full 2-turn, whole-army-plus-king window, but a piece
+    // that captures forfeits its own protection. The shield is now a square list
+    // seeded with your current army (so individual squares can drop out); when a
+    // protected piece captures, its square leaves the list. If the king itself
+    // captures, its king_safe cover ends too. (Pieces summoned mid-window are
+    // outside this snapshot and are not covered.)
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        addEffect(api, { kind: "shield", owner: api.me, squares: mySquares(api.board, api.me), turns: 2 });
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      },
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.me || !move.captured) return;
+        // Buff hooks run before the engine's shield-follow, so the capturing
+        // piece's square is still recorded as move.from here.
+        for (const e of api.bs.effects) {
+          if (e.kind === "shield" && e.owner === api.me && e.squares) {
+            const idx = e.squares.indexOf(move.from);
+            if (idx >= 0) e.squares.splice(idx, 1);
+          }
+          if (move.piece === "k" && e.kind === "king_safe" && e.owner === api.me) {
+            e.turns = 0;
+          }
+        }
+      },
+    },
   ),
   def(
     { id: "endless_turn", name: "Endless Turn", description: "Take exactly one bonus move. If that bonus move does not capture, take one more bonus move after your opponent replies.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
