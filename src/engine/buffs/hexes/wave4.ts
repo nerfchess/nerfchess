@@ -25,7 +25,6 @@ import {
   isInCheck,
   mySquares,
   relRank,
-  suppressDraftCards,
   tickTurns,
   tierHexes,
   turnsLeft,
@@ -385,34 +384,55 @@ const T1: Buff[] = [
     ),
   ),
   H1(
-    { id: "hx4_mismatched_livery", name: "Mismatched Livery", description: "Their rooks are repainted as checkers pieces for 4 of their turns, and the embarrassment lingers: on their next turn their rooks may only move sideways along ranks.", flavor: "Wrong game, gentlemen.", icon: "Palette", fx: { motif: "anchor", pieces: ["r"] } },
+    { id: "hx4_mismatched_livery", name: "Mismatched Livery", description: "Their rooks are repainted as checkers pieces for 4 of their turns. The embarrassment takes a moment to sink in: after their next move, on the following turn their rooks may only move sideways along ranks.", flavor: "Wrong game, gentlemen.", icon: "Palette", fx: { motif: "anchor", pieces: ["r"] } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 1;
+        inst.state.delay = 1;
         for (const sq of mySquares(api.board, api.opp, "r")) dressUp(api, sq, "checkers", 4);
       },
       filterOpponentMoves: (moves, inst) => {
-        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if ((inst.state.delay as number) > 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.piece !== "r" || RANK(m.from) === RANK(m.to));
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => (turnsLeft(inst) > 0 ? "the paint is still wet" : null),
     },
   ),
   H1(
-    { id: "hx4_red_tape", name: "Red Tape", description: "Your opponent's next draft offer excludes draft manipulation cards. The paperwork was misfiled.", flavor: "Form 7B requires form 7A, which does not exist.", icon: "FileText" },
-    suppressDraftCards(1),
+    { id: "hx4_red_tape", name: "Red Tape", description: "Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The paperwork was misfiled.", flavor: "Form 7B requires form 7A, which does not exist.", icon: "FileText" },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
+        inst.state.draftAt = api.theirs.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        if (api.theirs.draftsTaken > ((inst.state.draftAt as number) ?? 0)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "the paperwork clears" : "waiting for their next draft"),
+    },
   ),
   H1(
-    { id: "hx4_pigeon_perch", name: "Pigeon Perch", description: "A pigeon lands on their king and refuses to leave for 4 of their turns. Not wishing to disturb it, their king does not move on their next turn.", flavor: "It has nested. There are bylaws about nests.", icon: "Bird", fx: { motif: "jail" } },
+    { id: "hx4_pigeon_perch", name: "Pigeon Perch", description: "A pigeon lands on their king and refuses to leave for 3 of their turns. Not wishing to disturb it, their king does not move on their next turn.", flavor: "It has nested. There are bylaws about nests.", icon: "Bird", fx: { motif: "jail" } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 1;
         const k = oppKing(api);
-        if (k != null) addEffect(api, { kind: "cosmetic", sq: k, owner: api.opp, turns: 4, skin: "pigeon" });
+        if (k != null) addEffect(api, { kind: "cosmetic", sq: k, owner: api.opp, turns: 3, skin: "pigeon" });
       },
       filterOpponentMoves: (moves, inst) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;

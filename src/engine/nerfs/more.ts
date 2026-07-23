@@ -415,7 +415,7 @@ export const REMORSEFUL: Nerf = db({
 
 export const SHAPESHIFTER: Nerf = db({
   id: "shapeshifter", name: "Shapeshifter", tier: 4, implemented: true,
-  description: "Queen starts as a bishop. When you capture a non-pawn, queen becomes a copy of that piece. Capturing a knight freezes her.",
+  description: "For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her.",
   init: () => ({ form: "b" as PieceType, frozen: false }),
   onTurnStart: (state, ctx) => {
     let form: PieceType = "b";
@@ -430,7 +430,8 @@ export const SHAPESHIFTER: Nerf = db({
     void state;
     return { form, frozen };
   },
-  filterMoves: (moves, state) => {
+  filterMoves: (moves, state, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // activation delayed until after your move 3
     const s = state as { form: PieceType; frozen: boolean };
     return moves.filter((m) => {
       if (m.piece !== "q") return true;
@@ -447,8 +448,9 @@ export const SHAPESHIFTER: Nerf = db({
 
 export const HORSE_EATS_FIRST: Nerf = db({
   id: "horse_eats_first", name: "Horse Eats First", tier: 5, implemented: true,
-  description: "As long as you have a knight, you can only capture with knights.",
+  description: "As long as you have a knight, you can only capture with knights. This activates only after your move 3.",
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves;
     const hasKnight = pieceSquares(ctx.board, ctx.me, "n").length > 0;
     if (!hasKnight) return moves;
     return moves.filter((m) => !m.captured || m.piece === "n");
@@ -843,6 +845,7 @@ export const MOVING_DAY: Nerf = db({
   id: "moving_day", name: "Moving Day", tier: 4, implemented: true,
   description: "After turn 20, no piece may be on your home row.",
   checkLoss: (_s, ctx) => {
+    if (ctx.moveNumber < 3) return null; // activation delayed until after your move 3
     if (ctx.moveNumber < 20) return null;
     const homeR = ctx.me === "w" ? 0 : 7;
     for (let f = 0; f < 8; f++) {
@@ -2134,16 +2137,18 @@ export const TORPEDOES: Nerf = db({
 
 export const THEOCRACY: Nerf = db({
   id: "theocracy", name: "Theocracy", tier: 5, implemented: true,
-  description: "On odd/even moves, can only capture with bishops.",
+  description: "On odd/even moves, can only capture with bishops. This activates only after your move 3.",
   init: (rng) => ({ parity: rng.int(2) as 0 | 1 }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { parity: 0 | 1 };
+    if (ctx.moveNumber < 3) return moves;
     const turn = ctx.moveNumber + 1;
     if (turn % 2 !== s.parity) return moves;
     return moves.filter((m) => !m.captured || m.piece === "b");
   },
   hint: (state, ctx) => {
     const s = state as { parity: 0 | 1 };
+    if (ctx.moveNumber < 3) return null;
     const turn = ctx.moveNumber + 1;
     if (turn % 2 !== s.parity) return null;
     return { text: "A holy turn: only bishops may capture.", tone: "info" };
