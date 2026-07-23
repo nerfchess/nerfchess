@@ -231,12 +231,12 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "queens_handicap",
       name: "Queen's Handicap",
-      description: "Nerf your opponent's queen: for their next 4 turns her every move must end beside another of their own pieces. No escort, no move.",
+      description: "Nerf your opponent's queen: for their next 3 turns her every move must end beside another of their own pieces. No escort, no move.",
       tier: 5,
       flavor: "She now requires a party to queue.",
       fx: { motif: "anchor", pieces: ["q"] },
     },
-    curse(4, (moves, api) =>
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "q") return true;
         for (const df of [-1, 0, 1]) {
@@ -295,22 +295,30 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "nerf_this",
       name: "Nerf This",
-      description: "The balance team finally answers: one enemy queen you point at is patched down to a bishop where she stands.",
+      description: "The balance team finally answers: one enemy queen you point at is patched down to a bishop where she stands. The defender keeps one queen immune, so a lone queen shrugs the patch off.",
       tier: 6,
       flavor: "Nerf THIS.",
     },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Point at the queen to nerf",
-              squares: mySquares(api.board, api.opp, "q"),
-            },
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const queens = mySquares(api.board, api.opp, "q");
+        // The defender keeps one queen immune. A defender choice flow is not
+        // practical here, so the immunity lands deterministically on the
+        // lowest-indexed enemy queen; only the rest may be pointed at.
+        const immune = queens.length > 0 ? Math.min(...queens) : null;
+        return {
+          kind: "square",
+          label: "Point at the queen to nerf",
+          squares: queens.filter((sq) => sq !== immune),
+        };
+      },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
+        const queens = mySquares(api.board, api.opp, "q");
+        const immune = queens.length > 0 ? Math.min(...queens) : null;
+        if (sq === immune) return;
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type === "q") {
           api.setPieceType(sq, "b");
@@ -326,14 +334,28 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "patch_notes",
       name: "Patch Notes",
-      description: "The balance patch lands: your opponent's next draft is skipped, and you gain one draft reroll.",
+      description: "The balance patch lands: your opponent's next draft is skipped. Once that draft has passed, you gain one draft reroll.",
       tier: 4,
       flavor: "See the changelog. You were the change.",
     },
-    instant((_inst, api) => {
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        // Skip exactly one of the opponent's drafts.
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        // Remember the block count right after adding ours; when it drops below
+        // this mark the skipped draft has resolved and the reroll is paid out.
+        inst.state.mark = api.theirs.flags.blockedDrafts;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        const now = api.theirs.flags.blockedDrafts ?? 0;
+        if (now < (inst.state.mark as number)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+    },
   ),
 
   // -------------------------------------------------------------------------

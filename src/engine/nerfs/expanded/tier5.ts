@@ -36,20 +36,30 @@ export const NERFS_T5: Nerf[] = [
       },
     },
   ),
-  N(
-    { id: "stunted_rooks", name: "Stunted Rooks", description: "Your rooks can only move one square at a time.", flavor: "The towers shuffle inch by inch.", icon: "castle" },
+  nerf(
+    { id: "stunted_rooks", name: "Stunted Rooks", description: "From your fourth move on, your rooks can only move one square at a time.", flavor: "The towers shuffle inch by inch.", icon: "castle", tier: 6 },
     {
-      filterMoves: filter((m) => !(m.piece === "r" && cheb(m.from, m.to) > 1)),
+      // Activation delayed until move 4 (moveNumber >= 3): the first three moves
+      // are unrestricted so the opening cannot be soft-locked.
+      filterMoves: (moves, _state, ctx) =>
+        ctx.moveNumber < 3
+          ? moves
+          : moves.filter((m) => !(m.piece === "r" && cheb(m.from, m.to) > 1)),
     },
   ),
-  N(
-    { id: "myopic_bishops", name: "Myopic Bishops", description: "Your bishops can't move more than two squares.", flavor: "They can't see past the next tile.", icon: "church" },
+  nerf(
+    { id: "myopic_bishops", name: "Myopic Bishops", description: "From your fourth move on, your bishops can't move more than two squares.", flavor: "They can't see past the next tile.", icon: "church", tier: 6 },
     {
-      filterMoves: filter((m) => !(m.piece === "b" && cheb(m.from, m.to) > 2)),
+      // Activation delayed until move 4 (moveNumber >= 3): the first three moves
+      // are unrestricted so the opening cannot be soft-locked.
+      filterMoves: (moves, _state, ctx) =>
+        ctx.moveNumber < 3
+          ? moves
+          : moves.filter((m) => !(m.piece === "b" && cheb(m.from, m.to) > 2)),
     },
   ),
-  N(
-    { id: "hobbled_knights", name: "Hobbled Knights", description: "Your knights can't advance toward the enemy side; their rank may never increase.", flavor: "The horses only ever fall back.", icon: "move" },
+  nerf(
+    { id: "hobbled_knights", name: "Hobbled Knights", description: "Your knights can't advance toward the enemy side; their rank may never increase.", flavor: "The horses only ever fall back.", icon: "move", tier: 6 },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter(
@@ -58,22 +68,44 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   N(
-    { id: "homebound_pawns", name: "Homebound Pawns", description: "Your pawns can't advance past the halfway line unless the move is a capture; only by force can they cross into enemy soil.", flavor: "They only leave home soil to seize ground by force.", icon: "flag" },
+    { id: "homebound_pawns", name: "Homebound Pawns", description: "From your fourth move on, your pawns can't advance past the halfway line unless the move is a capture; only by force can they cross into enemy soil.", flavor: "They only leave home soil to seize ground by force.", icon: "flag" },
     {
       // Distinct from pawn_ceiling (a hard wall at midfield for every pawn
       // move): a capturing pawn move may still cross the halfway line here.
+      // Activation delayed until after move 3 (moveNumber >= 3): the rule starts
+      // on your fourth move.
       filterMoves: (moves, _state, ctx) =>
-        moves.filter(
-          (m) => !(m.piece === "p" && !m.captured && relRank(ctx.me, m.to) > 4),
-        ),
+        ctx.moveNumber < 3
+          ? moves
+          : moves.filter(
+              (m) => !(m.piece === "p" && !m.captured && relRank(ctx.me, m.to) > 4),
+            ),
     },
   ),
-  N(
-    { id: "no_mans_land", name: "No Man's Land", description: "You can't move any piece onto a square your opponent currently attacks.", flavor: "Every guarded square is a minefield.", icon: "ban" },
+  nerf(
+    { id: "no_mans_land", name: "No Man's Land", description: "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.", flavor: "Every guarded square is a minefield.", icon: "ban", tier: 6 },
     {
-      filterMoves: (moves, _state, ctx) => {
+      // Once-per-game exemption: you may make a single move onto an attacked
+      // square. Whether the attacked squares depend on the live position (not on
+      // the move alone), so the exemption is tracked in state: onTurnStart
+      // snapshots the danger squares you are about to move from, and next turn
+      // checks whether your last move landed on one of them, spending the token.
+      init: () => ({ spent: false, danger: [] as number[] }),
+      onTurnStart: (state, ctx) => {
+        let spent = state.spent as boolean;
+        const prevDanger = state.danger as number[];
+        const last = ctx.myLastMove;
+        if (!spent && last && prevDanger.includes(last.to)) spent = true;
+        return { spent, danger: [...attackedBy(ctx.board, other(ctx.me))] };
+      },
+      filterMoves: (moves, state, ctx) => {
+        // While the token is unspent, every move is offered: stepping onto an
+        // attacked square spends the token (recorded next turn). Once spent, the
+        // ban is absolute, with a soft-lock fallback if no safe square remains.
+        if (!(state.spent as boolean)) return moves;
         const atk = attackedBy(ctx.board, other(ctx.me));
-        return moves.filter((m) => !atk.has(m.to));
+        const safe = moves.filter((m) => !atk.has(m.to));
+        return safe.length ? safe : moves;
       },
     },
   ),

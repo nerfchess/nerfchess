@@ -4,9 +4,10 @@
 // denied), but every card is easily played around and carries no material
 // swing. Import ONLY from ./shared so the safety rails come for free.
 
-import { Buff, BuffInstance } from "./shared";
+import { Buff, BuffInstance, Mech, Move, BuffApi, Square } from "./shared";
 import {
   tierHexes,
+  hex,
   curse,
   walnutTarget,
   activated,
@@ -15,6 +16,8 @@ import {
   addEffect,
   stealBuffs,
   suppressDraftCards,
+  tickTurns,
+  turnsLeft,
   inBoard,
   FILE,
   RANK,
@@ -26,6 +29,71 @@ const H = tierHexes(2);
 /** Chebyshev (king-step) distance a move travels. */
 const dist = (from: number, to: number) =>
   Math.max(Math.abs(FILE(to) - FILE(from)), Math.abs(RANK(to) - RANK(from)));
+
+/** Wrap a mech so its effect ALSO hands the caster one draft reroll: the
+ * draft-touching hexes now nudge a single draft and refund a reroll. */
+function grantRerollAfter(mech: Mech): Mech {
+  const base = mech.effect;
+  return {
+    ...mech,
+    effect: (inst, api, picks) => {
+      if (base) base(inst, api, picks);
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+    },
+  };
+}
+
+/** Timed opponent curse where the FIRST move the curse would forbid is allowed
+ * once (the first affected piece's one legal escape move); after that the
+ * restriction bites for the remainder of its `turns` of their turns. */
+function curseWithEscape(
+  turns: number,
+  filter: (moves: Move[], api: BuffApi) => Move[],
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.escaped = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      // Until the escape is spent the curse does not bite.
+      if (!inst.state.escaped) return moves;
+      const kept = filter(moves, api);
+      return kept.length > 0 ? kept : moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      // Spend the escape the first time the opponent plays a move the curse
+      // would otherwise have removed.
+      if (
+        turnsLeft(inst) > 0 &&
+        !inst.state.escaped &&
+        move.color === api.opp &&
+        filter([move], api).length === 0
+      ) {
+        inst.state.escaped = true;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) => `${turnsLeft(inst)} of their turns left`,
+  };
+}
+
+/** Passive that fires `effect` once, right after the opponent's next completed
+ * move (a one-move-delayed instant), then retires. */
+function afterOppMove(effect: (api: BuffApi) => void): Mech {
+  return {
+    kind: "passive",
+    onMovePlayed: (inst, move, api) => {
+      if (inst.spent) return;
+      if (move.color === api.opp) {
+        effect(api);
+        inst.spent = true;
+      }
+    },
+  };
+}
 
 export const HEXES_T2: Buff[] = [
   H(
@@ -40,8 +108,8 @@ export const HEXES_T2: Buff[] = [
     { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks cannot move sideways for their next 4 turns: they may only slide up and down their own file.", flavor: "The wheels only roll one way now.", fx: { motif: "anchor", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || FILE(m.from) === FILE(m.to))),
   ),
-  H(
-    { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns.", fx: { motif: "muzzle", pieces: ["r"] } },
+  hex(
+    { id: "rusted_hinges", name: "Rusted Hinges", description: "Your opponent's rooks cannot capture for their next 4 turns.", tier: 3, fx: { motif: "muzzle", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => !(m.piece === "r" && m.captured))),
   ),
   H(
@@ -64,8 +132,8 @@ export const HEXES_T2: Buff[] = [
     ),
   ),
   H(
-    { id: "safe_passage", name: "Safe Passage", description: "The roads along the edge are under truce: your opponent cannot capture anything standing on the outer rim of the board, for their next 4 turns.", flavor: "Even wars respect the coast road.", fx: { motif: "muzzle", pieces: "all" } },
-    curse(4, (moves) =>
+    { id: "safe_passage", name: "Safe Passage", description: "The roads along the edge are under truce: for their next 4 turns your opponent cannot capture anything standing on the outer rim of the board. The first capture the truce would deny is allowed once.", flavor: "Even wars respect the coast road.", fx: { motif: "muzzle", pieces: "all" } },
+    curseWithEscape(4, (moves) =>
       moves.filter((m) => {
         const cap = m.capturedSquare ?? (m.captured ? m.to : null);
         if (cap == null) return true;
@@ -73,12 +141,12 @@ export const HEXES_T2: Buff[] = [
       }),
     ),
   ),
-  H(
-    { id: "stone_hooves", name: "Stone Hooves", description: "Petrify one of your opponent's knights for 3 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.", flavor: "The cavalry sets like plaster." },
+  hex(
+    { id: "stone_hooves", name: "Stone Hooves", description: "Petrify one of your opponent's knights for 3 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.", tier: 3, flavor: "The cavalry sets like plaster." },
     walnutTarget(3, ["n"]),
   ),
-  H(
-    { id: "gargoyles", name: "Gargoyles", description: "Petrify one of your opponent's bishops for 3 of their turns: it can only shuffle one square at a time.", flavor: "Perched, and quite forgotten." },
+  hex(
+    { id: "gargoyles", name: "Gargoyles", description: "Petrify one of your opponent's bishops for 3 of their turns: it can only shuffle one square at a time.", tier: 3, flavor: "Perched, and quite forgotten." },
     walnutTarget(3, ["b"]),
   ),
   H(
