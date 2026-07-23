@@ -32,7 +32,6 @@ import {
   activated,
   addEffect,
   augment,
-  barLine,
   captureExplosion,
   emptySquares,
   freezeAllEnemies,
@@ -1041,13 +1040,13 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_frostbite_curse",
       name: "Frostbite",
       description:
-        "Your opponent's pieces go numb: for their next 2 turns they cannot make any capture, and no piece may move more than 2 squares.",
+        "Your opponent's pieces go numb: for their next turn they cannot make any capture, and no piece may move more than 2 squares.",
       tier: 5,
       category: "protection",
       flavor: "Fingers too cold to close, joints too stiff to reach.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(2, (moves) => moves.filter((m) => !m.captured && dist(m.from, m.to) <= 2)),
+    curse(1, (moves) => moves.filter((m) => !m.captured && dist(m.from, m.to) <= 2)),
   ),
   card(
     {
@@ -1055,7 +1054,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "CloudFog",
       name: "Whiteout",
       description:
-        "A blizzard freezes every enemy piece except the king and pawns for their next 2 turns. The pawns can still trudge.",
+        "A blizzard freezes every enemy piece except the king and pawns for their next turn. The pawns can still trudge.",
       tier: 7,
       category: "tempo",
       flavor: "Only the smallest feet still find the ground.",
@@ -1065,7 +1064,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       for (const sq of mySquares(api.board, api.opp)) {
         const t = api.board.pieces[sq]!.type;
         if (t === "k" || t === "p") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "ice" });
       }
     }),
   ),
