@@ -130,15 +130,36 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_heads_or_tails",
       name: "Heads or Tails",
       description:
-        "Flip the coin, half and half: heads you immediately take an extra move; tails nothing happens and the coin laughs at you.",
+        "Call the coin or take the sure thing. Gamble: flip two coins at 50% each, heads on either wins an extra move right now (75% overall), both tails and nothing. Or skip the flip to reveal the tier of your opponent's next draft offer and gain one reroll.",
       tier: 1,
       category: "tempo",
       icon: "CircleDollarSign",
       flavor: "Best out of one.",
     },
-    {
-      ...activatedSimple((inst, api) => {
-        const heads = api.rng.next() < 0.5;
+    activated(
+      (inst, api, picks) => {
+        if (inst.state.result != null || picks.length > 0) return null;
+        const k = kingSquare(api.board, api.me);
+        return {
+          kind: "square",
+          label:
+            "Flip two coins and press Done, or click your king to skip the flip: reveal your opponent's next draft tier and gain a reroll",
+          squares: k != null ? [k] : [],
+          finishable: true,
+        };
+      },
+      (inst, api, picks) => {
+        if (inst.state.result != null) return;
+        if (picks.length > 0) {
+          inst.state.result = "intel";
+          api.mine.flags.seeOppTier = true;
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          return;
+        }
+        // Two independent flips; keep the better (heads = the jackpot extra move).
+        const a = api.rng.next() < 0.5;
+        const b = api.rng.next() < 0.5;
+        const heads = a || b;
         inst.state.result = heads ? "heads" : "tails";
         if (heads) {
           api.bs.extraMoves[api.me] += 1;
@@ -146,9 +167,9 @@ export const OVERHAUL_GAMBLING: Buff[] = [
           const k = kingSquare(api.board, api.me);
           if (k != null) flashSquares(api, [k], true);
         }
-      }),
-      freeAction: true,
-    },
+      },
+      { freeAction: true },
+    ),
   ),
   // 203. Claw Machine (T1) -----------------------------------------------------------
   card(
@@ -372,7 +393,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_underdog_parlay",
       name: "Underdog Parlay",
       description:
-        "Two legs: put the enemy king under attack within 5 of your turns AND capture within 3. Both hit: a knight joins your back rank. One: a pawn joins your second rank. Neither: your opponent gains a free reroll.",
+        "Two legs: put the enemy king under attack within 5 of your turns AND capture within 3. Both hit: a knight joins your back rank. One: a pawn joins your second rank. Neither: the parlay busts and nothing happens.",
       tier: 3,
       category: "attack",
       icon: "TrendingUp",
@@ -404,7 +425,12 @@ export const OVERHAUL_GAMBLING: Buff[] = [
             const hits = (inst.state.check ? 1 : 0) + (inst.state.cap ? 1 : 0);
             if (hits === 2) spawnRandom(api, "n", emptyHomeRank(api, 0));
             else if (hits === 1) spawnRandom(api, "p", emptyHomeRank(api, 1));
-            else api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+            else {
+              // The reroll this leg used to hand the opponent has been removed:
+              // a total miss now simply busts with no payout to either side.
+              const k = kingSquare(api.board, api.me);
+              if (k != null) flashSquares(api, [k], true);
+            }
             inst.state.result = hits;
             inst.spent = true;
           }

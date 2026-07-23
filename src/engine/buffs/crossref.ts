@@ -633,10 +633,36 @@ export const CROSSREF_CARDS: Buff[] = [
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
-        const kept = moves.filter((m) => dist(sq, m.to) !== 1);
+        const escapeUsed = !!inst.state.escapeUsed;
+        // The first affected piece gets one legal escape move: until that
+        // escape is spent, the lowest-indexed enemy piece with a blocked step
+        // keeps its ring moves; every other piece is still held out.
+        let exempt: Square | null = null;
+        if (!escapeUsed) {
+          for (const m of moves) {
+            if (dist(sq, m.to) === 1 && (exempt == null || m.from < exempt)) {
+              exempt = m.from;
+            }
+          }
+        }
+        const kept = moves.filter(
+          (m) => dist(sq, m.to) !== 1 || (!escapeUsed && m.from === exempt),
+        );
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Spend the escape the moment the exempt piece steps into the stench.
+        const sq = inst.state.sq as Square | undefined;
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          sq != null &&
+          dist(sq, move.to) === 1
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) =>
         inst.state.sq == null
           ? "activate to lob the durian"
