@@ -45,7 +45,6 @@ import {
   slideMoves,
   teleportMoves,
   timedAugment,
-  timedOppFilter,
   trackBoundPiece,
 } from "./helpers";
 import {
@@ -3275,7 +3274,6 @@ export const BOON_WAVE4B: Buff[] = [
       status: (inst) =>
         inst.spent ? "the charter has lapsed" : `${(inst.state.turns as number) ?? 4} of their turns of gold`,
     },
-  ),
   ),
   card(
     { id: "bn4_deck_of_kings", name: "Deck of Kings", tier: 8, category: "draft", icon: "Layers",

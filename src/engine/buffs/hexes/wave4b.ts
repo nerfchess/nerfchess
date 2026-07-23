@@ -1967,16 +1967,36 @@ const T8: Buff[] = [
     freezeAllEnemies(1, "ice"),
   ),
   H8(
-    { id: "hx4_sealed_meridian", name: "Sealed Meridian", description: "Choose a file: it is sealed against your opponent for 3 of their turns. None of their pieces may stop on it or cross it, while yours pass freely.", flavor: "The cartographers simply removed the road.", icon: "AlignVerticalJustifyCenter", fx: { motif: "blindfold" } },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
+    { id: "hx4_sealed_meridian", name: "Sealed Meridian", description: "Choose a file: for 2 of your opponent's turns none of their pieces may cross it, though they may move along it, stop on it, or leave it. Your pieces pass freely.", flavor: "The cartographers simply removed the road.", icon: "AlignVerticalJustifyCenter", fx: { motif: "blindfold" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, _api, picks) =>
+        picks.length > 0 || inst.state.file != null
           ? null
           : { kind: "square", label: "Pick any square on the file to seal", squares: Array.from({ length: 64 }, (_, i) => i) },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) barNow(api, fileSquares(FILE(picks[0].square)), 3);
+      effect: (inst, _api, picks) => {
+        if (inst.state.file != null) return;
+        if (picks[0]?.square != null) {
+          inst.state.file = FILE(picks[0].square);
+          inst.state.turns = 2;
+        }
       },
-    ),
+      filterOpponentMoves: (moves, inst) => {
+        const f = inst.state.file as number | undefined;
+        if (f == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter(
+          (m) => !((FILE(m.from) < f && FILE(m.to) > f) || (FILE(m.from) > f && FILE(m.to) < f)),
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.file == null) return;
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.file == null ? "activate to choose the file" : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   hex(
     { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" }, tier: 6 },
@@ -2183,14 +2203,14 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_severed_lines", name: "Severed Lines", description: "Their supply roads are cut: your opponent's pieces cannot stop on their own 3rd or 4th rank for their next 2 turns.", flavor: "An army is a stomach with banners.", icon: "Unlink", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_severed_lines", name: "Severed Lines", description: "Their supply roads are cut: your opponent's pieces cannot stop on their own 3rd or 4th rank for their next turn.", flavor: "An army is a stomach with banners.", icon: "Unlink", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {
       const squares: number[] = [];
       for (let sq = 0; sq < 64; sq++) {
         const rr = relRank(api.opp, sq);
         if (rr === 3 || rr === 4) squares.push(sq);
       }
-      barNow(api, squares, 2);
+      barNow(api, squares, 1);
     }),
   ),
   H8(
@@ -2242,9 +2262,15 @@ const T8: Buff[] = [
     escapeCurse(6, (moves, api) => moves.filter((m) => m.piece !== "p" || relRank(api.opp, m.to) <= 4)),
   ),
   H8(
-    { id: "hx4_tempest", name: "Tempest", description: "A storm tears across the board: 6 random empty squares become impassable wreckage your opponent cannot stop on for their next 3 turns, and 2 of their pieces, chosen at random, are stunned frozen for 1 of their turns.", flavor: "The sky finally picked a side.", icon: "CloudLightning", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_tempest", name: "Tempest", description: "A storm tears across the board: 6 random empty squares become impassable wreckage your opponent cannot stop on for their next 3 turns, save one bridge square, the wreckage nearest their king, which the defender keeps passable, and 2 of their pieces, chosen at random, are stunned frozen for 1 of their turns.", flavor: "The sky finally picked a side.", icon: "CloudLightning", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {
-      barNow(api, drawRandom(api, emptySquares(api.board), 6), 3);
+      const wreck = drawRandom(api, emptySquares(api.board), 6);
+      const k = oppKing(api);
+      let bridge = wreck.length > 0 ? wreck[0] : null;
+      if (k != null && bridge != null) {
+        for (const sq of wreck) if (cheb(sq, k) < cheb(bridge, k)) bridge = sq;
+      }
+      barNow(api, wreck.filter((sq) => sq !== bridge), 3);
       const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
       for (const sq of drawRandom(api, pool, 2)) freezeNow(api, sq, 1, "shock");
     }),
@@ -2323,18 +2349,21 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_burned_keep", name: "The Burned Keep", description: "Their castle burns to the ground: your opponent may never castle again this game, and both of their rooks, busy fighting the fire, are frozen for 1 of their turns.", flavor: "Insurance does not cover acts of hex.", icon: "FlameKindling", fx: { motif: "jail", pieces: ["r", "k"] } },
+    { id: "hx4_burned_keep", name: "The Burned Keep", description: "Their castle burns to the ground: your opponent may not castle, and both of their rooks, busy fighting the fire, are frozen for 1 of their turns. The ban holds with no time limit, until they make a capture, which douses the flames and lets them castle once more.", flavor: "Insurance does not cover acts of hex.", icon: "FlameKindling", fx: { motif: "jail", pieces: ["r", "k"] } },
     {
       kind: "passive",
       init: (_inst, api) => {
         for (const sq of mySquares(api.board, api.opp, "r")) freezeNow(api, sq, 1, "shock");
       },
-      filterOpponentMoves: (moves) => {
-        if (moves.length === 0) return moves;
+      filterOpponentMoves: (moves, inst) => {
+        if (inst.spent || moves.length === 0) return moves;
         const kept = moves.filter((m) => !m.castle);
         return kept.length > 0 ? kept : moves;
       },
-      status: () => "their castle is ash",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && move.captured) inst.spent = true;
+      },
+      status: (inst) => (inst.spent ? "the fire is out" : "their castle is ash"),
     },
   ),
   H8(
@@ -2454,8 +2483,8 @@ const T8: Buff[] = [
       }
     }),
   ),
-  H8(
-    { id: "hx4_mirror_of_winter", name: "Mirror of Winter", description: "A sympathetic frost binds their army: for your opponent's next 2 turns, whenever they move a piece, every OTHER piece they own of that same type is frozen for 1 of their turns.", flavor: "When one soldier shivers, the regiment catches cold.", icon: "Copy", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_mirror_of_winter", name: "Mirror of Winter", description: "A sympathetic frost binds their army: for your opponent's next 2 turns, whenever they move a piece, every OTHER piece they own of that same type is frozen for 1 of their turns.", flavor: "When one soldier shivers, the regiment catches cold.", icon: "Copy", fx: { motif: "slow", pieces: "all" }, tier: 9 },
     onTheirMove(2, (move, api) => {
       if (move.piece === "k") return;
       for (const sq of mySquares(api.board, api.opp, move.piece)) {
