@@ -2775,9 +2775,9 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_founding_of_the_city", name: "Founding of the City", tier: 8, category: "pieces", icon: "Building2",
-      description: "Place a new knight and a new bishop on empty squares on your home rank.",
+      description: "Place a new knight on an empty square on your home rank.",
       flavor: "First the walls, then the stables, then the cathedral. One turn total." },
-    placePieces(["n", "b"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
+    placePieces(["n"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
   ),
   card(
     { id: "bn4_winter_garrison", name: "Winter Garrison", tier: 8, category: "pieces", icon: "Tent",
@@ -2811,18 +2811,25 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_endless_militia", name: "Endless Militia", tier: 8, category: "pieces", icon: "Users",
-      description: "For the rest of the game, every one of your pawns that is captured returns at once to the empty square nearest your home rank (while there is room for it).",
+      description: "For the rest of the game, the first three of your pawns that are captured each return at once to the empty square nearest your home rank (while there is room for it). Later captured pawns stay captured.",
       flavor: "The village signs up faster than the war can spend them.", requires: ["p"] },
     {
       kind: "passive",
-      onMovePlayed: (_inst, move, api) => {
-        if (move.color !== api.opp || move.captured !== "p") return;
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp || move.captured !== "p") return;
+        if (((inst.state.charges as number) ?? 3) <= 0) return;
         const sq = autoPlace(api, api.me, "p");
         if (sq == null) return;
         api.place(sq, "p", api.me);
         markRevived(api, "p");
+        const c = ((inst.state.charges as number) ?? 3) - 1;
+        inst.state.charges = c;
+        if (c <= 0) inst.spent = true;
       },
-      status: () => "the muster roll never closes",
+      status: (inst) => `${(inst.state.charges as number) ?? 3} recruits left`,
     },
   ),
   card(
