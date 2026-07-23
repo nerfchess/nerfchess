@@ -483,7 +483,7 @@ const HOUSEWARMINGS: Array<
   }
 > = [
   { id: "housewarming_gift", name: "Housewarming Gift", flavor: "A small casserole of seconds, still warm.", icon: "Gift", what: "gain 9 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 9 }) },
-  { id: "new_locks", name: "New Locks", flavor: "First night in the new place, deadbolt thrown.", icon: "Lock", what: "your king cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
+  { id: "new_locks", name: "New Locks", flavor: "First night in the new place, deadbolt thrown.", icon: "Lock", tier: 2, what: "your king cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "gilded_doorknob", name: "Gilded Doorknob", flavor: "Purely decorative. Devastatingly tasteful.", icon: "KeyRound", what: "your king is gilded, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "meet_the_neighbors", name: "Meet the Neighbors", flavor: "Know exactly which houses on the street keep siege engines.", icon: "Binoculars", what: "every enemy queen and rook flashes until your opponent replies, and you gain a draft reroll", ride: (_move, api) => { flashSquares(api, [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")]); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "change_of_address", name: "Change of Address", flavor: "The draft catalogue gets forwarded with a bonus stamp.", icon: "Mailbox", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, fallbackBy: 12 },
@@ -491,6 +491,18 @@ const HOUSEWARMINGS: Array<
 ];
 
 function housewarming(entry: (typeof HOUSEWARMINGS)[number]): Buff {
+  if (entry.id === "new_locks") {
+    // Retier + "does not prevent captures by pawns": a card-managed guard on the
+    // castled king, armed when you castle, that reliably survives into the
+    // opponent's turn and lets enemy pawn captures through.
+    return opener(
+      entry,
+      "When you castle, your king cannot be captured during your opponent's next turn, except by a pawn. One use.",
+      armedGuard((move, api) => (move.color === api.me && move.castle ? move.to : null), {
+        exceptPawns: true,
+      }),
+    );
+  }
   const desc =
     entry.fallbackBy != null
       ? `When you castle, ${entry.what}. If you have not castled by your ${entry.fallbackBy}th move, gain a draft reroll instead. One use.`
@@ -890,6 +902,10 @@ const SPRING_THAW: Array<
     bankRetry?: boolean;
     /** Seconds granted the first time a bankRetry roll fails. */
     consolationSec?: number;
+    /** Draft rerolls granted alongside the consolation seconds the first time a
+     * bankRetry roll fails (the untimed substitute for the seconds: a no-op
+     * clock gain and these rerolls are both landed, so untimed play still pays). */
+    consolationRerolls?: number;
     /** Roll two eligible pawns independently and advance the one nearer
      * promotion (the auto-resolved "player's choice" between two rolls). */
     doubleRoll?: boolean;

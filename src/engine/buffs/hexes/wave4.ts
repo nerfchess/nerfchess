@@ -909,8 +909,8 @@ const T2: Buff[] = [
       m.piece === "k" || relRank(api.opp, m.to) >= relRank(api.opp, m.from) || moveDist(m) <= 2,
     ),
   ),
-  H2(
-    { id: "hx4_plumed_helmets", name: "Plumed Helmets", description: "Their knights are issued enormous ceremonial wings for 5 of their turns, and preening takes time: their knights cannot move on their next turn.", flavor: "Aerodynamic? No. Magnificent? Extremely.", icon: "Feather", fx: { motif: "slow", pieces: ["n"] } },
+  hex(
+    { id: "hx4_plumed_helmets", name: "Plumed Helmets", description: "Their knights are issued enormous ceremonial wings for 5 of their turns, and preening takes time: their knights cannot move on their next turn.", flavor: "Aerodynamic? No. Magnificent? Extremely.", icon: "Feather", fx: { motif: "slow", pieces: ["n"] }, tier: 3 },
     {
       kind: "passive",
       init: (inst, api) => {
@@ -934,8 +934,8 @@ const T2: Buff[] = [
       return moves.filter((m) => m.piece !== "n" || cheb(m.to, k) > 1);
     }),
   ),
-  H2(
-    { id: "hx4_soggy_invaders", name: "Soggy Invaders", description: "For your opponent's next 2 turns, their pieces standing in your half of the board cannot capture. Wet powder, wetter morale.", flavor: "The river crossing seemed clever at the time.", icon: "Umbrella", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_soggy_invaders", name: "Soggy Invaders", description: "For your opponent's next 2 turns, their pieces standing in your half of the board cannot capture. Wet powder, wetter morale.", flavor: "The river crossing seemed clever at the time.", icon: "Umbrella", fx: { motif: "muzzle", pieces: "all" }, tier: 3 },
     curse(2, (moves, api) => moves.filter((m) => !m.captured || relRank(api.opp, m.from) <= 4)),
   ),
   H2(
@@ -948,8 +948,8 @@ const T2: Buff[] = [
       }),
     ),
   ),
-  H2(
-    { id: "hx4_winded_destrier", name: "Winded Destrier", description: "For your opponent's next 3 turns, any knight of theirs that captures must catch its breath and is frozen for 1 of their turns.", flavor: "The charge was glorious. The wheeze, less so.", icon: "Wind", fx: { motif: "muzzle", pieces: ["n"] } },
+  hex(
+    { id: "hx4_winded_destrier", name: "Winded Destrier", description: "For your opponent's next 3 turns, any knight of theirs that captures must catch its breath and is frozen for 1 of their turns.", flavor: "The charge was glorious. The wheeze, less so.", icon: "Wind", fx: { motif: "muzzle", pieces: ["n"] }, tier: 3 },
     onTheirMove(3, (move, api) => {
       if (move.piece === "n" && move.captured) sting(api, move.to, 1, "gum");
     }),

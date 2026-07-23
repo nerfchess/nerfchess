@@ -87,16 +87,37 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Snowflake",
       name: "Frost Wall",
       description:
-        "A wall of blue ice seals the keep: your opponent cannot move any piece onto your back two ranks for their next 4 turns.",
+        "A wall of blue ice seals the keep: your opponent cannot move any piece onto your back two ranks for their next 4 turns, save one bridge square left open for the defender, the wall square nearest their king.",
       tier: 5,
       category: "hex",
       flavor: "Cold enough to stop an army cold.",
       fx: { motif: "blindfold" },
     },
+    // Balance pass: the terrain is preserved, but the defender keeps one bridge
+    // across the ice. An instant has no opponent-pick flow, so the open square
+    // is chosen deterministically for the defender: the wall square nearest
+    // their king (ties break to the lower index), the crossing they would most
+    // want to hold. A pure board read, so both replicas open the same bridge.
     instant((_inst, api) => {
       const ranks = api.me === "w" ? [0, 1] : [6, 7];
       const squares = ranks.flatMap((r) => Array.from({ length: 8 }, (_, f) => SQ(f, r)));
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
+      const kingSq = mySquares(api.board, api.opp, "k")[0];
+      let bridge = -1;
+      if (kingSq != null) {
+        let best = Infinity;
+        for (const sq of squares) {
+          const d = Math.max(
+            Math.abs(FILE(sq) - FILE(kingSq)),
+            Math.abs(RANK(sq) - RANK(kingSq)),
+          );
+          if (d < best) {
+            best = d;
+            bridge = sq;
+          }
+        }
+      }
+      const walled = squares.filter((sq) => sq !== bridge);
+      addEffect(api, { kind: "barred", squares: walled, against: api.opp, turns: 4 });
     }),
   ),
   card(
