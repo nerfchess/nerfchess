@@ -394,6 +394,13 @@ export function grantInventory(api: BuffApi, type: PieceType, n = 1) {
   if (type === "k" || n <= 0) return;
   const pocket = (api.mine.inventory ??= {});
   pocket[type] = (pocket[type] ?? 0) + n;
+  // The pocket is public state (draftStateFor sends inventory openly), but a
+  // grant from a HIDDEN passive's onMovePlayed hook is invisible to the
+  // reveal detection unless it bumps the mutation counter — exactly like
+  // place()/removePiece(). Without this, a replica never learns the card,
+  // never replays the grant, and the pocket desyncs permanently (dtState
+  // carries the count only when an offer also rolls that move).
+  api.bs.mutations = (api.bs.mutations ?? 0) + 1;
 }
 
 /** Grant the holder a random apex card as an unspent, usable card added to
