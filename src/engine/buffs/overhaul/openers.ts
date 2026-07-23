@@ -1315,14 +1315,10 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
       : entry.mode === "out"
         ? " The step must angle toward the board's edge."
         : "";
-<<<<<<< Updated upstream
   const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape" || entry.id === "palace_gate";
   // The diagonal step already lands only on an empty square (teleportMoves), so
   // this filter is explicit insurance matching the "cannot capture" wording.
   const noCapture = entry.id === "revolving_door";
-=======
-  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape";
->>>>>>> Stashed changes
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const out: Move[] = [];
