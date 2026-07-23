@@ -1158,8 +1158,8 @@ export const HEX_WAVE2: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 4;
-        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 4, then: "remove" });
+        inst.state.turns = 3;
+        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 3, then: "remove" });
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -1242,7 +1242,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tide_of_ash",
       name: "Tide of Ash",
       description:
-        "Ash rolls in over their homeland: their 1st rank is buried at once, and the tide swallows one more of their home ranks on each of their next 3 turns, up to their 4th rank. Buried ground cannot be moved ONTO by your opponent (pieces standing in the ash may still climb out), so their army is herded forward rank by rank. The whole tide blows away after their 6th turn.",
+        "Ash rolls in over their homeland: their 1st rank is buried at once, and the tide swallows one more of their home ranks on each of their next 3 turns, up to their 4th rank. Buried ground cannot be moved ONTO by your opponent, but the ash is a drift, not a wall: any piece already standing in it may leave normally, gliding or stepping out of the ash onto clear ground. So their army is herded forward rank by rank. The whole tide blows away after their 6th turn.",
       flavor: "The mountain did not erupt at the army. It erupted at the address.",
       fx: { motif: "blindfold" },
     },
@@ -1253,17 +1253,34 @@ export const HEX_WAVE2: Buff[] = [
         inst.state.front = 1;
         const squares: Square[] = [];
         for (let sq = 0; sq < 64; sq++) if (relRank(api.opp, sq) === 1) squares.push(sq);
+        inst.state.ash = squares.slice();
         addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
       },
       onMovePlayed: (inst, move, api) => {
         const front = (inst.state.front as number) ?? 1;
         if (move.color === api.opp && turnsLeft(inst) > 0 && front < 4) {
+          const ash = ((inst.state.ash as Square[] | undefined) ?? []).slice();
+          const add: Square[] = [];
+          for (let sq = 0; sq < 64; sq++)
+            if (relRank(api.opp, sq) === front + 1 && !ash.includes(sq)) add.push(sq);
+          const nextAsh = ash.concat(add);
+          // Extend the SINGLE ash band in place instead of stacking one barred
+          // effect per rank. A band two or more ranks thick is not a board-
+          // splitting wall, only a no-landing zone, so a piece already standing
+          // in the ash may glide or leap out of it normally (moving ONTO buried
+          // ground stays forbidden). Stacked one-rank walls would instead trap
+          // pieces caught inside behind the crossing rule.
+          const eff = api.bs.effects.find(
+            (e) =>
+              e.kind === "barred" &&
+              e.against === api.opp &&
+              e.squares.length === ash.length &&
+              ash.every((s) => e.squares.includes(s)),
+          );
+          if (eff && eff.kind === "barred") eff.squares = nextAsh;
+          else addEffect(api, { kind: "barred", squares: nextAsh, against: api.opp, turns: turnsLeft(inst) });
           inst.state.front = front + 1;
-          const squares: Square[] = [];
-          for (let sq = 0; sq < 64; sq++) if (relRank(api.opp, sq) === front + 1) squares.push(sq);
-          // Added during their move (ticked once immediately), so every band
-          // of ash expires together after their 6th turn.
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: turnsLeft(inst) });
+          inst.state.ash = nextAsh;
         }
         tickTurns(inst, move, api.opp);
       },

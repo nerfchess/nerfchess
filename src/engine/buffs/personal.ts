@@ -1704,14 +1704,14 @@ const NAMED: Buff[] = [
       id: "daniel_caesar",
       name: "Daniel Caesar",
       description:
-        "Smooth things over. For your opponent's next 3 turns none of their pieces may capture anything, so the board stays calm while you set up.",
+        "Smooth things over. For your opponent's next 2 turns none of their pieces may capture anything, so the board stays calm while you set up.",
       tier: 4,
       category: "hex",
       icon: "Music2",
       flavor: "Best part, right in the blue.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    timedOppFilter(3, (moves) => moves.filter((m) => !m.captured)),
+    timedOppFilter(2, (moves) => moves.filter((m) => !m.captured)),
   ),
 
   card(
@@ -1883,21 +1883,41 @@ const NAMED: Buff[] = [
       id: "check_out_our_socials",
       name: "Check Out Our Socials",
       description:
-        "Go live to the whole board. Every enemy piece except the king freezes for their next 2 turns while your hyped-up side takes 2 extra moves right now.",
+        "Go live to the squad. Freeze up to 3 enemy pieces except the king for their next turn, then take one bonus move.",
       tier: 8,
       category: "tempo",
       icon: "Megaphone",
       flavor: "Like, subscribe, and stop moving.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type !== "k") {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
+    // Nerf: no more board-wide freeze or second bonus move. Freeze up to three
+    // chosen non-king enemies for one turn, then take a single bonus move.
+    {
+      kind: "activated",
+      freeAction: true,
+      targets: (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const p = api.board.pieces[k.square];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1, skin: "stun" });
+          }
         }
-      }
-      api.bs.extraMoves[api.me] += 2;
-    }),
+        api.bs.extraMoves[api.me] += 1;
+      },
+    },
   ),
 ];
 

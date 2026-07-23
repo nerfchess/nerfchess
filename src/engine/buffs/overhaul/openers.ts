@@ -519,7 +519,7 @@ const STRANGE_GAITS: Array<
 > = [
   { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction", capture: "none" },
   { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction" },
-  { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between" },
+  { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between", capture: "none" },
   { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between" },
   { id: "viziers_errand", name: "Vizier's Errand", flavor: "One dignified step. No hopping. There are appearances.", icon: "Crown", leaps: symLeaps(1, 0), how: "a single step to an adjacent square, straight only" },
   { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square" },
