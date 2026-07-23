@@ -1670,14 +1670,14 @@ const T4: Buff[] = [
     escapeCurse(3, (m) => m.piece === "k" || quadOf(m.from) !== quadOf(m.to)),
   ),
   H4(
-    { id: "hx4_tin_soldiers", name: "Tin Soldiers", description: "Their knights and bishops are recast as toy soldiers: wooden for 6 of their turns, and stiff jointed for the first 2, during which they may move at most 2 squares.", flavor: "Painted smiles, glued elbows.", icon: "ToyBrick", fx: { motif: "anchor", pieces: ["n", "b"] } },
+    { id: "hx4_tin_soldiers", name: "Tin Soldiers", description: "Their knights and bishops are recast as toy soldiers: wooden for 5 of their turns, and stiff jointed for the first 2, during which they may move at most 2 squares.", flavor: "Painted smiles, glued elbows.", icon: "ToyBrick", fx: { motif: "anchor", pieces: ["n", "b"] } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 2;
         for (const sq of mySquares(api.board, api.opp)) {
           const t = api.board.pieces[sq]!.type;
-          if (t === "n" || t === "b") dressUp(api, sq, "wooden", 6);
+          if (t === "n" || t === "b") dressUp(api, sq, "wooden", 5);
         }
       },
       filterOpponentMoves: (moves, inst) => {
@@ -1798,8 +1798,8 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_understudy_rule", name: "Understudy Rule", description: "For your opponent's next 4 turns, no two officer moves in a row: after moving a knight, bishop, rook or queen, their next move must be a pawn or king move.", flavor: "The stars rest. The chorus sweats.", icon: "Drama", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
-    curse(4, (moves, api) => {
+    { id: "hx4_understudy_rule", name: "Understudy Rule", description: "For your opponent's next 4 turns, no two officer moves in a row: after moving a knight, bishop, rook or queen, their next move must be a pawn or king move. The first move blocked by this slips through as one escape, then the restriction holds.", flavor: "The stars rest. The chorus sweats.", icon: "Drama", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
+    escapeCurseBoard(4, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {

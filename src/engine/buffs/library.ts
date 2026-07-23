@@ -471,7 +471,10 @@ function lineSweepThen(
         const sq = SQ(f, r);
         const p = api.board.pieces[sq];
         if (!p) {
-          if (swept > 0) out.push(sq);
+          // maxCaptures 0 is a non-capturing slide: every empty square up to the
+          // first blocker is a valid landing. Otherwise a landing only opens up
+          // once the sweep has passed at least one captured enemy.
+          if (maxCaptures === 0 || swept > 0) out.push(sq);
         } else {
           if (p.color === api.me || p.type === "k") break;
           swept++;
