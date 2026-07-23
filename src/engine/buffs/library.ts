@@ -4277,11 +4277,12 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "kings_legion", name: "King's Legion", description: "Add a rook, a knight, and a pawn to your pocket, then drop them onto empty squares on later turns.", tier: 7, category: "pieces" },
+    { id: "kings_legion", name: "King's Legion", description: "Add a rook and a knight to your pocket, then drop them onto empty squares on later turns.", tier: 7, category: "pieces" },
+    // Rebalance: spawn count reduced by one (was rook, knight, pawn); the pawn,
+    // the least valuable of the three, is dropped.
     instant((_inst, api) => {
       grantInventory(api, "r", 1);
       grantInventory(api, "n", 1);
-      grantInventory(api, "p", 1);
     }),
   ),
   def(
@@ -4640,15 +4641,36 @@ const TIER7: Buff[] = [
     shieldArmy(1),
   ),
   def(
-    { id: "godslayer_knight", requires: ["n"], name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
-    bindPiece("Choose the knight", bindCandidates(["n"]), {
-      turns: 3,
-      // turns - 1: the +1 activation bump restores the shield to 3, so it
-      // co-terminates with the movement grant rather than outlasting it.
-      shieldTurns: 2,
-      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
-      explodeOnCapture: true,
-    }),
+    { id: "godslayer_knight", requires: ["n"], name: "Godslayer Knight", description: "One knight moves as an amazon, is uncapturable, and explodes on capture, for 3 turns. While shielded it cannot give check.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    (() => {
+      const base = bindPiece("Choose the knight", bindCandidates(["n"]), {
+        turns: 3,
+        // turns - 1: the +1 activation bump restores the shield to 3, so it
+        // co-terminates with the movement grant rather than outlasting it.
+        shieldTurns: 2,
+        gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
+        explodeOnCapture: true,
+      });
+      const baseAugment = base.augmentMoves;
+      return {
+        ...base,
+        augmentMoves: (moves, inst, api) => {
+          baseAugment?.(moves, inst, api);
+          // While the shield is live (co-terminal with the movement grant),
+          // the bound piece may not deliver check: drop any of its moves that
+          // put the enemy king in check. Never empty the mover's whole list.
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null || turnsLeft(inst) <= 0) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          const keep = moves.filter((m) => m.from !== sq || !boundGivesCheck(api, sq, m.to));
+          if (keep.length > 0 && keep.length < moves.length) {
+            moves.length = 0;
+            moves.push(...keep);
+          }
+        },
+      };
+    })(),
   ),
   def(
     { id: "abyss", name: "Abyss", description: "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.", tier: 5, category: "attack" },
@@ -4722,9 +4744,13 @@ const TIER7: Buff[] = [
     // higher, i.e. strictly dominated. The sovereign now also lifts the offer
     // one tier (same lift as a banked skip, capped by the same rollOffer
     // rules), so tier 7 buys a real step over Greed.
+    // Rebalance: rather than a blind roll, the sovereign also reveals the tier
+    // of the opponent's next offer (seeOppTier), so the caster reads the ceiling
+    // instead of only gambling on their own lifted roll.
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+      api.mine.flags.seeOppTier = true;
     }),
   ),
   // Nerf-modifiers (cross-cutting)
