@@ -4380,27 +4380,51 @@ const TIER7: Buff[] = [
     stealBuffs(3, undefined, notLockedIn),
   ),
   def(
-    { id: "meteor", name: "Meteor", description: "Destroy every enemy piece on one rank and one file that cross at a square you pick.", tier: 7, category: "attack" },
+    { id: "meteor", name: "Meteor", description: "Pick an impact square, then a rank or a file through it, not both. Remove up to three enemy pieces on that line, kings aside, nearest the impact square.", tier: 7, category: "attack" },
     activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : { kind: "square", label: "Pick the impact square", squares: Array.from({ length: 64 }, (_, i) => i) },
+      (_inst, _api, picks) => {
+        if (picks.length === 0)
+          return { kind: "square", label: "Pick the impact square", squares: Array.from({ length: 64 }, (_, i) => i) };
+        if (picks.length === 1) {
+          const c = picks[0].square!;
+          const squares: Square[] = [];
+          for (let i = 0; i < 8; i++) {
+            const onRank = SQ(i, RANK(c));
+            const onFile = SQ(FILE(c), i);
+            if (onRank !== c) squares.push(onRank);
+            if (onFile !== c) squares.push(onFile);
+          }
+          return { kind: "square", label: "Pick a square on the rank or file to strike", squares };
+        }
+        return null;
+      },
       (_inst, api, picks) => {
         const c = picks[0]?.square;
-        if (c == null) return;
-        for (let i = 0; i < 8; i++) {
-          for (const sq of [SQ(i, RANK(c)), SQ(FILE(c), i)]) {
+        const o = picks[1]?.square;
+        if (c == null || o == null) return;
+        // The second pick's shared coordinate chooses the axis: same rank as the
+        // impact square means the rank, otherwise the file.
+        const useRank = RANK(o) === RANK(c);
+        const line: Square[] = [];
+        for (let i = 0; i < 8; i++) line.push(useRank ? SQ(i, RANK(c)) : SQ(FILE(c), i));
+        const dist = (sq: Square) =>
+          useRank ? Math.abs(FILE(sq) - FILE(c)) : Math.abs(RANK(sq) - RANK(c));
+        const targets = line
+          .filter((sq) => {
             const p = api.board.pieces[sq];
-            if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
-          }
-        }
+            return p && p.color === api.opp && p.type !== "k";
+          })
+          .sort((a, b) => dist(a) - dist(b))
+          .slice(0, 3);
+        for (const sq of targets) api.removePiece(sq);
       },
     ),
   ),
   def(
-    { id: "grand_resurrection", name: "Grand Resurrection", description: "Revive your queen and one minor piece to your half.", tier: 7, category: "pieces" },
-    autoRevive(["q", ["n", "b"]]),
+    { id: "grand_resurrection", name: "Grand Resurrection", description: "Revive your queen to your half.", tier: 7, category: "pieces" },
+    // Rebalance: the revived count (2) is the largest quantity above one, so it
+    // drops by one to a single piece; the queen, the card's headline, is kept.
+    autoRevive(["q"]),
   ),
   def(
     { id: "world_lock", name: "World Lock", description: "Seal the border: your opponent cannot move any piece into your half of the board for their next 3 turns.", tier: 8, category: "protection", fx: { motif: "blindfold" } },
@@ -4445,11 +4469,23 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "draft_tyranny", name: "Draft Tyranny", description: "Set both of your own next cards to tier 7, once.", tier: 7, category: "draft" },
-    // Rebalance: forced tier lowered from 8 to 7, one band off the apex ceiling.
-    instant((_inst, api) => {
-      api.mine.flags.forceTier = 7;
-    }),
+    { id: "draft_tyranny", name: "Draft Tyranny", description: "After your opponent's next move, both cards in your next draft are set to tier 7, once.", tier: 7, category: "draft" },
+    // Rebalance: forced tier lowered from 8 to 7, one band off the apex ceiling,
+    // and the payoff is delayed one opponent move before it takes hold.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        api.mine.flags.forceTier = 7;
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "sets your next draft to tier 7 after their next move" : "used",
+    },
   ),
   def(
     { id: "warp_sovereign", name: "Warp Sovereign", description: "Swap up to three pairs of your pieces, once. Stop after any pair.", tier: 8, category: "movement" },
