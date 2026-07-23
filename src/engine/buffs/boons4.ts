@@ -1769,9 +1769,36 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_sparring_rhythm", name: "Sparring Rhythm", tier: 3, category: "nerf", icon: "Zap",
-      description: "The next 2 times you put your opponent's king in check, your nerf is suspended for your next 2 turns.",
+      description: "The next 2 times you put your opponent's king in check, your nerf is suspended for your next 2 turns, beginning after your opponent's following move.",
       flavor: "Jab, jab, breathe." },
-    reliefOn(2, 2, (m, api) => m.color === api.me && isInCheck(api.board, api.opp), "flurries"),
+    {
+      // The 2-turn suspension is preserved but begins one opponent move later:
+      // a check arms a pending suspension that fires after the reply (the
+      // knights_vigil pending idiom).
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+        inst.state.pending = 0;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // A suspension armed by an earlier check begins now, after this reply.
+        if (move.color === api.opp && ((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          susp(api, 2);
+        }
+        // Putting the opponent's king in check arms a suspension that begins
+        // after their following move.
+        const left = (inst.state.charges as number) ?? 0;
+        if (left > 0 && move.color === api.me && isInCheck(api.board, api.opp)) {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+          inst.state.charges = left - 1;
+        }
+        if (((inst.state.charges as number) ?? 0) <= 0 && ((inst.state.pending as number) ?? 0) <= 0) {
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 2} flurries left`,
+    },
   ),
   card(
     { id: "bn4_lone_crown", name: "Lone Crown", tier: 3, category: "nerf", icon: "Crown",
@@ -2183,29 +2210,47 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_visor_down", name: "Visor Down", tier: 3, category: "protection", icon: "HardHat",
-      description: "The two squares diagonally ahead of your king are barred to enemy pieces for 4 turns.",
+      description: "The two squares diagonally ahead of your king are barred to enemy pieces for 4 turns. In exchange, your next draft is skipped.",
       flavor: "Vision narrows. Confidence soars." },
     instant((_inst, api) => {
       const ks = kingSquare(api.board, api.me);
-      if (ks == null) return;
-      const fwd = api.me === "w" ? 1 : -1;
-      const squares: Square[] = [];
-      for (const df of [-1, 1]) {
-        const f = FILE(ks) + df, r = RANK(ks) + fwd;
-        if (inBoard(f, r)) squares.push(SQ(f, r));
+      if (ks != null) {
+        const fwd = api.me === "w" ? 1 : -1;
+        const squares: Square[] = [];
+        for (const df of [-1, 1]) {
+          const f = FILE(ks) + df, r = RANK(ks) + fwd;
+          if (inBoard(f, r)) squares.push(SQ(f, r));
+        }
+        if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
       }
-      if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   card(
     { id: "bn4_rampart_watch", name: "Rampart Watch", tier: 3, category: "protection", icon: "TowerControl",
-      description: "None of your pieces standing on your second rank can be captured for your opponent's next 2 turns.",
+      description: "After your opponent's next move, none of your pieces standing on your second rank can be captured for their following 2 turns.",
       flavor: "The wall walk is staffed and grumbling.",
       fx: { motif: "ward", pieces: "all", self: true } },
-    shieldZone(
-      (api) => mySquares(api.board, api.me).filter((sq) => RANK(sq) === ownRank(api.me, 1)),
-      2,
-    ),
+    {
+      // The payoff is preserved but delayed: the shield lands after the
+      // opponent's next move (the pawn_umbrella delay idiom), so it covers
+      // their following 2 turns instead of their next 2.
+      kind: "passive",
+      init: (inst) => {
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const d = (inst.state.delay as number) ?? 1;
+        inst.state.delay = d - 1;
+        if (d - 1 <= 0) {
+          const squares = mySquares(api.board, api.me).filter((sq) => RANK(sq) === ownRank(api.me, 1));
+          if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "the wall mans after their next move"),
+    },
   ),
   card(
     { id: "bn4_royal_taster", name: "Royal Taster", tier: 4, category: "protection", icon: "Utensils",
@@ -2299,10 +2344,25 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_slow_procession", name: "Slow Procession", tier: 3, category: "tempo", icon: "Snail",
-      description: "For your opponent's next 2 turns, their queen cannot move.",
+      description: "For your opponent's next 2 turns, their queen cannot move. When it resolves, their queen lights up until they reply.",
       flavor: "Protocol demands she walk behind the banners. All of them.",
       fx: { motif: "jail", pieces: ["q"] } },
-    timedOppFilter(2, (moves) => moves.filter((m) => m.piece !== "q")),
+    {
+      // The jail identity is preserved; the affected piece is revealed before
+      // the opponent replies: the queen lights up until their next move.
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 2;
+        flashSquares(api, mySquares(api.board, api.opp, "q"));
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const filtered = moves.filter((m) => m.piece !== "q");
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   card(
     { id: "bn4_coffee_break", name: "Coffee Break", tier: 3, category: "tempo", icon: "Coffee",
@@ -2357,11 +2417,31 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_trade_secret", name: "Trade Secret", tier: 3, category: "draft", icon: "Lock",
-      description: "Your next draft offer is fated to deal tier 4 cards.",
+      description: "Your next draft offer is fated to deal tier 4 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed.",
       flavor: "Ask no questions about the supplier." },
-    instant((_inst, api) => {
-      api.mine.flags.forceTier = 4;
-    }),
+    {
+      // The reward is preserved but expires: the forced tier is reclaimed if the
+      // fated offer is not dealt within two of your drafts (the Lucky Coin
+      // expiry idiom applied to forceTier).
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.forceTier = 4;
+        inst.state.draftsAtGrant = api.mine.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        // The flag clears itself when the offer is dealt: the reward was used.
+        if (api.mine.flags.forceTier !== 4) {
+          inst.spent = true;
+          return;
+        }
+        if (api.mine.draftsTaken - (inst.state.draftsAtGrant as number) >= 2) {
+          api.mine.flags.forceTier = undefined;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "the fated offer expires in two drafts"),
+    },
   ),
 
   // --- item (2) ---
@@ -2443,15 +2523,51 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_harvest_rest", name: "Harvest Rest", tier: 4, category: "nerf", icon: "Tractor",
-      description: "After your next 5 turns, your nerf is suspended for the 6 turns that follow.",
+      description: "After your next 5 turns, your nerf is suspended for the 6 turns that follow. On the final turn the relief applies only to movement restrictions: you may move only one square at a time.",
       flavor: "First the field, then the feast." },
-    reliefAfter(5, 6),
+    // reliefAfter(5, 6) inlined so the final suspended turn can be made
+    // movement-only (the Saint's Day idiom). After the 5-turn delay the
+    // suspension covers the first 5 turns in full; a sixth, movement-only turn
+    // is added when those run out (nerf_suspended plus a short_leash, both
+    // granted on the same own move so the same-move tick leaves each covering
+    // exactly that one final turn).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 5;
+        inst.state.phase = "delay";
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        if (inst.state.phase === "delay") {
+          const t = ((inst.state.turns as number) ?? 5) - 1;
+          inst.state.turns = t;
+          if (t <= 0) {
+            susp(api, 6);
+            inst.state.phase = "relief";
+            inst.state.turns = 5;
+          }
+          return;
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          susp(api, 2);
+          addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.phase === "delay"
+          ? `${(inst.state.turns as number) ?? 5} of your turns until relief`
+          : "resting",
+    },
   ),
   card(
     { id: "bn4_furlough", name: "Furlough", tier: 4, category: "nerf", icon: "Backpack",
-      description: "Spend your turn signing out: your nerf is suspended for your next 7 turns.",
+      description: "Spend your turn signing out: your nerf is suspended for your next 6 turns.",
       flavor: "Leave the shackles at the front desk." },
-    activatedSimple((_inst, api) => susp(api, 7)),
+    activatedSimple((_inst, api) => susp(api, 6)),
   ),
   card(
     { id: "bn4_dragonslayer", name: "Dragonslayer", tier: 3, category: "nerf", icon: "Flame",
@@ -2487,52 +2603,92 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_home_square", name: "Home Square", tier: 4, category: "nerf", icon: "House",
-      description: "While your king stands on its starting square, your nerf is suspended. Castle or step away, and the comfort ends until he returns.",
+      description: "While your king stands on its starting square, your nerf is suspended, beginning the turn after each of your opponent's moves. Castle or step away, and the comfort ends until he returns.",
       flavor: "There is exactly one chair in the world that fits." },
-    reliefWhile((api) => {
-      const home = api.me === "w" ? SQ(4, 0) : SQ(4, 7);
-      const p = api.board.pieces[home];
-      return !!p && p.color === api.me && p.type === "k";
-    }, "the throne remembers"),
+    // The continuous relief is preserved but begins after the opponent replies:
+    // no immediate init grant, so it only starts once the opponent has moved
+    // while the king sits home (the dowagers_patience delay idiom). Added on
+    // their move, the nerf_suspended timer is not self-ticked, so turns:1 covers
+    // exactly your following turn (refreshed after each of their moves).
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const home = api.me === "w" ? SQ(4, 0) : SQ(4, 7);
+        const p = api.board.pieces[home];
+        if (!!p && p.color === api.me && p.type === "k") susp(api, 1);
+      },
+      status: () => "the throne remembers",
+    },
   ),
   card(
     { id: "bn4_hold_the_door", name: "Hold the Door", tier: 4, category: "nerf", icon: "DoorClosed",
-      description: "The next 2 times an enemy piece reaches your back rank, your nerf is suspended for your next 4 turns.",
+      description: "The next 2 times an enemy piece reaches your back rank, your nerf is suspended for your next 3 turns.",
       flavor: "They are in the hall. You are suddenly wide awake." },
-    reliefOn(2, 4, (m, api) => m.color === api.opp && relRank(api.opp, m.to) === 8, "alarms"),
+    reliefOn(2, 3, (m, api) => m.color === api.opp && relRank(api.opp, m.to) === 8, "alarms"),
   ),
 
   // --- movement (5) ---
 
   card(
     { id: "bn4_hidden_stair", name: "Hidden Stair", tier: 4, category: "movement", icon: "ArrowDownToLine",
-      description: "Once, your king may descend to any empty square on your home rank.",
+      description: "Once, your king may descend to any empty square on your home rank. In exchange, your next draft is skipped.",
       flavor: "Behind the tapestry. Mind the third step.",
       fx: { motif: "empower", pieces: ["k"], self: true } },
-    augment((_moves, inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return [];
-      const r = api.me === "w" ? 0 : 7;
-      const dests: Square[] = [];
-      for (let f = 0; f < 8; f++) {
-        const s = SQ(f, r);
-        if (s !== ks && !api.board.pieces[s]) dests.push(s);
-      }
-      return teleportMoves(api.board, ks, dests, inst.id);
-    }, 1),
+    {
+      // augment() inlined so using the descent also skips your next draft.
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks == null) return;
+        const r = api.me === "w" ? 0 : 7;
+        const dests: Square[] = [];
+        for (let f = 0; f < 8; f++) {
+          const s = SQ(f, r);
+          if (s !== ks && !api.board.pieces[s]) dests.push(s);
+        }
+        addNovel(moves, teleportMoves(api.board, ks, dests, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id) return;
+        const charges = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = charges;
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+        if (charges <= 0) inst.spent = true;
+      },
+      status: () => null,
+    },
   ),
   card(
     { id: "bn4_mountain_pass", name: "Mountain Pass", tier: 4, category: "movement", icon: "MountainSnow",
-      description: "For your next 3 turns, your bishops may slide diagonally through one of your own pieces (never capturing it) to squares beyond.",
+      description: "For your next 3 turns, your bishops may slide diagonally through one of your own pieces (never capturing it) to squares beyond. The square a bishop lands on this way lights up until your opponent replies.",
       flavor: "The goat path is open. Bishops are surprisingly goat-like.", requires: ["b"],
       fx: { motif: "empower", pieces: ["b"], moveAs: "b", self: true } },
-    timedAugment(3, (_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "b")) {
-        out.push(...phasingSlideMoves(api.board, from, [[1, 1], [1, -1], [-1, 1], [-1, -1]], inst.id, 1));
-      }
-      return out;
-    }),
+    // timedAugment(3, ...) inlined so the destination is revealed before the
+    // opponent replies: a bishop's landing square lights up until their move.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "b")) {
+          out.push(...phasingSlideMoves(api.board, from, [[1, 1], [1, -1], [-1, 1], [-1, -1]], inst.id, 1));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id) flashSquares(api, [move.to]);
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   card(
     { id: "bn4_processional", name: "Processional", tier: 4, category: "movement", icon: "Footprints",
@@ -2711,10 +2867,29 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_pawn_bulwark", name: "Pawn Bulwark", tier: 4, category: "protection", icon: "BrickWall",
-      description: "None of your pawns can be captured for your opponent's next 2 turns.",
+      description: "After your opponent's next move, none of your pawns can be captured for their following 2 turns.",
       flavor: "The little wall holds. The little wall always holds.", requires: ["p"],
       fx: { motif: "ward", pieces: ["p"], self: true } },
-    shieldZone((api) => mySquares(api.board, api.me, "p"), 2),
+    {
+      // The payoff is preserved but delayed: the shield lands after the
+      // opponent's next move (the pawn_umbrella delay idiom), covering their
+      // following 2 turns instead of their next 2.
+      kind: "passive",
+      init: (inst) => {
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const d = (inst.state.delay as number) ?? 1;
+        inst.state.delay = d - 1;
+        if (d - 1 <= 0) {
+          const pawns = mySquares(api.board, api.me, "p");
+          if (pawns.length) addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 2 });
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "the wall holds after their next move"),
+    },
   ),
   card(
     { id: "bn4_glass_case", name: "Glass Case", tier: 5, category: "protection", icon: "Frame",
@@ -2785,10 +2960,26 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_general_strike", name: "General Strike", tier: 4, category: "tempo", icon: "Megaphone",
-      description: "For your opponent's next turn, only their king will move: every other piece is off the job.",
+      description: "For your opponent's next turn, only their king will move, and it cannot capture unless a capture is its only legal move: every other piece is off the job.",
       flavor: "The pawns have demands. The rooks have a drum.",
       fx: { motif: "slow", pieces: "all" } },
-    instant((_inst, api) => addEffect(api, { kind: "king_only", against: api.opp, turns: 1 })),
+    // The king-only identity is preserved; the granted move cannot capture: the
+    // opponent's captures are filtered out for that turn (with the standard
+    // never-strand fallback if a capture is their only legal move).
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 1;
+        addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const filtered = moves.filter((m) => !m.captured);
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => (turnsLeft(inst) > 0 ? "the king works alone, unarmed" : null),
+    },
   ),
   card(
     { id: "bn4_tangled_reins", name: "Tangled Reins", tier: 4, category: "tempo", icon: "Cable",
@@ -2808,11 +2999,16 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_listening_post", name: "Listening Post", tier: 4, category: "info", icon: "RadioTower",
-      description: "See both the cards and the tier of your opponent's next draft offer.",
+      description: "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, you learn nothing.",
       flavor: "The wire crackles. The news is specific." },
     instant((_inst, api) => {
-      api.mine.flags.seeOppCards = true;
-      api.mine.flags.seeOppTier = true;
+      // Never combine the peek with a skipped enemy draft: if the opponent's
+      // next draft is already blocked there is no offer to read, so neither the
+      // cards nor the tier are revealed (the over_the_shoulder idiom).
+      if ((api.theirs.flags.blockedDrafts ?? 0) === 0) {
+        api.mine.flags.seeOppCards = true;
+        api.mine.flags.seeOppTier = true;
+      }
     }),
   ),
   card(
@@ -2846,11 +3042,31 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_private_auction", name: "Private Auction", tier: 4, category: "draft", icon: "Gavel",
-      description: "Your next draft offer is fated to deal tier 5 cards.",
+      description: "Your next draft offer is fated to deal tier 5 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed.",
       flavor: "Invitation only. You are the invitation." },
-    instant((_inst, api) => {
-      api.mine.flags.forceTier = 5;
-    }),
+    {
+      // The reward is preserved but expires: the forced tier is reclaimed if the
+      // fated offer is not dealt within two of your drafts (the Lucky Coin
+      // expiry idiom applied to forceTier).
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.forceTier = 5;
+        inst.state.draftsAtGrant = api.mine.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        // The flag clears itself when the offer is dealt: the reward was used.
+        if (api.mine.flags.forceTier !== 5) {
+          inst.spent = true;
+          return;
+        }
+        if (api.mine.draftsTaken - (inst.state.draftsAtGrant as number) >= 2) {
+          api.mine.flags.forceTier = undefined;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "the fated offer expires in two drafts"),
+    },
   ),
 
   // --- item (2) ---

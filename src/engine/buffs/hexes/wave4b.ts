@@ -1383,8 +1383,25 @@ const T7: Buff[] = [
     },
   ),
   H7(
-    { id: "hx4_stone_garden", name: "Stone Garden", description: "All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square at a time.", flavor: "Arranged tastefully. Screaming silently.", icon: "Trees", fx: { motif: "anchor", pieces: ["n", "b", "r"] } },
-    walnutAll(["n", "b", "r"], 1),
+    { id: "hx4_stone_garden", name: "Stone Garden", description: "All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square at a time. Two of the affected pieces resist and keep their footing: since the defender cannot pick here, their two most valuable affected pieces are spared.", flavor: "Arranged tastefully. Screaming silently.", icon: "Trees", fx: { motif: "anchor", pieces: ["n", "b", "r"] } },
+    instant((_inst, api) => {
+      const affected = mySquares(api.board, api.opp).filter((sq) => {
+        const t = api.board.pieces[sq]!.type;
+        return t === "n" || t === "b" || t === "r";
+      });
+      const resist = new Set(
+        affected
+          .slice()
+          .sort((a, b) => {
+            const dv = PIECE_VAL[api.board.pieces[b]!.type] - PIECE_VAL[api.board.pieces[a]!.type];
+            return dv !== 0 ? dv : a - b;
+          })
+          .slice(0, 2),
+      );
+      for (const sq of affected) {
+        if (!resist.has(sq)) addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 1 });
+      }
+    }),
   ),
   H7(
     { id: "hx4_lovestruck_majesty", name: "Lovestruck Majesty", description: "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.", flavor: "She has written four sonnets already.", icon: "Heart", fx: { motif: "jail", pieces: ["q"] } },
@@ -1421,8 +1438,8 @@ const T7: Buff[] = [
     },
   ),
   H7(
-    { id: "hx4_royal_quarantine", name: "Royal Quarantine", description: "Their king is declared contagious: for your opponent's next 4 turns, none of their pieces may end a move adjacent to their own king. The king itself moves freely.", flavor: "Get well soon, Your Majesty. From a distance.", icon: "ShieldAlert", fx: { motif: "blindfold", pieces: "all" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_royal_quarantine", name: "Royal Quarantine", description: "Their king is declared contagious: for your opponent's next 4 turns, none of their pieces may end a move adjacent to their own king. The king itself moves freely. The first piece the quarantine would turn away may make one such move, then it binds fully.", flavor: "Get well soon, Your Majesty. From a distance.", icon: "ShieldAlert", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurse(4, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       return moves.filter((m) => m.piece === "k" || cheb(m.to, k) > 1);
@@ -1447,8 +1464,10 @@ const T7: Buff[] = [
     ),
   ),
   H7(
-    { id: "hx4_the_long_night", name: "The Long Night", description: "Darkness swallows their camp: for your opponent's next 2 turns, every piece they own may move at most 1 square. King captures are always allowed.", flavor: "Nobody marches far by candlelight.", icon: "MoonStar", fx: { motif: "anchor", pieces: "all" } },
-    instant((_inst, api) => addEffect(api, { kind: "short_leash", owner: api.opp, turns: 2 })),
+    { id: "hx4_the_long_night", name: "The Long Night", description: "Darkness swallows their camp: for your opponent's next 2 turns, every piece they own may move at most 1 square. Pieces already standing in their own half may leave normally, and king captures are always allowed.", flavor: "Nobody marches far by candlelight.", icon: "MoonStar", fx: { motif: "anchor", pieces: "all" } },
+    curse(2, (moves, api) =>
+      moves.filter((m) => m.captured === "k" || relRank(api.opp, m.from) <= 4 || moveDist(m) <= 1),
+    ),
   ),
   H7(
     { id: "hx4_kraken_arms", name: "Kraken Arms", description: "Three tentacles burst from the board: choose 3 enemy pieces (never the king). The first you choose may make one move before the tentacle seizes it; each of the three is held fast, frozen for 1 of their turns.", flavor: "It only has three arms free. Lucky you.", icon: "Shell", fx: { motif: "jail" } },
@@ -1500,12 +1519,26 @@ const T7: Buff[] = [
     ),
   ),
   H7(
-    { id: "hx4_scorched_diagonal", name: "Scorched Diagonal", description: "The great a1 to h8 diagonal burns: your opponent's pieces cannot stop on any of its 8 squares for their next 3 turns.", flavor: "The longest road in the kingdom, closed for repairs.", icon: "Flame", fx: { motif: "blindfold" } },
-    instant((_inst, api) => barNow(api, Array.from({ length: 8 }, (_, i) => SQ(i, i)), 3)),
+    { id: "hx4_scorched_diagonal", name: "Scorched Diagonal", description: "The great a1 to h8 diagonal burns: your opponent's pieces cannot stop on its 8 squares for their next 3 turns, save one bridge square left cool. Since the defender cannot pick here, the bridge is the diagonal square nearest their king.", flavor: "The longest road in the kingdom, closed for repairs.", icon: "Flame", fx: { motif: "blindfold" } },
+    instant((_inst, api) => {
+      const diag = Array.from({ length: 8 }, (_, i) => SQ(i, i));
+      const k = oppKing(api);
+      let bridge = diag[0];
+      for (const sq of diag) {
+        if (k == null) {
+          if (sq < bridge) bridge = sq;
+        } else {
+          const db = cheb(bridge, k);
+          const ds = cheb(sq, k);
+          if (ds < db || (ds === db && sq < bridge)) bridge = sq;
+        }
+      }
+      barNow(api, diag.filter((s) => s !== bridge), 3);
+    }),
   ),
   H7(
-    { id: "hx4_tribute_demand", name: "Tribute Demand", description: "For your opponent's next 5 turns, every capture they make demands tribute: whichever of their other pieces stands nearest the kill is frozen for 1 of their turns.", flavor: "Victory is taxed at the source.", icon: "HandCoins", fx: { motif: "muzzle", pieces: "all" } },
-    onTheirMove(5, (move, api) => {
+    { id: "hx4_tribute_demand", name: "Tribute Demand", description: "For your opponent's next 4 turns, every capture they make demands tribute: whichever of their other pieces stands nearest the kill is frozen for 1 of their turns.", flavor: "Victory is taxed at the source.", icon: "HandCoins", fx: { motif: "muzzle", pieces: "all" } },
+    onTheirMove(4, (move, api) => {
       if (!move.captured) return;
       let best: Square | null = null;
       let bd = Infinity;
@@ -1603,23 +1636,57 @@ const T7: Buff[] = [
     nullifyDrafts(1),
   ),
   H7(
-    { id: "hx4_tidal_wall", name: "Tidal Wall", description: "A wall of seawater stands across the middle of the board: your opponent's pieces cannot stop on either central rank (the 4th and 5th) for their next 2 turns.", flavor: "The tide takes sides.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },
-    instant((_inst, api) => barNow(api, [...rankSquares(3), ...rankSquares(4)], 2)),
+    { id: "hx4_tidal_wall", name: "Tidal Wall", description: "A wall of seawater stands across the middle of the board: your opponent's pieces cannot stop on either central rank (the 4th and 5th) for their next 2 turns, save one bridge square left standing. Since the defender cannot pick here, the bridge is the wall square nearest their king.", flavor: "The tide takes sides.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },
+    instant((_inst, api) => {
+      const wall = [...rankSquares(3), ...rankSquares(4)];
+      const k = oppKing(api);
+      let bridge = wall[0];
+      for (const sq of wall) {
+        if (k == null) {
+          if (sq < bridge) bridge = sq;
+        } else {
+          const db = cheb(bridge, k);
+          const ds = cheb(sq, k);
+          if (ds < db || (ds === db && sq < bridge)) bridge = sq;
+        }
+      }
+      barNow(api, wall.filter((s) => s !== bridge), 2);
+    }),
   ),
   H7(
-    { id: "hx4_treacle_tide", name: "Treacle Tide", description: "Treacle floods their camp: for your opponent's next 4 turns, any piece of theirs standing in their own half may move at most 1 square. Their king is exempt, and pieces already in your half are free.", flavor: "Sweet, slow, and knee deep.", icon: "IceCreamCone", fx: { motif: "anchor", pieces: "all" } },
-    curse(4, (moves, api) =>
-      moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) >= 5 || moveDist(m) <= 1),
-    ),
+    { id: "hx4_treacle_tide", name: "Treacle Tide", description: "Treacle seeps in slowly: your opponent's next move passes freely, then for their following 4 turns, any piece of theirs standing in their own half may move at most 1 square. Their king is exempt, and pieces already in your half are free.", flavor: "Sweet, slow, and knee deep.", icon: "IceCreamCone", fx: { motif: "anchor", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) >= 5 || moveDist(m) <= 1);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the treacle spreads after their next move",
+    },
   ),
   H7(
-    { id: "hx4_traitors_gala", name: "Traitor's Gala", description: "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 2 of their turns.", flavor: "The wine list was curated by the enemy.", icon: "Wine", fx: { motif: "anchor", pieces: ["n", "b"] } },
+    { id: "hx4_traitors_gala", name: "Traitor's Gala", description: "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.", flavor: "The wine list was curated by the enemy.", icon: "Wine", fx: { motif: "anchor", pieces: ["n", "b"] } },
     instant((_inst, api) => {
       const pool = mySquares(api.board, api.opp).filter((sq) => {
         const t = api.board.pieces[sq]!.type;
         return t === "n" || t === "b";
       });
-      for (const sq of drawRandom(api, pool, 2)) nutNow(api, sq, 2);
+      for (const sq of drawRandom(api, pool, 2)) nutNow(api, sq, 1);
     }),
   ),
   hex(
@@ -1667,8 +1734,8 @@ const T7: Buff[] = [
     },
   ),
   H7(
-    { id: "hx4_veil_of_moths", name: "Veil of Moths", description: "A living veil settles over your half of the board: for your opponent's next 4 turns, they cannot capture anything standing in your half.", flavor: "A thousand wings between the blade and the mark.", icon: "Bug", fx: { motif: "muzzle", pieces: "all" } },
-    curse(4, (moves, api) =>
+    { id: "hx4_veil_of_moths", name: "Veil of Moths", description: "A living veil settles over your half of the board: for your opponent's next 3 turns, they cannot capture anything standing in your half.", flavor: "A thousand wings between the blade and the mark.", icon: "Bug", fx: { motif: "muzzle", pieces: "all" } },
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
         return c == null || relRank(api.opp, c) <= 4;
@@ -1709,20 +1776,44 @@ const T7: Buff[] = [
     instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 })),
   ),
   H7(
-    { id: "hx4_wheel_of_ice", name: "Wheel of Ice", description: "A ribbon of ice sweeps the board one file per turn, starting at the a file: for your opponent's next 4 turns, their pieces standing on the current icy file cannot move. Their king is exempt.", flavor: "You can hear it coming, column by column.", icon: "LoaderCircle", fx: { motif: "jail", pieces: "all" } },
+    { id: "hx4_wheel_of_ice", name: "Wheel of Ice", description: "A ribbon of ice sweeps the board one file per turn, starting at the a file: for your opponent's next 4 turns, their pieces standing on the current icy file cannot move. Their king is exempt. The first piece the ice would pin may make one move, then it binds fully.", flavor: "You can hear it coming, column by column.", icon: "LoaderCircle", fx: { motif: "jail", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const left = turnsLeft(inst);
         if (left <= 0 || moves.length === 0) return moves;
         const file = 4 - left; // a, then b, c, d
         const kept = moves.filter((m) => m.piece === "k" || FILE(m.from) !== file);
-        return kept.length > 0 ? kept : moves;
+        if (kept.length === 0) return moves;
+        if (inst.state.escaped) return kept;
+        const keptSet = new Set(kept);
+        const blocked = moves.filter((m) => !keptSet.has(m));
+        if (blocked.length === 0) return kept;
+        let escapeFrom = blocked[0].from;
+        for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+        const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+        inst.state.escapeFrom = escapeFrom;
+        inst.state.escapeTos = escapeMoves.map((m) => m.to);
+        return [...kept, ...escapeMoves];
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        if (
+          move.color === api.opp &&
+          turnsLeft(inst) > 0 &&
+          !inst.state.escaped &&
+          inst.state.escapeFrom != null &&
+          move.from === inst.state.escapeFrom &&
+          Array.isArray(inst.state.escapeTos) &&
+          (inst.state.escapeTos as Square[]).includes(move.to)
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -1800,20 +1891,21 @@ const T7: Buff[] = [
       return moves;
     }),
   ),
-  H7(
-    { id: "hx4_spiders_parlor", name: "Spider's Parlor", description: "Invisible webs stretch between the armies: for your opponent's next 3 turns, any piece of theirs that ends a move adjacent to one of your pieces is snared and frozen for 1 of their turns. Kings tear free.", flavor: "Do come closer, said the spider.", icon: "Waypoints", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_spiders_parlor", name: "Spider's Parlor", description: "Invisible webs stretch between the armies: for your opponent's next 3 turns, any piece of theirs that ends a move adjacent to one of your pieces is snared and frozen for 1 of their turns. Kings tear free.", flavor: "Do come closer, said the spider.", icon: "Waypoints", fx: { motif: "slow", pieces: "all" }, tier: 8 },
     onTheirMove(3, (move, api) => {
       if (move.piece === "k") return;
       const near = mySquares(api.board, api.me).some((s) => cheb(s, move.to) <= 1);
       if (near) sting(api, move.to, 1, "web");
     }),
   ),
-  H7(
-    { id: "hx4_last_toll", name: "The Last Toll", description: "The great bell rings twice: your opponent skips their next turn, and on the turn after that they may only move a pawn or their king.", flavor: "Once for silence. Once for obedience.", icon: "BellElectric", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_last_toll", name: "The Last Toll", description: "The great bell rings twice: your opponent skips their next turn, and on the turn after that they may only move a pawn or their king. When the bell falls silent, they bank one draft reroll for the turn after it ends.", flavor: "Once for silence. Once for obedience.", icon: "BellElectric", fx: { motif: "slow", pieces: "all" }, tier: 8 },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 1;
+        inst.state.banked = false;
         api.bs.skips[api.opp] += 1;
       },
       filterOpponentMoves: (moves, inst) => {
@@ -1821,7 +1913,14 @@ const T7: Buff[] = [
         const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        const wasActive = turnsLeft(inst) > 0;
+        tickTurns(inst, move, api.opp);
+        if (wasActive && turnsLeft(inst) <= 0 && !inst.state.banked) {
+          api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+          inst.state.banked = true;
+        }
+      },
       status: (inst) => (turnsLeft(inst) > 0 ? "the second toll still hangs in the air" : null),
     },
   ),
@@ -1883,8 +1982,8 @@ const T8: Buff[] = [
     { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 4 of their turns. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" } },
     freezeTarget(4, "sleep"),
   ),
-  H8(
-    { id: "hx4_brittle_arsenal", name: "Brittle Arsenal", description: "Every enemy bishop, rook and queen turns to a walnut for 1 of their turns: the whole long range arsenal reduced to shuffling.", flavor: "All that reach, and nothing to reach with.", icon: "Hammer", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
+  hex(
+    { id: "hx4_brittle_arsenal", name: "Brittle Arsenal", description: "Every enemy bishop, rook and queen turns to a walnut for 1 of their turns: the whole long range arsenal reduced to shuffling.", flavor: "All that reach, and nothing to reach with.", icon: "Hammer", fx: { motif: "anchor", pieces: ["b", "r", "q"] }, tier: 6 },
     walnutAll(["b", "r", "q"], 1),
   ),
   H8(
@@ -1930,19 +2029,19 @@ const T8: Buff[] = [
     { id: "hx4_puppet_court", name: "Puppet Court", description: "Every officer's strings are cut: for your opponent's next 3 turns they may move only pawns and their king.", flavor: "The puppeteer stepped out for a smoke.", icon: "Drama", fx: { motif: "jail", pieces: ["n", "b", "r", "q"] } },
     curse(3, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
   ),
-  H8(
-    { id: "hx4_avalanche_pass", name: "Avalanche Pass", description: "Snow buries both central files: your opponent's pieces cannot stop on the d or e file for their next 2 turns, while yours climb freely.", flavor: "The mountain closed the road on purpose.", icon: "MountainSnow", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_avalanche_pass", name: "Avalanche Pass", description: "Snow buries both central files: your opponent's pieces cannot stop on the d or e file for their next 2 turns, while yours climb freely. Pieces already standing there may leave freely.", flavor: "The mountain closed the road on purpose.", icon: "MountainSnow", fx: { motif: "blindfold" }, tier: 6 },
     instant((_inst, api) => barNow(api, [...fileSquares(3), ...fileSquares(4)], 2)),
   ),
   H8(
-    { id: "hx4_debt_of_crowns", name: "Debt of Crowns", description: "The crown's debts are called in: your opponent's next draft is skipped outright, and the 2 drafted cards after that arrive nullified.", flavor: "Compound interest, sovereign edition.", icon: "Coins" },
+    { id: "hx4_debt_of_crowns", name: "Debt of Crowns", description: "The crown's debts are called in: your opponent's next draft is skipped outright, and in the draft after it one card arrives nullified. Since only the card they pick is nullified, the rest of that offer is protected by their own choice.", flavor: "Compound interest, sovereign edition.", icon: "Coins" },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 2;
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
   H8(
-    { id: "hx4_blood_price", name: "Blood Price", description: "For your opponent's next 4 turns, killing has a price: each of their first 2 captures in that window costs them their following turn, skipped outright.", flavor: "Pay at the moment of purchase.", icon: "Banknote", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_blood_price", name: "Blood Price", description: "For your opponent's next 4 turns, killing has a price: their first capture in that window costs them their following turn, skipped outright; their second capture instead freezes the capturing piece for 2 of their turns. Kings never freeze.", flavor: "Pay at the moment of purchase.", icon: "Banknote", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
@@ -1953,11 +2052,12 @@ const T8: Buff[] = [
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
           const paid = ((inst.state.paid as number) ?? 0) + 1;
           inst.state.paid = paid;
-          api.bs.skips[api.opp] += 1;
           if (paid >= 2) {
+            sting(api, move.to, 2, "chains");
             inst.spent = true;
             return;
           }
+          api.bs.skips[api.opp] += 1;
         }
         tickTurns(inst, move, api.opp);
       },
@@ -2017,11 +2117,21 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_doomsday_clock", name: "Doomsday Clock", description: "A great clock begins to tick, in full view: after 4 of your opponent's turns, every piece of theirs then standing in your half of the board becomes a walnut for 2 of their turns.", flavor: "Midnight is a place, and they are marching into it.", icon: "AlarmClock", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(4, (_move, api, inst) => {
+    { id: "hx4_doomsday_clock", name: "Doomsday Clock", description: "A great clock begins to tick, in full view: after 3 of your opponent's turns, every piece of theirs then standing in your half of the board becomes a walnut for 2 of their turns. If none are present, their most advanced piece is instead frozen for 1 of their turns.", flavor: "Midnight is a place, and they are marching into it.", icon: "AlarmClock", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(3, (_move, api, inst) => {
       if (turnsLeft(inst) === 1) {
+        let any = false;
         for (const sq of mySquares(api.board, api.opp)) {
-          if (relRank(api.opp, sq) >= 5) nutSting(api, sq, 2);
+          if (relRank(api.opp, sq) >= 5 && api.board.pieces[sq]!.type !== "k") {
+            nutSting(api, sq, 2);
+            any = true;
+          }
+        }
+        if (!any) {
+          const front = mySquares(api.board, api.opp)
+            .filter((sq) => api.board.pieces[sq]!.type !== "k")
+            .sort((a, b) => relRank(api.opp, b) - relRank(api.opp, a) || a - b);
+          if (front.length > 0) sting(api, front[0], 1, "stun");
         }
       }
     }),
@@ -2057,13 +2167,13 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_crown_of_lead", name: "Crown of Lead", description: "Their king is crowned with lead and wears the dunce cap for 10 of their turns. Under its weight, for their next 3 turns no piece standing adjacent to their king may capture.", flavor: "It was gold last week. Funny thing, alchemy.", icon: "Crown", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_crown_of_lead", name: "Crown of Lead", description: "Their king is crowned with lead and wears the dunce cap for 9 of their turns. Under its weight, for their next 3 turns no piece standing adjacent to their king may capture.", flavor: "It was gold last week. Funny thing, alchemy.", icon: "Crown", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 3;
         const k = oppKing(api);
-        if (k != null) addEffect(api, { kind: "cosmetic", sq: k, owner: api.opp, turns: 10, skin: "dunce" });
+        if (k != null) addEffect(api, { kind: "cosmetic", sq: k, owner: api.opp, turns: 9, skin: "dunce" });
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -2146,17 +2256,38 @@ const T8: Buff[] = [
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H8(
-    { id: "hx4_banquet_of_dust", name: "Banquet of Dust", description: "Their heavy pieces are seated at a feast of nothing: for your opponent's next 5 turns, their queen and rooks cannot capture.", flavor: "Course after course of empty plates.", icon: "UtensilsCrossed", fx: { motif: "muzzle", pieces: ["r", "q"] } },
+  hex(
+    { id: "hx4_banquet_of_dust", name: "Banquet of Dust", description: "Their heavy pieces are seated at a feast of nothing: for your opponent's next 5 turns, their queen and rooks cannot capture.", flavor: "Course after course of empty plates.", icon: "UtensilsCrossed", fx: { motif: "muzzle", pieces: ["r", "q"] }, tier: 6 },
     curse(5, (moves) => moves.filter((m) => (m.piece !== "q" && m.piece !== "r") || !m.captured)),
   ),
   H8(
-    { id: "hx4_eternal_toll", name: "Eternal Toll", description: "The border levies its toll without mercy: for your opponent's next 6 turns, any piece of theirs that crosses the midline into your half is frozen for 1 of their turns on arrival. Kings cross free.", flavor: "The gate never sleeps and never waives a fee.", icon: "Landmark", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(6, (move, api) => {
-      if (move.piece !== "k" && relRank(api.opp, move.from) <= 4 && relRank(api.opp, move.to) >= 5) {
-        sting(api, move.to, 1, "quicksand");
-      }
-    }),
+    { id: "hx4_eternal_toll", name: "Eternal Toll", description: "The border's toll comes late but without mercy: your opponent's next move crosses free, then for their following 6 turns, any piece of theirs that crosses the midline into your half is frozen for 1 of their turns on arrival. Kings cross free.", flavor: "The gate never sleeps and never waives a fee.", icon: "Landmark", fx: { motif: "slow", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+        inst.state.armed = false;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        if (
+          turnsLeft(inst) > 0 &&
+          move.piece !== "k" &&
+          relRank(api.opp, move.from) <= 4 &&
+          relRank(api.opp, move.to) >= 5
+        ) {
+          sting(api, move.to, 1, "quicksand");
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the toll begins after their next move",
+    },
+  ),
   ),
   H8(
     { id: "hx4_wall_of_teeth", name: "Wall of Teeth", description: "Your two back ranks grow a wall of teeth: your opponent's pieces cannot stop anywhere on them for their next 3 turns. No infiltration, no promotion.", flavor: "The fortress smiled, and the siege reconsidered.", icon: "Fence", fx: { motif: "blindfold", pieces: "all" } },
@@ -2168,8 +2299,8 @@ const T8: Buff[] = [
       barNow(api, squares, 3);
     }),
   ),
-  H8(
-    { id: "hx4_black_lotus", name: "Black Lotus", description: "The lotus blooms once over their army: one random pawn, knight, bishop, rook and queen of theirs (one of each they still have) is frozen for 2 of their turns.", flavor: "Five petals, five sleepers.", icon: "Flower", fx: { motif: "jail" } },
+  hex(
+    { id: "hx4_black_lotus", name: "Black Lotus", description: "The lotus blooms once over their army: one random pawn, knight, bishop, rook and queen of theirs (one of each they still have) is frozen for 2 of their turns.", flavor: "Five petals, five sleepers.", icon: "Flower", fx: { motif: "jail" }, tier: 6 },
     instant((_inst, api) => {
       for (const t of ["p", "n", "b", "r", "q"] as const) {
         const pool = mySquares(api.board, api.opp, t);

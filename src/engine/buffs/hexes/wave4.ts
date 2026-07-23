@@ -1612,8 +1612,8 @@ const T4: Buff[] = [
       }
     }),
   ),
-  H4(
-    { id: "hx4_lockstep", name: "Lockstep", description: "For your opponent's next 3 turns, every move they make must cover exactly the same distance as the move you made just before it. Their king is exempt, and if nothing matches they move freely.", flavor: "Left. Left. Left, curse you.", icon: "Footprints", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_lockstep", name: "Lockstep", description: "For your opponent's next 3 turns, every move they make must cover exactly the same distance as the move you made just before it. Their king is exempt, and if nothing matches they move freely.", flavor: "Left. Left. Left, curse you.", icon: "Footprints", fx: { motif: "slow", pieces: "all" }, tier: 5 },
     curse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
@@ -1790,8 +1790,8 @@ const T4: Buff[] = [
     { id: "hx4_cracked_lens", name: "Cracked Lens", description: "For your opponent's next 3 turns, their bishops cannot judge distance: they may only capture within 2 squares. The first bishop to reach further slips through as one escape, then the restriction holds.", flavor: "Faith moves mountains. Optics hit them.", icon: "Glasses", fx: { motif: "muzzle", pieces: ["b"] } },
     escapeCurse(3, (m) => m.piece !== "b" || !m.captured || moveDist(m) <= 2),
   ),
-  H4(
-    { id: "hx4_haunted_gallery", name: "Haunted Gallery", description: "Ghosts walk the great dark diagonal (a1 to h8): every enemy piece standing on it is frozen in dread for 1 of their turns. Their king is spared.", flavor: "The portraits follow you. The floor holds you.", icon: "Ghost", fx: { motif: "jail", pieces: "all" } },
+  hex(
+    { id: "hx4_haunted_gallery", name: "Haunted Gallery", description: "Ghosts walk the great dark diagonal (a1 to h8): every enemy piece standing on it is frozen in dread for 1 of their turns. Their king is spared.", flavor: "The portraits follow you. The floor holds you.", icon: "Ghost", fx: { motif: "jail", pieces: "all" }, tier: 5 },
     instant((_inst, api) => {
       for (let i = 0; i < 8; i++) {
         const sq = SQ(i, i);
@@ -1801,8 +1801,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_prowlers_bell", name: "Prowler's Bell", description: "A bell is tied to every gate in your half: for your opponent's next 4 turns, their pieces may not end a move on an EMPTY square in your half. They may enter only by capturing. Their king is exempt.", flavor: "Come in swinging or do not come in.", icon: "BellRing", fx: { motif: "blindfold", pieces: "all" } },
-    curse(4, (moves, api) =>
+    { id: "hx4_prowlers_bell", name: "Prowler's Bell", description: "A bell is tied to every gate in your half: for your opponent's next 3 turns, their pieces may not end a move on an EMPTY square in your half. They may enter only by capturing. Their king is exempt.", flavor: "Come in swinging or do not come in.", icon: "BellRing", fx: { motif: "blindfold", pieces: "all" } },
+    curse(3, (moves, api) =>
       moves.filter((m) => m.piece === "k" || m.captured != null || relRank(api.opp, m.to) <= 4),
     ),
   ),
@@ -1835,12 +1835,12 @@ const T4: Buff[] = [
       },
     ),
   ),
-  H4(
-    { id: "hx4_night_ledger", name: "Night Ledger", description: "For your opponent's next 2 turns, their rooks and queen answer to the accountants: they may only move if the move is a capture. Quiet heavy moves are struck from the ledger.", flavor: "Movement without acquisition is a cost center.", icon: "BookOpen", fx: { motif: "jail", pieces: ["r", "q"] } },
+  hex(
+    { id: "hx4_night_ledger", name: "Night Ledger", description: "For your opponent's next 2 turns, their rooks and queen answer to the accountants: they may only move if the move is a capture. Quiet heavy moves are struck from the ledger.", flavor: "Movement without acquisition is a cost center.", icon: "BookOpen", fx: { motif: "jail", pieces: ["r", "q"] }, tier: 5 },
     curse(2, (moves) => moves.filter((m) => (m.piece !== "r" && m.piece !== "q") || m.captured != null)),
   ),
-  H4(
-    { id: "hx4_no_doubling", name: "No Doubling", description: "For your opponent's next 4 turns, their pawns refuse to share a file: a pawn may not capture onto a file that already holds another of their pawns.", flavor: "Union rules. One pawn per lane.", icon: "Columns2", fx: { motif: "muzzle", pieces: ["p"] } },
+  hex(
+    { id: "hx4_no_doubling", name: "No Doubling", description: "For your opponent's next 4 turns, their pawns refuse to share a file: a pawn may not capture onto a file that already holds another of their pawns.", flavor: "Union rules. One pawn per lane.", icon: "Columns2", fx: { motif: "muzzle", pieces: ["p"] }, tier: 5 },
     curse(4, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "p" || !m.captured || FILE(m.from) === FILE(m.to)) return true;
@@ -1908,8 +1908,8 @@ const T4: Buff[] = [
       return moves;
     }),
   ),
-  H4(
-    { id: "hx4_no_return", name: "No Return", description: "For your opponent's next 4 turns, the border runs one way: pieces of theirs standing in your half may not move back across the midline into their own half.", flavor: "The gate reads ENTRANCE on both sides. From their side.", icon: "LogIn", fx: { motif: "anchor", pieces: "all" } },
+  hex(
+    { id: "hx4_no_return", name: "No Return", description: "For your opponent's next 4 turns, the border runs one way: pieces of theirs standing in your half may not move back across the midline into their own half.", flavor: "The gate reads ENTRANCE on both sides. From their side.", icon: "LogIn", fx: { motif: "anchor", pieces: "all" }, tier: 5 },
     curse(4, (moves, api) =>
       moves.filter(
         (m) => m.piece === "k" || relRank(api.opp, m.from) <= 4 || relRank(api.opp, m.to) >= 5,
@@ -2001,8 +2001,8 @@ const T4: Buff[] = [
       }
     }),
   ),
-  H4(
-    { id: "hx4_ironglass_mirror", name: "Ironglass Mirror", description: "Your threats harden into glass: for your opponent's next 2 turns, any piece of theirs standing on a square one of your pieces attacks cannot move. Their king is exempt.", flavor: "Held by nothing but being seen.", icon: "Scan", fx: { motif: "jail", pieces: "all" } },
+  hex(
+    { id: "hx4_ironglass_mirror", name: "Ironglass Mirror", description: "Your threats harden into glass: for your opponent's next 2 turns, any piece of theirs standing on a square one of your pieces attacks cannot move. Their king is exempt.", flavor: "Held by nothing but being seen.", icon: "Scan", fx: { motif: "jail", pieces: "all" }, tier: 5 },
     curse(2, (moves, api) =>
       moves.filter(
         (m) => m.piece === "k" || !mySquares(api.board, api.me).some((s) => attacks(api, s, m.from)),
