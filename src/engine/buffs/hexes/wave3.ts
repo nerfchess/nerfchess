@@ -1869,16 +1869,17 @@ const T6: Buff[] = [
   // vs: Compounding Misery (a ONE-SHOT freeze that scales with active curses).
   // This is a STANDING filter that scales live: the more curses already bite
   // the victim, the tighter their sliders are reined. Cleanse to loosen it.
-  H6(
+  hex(
     {
+      tier: 7,
       id: "hw3_feeding_frenzy",
       name: "Feeding Frenzy",
       description:
-        "A parasite curse that feeds on other curses: for your opponent's next 6 turns, their bishops, rooks and queen have their reach capped, and the cap tightens for every other curse-effect already afflicting them (each frozen or petrified piece, sealed square, or royal edict). On a clean board it barely bites; on a board buried in hexes it clamps their long pieces to a crawl. Cleansing the other curses loosens this one.",
+        "A parasite curse that feeds on other curses: for your opponent's next 5 turns, their bishops, rooks and queen have their reach capped, and the cap tightens for every other curse-effect already afflicting them (each frozen or petrified piece, sealed square, or royal edict). On a clean board it barely bites; on a board buried in hexes it clamps their long pieces to a crawl. Cleansing the other curses loosens this one.",
       flavor: "It grows fat on the misery of its neighbors.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
-    curse(6, (moves, api) => {
+    curse(5, (moves, api) => {
       const cap = Math.max(2, 7 - activeCurseCount(api));
       return moves.filter(
         (m) => (m.piece !== "b" && m.piece !== "r" && m.piece !== "q") || cheb(m.from, m.to) <= cap,
