@@ -325,8 +325,8 @@ const T5: Buff[] = [
   ),
 
   H5(
-    { id: "hx4_leaden_boots", name: "Leaden Boots", description: "For your opponent's next 4 turns, none of their pieces may move more than 2 squares. Their king is exempt.", flavor: "Every step rings like an anvil.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
-    curse(4, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 2)),
+    { id: "hx4_leaden_boots", name: "Leaden Boots", description: "For your opponent's next 3 turns, none of their pieces may move more than 2 squares. Their king is exempt.", flavor: "Every step rings like an anvil.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
+    curse(3, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 2)),
   ),
   H5(
     { id: "hx4_tithe_of_blood", name: "Tithe of Blood", description: "For your opponent's next 4 turns, any piece of theirs that captures is frozen for 1 of their turns immediately after the kill. Kings never freeze.", flavor: "The altar takes its cut of every kill.", icon: "Droplets", fx: { motif: "muzzle", pieces: "all" } },
@@ -335,16 +335,16 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_river_watch", name: "River Watch", description: "For your opponent's next 3 turns, their rooks may not cross the midline into your half of the board.", flavor: "The ferry does not take siege towers.", icon: "Waves", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(3, (moves, api) => moves.filter((m) => m.piece !== "r" || relRank(api.opp, m.to) <= 4)),
+    { id: "hx4_river_watch", name: "River Watch", description: "For your opponent's next 3 turns, their rooks may not cross the midline into your half of the board. The first rook the ferry would stop may cross once, then it binds fully.", flavor: "The ferry does not take siege towers.", icon: "Waves", fx: { motif: "anchor", pieces: ["r"] } },
+    escapeCurse(3, (moves, api) => moves.filter((m) => m.piece !== "r" || relRank(api.opp, m.to) <= 4)),
   ),
   H5(
-    { id: "hx4_sandstorm", name: "Sandstorm", description: "Grit chokes every sightline: for your opponent's next 3 turns, their bishops, rooks and queen may slide at most 3 squares.", flavor: "You cannot aim at what you cannot see.", icon: "Wind", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
-    curse(3, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 3)),
+    { id: "hx4_sandstorm", name: "Sandstorm", description: "Grit chokes every sightline: for your opponent's next 3 turns, their bishops, rooks and queen may slide at most 3 squares. The first piece the storm would rein in may slide freely once, then it binds fully.", flavor: "You cannot aim at what you cannot see.", icon: "Wind", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
+    escapeCurse(3, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 3)),
   ),
   H5(
-    { id: "hx4_royal_escort", name: "Royal Escort", description: "For your opponent's next 4 turns, their queen may not end a move more than 2 squares from one of their rooks. If they have no rooks, she travels unguarded and freely.", flavor: "Her Majesty does not travel without the guard.", icon: "Link", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(4, (moves, api) => {
+    { id: "hx4_royal_escort", name: "Royal Escort", description: "For your opponent's next 4 turns, their queen may not end a move more than 2 squares from one of their rooks. If they have no rooks, she travels unguarded and freely. The first move the escort would forbid slips through once, then it binds fully.", flavor: "Her Majesty does not travel without the guard.", icon: "Link", fx: { motif: "anchor", pieces: ["q"] } },
+    escapeCurse(4, (moves, api) => {
       const rooks = mySquares(api.board, api.opp, "r");
       if (rooks.length === 0) return moves;
       return moves.filter((m) => m.piece !== "q" || rooks.some((r) => r !== m.from && cheb(m.to, r) <= 2));
@@ -387,12 +387,12 @@ const T5: Buff[] = [
     nullifyDrafts(1),
   ),
   H5(
-    { id: "hx4_no_homecoming", name: "No Homecoming", description: "For your opponent's next 4 turns, none of their pieces may stop on their own back rank. Their king is exempt.", flavor: "The doors of the keep are shut from inside.", icon: "DoorClosed", fx: { motif: "blindfold", pieces: "all" } },
-    curse(4, (moves, api) => moves.filter((m) => m.piece === "k" || relRank(api.opp, m.to) !== 1)),
+    { id: "hx4_no_homecoming", name: "No Homecoming", description: "For your opponent's next 4 turns, none of their pieces may stop on their own back rank. Their king is exempt. The first piece the ban would turn away may return home once, then it binds fully.", flavor: "The doors of the keep are shut from inside.", icon: "DoorClosed", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurse(4, (moves, api) => moves.filter((m) => m.piece === "k" || relRank(api.opp, m.to) !== 1)),
   ),
   H5(
-    { id: "hx4_undertow", name: "Undertow", description: "For your opponent's next 3 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.", flavor: "The current only pulls one way.", icon: "ArrowDownToLine", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(3, (move, api) => {
+    { id: "hx4_undertow", name: "Undertow", description: "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.", flavor: "The current only pulls one way.", icon: "ArrowDownToLine", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(2, (move, api) => {
       if (move.piece !== "k" && relRank(api.opp, move.to) < relRank(api.opp, move.from)) sting(api, move.to, 1, "quicksand");
     }),
   ),
@@ -457,7 +457,7 @@ const T5: Buff[] = [
     ),
   ),
   H5(
-    { id: "hx4_silk_cocoon", name: "Silk Cocoon", description: "Wrap one enemy knight or bishop you target in silk: it is frozen for 3 of their turns.", flavor: "It will emerge exactly the same, only later.", icon: "Bug", fx: { motif: "jail", pieces: ["n", "b"] } },
+    { id: "hx4_silk_cocoon", name: "Silk Cocoon", description: "Wrap one enemy knight or bishop you target in silk: it is frozen for 2 of their turns.", flavor: "It will emerge exactly the same, only later.", icon: "Bug", fx: { motif: "jail", pieces: ["n", "b"] } },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -471,7 +471,7 @@ const T5: Buff[] = [
               }),
             },
       (_inst, api, picks) => {
-        if (picks[0]?.square != null) freezeNow(api, picks[0].square, 3, "web");
+        if (picks[0]?.square != null) freezeNow(api, picks[0].square, 2, "web");
       },
     ),
   ),
@@ -522,8 +522,8 @@ const T5: Buff[] = [
     ),
   ),
   H5(
-    { id: "hx4_mitred_blinders", name: "Mitred Blinders", description: "For your opponent's next 4 turns, their bishops may slide at most 1 square.", flavor: "Faith is no substitute for eyesight.", icon: "EyeOff", fx: { motif: "anchor", pieces: ["b"] } },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "b" || moveDist(m) <= 1)),
+    { id: "hx4_mitred_blinders", name: "Mitred Blinders", description: "For your opponent's next 3 turns, their bishops may slide at most 1 square.", flavor: "Faith is no substitute for eyesight.", icon: "EyeOff", fx: { motif: "anchor", pieces: ["b"] } },
+    curse(3, (moves) => moves.filter((m) => m.piece !== "b" || moveDist(m) <= 1)),
   ),
   H5(
     { id: "hx4_court_in_session", name: "Court in Session", description: "For your opponent's next 2 turns, any of their pieces standing adjacent to their own king may not move. The king itself is free to go.", flavor: "Nobody leaves while the king is speaking.", icon: "Gavel", fx: { motif: "jail", pieces: "all" } },
@@ -602,12 +602,12 @@ const T5: Buff[] = [
     curse(5, (moves) => moves.filter((m) => m.piece !== "r" || FILE(m.from) === FILE(m.to))),
   ),
   H5(
-    { id: "hx4_paddock_fence", name: "Paddock Fence", description: "For your opponent's next 3 turns, their knights may not land in your half of the board.", flavor: "The gate is horse-high and grudge-deep.", icon: "Fence", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(3, (moves, api) => moves.filter((m) => m.piece !== "n" || relRank(api.opp, m.to) <= 4)),
+    { id: "hx4_paddock_fence", name: "Paddock Fence", description: "For your opponent's next 3 turns, their knights may not land in your half of the board. The first knight the fence would stop may leap across once, then it binds fully.", flavor: "The gate is horse-high and grudge-deep.", icon: "Fence", fx: { motif: "anchor", pieces: ["n"] } },
+    escapeCurse(3, (moves, api) => moves.filter((m) => m.piece !== "n" || relRank(api.opp, m.to) <= 4)),
   ),
   H5(
-    { id: "hx4_widows_veil", name: "Widow's Veil", description: "For your opponent's next 6 turns, their queen cannot capture anything. She is in deep mourning.", flavor: "Black lace, sheathed blade.", icon: "HeartCrack", fx: { motif: "muzzle", pieces: ["q"] } },
-    curse(6, (moves) => moves.filter((m) => m.piece !== "q" || !m.captured)),
+    { id: "hx4_widows_veil", name: "Widow's Veil", description: "For your opponent's next 5 turns, their queen cannot capture anything. She is in deep mourning.", flavor: "Black lace, sheathed blade.", icon: "HeartCrack", fx: { motif: "muzzle", pieces: ["q"] } },
+    curse(5, (moves) => moves.filter((m) => m.piece !== "q" || !m.captured)),
   ),
   H5(
     { id: "hx4_grasping_ivy", name: "Grasping Ivy", description: "Ivy coils around your king's court: for your opponent's next 4 turns, any piece of theirs that ends a move adjacent to your king is seized by vines and frozen for 1 of their turns. The first piece to reach the court escapes the vines; every piece after it is seized.", flavor: "The garden defends the gardener.", icon: "Leaf", fx: { motif: "slow", pieces: "all" } },

@@ -87,15 +87,17 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_hostile_takeover",
       name: "Hostile Takeover",
       description:
-        "Spend your turn moving one enemy piece for them: any square it could legally reach without capturing. Their king is not for sale.",
+        "Spend your turn issuing the order: name one enemy piece (not their king) and any square it could legally reach without capturing. After your opponent's next move it is reassigned there, if the piece still stands and the square is still empty.",
       tier: 6,
       category: "movement",
       icon: "Briefcase",
       flavor: "The board of directors has some exciting news for you.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.from != null || picks.length >= 2) return null;
         if (picks.length === 0) {
           return {
             kind: "square",
@@ -111,16 +113,29 @@ export const OVERHAUL_T6: Buff[] = [
           squares: quietDests(api, picks[0].square!),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
+        if (from == null || to == null || inst.state.from != null) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        flashSquares(api, [from, to]);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.from == null || move.color !== api.opp) return;
+        // The reassignment lands after the opponent replies, if still valid.
+        const from = inst.state.from as Square, to = inst.state.to as Square;
         const p = api.board.pieces[from];
         if (p && p.color === api.opp && p.type !== "k" && !api.board.pieces[to]) {
           api.relocate(from, to);
           flashSquares(api, [to], true);
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.from == null
+          ? "activate to issue the order"
+          : "reassignment lands after their reply",
+    },
   ),
   // 127. Frost Wyrm ------------------------------------------------------------
   card(
@@ -541,7 +556,7 @@ export const OVERHAUL_T6: Buff[] = [
       requires: ["r", "b"],
       fx: { motif: "empower", pieces: ["r", "b"], moveAs: "k", self: true },
     },
-    timedAugment(5, (_moves, inst, api) => {
+    timedAugment(4, (_moves, inst, api) => {
       if (mySquares(api.board, api.me, "q").length > 0) return [];
       const out: Move[] = [];
       for (const sq of [...mySquares(api.board, api.me, "r"), ...mySquares(api.board, api.me, "b")]) {
@@ -556,7 +571,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_meteor_golf",
       name: "Meteor Golf",
       description:
-        "Tee off at any square, in plain sight of both players. After your opponent's next move the meteor lands: any piece there (kings excluded) is destroyed and adjacent pieces are knocked one square outward onto empty squares.",
+        "Tee off at any square, in plain sight of both players. Until it lands the target and its adjacent squares are sealed shut against your opponent. After their next move the meteor strikes: any piece on the target (kings excluded) is destroyed and the seal vanishes.",
       tier: 6,
       category: "attack",
       icon: "Target",

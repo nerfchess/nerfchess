@@ -1311,10 +1311,10 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_crowned_strider", name: "Crowned Strider", tier: 6, category: "movement", icon: "Footprints",
-      description: "For your next 5 turns, your king may move two squares in a straight line, if both squares are empty.",
+      description: "For your next 4 turns, your king may move two squares in a straight line, if both squares are empty.",
       flavor: "A king's pace is whatever the king says it is.",
       fx: { motif: "empower", pieces: ["k"], self: true } },
-    timedAugment(5, (_moves, inst, api) => {
+    timedAugment(4, (_moves, inst, api) => {
       const ks = kingSquare(api.board, api.me);
       if (ks == null) return [];
       const out: Move[] = [];
@@ -1330,33 +1330,65 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_fisherman_king", name: "Fisherman King", tier: 6, category: "movement", icon: "Fish",
-      description: "Once, your king may slip away to any empty square directly beside one of your rooks.",
+      description: "Once, your king may slip away to any empty square directly beside one of your rooks. On arrival it cannot be captured for your opponent's next turn.",
       flavor: "Gone fishing. The tower knows where.", requires: ["r"],
       fx: { motif: "empower", pieces: ["k"], self: true } },
-    augment((_moves, inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return [];
-      const dests: Square[] = [];
-      for (const rsq of mySquares(api.board, api.me, "r")) {
-        for (const s of adjSquares(rsq)) {
-          if (s !== ks && !api.board.pieces[s] && !dests.includes(s)) dests.push(s);
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks == null) return;
+        const dests: Square[] = [];
+        for (const rsq of mySquares(api.board, api.me, "r")) {
+          for (const s of adjSquares(rsq)) {
+            if (s !== ks && !api.board.pieces[s] && !dests.includes(s)) dests.push(s);
+          }
         }
-      }
-      return teleportMoves(api.board, ks, dests, inst.id);
-    }, 1),
+        addNovel(moves, teleportMoves(api.board, ks, dests, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id || !move.color) return;
+        // The king just fished its way beside a rook: guard it for the
+        // opponent's next turn. king_safe ticks on their moves, so adding it
+        // here (during my move) leaves the full one opponent turn of cover.
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        const charges = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = charges;
+        if (charges <= 0) inst.spent = true;
+      },
+    },
   ),
   card(
     { id: "bn4_court_procession", name: "Court Procession", tier: 6, category: "movement", icon: "Gem",
-      description: "For your next 3 turns, your queen may slide straight through your own pieces (never capturing them) to squares beyond.",
+      description: "For your next 3 turns, your queen may slide straight through your own pieces (never capturing them) to squares beyond. Each such move reveals her landing square until your opponent replies.",
       flavor: "The court parts. The court always parts.", requires: ["q"],
       fx: { motif: "empower", pieces: ["q"], moveAs: "q", self: true } },
-    timedAugment(3, (_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "q")) {
-        out.push(...phasingSlideMoves(api.board, from, ALL_DIRS, inst.id, 8));
-      }
-      return out;
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "q")) {
+          out.push(...phasingSlideMoves(api.board, from, ALL_DIRS, inst.id, 8));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) flashSquares(api, [move.to]);
+        if (move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of your turns left`,
+    },
   ),
 
   // --- pieces (6) ---
@@ -1469,12 +1501,21 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_ancestral_shield", name: "Ancestral Shield", tier: 6, category: "protection", icon: "Shield",
-      description: "None of your pieces can be captured for your opponent's next 2 turns.",
+      description: "After your opponent's next move, none of your pieces can be captured for your opponent's next 2 turns.",
       flavor: "Dented by every war. Pierced by none.",
       fx: { motif: "ward", pieces: "all", self: true } },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
-    }),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        // Delayed payoff: the shield rises only after the opponent's next move.
+        // It ticks on their moves, and this very move ticks the fresh effect
+        // once, so ask for 3 to leave the full 2 of their following turns.
+        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+        inst.spent = true;
+      },
+      status: () => "the shield is rising",
+    },
   ),
   card(
     { id: "bn4_harbor_queen", name: "Harbor Queen", tier: 7, category: "protection", icon: "Sailboat",
@@ -1552,7 +1593,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_glacier_calving", name: "Glacier Calving", tier: 6, category: "tempo", icon: "MountainSnow",
-      description: "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn.",
+      description: "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
       flavor: "The ice decides when. The ice decided now." },
     activated(
       (_inst, api, picks) =>
@@ -1575,6 +1616,7 @@ export const BOON_WAVE4B: Buff[] = [
           if (!p || p.color !== api.opp || p.type === "k") continue;
           addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "ice" });
         }
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       },
     ),
   ),

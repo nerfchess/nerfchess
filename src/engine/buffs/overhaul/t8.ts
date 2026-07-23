@@ -42,7 +42,6 @@ import {
   teleportMoves,
   tickTurns,
   turnsLeft,
-  undefendedPieces,
 } from "./shared";
 
 /** Random element of a possibly-empty array off the effect RNG. */
@@ -149,7 +148,7 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_rapture_of_pawns",
       name: "The Rapture of Pawns",
       description:
-        "Your pawns are permanently uplifted: they may also step one square sideways or diagonally forward without capturing. Captures stay diagonal, as the heavens intended.",
+        "Choose up to three of your pawns to uplift permanently: each may also step one square sideways or diagonally forward without capturing. Captures stay diagonal, as the heavens intended.",
       tier: 8,
       category: "movement",
       icon: "Feather",
@@ -157,17 +156,40 @@ export const OVERHAUL_T8: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
+    // Balance pass: the uplift no longer touches the whole army. You designate
+    // up to three pawns (a free action); those pawns keep the gift permanently,
+    // and the card tracks them across the board until they are captured or
+    // promote away.
     {
-      kind: "passive",
-      init: (_inst, api) => {
-        for (const sq of mySquares(api.board, api.me, "p")) {
-          pinCosmetic(api, sq, api.me, "wings", null);
-        }
+      kind: "activated",
+      spendOnUse: false,
+      freeAction: true,
+      targets: (inst, api, picks) => {
+        if (inst.state.sqs != null || picks.length >= 3) return null;
+        const chosen = picks.map((k) => k.square);
+        const squares = mySquares(api.board, api.me, "p").filter((sq) => !chosen.includes(sq));
+        if (squares.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Choose pawn ${picks.length + 1} of up to 3 to uplift`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.sqs = sqs;
+        for (const sq of sqs) pinCosmetic(api, sq, api.me, "wings", null);
       },
       augmentMoves: (moves, inst, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs) return;
         const out: Move[] = [];
         const fwd = api.me === "w" ? 1 : -1;
-        for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me || p.type !== "p") continue;
           const tos: Square[] = [];
           const f = FILE(sq), r = RANK(sq);
           if (f > 0) tos.push(SQ(f - 1, r));
@@ -187,7 +209,28 @@ export const OVERHAUL_T8: Buff[] = [
         }
         addNovel(moves, out);
       },
-      status: () => "your pawns walk on air",
+      onMovePlayed: (inst, move) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs) return;
+        const next: Square[] = [];
+        for (const sq of sqs) {
+          if (move.capturedSquare === sq && move.from !== sq) continue;
+          if (move.from === sq) {
+            if (move.promotion) continue;
+            next.push(move.to);
+          } else if (move.to === sq && move.from !== sq) {
+            continue;
+          } else {
+            next.push(sq);
+          }
+        }
+        inst.state.sqs = next;
+      },
+      status: (inst) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (sqs == null) return "activate to uplift up to three pawns";
+        return `${sqs.length} uplifted ${sqs.length === 1 ? "pawn walks" : "pawns walk"} on air`;
+      },
     },
   ),
   // 178. Board of Directors ---------------------------------------------------------
@@ -196,29 +239,79 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_board_of_directors",
       name: "Board of Directors",
       description:
-        "For 6 of your turns, the Board issues a directive after each of your moves: a 6 second bonus, a scouting report marking undefended enemy pieces, a free pawn advance, or a draft reroll. Their pick, not yours.",
+        "Convene the Board and appoint two of its four departments for 6 of your turns. After each of your moves your chosen departments report: Operations advances one of your pawns every third turn; Intelligence reveals enemy pieces you attack that stand undefended; Treasury adds 12 seconds to your clock; Drafting grants a reroll and lifts your next draft one tier. You pick the two departments, not the Board.",
       tier: 8,
       category: "info",
       icon: "Briefcase",
       flavor: "Synergy. Alignment. A pawn to e4 going forward.",
     },
+    // Balance pass: the player now appoints the departments. The engine has no
+    // abstract option menu, so the two-of-four choice is collected through the
+    // four marker squares a-d on your back rank (the label maps each file to a
+    // department); picking a marker appoints that department and moves nothing.
     {
-      kind: "passive",
-      init: (inst) => {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.depts != null || picks.length >= 2) return null;
+        const r = ownRank(api.me, 0);
+        const chosen = picks.map((k) => k.square);
+        const squares = [0, 1, 2, 3]
+          .map((f) => SQ(f, r))
+          .filter((sq) => !chosen.includes(sq));
+        return {
+          kind: "square",
+          label: `Appoint department ${picks.length + 1} of 2 (pick its back-rank marker): a = Operations (a pawn step every third turn), b = Intelligence (reveal undefended targets), c = Treasury (12 seconds each turn), d = Drafting (a reroll and a tier-up draft).`,
+          squares,
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.depts != null) return;
+        const depts = picks
+          .map((k) => (k.square != null ? FILE(k.square) : -1))
+          .filter((f) => f >= 0 && f <= 3);
+        inst.state.depts = depts;
         inst.state.turns = 6;
+        inst.state.opsCount = 0;
+        const r = ownRank(api.me, 0);
+        flashSquares(api, depts.map((f) => SQ(f, r)));
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color !== api.me) return;
-        const roll = api.rng.int(4);
-        if (roll === 0) api.adjustClock({ addSelfSec: 6 });
-        else if (roll === 1) flashSquares(api, undefendedPieces(api.board, api.opp));
-        else if (roll === 2) {
-          const pawn = pickRng(api, advanceablePawns(api));
-          if (pawn != null) advancePawn(api, pawn);
-        } else api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        const depts = inst.state.depts as number[] | undefined;
+        if (!depts || move.color !== api.me) return;
+        if (depts.includes(0)) {
+          const c = ((inst.state.opsCount as number) ?? 0) + 1;
+          inst.state.opsCount = c;
+          if (c % 3 === 0) {
+            const pawn = pickRng(api, advanceablePawns(api));
+            if (pawn != null) advancePawn(api, pawn);
+          }
+        }
+        if (depts.includes(1)) {
+          const hanging = mySquares(api.board, api.opp).filter((sq) => {
+            const p = api.board.pieces[sq]!;
+            if (p.type === "k") return false;
+            const attacked = mySquares(api.board, api.me).some((a) =>
+              attacksSquare(api.board, a, sq),
+            );
+            const defended = mySquares(api.board, api.opp).some(
+              (d) => d !== sq && attacksSquare(api.board, d, sq),
+            );
+            return attacked && !defended;
+          });
+          flashSquares(api, hanging);
+        }
+        if (depts.includes(2)) api.adjustClock({ addSelfSec: 12 });
+        if (depts.includes(3)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          api.mine.flags.bankBonus = 1;
+        }
         tickTurns(inst, move, api.me);
       },
-      status: (inst) => `${turnsLeft(inst)} board meetings left`,
+      status: (inst) =>
+        inst.state.depts == null
+          ? "convene to appoint two departments"
+          : `${turnsLeft(inst)} board meetings left`,
     },
   ),
   // 179. Continental Drift --------------------------------------------------------------
