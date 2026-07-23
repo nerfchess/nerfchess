@@ -3653,8 +3653,8 @@ const TIER6: Buff[] = [
     barLine("file", 2),
   ),
   def(
-    { id: "queens_wrath", requires: ["q"], name: "Queen's Wrath", description: "In one move, your queen sweeps along one straight line, removing up to two enemy pieces on it, then freezes every enemy piece beside her landing square for their next turn; a friendly piece or an enemy king ends the line, once.", tier: 6, category: "attack" },
-    lineSweepThen("q", ALL_DIRS, 2, (api, _from, to) => {
+    { id: "queens_wrath", requires: ["q"], name: "Queen's Wrath", description: "In one move, your queen slides along one straight line to an empty square without capturing, then freezes every enemy piece beside her landing square for their next turn; the line stops at the first piece of either color, once.", tier: 6, category: "attack" },
+    lineSweepThen("q", ALL_DIRS, 0, (api, _from, to) => {
       // Freeze wake: every enemy non-king piece king-adjacent to the landing.
       for (const [df, dr] of ALL_DIRS) {
         const f = FILE(to) + df, r = RANK(to) + dr;
