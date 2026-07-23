@@ -152,18 +152,23 @@ export const NERFS_T5: Nerf[] = [
       },
     },
   ),
-  N(
-    { id: "restless_crown", name: "Restless Crown", description: "Your king may move only six times all game; you lose on his seventh move.", flavor: "A wandering king loses his kingdom.", icon: "crown" },
+  nerf(
+    { id: "restless_crown", name: "Restless Crown", description: "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.", flavor: "A wandering king loses his kingdom.", icon: "crown", tier: 6 },
     {
+      // The loss condition stays a king-move limit. One compliance token excuses
+      // the seventh king move, so the loss only fires past seven.
       init: () => ({ kingMoves: 0 }),
       onTurnStart: (_state, ctx) => ({ kingMoves: countHistory(ctx, (m) => m.piece === "k") }),
       checkLoss: (state) =>
-        (state.kingMoves as number) > 6 ? { reason: "your king wandered too far" } : null,
-      progress: (state) => ({
-        value: state.kingMoves as number,
-        max: 6,
-        label: (state.kingMoves as number) + "/6 king moves",
-      }),
+        (state.kingMoves as number) > 7 ? { reason: "your king wandered too far" } : null,
+      progress: (state) => {
+        const kingMoves = state.kingMoves as number;
+        return {
+          value: Math.min(kingMoves, 6),
+          max: 6,
+          label: kingMoves > 6 ? "6/6 king moves, compliance token spent" : kingMoves + "/6 king moves",
+        };
+      },
     },
   ),
 ];

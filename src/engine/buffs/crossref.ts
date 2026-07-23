@@ -508,13 +508,15 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "sahur",
       name: "Bobrito Bandito",
-      description: "Bonk one enemy piece with the log: it is stunned and cannot move for its next 2 turns. Kings are too stubborn to bonk.",
+      description: "Bonk one enemy piece with the log: the swing lands after your opponent's next move, stunning that piece so it cannot move for its next 2 turns. Kings are too stubborn to bonk.",
       tier: 5,
       flavor: "The beaver bandit collects his toll, one bonk at a time.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -523,18 +525,38 @@ export const CROSSREF_CARDS: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        const p = api.board.pieces[sq];
+        // Mark the target and arm the log: the bonk is delayed until after the
+        // opponent's next move, not applied immediately.
+        inst.state.sq = sq;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        // The log swings after the opponent's next move. Follow the target if
+        // that very move was the piece stepping away.
+        let target = inst.state.sq as Square;
+        if (move.from === target) target = move.to;
+        inst.state.armed = false;
+        inst.spent = true;
+        const p = api.board.pieces[target];
         if (!p || p.color !== api.opp || p.type === "k") return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
+        addEffect(api, { kind: "freeze", sq: target, owner: api.opp, turns: 2, skin: "stun" });
         // Impact flash: the log's bonk, NOT Lightning Strike. A `bonk` effect
         // on the same square the freeze lands on, so the injured overlay can
         // pair the two (freeze + recent bonk = a stunned, dazed piece).
-        addEffect(api, { kind: "bonk", squares: [sq], owner: api.me, turns: 1 });
+        addEffect(api, { kind: "bonk", squares: [target], owner: api.me, turns: 1 });
       },
-    ),
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to bonk a piece"
+          : inst.state.armed
+            ? "the log swings after their next move"
+            : "bonked",
+    },
   ),
 
   // Fruit: a dropped coconut. A lighter bonk: one enemy piece is stunned for
@@ -582,7 +604,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "durian",
       name: "Durian",
-      description: "Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The stench clears after that.",
+      description: "Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The first piece caught by the stench still gets one step into the ring; after that the ring is sealed until the stench clears.",
       tier: 3,
       flavor: "Banned on public transit for a reason.",
       fx: { motif: "blindfold" },

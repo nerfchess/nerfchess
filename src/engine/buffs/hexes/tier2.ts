@@ -214,29 +214,29 @@ export const HEXES_T2: Buff[] = [
     ),
   ),
   H(
-    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen can only capture at arm's length: her captures must be exactly one square away, for their next 3 turns.", flavor: "Her gown is sewn with lead.", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves) =>
+    { id: "leaden_queen", name: "Leaden Queen", description: "Your opponent's queen can only capture at arm's length: for their next 3 turns her captures must be exactly one square away. The first capture the curse would deny is allowed once.", flavor: "Her gown is sewn with lead.", fx: { motif: "anchor", pieces: ["q"] } },
+    curseWithEscape(3, (moves) =>
       moves.filter((m) => m.piece !== "q" || !m.captured || dist(m.from, m.to) <= 1),
     ),
   ),
   H(
     // Board already paints no_pawn_advance; fx carried for consistency.
-    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 3 turns. They may still capture diagonally.", flavor: "The infantry are pinned in the mud.", fx: { motif: "anchor", pieces: ["p"] } },
+    { id: "trench_line", name: "Trench Line", description: "Your opponent's pawns cannot advance for their next 2 turns. They may still capture diagonally.", flavor: "The infantry are pinned in the mud.", fx: { motif: "anchor", pieces: ["p"] } },
     instant((_inst, api) => {
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 3 });
+      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 2 });
     }),
   ),
   H(
     // Board already paints barred squares; fx carried for consistency
     // (square-scoped, so no pieces field).
-    { id: "no_mans_land", name: "No Man's Land", description: "Your opponent cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.", flavor: "The middle of the board is scorched ground.", fx: { motif: "blindfold" } },
-    instant((_inst, api) => {
+    { id: "no_mans_land", name: "No Man's Land", description: "Starting after your opponent's next move, they cannot enter the four center squares (d4, e4, d5, e5) for their next 3 turns.", flavor: "The middle of the board is scorched ground.", fx: { motif: "blindfold" } },
+    afterOppMove((api) => {
       const squares = [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)];
       addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
     }),
   ),
   H(
-    { id: "sealed_orders", name: "Sealed Orders", description: "Your opponent's next two draft offers contain no draft-manipulation cards.", flavor: "The dispatch never reaches the tent." },
-    suppressDraftCards(2),
+    { id: "sealed_orders", name: "Sealed Orders", description: "Your opponent's next draft offer contains no draft-manipulation cards, and you take a draft reroll.", flavor: "The dispatch never reaches the tent." },
+    grantRerollAfter(suppressDraftCards(1)),
   ),
 ];
