@@ -1537,16 +1537,17 @@ export const BOON_WAVE3: Buff[] = [
   ),
 
   // A one-shot king rescue: reset the king to the safest empty home-rank
-  // square and grant a breath of immunity. Neighbours: Bolt Hole (in-check
-  // teleport within 2), escape_hatch. Distinct: an instant, deterministic
-  // relocation to the home-rank square furthest from any enemy, plus one turn
-  // of king_safe - a full reset button, not a step.
+  // square. Neighbours: Bolt Hole (in-check teleport within 2), escape_hatch.
+  // Distinct: an instant, deterministic relocation to the home-rank square
+  // furthest from any enemy, a full reset button, not a step. Balance review:
+  // the one-turn king_safe rider was dropped (protection shortened by its one
+  // opponent turn), so it moves the king but grants no immunity.
   boon(
     {
       id: "bw3_kings_sanctuary",
       name: "King's Sanctuary",
       description:
-        "Spirit the king home to the quietest corner: your king is moved to the empty square on your home rank that sits furthest from any enemy piece, and it cannot be captured for your opponent's next turn.",
+        "Spirit the king home to the quietest corner: your king is moved to the empty square on your home rank that sits furthest from any enemy piece.",
       tier: 7,
       category: "movement",
       icon: "Church",
@@ -1573,20 +1574,20 @@ export const BOON_WAVE3: Buff[] = [
         }
       }
       if (bestSq != null && bestSq !== ks) api.relocate(ks, bestSq);
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
     }),
   ),
 
-  // Self-cost surgical removal at a favorable exchange. Neighbours: Blood Duel
+  // Self-cost surgical removal at an even exchange. Neighbours: Blood Duel
   // (one-for-one, same kind), Blood Price (feed a piece to the deck). Distinct:
-  // you sacrifice ONE of your own minors to remove TWO of the enemy's minors, a
-  // deliberate two-for-one that thins their light pieces at a real cost.
+  // you sacrifice ONE of your own minors to remove ONE of the enemy's minors, a
+  // targeted minor-for-minor trade at a real cost (balance review: reduced from
+  // two enemy removals to one, its repeat use cut by one).
   boon(
     {
       id: "bw3_martyrdom",
       name: "Martyrdom",
       description:
-        "One of yours falls so two of theirs must: destroy one of your own knights or bishops, then remove any two of your opponent's knights or bishops from the board. Every loss here is real.",
+        "One of yours falls so one of theirs must: destroy one of your own knights or bishops, then remove one of your opponent's knights or bishops from the board. Every loss here is real.",
       tier: 7,
       category: "attack",
       icon: "Cross",

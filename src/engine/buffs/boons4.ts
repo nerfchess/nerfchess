@@ -31,6 +31,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   augment,
   emptySquares,
   grantInventory,

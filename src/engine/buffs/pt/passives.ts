@@ -361,7 +361,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         for (const sq of caught) persist.push(sq);
         inst.state.frozen = persist;
       },
-      status: () => "spores drifting between pieces",
+      status: (inst) =>
+        inst.state.armed ? "spores drifting between pieces" : "dormant until they move",
     },
   ),
 

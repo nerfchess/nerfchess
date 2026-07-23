@@ -938,7 +938,7 @@ export const STIR_CRAZY: Nerf = db({
 
 export const ROOK_ON_SEVENTH: Nerf = db({
   id: "rook_on_seventh", name: "Rook on the Seventh", tier: 5, implemented: true,
-  description: "By move 15, you must have a rook on your 7th rank.",
+  description: "By move 15, you must get a rook to your 7th rank. Once a rook has reached it, that rook may leave normally without breaking the pledge.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 15) return null;
     const targetR = ctx.me === "w" ? 6 : 1;
@@ -946,6 +946,12 @@ export const ROOK_ON_SEVENTH: Nerf = db({
       const p = ctx.board.pieces[SQ(f, targetR)];
       if (p && p.color === ctx.me && p.type === "r") return null;
     }
+    // A rook already inside the region may leave normally: once any rook of
+    // yours has ever landed on the 7th rank, the pledge stays satisfied.
+    const everReached = ctx.board.history.some(
+      (m) => m.color === ctx.me && m.piece === "r" && RANK(m.to) === targetR,
+    );
+    if (everReached) return null;
     return { reason: "no rook on seventh" };
   },
 });
@@ -1301,13 +1307,24 @@ export const SIMON_SAYS: Nerf = db({
 
 export const IRRESISTIBLE: Nerf = db({
   id: "irresistible", name: "Irresistible", tier: 5, implemented: true,
-  description: "If you can move a piece adjacent to opponent's king (that isn't already), you must.",
+  description: "If you can move a piece adjacent to the opponent's king (that isn't already), you must, unless every such move would hang the piece (leave it attacked and undefended), in which case the pull relents and you may play any move.",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
     const oks = findKing(ctx.board, opp);
     if (oks == null) return moves;
     const lures = moves.filter((m) => adj(m.to, oks) && !adj(m.from, oks));
-    return lures.length ? lures : moves;
+    if (!lures.length) return moves;
+    // Exemption when no safe compliant move exists: if every luring move would
+    // hang the piece (ends attacked and undefended, and is not a
+    // favorable-or-equal capture), the pull relents this turn.
+    const safeExists = lures.some((m) => {
+      if (m.captured && PIECE_VAL[m.captured] >= PIECE_VAL[m.piece]) return true;
+      const nb = makeMove(ctx.board, m);
+      const attacked = attackedBy(nb, opp).has(m.to);
+      const defended = attackedBy(nb, ctx.me).has(m.to);
+      return !attacked || defended;
+    });
+    return safeExists ? lures : moves;
   },
 });
 
@@ -2209,12 +2226,24 @@ export const UNREQUITED_LOVE: Nerf = db({
 
 export const TORPEDOES: Nerf = db({
   id: "torpedoes", name: "Torpedoes", tier: 4, implemented: true,
-  description: "If you made a non-capturing pawn move last turn and can move it again, you must.",
+  description: "If you made a non-capturing pawn move last turn and can move it again, you must, unless every such continuation would hang the pawn (leave it attacked and undefended), in which case the compulsion relents and you may play any move.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last || last.piece !== "p" || last.captured) return moves;
     const same = moves.filter((m) => m.from === last.to && m.piece === "p");
-    return same.length ? same : moves;
+    if (!same.length) return moves;
+    // Exemption when no safe compliant move exists: if every forced
+    // continuation would hang the pawn (ends attacked and undefended, and is
+    // not a favorable-or-equal capture), the compulsion relents this turn.
+    const opp = ctx.me === "w" ? "b" : "w";
+    const safeExists = same.some((m) => {
+      if (m.captured && PIECE_VAL[m.captured] >= PIECE_VAL[m.piece]) return true;
+      const nb = makeMove(ctx.board, m);
+      const attacked = attackedBy(nb, opp).has(m.to);
+      const defended = attackedBy(nb, ctx.me).has(m.to);
+      return !attacked || defended;
+    });
+    return safeExists ? same : moves;
   },
 });
 
