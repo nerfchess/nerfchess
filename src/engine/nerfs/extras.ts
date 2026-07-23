@@ -443,13 +443,16 @@ export const WAGON_TRAIN: Nerf = db({
 export const HOARDER: Nerf = db({
   id: "hoarder",
   name: "Hoarder",
-  description: "If you ever have fewer than 8 pawns, you lose the game.",
+  description: "If you ever have fewer than 8 pawns, you lose the game. Every pawn loss counts, including self-removal and forced card sacrifices.",
   flavor: "Don't lose a single one.",
   tier: 8,
   icon: "wheat",
   implemented: true,
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    // Count pawns actually on the board, so the rule cannot be bypassed: a pawn
+    // removed by any means (capture, self-removal, or a forced card sacrifice)
+    // drops the count and triggers the loss just the same.
     const pawns = pieceSquares(ctx.board, ctx.me, "p").length;
     return pawns < 8 ? { reason: "lost a pawn" } : null;
   },
@@ -458,12 +461,13 @@ export const HOARDER: Nerf = db({
 export const VANISHING_POINT: Nerf = db({
   id: "vanishing_point",
   name: "Vanishing Point",
-  description: "Your pieces can't move to the same square twice in the game.",
+  description: "Starting on move 4, your pieces can't move to the same square twice in the game.",
   flavor: "Each step, the last of its kind.",
   tier: 6,
   icon: "circle-off",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const used = new Set<number>();
     for (const m of ctx.board.history) if (m.color === ctx.me) used.add(m.to);
     const fresh = moves.filter((m) => !used.has(m.to));
@@ -814,6 +818,10 @@ export const PILGRIMAGE: Nerf = db({
   icon: "map",
   implemented: true,
   checkLoss: (_s, ctx) => {
+    // The pilgrimage requirement stays dormant through the opening (it is a
+    // move-30 deadline, not a per-move filter, so it never restricts opening
+    // moves and cannot soft-lock the opening).
+    if (ctx.moveNumber < 4) return null;
     if (ctx.moveNumber < 30) return null;
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return null;
@@ -841,7 +849,7 @@ export const SCHOLARSHIP: Nerf = db({
 export const TRIBUTE: Nerf = db({
   id: "tribute",
   name: "Tribute",
-  description: "Every 8th turn, if you can push a pawn onto a square the enemy attacks, you must.",
+  description: "Every 8th turn, if you can push a pawn onto a square the enemy attacks, you must. This forced tribute cannot be dodged by card-granted moves.",
   flavor: "Pay the toll.",
   tier: 6,
   icon: "coins",
@@ -851,6 +859,11 @@ export const TRIBUTE: Nerf = db({
     if (turn % 8 !== 0) return moves;
     const opp = ctx.me === "w" ? "b" : "w";
     const oppAttacks = attackedBy(ctx.board, opp);
+    // Nerf filters run after buff move-injection, so any card-granted moves are
+    // already in `moves`. On the tribute turn the forced-sacrifice set wins over
+    // them: a card effect cannot make an otherwise forbidden non-tribute move
+    // legal (a card-granted pawn push onto an attacked square is itself a valid
+    // tribute and stays in the set).
     const sacrifices = moves.filter((m) => m.piece === "p" && oppAttacks.has(m.to));
     return sacrifices.length ? sacrifices : moves;
   },

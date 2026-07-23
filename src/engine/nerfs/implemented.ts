@@ -915,24 +915,21 @@ export const KING_OF_THE_HILL: Nerf = db({
 export const HOLD_THEM_BACK: Nerf = db({
   id: "hold_them_back",
   name: "Hold Them Back",
-  description: "You lose the moment any enemy pawn reaches your first three ranks.",
+  description: "You lose the moment any enemy pawn reaches your half of the board.",
   flavor: "Not one step past the inner wall.",
   tier: 8,
   icon: "shield-alert",
   implemented: true,
-  // Rebalance 2026-07: the trigger zone shrank from your whole half (4 ranks)
-  // to your first three ranks. An enemy pawn crossing the midline is routine
-  // within the first few opening moves and could not be prevented (pawns push
-  // into attacked squares freely), which made this a near-instant lottery
-  // loss. A pawn now has to advance one rank deeper, so it can be captured or
-  // blockaded while it stands on the 4th rank: real counterplay, still tier 8.
-  // Distinct from homeland_security (ANY enemy piece, two home ranks, tier 6).
+  // Rebalance 2026-07: the trigger zone is your whole half of the board (the
+  // four ranks nearest you). An enemy pawn crossing the midline onto your half
+  // is the loss condition. Distinct from homeland_security (ANY enemy piece,
+  // two home ranks, tier 6).
   checkLoss: (_s, ctx) => {
-    const innerWall = ctx.me === "w" ? [0, 1, 2] : [5, 6, 7];
+    const ownHalf = ctx.me === "w" ? [0, 1, 2, 3] : [4, 5, 6, 7];
     for (let sq = 0; sq < 64; sq++) {
       const p = ctx.board.pieces[sq];
-      if (p && p.color !== ctx.me && p.type === "p" && innerWall.includes(RANK(sq))) {
-        return { reason: "enemy pawn breached the inner wall" };
+      if (p && p.color !== ctx.me && p.type === "p" && ownHalf.includes(RANK(sq))) {
+        return { reason: "enemy pawn breached your half of the board" };
       }
     }
     return null;

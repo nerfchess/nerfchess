@@ -1253,7 +1253,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_shadow_reserve",
       name: "Shadow Reserve",
       description:
-        "Open the coat: a knight, a bishop and a rook slip into your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). The smugglers take their fee up front: your next 2 drafts are skipped outright.",
+        "Open the coat: a knight, a bishop and a rook slip into your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). The heaviest of them, the rook, still lands on an empty square, so it cannot capture on the turn it arrives, only once your opponent has replied. The smugglers take their fee up front: your next 2 drafts are skipped outright.",
       tier: 8,
       category: "pieces",
       icon: "Gift",
