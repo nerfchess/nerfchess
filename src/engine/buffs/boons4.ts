@@ -172,6 +172,34 @@ function reliefWhile(cond: (api: BuffApi) => boolean, note: string, turns = 1): 
   };
 }
 
+/** Like reliefWhile, but when `cond` lapses the trailing (final) turn keeps the
+ * suspension for one more turn as a movement-only grace: a short_leash rides
+ * alongside it (you may move only one square at a time). Added on the
+ * opponent's move, neither timer is self-ticked, so turns:1 covers exactly
+ * that one final turn. */
+function reliefWhileGrace(cond: (api: BuffApi) => boolean, note: string, turns = 1): Mech {
+  return {
+    kind: "passive",
+    init: (inst, api) => {
+      const on = cond(api);
+      if (on) susp(api, turns);
+      inst.state.relieved = on;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color !== api.opp) return;
+      const on = cond(api);
+      if (on) {
+        susp(api, turns);
+      } else if (inst.state.relieved) {
+        susp(api, 1);
+        addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
+      }
+      inst.state.relieved = on;
+    },
+    status: () => note,
+  };
+}
+
 /** Delayed relief: after `delay` of my turns, suspend for `grant` turns. */
 function reliefAfter(delay: number, grant: number): Mech {
   return {

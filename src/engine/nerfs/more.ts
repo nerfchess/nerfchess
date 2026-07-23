@@ -1201,7 +1201,10 @@ export const MESSY_DIVORCE: Nerf = db({
 
 export const LEVELING_UP: Nerf = db({
   id: "leveling_up", name: "Leveling Up", tier: 6, implemented: true,
-  description: "Can't capture a piece type until you've captured its predecessor.",
+  description: "Can't capture a piece type until you've captured its predecessor. A move granted by another card can't make a barred capture legal.",
+  // The filter runs over the full move set (including moves another card injects),
+  // and there is no escape hatch that returns the unfiltered list, so a barred
+  // capture stays barred no matter how it was offered.
   filterMoves: (moves, _s, ctx) => {
     const order: PieceType[] = ["p", "n", "b", "r", "q"];
     const got = new Set<PieceType>();
@@ -1401,11 +1404,16 @@ export const WINDS_OF_FATE: Nerf = db({
 
 export const MONKEY_SEE: Nerf = db({
   id: "monkey_see", name: "Monkey See", tier: 6, implemented: true,
-  description: "Can only capture with piece types your opponent has captured with.",
+  description: "Can only capture with piece types your opponent has captured with. If that leaves no legal move, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     const types = new Set<PieceType>();
     for (const m of ctx.board.history) if (m.color !== ctx.me && m.captured) types.add(m.piece);
-    return moves.filter((m) => !m.captured || types.has(m.piece));
+    const filtered = moves.filter((m) => !m.captured || types.has(m.piece));
+    if (filtered.length) return filtered;
+    // No compliant move exists (every legal move is a barred capture): allow a
+    // king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
   hint: (_s, ctx) => {
     const names: Record<PieceType, string> = {
@@ -1735,13 +1743,16 @@ export const ICHTHYOPHOBE: Nerf = db({
 
 export const LEFT_TO_RIGHT: Nerf = db({
   id: "left_to_right", name: "Left to Right", tier: 6, implemented: true,
-  description: "Unless you just moved to the rightmost file, must move right of your last move's destination.",
+  description: "Unless you just moved to the rightmost file, must move right of your last move's destination. If no rightward move exists, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
     if (FILE(last.to) === 7) return moves;
     const rightward = moves.filter((m) => FILE(m.to) > FILE(last.to));
-    return rightward.length ? rightward : moves;
+    if (rightward.length) return rightward;
+    // No compliant (rightward) move exists: allow a king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
