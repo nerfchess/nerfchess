@@ -325,16 +325,68 @@ const GYM: Buff[] = [
       id: "onearmmuscleupismydream",
       name: "One Arm Muscle Up Is My Dream",
       description:
-        "One chosen piece reaches for the bar: forever it also slides diagonally like a bishop, extending one long arm across the board on top of its own moves.",
+        "One chosen piece reaches for the bar: once, it may slide diagonally like a bishop, one long arm across the board. That reach is a single grasp, taking it spends it, and so does the first of your turns where the reach is available but you move without using it.",
       tier: 5,
       category: "movement",
       icon: "MoveUpRight",
       flavor: "Someday the second arm. Today, this reach.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "b", self: true },
     },
-    bindPiece("Choose the piece reaching for its dream", bindCandidates(), {
-      gen: (b, sq, via) => slideMoves(b, sq, DIAG_DIRS, via),
-    }),
+    (() => {
+      // Nerf: the reach is a one-charge grasp, not a permanent grant. Using it
+      // spends the charge (normal), and because the engine only ever offers a
+      // legal reach, a "failed/illegal attempt" is modeled as the fallback in
+      // the directive glossary: the charge also expires the first turn the
+      // reach was available but the owner moved without taking it.
+      const reachOf = (b: BoardState, sq: Square, via: string) =>
+        slideMoves(b, sq, DIAG_DIRS, via);
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.sq != null
+            ? null
+            : {
+                kind: "square",
+                label: "Choose the piece reaching for its dream",
+                squares: bindCandidates()(api),
+              },
+        effect: (inst, _api, picks) => {
+          if (inst.state.sq != null) return;
+          inst.state.sq = picks[0]?.square;
+        },
+        augmentMoves: (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          addNovel(moves, reachOf(api.board, sq, inst.id));
+        },
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq != null && move.color === api.me) {
+            if (move.from === sq && move.via === inst.id) {
+              inst.spent = true; // the reach was taken
+              return;
+            }
+            // A move was made without the reach: if the arm could have reached
+            // this turn (the bound piece itself moved, so it clearly could, or
+            // it still stands and has a diagonal open), the charge is spent.
+            const available =
+              move.from === sq || reachOf(api.board, sq, inst.id).length > 0;
+            if (available) {
+              inst.spent = true;
+              return;
+            }
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          return sq == null ? "activate to choose a piece" : `reaching from ${sqLabel(sq)}`;
+        },
+      };
+    })(),
   ),
 
   card(
@@ -342,7 +394,7 @@ const GYM: Buff[] = [
       id: "bench_225",
       name: "225 Bench",
       description:
-        "Press 225 and shove up to 4 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
+        "Press 225 and shove up to 3 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
       tier: 6,
       category: "tempo",
       icon: "Dumbbell",
