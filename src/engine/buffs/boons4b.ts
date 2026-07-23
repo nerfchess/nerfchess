@@ -1837,18 +1837,17 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_jubilee", name: "Jubilee", tier: 7, category: "nerf", icon: "PartyPopper",
-      description: "Suspend your nerf for your next 8 turns, none of your pieces can be captured on your opponent's next turn, and you gain 1 draft reroll.",
+      description: "Suspend your nerf for your next 8 turns, and your next draft offer rolls one tier higher.",
       flavor: "Debts forgiven, streets full, rooks garlanded." },
     suspendNow(8, (api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
   card(
     { id: "bn4_keys_to_the_city", name: "Keys to the City", tier: 7, category: "nerf", icon: "Key",
-      description: "Free action: suspend your nerf for your next 10 turns, used at the moment you choose.",
+      description: "Free action: suspend your nerf for your next 8 turns, used at the moment you choose. While suspended, your pieces ignore the boundaries your nerf would impose.",
       flavor: "Every gate, every hour, no questions." },
-    suspendFree(10),
+    suspendFree(8),
   ),
   card(
     { id: "bn4_debtors_holiday", name: "Debtor's Holiday", tier: 7, category: "nerf", icon: "Banknote",
@@ -1971,17 +1970,34 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_kings_leap_year", name: "King's Leap Year", tier: 7, category: "movement", icon: "Rabbit",
-      description: "For your next 3 turns, your king may leap like a knight (capturing allowed).",
+      description: "For your next 3 turns, your king may leap like a knight (capturing allowed). Each leap's landing square is revealed and stays marked until your opponent replies.",
       flavor: "Once every so often, the calendar lets him.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true } },
-    timedAugment(3, (_moves, inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return [];
-      const leaps = [
-        [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
-      ] as const;
-      return leapMoves(api.board, ks, leaps, inst.id);
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks == null) return;
+        const leaps = [
+          [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
+        ] as const;
+        addNovel(moves, leapMoves(api.board, ks, leaps, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        // Reveal the landing square: the strike flash lingers until the
+        // opponent replies (it ticks on their turns).
+        if (move.via === inst.id) flashSquares(api, [move.to]);
+        const t = ((inst.state.turns as number) ?? 3) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 3} of your turns left`,
+    },
   ),
   card(
     { id: "bn4_marshals_baton", name: "Marshal's Baton", tier: 7, category: "movement", icon: "Wand",

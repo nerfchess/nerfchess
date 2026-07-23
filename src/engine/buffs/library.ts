@@ -4067,8 +4067,65 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "abyss", name: "Abyss", description: "Two squares you pick swallow any enemy piece except a king that enters, for the game.", tier: 5, category: "attack" },
-    voidSquares(2, null),
+    { id: "abyss", name: "Abyss", description: "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.", tier: 5, category: "attack" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once the voids are placed they never move.
+      targets: (inst, api, picks) =>
+        picks.length >= 2 || inst.state.squares != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a void square (${picks.length + 1}/2)`,
+              squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.squares != null) return;
+        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.squares = squares;
+        // The defender's bridge: since a live opponent pick is not part of the
+        // caster's activation flow, exempt one void deterministically in the
+        // defender's favor. The void nearest the enemy king stays a safe
+        // crossing and never swallows.
+        const ek = mySquares(api.board, api.opp, "k")[0];
+        if (ek != null && squares.length > 1) {
+          let bridge = squares[0];
+          let bestD = Infinity;
+          for (const s of squares) {
+            const d = Math.max(Math.abs(FILE(s) - FILE(ek)), Math.abs(RANK(s) - RANK(ek)));
+            if (d < bestD) {
+              bestD = d;
+              bridge = s;
+            }
+          }
+          inst.state.bridge = bridge;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return;
+        const bridge = inst.state.bridge as Square | undefined;
+        if (
+          move.color === api.opp &&
+          squares.includes(move.to) &&
+          move.to !== bridge &&
+          move.piece !== "k"
+        ) {
+          api.removePiece(move.to);
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return "activate to place";
+        const name = (sq: Square) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        const bridge = inst.state.bridge as Square | undefined;
+        const swallowing = squares.filter((s) => s !== bridge).map(name).join(", ");
+        return bridge != null
+          ? `swallowing at ${swallowing}, bridge at ${name(bridge)}`
+          : `swallowing at ${squares.map(name).join(", ")}`;
+      },
+    },
   ),
   def(
     { id: "grand_retreat", name: "Grand Retreat", description: "Return your army to its free starting squares, once (blocked pieces stay put).", tier: 6, category: "movement" },

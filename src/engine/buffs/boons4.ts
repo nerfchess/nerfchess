@@ -1532,9 +1532,13 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_egg_timer", name: "Egg Timer", tier: 2, category: "tempo", icon: "Timer",
-      description: "Add 15 seconds to your clock. In untimed games it adds nothing.",
-      flavor: "Soft-boiled decisions take three minutes. You get fifteen seconds." },
-    instant((_inst, api) => api.adjustClock({ addSelfSec: 15 })),
+      description: "Add 20 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the reveal apply.",
+      flavor: "Soft-boiled decisions take three minutes. You get twenty seconds." },
+    instant((_inst, api) => {
+      api.adjustClock({ addSelfSec: 20 });
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
+    }),
   ),
   card(
     { id: "bn4_slow_doors", name: "Slow Doors", tier: 2, category: "tempo", icon: "DoorOpen",
@@ -1626,10 +1630,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_ear_to_the_ground", name: "Ear to the Ground", tier: 2, category: "info", icon: "Ear",
-      description: "Learn the tier of your opponent's next draft offer, and gain 1 draft reroll.",
+      description: "Learn the tier of your opponent's next draft offer, and gain 1 draft reroll. If that draft is already skipped, only the reroll arrives.",
       flavor: "The floorboards gossip terribly." },
     instant((_inst, api) => {
-      api.mine.flags.seeOppTier = true;
+      // Never combine the reveal with a skipped enemy draft: if the opponent's
+      // next draft is already blocked there is no offer to read, so keep only
+      // the reroll and drop the reveal.
+      if ((api.theirs.flags.blockedDrafts ?? 0) === 0) api.mine.flags.seeOppTier = true;
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
@@ -1641,6 +1648,9 @@ const BOON_WAVE4A: Buff[] = [
       description: "Your next draft offer rolls one tier higher. The redemption fee is one of your rerolls, if you have any.",
       flavor: "Some restrictions apply. All restrictions apply." },
     instant((_inst, api) => {
+      // The offer is preserved and stays self-only: it lifts your own next
+      // draft and never touches the enemy draft. The Math.min cap means the
+      // boost never stacks with (combines with) a skipped draft's banked bonus.
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
       api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
     }),

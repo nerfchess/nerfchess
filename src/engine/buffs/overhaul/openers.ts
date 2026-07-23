@@ -764,7 +764,7 @@ const BACKSTAGE: Array<OpenerMeta & { type: "n" | "b" | "r" | "q"; dist: number 
   { id: "green_room", name: "Green Room", flavor: "The knight slides one seat down the sofa.", icon: "Sofa", type: "n", dist: 1 },
   { id: "stage_left", name: "Stage Left", flavor: "Exit knight, pursued by absolutely nothing.", icon: "Theater", type: "n", dist: 2 },
   { id: "prompt_corner", name: "Prompt Corner", flavor: "The bishop shuffles over to whisper the next line.", icon: "MessageSquare", type: "b", dist: 1 },
-  { id: "trapdoor_exit", name: "Trapdoor", flavor: "The bishop vanishes and reappears two boards over.", icon: "DoorClosed", type: "b", dist: 2 },
+  { id: "trapdoor_exit", name: "Bishop's Hatch", flavor: "The bishop vanishes and reappears two boards over.", icon: "DoorClosed", type: "b", dist: 2 },
   { id: "star_dressing_room", name: "Star Dressing Room", flavor: "Two doors down, better lighting, same queen.", icon: "Star", type: "q", dist: 2 },
   { id: "set_change", name: "Set Change", flavor: "The tower is scenery. Scenery moves between acts.", icon: "Hammer", type: "r", dist: 2 },
 ];
@@ -1215,7 +1215,7 @@ const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: nu
   { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2, tier: 2 },
   { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 1 },
   { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 1 },
-  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },
+  { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 1 },
   { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] , uses: 2 },
   { id: "squires_errand", name: "Squire's Errand", flavor: "The b- and g-pawns trot back to fetch the good lance.", icon: "Backpack", files: [1, 6] , uses: 2 },
   { id: "sidestep_and_bow", name: "Sidestep and Bow", flavor: "Retreat diagonally and it counts as courtly manners.", icon: "Feather", diag: true },
@@ -1657,8 +1657,9 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
     entry.line === "fwd" ? "straight forward" : entry.line === "lat" ? "sideways along its rank" : "along its diagonals";
   const owner = entry.type === "q" ? "your queen" : `one of your ${names[entry.type]}`;
   const lossy = entry.id === "freight_elevator";
-  // Painter's Lift keeps its phasing identity but may not capture on landing.
-  const noCapture = entry.id === "painters_lift";
+  // Painter's Lift and Rolling Gantry keep their phasing identity but may not
+  // capture on landing.
+  const noCapture = entry.id === "painters_lift" || entry.id === "rolling_gantry";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const dirs: readonly (readonly [number, number])[] =

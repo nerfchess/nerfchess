@@ -1106,12 +1106,32 @@ const T6: Buff[] = [
     ),
   ),
   H6(
-    { id: "hx4_signal_jam", name: "Signal Jam", description: "For your opponent's next 3 turns, none of their pieces may end a move on the same file as their own king. The king itself may move freely.", flavor: "Every order home is static.", icon: "RadioTower", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves, api) => {
-      const k = oppKing(api);
-      if (k == null) return moves;
-      return moves.filter((m) => m.piece === "k" || FILE(m.to) !== FILE(k));
-    }),
+    { id: "hx4_signal_jam", name: "Signal Jam", description: "Your opponent's next move passes freely, then for their following 3 turns, none of their pieces may end a move on the same file as their own king. The king itself may move freely.", flavor: "Every order home is static.", icon: "RadioTower", fx: { motif: "blindfold", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const k = oppKing(api);
+        if (k == null) return moves;
+        const kept = moves.filter((m) => m.piece === "k" || FILE(m.to) !== FILE(k));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the jam sets in after their next move",
+    },
   ),
   hex(
     { id: "hx4_donkey_ears", name: "Donkey Ears", description: "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.", flavor: "The portrait painters are thrilled.", icon: "Crown", fx: { motif: "muzzle" }, tier: 7 },
@@ -1136,10 +1156,30 @@ const T6: Buff[] = [
     instant((_inst, api) => barNow(api, [...fileSquares(0), ...fileSquares(7)], 2)),
   ),
   H6(
-    { id: "hx4_sleepwalkers", name: "Sleepwalkers", description: "For your opponent's next 3 turns, pieces that start a move in their own half cannot capture. Only their pieces already in your half may fight.", flavor: "You cannot swing a sword you dreamt of packing.", icon: "MoonStar", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) =>
-      moves.filter((m) => !m.captured || relRank(api.opp, m.from) >= 5),
-    ),
+    { id: "hx4_sleepwalkers", name: "Sleepwalkers", description: "Your opponent's next move passes freely, then for their following 3 turns, pieces that start a move in their own half cannot capture. Only their pieces already in your half may fight.", flavor: "You cannot swing a sword you dreamt of packing.", icon: "MoonStar", fx: { motif: "muzzle", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => !m.captured || relRank(api.opp, m.from) >= 5);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the sleep deepens after their next move",
+    },
   ),
   hex(
     { id: "hx4_glass_floor", name: "Glass Floor", description: "Every dark square becomes thin glass: for your opponent's next 2 turns their pieces may not stop on dark squares. Their king is exempt.", flavor: "Mind the crunch.", icon: "Square", fx: { motif: "blindfold", pieces: "all" }, tier: 7 },
@@ -1213,8 +1253,8 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_thunderhead", name: "Thunderhead", description: "A storm gathers over their throne, in plain sight: after 2 of your opponent's turns, lightning falls and every piece adjacent to their king is frozen for 1 of their turns.", flavor: "Count the seconds between flash and ruin.", icon: "CloudLightning", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(2, (_move, api, inst) => {
+    { id: "hx4_thunderhead", name: "Thunderhead", description: "A storm gathers over their throne, in plain sight: after 1 of your opponent's turns, lightning falls and every piece adjacent to their king is frozen for 1 of their turns.", flavor: "Count the seconds between flash and ruin.", icon: "CloudLightning", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(1, (_move, api, inst) => {
       if (turnsLeft(inst) === 1) {
         const k = oppKing(api);
         if (k == null) return;
