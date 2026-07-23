@@ -424,19 +424,31 @@ export const SUNRISE: Nerf = db({
 export const WAGON_TRAIN: Nerf = db({
   id: "wagon_train",
   name: "Wagon Train",
-  description: "Keep the column in its lane: each move must land on the same file as your previous move's destination or a file right next to it.",
+  description: "Keep the wagons together: each move must land within one file and one rank of your previous move's destination. A knight may leap out of the convoy only on a turn when no such move exists.",
   flavor: "Keep the column tight.",
   tier: 8,
   icon: "route",
   implemented: true,
-  // Distinct from domino (full king-adjacency of the two destinations): wagon
-  // train only constrains the file, so the column stays within a three-file
-  // lane while the rank stays free.
+  // The convoy stays within a three by three block around the last landing
+  // square (one file and one rank each way). A knight leap breaks that block, so
+  // it is allowed only as an escape valve on a turn with no convoy move.
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
-    const near = moves.filter((m) => Math.abs(FILE(m.to) - FILE(last.to)) <= 1);
-    return near.length ? near : moves;
+    const convoy = moves.filter(
+      (m) =>
+        Math.abs(FILE(m.to) - FILE(last.to)) <= 1 &&
+        Math.abs(RANK(m.to) - RANK(last.to)) <= 1,
+    );
+    if (convoy.length) return convoy;
+    // No convoy move available: knight leaps become legal this turn.
+    const leaps = moves.filter((m) => {
+      if (m.piece !== "n") return false;
+      const df = Math.abs(FILE(m.to) - FILE(m.from));
+      const dr = Math.abs(RANK(m.to) - RANK(m.from));
+      return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+    });
+    return leaps.length ? leaps : moves;
   },
 });
 
@@ -702,31 +714,48 @@ export const COURT_MARTIAL: Nerf = db({
 export const NEAT_FREAK: Nerf = db({
   id: "neat_freak",
   name: "Neat Freak",
-  description: "After turn 10, you lose if two of your pieces of the same type (pawns aside) ever share a diagonal.",
+  description: "After move 8, no two of your non-pawn pieces of the same type may share a rank, file, or diagonal. If the opponent's move creates the alignment you get one move to break it; a move of your own that makes or keeps one loses at once.",
   flavor: "Don't crowd me.",
   tier: 8,
   icon: "ruler",
   implemented: true,
   checkLoss: (_s, ctx) => {
-    if (ctx.moveNumber < 10) return null;
+    if (ctx.moveNumber < 8) return null;
     const byType: Partial<Record<PieceType, number[]>> = {};
     for (const sq of pieceSquares(ctx.board, ctx.me)) {
       const t = ctx.board.pieces[sq]!.type;
       if (t === "p" || t === "k") continue;
       (byType[t] ||= []).push(sq);
     }
-    for (const t of Object.keys(byType) as PieceType[]) {
-      const list = byType[t]!;
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
-          const a = list[i], b = list[j];
-          if (Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))) {
-            return { reason: "two same pieces share a diagonal" };
+    const aligned = (() => {
+      for (const t of Object.keys(byType) as PieceType[]) {
+        const list = byType[t]!;
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i], b = list[j];
+            if (
+              RANK(a) === RANK(b) ||
+              FILE(a) === FILE(b) ||
+              Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))
+            ) {
+              return true;
+            }
           }
         }
       }
-    }
-    return null;
+      return false;
+    })();
+    if (!aligned) return null;
+    // One move of grace when the OPPONENT creates the alignment. checkLoss runs
+    // after every ply, so the last mover in history tells us whose move produced
+    // the current position: if it was the opponent, the alignment is freshly
+    // theirs, so hold off and let you break it next turn. An alignment still
+    // standing right after your OWN move (you made it, or failed to break a
+    // graced one) loses immediately.
+    const hist = ctx.board.history;
+    const lastMover = hist.length ? hist[hist.length - 1].color : null;
+    if (lastMover !== ctx.me) return null;
+    return { reason: "two same pieces share a rank, file, or diagonal" };
   },
 });
 
