@@ -1806,15 +1806,20 @@ const T6: Buff[] = [
       init: (inst) => {
         inst.state.fuse = 3;
         inst.state.win = 0;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (((inst.state.win as number) ?? 0) <= 0 || moves.length === 0) return moves;
+        // The first piece they move once it falls gets one legal escape move
+        // onto open ground; until that escape is spent, the burial does not bite.
+        if (!inst.state.escaped) return moves;
         const kept = moves.filter((m) => m.captured || relRank(api.opp, m.to) >= 5);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
         if (((inst.state.win as number) ?? 0) > 0) {
+          if (!inst.state.escaped) inst.state.escaped = true; // first burial move is the escape
           const w = (inst.state.win as number) - 1;
           inst.state.win = w;
           if (w <= 0) inst.spent = true;
@@ -1846,13 +1851,18 @@ const T6: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.escaped = false;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.piece === "k") {
           const guard = nearestVictimPiece(api, move.to);
           if (guard != null) {
-            // Added during their own move: 2 leaves exactly 1 of their turns.
-            addEffect(api, { kind: "freeze", sq: guard, owner: api.opp, turns: 2, skin: "chains" });
+            if (!inst.state.escaped) {
+              inst.state.escaped = true; // the first guard caught is spared, free to move
+            } else {
+              // Added during their own move: 2 leaves exactly 1 of their turns.
+              addEffect(api, { kind: "freeze", sq: guard, owner: api.opp, turns: 2, skin: "chains" });
+            }
           }
         }
         tickTurns(inst, move, api.opp);
