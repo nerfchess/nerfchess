@@ -241,15 +241,20 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first); either way it is frozen for 2 of their turns.",
+        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first). It may make one last legal move to flee, then it is frozen for 2 of their turns.",
       tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account, and sent to their room.",
       fx: { motif: "jail", pieces: "all" },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Balance pass: the first affected piece gets one legal escape move. The
+    // exile still sends it home at once, but the freeze does not bite until the
+    // piece has taken one move; then it holds for the full 2 of their turns.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -258,9 +263,9 @@ export const FANTASY_DIVINE: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
+        if (sq == null || inst.state.sq != null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         const rank = api.opp === "w" ? 0 : 7;
@@ -277,9 +282,45 @@ export const FANTASY_DIVINE: Buff[] = [
           .find((h) => h !== sq && !api.board.pieces[h]);
         const finalSq = home != null ? home : sq;
         if (home != null) api.relocate(sq, home);
-        addEffect(api, { kind: "freeze", sq: finalSq, owner: api.opp, turns: 2 });
+        inst.state.sq = finalSq;
+        inst.state.turns = 2;
+        inst.state.escaped = false;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // The judged piece was captured or overrun: the sentence lapses.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (!inst.state.escaped && move.color === api.opp) {
+            // That was the one legal flight: the frost takes hold where it
+            // lands. turns:3 nets 2 of their turns after the immediate tick a
+            // freeze added on the frozen side's own move receives.
+            inst.state.escaped = true;
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+            return;
+          }
+        }
+        if (move.color !== api.opp || !inst.state.escaped) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to judge"
+          : inst.state.escaped
+            ? `frozen, ${(inst.state.turns as number) ?? 0} of their turns left`
+            : "sentence pronounced: one flight remains",
+    },
   ),
   card(
     {

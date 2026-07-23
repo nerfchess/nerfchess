@@ -117,6 +117,65 @@ function delayedCurse(turns: number, filter: (moves: Move[], api: BuffApi) => Mo
   };
 }
 
+// Escape variant of curse() for filters that must read the (pre-move) board or
+// history: while the escape is unused the whole restriction is off, and the
+// first move the filter WOULD have blocked slips through, flipping the escape.
+// From then on `filter` is enforced for the rest of the duration. Detection is
+// done in filterOpponentMoves (board still in its pre-move state) so filters
+// that inspect captured pieces or the opponent's own move history stay correct.
+function escapeCurseBoard(turns: number, filter: (moves: Move[], api: BuffApi) => Move[]): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.escaped = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      const kept = filter(moves, api);
+      if (kept.length === 0) return moves;
+      if (inst.state.escaped) return kept;
+      const keptSet = new Set(kept);
+      inst.state.blocked = moves.filter((m) => !keptSet.has(m)).map((m) => [m.from, m.to]);
+      return moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color === api.opp && turnsLeft(inst) > 0 && !inst.state.escaped) {
+        const blocked = inst.state.blocked as [Square, Square][] | undefined;
+        if (blocked && blocked.some(([f, t]) => f === move.from && t === move.to)) {
+          inst.state.escaped = true;
+        }
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      !inst.state.escaped ? "one escape move remains" : `${turnsLeft(inst)} of their turns left`,
+  };
+}
+
+// Delayed variant of onTheirMove(): the first of the opponent's moves passes
+// without firing, then `fire` runs on their next `turns` turns (duration
+// preserved, just shifted one opponent move later).
+function delayedOnTheirMove(turns: number, fire: (move: Move, api: BuffApi) => void): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.delay = 1;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color === api.opp && (inst.state.delay as number) > 0) {
+        inst.state.delay = (inst.state.delay as number) - 1;
+        return;
+      }
+      if (move.color === api.opp && turnsLeft(inst) > 0) fire(move, api);
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
+  };
+}
+
 // ------------------------------- TIER 1 ------------------------------------
 // Pinpricks: one pawn inconvenienced, one-turn quirks, cosmetic jabs.
 

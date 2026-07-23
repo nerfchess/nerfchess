@@ -698,13 +698,27 @@ export const MODEST: Nerf = db({
 
 export const TRIPLE_PLAY: Nerf = db({
   id: "triple_play", name: "Triple Play", tier: 5, implemented: true,
-  description: "Can only capture the enemy king if you have 3 of a random piece type.",
+  description: "Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
   init: (rng) => ({ type: rng.pick(["n", "b", "r"] as PieceType[]) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { type: PieceType };
     const count = pieceSquares(ctx.board, ctx.me, s.type).length;
     if (count >= 3) return moves;
-    return moves.filter((m) => m.captured !== "k");
+    const filtered = moves.filter((m) => m.captured !== "k");
+    return filtered.length >= 3 ? filtered : moves;
+  },
+  // Reveal the random restriction up front (a turn ahead of when it can matter):
+  // name the piece type you must collect three of.
+  hint: (state, ctx) => {
+    const s = state as { type: PieceType };
+    const names: Record<PieceType, string> = {
+      p: "pawns", n: "knights", b: "bishops", r: "rooks", q: "queens", k: "kings",
+    };
+    const count = pieceSquares(ctx.board, ctx.me, s.type).length;
+    return {
+      text: `You may only capture the enemy king while you hold three ${names[s.type]} (you have ${count}).`,
+      tone: count >= 3 ? "info" : "warn",
+    };
   },
 });
 
@@ -1075,13 +1089,18 @@ export const FISCHER_RANDOM_ENDGAME: Nerf = db({
 
 export const CENTRALIZED_COMMAND: Nerf = db({
   id: "centralized_command", name: "Centralized Command", tier: 6, implemented: true,
-  description: "Can only capture if you moved your king in last 3 turns.",
+  description: "Can only capture if you moved your king in the last 3 turns. If that would leave you no legal move, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
     const recent = mine.slice(-3);
     const movedKing = recent.some((m) => m.piece === "k");
     if (movedKing) return moves;
-    return moves.filter((m) => !m.captured);
+    const filtered = moves.filter((m) => !m.captured);
+    if (filtered.length) return filtered;
+    // No compliant move exists (every legal move is a barred capture): allow a
+    // king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -1525,10 +1544,12 @@ export const DEATH_WISH: Nerf = db({
 
 export const CHECKERS: Nerf = db({
   id: "checkers", name: "Checkers", tier: 6, implemented: true,
-  description: "Must capture if able.",
+  description: "Must capture if able. Your king is exempt: a king move is always allowed instead.",
   filterMoves: (moves) => {
     const caps = moves.filter((m) => m.captured);
-    return caps.length ? caps : moves;
+    if (!caps.length) return moves;
+    // A king move is always allowed as an escape from the forced capture.
+    return moves.filter((m) => m.captured || m.piece === "k");
   },
 });
 

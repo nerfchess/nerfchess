@@ -99,6 +99,61 @@ function crownSquare(api: BuffApi): Square | null {
   return kingSquare(api.board, api.me);
 }
 
+/** A one-opponent-turn guard on the square a trigger move lands on, enforced
+ * through our OWN move filter rather than a plain shield effect, so it can
+ * carve out enemy pawn captures (`exceptPawns`) or drop the instant the guarded
+ * piece itself captures (`endOnCapture`) the way a shared shield cannot. `arm`
+ * returns the square to protect on the move that triggers it, or null on a
+ * non-triggering move; once armed the guard follows the piece if the owner
+ * repositions it and ends when the piece is captured or the opponent's next
+ * turn passes. */
+function armedGuard(
+  arm: (move: Move, api: BuffApi) => Square | null,
+  opts: { exceptPawns?: boolean; endOnCapture?: boolean } = {},
+): Parameters<typeof opener>[2] {
+  return {
+    kind: "passive",
+    onMovePlayed: (inst, move, api) => {
+      if (inst.spent) return;
+      if (!inst.state.armed) {
+        const sq = arm(move, api);
+        if (sq == null) return;
+        inst.state.armed = true;
+        inst.state.sq = sq;
+        inst.state.turns = 1;
+        return;
+      }
+      const sq = inst.state.sq as Square;
+      const cap = move.capturedSquare ?? (move.captured ? move.to : null);
+      if (move.color === api.me && move.from === sq) {
+        if (opts.endOnCapture && move.captured) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = move.to;
+      } else if (cap === sq && move.from !== sq) {
+        inst.spent = true;
+        return;
+      }
+      if (move.color === api.opp) {
+        inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
+        if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
+      }
+    },
+    filterOpponentMoves: (moves, inst) => {
+      if (!inst.state.armed || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+      const sq = inst.state.sq as Square;
+      return moves.filter((m) => {
+        const c = m.capturedSquare ?? (m.captured ? m.to : null);
+        if (c !== sq) return true;
+        if (opts.exceptPawns && m.piece === "p") return true;
+        return false;
+      });
+    },
+    status: (inst) => (inst.state.armed ? "guarding" : "standing guard"),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // FAMILY: Weather Omens. Pure garnish with a 3-second sliver of time: a sign
 // flashes over a themed patch of board and your clock breathes once. These
