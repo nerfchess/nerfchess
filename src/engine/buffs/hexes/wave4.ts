@@ -1245,8 +1245,8 @@ const T3: Buff[] = [
     { id: "hx4_wrong_map", name: "Wrong Map", description: "For your opponent's next 3 turns, their knights may only land on dark squares. Someone printed the map inverted.", flavor: "According to this, the tavern is a lake.", icon: "Map", fx: { motif: "anchor", pieces: ["n"] } },
     curse(3, (moves) => moves.filter((m) => m.piece !== "n" || sqShade(m.to) === 0)),
   ),
-  H3(
-    { id: "hx4_fresh_crater", name: "Fresh Crater", description: "For your opponent's next 2 turns, pieces standing adjacent to the piece you last moved cannot move: everyone is staring at the crater. Their king is exempt.", flavor: "It is still smoking. Give it a minute.", icon: "CircleDot", fx: { motif: "jail", pieces: "all" } },
+  hex(
+    { id: "hx4_fresh_crater", name: "Fresh Crater", description: "For your opponent's next 2 turns, pieces standing adjacent to the piece you last moved cannot move: everyone is staring at the crater. Their king is exempt.", flavor: "It is still smoking. Give it a minute.", icon: "CircleDot", fx: { motif: "jail", pieces: "all" }, tier: 4 },
     curse(2, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
@@ -1266,8 +1266,8 @@ const T3: Buff[] = [
       ),
     ),
   ),
-  H3(
-    { id: "hx4_creaking_gallows", name: "Creaking Gallows", description: "The gallows creak for 2 of your opponent's turns, then the rope drops: their most advanced piece at that moment (never the king) is frozen for 2 of their turns.", flavor: "Every head in the front row keeps very still.", icon: "TriangleAlert", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_creaking_gallows", name: "Creaking Gallows", description: "The gallows creak for 2 of your opponent's turns, then the rope drops: their most advanced piece at that moment (never the king) is frozen for 2 of their turns.", flavor: "Every head in the front row keeps very still.", icon: "TriangleAlert", fx: { motif: "slow", pieces: "all" }, tier: 4 },
     onTheirMove(2, (_move, api, inst) => {
       if (turnsLeft(inst) === 1) {
         const front = mySquares(api.board, api.opp)
@@ -1277,8 +1277,8 @@ const T3: Buff[] = [
       }
     }),
   ),
-  H3(
-    { id: "hx4_pawnbrokers_lien", name: "Pawnbroker's Lien", description: "For your opponent's next 4 turns, every pawn they move is seized as collateral: it is frozen for the remainder of the window.", flavor: "Read the ticket. It is all in the ticket.", icon: "Receipt", fx: { motif: "slow", pieces: ["p"] } },
+  hex(
+    { id: "hx4_pawnbrokers_lien", name: "Pawnbroker's Lien", description: "For your opponent's next 4 turns, every pawn they move is seized as collateral: it is frozen for the remainder of the window.", flavor: "Read the ticket. It is all in the ticket.", icon: "Receipt", fx: { motif: "slow", pieces: ["p"] }, tier: 4 },
     onTheirMove(4, (move, api, inst) => {
       if (move.piece === "p" && !move.promotion) {
         const n = turnsLeft(inst) - 1;
@@ -1286,8 +1286,8 @@ const T3: Buff[] = [
       }
     }),
   ),
-  H3(
-    { id: "hx4_skittish_mounts", name: "Skittish Mounts", description: "For your opponent's next 2 turns, their knights may not land adjacent to any of your pieces. The horses smell trouble.", flavor: "A horse's veto is absolute.", icon: "AlertTriangle", fx: { motif: "anchor", pieces: ["n"] } },
+  hex(
+    { id: "hx4_skittish_mounts", name: "Skittish Mounts", description: "For your opponent's next 2 turns, their knights may not land adjacent to any of your pieces. The horses smell trouble.", flavor: "A horse's veto is absolute.", icon: "AlertTriangle", fx: { motif: "anchor", pieces: ["n"] }, tier: 4 },
     curse(2, (moves, api) =>
       moves.filter(
         (m) => m.piece !== "n" || !mySquares(api.board, api.me).some((s) => cheb(s, m.to) <= 1),

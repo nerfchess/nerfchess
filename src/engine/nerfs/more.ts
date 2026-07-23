@@ -1771,41 +1771,77 @@ export const GOING_THE_DISTANCE: Nerf = db({
   },
 });
 
+// True if any of `me`'s pawns is attacked by the opponent and not defended by
+// one of `me`'s own pieces. Used by Helicopter Parent's two-strike rule.
+function pawnExposed(board: BoardState, me: Color): boolean {
+  const opp: Color = me === "w" ? "b" : "w";
+  const attackers = attackedBy(board, opp);
+  const defenders = attackedBy(board, me);
+  for (const sq of pieceSquares(board, me, "p")) {
+    if (attackers.has(sq) && !defenders.has(sq)) return true;
+  }
+  return false;
+}
+
 export const HELICOPTER_PARENT: Nerf = db({
   id: "helicopter_parent", name: "Helicopter Parent", tier: 6, implemented: true,
-  description: "You lose if you end one of your turns with a pawn that is attacked and undefended.",
+  description: "If you end one of your turns with a pawn that is attacked and undefended, you are warned. You lose only if a pawn is still attacked and undefended at the end of your next turn.",
   // Rebalance 2026-07, two surgical changes:
   //  - a pawn now has to be ATTACKED and undefended (was: undefended, even
   //    with no attacker anywhere), which made every pawn advance a standing
   //    death sentence and was harder than house_of_cards a full two tiers up;
   //  - judged only after YOUR move, so when the opponent's move creates the
   //    threat you get one turn to defend the child (or move it) first.
+  // Follow-up: the first offending turn only warns; you lose only if you end a
+  // second turn in a row with a pawn attacked and undefended. `warned` is set in
+  // onTurnStart from the position right after your previous move (checkLoss
+  // cannot mutate state), so a lone bad turn is survivable if you repair it.
   // The card keeps its identity: hover over threatened pawns. Still tier 6.
-  checkLoss: (_s, ctx) => {
+  init: () => ({ warned: false }),
+  onTurnStart: (_s, ctx) => {
+    // Were you already exposed at the end of your previous move? If so you enter
+    // this turn under a standing warning.
+    const h = ctx.board.history;
+    let lastMineIdx = -1;
+    for (let i = h.length - 1; i >= 0; i--) {
+      if (h[i].color === ctx.me) { lastMineIdx = i; break; }
+    }
+    if (lastMineIdx < 0) return { warned: false };
+    const after = boardAfter(h, lastMineIdx + 1);
+    return { warned: pawnExposed(after, ctx.me) };
+  },
+  checkLoss: (state, ctx) => {
     if (ctx.moveNumber === 0) return null;
     const h = ctx.board.history;
     const last = h[h.length - 1];
     if (!last || last.color !== ctx.me) return null;
-    const opp = ctx.me === "w" ? "b" : "w";
-    const attackers = attackedBy(ctx.board, opp);
-    const defenders = attackedBy(ctx.board, ctx.me);
-    for (const sq of pieceSquares(ctx.board, ctx.me, "p")) {
-      if (attackers.has(sq) && !defenders.has(sq)) return { reason: "a pawn was left alone and in danger" };
-    }
-    return null;
+    if (!pawnExposed(ctx.board, ctx.me)) return null; // safe now: repaired or never exposed
+    // A pawn is attacked and undefended after my move. Lose only if I was
+    // already warned coming into this turn (exposed last turn too); otherwise
+    // this is the first offense and only warns.
+    const s = state as { warned: boolean };
+    return s.warned ? { reason: "a pawn was left in danger for a second turn" } : null;
   },
-  hint: (_s, ctx) => {
+  hint: (state, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
     const attackers = attackedBy(ctx.board, opp);
     const defenders = attackedBy(ctx.board, ctx.me);
     const exposed = pieceSquares(ctx.board, ctx.me, "p").filter(
       (sq) => attackers.has(sq) && !defenders.has(sq),
     );
+    const s = state as { warned: boolean };
+    if (s.warned) {
+      return {
+        text: "Helicopter warning: a pawn was left attacked and undefended. Leave every pawn safe this turn or lose.",
+        squares: exposed,
+        tone: "warn",
+      };
+    }
     if (!exposed.length) return null;
     return {
-      text: "A pawn is attacked and undefended. End this turn with every pawn safe or lose.",
+      text: "A pawn is attacked and undefended. Repair it this turn or you will be warned.",
       squares: exposed,
-      tone: "warn",
+      tone: "info",
     };
   },
 });

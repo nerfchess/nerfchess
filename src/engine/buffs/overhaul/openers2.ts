@@ -389,15 +389,25 @@ function finePrint(entry: (typeof FINE_PRINT)[number]): Buff {
 // One use, automatic.
 // ---------------------------------------------------------------------------
 
-const FIRST_BLOOD: Array<OpenerMeta & { what: string; ride: (move: Move, api: BuffApi) => void }> = [
-  { id: "victory_lap", name: "Victory Lap", flavor: "Jog the perimeter, wave to the pawns.", icon: "Trophy", what: "the capturing piece cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
+const FIRST_BLOOD: Array<
+  OpenerMeta & {
+    what: string;
+    ride: (move: Move, api: BuffApi) => void;
+    /** Fire on your first N captures instead of just the first. */
+    charges?: number;
+    /** With charges, a repeat only fires on a capture landing on a square not
+     * already used by an earlier charge. */
+    distinctTarget?: boolean;
+  }
+> = [
+  { id: "victory_lap", name: "Victory Lap", flavor: "Jog the perimeter, wave to the pawns.", icon: "Trophy", tier: 2, what: "the capturing piece cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "champions_shades", name: "Champion's Shades", flavor: "The forecast is 100 percent glare.", icon: "Glasses", what: "the capturing piece puts on sunglasses, purely cosmetically, forever", ride: (move, api) => pinCosmetic(api, move.to, api.me, "sunglasses", null) },
-  { id: "stoppage_time", name: "Stoppage Time", flavor: "The referee checks his watch and shrugs generously.", icon: "Timer", what: "gain 4 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 4 }) },
+  { id: "stoppage_time", name: "Stoppage Time", flavor: "The referee checks his watch and shrugs generously.", icon: "Timer", what: "gain 9 seconds on your clock, advance one of your pawns one square, and gain a draft reroll", ride: (_move, api) => { api.adjustClock({ addSelfSec: 9 }); const cands = advanceablePawns(api); if (cands.length > 0) advancePawn(api, cands[api.rng.int(cands.length)]); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "coachs_whistle", name: "Coach's Whistle", flavor: "One sharp blast and the whole defense is on the tactics board.", icon: "Megaphone", what: "every currently undefended enemy piece flashes until your opponent replies, and any temporary shield protecting one of them is removed", ride: (_move, api) => { const sqs = undefendedPieces(api.board, api.opp); flashSquares(api, sqs); stripTempShields(api, sqs, api.opp); } },
   { id: "transfer_window", name: "Transfer Window", flavor: "A vacancy opens on the roster. Scouts descend.", icon: "RefreshCw", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "opposition_research", name: "Opposition Research", flavor: "The captured piece had a very informative diary.", icon: "Search", what: "you learn the tier of your opponent's next draft offer", ride: (_move, api) => { api.mine.flags.seeOppTier = true; } },
   { id: "locker_room_nickname", name: "Locker Room Nickname", flavor: "Score once and the name sticks for the season.", icon: "Medal", what: "the capturing piece is named Champ, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "nametag", null, "Champ"); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
-  { id: "ticker_tape", name: "Ticker Tape", flavor: "Someone has been saving shredded gamescores for this.", icon: "PartyPopper", what: "the square is showered in confetti until your opponent replies, and nothing else happens", ride: (move, api) => flashSquares(api, [move.to], true) },
+  { id: "ticker_tape", name: "Ticker Tape", flavor: "Someone has been saving shredded gamescores for this.", icon: "PartyPopper", charges: 2, distinctTarget: true, what: "the square is showered in confetti until your opponent replies, and nothing else happens", ride: (move, api) => flashSquares(api, [move.to], true) },
 ];
 
 function firstBlood(entry: (typeof FIRST_BLOOD)[number]): Buff {
