@@ -1607,7 +1607,7 @@ const T5: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       onMovePlayed: (inst, move, api) => {
         let sq = (inst.state.sq as Square | null | undefined) ?? null;
@@ -1643,7 +1643,7 @@ const T5: Buff[] = [
       id: "hw3_wildfire",
       name: "Wildfire Rot",
       description:
-        "Set a rot on one enemy piece: for your opponent's next 6 turns, no rotten piece may capture, and on each of their turns the rot spreads to one more of their pieces standing beside an infected one. Left in a huddle it consumes the whole cluster; kept apart it cannot jump the gap. Capturing a rotten piece burns that infection away. Kings never rot.",
+        "Set a rot on one enemy piece: for your opponent's next 6 turns, no rotten piece may capture, though the first piece you rot is granted one move before the rot bites and may still capture that once. On each of their turns the rot spreads to one more of their pieces standing beside an infected one. Left in a huddle it consumes the whole cluster; kept apart it cannot jump the gap. Capturing a rotten piece burns that infection away. Kings never rot.",
       flavor: "One spark in dry grass and the whole field is gone by noon.",
       fx: { motif: "muzzle" },
     },
@@ -1665,17 +1665,30 @@ const T5: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.rotten = [sq] as Square[];
+        inst.state.first = sq;
+        inst.state.escaped = false;
         inst.state.turns = 6;
       },
       filterOpponentMoves: (moves, inst) => {
         const rotten = (inst.state.rotten as Square[] | undefined) ?? [];
         if (rotten.length === 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
-        const kept = moves.filter((m) => !m.captured || !rotten.includes(m.from));
+        const first = inst.state.first as Square | null | undefined;
+        const escaped = !!inst.state.escaped;
+        // The first piece you rot gets one legal escape move: until it is spent,
+        // that piece keeps its captures; every other rotten piece cannot capture.
+        const kept = moves.filter(
+          (m) => !m.captured || !rotten.includes(m.from) || (!escaped && m.from === first),
+        );
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         let rotten = (inst.state.rotten as Square[] | undefined) ?? [];
         rotten = rotten.map((sq) => followSq(sq, move)).filter((sq): sq is Square => sq != null);
+        const firstBefore = (inst.state.first as Square | null | undefined) ?? null;
+        if (!inst.state.escaped && move.color === api.opp && firstBefore != null && move.from === firstBefore) {
+          inst.state.escaped = true; // the first rotten piece spent its one free move
+        }
+        inst.state.first = followSq(firstBefore, move);
         if (move.color === api.opp && turnsLeft(inst) > 0 && rotten.length > 0) {
           // Spread to ONE new neighbor (lowest index) for a readable pace.
           let next: Square | null = null;
@@ -1716,7 +1729,7 @@ const T6: Buff[] = [
       id: "hw3_effigy_of_dread",
       name: "Effigy of Dread",
       description:
-        "Raise a leering effigy on an empty square in your opponent's half. While it stands, every square around it is barred to their pieces, and the dread lingers for 6 of their turns before it topples. It is not invincible: the effigy is a piece they can capture, and smashing it ends the curse at once. Route around its shadow, or send a piece to break it.",
+        "Raise a leering effigy on an empty square in your opponent's half. While it stands, no enemy piece may step onto the ring of squares around it, though a piece already caught inside that ring may leave normally. The dread lingers for 6 of their turns before it topples. It is not invincible: the effigy is a piece they can capture, and smashing it ends the curse at once. Route around its shadow, or send a piece to break it.",
       flavor: "Knock it down. It would like to see you try.",
       fx: { motif: "blindfold" },
     },

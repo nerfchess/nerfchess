@@ -928,7 +928,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_living_board",
       name: "Living Board",
       description:
-        "Two 2x2 areas (neither containing a king, away from the back ranks) trade their entire contents, square for square.",
+        "Two 2x2 areas (neither containing a king, away from the back ranks) trade their entire contents, square for square. Then one of your pieces that moved may take a free king-step to an empty adjacent square, without capturing.",
       tier: 7,
       category: "movement",
       icon: "Grid3x3",
@@ -936,23 +936,64 @@ export const OVERHAUL_T7: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
-        const anchors = Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) => {
-          if (FILE(sq) > 6 || RANK(sq) < 1 || RANK(sq) > 5) return false;
-          if (plot(sq).some((s) => api.board.pieces[s]?.type === "k")) return false;
-          if (picks.length === 1) {
-            const first = plot(picks[0].square!);
-            if (plot(sq).some((s) => first.includes(s))) return false;
+        if (picks.length < 2) {
+          const anchors = Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) => {
+            if (FILE(sq) > 6 || RANK(sq) < 1 || RANK(sq) > 5) return false;
+            if (plot(sq).some((s) => api.board.pieces[s]?.type === "k")) return false;
+            if (picks.length === 1) {
+              const first = plot(picks[0].square!);
+              if (plot(sq).some((s) => first.includes(s))) return false;
+            }
+            return true;
+          });
+          return {
+            kind: "square",
+            label:
+              picks.length === 0
+                ? "Choose the first plot's bottom-left corner"
+                : "Choose the second plot's bottom-left corner",
+            squares: anchors,
+          };
+        }
+        // After both plots are chosen, one of your moved pieces may take a free
+        // king-step. Positions are read post-swap (deterministic from the two
+        // plots), so the option is offered before the board actually trades.
+        const A = plot(picks[0].square!), B = plot(picks[1].square!);
+        const postAt = (s: Square) => {
+          const ai = A.indexOf(s);
+          if (ai >= 0) return api.board.pieces[B[ai]];
+          const bi = B.indexOf(s);
+          if (bi >= 0) return api.board.pieces[A[bi]];
+          return api.board.pieces[s];
+        };
+        const kingNeighbors = (s: Square) => {
+          const out: Square[] = [];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const f = FILE(s) + df, r = RANK(s) + dr;
+              if (inBoard(f, r)) out.push(SQ(f, r));
+            }
           }
-          return true;
-        });
+          return out;
+        };
+        if (picks.length === 2) {
+          const movers = [...A, ...B].filter((s) => {
+            const p = postAt(s);
+            return p && p.color === api.me && kingNeighbors(s).some((n) => !postAt(n));
+          });
+          return {
+            kind: "square",
+            label: "Optional: choose a moved piece to king-step",
+            squares: movers,
+            finishable: true,
+          };
+        }
+        const s = picks[2].square!;
         return {
           kind: "square",
-          label:
-            picks.length === 0
-              ? "Choose the first plot's bottom-left corner"
-              : "Choose the second plot's bottom-left corner",
-          squares: anchors,
+          label: "Choose the free king-step (empty adjacent square)",
+          squares: kingNeighbors(s).filter((n) => !postAt(n)),
         };
       },
       (_inst, api, picks) => {
@@ -971,6 +1012,19 @@ export const OVERHAUL_T7: Buff[] = [
           if (pa[i]) api.place(B[i], pa[i]!.type, pa[i]!.color);
         }
         flashSquares(api, [...A, ...B]);
+        // The free king-step for one moved piece (post-swap board == the plan).
+        const from = picks[2]?.square, to = picks[3]?.square;
+        if (from != null && to != null) {
+          const p = api.board.pieces[from];
+          const adj =
+            from !== to &&
+            Math.abs(FILE(from) - FILE(to)) <= 1 &&
+            Math.abs(RANK(from) - RANK(to)) <= 1;
+          if (p && p.color === api.me && adj && !api.board.pieces[to]) {
+            api.relocate(from, to);
+            flashSquares(api, [to], true);
+          }
+        }
       },
     ),
   ),

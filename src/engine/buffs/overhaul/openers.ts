@@ -789,13 +789,13 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const GUARDIANS: Array<OpenerMeta & { file?: number; piece?: "q" | "r" | "b" | "n" }> = [
-  { id: "harbor_gull", name: "Harbor Gull", flavor: "Nobody ambushes a pawn under a screaming gull.", icon: "Bird", file: 0 },
+  { id: "harbor_gull", name: "Harbor Gull", flavor: "Nobody ambushes a pawn under a screaming gull.", icon: "Bird", file: 0, tier: 2 },
   { id: "alley_cat", name: "Alley Cat", flavor: "The b-file belongs to the cat. The pawn just lives there.", icon: "Cat", file: 1, tier: 2 },
   { id: "cloister_bell", name: "Cloister Bell", flavor: "One toll, and the c-file pawn is suddenly elsewhere in spirit.", icon: "Bell", file: 2, tier: 2 },
   { id: "market_dog", name: "Market Dog", flavor: "Fed by every stall on the d-file. Repays in barking.", icon: "Dog", file: 3 },
   { id: "parade_marshal", name: "Parade Marshal", flavor: "Nobody touches the e-file pawn on the marshal's watch.", icon: "Shield", file: 4 },
-  { id: "garden_scarecrow", name: "Garden Scarecrow", flavor: "It works on crows. It works on rooks. Mostly.", icon: "Wheat", file: 5 },
-  { id: "gallery_docent", name: "Gallery Docent", flavor: "Please do not touch the g-file exhibit.", icon: "Frame", file: 6 },
+  { id: "garden_scarecrow", name: "Garden Scarecrow", flavor: "It works on crows. It works on rooks. Mostly.", icon: "Wheat", file: 5, tier: 2 },
+  { id: "gallery_docent", name: "Gallery Docent", flavor: "Please do not touch the g-file exhibit.", icon: "Frame", file: 6, tier: 2 },
   { id: "lighthouse_keeper", name: "Lighthouse Keeper", flavor: "The lamp swings round the moment trouble sails in.", icon: "Flashlight", file: 7 },
   { id: "lady_in_waiting", name: "Lady in Waiting", flavor: "She steps in front of the first blade, exactly once.", icon: "Crown", piece: "q" },
   { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r" },
@@ -819,13 +819,18 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
   // move filter that reliably survives into the opponent's turn instead.
   // `delay` postpones the guard until after the opponent's next move;
   // `exceptPawns` lets enemy pawn captures through.
-  const filterGuard = (opts: { delay?: boolean; exceptPawns?: boolean }): Parameters<typeof card>[1] => ({
+  const filterGuard = (opts: { delay?: boolean; exceptPawns?: boolean; endOnCapture?: boolean }): Parameters<typeof card>[1] => ({
     kind: "passive",
     onMovePlayed: (inst, move, api) => {
       if (inst.spent) return;
       if (inst.state.armed) {
         // The guarded square follows the piece if I reposition it, and the
         // guard ends the moment that piece is captured or the turn passes.
+        if (opts.endOnCapture && move.from === (inst.state.sq as number) && captureSquare(move) != null) {
+          // The guarded piece struck: the protection ends immediately.
+          inst.spent = true;
+          return;
+        }
         if (move.from === (inst.state.sq as number)) inst.state.sq = move.to;
         if (captureSquare(move) === (inst.state.sq as number) && move.from !== (inst.state.sq as number)) {
           inst.spent = true;
@@ -894,6 +899,24 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
       entry,
       `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
       filterGuard({}),
+    );
+  }
+
+  if (entry.id === "gallery_docent") {
+    // Retier + the protection ends the moment the guarded pawn makes a capture.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.`,
+      filterGuard({ endOnCapture: true }),
+    );
+  }
+
+  if (entry.id === "garden_scarecrow" || entry.id === "harbor_gull") {
+    // Retier + the shield does not stop pawn captures.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
+      filterGuard({ exceptPawns: true }),
     );
   }
 
@@ -988,7 +1011,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
 const RETREATS: Array<OpenerMeta & { files?: number[]; diag?: boolean; uses?: number }> = [
   { id: "tactical_withdrawal", name: "Tactical Withdrawal", flavor: "It is only running away if someone writes it down.", icon: "Undo2" },
   { id: "back_to_barracks", name: "Back to Barracks", flavor: "The queenside bunks are warmer anyway.", icon: "Home", files: [0, 1, 2, 3] , uses: 2, tier: 2 },
-  { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 2 },
+  { id: "homesick_private", name: "Homesick Private", flavor: "A kingside pawn just remembered it left the stove on.", icon: "Mailbox", files: [4, 5, 6, 7] , uses: 1 },
   { id: "regroup_at_camp", name: "Regroup at Camp", flavor: "The center pawns call it consolidating the narrative.", icon: "Tent", files: [2, 3, 4, 5] , uses: 2 },
   { id: "second_thoughts", name: "Second Thoughts", flavor: "The d- and e-pawns saw the middlegame and politely declined.", icon: "RotateCcw", files: [3, 4] , uses: 2 },
   { id: "edge_of_the_map", name: "Edge of the Map", flavor: "Rook pawns back away from where the dragons are drawn.", icon: "Map", files: [0, 7] , uses: 2 },

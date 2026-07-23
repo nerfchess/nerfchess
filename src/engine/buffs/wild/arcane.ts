@@ -776,7 +776,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_time_stop",
       name: "Time Stop",
       description:
-        "Stop one piece in time, yours or theirs (never a king): for 2 of its owner's turns it cannot move, and it cannot be captured. It is simply not here right now.",
+        "Stop one piece in time, yours or theirs (never a king): for 2 of its owner's turns it cannot move, and for the first of those turns it cannot be captured. It is simply not here right now.",
       tier: 4,
       category: "tempo",
       flavor: "For it, the clock simply stopped.",
@@ -799,7 +799,9 @@ export const WILD_ARCANE: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.type === "k") return;
         addEffect(api, { kind: "freeze", sq, owner: p.color, turns: 2, skin: "bubble" });
-        addEffect(api, { kind: "shield", owner: p.color, squares: [sq], turns: 2 });
+        // Balance: the capture immunity is shortened by one of its owner's turns
+        // (2 -> 1); the freeze (cannot move) still holds for the full 2 turns.
+        addEffect(api, { kind: "shield", owner: p.color, squares: [sq], turns: 1 });
       },
     ),
   ),
@@ -1222,13 +1224,16 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_border_ward",
       name: "Border Ward",
       description:
-        "A warded frontier: your opponent may not move any piece into your half of the board for their next 2 turns.",
+        "A warded frontier: for their next 2 turns your opponent may not move any piece into your half of the board, unless the move captures.",
       tier: 5,
       category: "protection",
       flavor: "The far side of the board is closed for repairs.",
       fx: { motif: "blindfold" },
     },
-    curse(2, (moves, api) => moves.filter((m) => !inHalf(api.me, m.to))),
+    // Balance: the ward keeps its movement identity (no incursions into your
+    // half) but the special barred move can no longer stop a capture: capturing
+    // moves into your half are still allowed.
+    curse(2, (moves, api) => moves.filter((m) => !inHalf(api.me, m.to) || m.captured)),
   ),
   card(
     {

@@ -79,6 +79,23 @@ const oppHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.opp, sq);
 const dist = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
 
+/** Does a queen on `from` attack `target` along a clear rank, file, or
+ * diagonal? A queen-only local copy of the board's attacksSquare, used by
+ * Stage Fright to tell whether the queen's move gives check. */
+function queenAttacks(api: BuffApi, from: Square, target: Square): boolean {
+  if (from === target) return false;
+  const df = FILE(target) - FILE(from), dr = RANK(target) - RANK(from);
+  const adf = Math.abs(df), adr = Math.abs(dr);
+  if (adf !== adr && df !== 0 && dr !== 0) return false;
+  const sf = Math.sign(df), sr = Math.sign(dr);
+  let f = FILE(from) + sf, r = RANK(from) + sr;
+  while (inBoard(f, r) && SQ(f, r) !== target) {
+    if (api.board.pieces[SQ(f, r)]) return false;
+    f += sf; r += sr;
+  }
+  return true;
+}
+
 // --- Local composite helpers (copies of the sibling shared.ts surfaces) ------
 
 /** Opponent-move filter with the non-empty safety guarantee: the filter is
@@ -563,42 +580,115 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_backseat_driver",
       name: "Backseat Driver",
-      description: "Someone will not stop yelling push a pawn: on your opponent's next turn they must move a pawn if any pawn of theirs can legally move.",
+      description: "Someone will not stop yelling push a pawn: it takes a turn to sink in, so only after your opponent's next move, on the turn that follows, must they move a pawn if any pawn of theirs can legally move.",
       tier: 3,
       category: "hex",
       flavor: "No, the OTHER pawn.",
       fx: { motif: "slow", pieces: ["p"] },
     },
-    curse(1, (moves) => moves.filter((m) => m.piece === "p")),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+        inst.state.turns = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed || (inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "p");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The nagging lands one reply late: the opponent's first move goes
+        // through free, then the pawn demand arms for their next turn.
+        if (!inst.state.armed) { inst.state.armed = true; return; }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.state.armed
+          ? "the nagging starts after their next move"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "wc_wrong_way",
       name: "Wrong Way",
-      description: "Every one of your opponent's pieces has its map upside down: for their next 2 turns none of them may retreat toward their own back rank.",
+      description: "Every one of your opponent's pieces has its map upside down: after their next move, for the 2 turns that follow none of them may retreat toward their own back rank.",
       tier: 5,
       category: "hex",
       flavor: "Recalculating. Recalculating.",
       fx: { motif: "slow", pieces: "all" },
     },
-    curse(2, (moves, api) =>
-      moves.filter((m) => relRank(api.opp, m.to) >= relRank(api.opp, m.from)),
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+        inst.state.turns = 2;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || (inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => relRank(api.opp, m.to) >= relRank(api.opp, m.from));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The flipped map lands one reply late: the opponent's first move goes
+        // through free, then the retreat ban arms for their next 2 turns.
+        if (!inst.state.armed) { inst.state.armed = true; return; }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.state.armed
+          ? "the map flips after their next move"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "wc_broken_elevator",
       name: "Broken Elevator",
-      description: "The lift to your half is out of order: for their next 2 turns your opponent cannot move any piece onto either of your two back ranks.",
+      description: "The lift to your half is out of order: for their next 2 turns your opponent cannot move any piece onto either of your two back ranks. The first piece turned away still gets to make that one move.",
       tier: 5,
       category: "hex",
       flavor: "Please use the stairs. There are no stairs.",
       fx: { motif: "blindfold", pieces: "all" },
     },
-    curse(2, (moves, api) => {
-      const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
-      return moves.filter((m) => !home(m.to));
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if ((inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
+        // One legal escape: the first affected piece (the lowest-square piece
+        // with a blocked move) keeps that move until the exemption is spent.
+        let exemptFrom: Square | undefined;
+        if (!inst.state.escaped) {
+          const blocked = moves.filter((m) => home(m.to)).map((m) => m.from);
+          if (blocked.length > 0) exemptFrom = Math.min(...blocked);
+        }
+        const kept = moves.filter((m) => !home(m.to) || m.from === exemptFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
+        // The escape is spent the moment the first affected piece uses its one
+        // free move onto the barred ranks.
+        if (!inst.state.escaped && home(move.to)) inst.state.escaped = true;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {

@@ -2486,13 +2486,16 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "duelist", name: "Duelist", description: "One piece survives the first capture against it and the attacker dies instead, once (kings excluded).", tier: 4, category: "protection" },
+    { id: "duelist", name: "Duelist", description: "Choose one piece; after your opponent's next move it survives the first capture against it and that attacker dies instead, once (kings excluded).", tier: 4, category: "protection" },
     {
       kind: "activated",
       spendOnUse: false,
-      // One activation only: the duelist is chosen once and never re-aimed.
+      // One activation only: the duelist is chosen once and never re-aimed. The
+      // guard is delayed: the pick is parked in state.pendingSq at activation
+      // and only arms (state.sq) once the opponent has replied. A capture on
+      // that reply just takes the piece; the duel is not yet live.
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pendingSq != null
           ? null
           : {
               kind: "square",
@@ -2502,10 +2505,27 @@ const TIER4: Buff[] = [
               ),
             },
       effect: (inst, _api, picks) => {
-        if (inst.state.sq != null) return;
-        inst.state.sq = picks[0]?.square;
+        if (inst.state.sq != null || inst.state.pendingSq != null) return;
+        inst.state.pendingSq = picks[0]?.square;
       },
       onMovePlayed: (inst, move, api) => {
+        if (inst.state.pendingSq != null) {
+          const psq = inst.state.pendingSq as Square;
+          if (move.capturedSquare === psq && move.from !== psq) {
+            inst.state.pendingSq = null;
+            inst.spent = true;
+            return;
+          }
+          if (move.from === psq) {
+            inst.state.pendingSq = move.to;
+            return;
+          }
+          if (move.color === api.opp) {
+            inst.state.sq = inst.state.pendingSq;
+            inst.state.pendingSq = null;
+          }
+          return;
+        }
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.color === api.opp && move.captured && captureSquare(move) === sq) {
@@ -2521,10 +2541,10 @@ const TIER4: Buff[] = [
         trackBoundPiece(inst, move);
       },
       status: (inst) => {
-        const sq = inst.state.sq as Square | undefined;
-        return sq == null
-          ? "activate to choose a piece"
-          : `dueling on ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        const sq = (inst.state.sq ?? inst.state.pendingSq) as Square | undefined;
+        if (sq == null) return "activate to choose a piece";
+        const name = `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        return inst.state.sq != null ? `dueling on ${name}` : `arming at ${name} after their reply`;
       },
     },
   ),

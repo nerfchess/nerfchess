@@ -18,6 +18,7 @@ import {
   activated,
   addEffect,
   anyEmptyZone,
+  emptySquares,
   instant,
   mySquares,
   myHalfZone,
@@ -344,15 +345,20 @@ export const FUNNY_META: Buff[] = [
       id: "main_character",
       name: "Main Character",
       description:
-        "One of your pieces gets plot armor: it cannot be captured for your opponent's next 4 turns.",
+        "One of your pieces gets plot armor: it cannot be captured for your opponent's next 4 turns, but the armor drops the instant it makes a capture.",
       tier: 5,
       category: "protection",
       flavor: "The sequel is already greenlit. It cannot die here.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Full 4-turn shield, but the plot armor ends the moment the protected
+    // piece captures: on that capture we strip its shield square before the
+    // shield-follow can carry the ward onto the piece's new home.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -361,12 +367,35 @@ export const FUNNY_META: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 4 });
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 4 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq && move.color === api.me) {
+          if (move.captured) {
+            for (const e of api.bs.effects) {
+              if (e.kind === "shield" && e.owner === api.me && e.squares) {
+                e.squares = e.squares.filter((s) => s !== sq);
+              }
+            }
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          inst.state.sq = move.to;
+        } else if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
         }
       },
-    ),
+      status: (inst) =>
+        inst.state.sq == null ? "activate to crown a lead" : "plot armor holds until it captures",
+    },
   ),
   card(
     {
