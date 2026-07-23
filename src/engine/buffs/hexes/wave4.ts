@@ -678,8 +678,8 @@ const T1: Buff[] = [
 
 const T2: Buff[] = [
   H2(
-    { id: "hx4_dim_torches", name: "Dim Torches", description: "For your opponent's next 2 turns, they may not capture anything more than 3 squares away from their own king. The dark swallows distant targets.", flavor: "Past the torchlight, everything is a guess.", icon: "Lamp", fx: { motif: "muzzle", pieces: "all" } },
-    curse(2, (moves, api) => {
+    { id: "hx4_dim_torches", name: "Dim Torches", description: "Starting after your opponent's next move, for their following 2 turns, they may not capture anything more than 3 squares away from their own king. The dark swallows distant targets.", flavor: "Past the torchlight, everything is a guess.", icon: "Lamp", fx: { motif: "muzzle", pieces: "all" } },
+    delayedCurse(2, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       return moves.filter((m) => {
@@ -701,8 +701,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_no_trampling", name: "No Trampling", description: "For your opponent's next 4 turns, their knights may not capture pawns. The cavalry has been sued before.", flavor: "The last settlement bought the plaintiff a farm.", icon: "Scale", fx: { motif: "muzzle", pieces: ["n"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_no_trampling", name: "No Trampling", description: "For your opponent's next 4 turns, their knights may not capture pawns. The first such capture slips through as one escape, then the restriction holds. The cavalry has been sued before.", flavor: "The last settlement bought the plaintiff a farm.", icon: "Scale", fx: { motif: "muzzle", pieces: ["n"] } },
+    escapeCurseBoard(4, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "n") return true;
         const c = capSq(m);
@@ -715,8 +715,8 @@ const T2: Buff[] = [
     curse(1, (moves) => moves.filter((m) => m.piece !== "r")),
   ),
   H2(
-    { id: "hx4_muddy_moat", name: "Muddy Moat", description: "For your opponent's next 3 turns, their pawns on the d and e files cannot advance. The center is a soup.", flavor: "The engineers blame the rain. The rain blames the engineers.", icon: "CloudRain", fx: { motif: "anchor", pieces: ["p"] } },
-    curse(3, (moves) =>
+    { id: "hx4_muddy_moat", name: "Muddy Moat", description: "For your opponent's next 2 turns, their pawns on the d and e files cannot advance. The center is a soup.", flavor: "The engineers blame the rain. The rain blames the engineers.", icon: "CloudRain", fx: { motif: "anchor", pieces: ["p"] } },
+    curse(2, (moves) =>
       moves.filter(
         (m) =>
           m.piece !== "p" ||
@@ -760,8 +760,8 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_elbow_room", name: "Elbow Room", description: "For your opponent's next 2 turns, none of their pieces may end a move adjacent to another of their own pieces. The army demands personal space. Their king is exempt.", flavor: "Formation is a strong word for what this is.", icon: "Expand", fx: { motif: "anchor", pieces: "all" } },
-    curse(2, (moves, api) =>
+    { id: "hx4_elbow_room", name: "Elbow Room", description: "Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to another of their own pieces. The army demands personal space. Their king is exempt.", flavor: "Formation is a strong word for what this is.", icon: "Expand", fx: { motif: "anchor", pieces: "all" } },
+    delayedCurse(2, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece === "k" ||
@@ -770,11 +770,11 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_cold_start", name: "Cold Start", description: "For your opponent's next 4 turns, the first knight of theirs to move pulls a muscle and is frozen for 1 of their turns immediately after.", flavor: "Always stretch before leaping. Always.", icon: "Activity", fx: { motif: "slow", pieces: ["n"] } },
+    { id: "hx4_cold_start", name: "Cold Start", description: "For your opponent's next 3 turns, the first knight of theirs to move pulls a muscle and is frozen for 1 of their turns immediately after.", flavor: "Always stretch before leaping. Always.", icon: "Activity", fx: { motif: "slow", pieces: ["n"] } },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 4;
+        inst.state.turns = 3;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.piece === "n") {
