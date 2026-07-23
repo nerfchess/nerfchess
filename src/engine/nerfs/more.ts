@@ -1448,23 +1448,26 @@ export const LEFT_FOR_DEAD: Nerf = db({
 
 export const CRUSADE: Nerf = db({
   id: "crusade", name: "Crusade", tier: 5, implemented: true,
-  description: "For 4 moves starting on a random move, must end turn on a specific random square.",
+  description: "For 4 moves starting on a random move (announced a turn early), if at least three of your moves reach a specific random square, you must move to it.",
   init: (rng) => ({ start: 4 + rng.int(10), sq: rng.int(64) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { start: number; sq: number };
     const turn = ctx.moveNumber + 1;
     if (turn < s.start || turn >= s.start + 4) return moves;
     const hits = moves.filter((m) => m.to === s.sq);
-    return hits.length ? hits : moves;
+    return hits.length >= 3 ? hits : moves;
   },
   visual: (state) => ({ highlightSquares: [(state as { sq: number }).sq] }),
   hint: (state, ctx) => {
     const s = state as { start: number; sq: number };
     const turn = ctx.moveNumber + 1;
+    if (turn === s.start - 1) {
+      return { text: `Crusade begins next turn: prepare to reach ${squareName(s.sq)}.`, squares: [s.sq], tone: "info" };
+    }
     if (turn < s.start || turn >= s.start + 4) return null;
     const turnsLeft = s.start + 4 - turn;
     return {
-      text: `Crusade: must end turn ${turn} on ${squareName(s.sq)} (${turnsLeft} turn${turnsLeft === 1 ? "" : "s"} left, started turn ${s.start}).`,
+      text: `Crusade: if three or more moves reach ${squareName(s.sq)}, you must take one (${turnsLeft} turn${turnsLeft === 1 ? "" : "s"} left, started turn ${s.start}).`,
       squares: [s.sq],
       tone: "warn",
     };

@@ -316,7 +316,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Radiation",
       name: "Contagion",
       description:
-        "Freezes are catching: whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
+        "Freezes are catching, but the strain lies dormant until after your opponent's next move. Once it wakes, whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
       tier: 7,
       category: "hex",
       flavor: "Cover your cough.",
@@ -324,12 +324,20 @@ export const PT_PASSIVE_CARDS: Buff[] = [
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
-        const known = new Set<number>((inst.state.frozen as number[]) ?? []);
         // Enemy squares currently under an active freeze.
         const cur = new Set<number>();
         for (const e of api.bs.effects) {
           if (e.kind === "freeze" && e.owner === api.opp && e.turns > 0) cur.add(e.sq);
         }
+        // Delay activation until after the opponent's next move: stay dormant
+        // until the opponent has moved once, recording the live freezes as the
+        // baseline so nothing that predates activation counts as newly frozen.
+        if (!inst.state.armed) {
+          inst.state.frozen = Array.from(cur);
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        const known = new Set<number>((inst.state.frozen as number[]) ?? []);
         const caught = new Set<number>();
         for (const sq of cur) {
           if (known.has(sq)) continue; // only a NEWLY frozen piece spreads

@@ -189,13 +189,18 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves; // the recording turn: free choice
+        if (!inst.state.escaped) return moves; // the first affected turn is a free escape move
         const kept = moves.filter((m) => m.from === sq);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
-        if (inst.state.sq == null) inst.state.sq = move.to; // record the piece
-        else if (move.from === inst.state.sq) inst.state.sq = move.to; // follow the echo
+        if (inst.state.sq == null) {
+          inst.state.sq = move.to; // record the piece
+        } else {
+          if (move.from === inst.state.sq) inst.state.sq = move.to; // follow the piece
+          inst.state.escaped = true; // spend the one free escape move
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>

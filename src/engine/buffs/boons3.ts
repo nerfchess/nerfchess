@@ -1388,17 +1388,42 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_last_stand",
       name: "Last Stand",
       description:
-        "Raise the shield wall around everything and pay for it later: for the next 3 turns none of your pieces can be captured and your king cannot be taken. The smiths take their due up front - your next 3 drafts are skipped.",
+        "Raise the shield wall around everything and pay for it later: for the next 3 turns none of your pieces can be captured and your king cannot be taken, but the wall falls the instant one of your pieces makes a capture. The smiths take their due up front - your next 3 drafts are skipped.",
       tier: 7,
       category: "protection",
       icon: "ShieldPlus",
       flavor: "Hold. Hold. Hold. Worry about tomorrow tomorrow.",
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 3;
-    }),
+    {
+      kind: "passive",
+      // Applies the instant its owner acquires it (init runs on acquire, exactly
+      // where an instant card's effect would): the shield wall and the draft
+      // debt land right now.
+      init: (_inst, api) => {
+        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        // The wall falls the moment one of your protected pieces captures: drop
+        // the full-army shield and the king ward at once, ending the protection
+        // early even though their timers would still cover three turns.
+        if (move.color === api.me && move.captured && move.captured !== "k") {
+          for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+            const e = api.bs.effects[i];
+            if (
+              (e.kind === "shield" && e.squares === null && e.owner === api.me) ||
+              (e.kind === "king_safe" && e.owner === api.me)
+            ) {
+              api.bs.effects.splice(i, 1);
+            }
+          }
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "the wall has fallen" : "the shield wall holds"),
+    },
   ),
 
   // A draft raid that grabs everything for a stretch, then goes hungry.
@@ -1410,7 +1435,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_high_stakes",
       name: "High Stakes",
       description:
-        "Sweep the table twice: you keep every card offered in each of your next 2 drafts instead of just one. In return you forfeit all of your rerolls, now and forever.",
+        "Sweep the table twice: you keep every card offered in each of your next 2 drafts instead of just one, and one of your drafts is skipped besides. In return you forfeit all of your rerolls, now and forever.",
       tier: 7,
       category: "draft",
       icon: "Dices",
@@ -1419,6 +1444,8 @@ export const BOON_WAVE3: Buff[] = [
     instant((_inst, api) => {
       api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
       api.mine.rerollsLeft = 0;
+      // Balance: one further boon draft is skipped.
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
