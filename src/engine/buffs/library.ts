@@ -3582,10 +3582,70 @@ const TIER6: Buff[] = [
     captureExplosion({ beside: true, charges: 2 }),
   ),
   def(
-    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights move as amazons for your next 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
-    timedAugment(3, (_m, inst, api) =>
-      mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
-    ),
+    { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "Choose two knights; each may make one queen-style move once, then moves as a normal knight again.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    // Balance: no longer a blanket amazon buff on every knight. Two chosen
+    // knights each bank a single queen-style move; the charge follows a knight
+    // that first steps normally, and is spent the moment it slides like a queen.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.knights != null || picks.length >= 2) return null;
+        const squares = mySquares(api.board, api.me, "n").filter(
+          (sq) => !picks.some((k) => k.square === sq),
+        );
+        if (!squares.length) return null;
+        return {
+          kind: "square",
+          label: `Choose a knight (${picks.length + 1}/2)`,
+          squares,
+          ...(picks.length >= 1 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, _api, picks) => {
+        if (inst.state.knights != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.knights = sqs.map((sq) => ({ sq }));
+        if (sqs.length === 0) inst.spent = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const knights = inst.state.knights as { sq: Square }[] | undefined;
+        if (!knights?.length) return;
+        const extra: Move[] = [];
+        for (const kn of knights) {
+          const p = api.board.pieces[kn.sq];
+          if (p && p.color === api.me && p.type === "n") {
+            extra.push(...slideMoves(api.board, kn.sq, ALL_DIRS, inst.id));
+          }
+        }
+        addNovel(moves, extra);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const knights = inst.state.knights as { sq: Square }[] | undefined;
+        if (!knights?.length) return;
+        const next: { sq: Square }[] = [];
+        for (const kn of knights) {
+          // Someone else captured or landed on this knight's square: it is gone.
+          if (move.capturedSquare === kn.sq && move.from !== kn.sq) continue;
+          if (move.to === kn.sq && move.from !== kn.sq) continue;
+          if (move.from === kn.sq) {
+            // Used its one queen-style move: the charge is spent, drop it.
+            if (move.via === inst.id) continue;
+            // A normal knight step: keep the charge, follow the piece.
+            next.push({ sq: move.to });
+            continue;
+          }
+          next.push(kn);
+        }
+        inst.state.knights = next;
+        if (next.length === 0) inst.spent = true;
+      },
+      status: (inst) => {
+        const knights = inst.state.knights as { sq: Square }[] | undefined;
+        if (!knights) return "activate to choose two knights";
+        return `${knights.length} queen-style move${knights.length === 1 ? "" : "s"} left`;
+      },
+    },
   ),
   def(
     { id: "time_rewind", name: "Time Rewind", description: "Turn back time: restore some of your clock and free all of your own frozen or petrified pieces, once.", tier: 4, category: "tempo" },
@@ -3724,8 +3784,48 @@ const TIER6: Buff[] = [
     stealBuffs(2, undefined, notLockedIn),
   ),
   def(
-    { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each explode adjacent enemy pieces.", tier: 6, category: "attack" },
-    captureExplosion({ charges: 3 }),
+    { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each remove at most one adjacent enemy piece: the most valuable non-king beside the captured square, kings aside. The blast never chains.", tier: 6, category: "attack" },
+    // Balance: no longer a full-neighbourhood detonation. Each of three captures
+    // removes only a single adjacent enemy non-king (the most valuable, ties
+    // broken by lowest square), shielded pieces resist, and nothing chains.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!move.captured || move.captured === "k" || move.color !== api.me) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+        const center = captureSquare(move) ?? move.to;
+        const shielded = (sq: Square) =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              (e.turns == null || e.turns > 0) &&
+              (e.squares == null || e.squares.includes(sq)),
+          );
+        const val: Record<PieceType, number> = { q: 9, r: 5, b: 3, n: 3, p: 1, k: 0 };
+        let best: Square | null = null;
+        let bestVal = -1;
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(center) + df, r = RANK(center) + dr;
+          if (!inBoard(f, r)) continue;
+          const sq = SQ(f, r);
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.opp || p.type === "k" || shielded(sq)) continue;
+          if (val[p.type] > bestVal) {
+            bestVal = val[p.type];
+            best = sq;
+          }
+        }
+        if (best != null) api.removePiece(best);
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} captures left`,
+    },
   ),
   def(
     { id: "grand_summon", name: "Grand Summon", description: "Add a knight and a bishop to your pocket, then drop them onto empty squares on later turns; your next draft is skipped.", tier: 6, category: "pieces" },

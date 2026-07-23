@@ -2811,17 +2811,40 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_dukes_patent", name: "The Duke's Patent", tier: 8, category: "movement", icon: "Stamp",
-      description: "For the rest of the game, your rooks may also step one square diagonally (capturing allowed).",
+      description: "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
       flavor: "A single signature, and every tower learns to lean.", requires: ["r"],
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true } },
-    permanentAugment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const;
-      for (const from of mySquares(api.board, api.me, "r")) {
-        out.push(...leapMoves(api.board, from, DIAG, inst.id));
-      }
-      return out;
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (inst.spent || ((inst.state.turns as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const;
+        for (const from of mySquares(api.board, api.me, "r")) {
+          out.push(...leapMoves(api.board, from, DIAG, inst.id));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        // Ends the moment one of your rooks captures.
+        if (move.color === api.me && move.piece === "r" && move.captured && move.captured !== "k") {
+          inst.spent = true;
+          return;
+        }
+        // Active for the opponent's next 4 turns.
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 4) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.spent ? "the patent has lapsed" : `${(inst.state.turns as number) ?? 4} of their turns of leaning towers`,
+    },
   ),
   card(
     { id: "bn4_hall_of_doors", name: "Hall of Doors", tier: 8, category: "movement", icon: "DoorOpen",
@@ -2888,8 +2911,11 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_return_of_the_queen", name: "Return of the Queen", tier: 8, category: "pieces", icon: "Crown",
-      description: "Your captured queen returns to an empty square on your home rank.",
+      description: "Your captured queen returns to an empty square on your home rank. She cannot capture until your opponent has replied.",
       flavor: "The court kept her chair empty. The court knew." },
+    // The highest-value (only) arrival is the queen. Reviving her spends your
+    // turn, so the opponent always moves before you can move her: the "cannot
+    // capture until your opponent replies" clause is enforced by that turn cost.
     reviveOne(["q"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
   ),
   card(
@@ -2989,12 +3015,12 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_menagerie_gates", name: "Menagerie Gates", tier: 8, category: "pieces", icon: "Gift",
-      description: "The gates open: a knight, a bishop and two pawns all join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
+      description: "The gates open: a knight, a bishop and a pawn all join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
       flavor: "Please do not feed the reserves. They feed themselves." },
     instant((_inst, api) => {
       grantInventory(api, "n", 1);
       grantInventory(api, "b", 1);
-      grantInventory(api, "p", 2);
+      grantInventory(api, "p", 1);
     }),
   ),
 

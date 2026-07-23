@@ -2050,13 +2050,14 @@ const T8: Buff[] = [
     instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 8 })),
   ),
   H8(
-    { id: "hx4_shattered_council", name: "Shattered Council", description: "Their war council collapses: their queen and both rooks are frozen for 1 of their turns, and their next drafted card arrives nullified.", flavor: "The table broke first. The alliance followed.", icon: "Users", fx: { motif: "jail", pieces: ["q", "r"] } },
+    { id: "hx4_shattered_council", name: "Shattered Council", description: "Their war council collapses: their queen and both rooks are frozen for 1 of their turns, and their next drafted card arrives nullified. In recompense for the ruined council, their next offer deals three cards to choose from instead of two.", flavor: "The table broke first. The alliance followed.", icon: "Users", fx: { motif: "jail", pieces: ["q", "r"] } },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         const t = api.board.pieces[sq]!.type;
         if (t === "q" || t === "r") freezeNow(api, sq, 1, "stun");
       }
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      api.theirs.flags.prepThree = true;
     }),
   ),
   H8(
@@ -2111,10 +2112,12 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_gorgons_court", name: "Gorgon's Court", description: "Choose 2 enemy pieces (never the king): both become walnuts for 3 of their turns.", flavor: "Two more statues for the east wing.", icon: "Landmark", fx: { motif: "anchor" } },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 2
+    { id: "hx4_gorgons_court", name: "Gorgon's Court", description: "Choose 2 enemy pieces (never the king): both become walnuts for 3 of their turns. The first piece chosen may make one move before it petrifies.", flavor: "Two more statues for the east wing.", icon: "Landmark", fx: { motif: "anchor" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 2 || inst.state.done
           ? null
           : {
               kind: "square",
@@ -2123,12 +2126,40 @@ const T8: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
               ),
             },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square != null) nutNow(api, k.square, 3);
-        }
+      effect: (inst, api, picks) => {
+        if (inst.state.done) return;
+        inst.state.done = true;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        // The second chosen piece petrifies at once; the first gets one move.
+        for (let i = 1; i < sqs.length; i++) nutNow(api, sqs[i], 3);
+        inst.state.sq = sqs.length > 0 ? sqs[0] : null;
+        if (inst.state.sq == null) inst.spent = true;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null || move.color !== api.opp) return;
+        const before = inst.state.sq as Square;
+        if (move.from === before) {
+          const now = followSq(before, move);
+          if (now != null) nutSting(api, now, 3);
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(before, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? inst.state.done
+            ? "petrified"
+            : "activate to choose two pieces"
+          : inst.spent
+            ? "both petrified"
+            : "one escape move, then it petrifies",
+    },
   ),
   H8(
     { id: "hx4_maze_of_thorns", name: "Maze of Thorns", description: "Thorn hedges spring up across every lane: for your opponent's next 5 turns, no piece of theirs may move more than 1 square, except knights, who leap the hedges. Their king is exempt.", flavor: "The garden won the war.", icon: "Flower2", fx: { motif: "anchor", pieces: "all" } },
