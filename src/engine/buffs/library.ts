@@ -2166,8 +2166,8 @@ const TIER4: Buff[] = [
     promotePawns(1, 1, "q"),
   ),
   def(
-    { id: "piece_steal", name: "Piece Steal", description: "Convert one enemy pawn to your color, once.", tier: 3, category: "pieces" },
-    convertEnemies(1, ["p"]),
+    { id: "piece_steal", name: "Piece Steal", description: "Convert one enemy pawn to your color, once. Using it spends your next unused reroll, if any.", tier: 3, category: "pieces" },
+    consumeRerollOnUse(convertEnemies(1, ["p"])),
   ),
   def(
     { id: "split_bishop", name: "Split Bishop", description: "Add a new bishop to your pocket, then spend a later turn to drop it onto any empty square.", tier: 4, category: "pieces" },
