@@ -1258,7 +1258,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_the_last_bet",
       name: "The Last Bet",
       description:
-        "Push your queen across the felt: 70% she returns empowered, leaping like a knight as well as sliding, for 6 of your turns. 30% the back room keeps her for 2 of your turns, then returns her untouched to her square, or the nearest empty one.",
+        "Push your queen across the felt: 70% she returns empowered, adding knight leaps to her slides for 6 of your turns, but those knight leaps cannot capture. 30% the back room keeps her for 2 of your turns, then returns her untouched to her square, or the nearest empty one.",
       tier: 8,
       category: "pieces",
       icon: "Gem",
@@ -1301,7 +1301,12 @@ export const OVERHAUL_GAMBLING: Buff[] = [
         if (sq == null || ((inst.state.turns as number) ?? 0) <= 0) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "q") return;
-        addNovel(moves, leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id));
+        // The granted knight leaps cannot capture: drop any leap that lands on
+        // an enemy piece, leaving only the empty-square hops.
+        addNovel(
+          moves,
+          leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id).filter((m) => m.captured == null),
+        );
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.state.result === "empowered") {

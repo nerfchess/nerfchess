@@ -335,19 +335,53 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_veterans_pension", name: "Veteran's Pension", tier: 5, category: "nerf", icon: "PiggyBank",
-      description: "After your next 6 turns, your nerf is suspended for the 10 turns that follow.",
+      description: "After your next 6 turns, your nerf is suspended for the 10 turns that follow. On the last of those turns you may only step one square (a king step).",
       flavor: "Deferred, compounded, and finally owed." },
-    reliefAfter(6, 10),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        if (inst.state.armed) {
+          leashRider(inst, move, api);
+          return;
+        }
+        const t = ((inst.state.turns as number) ?? 6) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          armMoveOnlyFinal(api, inst, 10);
+          inst.state.armed = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? "the final turn tightens the leash"
+          : `${(inst.state.turns as number) ?? 6} of your turns until relief`,
+    },
   ),
   card(
     { id: "bn4_smoke_break_union", name: "Smoke Break Union", tier: 5, category: "nerf", icon: "Cigarette",
-      description: "For the rest of the game, every capture made by either player suspends your nerf for your next turn.",
+      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
       flavor: "Any excuse counts, per the collective agreement." },
-    reliefEvery(
-      1,
-      (m) => !!m.captured && m.captured !== "k",
-      "the union is watching the board",
-    ),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        susp(api, 18);
+        inst.state.turns = 18;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 18) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+    },
   ),
   card(
     { id: "bn4_diplomatic_pouch", name: "Diplomatic Pouch", tier: 6, category: "nerf", icon: "Briefcase",
