@@ -1160,7 +1160,7 @@ export const GLORIOUS_BATTLE: Nerf = db({
     const s = state as { start: number };
     const turn = ctx.moveNumber + 1;
     if (turn >= s.start + 3) return { value: 3, max: 3, label: "battle survived" };
-    if (turn < s.start) return { value: 0, max: 3, label: `battle begins on your move ${s.start}` };
+    if (turn < s.start) return { value: 0, max: 3, label: "battle not yet begun" };
     return { value: turn - s.start, max: 3, label: `battle turn ${turn - s.start + 1} of 3` };
   },
   hint: (state, ctx, legal) => {
@@ -1175,12 +1175,6 @@ export const GLORIOUS_BATTLE: Nerf = db({
         text: `Glorious battle (turn ${turn - s.start + 1} of 3): you must capture.`,
         squares: Array.from(new Set(caps.map((m) => m.from))),
         tone: "warn",
-      };
-    }
-    if (turn >= s.start - 2 && turn < s.start) {
-      return {
-        text: `The glorious battle begins on your move ${s.start}: line up captures now.`,
-        tone: "info",
       };
     }
     return null;
@@ -1945,8 +1939,9 @@ export const DEVIL_ON_SHOULDER: Nerf = db({
 
 export const REFLECTIVE: Nerf = db({
   id: "reflective", name: "Reflective", tier: 7, implemented: true,
-  description: "Non-pawns must move to squares whose mirror across the center is occupied.",
+  description: "From your move 4 on, non-pawns must move to squares whose mirror across the center is occupied. The first three moves are free so the opening cannot be soft-locked.",
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // the rule starts on your move 4
     return moves.filter((m) => {
       if (m.piece === "p") return true;
       const mirror = SQ(7 - FILE(m.to), 7 - RANK(m.to));
@@ -2244,7 +2239,10 @@ export const ROYAL_BERTH: Nerf = db({
 
 export const VELOCIRAPTOR: Nerf = db({
   id: "velociraptor", name: "Velociraptor", tier: 7, implemented: true,
-  description: "Can only capture a piece type if opponent moved that type in their last 3 moves.",
+  description: "Can only capture a piece type if opponent moved that type in their last 3 moves. A piece a card spawns or teleports in obeys this at once.",
+  // The filter runs over every offered move, reading captures off the live board,
+  // so a piece a card spawns or teleports in is bound by the same rule on its very
+  // first move: there is no per-piece warmup or grace that would exempt it.
   filterMoves: (moves, _s, ctx) => {
     const recent = new Set<PieceType>();
     const oppMoves = ctx.board.history.filter((m) => m.color !== ctx.me).slice(-3);

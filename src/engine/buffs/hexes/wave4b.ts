@@ -2288,7 +2288,6 @@ const T8: Buff[] = [
         inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the toll begins after their next move",
     },
   ),
-  ),
   H8(
     { id: "hx4_wall_of_teeth", name: "Wall of Teeth", description: "Your two back ranks grow a wall of teeth: your opponent's pieces cannot stop anywhere on them for their next 3 turns. No infiltration, no promotion.", flavor: "The fortress smiled, and the siege reconsidered.", icon: "Fence", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {

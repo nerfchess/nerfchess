@@ -1746,8 +1746,8 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_iron_quota", name: "Iron Quota", description: "For your opponent's next 6 turns, the royal smithy only stocks battlements: any pawn they promote must become a rook.", flavor: "The queen molds are being cleaned. Indefinitely.", icon: "Anvil", fx: { motif: "slow", pieces: ["p"] } },
-    curse(6, (moves) => moves.filter((m) => !m.promotion || m.promotion === "r")),
+    { id: "hx4_iron_quota", name: "Iron Quota", description: "Starting after your opponent's next move, for their following 6 turns the royal smithy only stocks battlements: any pawn they promote must become a rook.", flavor: "The queen molds are being cleaned. Indefinitely.", icon: "Anvil", fx: { motif: "slow", pieces: ["p"] } },
+    delayedCurse(6, (moves) => moves.filter((m) => !m.promotion || m.promotion === "r")),
   ),
   hex(
     { id: "hx4_clay_hooves", name: "Clay Hooves", description: "Every enemy knight that has left its starting square hardens into clay and is frozen for 2 of their turns. Knights still at home are spared.", flavor: "Adventure has a firing temperature.", icon: "Amphora", fx: { motif: "jail", pieces: ["n"] }, tier: 5 },
@@ -1766,8 +1766,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_food_taster", name: "The Food Taster", description: "Paranoia grips the throne: for your opponent's next 3 turns, their queen may not end a move on any square one of your pieces attacks.", flavor: "Every square is poisoned until proven otherwise.", icon: "Wine", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves, api) =>
+    { id: "hx4_food_taster", name: "The Food Taster", description: "Paranoia grips the throne: for your opponent's next 2 turns, their queen may not end a move on any square one of your pieces attacks.", flavor: "Every square is poisoned until proven otherwise.", icon: "Wine", fx: { motif: "anchor", pieces: ["q"] } },
+    curse(2, (moves, api) =>
       moves.filter(
         (m) => m.piece !== "q" || !mySquares(api.board, api.me).some((s) => attacks(api, s, m.to)),
       ),
@@ -1944,8 +1944,8 @@ const T4: Buff[] = [
     },
   ),
   H4(
-    { id: "hx4_feuding_towers", name: "Feuding Towers", description: "Their rooks are not speaking to each other: for your opponent's next 4 turns, a rook may not end a move on the same rank or file as another of their rooks.", flavor: "It began over a bishop. It always begins over a bishop.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_feuding_towers", name: "Feuding Towers", description: "Their rooks are not speaking to each other: starting after your opponent's next move, for their following 4 turns a rook may not end a move on the same rank or file as another of their rooks.", flavor: "It began over a bishop. It always begins over a bishop.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
+    delayedCurse(4, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "r") return true;
         return !mySquares(api.board, api.opp, "r").some(
