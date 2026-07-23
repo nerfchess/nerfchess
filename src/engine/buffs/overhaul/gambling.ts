@@ -1125,46 +1125,88 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_cursed_dice",
       name: "Cursed Dice",
       description:
-        "Force your opponent to roll the bone dice: 40% one random enemy piece freezes for a turn, 35% a random enemy pawn stumbles back a square, 25% the dice grin and nothing happens.",
+        "Force your opponent to roll the bone dice: 40% one random enemy piece is cursed to freeze for a turn, but it gets one free move to escape first and freezes wherever that move leaves it (or in place if it does not move). 35% a random enemy pawn stumbles back a square. 25% the dice grin and nothing happens.",
       tier: 3,
       category: "hex",
       icon: "Dices",
       flavor: "Carved from something that still remembers being alive.",
     },
-    activatedSimple((inst, api) => {
-      const r = api.rng.next();
-      if (r < 0.4) {
-        inst.state.result = "freeze";
-        const targets = mySquares(api.board, api.opp).filter(
-          (s) => api.board.pieces[s]!.type !== "k",
-        );
-        const sq = pickRng(api, targets);
-        if (sq != null) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
-      } else if (r < 0.75) {
-        inst.state.result = "stumble";
-        const back = fwdOf(api.opp) * -1;
-        const pawns = mySquares(api.board, api.opp, "p").filter((sq) => {
-          const to = sq + back;
-          return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
-        });
-        const sq = pickRng(api, pawns);
-        if (sq != null) {
-          api.relocate(sq, sq + back);
-          flashSquares(api, [sq + back], true);
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        if (inst.state.result != null) return;
+        const r = api.rng.next();
+        if (r < 0.4) {
+          // Mark a random enemy piece. The freeze is held back one opponent
+          // move so that piece gets one legal escape move before it bites.
+          const targets = mySquares(api.board, api.opp).filter(
+            (s) => api.board.pieces[s]!.type !== "k",
+          );
+          const sq = pickRng(api, targets);
+          if (sq == null) {
+            inst.state.result = "grin";
+            inst.spent = true;
+            return;
+          }
+          inst.state.result = "freeze";
+          inst.state.escapeSq = sq;
+          flashSquares(api, [sq], true);
+        } else if (r < 0.75) {
+          inst.state.result = "stumble";
+          const back = fwdOf(api.opp) * -1;
+          const pawns = mySquares(api.board, api.opp, "p").filter((sq) => {
+            const to = sq + back;
+            return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
+          });
+          const sq = pickRng(api, pawns);
+          if (sq != null) {
+            api.relocate(sq, sq + back);
+            flashSquares(api, [sq + back], true);
+          }
+          inst.spent = true;
+        } else {
+          inst.state.result = "grin";
+          const k = kingSquare(api.board, api.opp);
+          if (k != null) flashSquares(api, [k], true);
+          inst.spent = true;
         }
-      } else {
-        inst.state.result = "grin";
-        const k = kingSquare(api.board, api.opp);
-        if (k != null) flashSquares(api, [k], true);
-      }
-    }),
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.result !== "freeze") return;
+        const esc = inst.state.escapeSq as Square | undefined;
+        if (esc == null) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color !== api.opp) {
+          // The cursed piece was captured or removed before it could resolve.
+          const p = api.board.pieces[esc];
+          if (!p || p.color !== api.opp) inst.spent = true;
+          return;
+        }
+        // The opponent has spent their one move: if they used it on the cursed
+        // piece it escaped (freeze follows to its new square); otherwise the
+        // freeze lands in place. Either way the duration stays one turn.
+        const freezeSq = move.from === esc ? move.to : esc;
+        const p = api.board.pieces[freezeSq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          addEffect(api, { kind: "freeze", sq: freezeSq, owner: api.opp, turns: 1, skin: "stone" });
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.result === "freeze" && !inst.spent
+          ? "a cursed piece may escape once before it freezes"
+          : null,
+    },
   ),
   card(
     {
       id: "gm_rigged_raffle",
       name: "Rigged Raffle",
       description:
-        "Enter your opponent in a raffle they never asked to join: for their next 3 turns, 1 chance in 3 after each of their moves that the piece they just moved is glued in place for a turn.",
+        "Enter your opponent in a raffle they never asked to join: their next move passes untouched, then for their following 3 turns, 1 chance in 3 after each of their moves that the piece they just moved is glued in place for a turn.",
       tier: 5,
       category: "hex",
       icon: "Ticket",
@@ -1174,9 +1216,16 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 3;
+        inst.state.delay = 1;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
+        // Delay activation: the opponent's next move passes before the raffle
+        // starts drawing.
+        if (((inst.state.delay as number) ?? 0) > 0) {
+          inst.state.delay = ((inst.state.delay as number) ?? 0) - 1;
+          return;
+        }
         if (api.rng.next() < 1 / 3) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp && p.type !== "k") {
@@ -1187,7 +1236,10 @@ export const OVERHAUL_GAMBLING: Buff[] = [
         inst.state.turns = t;
         if (t <= 0) inst.spent = true;
       },
-      status: (inst) => `${turnsLeft(inst)} of their turns in the raffle`,
+      status: (inst) =>
+        ((inst.state.delay as number) ?? 0) > 0
+          ? "the raffle drum warms up"
+          : `${turnsLeft(inst)} of their turns in the raffle`,
     },
   ),
   card(

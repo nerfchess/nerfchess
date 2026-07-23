@@ -754,22 +754,37 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_stray_cat", name: "Stray Cat", tier: 5, category: "pieces", icon: "Cat",
-      description: "A pawn wanders in: place it on any empty square in your half. It cannot be captured on your opponent's next turn while it settles.",
+      description: "A pawn wanders in: place it on any empty square in your half. Then choose up to four of your pieces: each cannot be captured on your opponent's next turn while things settle.",
       flavor: "You did not adopt it. It adopted the b-file." },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose where it curls up",
-              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq)),
-            },
+      (_inst, api, picks) => {
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose where it curls up",
+            squares: emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq)),
+          };
+        }
+        if (picks.length >= 5) return null;
+        return {
+          kind: "square",
+          label: `Choose a piece to protect (${picks.length}/4)`,
+          squares: mySquares(api.board, api.me).filter((sq) => !picks.some((k) => k.square === sq)),
+          finishable: true,
+        };
+      },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null || api.board.pieces[sq] || !pawnRankOk(sq)) return;
         api.place(sq, "p", api.me);
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 1 });
+        const zone: Square[] = [];
+        for (let i = 1; i < picks.length; i++) {
+          const s = picks[i]?.square;
+          if (s == null) continue;
+          const p = api.board.pieces[s];
+          if (p && p.color === api.me) zone.push(s);
+        }
+        if (zone.length) addEffect(api, { kind: "shield", owner: api.me, squares: zone, turns: 1 });
       },
     ),
   ),
@@ -827,9 +842,28 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_stone_cloak", name: "Stone Cloak", tier: 5, category: "protection", icon: "Mountain",
-      description: "One of your pieces (your king excepted) can never be captured, for the rest of the game.",
+      description: "One of your pieces (your king excepted) can never be captured, for the rest of the game. Your next draft is then skipped.",
       flavor: "Heavy to wear. Heavier to argue with." },
-    shieldOne(null, "Choose the piece that turns to stone"),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the piece that turns to stone",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type === "k") return;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: null });
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+      },
+    ),
   ),
   card(
     { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 6, category: "protection", icon: "Moon",
