@@ -1,4 +1,3 @@
-<<<<<<< src/engine/buffs/hexes/wave3.ts
 // Hex wave 3 - the 2026-07 content expansion's hex batch (~40 new curses).
 // Every id is prefixed hw3_. Hexes here are curse-structured, biased hard
 // toward the families the 207-hex pool still lacks (piece possession/turncoat,
@@ -2356,7 +2355,3 @@ const T8: Buff[] = [
 ];
 
 export const HEX_WAVE3: Buff[] = [...T1, ...T2, ...T3, ...T4, ...T5, ...T6, ...T7, ...T8];
-
-
-=======
->>>>>>> /tmp/claude-0/-home-user-nerfchess/b8f01bb4-9594-5db0-a7df-64db5708fb65/scratchpad/wave3_t7.ts

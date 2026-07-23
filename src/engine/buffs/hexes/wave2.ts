@@ -1073,7 +1073,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gilded_rot",
       name: "Gilded Rot",
       description:
-        "Whatever they touch turns to gold: for your opponent's next 5 turns, each piece they move is gilded, and gilded pieces cannot capture for the rest of the curse. Unmoved pieces keep their teeth, so they must choose between developing their game and keeping their army dangerous. When the curse ends the gold flakes off everything at once.",
+        "Whatever they touch turns to gold, a beat late: their next move passes untouched, then for their following 5 turns, each piece they move is gilded, and gilded pieces cannot capture for the rest of the curse. Unmoved pieces keep their teeth, so they must choose between developing their game and keeping their army dangerous. When the curse ends the gold flakes off everything at once.",
       flavor: "The blessing of Midas, distributed fairly.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -1082,6 +1082,7 @@ export const HEX_WAVE2: Buff[] = [
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.marked = [] as Square[];
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const marked = (inst.state.marked as Square[] | undefined) ?? [];
@@ -1092,6 +1093,13 @@ export const HEX_WAVE2: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         let marked = (inst.state.marked as Square[] | undefined) ?? [];
         marked = marked.map((sq) => followSq(sq, move)).filter((sq): sq is Square => sq != null);
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched, ungilded; the
+          // rot sets in after it (duration preserved, shifted one move later).
+          inst.state.marked = marked;
+          inst.state.armed = true;
+          return;
+        }
         if (
           move.color === api.opp &&
           turnsLeft(inst) > 0 &&

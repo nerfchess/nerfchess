@@ -1852,10 +1852,9 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_debtors_holiday", name: "Debtor's Holiday", tier: 7, category: "nerf", icon: "Banknote",
-      description: "Suspend your nerf for your next 8 turns; your next draft shows three cards and rolls one tier higher.",
+      description: "Suspend your nerf for your next 8 turns; your next draft offer rolls one tier higher.",
       flavor: "The ledgers closed for the season. The season is you." },
     suspendNow(8, (api) => {
-      api.mine.flags.prepThree = true;
       api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
@@ -2341,11 +2340,10 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_crown_commission", name: "Crown Commission", tier: 7, category: "draft", icon: "Award",
-      description: "Your next draft offer is fated to deal tier 8 cards. The commission costs the draft after it, which is skipped.",
+      description: "You keep both cards of your next draft offer, at its usual tier.",
       flavor: "Signed by the crown. Countersigned by your patience." },
     instant((_inst, api) => {
-      api.mine.flags.forceTier = 8;
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
     }),
   ),
   card(

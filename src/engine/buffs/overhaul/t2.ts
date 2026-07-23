@@ -31,6 +31,7 @@ import {
   mySquares,
   pawnRankOk,
   pinCosmetic,
+  spendOnVia,
   teleportMoves,
   tickTurns,
   turnsLeft,
@@ -666,7 +667,8 @@ export const OVERHAUL_T2: Buff[] = [
     {
       id: "ov_wheelbarrow",
       name: "Wheelbarrow",
-      description: "One of your pawns may trundle to any adjacent empty square, once.",
+      description:
+        "After your opponent's next move, one of your pawns may trundle to any adjacent empty square, once.",
       tier: 2,
       category: "movement",
       icon: "Truck",
@@ -674,21 +676,40 @@ export const OVERHAUL_T2: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const tos: Square[] = [];
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const f = FILE(sq) + df, r = RANK(sq) + dr;
-            if (inBoard(f, r) && pawnRankOk(SQ(f, r))) tos.push(SQ(f, r));
+    // Balance pass: delay the first trigger until after the opponent's next
+    // move. Same one-shot trundle as before (augment with a single charge), but
+    // the granted move stays off the board until the opponent has replied once.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.armed = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || ((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const tos: Square[] = [];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const f = FILE(sq) + df, r = RANK(sq) + dr;
+              if (inBoard(f, r) && pawnRankOk(SQ(f, r))) tos.push(SQ(f, r));
+            }
           }
+          out.push(...teleportMoves(api.board, sq, tos, inst.id));
         }
-        out.push(...teleportMoves(api.board, sq, tos, inst.id));
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        spendOnVia(inst, move);
+      },
+      status: (inst) => (inst.state.armed ? null : "trundles after their next move"),
+    },
   ),
   // 41. Loot Filter ------------------------------------------------------------
   card(
@@ -795,7 +816,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_velcro_gloves",
       name: "Velcro Gloves",
       description:
-        "On your next capture, the capturing piece rips free and snaps back to the square it came from. Promotions keep their new square.",
+        "On your next capture, the capturing piece rips free and snaps back to the square it came from. Promotions keep their new square. Using it consumes your next unused draft reroll, if any.",
       tier: 2,
       category: "movement",
       icon: "Hand",
@@ -808,6 +829,9 @@ export const OVERHAUL_T2: Buff[] = [
         if (!move.promotion && move.from !== move.to && !api.board.pieces[move.from]) {
           api.relocate(move.to, move.from);
         }
+        // Balance pass: using the gloves (the capture that spends them) also
+        // consumes your next unused draft reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
         inst.spent = true;
       },
       status: () => "gloves on, awaiting your next capture",

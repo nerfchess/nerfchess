@@ -1079,7 +1079,7 @@ const AFFECTION: Buff[] = [
       id: "ilovemysister",
       name: "I Love My Sister",
       description:
-        "Bring your strongest fallen piece home to an empty square in your half. She arrives shielded, uncapturable for your opponent's next 2 turns.",
+        "Bring your strongest fallen piece home to an empty square in your half. She arrives shielded, uncapturable for your opponent's next 2 turns, but the shield ends once she has made two captures.",
       tier: 7,
       category: "pieces",
       icon: "HandHeart",
@@ -1093,9 +1093,15 @@ const AFFECTION: Buff[] = [
         }
         return null;
       };
-      return activated(
-        (_inst, api, picks) => {
-          if (picks.length > 0) return null;
+      // Nerf: the shield still runs for 2 opponent turns, but it also ends
+      // after the protected piece captures twice. Only the one revived piece
+      // is protected, so "two protected pieces capture" is delivered as the
+      // revived piece capturing twice.
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) => {
+          if (inst.state.sq != null || picks.length > 0) return null;
           const type = bestType(api);
           return {
             kind: "square",
@@ -1108,7 +1114,8 @@ const AFFECTION: Buff[] = [
                   ),
           };
         },
-        (_inst, api, picks) => {
+        effect: (inst, api, picks) => {
+          if (inst.state.sq != null) return;
           const type = bestType(api);
           const sq = picks[0]?.square;
           if (type == null || sq == null || api.board.pieces[sq]) return;
@@ -1116,8 +1123,48 @@ const AFFECTION: Buff[] = [
           api.place(sq, type, api.me);
           markRevived(api, type);
           addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+          inst.state.sq = sq;
+          inst.state.caps = 0;
         },
-      );
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          if (
+            move.color === api.me &&
+            move.from === sq &&
+            move.captured &&
+            move.captured !== "k"
+          ) {
+            const caps = ((inst.state.caps as number) ?? 0) + 1;
+            inst.state.caps = caps;
+            if (caps >= 2) {
+              // Drop her shield early (it still reads move.from here, before
+              // shields follow the piece).
+              for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+                const e = api.bs.effects[i];
+                if (
+                  e.kind === "shield" &&
+                  e.owner === api.me &&
+                  e.squares &&
+                  e.squares.length === 1 &&
+                  e.squares[0] === sq
+                ) {
+                  api.bs.effects.splice(i, 1);
+                }
+              }
+              inst.state.sq = move.to;
+              inst.spent = true;
+              return;
+            }
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return "activate to bring her home";
+          return `shielded at ${sqLabel(sq)}, ${(inst.state.caps as number) ?? 0}/2 captures`;
+        },
+      };
     })(),
   ),
 
@@ -1126,7 +1173,7 @@ const AFFECTION: Buff[] = [
       id: "ilovewhimperingaudios",
       name: "I Love Whimpering Audios",
       description:
-        "On each of your next 3 turns, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
+        "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
       tier: 8,
       category: "pieces",
       icon: "AudioLines",
@@ -1140,6 +1187,11 @@ const AFFECTION: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
+        // Nerf: delay the first trigger until after the opponent's next move.
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
         const left = (inst.state.charges as number) ?? 0;
         if (left <= 0) return;
         const k = mySquares(api.board, api.me, "k")[0];
