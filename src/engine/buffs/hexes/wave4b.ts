@@ -2520,7 +2520,7 @@ const T8: Buff[] = [
     }),
   ),
   hex(
-    { id: "hx4_mirror_of_winter", name: "Mirror of Winter", description: "A sympathetic frost binds their army: for your opponent's next 2 turns, whenever they move a piece, every OTHER piece they own of that same type is frozen for 1 of their turns.", flavor: "When one soldier shivers, the regiment catches cold.", icon: "Copy", fx: { motif: "slow", pieces: "all" }, tier: 9 },
+    { id: "hx4_mirror_of_winter", name: "Mirror of Winter", description: "A sympathetic frost binds their army: for your opponent's next 2 turns, whenever they move a piece, every OTHER piece they own of that same type is frozen for 1 of their turns.", flavor: "When one soldier shivers, the regiment catches cold.", icon: "Copy", fx: { motif: "slow", pieces: "all" }, tier: 9, special: true },
     onTheirMove(2, (move, api) => {
       if (move.piece === "k") return;
       for (const sq of mySquares(api.board, api.opp, move.piece)) {

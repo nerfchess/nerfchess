@@ -578,7 +578,7 @@ export const HEXES_T8: Buff[] = [
       flavor: "A forced truce enforced by the dead, with a cordon drawn around the crown.",
       fx: { motif: "muzzle", pieces: "all" },
       // Retiered 8 -> 9 (apex): the full three-turn duration is unchanged.
-      tier: 9,
+      tier: 9, special: true,
     },
     {
       kind: "passive",

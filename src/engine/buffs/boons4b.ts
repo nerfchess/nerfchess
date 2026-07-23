@@ -2754,7 +2754,7 @@ export const BOON_WAVE4B: Buff[] = [
       kind: "passive",
       onMovePlayed: (_inst, move, api) => {
         if (move.color !== api.opp) return;
-        if (armSize(api.board, api.me) <= armSize(api.board, api.opp)) susp(api, 1);
+        if (armySize(api.board, api.me) <= armySize(api.board, api.opp)) susp(api, 1);
       },
       status: () => "counting both camps",
     },

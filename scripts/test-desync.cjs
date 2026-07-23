@@ -376,14 +376,18 @@ function assertConverged(env, label) {
 // frame can repair).
 {
   const env = newDuel(505);
-  opPick(env, "w", "supply_drop", 3); // instant grant: knight into white's pocket
+  // Balance pass: the airlift is delayed; the pocket fills only after the
+  // opponent's next move (knight plus a spare pawn).
+  opPick(env, "w", "supply_drop", 3);
+  check((env.server.buffs.players.w.inventory.n ?? 0) === 0, "drop: pocket filled before the airlift landed");
+  opMove(env, "a2a3");
+  opMove(env, "a7a6"); // black's reply lands the supplies
   check(env.server.buffs.players.w.inventory.n === 1, "drop: server pocket missing the knight");
   check(
     env.replica.buffs.players.w.inventory.n === 1,
     "drop: replica pocket missing the knight (grant did not sync)",
   );
-  // The grant did not consume the turn: white is still to move and drops now.
-  check(env.server.board.turn === "w", "drop: instant grant consumed the turn");
+  check(env.server.board.turn === "w", "drop: white should be back on move after the airlift");
   check(
     legalMoves(env.server).some((m) => moveToUCI(m) === "n@e3"),
     "drop: n@e3 not offered as a legal drop",
@@ -401,6 +405,9 @@ function assertConverged(env, label) {
   // the pocket's grow/shrink) stay in lockstep across the dtState round-trip.
   opMove(env, "e7e5");
   opPick(env, "w", "supply_drop", 3);
+  // Second airlift is delayed too: a white move and black's reply land it.
+  opMove(env, "h2h3");
+  opMove(env, "h7h6");
   check(env.server.buffs.players.w.inventory.n === 1, "drop2: server pocket missing the regrant");
   opMove(env, "n@d3");
   check(env.server.board.pieces[sq("d3")]?.type === "n", "drop2: server knight not placed on d3");

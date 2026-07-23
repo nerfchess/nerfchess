@@ -353,7 +353,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_mole_tunnels",
       name: "Mole Tunnels",
       description:
-        "For 5 of your turns, up to twice: one of your pawns may tunnel to the empty square directly behind an enemy pawn on its own file.",
+        "The tunnels do not open until after your opponent's next move. Then, for 5 of your turns, up to twice: one of your pawns may tunnel to the empty square directly behind an enemy pawn on its own file.",
       tier: 4,
       category: "movement",
       icon: "Shovel",
@@ -366,8 +366,10 @@ export const OVERHAUL_T4: Buff[] = [
       init: (inst) => {
         inst.state.charges = 2;
         inst.state.turns = 5;
+        inst.state.armed = false;
       },
       augmentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return;
         if (((inst.state.charges as number) ?? 0) <= 0 || turnsLeft(inst) <= 0) return;
         for (const sq of mySquares(api.board, api.me, "p")) {
           const enemies = mySquares(api.board, api.opp, "p").filter((e) => FILE(e) === FILE(sq));
@@ -378,6 +380,12 @@ export const OVERHAUL_T4: Buff[] = [
         }
       },
       onMovePlayed: (inst, move, api) => {
+        // Delay the first trigger: the tunnels stay shut, and the 5-turn window
+        // does not start ticking, until the opponent has played one move.
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
         if (move.via === inst.id) {
           const c = ((inst.state.charges as number) ?? 1) - 1;
           inst.state.charges = c;
@@ -389,7 +397,9 @@ export const OVERHAUL_T4: Buff[] = [
         tickTurns(inst, move, api.me);
       },
       status: (inst) =>
-        `${(inst.state.charges as number) ?? 0} tunnels, ${turnsLeft(inst)} of your turns left`,
+        !inst.state.armed
+          ? "tunnels open after their next move"
+          : `${(inst.state.charges as number) ?? 0} tunnels, ${turnsLeft(inst)} of your turns left`,
     },
   ),
   // 82. Weather Balloon --------------------------------------------------------
@@ -402,7 +412,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_weather_balloon",
       name: "Weather Balloon",
       description:
-        "For 3 of your turns, at the start of each: every square the opponent could reach with their next move is highlighted.",
+        "Three scans, one after each of your opponent's moves: every square the opponent could reach with their next move is highlighted. Each scan spends one of the three even if it lights up nothing.",
       tier: 4,
       category: "info",
       icon: "Radar",
@@ -411,10 +421,12 @@ export const OVERHAUL_T4: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.charges = 3;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && turnsLeft(inst) > 0) {
+        // Charge model: each opponent reply triggers one scan, and a scan that
+        // finds nothing (a failed read) still spends its charge.
+        if (move.color === api.opp && ((inst.state.charges as number) ?? 0) > 0) {
           const reach = new Set<Square>();
           for (const sq of mySquares(api.board, api.opp)) {
             const p = api.board.pieces[sq]!;
@@ -444,10 +456,12 @@ export const OVERHAUL_T4: Buff[] = [
             }
           }
           flashSquares(api, [...reach].sort((a, b) => a - b));
+          const c = ((inst.state.charges as number) ?? 0) - 1;
+          inst.state.charges = c;
+          if (c <= 0) inst.spent = true;
         }
-        tickTurns(inst, move, api.me);
       },
-      status: (inst) => `${turnsLeft(inst)} of your turns of radar left`,
+      status: (inst) => `${(inst.state.charges as number) ?? 0} scans of radar left`,
     },
   ),
   // 83. Petting Zoo ------------------------------------------------------------
@@ -486,7 +500,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_ivy_crown",
       name: "Ivy Crown",
       description:
-        "Your king may lunge two squares in a straight line onto an empty square (the square between must also be empty). After each lunge the ivy rests for 4 of your turns.",
+        "Your king may lunge two squares in a straight line onto an empty square (the square between must also be empty). After each lunge the ivy rests for 3 of your turns.",
       tier: 4,
       category: "movement",
       icon: "Crown",
@@ -508,8 +522,10 @@ export const OVERHAUL_T4: Buff[] = [
         }
       },
       onMovePlayed: (inst, move, api) => {
+        // Balance pass: the largest knob above one (the 4-turn rest, the biggest
+        // of range 2 / cooldown 4) drops by one, to 3.
         if (move.via === inst.id && move.color === api.me) {
-          inst.state.cd = 4;
+          inst.state.cd = 3;
         } else if (move.color === api.me && ((inst.state.cd as number) ?? 0) > 0) {
           inst.state.cd = ((inst.state.cd as number) ?? 0) - 1;
         }
@@ -618,7 +634,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_templar_vows",
       name: "Templar Vows",
       description:
-        "Choose one of your bishops: for 6 of your turns it is a Templar and may also capture (but not quietly move) with knight leaps.",
+        "Choose one of your bishops: for 6 of your turns it is a Templar and may also make knight leaps onto empty squares. These leaps cannot capture.",
       tier: 4,
       category: "movement",
       icon: "Cross",
@@ -626,9 +642,12 @@ export const OVERHAUL_T4: Buff[] = [
       requires: ["b"],
       fx: { motif: "empower", pieces: ["b"], moveAs: "n", self: true },
     },
+    // Balance pass: the special move cannot capture. The Templar's knight leaps
+    // are now quiet only (drop any that would capture); its bishop lines still
+    // capture normally.
     bindPiece("Choose the bishop taking the vows", bindCandidates(["b"]), {
       turns: 6,
-      gen: (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via).filter((m) => m.captured),
+      gen: (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via).filter((m) => !m.captured),
     }),
   ),
   // 88. Alt Account ------------------------------------------------------------
@@ -668,7 +687,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_hall_of_mirrors",
       name: "Hall of Mirrors",
       description:
-        "For 3 of your turns, your rooks' horizontal moves wrap around the board edge, reappearing on the far file of the same rank.",
+        "For 3 of your turns, your rooks' horizontal moves wrap around the board edge, reappearing on the far file of the same rank. The wrap-around move cannot capture: it only lands on an empty square, and stops at the first piece it meets.",
       tier: 4,
       category: "movement",
       icon: "FlipHorizontal",
@@ -688,17 +707,8 @@ export const OVERHAUL_T4: Buff[] = [
             if (!t) {
               out.push({ from: sq, to, piece: "r", color: api.me, via: inst.id });
             } else {
-              if (t.color !== api.me) {
-                out.push({
-                  from: sq,
-                  to,
-                  piece: "r",
-                  color: api.me,
-                  captured: t.type,
-                  capturedSquare: to,
-                  via: inst.id,
-                });
-              }
+              // The special move cannot capture: stop at the first piece met,
+              // whether friend or foe, and never land on it.
               break;
             }
           }
@@ -769,7 +779,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_sleeping_draught",
       name: "Sleeping Draught",
       description:
-        "One enemy knight or bishop falls asleep for your opponent's next 3 turns. It wakes early if any piece adjacent to it is captured.",
+        "Dose one enemy knight or bishop. After your opponent's next move it falls asleep for their following 3 turns. It wakes early if any piece adjacent to it is captured.",
       tier: 4,
       category: "tempo",
       icon: "FlaskConical",
@@ -779,7 +789,7 @@ export const OVERHAUL_T4: Buff[] = [
       kind: "activated",
       spendOnUse: false,
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pending != null
           ? null
           : {
               kind: "square",
@@ -789,14 +799,36 @@ export const OVERHAUL_T4: Buff[] = [
                 return t === "n" || t === "b";
               }),
             },
-      effect: (inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || inst.state.sq != null) return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "sleep" });
-        inst.state.sq = sq;
-        inst.state.watch = 3;
+        if (sq == null || inst.state.sq != null || inst.state.pending != null) return;
+        // Delay the first trigger: park the dose. The sleep is applied on YOUR
+        // move after the opponent replies (so its timer is not ticked on the
+        // reply itself and the full 3 turns survive).
+        inst.state.pending = sq;
       },
       onMovePlayed: (inst, move, api) => {
+        const pending = inst.state.pending as Square | undefined;
+        if (pending != null) {
+          if (!inst.state.armed) {
+            if (move.color === api.opp) inst.state.armed = true;
+            return;
+          }
+          if (move.color !== api.me) return;
+          const p = api.board.pieces[pending];
+          if (p && p.color === api.opp && (p.type === "n" || p.type === "b")) {
+            addEffect(api, { kind: "freeze", sq: pending, owner: api.opp, turns: 3, skin: "sleep" });
+            inst.state.sq = pending;
+            inst.state.watch = 3;
+            flashSquares(api, [pending], true);
+          } else {
+            // The dosed minor slipped away on the reply: the draught is wasted.
+            inst.spent = true;
+          }
+          inst.state.pending = undefined;
+          inst.state.armed = undefined;
+          return;
+        }
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.to === sq && move.from !== sq) {
@@ -821,7 +853,11 @@ export const OVERHAUL_T4: Buff[] = [
         }
       },
       status: (inst) =>
-        inst.state.sq == null ? "pick a minor to dose" : `asleep for ${(inst.state.watch as number) ?? 0} of their turns`,
+        inst.state.sq != null
+          ? `asleep for ${(inst.state.watch as number) ?? 0} of their turns`
+          : inst.state.pending != null
+            ? "sleep takes hold after their next move"
+            : "pick a minor to dose",
     },
   ),
   // 93. Wallhack Goggles -------------------------------------------------------
@@ -830,7 +866,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_wallhack_goggles",
       name: "Wallhack Goggles",
       description:
-        "For 3 of your turns, at the start of each: every piece of yours standing on an enemy slider's line, even behind blockers, is highlighted.",
+        "Three scans, one after each of your opponent's moves: every piece of yours standing on an enemy slider's line, even behind blockers, is highlighted. Each scan spends one of the three even if it finds nothing.",
       tier: 4,
       category: "info",
       icon: "ScanEye",
@@ -839,10 +875,12 @@ export const OVERHAUL_T4: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.charges = 3;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && turnsLeft(inst) > 0) {
+        // Charge model: each opponent reply triggers one scan, and a scan that
+        // finds nothing (a failed read) still spends its charge.
+        if (move.color === api.opp && ((inst.state.charges as number) ?? 0) > 0) {
           const marks = new Set<Square>();
           for (const sq of mySquares(api.board, api.opp)) {
             const p = api.board.pieces[sq]!;
@@ -860,10 +898,12 @@ export const OVERHAUL_T4: Buff[] = [
             }
           }
           flashSquares(api, [...marks].sort((a, b) => a - b));
+          const c = ((inst.state.charges as number) ?? 0) - 1;
+          inst.state.charges = c;
+          if (c <= 0) inst.spent = true;
         }
-        tickTurns(inst, move, api.me);
       },
-      status: (inst) => `${turnsLeft(inst)} of your turns of x-ray left`,
+      status: (inst) => `${(inst.state.charges as number) ?? 0} scans of x-ray left`,
     },
   ),
   // 94. Prank Call -------------------------------------------------------------
@@ -891,7 +931,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_growth_potion",
       name: "Growth Potion",
       description:
-        "Choose one of your knights: it is a Warhorse for 5 of your turns. Each time it captures a pawn, you immediately move again.",
+        "Choose one of your knights: it is a Warhorse for 5 of your turns. Each time it captures a pawn, you immediately move again, but that bonus move cannot capture.",
       tier: 4,
       category: "movement",
       icon: "Beaker",
@@ -929,6 +969,15 @@ export const OVERHAUL_T4: Buff[] = [
           inst.state.sq = move.to;
           if (move.color === api.me && move.captured === "p" && turnsLeft(inst) > 0) {
             api.bs.extraMoves[api.me] += 1;
+            // The special move cannot capture: bar every square an enemy piece
+            // now holds against me for that one bonus move. turns:2 so the wall
+            // survives this capturing move's own tick and lapses right after the
+            // bonus move (the same guard Momentum uses); if it would leave only
+            // captures, the engine's no-move relax hands the turn back instead.
+            const enemySquares = mySquares(api.board, api.opp);
+            if (enemySquares.length) {
+              addEffect(api, { kind: "barred", squares: enemySquares, against: api.me, turns: 2 });
+            }
             flashSquares(api, [move.to], true);
           }
         }
@@ -946,7 +995,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_priest_hole",
       name: "Priest Hole",
       description:
-        "Once within 5 of your turns, while your king is in check: swap your king with one of your rooks standing on a square that is not currently attacked.",
+        "Once within 5 of your turns, while your king is in check: swap your king with one of your rooks standing on a square that is not currently attacked. Using this consumes your next unused reroll, if you have one.",
       tier: 4,
       category: "protection",
       icon: "DoorClosed",
@@ -982,6 +1031,8 @@ export const OVERHAUL_T4: Buff[] = [
         api.relocate(k, rookSq);
         api.place(k, "r", api.me);
         flashSquares(api, [k, rookSq], true);
+        // Balance pass: the escape spends your next unused reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       onMovePlayed: (inst, move, api) => {
         tickTurns(inst, move, api.me);

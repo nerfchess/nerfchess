@@ -989,12 +989,15 @@ export const OVERHAUL_T7: Buff[] = [
             finishable: true,
           };
         }
-        const s = picks[2].square!;
-        return {
-          kind: "square",
-          label: "Choose the free king-step (empty adjacent square)",
-          squares: kingNeighbors(s).filter((n) => !postAt(n)),
-        };
+        if (picks.length === 3) {
+          const s = picks[2].square!;
+          return {
+            kind: "square",
+            label: "Choose the free king-step (empty adjacent square)",
+            squares: kingNeighbors(s).filter((n) => !postAt(n)),
+          };
+        }
+        return null;
       },
       (_inst, api, picks) => {
         const a = picks[0]?.square, b = picks[1]?.square;

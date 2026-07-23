@@ -2247,6 +2247,7 @@ const T8: Buff[] = [
   hex(
     {
       tier: 9,
+      special: true,
       id: "hw3_curse_engine",
       name: "The Curse Engine",
       description:
