@@ -450,7 +450,7 @@ export const FUNNY_META: Buff[] = [
       id: "pay_to_win",
       name: "Pay to Win",
       description:
-        "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn.",
+        "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn. The bill comes due at the shop: you skip your next draft.",
       tier: 6,
       category: "pieces",
       requires: ["n", "b", "r"],
@@ -475,6 +475,8 @@ export const FUNNY_META: Buff[] = [
         if (t === "n" || t === "b" || t === "r") {
           const pocket = (api.mine.inventory ??= {});
           pocket[t] = (pocket[t] ?? 0) + 1;
+          // Paying up front: the purchase costs you your next draft.
+          api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
         }
       },
     ),
@@ -484,7 +486,7 @@ export const FUNNY_META: Buff[] = [
       id: "ban_hammer",
       name: "Ban Hammer",
       description:
-        "Moderator privileges activated: point at one enemy knight, bishop, or rook, and EVERY enemy piece of that type is permanently banned from the board.",
+        "Moderator privileges activated: point at one enemy knight, bishop, or rook, and up to two enemy pieces of that type are permanently banned from the board.",
       tier: 8,
       category: "attack",
       flavor: "Reason: no reason given. Appeals: closed.",
@@ -508,9 +510,7 @@ export const FUNNY_META: Buff[] = [
         if (!p || p.color !== api.opp) return;
         const banned = p.type;
         if (banned === "k" || banned === "q" || banned === "p") return;
-        // The hammer's docket closes after two: only the first two enemy pieces
-        // of that type (deterministic, lowest square first) are banned.
-        for (const s of mySquares(api.board, api.opp, banned).slice(0, 2)) api.removePiece(s);
+        for (const s of mySquares(api.board, api.opp, banned)) api.removePiece(s);
       },
     ),
   ),

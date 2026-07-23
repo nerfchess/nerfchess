@@ -30,16 +30,86 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "amazon",
       icon: "Crown",
       name: "Amazon",
-      description: "Your queen is crowned an Amazon: for the game she also moves like a knight.",
+      description: "Your queen is crowned an Amazon: she still moves like a queen and now banks a single knight leap, regaining one every four of your turns (never more than one banked), which she may spend to jump like a knight.",
       tier: 7,
       category: "movement",
       requires: ["q"],
       flavor: "Queen was not scary enough already.",
       fx: { motif: "empower", pieces: ["q"], moveAs: "n", self: true },
     },
-    pieceBound("q", "Choose the queen to crown", (board, sq, via) =>
-      leapMoves(board, sq, KNIGHT_LEAPS, via),
-    ),
+    // Knight movement is no longer permanent: the crowned queen banks one
+    // knight-leap charge (max one), regained every four of the owner's turns,
+    // and spending a leap empties the charge and restarts the recharge.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.cd = 0;
+      },
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the queen to crown",
+              squares: mySquares(api.board, api.me, "q"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || ((inst.state.charges as number) ?? 0) < 1) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "q") return;
+        const have = new Set(moves.map((m) => m.from * 64 + m.to));
+        for (const mv of leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id)) {
+          const key = mv.from * 64 + mv.to;
+          if (!have.has(key)) {
+            have.add(key);
+            moves.push(mv);
+          }
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        let consumed = false;
+        if (move.from === sq) {
+          if (move.via === inst.id) {
+            inst.state.charges = 0;
+            inst.state.cd = 4;
+            consumed = true;
+          }
+          inst.state.sq = move.to;
+        }
+        if (
+          move.color === api.me &&
+          !consumed &&
+          ((inst.state.charges as number) ?? 0) < 1
+        ) {
+          const cd = ((inst.state.cd as number) ?? 4) - 1;
+          inst.state.cd = cd;
+          if (cd <= 0) {
+            inst.state.charges = 1;
+            inst.state.cd = 0;
+          }
+        }
+      },
+      status: (inst) => {
+        if (inst.state.sq == null) return "activate to crown a queen";
+        return ((inst.state.charges as number) ?? 0) >= 1
+          ? "knight leap ready"
+          : `knight leap in ${(inst.state.cd as number) ?? 0} of your turns`;
+      },
+    },
   ),
   card(
     {

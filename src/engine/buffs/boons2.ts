@@ -1188,7 +1188,7 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_long_truce",
       name: "The Long Truce",
       description:
-        "Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured, kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 4 turns.",
+        "Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured, kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 3 turns.",
       tier: 8,
       category: "tempo",
       icon: "HeartHandshake",

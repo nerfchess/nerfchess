@@ -591,16 +591,18 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_twin_familiars",
       name: "Twin Familiars",
       description:
-        "A familiar perches on each of your bishops: for the rest of the game your bishops may also step one square straight (up, down, or sideways), finally changing their color.",
+        "A familiar perches on each of your bishops: for the rest of the game your bishops may also step one square straight (up, down, or sideways) but never to capture, finally changing their color.",
       tier: 5,
       category: "movement",
       requires: ["b"],
       flavor: "One for each shoulder.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true },
     },
+    // Balance: the card is a single permanent grant (one "use"), so the special
+    // straight step can no longer capture, matching Ghostwalk and Arcane Conduit.
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "b").flatMap((sq) =>
-        slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1),
+        slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 1).filter((m) => !m.captured),
       ),
     ),
   ),
@@ -717,60 +719,12 @@ export const WILD_ARCANE: Buff[] = [
     {
       id: "wa_dominate_major",
       name: "Grand Dominion",
-      description: "Mark one enemy rook or queen: after your opponent's next move, it becomes yours, once.",
+      description: "Take control of one enemy rook or queen: it becomes yours, once.",
       tier: 7,
       category: "pieces",
       flavor: "The bigger the will, the sweeter the break.",
     },
-    // Balance: every count here is one, so the takeover is delayed. You mark an
-    // enemy rook or queen now; it only turns to your color after the opponent
-    // has played one reply. If it is captured first, the domination fizzles.
-    {
-      kind: "activated",
-      spendOnUse: false,
-      targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
-          ? null
-          : {
-              kind: "square",
-              label: "Choose an enemy rook or queen to dominate",
-              squares: mySquares(api.board, api.opp).filter((sq) => {
-                const t = api.board.pieces[sq]!.type;
-                return t === "r" || t === "q";
-              }),
-            },
-      effect: (inst, _api, picks) => {
-        if (inst.state.sq != null) return;
-        const sq = picks[0]?.square;
-        if (sq != null) inst.state.sq = sq;
-      },
-      onMovePlayed: (inst, move, api) => {
-        const sq = inst.state.sq as Square | undefined;
-        if (sq == null) return;
-        // Follow the marked piece; if it is captured first, the domination fizzles.
-        if (move.capturedSquare === sq && move.from !== sq) {
-          inst.spent = true;
-          inst.state.sq = undefined;
-          return;
-        }
-        if (move.from === sq) inst.state.sq = move.to;
-        else if (move.to === sq && move.from !== sq) {
-          inst.spent = true;
-          inst.state.sq = undefined;
-          return;
-        }
-        // Fire once the opponent has replied.
-        if (move.color !== api.opp) return;
-        const cur = inst.state.sq as Square | undefined;
-        if (cur != null && api.board.pieces[cur]?.color === api.opp) api.setPieceColor(cur, api.me);
-        inst.spent = true;
-        inst.state.sq = undefined;
-      },
-      status: (inst) =>
-        inst.state.sq == null
-          ? "activate to mark a rook or queen"
-          : "dominates after your opponent replies",
-    },
+    convertEnemies(1, ["r", "q"], "Choose an enemy rook or queen to dominate"),
   ),
 
   // ===================== TIME: FREEZE & STOP =====================
@@ -1376,26 +1330,15 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_unmake",
       name: "Unmake",
       description:
-        "Your opponent's first reply passes untouched; the next capture they make after that is unmade: their piece snaps back to the square it came from, and your captured piece is restored where it stood. Kings cannot be unmade.",
+        "The next capture your opponent makes is unmade: their piece snaps back to the square it came from, and your captured piece is restored where it stood. Kings cannot be unmade.",
       tier: 5,
       category: "protection",
       flavor: "A moment of the game, uncreated.",
     },
-    // Balance: every count here is one, so the effect is delayed. The opponent's
-    // first move after this card is played passes untouched (arming the unmake);
-    // only a capture on a later opponent turn is undone.
     {
       kind: "passive",
-      init: (inst) => {
-        inst.state.armed = false;
-      },
       onMovePlayed: (inst, move, api) => {
-        if (move.color !== api.opp) return;
-        if (!inst.state.armed) {
-          inst.state.armed = true;
-          return;
-        }
-        if (!move.captured || move.captured === "k") return;
+        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
         if (move.piece === "k") return;
         const capSq = move.capturedSquare ?? move.to;
         // The capturer stands on move.to; its old square is empty again.
@@ -1407,10 +1350,7 @@ export const WILD_ARCANE: Buff[] = [
         }
         inst.spent = true;
       },
-      status: (inst) =>
-        inst.state.armed
-          ? "waiting to unmake their next capture"
-          : "arms after your opponent replies",
+      status: () => "waiting to unmake their next capture",
     },
   ),
 

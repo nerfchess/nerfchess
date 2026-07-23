@@ -362,7 +362,6 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
             if (p && p.color === api.me && p.type === "p") neighbors.push(SQ(f, r));
           }
           if (neighbors.length > 0) inst.state.guarded = [dest, neighbors[0]];
-          else inst.spent = true; // No pair to ward: nothing left to do.
         },
         filterOpponentMoves: (moves, inst) => {
           const guarded = (inst.state.guarded as Square[]) ?? [];
@@ -950,7 +949,7 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
 
 const SIDE_DOORS: Array<OpenerMeta & { files?: number[]; mode?: "in" | "out" }> = [
   { id: "servants_entrance", name: "Servants' Entrance", flavor: "The a-through-d staff know which hinges are oiled.", icon: "DoorOpen", files: [0, 1, 2, 3] },
-  { id: "garden_door", name: "Garden Door", flavor: "Kingside pawns prefer to arrive smelling of roses.", icon: "Flower2", files: [4, 5, 6, 7] },
+  { id: "garden_door", name: "Garden Door", flavor: "Kingside pawns prefer to arrive smelling of roses.", icon: "Flower2", files: [4, 5, 6, 7], tier: 2 },
   { id: "revolving_door", name: "Revolving Door", flavor: "Central pawns enter at an angle and act like they meant to.", icon: "RotateCw", files: [2, 3, 4, 5] },
   { id: "fire_escape", name: "Fire Escape", flavor: "Rim pawns keep one bolted ladder for emergencies.", icon: "Siren", files: [0, 1, 6, 7] },
   { id: "palace_gate", name: "Palace Gate", flavor: "The d- and e-pawns bow once and step through sideways.", icon: "Landmark", files: [3, 4] },
@@ -973,7 +972,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
       : entry.mode === "out"
         ? " The step must angle toward the board's edge."
         : "";
-  const lossy = entry.id === "drawbridge_in";
+  const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const out: Move[] = [];
