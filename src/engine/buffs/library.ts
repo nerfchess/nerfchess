@@ -4199,8 +4199,36 @@ const TIER6: Buff[] = [
 
 const TIER7: Buff[] = [
   def(
-    { id: "chain_atomic", name: "Chain Atomic", description: "Every capture by or against your pieces sets off an atomic blast that clears enemy pieces around it and chains, for the game. When an enemy captures one of your pieces, the capturing piece is destroyed too.", tier: 7, category: "attack" },
-    captureExplosion({ chain: true, onMyLosses: true, includeCenter: true }),
+    { id: "chain_atomic", name: "Chain Atomic", description: "For your next 3 turns, whenever a capture involves one of your pieces the capturing piece is destroyed, along with up to one enemy piece beside it, kings aside. No chains.", tier: 7, category: "attack" },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // A capture involving my pieces: I take an enemy, or my piece is taken.
+        const involvesMe = move.color === api.me || move.color === api.opp;
+        if (turnsLeft(inst) > 0 && move.captured && move.captured !== "k" && involvesMe) {
+          const at = move.to;
+          // Destroy the capturing piece (its owner aside; classic atomic).
+          const capturer = api.board.pieces[at];
+          if (capturer && capturer.type !== "k") api.removePiece(at);
+          // Plus at most one adjacent enemy non-king, taken deterministically.
+          for (const [df, dr] of ALL_DIRS) {
+            const f = FILE(at) + df, r = RANK(at) + dr;
+            if (!inBoard(f, r)) continue;
+            const sq = SQ(f, r);
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") {
+              api.removePiece(sq);
+              break;
+            }
+          }
+        }
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   def(
     { id: "triple_amazon", requires: ["n"], name: "Triple Amazon", description: "All your knights become amazons for the game, and each may also pass through one friendly piece per move.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
