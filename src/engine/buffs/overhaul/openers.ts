@@ -717,46 +717,69 @@ const BALLROOM: Array<OpenerMeta & { df: number; dr: number; hop?: boolean }> = 
 ];
 
 function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
-  const desc = entry.hop
-    ? "Once, your king may hop sideways over an adjacent friendly piece on his rank, landing on the empty square directly beyond."
-    : `Once, your king may move two squares ${
-        entry.dr === 0
-          ? entry.df > 0
-            ? "sideways toward the h-file"
-            : "sideways toward the a-file"
-          : entry.df === 0
-            ? "straight forward"
-            : entry.df < 0
-              ? "diagonally forward toward the a-file"
-              : "diagonally forward toward the h-file"
-      }. Both squares must be empty.`;
-  return opener(
-    entry,
-    desc,
-    augment((_moves, inst, api) => {
-      const dir = api.me === "w" ? 1 : -1;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "k")) {
-        if (entry.hop) {
-          for (const s of [-1, 1]) {
-            const f1 = FILE(sq) + s, f2 = FILE(sq) + s * 2;
-            if (f2 < 0 || f2 > 7) continue;
-            const mid = api.board.pieces[SQ(f1, RANK(sq))];
-            if (!mid || mid.color !== api.me) continue;
-            out.push(...teleportMoves(api.board, sq, [SQ(f2, RANK(sq))], inst.id));
-          }
-          continue;
+  const clockNote = entry.id === "foxtrot_slide" ? " When you take the dash you gain 5 seconds." : "";
+  const lossyNote =
+    entry.id === "grand_march"
+      ? " If the dash is on offer on your turn but you play something else, the charge is spent."
+      : "";
+  const desc =
+    (entry.hop
+      ? "Once, your king may hop sideways over an adjacent friendly piece on his rank, landing on the empty square directly beyond."
+      : `Once, your king may move two squares ${
+          entry.dr === 0
+            ? entry.df > 0
+              ? "sideways toward the h-file"
+              : "sideways toward the a-file"
+            : entry.df === 0
+              ? "straight forward"
+              : entry.df < 0
+                ? "diagonally forward toward the a-file"
+                : "diagonally forward toward the h-file"
+        }. Both squares must be empty.`) +
+    clockNote +
+    lossyNote;
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const dir = api.me === "w" ? 1 : -1;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, "k")) {
+      if (entry.hop) {
+        for (const s of [-1, 1]) {
+          const f1 = FILE(sq) + s, f2 = FILE(sq) + s * 2;
+          if (f2 < 0 || f2 > 7) continue;
+          const mid = api.board.pieces[SQ(f1, RANK(sq))];
+          if (!mid || mid.color !== api.me) continue;
+          out.push(...teleportMoves(api.board, sq, [SQ(f2, RANK(sq))], inst.id));
         }
-        const dr = entry.dr * dir;
-        const f1 = FILE(sq) + entry.df, r1 = RANK(sq) + dr;
-        const f2 = FILE(sq) + entry.df * 2, r2 = RANK(sq) + dr * 2;
-        if (!inBoard(f1, r1) || !inBoard(f2, r2)) continue;
-        if (api.board.pieces[SQ(f1, r1)] || api.board.pieces[SQ(f2, r2)]) continue;
-        out.push(...teleportMoves(api.board, sq, [SQ(f2, r2)], inst.id));
+        continue;
       }
-      return out;
-    }),
-  );
+      const dr = entry.dr * dir;
+      const f1 = FILE(sq) + entry.df, r1 = RANK(sq) + dr;
+      const f2 = FILE(sq) + entry.df * 2, r2 = RANK(sq) + dr * 2;
+      if (!inBoard(f1, r1) || !inBoard(f2, r2)) continue;
+      if (api.board.pieces[SQ(f1, r1)] || api.board.pieces[SQ(f2, r2)]) continue;
+      out.push(...teleportMoves(api.board, sq, [SQ(f2, r2)], inst.id));
+    }
+    return out;
+  };
+  if (entry.id === "grand_march") {
+    return opener(entry, desc, lossyAugment(gen));
+  }
+  if (entry.id === "foxtrot_slide") {
+    // "Otherwise gain 5 seconds when it resolves": the king dash names no file
+    // target, so it takes the clock branch of the directive.
+    return opener(entry, desc, {
+      ...augment(gen),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          api.adjustClock({ addSelfSec: 5 });
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+    });
+  }
+  return opener(entry, desc, augment(gen));
 }
 
 // ---------------------------------------------------------------------------

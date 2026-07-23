@@ -1487,15 +1487,22 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_high_ground",
       name: "High Ground",
-      description: "Choose one of your pieces: for the game it cannot be captured while it stands in your opponent's half.",
+      description: "Choose one of your pieces: for the game it cannot be captured while it stands in your opponent's half, but its shield drops on any turn it is giving check to the enemy king.",
       tier: 7,
       category: "protection",
       flavor: "They have to climb to reach you, and they will not.",
       fx: { motif: "ward", self: true },
     },
+    // Overhaul balance pass: the protected piece cannot give check from behind
+    // an untouchable shield. A buff cannot forbid the owner's own moves, so the
+    // enforceable reading is the mirror: whenever the piece is giving check, its
+    // invulnerability lapses for that turn and the opponent may capture the
+    // checker to answer the check.
     bindPiece("Choose the piece that takes the high ground", bindCandidates(), {
       filterOpp: (moves, sq, api) =>
-        inHalf(api.opp, sq) ? moves.filter((m) => captureSquare(m) !== sq) : moves,
+        inHalf(api.opp, sq) && !givesCheck(api, sq)
+          ? moves.filter((m) => captureSquare(m) !== sq)
+          : moves,
     }),
   ),
 

@@ -853,7 +853,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_genie_wish",
       name: "Genie Wish",
-      description: "You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns.",
+      description: "You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns, and the fine print costs you your next draft.",
       tier: 7,
       category: "pieces",
       flavor: "Should have read the terms.",
@@ -864,6 +864,8 @@ export const WILD_CHAOS: Buff[] = [
       // only writes the caster's pocket, so write theirs directly.
       const pocket = (api.theirs.inventory ??= {});
       pocket.n = (pocket.n ?? 0) + 1;
+      // More fine print: the wish costs you your own next draft.
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
@@ -1409,26 +1411,45 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_wrecking_ball",
       icon: "Hammer",
       name: "Wrecking Ball",
-      description: "Your queen takes one full swing in place: every enemy piece except a king on the 8 squares around her is smashed off the board. Shielded pieces resist the swing, once.",
+      description: "Your queen winds up a full swing: after your opponent's next move, every enemy piece except a king on the 8 squares around her is smashed off the board. Shielded pieces resist the swing, once.",
       tier: 6,
       category: "attack",
       requires: ["q"],
       flavor: "Structural integrity was more of a suggestion.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
               label: "Choose the queen that swings",
               squares: mySquares(api.board, api.me, "q"),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
-        if (sq == null || api.board.pieces[sq]?.type !== "q") return;
-        explodeAt(api, sq);
+        if (sq == null) return;
+        inst.state.sq = sq;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The swing lands only after the opponent's next move.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.me && p.type === "q") explodeAt(api, cur);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to wind up the swing" : "the swing lands after their next move",
+    },
   ),
 ];

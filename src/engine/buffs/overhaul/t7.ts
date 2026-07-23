@@ -686,44 +686,64 @@ export const OVERHAUL_T7: Buff[] = [
     }),
   ),
   // 167. Promotion Jubilee ------------------------------------------------------------------------------------------------
-  // ADAPTED: early promotions auto-queen (no underpromotion picker on granted
-  // moves).
+  // BALANCE: only the FIRST pawn to reach the seventh rank promotes early, and
+  // only to a rook, bishop, or knight (three explicit moves per square, never a
+  // queen). Playing any of these promotions sets `used` and ends the jubilee.
   card(
     {
       id: "ov_promotion_jubilee",
       name: "Promotion Jubilee",
       description:
-        "For 5 of your turns, your pawns stepping or capturing onto the seventh rank may promote to a queen there.",
+        "For 5 of your turns, the first of your pawns to step or capture onto the seventh rank may promote there, but only to a rook, bishop, or knight. That one early promotion ends the jubilee.",
       tier: 7,
       category: "pieces",
       icon: "PartyPopper",
       flavor: "One rank early, and nobody checked the bunting budget.",
       requires: ["p"],
-      fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    timedAugment(5, (_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (relRank(api.me, sq) !== 6) continue;
-        const fwd = sq + fwdOf(api.me);
-        if (!api.board.pieces[fwd]) {
-          out.push({ from: sq, to: fwd, piece: "p", color: api.me, promotion: "q", via: inst.id });
-        }
-        for (const df of [-1, 1]) {
-          const f = FILE(sq) + df, r = RANK(fwd);
-          if (!inBoard(f, r)) continue;
-          const cs = SQ(f, r);
-          const t = api.board.pieces[cs];
-          if (t && t.color === api.opp) {
-            out.push({
-              from: sq, to: cs, piece: "p", color: api.me,
-              captured: t.type, capturedSquare: cs, promotion: "q", via: inst.id,
-            });
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 5;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || inst.state.used) return;
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (relRank(api.me, sq) !== 6) continue;
+          const fwd = sq + fwdOf(api.me);
+          if (!api.board.pieces[fwd]) {
+            for (const promo of ["r", "b", "n"] as PieceType[]) {
+              out.push({ from: sq, to: fwd, piece: "p", color: api.me, promotion: promo, via: inst.id });
+            }
+          }
+          for (const df of [-1, 1]) {
+            const f = FILE(sq) + df, r = RANK(fwd);
+            if (!inBoard(f, r)) continue;
+            const cs = SQ(f, r);
+            const t = api.board.pieces[cs];
+            if (t && t.color === api.opp) {
+              for (const promo of ["r", "b", "n"] as PieceType[]) {
+                out.push({
+                  from: sq, to: cs, piece: "p", color: api.me,
+                  captured: t.type, capturedSquare: cs, promotion: promo, via: inst.id,
+                });
+              }
+            }
           }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.promotion) inst.state.used = true;
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) =>
+        inst.state.used
+          ? "the jubilee's early promotion is spent"
+          : `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   // 168. Fourth Wall Repair Crew -------------------------------------------------------------------------------------------
   card(

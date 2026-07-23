@@ -1468,15 +1468,35 @@ const T5: Buff[] = [
         inst.state.turns = 8;
       },
       onMovePlayed: (inst, move, api) => {
+        // A sympathetic strike has landed: the doomed twin gets one legal escape
+        // move. If they move it on their next turn it slips free; any other move
+        // that turn lets its fate close on it.
+        const doomed = (inst.state.doomed as Square | null | undefined) ?? null;
+        if (doomed != null) {
+          if (move.color === api.me) {
+            inst.state.doomed = followSq(doomed, move);
+            if (inst.state.doomed == null) inst.spent = true;
+            return;
+          }
+          if (move.from === doomed) {
+            inst.spent = true; // it took its one escape move and slips its fate
+          } else {
+            const p = api.board.pieces[doomed];
+            if (p && p.color === api.opp && p.type !== "k") api.removePiece(doomed);
+            inst.spent = true;
+          }
+          return;
+        }
         const a = (inst.state.a as Square | null | undefined) ?? null;
         const b = (inst.state.b as Square | null | undefined) ?? null;
         if (a == null || b == null) return;
-        // Did I capture one of the pair? The other shares its fate.
+        // Did I capture one of the pair? The other is marked for death, but
+        // granted one escape move before its fate closes.
         if (move.capturedSquare === a || move.capturedSquare === b) {
           const twin = move.capturedSquare === a ? b : a;
           const p = api.board.pieces[twin];
-          if (p && p.color === api.opp && p.type !== "k") api.removePiece(twin);
-          inst.spent = true;
+          if (p && p.color === api.opp && p.type !== "k") inst.state.doomed = twin;
+          else inst.spent = true;
           return;
         }
         inst.state.a = followSq(a, move);
@@ -1505,7 +1525,7 @@ const T5: Buff[] = [
       id: "hw3_collapsing_floor",
       name: "Collapsing Floor",
       description:
-        "Curse one rank in your opponent's half with a slow crack: after 3 of their turns the floor gives way, and every piece of theirs still standing on that rank is caught in the rubble and frozen for 2 of their turns. Their king is never trapped. The rank and the count are both plain to read - march their pieces off it before it caves in.",
+        "Curse one rank in your opponent's half with a slow crack: it lies quiet until after their next move, then after 3 of their turns the floor gives way, and every piece of theirs still standing on that rank is caught in the rubble and frozen for 2 of their turns. Their king is never trapped. The rank and the count are both plain to read - march their pieces off it before it caves in.",
       flavor: "You could hear it groaning for three days before it went.",
       fx: { motif: "blindfold" },
     },
@@ -1528,10 +1548,15 @@ const T5: Buff[] = [
         if (sq == null) return;
         inst.state.rank = RANK(sq);
         inst.state.turns = 3;
+        inst.state.started = false;
       },
       onMovePlayed: (inst, move, api) => {
         const rank = inst.state.rank as number | undefined;
         if (rank == null) return;
+        if (move.color === api.opp && !inst.state.started) {
+          inst.state.started = true; // the crack lies dormant until after their next move
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) === 1) {
           for (let f = 0; f < 8; f++) {
             const sq = SQ(f, rank);
@@ -1560,7 +1585,7 @@ const T5: Buff[] = [
       id: "hw3_bounty_mark",
       name: "Bounty Mark",
       description:
-        "Paint a bounty on one enemy piece for the next 6 of their turns: whenever the marked piece captures anything, it is swarmed by bounty hunters and frozen for 2 of their turns afterward. Marching it around is free; only using it to fight is punished. They can keep it out of combat, or trade it away to shed the mark. Kings carry no bounty.",
+        "Paint a bounty on one enemy piece for the next 5 of their turns: whenever the marked piece captures anything, it is swarmed by bounty hunters and frozen for 2 of their turns afterward. Marching it around is free; only using it to fight is punished. They can keep it out of combat, or trade it away to shed the mark. Kings carry no bounty.",
       flavor: "Dead or alive, but preferably exhausted first.",
       fx: { motif: "muzzle" },
     },

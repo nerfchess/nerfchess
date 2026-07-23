@@ -2369,11 +2369,11 @@ const TIER4: Buff[] = [
     instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   def(
-    { id: "cascade_freeze", name: "Cascade Freeze", description: "For 3 turns, each capture you make freezes the nearest enemy piece 1 turn.", tier: 4, category: "tempo" },
+    { id: "cascade_freeze", name: "Cascade Freeze", description: "For 2 turns, each capture you make freezes the nearest enemy piece 1 turn.", tier: 4, category: "tempo" },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && move.captured && turnsLeft(inst) > 0) {
@@ -2983,12 +2983,12 @@ const TIER5: Buff[] = [
   ),
   def(
     // Board already paints no_pawn_advance; fx carried for consistency.
-    { id: "blockade", name: "Blockade", description: "Wall the enemy front: their pawns cannot advance or capture for your opponent's next 2 turns.", tier: 4, category: "tempo", fx: { motif: "anchor", pieces: ["p"] } },
+    { id: "blockade", name: "Blockade", description: "Wall the enemy front: their pawns cannot advance or capture for your opponent's next turn.", tier: 4, category: "tempo", fx: { motif: "anchor", pieces: ["p"] } },
     {
       kind: "passive",
       init: (inst, api) => {
-        inst.state.turns = 2;
-        addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 2 });
+        inst.state.turns = 1;
+        addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 1 });
       },
       filterOpponentMoves: (moves, inst) => {
         if (turnsLeft(inst) <= 0) return moves;

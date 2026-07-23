@@ -256,28 +256,57 @@ export const FUNNY_META: Buff[] = [
       id: "mute_button",
       name: "Mute Button",
       description:
-        "You mute the loudest voices in their army: for their next 3 turns your opponent's queen and rooks cannot capture.",
+        "You mute the loudest voices in their army: for their next 3 turns your opponent's queen and rooks cannot capture. The first of those pieces they move gets one free move before the mute takes hold.",
       tier: 4,
       category: "hex",
       flavor: "You are now watching their attack on read.",
       fx: { motif: "muzzle", pieces: ["q", "r"] },
     },
-    curse(3, (moves) =>
-      moves.filter((m) => !(m.captured && (m.piece === "q" || m.piece === "r"))),
-    ),
+    // Preserve the 3-turn duration, but the first queen or rook the opponent
+    // moves is an unrestricted escape; the no-capture mute bites from the move
+    // after that, ticking across the same 3 of their turns.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || !inst.state.escaped || moves.length === 0) return moves;
+        const kept = moves.filter(
+          (m) => !(m.captured && (m.piece === "q" || m.piece === "r")),
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        if (
+          !inst.state.escaped &&
+          move.color === api.opp &&
+          (move.piece === "q" || move.piece === "r")
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.escaped
+          ? `${turnsLeft(inst)} of their turns left`
+          : "one free move, then muted",
+    },
   ),
   card(
     {
       id: "skill_issue",
       name: "Skill Issue",
       description:
-        "Diagnosis delivered: their minor pieces whiff every attack: enemy knights and bishops cannot capture for their next 4 turns.",
+        "Diagnosis delivered: their minor pieces whiff every attack: enemy knights and bishops cannot capture for their next 3 turns.",
       tier: 4,
       category: "hex",
       flavor: "Have you tried simply being better?",
       fx: { motif: "muzzle", pieces: ["n", "b"] },
     },
-    curse(4, (moves) =>
+    curse(3, (moves) =>
       moves.filter((m) => !(m.captured && (m.piece === "n" || m.piece === "b"))),
     ),
   ),
