@@ -5,7 +5,7 @@
 // Import only from ./shared, one nerf per N(...).
 
 import { Nerf } from "./shared";
-import { tierNerf, filter, relRank, cheb, isInCheck } from "./shared";
+import { nerf, tierNerf, filter, relRank, cheb, isInCheck, FILE } from "./shared";
 
 const N = tierNerf(8);
 
@@ -43,7 +43,7 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "own_half_only",
       name: "Own Half Only",
-      description: "You can't move any piece past your own fourth rank; the enemy half of the board is off limits.",
+      description: "You can't move any piece past your own fourth rank; the enemy half of the board is off limits. Spawned pieces and teleports can't bypass the boundary either.",
       flavor: "Cross the line and you never come back, so no one crosses.",
       icon: "fence",
     },
@@ -56,7 +56,7 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "total_pacifism",
       name: "Total Pacifism",
-      description: "You can never capture an enemy piece, except the king to win.",
+      description: "You can never capture an enemy piece, except the king to win. No card effect can capture on your behalf either, except one that captures the king.",
       flavor: "A war fought entirely by dancing around each other, right up to the last step.",
       icon: "heart",
     },
@@ -68,19 +68,38 @@ export const NERFS_T8: Nerf[] = [
       filterMoves: filter((m) => !m.captured || m.captured === "k"),
     },
   ),
-  N(
+  nerf(
     {
       id: "retrograde_knights",
       name: "Retrograde Knights",
-      description: "Your knights can only move backward toward your own side; a knight's rank can never advance.",
+      description: "Your knights can only move homeward, toward your own side, and can never advance, except that each knight's first move off its home square is exempt from the homeward rule.",
       flavor: "Horses that only ever bolt for the stable.",
       icon: "move",
+      tier: 5,
     },
     {
       filterMoves: (moves, _state, ctx) =>
-        moves.filter(
-          (m) => !(m.piece === "n" && relRank(ctx.me, m.to) >= relRank(ctx.me, m.from)),
-        ),
+        moves.filter((m) => {
+          if (m.piece !== "n") return true;
+          // Homeward (strictly toward own back rank) is always allowed.
+          if (relRank(ctx.me, m.to) < relRank(ctx.me, m.from)) return true;
+          // First-move exception: a knight still on its home square (b/g file,
+          // own back rank) that has not moved yet gets one move exempt from the
+          // homeward rule, so it can leave the wall it would otherwise be stuck
+          // against. History with no prior knight move from this square proves
+          // it is still the first move.
+          const home =
+            relRank(ctx.me, m.from) === 1 && (FILE(m.from) === 1 || FILE(m.from) === 6);
+          if (
+            home &&
+            !ctx.board.history.some(
+              (h) => h.color === ctx.me && h.piece === "n" && h.from === m.from,
+            )
+          ) {
+            return true;
+          }
+          return false;
+        }),
     },
   ),
   N(

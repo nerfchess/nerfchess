@@ -109,36 +109,47 @@ export const NERFS_T5: Nerf[] = [
       },
     },
   ),
-  N(
-    { id: "pawns_do_the_dirty_work", name: "Pawns Do the Dirty Work", description: "Only your pawns may capture; none of your other pieces can capture.", flavor: "The officers keep their hands clean.", icon: "swords" },
+  nerf(
+    { id: "pawns_do_the_dirty_work", name: "Pawns Do the Dirty Work", description: "Only your pawns may capture; none of your other pieces can capture.", flavor: "The officers keep their hands clean.", icon: "swords", tier: 6 },
     {
       filterMoves: filter((m) => !(m.captured && m.piece !== "p")),
     },
   ),
-  N(
-    { id: "no_retreat_ever", name: "No Retreat Ever", description: "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank.", flavor: "Only ever forward, never a step wasted.", icon: "move" },
+  nerf(
+    { id: "no_retreat_ever", name: "No Retreat Ever", description: "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.", flavor: "Only ever forward, never a step wasted.", icon: "move", tier: 6 },
     {
       // Distinct from forward_march (allows level and sideways moves) and
       // onward_only (delayed, allows level moves): here every move must strictly
-      // gain rank toward the enemy.
+      // gain rank toward the enemy. Once-per-game exemption: a single
+      // non-advancing move is allowed. It is spent the first time one appears in
+      // history (relRank not increasing), after which advance is forced again.
       filterMoves: (moves, _state, ctx) => {
+        const usedExemption = ctx.board.history.some(
+          (m) => m.color === ctx.me && relRank(ctx.me, m.to) <= relRank(ctx.me, m.from),
+        );
+        if (!usedExemption) return moves;
         const adv = moves.filter((m) => relRank(ctx.me, m.to) > relRank(ctx.me, m.from));
         return adv.length ? adv : moves;
       },
     },
   ),
-  N(
-    { id: "blood_quota", name: "Blood Quota", description: "You may make only six captures all game; you lose if you make a seventh.", flavor: "Six heads, then sheathe the sword.", icon: "droplet" },
+  nerf(
+    { id: "blood_quota", name: "Blood Quota", description: "You may make only six captures all game. One compliance token excuses a single extra capture; you lose only when you make an eighth capture.", flavor: "Six heads, then sheathe the sword.", icon: "droplet", tier: 6 },
     {
+      // The loss condition stays a capture-count limit. One compliance token
+      // excuses the seventh capture, so the loss only fires past seven.
       init: () => ({ caps: 0 }),
       onTurnStart: (_state, ctx) => ({ caps: countHistory(ctx, (m) => !!m.captured) }),
       checkLoss: (state) =>
-        (state.caps as number) > 6 ? { reason: "you exceeded your blood quota" } : null,
-      progress: (state) => ({
-        value: state.caps as number,
-        max: 6,
-        label: (state.caps as number) + "/6 captures",
-      }),
+        (state.caps as number) > 7 ? { reason: "you exceeded your blood quota" } : null,
+      progress: (state) => {
+        const caps = state.caps as number;
+        return {
+          value: Math.min(caps, 6),
+          max: 6,
+          label: caps > 6 ? "6/6 captures, compliance token spent" : caps + "/6 captures",
+        };
+      },
     },
   ),
   N(

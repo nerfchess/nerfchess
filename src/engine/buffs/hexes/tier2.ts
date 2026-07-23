@@ -156,10 +156,10 @@ export const HEXES_T2: Buff[] = [
     // only shuffle one square) that outlasts it by a turn, so on the third turn
     // the piece can crawl a single step but no further. A staggered 3-turn
     // lockdown that eases into a shuffle, not another bare freeze.
-    { id: "pinned_down", name: "Pinned Down", description: "Freeze one targeted enemy piece, never the king, for 2 of their turns. As it thaws it stays a heavy walnut for 1 more turn, able only to shuffle a single square.", flavor: "Staked to the ground, then too heavy to lift." },
+    { id: "pinned_down", name: "Pinned Down", description: "Choose one enemy piece, never the king. Starting after your opponent's next move it freezes for 2 of their turns, then stays a heavy walnut for 1 more turn, able only to shuffle a single square.", flavor: "Staked to the ground, then too heavy to lift." },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+      (inst, api, picks) =>
+        inst.state.sq != null || picks.length > 0
           ? null
           : {
               kind: "square",
@@ -168,21 +168,36 @@ export const HEXES_T2: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      (inst, _api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        inst.state.sq = sq;
+        inst.state.pending = true;
+      },
+      {
+        // Delay activation: the pin lands only after the opponent's next move.
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.pending) return;
+          // Follow the piece if the opponent moves it on this delayed turn.
+          if (move.from === (inst.state.sq as Square)) inst.state.sq = move.to;
+          if (move.color !== api.opp) return;
+          const sq = inst.state.sq as Square;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+          inst.state.pending = false;
+          inst.spent = true;
+        },
       },
     ),
   ),
   H(
-    { id: "cut_purse", name: "Cut Purse", description: "Steal one of your opponent's unspent cards of tier 1. Locked-in upgrades stay put.", flavor: "A hand in every pocket." },
-    stealBuffs(1, 1, (b: BuffInstance) => b.state.sq == null && b.state.squares == null),
+    { id: "cut_purse", name: "Cut Purse", description: "Steal one of your opponent's unspent cards of tier 1, then take a draft reroll. Locked-in upgrades stay put.", flavor: "A hand in every pocket." },
+    grantRerollAfter(stealBuffs(1, 1, (b: BuffInstance) => b.state.sq == null && b.state.squares == null)),
   ),
   H(
-    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot end a move beside any of your pieces, for their next 3 turns.", flavor: "He waves you forward from well behind.", fx: { motif: "muzzle", pieces: ["k"] } },
-    curse(3, (moves, api) =>
+    { id: "timid_king", name: "Timid King", description: "Your opponent's king cannot end a move beside any of your pieces, for their next 2 turns.", flavor: "He waves you forward from well behind.", fx: { motif: "muzzle", pieces: ["k"] } },
+    curse(2, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "k") return true;
         for (const df of [-1, 0, 1]) {

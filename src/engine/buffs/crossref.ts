@@ -366,7 +366,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "break_the_nerf",
       name: "Break the Nerf",
-      description: "Free action: break your nerf, suspending it for your next 3 turns, and take one extra move the moment it breaks.",
+      description: "Free action: break your nerf, suspending it for your next 3 turns.",
       tier: 3,
       category: "nerf",
       flavor: "The handicap was a suggestion. You declined.",
@@ -374,7 +374,6 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       ...activatedSimple((_inst, api) => {
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
-        api.bs.extraMoves[api.me] += 1;
       }),
       freeAction: true,
     },
@@ -423,7 +422,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "counter_nerf",
       name: "Counter-Nerf",
-      description: "The next 3 times your opponent captures one of your pieces, your nerf is suspended for your next turn.",
+      description: "The next 3 times your opponent captures one of your pieces, your nerf is suspended for one of your turns, but each suspension only begins after your opponent's next move.",
       tier: 4,
       category: "nerf",
       flavor: "Every wound you deal me loosens my chains.",
@@ -432,14 +431,35 @@ export const CROSSREF_CARDS: Buff[] = [
       kind: "passive",
       init: (inst: BuffInstance) => {
         inst.state.charges = 3;
+        inst.state.armed = 0;
       },
       onMovePlayed: (inst: BuffInstance, move: Move, api: BuffApi) => {
-        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
-        const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0) return;
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
+        if (move.color !== api.opp) return;
+        // The opponent has replied: any suspension queued on their PREVIOUS
+        // move now begins, covering the owner's upcoming turn.
+        const armed = (inst.state.armed as number) ?? 0;
+        if (armed > 0) {
+          for (let i = 0; i < armed; i++) {
+            addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+          }
+          inst.state.armed = 0;
+        }
+        // If this move captured one of my pieces, queue a suspension that only
+        // begins after the opponent's next reply (the one-turn delay).
+        if (move.captured && move.captured !== "k") {
+          const left = (inst.state.charges as number) ?? 0;
+          if (left > 0) {
+            inst.state.armed = ((inst.state.armed as number) ?? 0) + 1;
+            inst.state.charges = left - 1;
+          }
+        }
+        // Done only once every counter is spent and nothing remains armed.
+        if (
+          ((inst.state.charges as number) ?? 0) <= 0 &&
+          ((inst.state.armed as number) ?? 0) <= 0
+        ) {
+          inst.spent = true;
+        }
       },
       status: (inst: BuffInstance) => `${(inst.state.charges as number) ?? 3} counters left`,
     },
@@ -451,7 +471,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "holy_hell",
       name: "Holy Hell",
-      description: "Your pawns can never be captured en passant, for the rest of the game.",
+      description: "Your pawns can never be captured en passant for the rest of the game, except your leftmost pawn, which stays exposed to it.",
       tier: 1,
       category: "protection",
       boon: true,
@@ -459,7 +479,21 @@ export const CROSSREF_CARDS: Buff[] = [
       // Guards the pawns without a shield effect; ward is its only paint.
       fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
+    oppFilter((moves, _inst, api) => {
+      // Reduce the protected-pawn total by one: the leftmost of the owner's
+      // pawns is left exposed, so en passant against it still lands while every
+      // other pawn stays immune for the rest of the game.
+      const pawns = mySquares(api.board, api.me, "p");
+      let exposed: Square | null = null;
+      for (const sq of pawns) {
+        if (exposed == null || FILE(sq) < FILE(exposed)) exposed = sq;
+      }
+      return moves.filter((m) => {
+        if (!m.isEnPassant) return true;
+        const capSq = m.capturedSquare ?? m.to;
+        return capSq === exposed;
+      });
+    }),
   ),
 
   // -------------------------------------------------------------------------
