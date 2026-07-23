@@ -4206,9 +4206,9 @@ const TIER7: Buff[] = [
         inst.state.turns = 3;
       },
       onMovePlayed: (inst, move, api) => {
-        // A capture involving my pieces: I take an enemy, or my piece is taken.
-        const involvesMe = move.color === api.me || move.color === api.opp;
-        if (turnsLeft(inst) > 0 && move.captured && move.captured !== "k" && involvesMe) {
+        // Every capture involves one of my pieces (I take an enemy, or my piece
+        // is taken), so any non-king capture during the window detonates once.
+        if (turnsLeft(inst) > 0 && move.captured && move.captured !== "k") {
           const at = move.to;
           // Destroy the capturing piece (its owner aside; classic atomic).
           const capturer = api.board.pieces[at];
@@ -4307,11 +4307,13 @@ const TIER7: Buff[] = [
     },
   ),
   def(
-    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in upgrades resist.", tier: 7, category: "draft" },
+    { id: "grand_nullify", name: "Grand Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in upgrades resist. Using it consumes your next unused reroll, if any.", tier: 7, category: "draft" },
     // Rebalance: dropped the forward-reaching rider (their NEXT-drafted buff no
     // longer arrives nullified); it now only clears what they currently hold.
+    // Cost: using it also spends the caster's next unused reroll, if any.
     instant((_inst, api) => {
       broadNullify(api);
+      if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
     }),
   ),
   def(
@@ -4320,8 +4322,8 @@ const TIER7: Buff[] = [
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
-    { id: "great_divide", name: "Great Divide", description: "One full rank you pick becomes impassable to enemies for the rest of the game.", tier: 7, category: "protection", fx: { motif: "blindfold" } },
-    barLine("rank", null),
+    { id: "great_divide", name: "Great Divide", description: "One full rank you pick becomes impassable to enemies for your opponent's next 2 turns. Pieces already standing on that rank may still leave it.", tier: 7, category: "protection", fx: { motif: "blindfold" } },
+    barLine("rank", 2),
   ),
   def(
     { id: "queens_rampage", requires: ["q"], name: "Queen's Rampage", description: "In one move, your queen sweeps along one straight line you choose and removes every enemy piece on it; a friendly piece or an enemy king ends the line, once.", tier: 8, category: "attack" },
