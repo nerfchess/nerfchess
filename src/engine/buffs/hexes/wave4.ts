@@ -1186,8 +1186,8 @@ const T3: Buff[] = [
     },
   ),
   H3(
-    { id: "hx4_crooked_arrow", name: "Crooked Arrow", description: "For your opponent's next 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7.", flavor: "The fletcher was drunk. The rook is coping.", icon: "MoveDiagonal", fx: { motif: "anchor", pieces: ["r"] } },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) % 2 === 1)),
+    { id: "hx4_crooked_arrow", name: "Crooked Arrow", description: "Starting after your opponent's next move, for their following 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7.", flavor: "The fletcher was drunk. The rook is coping.", icon: "MoveDiagonal", fx: { motif: "anchor", pieces: ["r"] } },
+    delayedCurse(4, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) % 2 === 1)),
   ),
   hex(
     { id: "hx4_night_soil", name: "Night Soil", description: "The first rank of your half of the board is freshly manured: your opponent's pieces cannot stop anywhere on it for their next 2 turns.", flavor: "Strategically vital. Nasally unbearable.", icon: "Tractor", fx: { motif: "blindfold" }, tier: 4 },
@@ -1392,8 +1392,8 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_shifting_floor", name: "Shifting Floor", description: "For your opponent's next 3 turns, none of their pieces may end a move on the rank your king stands on. The floor there will not hold them. Their king is exempt.", flavor: "The architect owed the crown a favor.", icon: "Rows3", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_shifting_floor", name: "Shifting Floor", description: "Starting after your opponent's next move, for their following 3 turns, none of their pieces may end a move on the rank your king stands on. The floor there will not hold them. Their king is exempt.", flavor: "The architect owed the crown a favor.", icon: "Rows3", fx: { motif: "blindfold", pieces: "all" } },
+    delayedCurse(3, (moves, api) => {
       const k = myKing(api);
       if (k == null) return moves;
       return moves.filter((m) => m.piece === "k" || RANK(m.to) !== RANK(k));
@@ -1517,8 +1517,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_rusty_visor", name: "Rusty Visor", description: "For your opponent's next 3 turns, their visors stick shut: no piece may capture an enemy piece more valuable than itself. Capturing the king is always allowed.", flavor: "Swing at what you can see. Which is your own nose.", icon: "EyeOff", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) =>
+    { id: "hx4_rusty_visor", name: "Rusty Visor", description: "Starting after your opponent's next move, for their following 3 turns, their visors stick shut: no piece may capture an enemy piece more valuable than itself. Capturing the king is always allowed.", flavor: "Swing at what you can see. Which is your own nose.", icon: "EyeOff", fx: { motif: "muzzle", pieces: "all" } },
+    delayedCurse(3, (moves, api) =>
       moves.filter((m) => {
         if (!m.captured || m.captured === "k") return true;
         const c = capSq(m);

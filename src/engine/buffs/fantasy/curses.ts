@@ -203,7 +203,7 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Mountain",
       name: "Hex of Stone",
       description:
-        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, and for those 4 turns their rooks and queen may slide no more than two squares.",
+        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move before it too turns to a walnut; and for those 4 turns their rooks and queen may slide no more than two squares.",
       tier: 7,
       category: "hex",
       flavor: "The cavalry and the clergy, all one quarry now.",

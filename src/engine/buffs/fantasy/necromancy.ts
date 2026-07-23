@@ -191,7 +191,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "HeartCrack",
       name: "Withering Touch",
       description:
-        "One enemy piece freezes solid for 3 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
+        "One enemy piece freezes solid for 2 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
       tier: 5,
       category: "hex",
       flavor: "Flesh remembers how to be dust.",
@@ -211,10 +211,12 @@ export const FANTASY_NECROMANCY: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
-        // Two decay stages: hold it frozen for 3 turns, then leave it a heavy
-        // walnut (a one-square shuffle) for the rest of the game. The long
-        // walnut timer stands in for "permanent"; a walnut has no null option.
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stone" });
+        // Two decay stages: hold it frozen for 2 turns, then leave it a heavy
+        // walnut (a one-square shuffle) for the rest of the game. Balance pass:
+        // the freeze (the card's only bounded duration) is shortened by one of
+        // their turns; the walnut's long timer stands in for "permanent" and is
+        // not a real duration to trim (a walnut has no null option).
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stone" });
         addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
       },
     ),
