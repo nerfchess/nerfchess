@@ -138,13 +138,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "HeartPulse",
       name: "Curse of Frailty",
       description:
-        "A wasting curse saps the enemy's strength: for their next 3 turns your opponent cannot capture, and no piece of theirs may slide more than two squares.",
+        "A wasting curse saps the enemy's strength: their next move slips free, then for the 3 of their turns after it your opponent cannot capture, and no piece of theirs may slide more than two squares.",
       tier: 5,
       category: "hex",
       flavor: "Every sword arm goes soft as wax.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves) =>
+    // Balance pass: preserve the 3-turn wasting, but delay activation until
+    // after the opponent's next move.
+    delayedCurse(3, (moves) =>
       moves.filter((m) => {
         if (m.captured) return false;
         const dist = Math.max(
@@ -161,13 +163,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Footprints",
       name: "Doom March",
       description:
-        "The march ends where it stands: enemy pieces that have crossed into your half of the board are gripped by dread and cannot move, for your opponent's next 4 turns.",
+        "The march ends where it stands: after your opponent's next move, enemy pieces that have crossed into your half of the board are gripped by dread and cannot move, for the 4 of their turns after it.",
       tier: 5,
       category: "hex",
       flavor: "Every step forward was one step too many.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(4, (moves, api) => moves.filter((m) => !inHalf(api.me, m.from))),
+    // Balance pass: preserve the 4-turn grip, but delay activation until after
+    // the opponent's next move.
+    delayedCurse(4, (moves, api) => moves.filter((m) => !inHalf(api.me, m.from))),
   ),
   card(
     {
@@ -175,13 +179,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Anchor",
       name: "Chains of Binding",
       description:
-        "A spectral chain shackles the enemy's rooks to each other: while both live, neither rook may end a move more than 3 squares from the other, for your opponent's next 5 turns. A lone rook drags its broken chain and moves freely.",
+        "A spectral chain shackles the enemy's rooks to each other: the chain settles after your opponent's next move, then while both live neither rook may end a move more than 3 squares from the other, for the 5 of their turns after it. A lone rook drags its broken chain and moves freely.",
       tier: 5,
       category: "hex",
       flavor: "The clank of iron, wherever the other tower goes.",
       fx: { motif: "anchor", pieces: ["r"] },
     },
-    curse(5, (moves, api) =>
+    // Balance pass: preserve the 5-turn shackle, but delay activation until
+    // after the opponent's next move.
+    delayedCurse(5, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "r") return true;
         const other = mySquares(api.board, api.opp, "r").find((sq) => sq !== m.from);

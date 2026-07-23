@@ -663,20 +663,25 @@ const GRADUATIONS: Array<
     guardEndsOnCapture?: boolean;
     /** The guard begins only after the opponent's next reply (one turn later). */
     guardDelay?: boolean;
+    /** Route through the card-managed filter guard with no carve-outs (a plain
+     * one-opponent-turn guard that reliably survives into the opponent's turn,
+     * unlike the shared shield). The guard turns aside that single reply, then
+     * ends. */
+    guardPlain?: boolean;
   }
 > = [
   { id: "first_day_badge", name: "First Day Badge", flavor: "Rank four! The pin is enormous on so small a chest.", icon: "BadgeCheck", tier: 2, what: "The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn, and the guard ends the moment that pawn makes a capture", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 4, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true },
   { id: "honor_roll", name: "Honor Roll", flavor: "Fifth rank, first honors, gold trim.", icon: "Award", what: "The first of your pawns to reach your fifth rank is gilded, purely cosmetically, forever; since that reveals nothing you could act on, you also gain a draft reroll and learn the tier of your next draft offer", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 5, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); flashSquares(api, [move.to], true); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
-  { id: "riding_certificate", name: "Riding Certificate", flavor: "Licensed for forward operations at last.", icon: "FileCheck", what: "The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn", cond: (move, api) => move.piece === "n" && relRank(api.me, move.to) >= 4, pay: (move, api) => shield1(api, move.to) },
+  { id: "riding_certificate", name: "Riding Certificate", flavor: "Licensed for forward operations at last.", icon: "FileCheck", tier: 2, what: "The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn; the guard ends once it has turned that reply aside", cond: (move, api) => move.piece === "n" && relRank(api.me, move.to) >= 4, pay: (move, api) => shield1(api, move.to), guardPlain: true },
   { id: "exchange_student", name: "Exchange Student", flavor: "First semester abroad comes with an escort.", icon: "Backpack", tier: 2, what: "The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn, except by a pawn", cond: (move, api) => inHalf(api.opp, move.to), pay: (move, api) => shield1(api, move.to), guardExceptPawns: true },
   { id: "debutante_ball", name: "Debutante Ball", flavor: "Her first appearance is, by decree, uninterruptible.", icon: "Sparkles", tier: 2, what: "When your queen makes her first move, she cannot be captured during your opponent's turn after next (the guard begins only after their next reply)", cond: (move) => move.piece === "q", pay: (move, api) => shield1(api, move.to), guardDelay: true },
   { id: "tower_inspection", name: "Tower Inspection", flavor: "Freshly certified: one tower, structurally smug.", icon: "Castle", what: "When your first rook moves, it cannot be captured during your opponent's next turn", cond: (move) => move.piece === "r" && !move.castle, pay: (move, api) => shield1(api, move.to) },
-  { id: "ordination_day", name: "Ordination Day", flavor: "The diagonal is a calling, formally answered.", icon: "Church", what: "When your first bishop moves, it cannot be captured during your opponent's next turn", cond: (move) => move.piece === "b", pay: (move, api) => shield1(api, move.to) },
+  { id: "ordination_day", name: "Ordination Day", flavor: "The diagonal is a calling, formally answered.", icon: "Church", tier: 2, what: "When your first bishop moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that bishop makes a capture", cond: (move) => move.piece === "b", pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true },
   { id: "morning_constitutional", name: "Morning Constitutional", flavor: "A king who walks before breakfast earns his hat.", icon: "Footprints", what: "When your king makes his first non-castling move, he earns a hat, purely cosmetically, forever, every enemy piece he could capture flashes until your opponent replies, and you gain 5 seconds", cond: (move) => move.piece === "k" && !move.castle, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "hat", null); flashSquares(api, [move.to], true); const caps = capturesFrom(api, move.to, api.opp); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
 ];
 
 function graduation(entry: (typeof GRADUATIONS)[number]): Buff {
-  const guarded = !!(entry.guardExceptPawns || entry.guardEndsOnCapture || entry.guardDelay);
+  const guarded = !!(entry.guardExceptPawns || entry.guardEndsOnCapture || entry.guardDelay || entry.guardPlain);
   if (!guarded) {
     return opener(entry, `${entry.what}. One use, automatic.`, {
       kind: "passive",
