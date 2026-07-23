@@ -1201,11 +1201,14 @@ export function DraftOverlay({
               const def = BUFF_BY_ID[card.id];
               if (!def) return null;
               return (
-                <div key={i} className={selected === i ? "ring-2 ring-gold" : ""}>
+                // Selection ring rides on the card itself (glow), not a static
+                // wrapper, so the hover lift can never leave the ring behind.
+                <div key={i}>
                   <BuffCard
                     buff={def}
                     tier={card.tier}
                     compact
+                    glow={selected === i}
                     onClick={!settled ? () => chooseMinimized(i, Date.now()) : undefined}
                   />
                 </div>
