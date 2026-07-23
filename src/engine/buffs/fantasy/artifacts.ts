@@ -10,7 +10,6 @@
 import { Buff } from "./shared";
 import {
   card,
-  pieceBound,
   permanentAugment,
   timedAugment,
   slideMoves,
@@ -20,6 +19,7 @@ import {
   ORTHO_DIRS,
   DIAG_DIRS,
   ALL_DIRS,
+  type Square,
 } from "./shared";
 
 export const FANTASY_ARTIFACTS: Buff[] = [
@@ -29,16 +29,71 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Sword",
       name: "Excalibur",
       description:
-        "One of your bishops also moves like a rook for the game, giving it full queen movement.",
+        "Draw the lake's blade: choose one of your bishops. Until it next moves it may also slide like a rook, giving it full queen movement, but the first move it makes, straight or diagonal, spends the blade.",
       tier: 5,
       category: "movement",
       requires: ["b"],
       flavor: "The lake gives up its blade only once.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
     },
-    pieceBound("b", "Choose the bishop to wield Excalibur", (board, sq, via) =>
-      slideMoves(board, sq, ORTHO_DIRS, via),
-    ),
+    // Balance pass: the rook-line grant is a single charge, not a permanent
+    // upgrade. The engine only ever offers the granted slide when legal, so a
+    // failed attempt cannot happen; instead the charge is spent the moment the
+    // chosen bishop next moves, taken (a rook slide) or not (a bishop move).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the bishop to wield Excalibur",
+              squares: mySquares(api.board, api.me, "b"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || ((inst.state.charges as number) ?? 0) <= 0) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "b") return;
+        for (const e of slideMoves(api.board, sq, ORTHO_DIRS, inst.id)) {
+          if (!moves.some((m) => m.from === e.from && m.to === e.to)) moves.push(e);
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Bound bishop captured or overrun: the blade is lost.
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        // The bound bishop moved: the single stroke is spent, taken or not.
+        if (move.from === sq && move.color === api.me) {
+          inst.state.charges = 0;
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a bishop";
+        return ((inst.state.charges as number) ?? 0) > 0
+          ? "the blade is drawn for one stroke"
+          : "the blade is sheathed";
+      },
+    },
   ),
   card(
     {
@@ -180,7 +235,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "ShieldPlus",
       name: "Aegis of the Ages",
       description:
-        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 3 turns.",
+        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 3 turns. Lifting it consumes your next unused reroll, if you have one.",
       tier: 7,
       category: "protection",
       flavor: "Forged before the first war, unbroken since.",
@@ -191,6 +246,8 @@ export const FANTASY_ARTIFACTS: Buff[] = [
     instant((_inst, api) => {
       addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+      // Balance pass: lifting the aegis consumes your next unused reroll, if any.
+      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
     }),
   ),
   card(

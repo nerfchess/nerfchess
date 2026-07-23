@@ -4,7 +4,7 @@
 // the full move list, so none of these can ever soft-lock a turn.
 
 import { Buff } from "./shared";
-import { card, curse, dist, mySquares, FILE, RANK, relRank } from "./shared";
+import { card, curse, dist, mySquares, tickTurns, turnsLeft, FILE, RANK, relRank } from "./shared";
 
 export const FUNNY_CURSES: Buff[] = [
   card(

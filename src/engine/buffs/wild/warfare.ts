@@ -705,12 +705,53 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_bridgehead",
       name: "Bridgehead",
-      description: "Place a new knight and a new pawn on empty squares in your opponent's half, once.",
+      description: "Place a new knight on an empty square in your half and a new pawn on an empty square on your fourth rank or lower, once.",
       tier: 6,
       category: "pieces",
-      flavor: "Hold the crossing and pour through it.",
+      flavor: "Hold the near bank and build from it.",
     },
-    placePieces(["n", "p"], oppHalfZone),
+    // Overhaul balance pass: the reinforcements now form up on your own side of
+    // the river. The knight spawns anywhere in your half and the pawn no higher
+    // than your fourth rank, so neither can strike the moment it lands (they can
+    // only reach the enemy after advancing on a later turn, past an opponent
+    // reply).
+    {
+      kind: "activated",
+      spendOnUse: true,
+      targets: (_inst, api, picks) => {
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Place your new knight",
+            squares: emptySquares(api.board, myHalfZone(api)),
+          };
+        }
+        if (picks.length === 1) {
+          return {
+            kind: "square",
+            label: "Place your new pawn on your fourth rank or lower",
+            squares: emptySquares(
+              api.board,
+              (sq) => relRank(api.me, sq) <= 4 && pawnRankOk(sq),
+            ).filter((sq) => sq !== picks[0].square),
+          };
+        }
+        return null;
+      },
+      effect: (_inst, api, picks) => {
+        const knightSq = picks[0]?.square;
+        if (knightSq != null && !api.board.pieces[knightSq]) api.place(knightSq, "n", api.me);
+        const pawnSq = picks[1]?.square;
+        if (
+          pawnSq != null &&
+          !api.board.pieces[pawnSq] &&
+          relRank(api.me, pawnSq) <= 4 &&
+          pawnRankOk(pawnSq)
+        ) {
+          api.place(pawnSq, "p", api.me);
+        }
+      },
+    },
   ),
   card(
     {
@@ -1333,19 +1374,21 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_dug_in_defense",
       name: "Dug-In Defense",
-      description: "Dig three foxholes: choose up to three of your pieces; they cannot be captured for your opponent's next 3 turns.",
+      description: "Dig four foxholes: choose up to four of your pieces; they cannot be captured for your opponent's next 3 turns.",
       tier: 7,
       category: "protection",
-      flavor: "Three holes to weather anything.",
+      flavor: "Foxholes enough to weather anything.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
+    // Overhaul balance pass: the same 3-turn dig now shelters up to FOUR chosen
+    // pieces (was three).
     activated(
       (_inst, api, picks) =>
-        picks.length >= 3
+        picks.length >= 4
           ? null
           : {
               kind: "square",
-              label: `Choose a piece to dig in (${picks.length + 1}/3)`,
+              label: `Choose a piece to dig in (${picks.length + 1}/4)`,
               squares: mySquares(api.board, api.me).filter(
                 (sq) =>
                   api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),

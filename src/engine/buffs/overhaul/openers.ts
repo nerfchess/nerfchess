@@ -146,8 +146,8 @@ const FILE_SCOUTS: Array<OpenerMeta & { file: number }> = [
   { id: "cloister_step", name: "Cloister Step", flavor: "The c-file monks shuffle quietly but decisively.", icon: "Church", file: 2 },
   { id: "market_lane", name: "Market Lane", flavor: "On the d-file everything is negotiable, even geometry.", icon: "ShoppingBasket", file: 3 },
   { id: "parade_route", name: "Parade Route", flavor: "The e-file was built for marching. Sideways, today.", icon: "Flag", file: 4 },
-  { id: "garden_gate", name: "Garden Gate", flavor: "The f-file gardeners trim their hedges diagonally.", icon: "Flower2", file: 5 },
-  { id: "gallery_row", name: "Gallery Row", flavor: "The g-file critics agree: a bold lateral composition.", icon: "Palette", file: 6 },
+  { id: "garden_gate", name: "Garden Gate", flavor: "The e-file gardeners slip sideways through the gate.", icon: "Flower2", file: 5 },
+  { id: "gallery_row", name: "Gallery Row", flavor: "The d-file critics agree: a bold lateral composition.", icon: "Palette", file: 6 },
   { id: "harborside_h", name: "Lighthouse Walk", flavor: "The h-file keeps one light burning and one path open.", icon: "Lightbulb", file: 7 },
 ];
 
