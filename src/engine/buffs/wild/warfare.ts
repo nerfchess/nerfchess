@@ -553,6 +553,10 @@ export const WILD_WARFARE: Buff[] = [
       requires: ["p"],
       flavor: "The muster roll fills out fast.",
     },
+    // Overhaul balance pass: the special move cannot capture. The advance is a
+    // straight one-square step that only ever lands on an EMPTY square ahead
+    // (the pawn never moves diagonally and never onto an occupied square), so
+    // it can never capture by construction.
     instant((_inst, api) => {
       const fwd = api.me === "w" ? 8 : -8;
       // March the far ranks first so a pawn never blocks the one behind it.
@@ -562,6 +566,7 @@ export const WILD_WARFARE: Buff[] = [
       for (const sq of pawns) {
         const to = sq + fwd;
         if (to < 0 || to > 63) continue;
+        // Only an empty square ahead: this step never captures.
         if (!api.board.pieces[to] && pawnRankOk(to)) api.relocate(sq, to);
       }
     }),
@@ -818,14 +823,16 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_spearhead",
       name: "Spearhead",
-      description: "One of your rooks drives in a straight line, capturing up to two enemy pieces in its path and stopping. The squares it punches through stay barred to your opponent for their next 2 turns.",
+      description: "One of your rooks drives in a straight line, capturing the first enemy piece in its path and stopping. The squares it punches through stay barred to your opponent for their next 2 turns.",
       tier: 5,
       category: "attack",
       requires: ["r"],
       flavor: "Punch a hole and hold it open.",
       fx: { motif: "blindfold" },
     },
-    sweepThenBar("r", ORTHO_DIRS, 2, 2),
+    // Overhaul balance pass: of the two equal largest counts (up-to-two
+    // captures, two barred turns) the capture count is reduced by one (2 -> 1).
+    sweepThenBar("r", ORTHO_DIRS, 1, 2),
   ),
   card(
     {
@@ -1269,7 +1276,7 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_form_square",
       name: "Form Square",
-      description: "Pick any square: your pieces standing on it or any of the up-to-eight squares around it, your king aside, cannot be captured for your opponent's next 2 turns.",
+      description: "Pick any square: your pieces standing on it or any of the up-to-eight squares around it, your king aside, cannot be captured for your opponent's next turn.",
       tier: 5,
       category: "protection",
       flavor: "Backs together, blades out.",
@@ -1291,7 +1298,9 @@ export const WILD_WARFARE: Buff[] = [
           const f = FILE(c) + df, r = RANK(c) + dr;
           if (inBoard(f, r)) squares.push(SQ(f, r));
         }
-        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 2 });
+        // Overhaul balance pass: the immunity is shortened by one opponent turn
+        // (2 -> 1).
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
       },
     ),
   ),

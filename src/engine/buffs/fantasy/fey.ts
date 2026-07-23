@@ -247,7 +247,7 @@ export const FANTASY_FEY: Buff[] = [
       id: "unseelie_bargain",
       name: "Unseelie Bargain",
       description:
-        "Free action: strike a bargain with the dark court and take two extra moves right now. The price comes due and you skip your next turn.",
+        "Free action: strike a bargain with the dark court and take two extra moves right now. When the sequence resolves the price comes due and you skip your next draft.",
       tier: 6,
       category: "tempo",
       flavor: "Read the contract. The contract reads you back.",
@@ -256,7 +256,8 @@ export const FANTASY_FEY: Buff[] = [
     {
       ...activatedSimple((_inst, api) => {
         api.bs.extraMoves[api.me] += 2;
-        api.bs.skips[api.me] += 1;
+        // Balance pass: the price is now a skipped draft, not a skipped turn.
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       }),
       freeAction: true,
     },
@@ -266,48 +267,77 @@ export const FANTASY_FEY: Buff[] = [
       id: "dryad_grove",
       name: "Dryad Grove",
       description:
-        "The grove parts for the clergy: your bishops may slide through your own pawns (never capturing them), for the rest of the game.",
+        "The grove parts for the clergy just once: your bishops may slide through one of your own pawns (never capturing it) to the square beyond. This is a single passage, spent the first turn any such slide is on offer, whether or not you take it.",
       tier: 5,
       category: "movement",
       requires: ["b"],
       flavor: "Her roots go deeper than your war.",
       fx: { motif: "empower", pieces: ["b"], self: true },
     },
-    permanentAugment((_m, inst, api) => {
-      const out: ReturnType<typeof slideMoves> = [];
-      for (const from of mySquares(api.board, api.me, "b")) {
-        for (const [df, dr] of DIAG_DIRS) {
-          let f = FILE(from) + df, r = RANK(from) + dr, passedPawn = false;
-          while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
-            const to = f + r * 8;
-            const t = api.board.pieces[to];
-            if (!t) {
-              if (passedPawn) {
-                out.push({ from, to, piece: "b", color: api.me, via: inst.id });
+    // Balance pass: the phasing slide is a single charge, not a permanent grant.
+    // The engine only ever offers the slide when legal, so a "failed attempt"
+    // cannot happen; instead the charge is spent the first turn the slide is
+    // available, taken (played via this card) or not (any other move that turn).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.offered = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        for (const from of mySquares(api.board, api.me, "b")) {
+          for (const [df, dr] of DIAG_DIRS) {
+            let f = FILE(from) + df, r = RANK(from) + dr, passedPawn = false;
+            while (f >= 0 && f <= 7 && r >= 0 && r <= 7) {
+              const to = f + r * 8;
+              const t = api.board.pieces[to];
+              if (!t) {
+                if (passedPawn) {
+                  moves.push({ from, to, piece: "b", color: api.me, via: inst.id });
+                  inst.state.offered = true;
+                }
+              } else if (t.color === api.me && t.type === "p" && !passedPawn) {
+                passedPawn = true;
+              } else {
+                if (passedPawn && t.color !== api.me) {
+                  moves.push({
+                    from,
+                    to,
+                    piece: "b",
+                    color: api.me,
+                    captured: t.type,
+                    capturedSquare: to,
+                    via: inst.id,
+                  });
+                  inst.state.offered = true;
+                }
+                break;
               }
-            } else if (t.color === api.me && t.type === "p" && !passedPawn) {
-              passedPawn = true;
-            } else {
-              if (passedPawn && t.color !== api.me) {
-                out.push({
-                  from,
-                  to,
-                  piece: "b",
-                  color: api.me,
-                  captured: t.type,
-                  capturedSquare: to,
-                  via: inst.id,
-                });
-              }
-              break;
+              f += df;
+              r += dr;
             }
-            f += df;
-            r += dr;
           }
         }
-      }
-      return out;
-    }),
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Reset the availability flag at the start of each of the caster's
+        // turns (after the opponent replies) so it only ever reflects whether
+        // the passage was truly on offer on the caster's own move.
+        if (move.color === api.opp) {
+          inst.state.offered = false;
+          return;
+        }
+        if (move.color !== api.me || ((inst.state.charges as number) ?? 0) <= 0) return;
+        if (move.via === inst.id || inst.state.offered) {
+          inst.state.charges = 0;
+          inst.spent = true;
+        }
+        inst.state.offered = false;
+      },
+      status: (inst) =>
+        ((inst.state.charges as number) ?? 0) > 0 ? "one passage ready" : "the grove has closed",
+    },
   ),
   card(
     {
@@ -334,7 +364,7 @@ export const FANTASY_FEY: Buff[] = [
       id: "fey_step",
       name: "Fey Step",
       description:
-        "One of your knights or bishops slips into the hedgerow and steps out behind their lines: move it to any empty square on your opponent's back two ranks, once.",
+        "One of your knights or bishops slips into the hedgerow and steps out behind their lines: move it to any empty square on your opponent's back two ranks, once. The step lands on an empty square only and cannot capture.",
       tier: 5,
       category: "movement",
       requires: ["n", "b"],

@@ -1854,29 +1854,61 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "Leaf",
       name: "Overgrowth",
       description:
-        "One of your pawns blooms into a queen for your next 3 turns, then withers back into a pawn.",
+        "Choose one of your pawns; after your opponent replies it blooms into a queen for your next 3 turns, then withers back into a pawn.",
       tier: 5,
       category: "pieces",
       requires: ["p"],
       flavor: "A season of glory.",
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // The bloom is aimed now but its first trigger waits: the pawn only turns to
+    // a queen after the opponent's next move. The chosen pawn is tracked, so
+    // moving it in the meantime carries the pending bloom with it.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.armed === true
           ? null
           : {
               kind: "square",
               label: "Choose a pawn to bloom into a queen",
               squares: mySquares(api.board, api.me, "p"),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
-        api.setPieceType(sq, "q");
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "demote", into: "p" });
+        if (sq == null || inst.state.armed === true) return;
+        inst.state.sq = sq;
+        inst.state.armed = true;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true) return;
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) {
+          inst.state.armed = false;
+          inst.spent = true;
+          return;
+        }
+        // Follow the chosen pawn if you move it before the opponent replies.
+        if (move.from === sq && move.color === api.me) {
+          inst.state.sq = move.to;
+          return;
+        }
+        if (move.color !== api.opp) return;
+        // The bloom lands after the opponent's reply on wherever the chosen pawn
+        // now sits, provided it survived and is still your pawn.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.me && p.type === "p") {
+          api.setPieceType(cur, "q");
+          addEffect(api, { kind: "timed_loss", owner: api.me, sq: cur, turns: 4, then: "demote", into: "p" });
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "blooms after your opponent replies" : "activate to bloom a pawn",
+    },
   ),
   card(
     {
