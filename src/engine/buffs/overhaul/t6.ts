@@ -592,30 +592,24 @@ export const OVERHAUL_T6: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         inst.state.sq = sq;
+        // Seal the target and its neighbours against the opponent until impact.
+        const sealed: Square[] = [sq];
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(sq) + df, r = RANK(sq) + dr;
+            if (inBoard(f, r)) sealed.push(SQ(f, r));
+          }
+        }
+        addEffect(api, { kind: "barred", squares: sealed, against: api.opp, turns: 1 });
         flashSquares(api, [sq]);
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || move.color !== api.opp) return;
+        // Impact: destroy the target piece; the barred seal expires this turn.
         const center = api.board.pieces[sq];
         if (center && center.type !== "k") api.removePiece(sq);
-        // Knock neighbours outward, ascending square order (deterministic).
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const f = FILE(sq) + df, r = RANK(sq) + dr;
-            if (!inBoard(f, r)) continue;
-            const nsq = SQ(f, r);
-            const p = api.board.pieces[nsq];
-            if (!p) continue;
-            const of = f + df, orr = r + dr;
-            if (!inBoard(of, orr)) continue;
-            const out = SQ(of, orr);
-            if (api.board.pieces[out]) continue;
-            if (p.type === "p" && !pawnRankOk(out)) continue;
-            api.relocate(nsq, out);
-          }
-        }
         flashSquares(api, [sq]);
         inst.spent = true;
       },

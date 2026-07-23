@@ -329,9 +329,15 @@ const T5: Buff[] = [
     curse(3, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 2)),
   ),
   H5(
-    { id: "hx4_tithe_of_blood", name: "Tithe of Blood", description: "For your opponent's next 4 turns, any piece of theirs that captures is frozen for 1 of their turns immediately after the kill. Kings never freeze.", flavor: "The altar takes its cut of every kill.", icon: "Droplets", fx: { motif: "muzzle", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
-      if (move.captured && move.piece !== "k") sting(api, move.to, 1, "rust");
+    { id: "hx4_tithe_of_blood", name: "Tithe of Blood", description: "For your opponent's next 4 turns, any piece of theirs that captures is frozen for 1 of their turns immediately after the kill. The first piece to make a kill slips free; every capture after it freezes. Kings never freeze.", flavor: "The altar takes its cut of every kill.", icon: "Droplets", fx: { motif: "muzzle", pieces: "all" } },
+    onTheirMove(4, (move, api, inst) => {
+      if (move.captured && move.piece !== "k") {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          return;
+        }
+        sting(api, move.to, 1, "rust");
+      }
     }),
   ),
   H5(
@@ -351,23 +357,99 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_night_watch_rota", name: "Night Watch Rota", description: "For your opponent's next 4 turns, their knights and bishops are on watch duty every other turn (the 1st and 3rd) and cannot move on those turns.", flavor: "Half the officers are always asleep on the wall.", icon: "Moon", fx: { motif: "slow", pieces: ["n", "b"] } },
-    cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => m.piece !== "n" && m.piece !== "b")),
+    { id: "hx4_night_watch_rota", name: "Night Watch Rota", description: "For your opponent's next 4 turns, their knights and bishops are on watch duty every other turn (the 1st and 3rd) and cannot move on those turns. The first knight or bishop the rota would bench slips through once, then it binds fully.", flavor: "Half the officers are always asleep on the wall.", icon: "Moon", fx: { motif: "slow", pieces: ["n", "b"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const left = turnsLeft(inst);
+        if (left <= 0 || moves.length === 0) return moves;
+        if ((4 - left) % 2 !== 0) return moves;
+        const kept = moves.filter((m) => m.piece !== "n" && m.piece !== "b");
+        if (kept.length === 0) return moves;
+        if (inst.state.escaped) return kept;
+        const keptSet = new Set(kept);
+        const blocked = moves.filter((m) => !keptSet.has(m));
+        if (blocked.length === 0) return kept;
+        let escapeFrom = blocked[0].from;
+        for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+        const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+        inst.state.escapeFrom = escapeFrom;
+        inst.state.escapeTos = escapeMoves.map((m) => m.to);
+        return [...kept, ...escapeMoves];
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (
+          move.color === api.opp &&
+          turnsLeft(inst) > 0 &&
+          !inst.state.escaped &&
+          inst.state.escapeFrom != null &&
+          move.from === inst.state.escapeFrom &&
+          Array.isArray(inst.state.escapeTos) &&
+          (inst.state.escapeTos as Square[]).includes(move.to)
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H5(
-    { id: "hx4_tar_pits", name: "Tar Pits", description: "Choose 3 empty squares: they become bubbling tar for 3 of your opponent's turns, and none of their pieces may stop on them.", flavor: "The ground remembers everything that steps in it.", icon: "CircleDot", fx: { motif: "blindfold" } },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
+    { id: "hx4_tar_pits", name: "Tar Pits", description: "Choose 3 empty squares: they become bubbling tar for 3 of your opponent's turns, and none of their pieces may stop on them. The first piece the tar would stop may wade through once, then it binds fully.", flavor: "The ground remembers everything that steps in it.", icon: "CircleDot", fx: { motif: "blindfold" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.tar != null
           ? null
           : { kind: "square", label: `Choose a tar square (${picks.length + 1}/3)`, squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)) },
-      (_inst, api, picks) => {
-        barNow(api, picks.map((k) => k.square).filter((s): s is number => s != null), 3);
+      effect: (inst, _api, picks) => {
+        if (inst.state.tar != null) return;
+        inst.state.tar = picks.map((k) => k.square).filter((s): s is number => s != null);
+        inst.state.turns = 3;
+        inst.state.escaped = false;
       },
-    ),
+      filterOpponentMoves: (moves, inst) => {
+        const tar = inst.state.tar as Square[] | undefined;
+        if (!tar || tar.length === 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => !tar.includes(m.to));
+        if (kept.length === 0) return moves;
+        if (inst.state.escaped) return kept;
+        const keptSet = new Set(kept);
+        const blocked = moves.filter((m) => !keptSet.has(m));
+        if (blocked.length === 0) return kept;
+        let escapeFrom = blocked[0].from;
+        for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+        const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+        inst.state.escapeFrom = escapeFrom;
+        inst.state.escapeTos = escapeMoves.map((m) => m.to);
+        return [...kept, ...escapeMoves];
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.tar == null) return;
+        if (
+          move.color === api.opp &&
+          turnsLeft(inst) > 0 &&
+          !inst.state.escaped &&
+          inst.state.escapeFrom != null &&
+          move.from === inst.state.escapeFrom &&
+          Array.isArray(inst.state.escapeTos) &&
+          (inst.state.escapeTos as Square[]).includes(move.to)
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.tar == null ? "activate to set the tar" : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
-  H5(
-    { id: "hx4_walnut_pinch", name: "Walnut Pinch", description: "Your opponent's queen turns into a walnut for 1 of their turns: a heavy nut that can only shuffle one square.", flavor: "Just a taste of the shell.", icon: "Nut", fx: { motif: "anchor", pieces: ["q"] } },
+  hex(
+    { id: "hx4_walnut_pinch", name: "Walnut Pinch", description: "Your opponent's queen turns into a walnut for 1 of their turns: a heavy nut that can only shuffle one square.", flavor: "Just a taste of the shell.", icon: "Nut", fx: { motif: "anchor", pieces: ["q"] }, tier: 6 },
     walnutAll(["q"], 1),
   ),
   H5(
@@ -424,8 +506,8 @@ const T5: Buff[] = [
       }
     }),
   ),
-  H5(
-    { id: "hx4_white_flag_hour", name: "White Flag Hour", description: "A rolling truce is called: on the 1st and 3rd of your opponent's next 4 turns, they cannot capture anything.", flavor: "One hour of peace, signed under protest. Renewed hourly.", icon: "Flag", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_white_flag_hour", name: "White Flag Hour", description: "A rolling truce is called: on the 1st and 3rd of your opponent's next 4 turns, they cannot capture anything.", flavor: "One hour of peace, signed under protest. Renewed hourly.", icon: "Flag", fx: { motif: "muzzle", pieces: "all" }, tier: 6 },
     cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => !m.captured)),
   ),
   H5(
@@ -476,9 +558,14 @@ const T5: Buff[] = [
     ),
   ),
   H5(
-    { id: "hx4_quicksand_quarter", name: "Quicksand Quarter", description: "The queenside quarter of your half (files a to d) turns to quicksand: your opponent's pieces may not stop there for their next 3 turns. Their king is exempt.", flavor: "The map says meadow. The meadow disagrees.", icon: "MapPinOff", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_quicksand_quarter", name: "Quicksand Quarter", description: "The queenside quarter of your half (files a to d) turns to quicksand: your opponent's pieces may not stop there for their next 3 turns. Pieces already standing in the quarter may still move freely. Their king is exempt.", flavor: "The map says meadow. The meadow disagrees.", icon: "MapPinOff", fx: { motif: "blindfold", pieces: "all" } },
     curse(3, (moves, api) =>
-      moves.filter((m) => m.piece === "k" || !(FILE(m.to) <= 3 && relRank(api.opp, m.to) >= 5)),
+      moves.filter(
+        (m) =>
+          m.piece === "k" ||
+          !(FILE(m.to) <= 3 && relRank(api.opp, m.to) >= 5) ||
+          (FILE(m.from) <= 3 && relRank(api.opp, m.from) >= 5),
+      ),
     ),
   ),
   H5(
@@ -623,8 +710,22 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_paper_orders", name: "Paper Orders", description: "Your opponent's next 4 draft offers exclude draft manipulation cards. The couriers were paid to lose that satchel.", flavor: "Bureaucracy is the quietest siege engine.", icon: "FileX" },
-    suppressDraftCards(4),
+    { id: "hx4_paper_orders", name: "Paper Orders", description: "Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The couriers were paid to lose that satchel.", flavor: "Bureaucracy is the quietest siege engine.", icon: "FileX" },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
+        inst.state.draftAt = api.theirs.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        if (api.theirs.draftsTaken > ((inst.state.draftAt as number) ?? 0)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "the satchel is lost" : "waiting for their next draft"),
+    },
   ),
 ];
 

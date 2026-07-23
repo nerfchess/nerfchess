@@ -550,6 +550,19 @@ function augmentThenResolve(
   };
 }
 
+/** Wrap an activated mech so firing it also spends the caster's next unused
+ * reroll, if any (balance pass: the effect now costs a draft reroll). */
+function consumeRerollOnUse(mech: Mech): Mech {
+  const base = mech.effect;
+  return {
+    ...mech,
+    effect: (inst, api, picks) => {
+      base?.(inst, api, picks);
+      if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+    },
+  };
+}
+
 /** The 16 starting squares for `me`, paired with the piece type each holds. */
 function homeSquares(me: Color): [Square, PieceType][] {
   const hr = me === "w" ? 0 : 7;
@@ -610,8 +623,8 @@ const kingAdjacentZone = (api: BuffApi) => {
 
 const TIER1: Buff[] = [
   def(
-    { id: "pawn_push", requires: ["p"], name: "Pawn Push", description: "On any turn, one of your pawns with two empty squares ahead may advance two squares in a single move, even after it has left its starting square, for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    permanentAugment(doubleStepGen),
+    { id: "pawn_push", requires: ["p"], name: "Pawn Push", description: "On any turn, one of your pawns with two empty squares ahead may advance two squares in a single move, even after it has left its starting square, for the game. It cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    permanentAugment((moves, inst, api) => doubleStepGen(moves, inst, api).filter((m) => !m.captured)),
   ),
   def(
     { id: "wazir_rook", requires: ["r"], name: "Wazir Rook", description: "Choose one rook; for the game it may also step one square diagonally.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
@@ -1391,7 +1404,7 @@ const TIER2: Buff[] = [
     pieceBound("b", "Choose the bishop", (board, sq, via) => slideMoves(board, sq, ORTHO_DIRS, via, 1)),
   ),
   def(
-    { id: "spring_pawn", requires: ["p"], name: "Spring Pawn", description: "Your pawns can spring one square sideways onto an empty square, twice.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true }, flavor: "A little hop, a whole new file." },
+    { id: "spring_pawn", requires: ["p"], name: "Spring Pawn", description: "Your pawns can spring one square sideways onto an empty square, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true }, flavor: "A little hop, a whole new file." },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1405,12 +1418,14 @@ const TIER2: Buff[] = [
         }
       }
       return out;
-    }, 2),
+    }, 1),
   ),
   def(
-    { id: "rally", requires: ["n"], name: "Rally", description: "One of your knights may move like a king for 1 turn.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
+    { id: "rally", requires: ["n"], name: "Rally", description: "One of your knights may move like a king for 1 turn. The king step cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
     timedAugment(1, (_m, inst, api) =>
-      mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
+      mySquares(api.board, api.me, "n")
+        .flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1))
+        .filter((m) => !m.captured),
     ),
   ),
   def(
@@ -1704,7 +1719,7 @@ const TIER3: Buff[] = [
   def(
     // Fairy hop with no chess analogue, so no moveAs; any non-king piece can
     // be bound.
-    { id: "grasshopper", name: "Grasshopper", description: "Choose one non-king piece. For the game it may also move along any rank, file, or diagonal and land on the square immediately beyond the first piece in its path, capturing an enemy piece that stands there.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true } },
+    { id: "grasshopper", name: "Grasshopper", description: "Choose one non-king piece. For the game it may also move along any rank, file, or diagonal and land on the empty square immediately beyond the first piece in its path. It cannot capture.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true } },
     bindPiece("Choose the piece", bindCandidates(), {
       gen: (board, sq, via) => {
         const p = board.pieces[sq]!;
@@ -1717,12 +1732,10 @@ const TIER3: Buff[] = [
           const lf = f + df, lr = r + dr;
           if (!inBoard(f, r) || !inBoard(lf, lr)) continue;
           const to = SQ(lf, lr);
-          const t = board.pieces[to];
-          if (!t || t.color !== p.color) {
-            out.push({
-              from: sq, to, piece: p.type, color: p.color, via,
-              ...(t ? { captured: t.type, capturedSquare: to } : {}),
-            });
+          // The hop lands only on an empty square: it can no longer capture the
+          // piece sitting immediately beyond the screen.
+          if (!board.pieces[to]) {
+            out.push({ from: sq, to, piece: p.type, color: p.color, via });
           }
         }
         return out;
@@ -1854,9 +1867,11 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "overclock", requires: ["n"], name: "Overclock", description: "Your knights move like knights or kings for 3 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
+    { id: "overclock", requires: ["n"], name: "Overclock", description: "Your knights move like knights or kings for 3 turns. The added king step cannot capture.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
     timedAugment(3, (_m, inst, api) =>
-      mySquares(api.board, api.me, "n").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)),
+      mySquares(api.board, api.me, "n")
+        .flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id, 1))
+        .filter((m) => !m.captured),
     ),
   ),
   def(
@@ -1982,12 +1997,21 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "momentum", name: "Momentum", description: "After your next capture, immediately take a second move, once.", tier: 3, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "momentum", name: "Momentum", description: "After your next capture, immediately take a second move that cannot capture, once.", tier: 3, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me || !move.captured || move.captured === "k") return;
         api.bs.extraMoves[api.me] += 1;
+        // The bonus move cannot capture: bar every square an enemy piece now
+        // holds against me for that one move. turns:2 so the wall survives this
+        // capturing move's own tick and lapses right after the bonus move; if
+        // it would leave me with only captures, the engine's no-move relax just
+        // hands the turn back rather than soft-locking.
+        const enemySquares = mySquares(api.board, api.opp);
+        if (enemySquares.length) {
+          addEffect(api, { kind: "barred", squares: enemySquares, against: api.me, turns: 2 });
+        }
         inst.spent = true;
       },
       status: () => "waiting for your next capture",

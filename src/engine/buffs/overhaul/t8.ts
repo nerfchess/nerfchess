@@ -450,12 +450,16 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_deus_ex_machina",
       name: "Deus Ex Machina",
       description:
-        "The machine god intervenes once: if your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn.",
+        "The machine god intervenes once: if your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn. Using it spends the card even if the intervention finds nothing to do.",
       tier: 8,
       category: "pieces",
       icon: "Cog",
       flavor: "Act five, on schedule, with hydraulics.",
     },
+    // Balance pass: a failed or illegal attempt still spends the charge. The
+    // card is an always-offered one-shot (activatedSimple defaults to
+    // spendOnUse), so activation consumes it whether or not the effect below
+    // changes anything (queen already alive, no freezes, no recent enemy move).
     activatedSimple((_inst, api) => {
       if (revivable(api, "q") > 0) {
         const home = [...emptyHomeRank(api, 0), ...emptyHomeRank(api, 1)];
