@@ -1793,14 +1793,37 @@ const NAMED: Buff[] = [
       id: "uniqlo_warrior",
       name: "Uniqlo Warrior",
       description:
-        "Suit up in the daily fit. Your entire army cannot be captured for your opponent's next 3 turns.",
+        "Suit up in the daily fit. Choose up to four of your pieces: they cannot be captured for your opponent's next 3 turns.",
       tier: 5,
       category: "protection",
       icon: "Shirt",
       flavor: "Dependable, breathable, bulletproof.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    shieldArmy(3),
+    // Nerf: protection limited to four chosen pieces (was the whole army),
+    // duration preserved at the opponent's next 3 turns.
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to suit up (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const squares = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null);
+        if (squares.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+        }
+      },
+    ),
   ),
 
   card(
@@ -1808,16 +1831,20 @@ const NAMED: Buff[] = [
       id: "bayview_secondary_school",
       name: "Bayview Secondary School",
       description:
-        "Detention for the whole class. Choose a square: every enemy piece except the king in the 3 by 3 around it is locked in place for their next 3 turns.",
+        "Detention for the whole class. Choose a square: after your opponent's next move, every enemy piece except the king in the 3 by 3 around it is locked in place for their next 3 turns.",
       tier: 6,
       category: "tempo",
       icon: "School",
       flavor: "Nobody leaves till the bell.",
       fx: { motif: "jail" },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Nerf: the lockdown no longer bites on activation. Bank the chosen center
+    // and apply the freezes only after the opponent's next move.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        inst.state.center != null || picks.length > 0
           ? null
           : {
               kind: "square",
@@ -1829,17 +1856,26 @@ const NAMED: Buff[] = [
                 }),
               ),
             },
-      (_inst, api, picks) => {
-        const c = picks[0]?.square;
-        if (c == null) return;
+      effect: (inst, _api, picks) => {
+        if (inst.state.center != null) return;
+        if (picks[0]?.square != null) inst.state.center = picks[0].square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.center == null || inst.spent || move.color !== api.opp) return;
+        const c = inst.state.center as Square;
         for (const sq of [c, ...neighbors8(c)]) {
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
             addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stun" });
           }
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.center == null
+          ? "activate to set detention"
+          : "detention starts after your opponent moves",
+    },
   ),
 
   card(

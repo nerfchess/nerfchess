@@ -1042,7 +1042,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gravebloom",
       name: "Gravebloom",
       description:
-        "Flowers with long memories: for your opponent's next 6 turns, every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms. Each kill costs them the ground it was won on; capturing less, or only on squares they don't need, is the way through.",
+        "Flowers with long memories, slow to root: their next move passes untouched, then for their following 6 turns, every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms. Each kill costs them the ground it was won on; capturing less, or only on squares they don't need, is the way through.",
       flavor: "The garden takes root where the blood went in.",
       fx: { motif: "blindfold" },
     },
@@ -1050,8 +1050,15 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched; the garden
+          // takes root after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
           const sq = capSq(move) ?? move.to;
           // Added during their own move: 4 leaves exactly 3 of their turns.
@@ -1130,8 +1137,8 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_death_knell",
       name: "Death Knell",
       description:
-        "Toll the knell over one enemy piece you target: in 4 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Your opponent sees the count the whole time: they can feed the bell a pawn, spend the piece in a trade, or gamble on saving it. Kings cannot be tolled.",
-      flavor: "Four strokes. Blood on its hands buys the fifth never ringing.",
+        "Toll the knell over one enemy piece you target: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Your opponent sees the count the whole time: they can feed the bell a pawn, spend the piece in a trade, or gamble on saving it. Kings cannot be tolled.",
+      flavor: "Three strokes. Blood on its hands buys the fourth never ringing.",
     },
     {
       kind: "activated",
