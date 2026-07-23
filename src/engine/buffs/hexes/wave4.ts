@@ -1221,8 +1221,8 @@ const T3: Buff[] = [
     { id: "hx4_cracked_bell", name: "Cracked Bell", description: "For your opponent's next 5 turns, the truce bell rings on their 2nd and 4th turns: on those turns they cannot capture.", flavor: "It rings when it likes. The law is the law.", icon: "Bell", fx: { motif: "muzzle", pieces: "all" } },
     cadenceCurse(5, (e) => e === 1 || e === 3, (moves) => moves.filter((m) => !m.captured)),
   ),
-  H3(
-    { id: "hx4_moth_eaten_gloves", name: "Moth Eaten Gloves", description: "For your opponent's next 4 turns, their queen may only capture on light squares. Her dark glove is full of holes.", flavor: "One cannot strangle anyone in THESE.", icon: "Hand", fx: { motif: "muzzle", pieces: ["q"] } },
+  hex(
+    { id: "hx4_moth_eaten_gloves", name: "Moth Eaten Gloves", description: "For your opponent's next 4 turns, their queen may only capture on light squares. Her dark glove is full of holes.", flavor: "One cannot strangle anyone in THESE.", icon: "Hand", fx: { motif: "muzzle", pieces: ["q"] }, tier: 4 },
     curse(4, (moves) => {
       return moves.filter((m) => {
         if (m.piece !== "q" || !m.captured) return true;
@@ -1231,8 +1231,8 @@ const T3: Buff[] = [
       });
     }),
   ),
-  H3(
-    { id: "hx4_doting_retinue", name: "Doting Retinue", description: "For your opponent's next 3 turns, pieces standing adjacent to their queen may not move: the retinue will not leave her side. The queen herself moves freely.", flavor: "Yes, Majesty. At once, Majesty. We stay, Majesty.", icon: "Users", fx: { motif: "jail", pieces: "all" } },
+  hex(
+    { id: "hx4_doting_retinue", name: "Doting Retinue", description: "For your opponent's next 3 turns, pieces standing adjacent to their queen may not move: the retinue will not leave her side. The queen herself moves freely.", flavor: "Yes, Majesty. At once, Majesty. We stay, Majesty.", icon: "Users", fx: { motif: "jail", pieces: "all" }, tier: 4 },
     curse(3, (moves, api) => {
       const queens = mySquares(api.board, api.opp, "q");
       if (queens.length === 0) return moves;
