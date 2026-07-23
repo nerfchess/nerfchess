@@ -635,46 +635,71 @@ export const WILD_WARFARE: Buff[] = [
       id: "ww_paratroopers",
       icon: "Send",
       name: "Paratroopers",
-      description: "Drop two new pawns onto empty squares in your opponent's half, once. They dig in where they land: neither can be captured for 1 full turn.",
+      description: "Mark two empty squares in your opponent's half, once. After your opponent's next move a new pawn drops onto each square that is still empty: they dig in where they land, and neither can be captured for 1 full turn.",
       tier: 5,
       category: "pieces",
       flavor: "They land behind the lines and start filling sandbags.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 2
-          ? null
-          : {
-              kind: "square",
-              label: `Drop a paratrooper (${picks.length + 1}/2)`,
-              squares: emptySquares(api.board, oppHalfZone(api)).filter(
-                (sq) => pawnRankOk(sq) && !picks.some((k) => k.square === sq),
-              ),
-            },
-      (_inst, api, picks) => {
+    // Overhaul balance pass: the drop no longer lands the instant you call it in.
+    // You mark the drop zones now; the paratroopers only touch down after your
+    // opponent has replied once.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed || picks.length >= 2) return null;
+        const squares = emptySquares(api.board, oppHalfZone(api)).filter(
+          (sq) => pawnRankOk(sq) && !picks.some((k) => k.square === sq),
+        );
+        if (!squares.length) return null;
+        return {
+          kind: "square",
+          label: `Mark a drop zone (${picks.length + 1}/2)`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, _api, picks) => {
+        if (inst.state.armed) return;
+        inst.state.armed = true;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        const squares = (inst.state.squares as Square[] | undefined) ?? [];
         const landed: Square[] = [];
-        for (const k of picks) {
-          if (k.square != null && pawnRankOk(k.square) && !api.board.pieces[k.square]) {
-            api.place(k.square, "p", api.me);
-            landed.push(k.square);
+        for (const sq of squares) {
+          if (!api.board.pieces[sq] && pawnRankOk(sq)) {
+            api.place(sq, "p", api.me);
+            landed.push(sq);
           }
         }
         if (landed.length) {
           addEffect(api, { kind: "shield", owner: api.me, squares: landed, turns: 1 });
         }
+        inst.spent = true;
+        inst.state.squares = undefined;
       },
-    ),
+      status: (inst) =>
+        inst.state.armed
+          ? "the drop lands after your opponent's reply"
+          : "activate to mark drop zones",
+    },
   ),
   card(
     {
       id: "ww_forward_outpost",
       name: "Forward Outpost",
-      description: "Place a new rook on any empty square in your opponent's half, once.",
+      description: "Place a new rook on any empty square in your own half, once.",
       tier: 6,
       category: "pieces",
-      flavor: "Plant the flag deep in their ground.",
+      flavor: "Plant the flag on ground you already hold.",
     },
-    placePieces(["r"], oppHalfZone),
+    // Overhaul balance pass: the rook now musters in your OWN half rather than
+    // being parachuted deep into the enemy's. It crosses the midline under its
+    // own power on a later turn (by which point it has survived an opponent
+    // reply), so no deep-strike the moment it appears.
+    placePieces(["r"], myHalfZone),
   ),
   card(
     {

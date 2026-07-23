@@ -21,7 +21,6 @@ import {
   convertEnemies,
   freezeTarget,
   mySquares,
-  permanentAugment,
   relocateMany,
   slideMoves,
   timedAugment,
@@ -382,13 +381,13 @@ export const FANTASY_FEY: Buff[] = [
       id: "gossamer_veil",
       name: "Gossamer Veil",
       description:
-        "A shimmering veil of spider-silk tangles every long blade: your pieces cannot be captured by enemy bishops, rooks, or queens for your opponent's next 3 turns. Pawns, knights, and kings still cut through.",
+        "A shimmering veil of spider-silk tangles every long blade: your pieces cannot be captured by enemy bishops, rooks, or queens for your opponent's next 2 turns. Pawns, knights, and kings still cut through.",
       tier: 6,
       category: "protection",
       flavor: "Softer than moonlight, stronger than mail.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    curse(3, (moves) =>
+    curse(2, (moves) =>
       moves.filter(
         (m) => !(m.captured && (m.piece === "b" || m.piece === "r" || m.piece === "q")),
       ),
