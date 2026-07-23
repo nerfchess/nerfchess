@@ -2066,9 +2066,15 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_winter_that_stays", name: "The Winter That Stays", description: "For your opponent's next 5 turns, any piece of theirs that travels more than 2 squares in one move arrives frostbitten and is frozen for 1 of their turns. Kings endure the cold.", flavor: "Speed is a summer habit.", icon: "ThermometerSnowflake", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(5, (move, api) => {
-      if (move.piece !== "k" && moveDist(move) > 2) sting(api, move.to, 1, "ice");
+    { id: "hx4_winter_that_stays", name: "The Winter That Stays", description: "For your opponent's next 5 turns, any piece of theirs that travels more than 2 squares in one move arrives frostbitten and is frozen for 1 of their turns. The first such piece shakes off the frost; every long traveler after it freezes. Kings endure the cold.", flavor: "Speed is a summer habit.", icon: "ThermometerSnowflake", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(5, (move, api, inst) => {
+      if (move.piece !== "k" && moveDist(move) > 2) {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          return;
+        }
+        sting(api, move.to, 1, "ice");
+      }
     }),
   ),
   H8(
@@ -2309,21 +2315,33 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_great_waltz", name: "The Great Waltz", description: "The board itself calls the dance: for your opponent's next 3 turns they may only move pieces standing on the color the waltz names, dark squares first, then light, then dark. Their king may always dance.", flavor: "One two three, one two three.", icon: "Music4", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_great_waltz", name: "The Great Waltz", description: "The board itself calls the dance: your opponent's next move passes freely, then for their following 3 turns they may only move pieces standing on the color the waltz names, dark squares first, then light, then dark. Their king may always dance.", flavor: "One two three, one two three.", icon: "Music4", fx: { motif: "slow", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 3;
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed) return moves;
         const left = turnsLeft(inst);
         if (left <= 0 || moves.length === 0) return moves;
         const want = (3 - left) % 2; // 0 dark, 1 light
         const kept = moves.filter((m) => m.piece === "k" || sqShade(m.from) === want);
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `${turnsLeft(inst)} of their turns left`
+          : "the dance begins after their next move",
     },
   ),
   H8(
