@@ -369,7 +369,7 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_two_breaths", name: "Two Breaths", tier: 1, category: "nerf", icon: "Wind",
-      description: "Suspend your nerf for your next turn, and again for one more turn after your next 3 turns.",
+      description: "Suspend your nerf for your next turn, and again for one more turn after your next 3 turns. On that final turn you may move only one square at a time.",
       flavor: "In. Out. Later: in again." },
     {
       kind: "passive",
@@ -383,6 +383,9 @@ const BOON_WAVE4A: Buff[] = [
         inst.state.turns = t;
         if (t <= 0) {
           susp(api, 1);
+          // The final breath applies only to movement restrictions: a one-square
+          // leash rides that turn (turns:2, since the same-move tick eats one).
+          addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
           inst.spent = true;
         }
       },
@@ -391,9 +394,27 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_quiet_after", name: "The Quiet After", tier: 1, category: "nerf", icon: "CloudRain",
-      description: "While your queen is off the board, your nerf is suspended.",
+      description: "While your queen is off the board, your nerf is suspended, but the relief applies only to movement restrictions: you may move only one square at a time.",
       flavor: "Grief keeps its own kind of order." },
-    reliefWhile((api) => mySquares(api.board, api.me, "q").length === 0, "waiting on the quiet"),
+    {
+      // Each turn the queen is gone grants a one-turn suspension whose relief is
+      // movement-only: a one-square leash rides alongside it. A leash added on
+      // the opponent's move is not self-ticked, so turns:1 covers exactly your
+      // following turn, matching the suspension's own timing.
+      kind: "passive",
+      init: (_inst, api) => {
+        if (mySquares(api.board, api.me, "q").length === 0) {
+          susp(api, 1);
+          addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
+        }
+      },
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp || mySquares(api.board, api.me, "q").length !== 0) return;
+        susp(api, 1);
+        addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
+      },
+      status: () => "waiting on the quiet",
+    },
   ),
   card(
     { id: "bn4_third_wind", name: "Third Wind", tier: 2, category: "nerf", icon: "Hourglass",

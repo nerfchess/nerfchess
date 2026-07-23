@@ -1600,7 +1600,7 @@ export const BOON_WAVE3: Buff[] = [
           const t = api.board.pieces[sq]?.type;
           return t === "n" || t === "b";
         };
-        if (picks.length >= 3) return null;
+        if (picks.length >= 2) return null;
         if (picks.length === 0) {
           const enemyMinors = mySquares(api.board, api.opp).filter((sq) => {
             const t = api.board.pieces[sq]!.type;
@@ -1609,32 +1609,27 @@ export const BOON_WAVE3: Buff[] = [
           return {
             kind: "square",
             label: "Choose your own knight or bishop to sacrifice",
-            squares: enemyMinors.length >= 2 ? mySquares(api.board, api.me).filter(myMinor) : [],
+            squares: enemyMinors.length >= 1 ? mySquares(api.board, api.me).filter(myMinor) : [],
           };
         }
-        const chosen = picks.map((k) => k.square);
         return {
           kind: "square",
-          label: `Choose an enemy knight or bishop to remove (${picks.length}/2)`,
+          label: "Choose an enemy knight or bishop to remove",
           squares: mySquares(api.board, api.opp).filter((sq) => {
             const t = api.board.pieces[sq]!.type;
-            return (t === "n" || t === "b") && !chosen.includes(sq);
+            return t === "n" || t === "b";
           }),
         };
       },
       (_inst, api, picks) => {
-        const own = picks[0]?.square;
-        const e1 = picks[1]?.square, e2 = picks[2]?.square;
-        if (own == null || e1 == null || e2 == null) return;
+        const own = picks[0]?.square, enemy = picks[1]?.square;
+        if (own == null || enemy == null) return;
         const po = api.board.pieces[own];
         if (!po || po.color !== api.me || (po.type !== "n" && po.type !== "b")) return;
-        for (const es of [e1, e2]) {
-          const pe = api.board.pieces[es];
-          if (!pe || pe.color !== api.opp || (pe.type !== "n" && pe.type !== "b")) return;
-        }
+        const pe = api.board.pieces[enemy];
+        if (!pe || pe.color !== api.opp || (pe.type !== "n" && pe.type !== "b")) return;
         api.removePiece(own);
-        api.removePiece(e1);
-        api.removePiece(e2);
+        api.removePiece(enemy);
       },
     ),
   ),
@@ -1752,7 +1747,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_turn_the_tide",
       name: "Turn the Tide",
       description:
-        "The whole line surges as one: every one of your pawns that can advance takes one step forward at once, wherever the square ahead is empty. Pawns that would reach the final rank hold their ground.",
+        "The whole line surges as one: every one of your pawns that can advance takes one non-capturing step forward at once, into the empty square directly ahead. Pawns whose square ahead is occupied, or that would reach the final rank, hold their ground.",
       tier: 8,
       category: "movement",
       icon: "Waves",
@@ -1779,38 +1774,28 @@ export const BOON_WAVE3: Buff[] = [
 
   // A summoning of NEW material from nothing, at a steep economic price.
   // Neighbours: Shadow Reserve (three pocket pieces, skip two drafts).
-  // Distinct: a single fresh queen conjured straight onto the board, no pool
-  // and no pocket, paid for by three skipped drafts and every reroll you own.
+  // Distinct: a single fresh queen conjured into your pocket to be dropped on a
+  // later turn, paid for by two skipped drafts (balance review: the queen goes
+  // to the pocket instead of straight onto the board, two skips not three, and
+  // your rerolls are kept).
   boon(
     {
       id: "bw3_pretender",
       name: "Pretender to the Throne",
       description:
-        "Crown a claimant out of thin air: a brand new queen strides onto an empty square on your home rank. The court is not cheap - your next 3 drafts are skipped and you forfeit all of your rerolls.",
+        "Crown a claimant waiting in the wings: a brand new queen joins your pocket, ready to be dropped onto an empty square on a later turn (that drop spends the turn). The court is not cheap - your next 2 drafts are skipped.",
       tier: 8,
       category: "pieces",
       icon: "Crown",
       flavor: "Bloodline unverified. Firepower absolutely verified.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Crown the pretender on your home rank",
-              squares: emptySquares(api.board, (sq) =>
-                api.me === "w" ? RANK(sq) === 0 : RANK(sq) === 7,
-              ),
-            },
-      (_inst, api, picks) => {
-        const sq = picks[0]?.square;
-        if (sq == null || api.board.pieces[sq]) return;
-        api.place(sq, "q", api.me);
-        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 3;
-        api.mine.rerollsLeft = 0;
-      },
-    ),
+    instant((_inst, api) => {
+      // The new queen goes to your pocket (dropped onto an empty square on a
+      // later turn, spending that turn), not straight to the board. Skip two
+      // drafts; your rerolls are kept.
+      grantInventory(api, "q", 1);
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+    }),
   ),
 
   // A geographic purge miracle: clear the invaders from your half and the
