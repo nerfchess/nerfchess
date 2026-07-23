@@ -276,3 +276,11 @@ Engine fixes surfaced by the pass:
 
 Harness/docs: passive compositions regenerated (1333 entries), card registry + card audit + animation baseline regenerated, desync scenarios and sims (cold_snap, phantom_rook, chess_diff, balance-fixes, apex) updated to the new behaviors. Full battery green: typecheck, lint, rules, nerfs, lab 2083/2083, passive-registry, apex, desync, snapshot, fairness, sequence, purity, emdash, sound, animations, spectator/tv/replay/archive, glicko, build. Known pre-existing failure left alone: sim-capture-accounting's perfect_rewind scenario references a card that never shipped (fails on master too).
 - Draft picker: the gold selection ring now follows the card's hover lift on desktop (it sat 3px low); the minimized panel's ring rides the card itself.
+
+## 2026-07-23 04:10 EDT
+
+Owner follow-ups on PR #445 (same branch). OPEN.
+
+- Animations: summon/morph/convert/promote signature cards fell back to a generic poof (or nothing) because the board suppressed their bespoke board-wide lead unconditionally; the suppress now applies only when a removal lead was actually staged. Oversize concern audited in both the DOM play layer and canvas VFX layer: already correct (one-cell parents, square-relative sizing).
+- Draft picker selection ring: on hover-capable devices the gold ring sat 3px below the lifted card; the ring now lifts in lockstep (and the minimized panel's ring rides the card itself via glow).
+- Draft lag: profiling showed the buff-draft ambient dungeon stage (23 composited layers) was the sole in-game jank source on weak GPUs (~14fps during drafts, 60fps everywhere else). Starfields now paint once, the ambient set follows the FX intensity dial, and sustained sub-30fps auto-downgrades the ambience for the session. Verified with CDP tracing before/after; full battery green.
