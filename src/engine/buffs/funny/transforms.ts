@@ -3,10 +3,9 @@
 // the library's trade_up card. Nothing here touches a king's move legality in a
 // way that could soft-lock: added moves only widen the move list.
 
-import { Buff } from "./shared";
+import { Buff, Square } from "./shared";
 import {
   card,
-  pieceBound,
   permanentAugment,
   activated,
   slideMoves,
