@@ -63,7 +63,7 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_elder_wyrm",
       name: "The Elder Wyrm",
       description:
-        "The great dragon lands on a chosen empty 2x2 area for 6 of your turns: nothing may enter its footprint, and after each of your moves it acts on its own: it burns an enemy pawn near its perch, or failing that its wingbeat hurls an adjacent enemy piece one square away.",
+        "The great dragon lands on a chosen empty 2x2 area for 6 of your turns: nothing may enter its footprint, and after each of your moves its wingbeat hurls one adjacent enemy piece, never a king, one square away into an empty square. The dragon cannot capture.",
       tier: 8,
       category: "pieces",
       icon: "Flame",
@@ -71,7 +71,8 @@ export const OVERHAUL_T8: Buff[] = [
     },
     // ADAPTED: the roster's per-turn command menu (breath/gust/tail) needs a
     // choice UI the engine does not have; the wyrm instead acts automatically
-    // each turn with the same vocabulary (burn a pawn, else gust-push).
+    // each turn. Balance pass: its special action can no longer capture, so the
+    // pawn-burn is gone and only the non-capturing gust-push remains.
     {
       kind: "activated",
       spendOnUse: false,
@@ -100,32 +101,24 @@ export const OVERHAUL_T8: Buff[] = [
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || move.color !== api.me) return;
         const foot = block2x2(sq);
-        const near = (s: Square) =>
-          foot.some(
-            (f) => Math.abs(FILE(f) - FILE(s)) <= 2 && Math.abs(RANK(f) - RANK(s)) <= 2,
-          );
-        const pawns = mySquares(api.board, api.opp, "p").filter(near);
-        const burned = pickRng(api, pawns);
-        if (burned != null) {
-          api.removePiece(burned);
-          flashSquares(api, [burned]);
-        } else {
-          const adj = mySquares(api.board, api.opp).filter(
-            (s) =>
-              api.board.pieces[s]!.type !== "k" &&
-              foot.some(
-                (f) => Math.abs(FILE(f) - FILE(s)) <= 1 && Math.abs(RANK(f) - RANK(s)) <= 1,
-              ),
-          );
-          const target = pickRng(api, adj);
-          if (target != null) {
-            const cf = FILE(sq) + 0.5, cr = RANK(sq) + 0.5;
-            const df = Math.sign(FILE(target) - cf), dr = Math.sign(RANK(target) - cr);
-            const f = FILE(target) + df, r = RANK(target) + dr;
-            if (f >= 0 && f <= 7 && r >= 0 && r <= 7 && !api.board.pieces[SQ(f, r)]) {
-              api.relocate(target, SQ(f, r));
-              flashSquares(api, [SQ(f, r)], true);
-            }
+        // Movement identity only: the wingbeat hurls one adjacent enemy piece
+        // one square away into empty space. It can no longer capture (the old
+        // pawn-burn is gone), so nothing is ever removed from the board here.
+        const adj = mySquares(api.board, api.opp).filter(
+          (s) =>
+            api.board.pieces[s]!.type !== "k" &&
+            foot.some(
+              (f) => Math.abs(FILE(f) - FILE(s)) <= 1 && Math.abs(RANK(f) - RANK(s)) <= 1,
+            ),
+        );
+        const target = pickRng(api, adj);
+        if (target != null) {
+          const cf = FILE(sq) + 0.5, cr = RANK(sq) + 0.5;
+          const df = Math.sign(FILE(target) - cf), dr = Math.sign(RANK(target) - cr);
+          const f = FILE(target) + df, r = RANK(target) + dr;
+          if (f >= 0 && f <= 7 && r >= 0 && r <= 7 && !api.board.pieces[SQ(f, r)]) {
+            api.relocate(target, SQ(f, r));
+            flashSquares(api, [SQ(f, r)], true);
           }
         }
         const t = ((inst.state.turns as number) ?? 0) - 1;

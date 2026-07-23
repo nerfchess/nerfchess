@@ -1181,12 +1181,17 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_double_pardon", name: "Double Pardon", tier: 6, category: "nerf", icon: "HeartHandshake",
-      description: "Both players' nerfs are suspended for their next 6 turns.",
+      description: "Both players' nerfs are suspended for their next 6 turns. On the last of your 6 turns you may only step one square (a king step).",
       flavor: "Mercy is cheaper wholesale." },
-    instant((_inst, api) => {
-      susp(api, 6);
-      susp(api, 6, api.opp);
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        armMoveOnlyFinal(api, inst, 6);
+        susp(api, 6, api.opp);
+      },
+      onMovePlayed: leashRider,
+      status: () => "mercy on the clock",
+    },
   ),
   card(
     { id: "bn4_escape_artist", name: "Escape Artist", tier: 7, category: "nerf", icon: "Link2Off",
@@ -1221,12 +1226,55 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_gryphon_rider", name: "Gryphon Rider", tier: 6, category: "movement", icon: "Feather",
-      description: "Choose one of your knights: for the rest of the game it may also glide up to two squares diagonally (capturing allowed).",
+      description: "Choose one of your knights: for your opponent's next 4 turns it may also glide up to two squares diagonally (capturing allowed). The gift ends early the moment your king crosses the midline.",
       flavor: "Half horse, half hawk, all appetite.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true } },
-    pieceBound("n", "Choose the knight that takes wing", (board, sq, via) =>
-      slideMoves(board, sq, [[1, 1], [1, -1], [-1, 1], [-1, -1]], via, 2),
-    ),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the knight that takes wing",
+              squares: mySquares(api.board, api.me, "n"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+        inst.state.turns = 4;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (inst.spent) return;
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me) return;
+        addNovel(moves, slideMoves(api.board, sq, [[1, 1], [1, -1], [-1, 1], [-1, -1]], inst.id, 2));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        trackBoundPiece(inst, move, { dieOnPromote: true });
+        if (inst.spent) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks != null && !inHalf(api.me, ks)) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 4) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to choose a knight"
+          : `bound to ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+      },
+    },
   ),
   card(
     { id: "bn4_faerie_door", name: "Faerie Door", tier: 5, category: "movement", icon: "DoorOpen",

@@ -377,14 +377,14 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_high_water_mark",
       name: "High Water Mark",
       description:
-        "The middle two ranks flood: for your opponent's next 4 turns their bishops, rooks and queens cannot move through them, only into them.",
+        "The middle two ranks flood: for your opponent's next 3 turns their bishops, rooks and queens cannot move through them, only into them.",
       tier: 6,
       category: "protection",
       icon: "Waves",
       flavor: "The river remembers where it used to run.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
-    timedOppFilter(4, (moves) =>
+    timedOppFilter(3, (moves) =>
       moves.filter((m) => {
         if (m.piece !== "b" && m.piece !== "r" && m.piece !== "q") return true;
         const tr = RANK(m.to);
@@ -533,7 +533,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_regency_council",
       name: "Regency Council",
       description:
-        "For 5 of your turns, while your queen is off the board your rooks and bishops may also step one square in any direction.",
+        "For 4 of your turns, while your queen is off the board your rooks and bishops may also step one square in any direction.",
       tier: 6,
       category: "movement",
       icon: "Scale",
@@ -1083,7 +1083,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_paperwork_avalanche",
       name: "Paperwork Avalanche",
       description:
-        "For your opponent's next 3 turns, any enemy piece that captures is buried in forms and cannot move on their following turn.",
+        "For your opponent's next 2 turns, any enemy piece that captures is buried in forms and cannot move on their following turn.",
       tier: 6,
       category: "protection",
       icon: "FileStack",
@@ -1092,7 +1092,7 @@ export const OVERHAUL_T6: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured && move.piece !== "k") {
