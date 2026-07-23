@@ -265,7 +265,7 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "lava_floor",
       icon: "Flame",
       name: "Lava Floor",
-      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 4 turns, and the eruption throws every enemy piece already on that rank one square back toward its home rank.",
+      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 4 turns, except one bridge square left open on the file of their king, and the eruption throws every enemy piece on the barred squares one square back toward its home rank.",
       tier: 5,
       category: "hex",
       flavor: "The floor is, in fact, lava.",

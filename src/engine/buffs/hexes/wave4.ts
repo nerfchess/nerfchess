@@ -806,8 +806,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_cold_barracks", name: "Cold Barracks", description: "For your opponent's next 3 turns, their rooks may not stop on their own back rank. The barracks heating failed.", flavor: "The towers would rather sleep outside.", icon: "Building2", fx: { motif: "blindfold", pieces: ["r"] } },
-    curse(3, (moves, api) => moves.filter((m) => m.piece !== "r" || relRank(api.opp, m.to) !== 1)),
+    { id: "hx4_cold_barracks", name: "Cold Barracks", description: "For your opponent's next 3 turns, their rooks may not stop on their own back rank. The first rook to try slips through as one escape, then the restriction holds. The barracks heating failed.", flavor: "The towers would rather sleep outside.", icon: "Building2", fx: { motif: "blindfold", pieces: ["r"] } },
+    escapeCurse(3, (m, api) => m.piece !== "r" || relRank(api.opp, m.to) !== 1),
   ),
   H2(
     { id: "hx4_two_step", name: "Two Step", description: "For your opponent's next 3 turns, no move may cover the same distance as their previous move. The dance master insists on variety.", flavor: "One long, one short. Feel the rhythm.", icon: "AudioLines", fx: { motif: "slow", pieces: "all" } },
@@ -825,8 +825,8 @@ const T2: Buff[] = [
       return moves;
     }),
   ),
-  H2(
-    { id: "hx4_guild_insurance", name: "Guild Insurance", description: "Your rooks are insured by the masons' guild: your opponent cannot capture them for their next 3 turns.", flavor: "Nobody wants to owe the masons a tower.", icon: "ShieldCheck", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_guild_insurance", name: "Guild Insurance", description: "Your rooks are insured by the masons' guild: your opponent cannot capture them for their next 3 turns.", flavor: "Nobody wants to owe the masons a tower.", icon: "ShieldCheck", fx: { motif: "muzzle", pieces: "all" }, tier: 3 },
     curse(3, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
@@ -841,8 +841,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_hand_cramp", name: "Hand Cramp", description: "For your opponent's next 2 turns, any rook they move seizes up afterward and is frozen for 1 of their turns.", flavor: "Too much penmanship, not enough siegecraft.", icon: "PenOff", fx: { motif: "slow", pieces: ["r"] } },
-    onTheirMove(2, (move, api) => {
+    { id: "hx4_hand_cramp", name: "Hand Cramp", description: "Starting after your opponent's next move, for their following 2 turns, any rook they move seizes up afterward and is frozen for 1 of their turns.", flavor: "Too much penmanship, not enough siegecraft.", icon: "PenOff", fx: { motif: "slow", pieces: ["r"] } },
+    delayedOnTheirMove(2, (move, api) => {
       if (move.piece === "r") sting(api, move.to, 1, "rust");
     }),
   ),
