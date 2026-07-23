@@ -1700,8 +1700,36 @@ const TIER3: Buff[] = [
     extraMovesNow(1),
   ),
   def(
-    { id: "promote_now", requires: ["p"], name: "Promote Now", description: "Instantly promote one of your pawns on your 6th rank or beyond to a queen.", tier: 3, category: "pieces" },
-    promotePawns(1, 6, "q"),
+    { id: "promote_now", requires: ["p"], name: "Promote Now", description: "Choose one of your pawns on your 6th rank or beyond; it promotes to a queen after your opponent's next move, once.", tier: 3, category: "pieces" },
+    // Delayed: the pawn is chosen at activation and promotes only once the
+    // opponent has replied. If it has been captured by then the promotion
+    // fizzles and the charge is still spent.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.pawnSq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the pawn to promote",
+              squares: mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) >= 6),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.pawnSq != null || picks[0]?.square == null) return;
+        inst.state.pawnSq = picks[0].square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.pawnSq == null || move.color !== api.opp) return;
+        const sq = inst.state.pawnSq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.me && p.type === "p") api.setPieceType(sq, "q");
+        inst.state.pawnSq = null;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pawnSq != null ? "promotes after their reply" : "activate to choose a pawn",
+    },
   ),
   def(
     { id: "summon_knight", name: "Summon Knight", description: "Place a new knight on any empty square in your half, once.", tier: 4, category: "pieces" },
@@ -1978,9 +2006,15 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "tidal_push", name: "Tidal Push", description: "Shove one enemy piece two squares in a straight line if the path is empty, once.", tier: 3, category: "attack" },
-    activated(
-      (_inst, api, picks) => {
+    { id: "tidal_push", name: "Tidal Push", description: "Choose one enemy piece and where it lands; after your opponent's next move, shove it two squares in a straight line if the path is still empty, once.", tier: 3, category: "attack" },
+    // Delayed: the shove is aimed at activation and only lands once the
+    // opponent has replied. If the target moved or the landing square filled by
+    // then the shove fizzles and the charge is still spent.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.pending != null) return null;
         const pushDests = (from: Square) =>
           ALL_DIRS.flatMap(([df, dr]) => {
             const f1 = FILE(from) + df, r1 = RANK(from) + dr;
@@ -2004,19 +2038,31 @@ const TIER3: Buff[] = [
         }
         return null;
       },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
-        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+        if (inst.state.pending != null || from == null || to == null) return;
+        inst.state.pending = [from, to];
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const pend = inst.state.pending as [Square, Square] | undefined;
+        if (pend == null || move.color !== api.opp) return;
+        const [from, to] = pend;
+        const p = api.board.pieces[from];
+        if (p && p.color === api.opp && p.type !== "k" && !api.board.pieces[to]) {
+          api.relocate(from, to);
+        }
+        inst.state.pending = null;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.pending != null ? "shove lands after their reply" : "activate to aim"),
+    },
   ),
   def(
-    { id: "second_wind_major", name: "Second Wind Major", description: "Return a captured rook to any empty back-rank square, once.", tier: 3, category: "pieces" },
-    reviveOne(["r"], backRankZone),
+    { id: "second_wind_major", name: "Second Wind Major", description: "Return a captured rook to any empty back-rank square, once. Using it spends your next unused reroll, if any.", tier: 3, category: "pieces" },
+    consumeRerollOnUse(reviveOne(["r"], backRankZone)),
   ),
   def(
-    { id: "split_march", requires: ["p"], name: "Split March", description: "Four pawns each advance one square immediately.", tier: 3, category: "movement" },
+    { id: "split_march", requires: ["p"], name: "Split March", description: "Four of your pawns each advance one square immediately, once. Using it spends the card even if fewer than four pawns can advance.", tier: 3, category: "movement" },
     advancePawns(4),
   ),
   def(
@@ -2879,8 +2925,30 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "regenerate", name: "Regenerate", description: "Revive two of your captured pawns to empty squares on your 2nd rank.", tier: 3, category: "pieces" },
-    revivePawnsToStart(2),
+    { id: "regenerate", name: "Regenerate", description: "After your opponent's next move, revive two of your captured pawns to empty squares on your 2nd rank.", tier: 3, category: "pieces" },
+    // Delayed: armed on acquisition, the revive fires only once the opponent
+    // has replied.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const rank = api.me === "w" ? 1 : 6;
+        const spots = emptySquares(api.board, (sq) => RANK(sq) === rank);
+        let left = Math.min(2, revivable(api, "p"));
+        for (const sq of spots) {
+          if (left <= 0) break;
+          api.place(sq, "p", api.me);
+          markRevived(api, "p");
+          left--;
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.pending ? "revives after their next move" : null),
+    },
   ),
   def(
     { id: "sever", name: "Sever", description: "Permanently disable one enemy buff and block its retrigger.", tier: 5, category: "draft" },
@@ -2894,7 +2962,7 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "tempo_theft", name: "Tempo Theft", description: "Steal your opponent's next turn (you move twice, they wait), once.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "tempo_theft", name: "Tempo Theft", description: "Steal your opponent's next turn (you move twice, they wait), once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     skipOpponent(1),
   ),
   def(

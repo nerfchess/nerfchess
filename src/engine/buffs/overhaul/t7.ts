@@ -15,6 +15,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   attackersOf,
   card,
   emptySquares,
@@ -124,24 +125,38 @@ export const OVERHAUL_T7: Buff[] = [
     }),
   ),
   // 153. Write the Patch Notes ---------------------------------------------------------
-  // ADAPTED: there is no pool-pruning flag; you write the notes, so your next
-  // draft rolls one tier higher (bankBonus) and you gain a reroll to strike
-  // one bad card yourself.
+  // BALANCE: the reroll ("rolling") is traded for a guaranteed reinforcement.
+  // You take a pawn on your second rank instead of a reroll; the tier-up draft
+  // (bankBonus, the card's jackpot) is kept as the ceiling. Odds are exact:
+  // the tier lift is guaranteed, so the description states it plainly.
   card(
     {
       id: "ov_patch_notes",
       name: "Write the Patch Notes",
       description:
-        "You write the notes: your next draft rolls one tier higher and you gain 1 draft reroll.",
+        "Spend your turn: plant a new pawn on an empty square of your second rank, and your next draft is dealt exactly one tier higher.",
       tier: 7,
       category: "draft",
       icon: "PenLine",
       flavor: "Removed: everything you dislike. Buffed: you, specifically.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.bankBonus = 1;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Plant a pawn on your second rank",
+              squares: emptySquares(api.board, (sq) => relRank(api.me, sq) === 2),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq] || relRank(api.me, sq) !== 2) return;
+        api.place(sq, "p", api.me);
+        api.mine.flags.bankBonus = 1;
+        flashSquares(api, [sq], true);
+      },
+    ),
   ),
   // 154. Puppet Coronation ----------------------------------------------------------------
   card(
@@ -149,15 +164,17 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_puppet_coronation",
       name: "Puppet Coronation",
       description:
-        "Spend your turn moving the enemy queen yourself, to any empty square she could legally reach. No captures; the strings only pull so hard.",
+        "Choose the enemy queen and an empty square she could legally reach. After your opponent's next move, the strings pull and she is marched there, if she still stands where you chose and the square is still empty. No captures.",
       tier: 7,
       category: "movement",
       icon: "Drama",
       flavor: "All hail the queen, who walks exactly where she is told.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed || picks.length >= 2) return null;
         if (picks.length === 0) {
           return {
             kind: "square",
@@ -175,16 +192,35 @@ export const OVERHAUL_T7: Buff[] = [
             .map((m) => m.to),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
+        if (from == null || to == null || inst.state.armed) return;
+        const p = api.board.pieces[from];
+        if (!p || p.color !== api.opp || p.type !== "q" || api.board.pieces[to]) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        inst.state.armed = true;
+      },
+      // Delayed: the strings pull only after the opponent's next move, and only
+      // if the queen still stands where she was chosen and the square is free.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || inst.spent) return;
+        if (move.color !== api.opp) return;
+        const from = inst.state.from as Square, to = inst.state.to as Square;
         const p = api.board.pieces[from];
         if (p && p.color === api.opp && p.type === "q" && !api.board.pieces[to]) {
           api.relocate(from, to);
           flashSquares(api, [to], true);
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        !inst.state.armed
+          ? "activate to seize the enemy queen"
+          : inst.spent
+            ? "the strings have pulled"
+            : "the strings pull after your opponent's next move",
+    },
   ),
   // 155. Time Heist ---------------------------------------------------------------------------
   // ADAPTED: the roster's opponent-chosen revenge skip cannot be opponent
@@ -387,7 +423,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_olympus_voicemail",
       name: "Olympus Voicemail",
       description:
-        "For your next 3 turns, after each of your moves a bolt stuns the enemy piece that moved most recently (kings excluded) for 1 turn.",
+        "For your next 2 turns, after each of your moves a bolt stuns the enemy piece that moved most recently (kings excluded) for 1 turn.",
       tier: 7,
       category: "attack",
       icon: "CloudLightning",
@@ -396,7 +432,7 @@ export const OVERHAUL_T7: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && turnsLeft(inst) > 0) {

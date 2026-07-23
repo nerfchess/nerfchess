@@ -101,25 +101,35 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "dragonslayer",
       name: "Dragonslayer",
       description:
-        "The old blade remembers its work: name one enemy rook or queen and it is slain where it stands.",
+        "The old blade remembers its work: name one enemy rook or queen and it is slain where it stands. Using it consumes your next unused reroll, if you have one.",
       tier: 7,
       category: "attack",
       flavor: "Every scale has a seam. The sword knows where.",
     },
-    removeEnemies(1, ["r", "q"]),
+    // Balance pass: the killing stroke also consumes your next unused reroll.
+    (() => {
+      const base = removeEnemies(1, ["r", "q"]);
+      return {
+        ...base,
+        effect: (inst, api, picks) => {
+          base.effect?.(inst, api, picks);
+          api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+        },
+      };
+    })(),
   ),
   card(
     {
       id: "round_table",
       name: "The Round Table",
       description:
-        "Two sworn knights answer your call and wait in your pocket: spend a later turn to drop each onto any empty square.",
+        "One sworn knight answers your call and waits in your pocket: spend a later turn to drop it onto any empty square.",
       tier: 5,
       category: "pieces",
       flavor: "No head of the table, no end to the oath.",
     },
     instant((_inst, api) => {
-      grantInventory(api, "n", 2);
+      grantInventory(api, "n", 1);
     }),
   ),
   card(
@@ -283,15 +293,17 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "valkyrie",
       name: "Valkyrie",
       description:
-        "A chooser of the slain rides beside your army: for your opponent's next 3 turns, any knight, bishop, or rook of yours they capture is carried home to your pocket instead of being lost for good. Drop it back onto an empty square on a later turn.",
+        "A chooser of the slain rides beside your army: for your opponent's next 3 turns, any knight, bishop, or rook of yours they capture is carried home to your pocket instead of being lost for good. Drop it back onto an empty square on a later turn. In exchange, you skip your next draft.",
       tier: 6,
       category: "pieces",
       flavor: "Not this one. This one still has work to do.",
     },
     {
       kind: "passive",
-      init: (inst) => {
+      init: (inst, api) => {
         inst.state.turns = 3;
+        // Balance pass: riding beside your army costs you your next draft.
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
@@ -373,15 +385,17 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "dragon_mount",
       name: "Dragon Mount",
       description:
-        "One of your knights breaks a young dragon to the saddle: for the game it may also slide any distance diagonally.",
+        "One of your knights breaks a young dragon to the saddle: for the game it may also slide any distance diagonally, though the dragon's glide cannot capture.",
       tier: 6,
       category: "movement",
       requires: ["n"],
       flavor: "The hard part is not the taming. It is the dismount.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true },
     },
+    // Balance pass: the granted diagonal glide cannot capture (its normal
+    // knight moves still can); captures are dropped from the added move set.
     pieceBound("n", "Choose the knight that takes the saddle", (board, sq, via) =>
-      slideMoves(board, sq, DIAG_DIRS, via),
+      slideMoves(board, sq, DIAG_DIRS, via).filter((m) => !m.captured),
     ),
   ),
   card(

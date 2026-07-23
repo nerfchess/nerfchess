@@ -1278,13 +1278,13 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_haunted_house",
       name: "Haunted House",
-      description: "Two rooms turn haunted: mark two empty squares and any enemy piece that enters one, never a king, vanishes. The haunting lasts 4 of your turns.",
+      description: "Two rooms turn haunted: mark two empty squares and any enemy piece that enters one, never a king, vanishes. The haunting lasts 3 of your turns.",
       tier: 5,
       category: "attack",
       flavor: "It was the butler. It is always the butler.",
       fx: { motif: "blindfold" },
     },
-    voidSquares(2, 4),
+    voidSquares(2, 3),
   ),
   card(
     {

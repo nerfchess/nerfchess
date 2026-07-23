@@ -1029,7 +1029,7 @@ const T4: Buff[] = [
       id: "hw3_sinking_mire",
       name: "Sinking Mire",
       description:
-        "Conjure a sucking mire in your opponent's half: a cross of five squares no enemy piece may step onto (pieces caught inside may still climb out). Unlike a spreading rot the mire drains away, losing one arm of the cross on each of their turns until nothing is left, over 5 of their turns. Route around the puddle and wait it out, or fight past its edge.",
+        "Conjure a sucking mire in your opponent's half: a patch of four squares no enemy piece may step onto (pieces caught inside may still climb out). Unlike a spreading rot the mire drains away, losing one square on each of their turns until nothing is left, over 4 of their turns. Route around the puddle and wait it out, or fight past its edge.",
       flavor: "Give it a week and it is just a damp patch and a smell.",
       fx: { motif: "blindfold" },
     },
@@ -1048,11 +1048,12 @@ const T4: Buff[] = [
           const r = RANK(c) + dr;
           if (inBoard(f, r) && relRank(api.opp, SQ(f, r)) <= 4) ring.push(SQ(f, r));
         }
-        inst.state.squares = ring;
-        inst.state.turns = 5;
+        const mire = ring.slice(0, 4); // four squares, draining over four of their turns
+        inst.state.squares = mire;
+        inst.state.turns = 4;
         // Added on my turn: 1 covers the victim's next turn; re-added each turn
         // from the SHRUNK list so the mire genuinely drains rather than lingering.
-        addEffect(api, { kind: "barred", squares: ring.slice(), against: api.opp, turns: 1 });
+        addEffect(api, { kind: "barred", squares: mire.slice(), against: api.opp, turns: 1 });
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
@@ -1315,8 +1316,8 @@ const T5: Buff[] = [
       id: "hw3_defectors_mark",
       name: "Sleeper Cell",
       description:
-        "Plant a sleeper in one enemy knight or bishop. On their 4th turn from now it wakes and defects: it becomes yours to command for your next 3 turns, then slips back to your opponent. Until it turns, it is still theirs - they can root out the plot by capturing or trading the marked piece before the fuse ends. Kings are never turned.",
-      flavor: "It smiled and saluted for three days. On the fourth it did not.",
+        "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: it becomes yours to command for your next 3 turns, then slips back to your opponent. Until it turns, it is still theirs - they can root out the plot by capturing or trading the marked piece before the fuse ends. Kings are never turned.",
+      flavor: "It smiled and saluted for two days. On the third it did not.",
       fx: { motif: "jail" },
     },
     {
@@ -1339,7 +1340,7 @@ const T5: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.armed = false;
-        inst.state.fuse = 4;
+        inst.state.fuse = 3;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.state.armed) {
@@ -1381,7 +1382,7 @@ const T5: Buff[] = [
       id: "hw3_roaming_void",
       name: "Roaming Maw",
       description:
-        "Tear open a hungry void in your opponent's half. Each of their turns it drifts one square toward their nearest piece, and no enemy piece may move onto the square it occupies. If it reaches a piece (never the king), that piece is swallowed off the board. It hunts for 6 of their turns, then closes. Its next step is always plain to see - keep pieces clear of its path.",
+        "Tear open a hungry void in your opponent's half. Each of their turns it drifts one square toward their nearest piece, and no enemy piece may move onto the square it occupies. If it reaches a piece (never the king), that piece is swallowed off the board. The defender keeps one bridge: a single safe square, the central crossing one rank deeper in their half, that the void can never bar or swallow. It hunts for 6 of their turns, then closes. Its next step is always plain to see - keep pieces clear of its path.",
       flavor: "It does not chase so much as insist.",
       fx: { motif: "blindfold" },
     },

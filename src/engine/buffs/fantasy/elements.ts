@@ -70,14 +70,14 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Star",
       name: "Starfall",
       description:
-        "A rook crashes down into your pocket, and a chip of star-iron lands with it as a pawn: drop them onto empty squares on later turns.",
+        "A rook crashes down into your pocket: drop it onto any empty square on a later turn.",
       tier: 5,
       category: "pieces",
       flavor: "The crater is still glowing.",
     },
+    // Balance pass: the star-iron pawn no longer lands, one fewer spawned piece.
     instant((_inst, api) => {
       grantInventory(api, "r", 1);
-      grantInventory(api, "p", 1);
     }),
   ),
   card(

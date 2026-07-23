@@ -165,12 +165,12 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Blocks",
       name: "Stone Golem",
       description:
-        "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 6 of your turns, then crumbles back to rubble.",
+        "Bind a spirit into rock and stone: a lumbering golem serves as a rook for 5 of your turns, then crumbles back to rubble.",
       tier: 5,
       category: "pieces",
       flavor: "Slow, patient, and extremely heavy.",
     },
-    summonTemp("r", 6, myHalfZone),
+    summonTemp("r", 5, myHalfZone),
   ),
   card(
     {

@@ -1469,12 +1469,17 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_double_trench",
       name: "Double Trench",
-      description: "Pick two files: your opponent cannot move onto either file for their next 2 turns, and any enemy piece standing on those files cannot capture in that time.",
+      description: "Pick two files: your opponent cannot move onto either file for their next 2 turns, and any enemy piece standing on those files cannot capture in that time. Committing the trench spends the card even if it catches nothing.",
       tier: 6,
       category: "protection",
       flavor: "Two lines of wire, and the guns behind them jam.",
       fx: { motif: "blindfold" },
     },
+    // Overhaul balance pass: a failed or wasted attempt still spends the charge.
+    // This card has no failable granted MOVE (activation is always legal: any
+    // two files can be chosen), so per the directive's fallback the single use
+    // is committal, the moment the files are set the card is used up and can
+    // never be re-aimed, whether or not the trenches ever trap a piece.
     {
       kind: "activated",
       spendOnUse: false,
@@ -1691,12 +1696,58 @@ export const WILD_WARFARE: Buff[] = [
       name: "Mass Defection",
       // Tier 5 (moved up from 4): converting two pawns is a four-point swing,
       // the doubled sibling of Piece Steal (one pawn, tier 3).
-      description: "Turn two enemy pawns to your side for the rest of the game, once.",
+      description: "Mark two enemy pawns: after your opponent's next move they turn to your side for the rest of the game, once.",
       tier: 5,
       category: "pieces",
       flavor: "Word spreads down the whole trench.",
     },
-    convertEnemies(2, ["p"], "Choose an enemy pawn to win over"),
+    // Overhaul balance pass: the conversion is permanent (no timed duration to
+    // shorten), so the directive's other lever applies, the pawns no longer
+    // switch the instant you name them. You mark them now and they cross over
+    // only after your opponent has replied (each marked pawn is followed if it
+    // moves first, and dropped if it is captured before the switch), mirroring
+    // this file's Defectors card.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 2 || inst.state.armed
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy pawn to win over (${picks.length + 1}/2)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type === "p" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.armed) return;
+        inst.state.armed = true;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed) return;
+        let squares = (inst.state.squares as Square[] | undefined) ?? [];
+        // A marked pawn may be captured or moved before the switch lands.
+        squares = squares
+          .filter((s) => !(move.capturedSquare === s && move.from !== s))
+          .map((s) => (move.from === s ? move.to : s));
+        inst.state.squares = squares;
+        if (move.color !== api.opp) return;
+        for (const sq of squares) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") api.setPieceColor(sq, api.me);
+        }
+        inst.spent = true;
+        inst.state.squares = undefined;
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? "the defectors cross over after your opponent's reply"
+          : "activate to choose enemy pawns",
+    },
   ),
   card(
     {

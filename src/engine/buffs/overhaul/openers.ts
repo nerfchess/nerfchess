@@ -224,6 +224,163 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
       ),
     );
   }
+  if (entry.id === "harbor_walk") {
+    // Preserve the narrow a-file identity; if the sidestep is never used by the
+    // owner's 12th move, the unused charge converts into one draft reroll.
+    const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+      const out: Move[] = [];
+      for (const sq of mySquares(api.board, api.me, "p")) {
+        if (FILE(sq) !== entry.file) continue;
+        const tos: Square[] = [];
+        if (FILE(sq) > 0) tos.push(sq - 1);
+        if (FILE(sq) < 7) tos.push(sq + 1);
+        out.push(...teleportMoves(api.board, sq, tos, inst.id));
+      }
+      return out;
+    };
+    return opener(
+      entry,
+      "Your a-file pawn may step one square sideways, once. The destination must be empty. If unused by your 12th move, the charge becomes one draft reroll.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+          inst.state.moves = 0;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          addNovel(moves, gen(moves, inst, api));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via === inst.id && move.color) {
+            const left = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.charges = left;
+            if (left <= 0) inst.spent = true;
+          }
+          if (move.color === api.me) {
+            inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
+            if (
+              ((inst.state.moves as number) ?? 0) >= 12 &&
+              ((inst.state.charges as number) ?? 0) > 0 &&
+              !inst.spent
+            ) {
+              api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+              inst.state.charges = 0;
+              inst.spent = true;
+            }
+          }
+        },
+        status: (inst) => {
+          const c = (inst.state.charges as number) ?? 1;
+          return c > 0 ? "1 left, reroll at your 12th move" : null;
+        },
+      },
+    );
+  }
+  if (entry.id === "gallery_row") {
+    // Reworked identity: the d-file pawn sidesteps one square to an empty
+    // central file (c or e) and seals the square it vacated to both players
+    // until your next turn.
+    return opener(
+      entry,
+      "Once, your d-file pawn may sidestep one square to an empty central-file square (c or e); the square it leaves is blocked to both players until your next turn.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 3) continue;
+            const tos = [sq - 1, sq + 1].filter((t) => !api.board.pieces[t] && pawnRankOk(t));
+            out.push(...teleportMoves(api.board, sq, tos, inst.id));
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id) return;
+          // The opponent seal ticks on their turns (one reply, then it lifts).
+          // The self seal ticks on MY turns, and this sidestep is one of them,
+          // so it needs turns:2 to survive this move and still bar me next turn.
+          addEffect(api, { kind: "barred", squares: [move.from], against: api.opp, turns: 1 });
+          addEffect(api, { kind: "barred", squares: [move.from], against: api.me, turns: 2 });
+          inst.state.charges = 0;
+          inst.spent = true;
+        },
+        status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "one sidestep ready" : null),
+      },
+    );
+  }
+  if (entry.id === "garden_gate") {
+    // Reworked identity: the e-file pawn sidesteps to the d- or f-file; if it
+    // lands adjacent to a friendly pawn, that pair resists en passant capture
+    // for the rest of the game.
+    return opener(
+      entry,
+      "Once, your e-file pawn may step one square sideways to the d- or f-file (empty destination, not a capture); if it ends adjacent to a friendly pawn, both pawns resist en passant capture for the rest of the game.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+          inst.state.guarded = [];
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 4) continue;
+            const tos = [sq - 1, sq + 1].filter((t) => !api.board.pieces[t] && pawnRankOk(t));
+            out.push(...teleportMoves(api.board, sq, tos, inst.id));
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          // Follow the guarded pawns as they move; drop any that is captured or
+          // promotes (no longer a pawn worth warding).
+          const guarded = (inst.state.guarded as Square[]) ?? [];
+          if (guarded.length > 0) {
+            const next: Square[] = [];
+            for (const g of guarded) {
+              if (move.capturedSquare === g && move.from !== g) continue;
+              if (move.to === g && move.from !== g) continue;
+              if (move.from === g) {
+                if (!move.promotion) next.push(move.to);
+              } else next.push(g);
+            }
+            inst.state.guarded = next;
+          }
+          if (move.via !== inst.id) return;
+          inst.state.charges = 0;
+          const dest = move.to;
+          const neighbors: Square[] = [];
+          for (const [df, dr] of ALL8) {
+            const f = FILE(dest) + df, r = RANK(dest) + dr;
+            if (!inBoard(f, r)) continue;
+            const p = api.board.pieces[SQ(f, r)];
+            if (p && p.color === api.me && p.type === "p") neighbors.push(SQ(f, r));
+          }
+          if (neighbors.length > 0) inst.state.guarded = [dest, neighbors[0]];
+        },
+        filterOpponentMoves: (moves, inst) => {
+          const guarded = (inst.state.guarded as Square[]) ?? [];
+          if (guarded.length === 0) return moves;
+          return moves.filter(
+            (m) => !(m.isEnPassant && m.capturedSquare != null && guarded.includes(m.capturedSquare)),
+          );
+        },
+        status: (inst) => {
+          const g = (inst.state.guarded as Square[]) ?? [];
+          return g.length > 0
+            ? "en passant warded"
+            : ((inst.state.charges as number) ?? 0) > 0
+              ? "one sidestep ready"
+              : null;
+        },
+      },
+    );
+  }
   return opener(
     entry,
     `Your ${fileName}-file pawn may step one square sideways, once. The destination must be empty.`,
@@ -303,6 +460,10 @@ const COUNTRY_ROADS: Array<OpenerMeta & { file: number }> = [
 function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
   const fileName = FILE_NAMES[entry.file];
   const lossy = entry.id === "bridle_path";
+  // These entries' directive forbids capturing outright. The two-square advance
+  // already lands only when both squares are empty, so this filter is explicit
+  // insurance that matches the "cannot capture" wording rather than a change.
+  const noCapture = entry.id === "ferry_crossing" || entry.id === "goat_track";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const out: Move[] = [];
     const fwd = fwdOf(api.me);
@@ -315,7 +476,7 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
         out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
     }
-    return out;
+    return noCapture ? out.filter((m) => !m.captured) : out;
   };
   return opener(
     entry,
@@ -364,7 +525,7 @@ const STRANGE_GAITS: Array<
   { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square" },
   { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between" },
   { id: "long_jump", name: "Long Jump", flavor: "The sand pit is three ranks over. Stick the landing.", icon: "Wind", leaps: symLeaps(3, 3), how: "a jump of exactly 3 diagonally, clearing anything between" },
-  { id: "giraffe_keeper", name: "Giraffe Keeper", flavor: "The enclosure was never going to hold her.", icon: "TreePalm", leaps: symLeaps(4, 1), how: "a giraffe leap, 4 by 1, in any direction" },
+  { id: "giraffe_keeper", name: "Giraffe Keeper", flavor: "The enclosure was never going to hold her.", icon: "TreePalm", leaps: symLeaps(4, 1), how: "a giraffe leap, 4 by 1, in any direction", capture: "none" },
   { id: "dromedary_post", name: "Dromedary Post", flavor: "One hump, two deliveries, no return address.", icon: "Sun", leaps: symLeaps(3, 1), forward: true, how: "a camel leap, 3 by 1, toward the enemy side only", capture: "only" },
   { id: "colts_gallop", name: "Colt's Gallop", flavor: "All legs, no brakes, forward only.", icon: "Sprout", leaps: symLeaps(3, 2), forward: true, how: "a zebra leap, 3 by 2, toward the enemy side only", lossy: true },
   { id: "signal_rocket", name: "Signal Rocket", flavor: "Four squares of flight and a very confused landing.", icon: "Rocket", leaps: symLeaps(4, 0), how: "a launch of exactly 4 straight, clearing anything between" },

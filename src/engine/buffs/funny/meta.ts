@@ -10,7 +10,7 @@
 // Every card reuses an existing primitive; every opponent filter is partial so
 // nothing can soft-lock, and kings are never targeted.
 
-import { Buff, Move } from "./shared";
+import { Buff, Move, Square } from "./shared";
 import {
   card,
   curse,
@@ -26,6 +26,8 @@ import {
   relRank,
   removeEnemies,
   reviveOne,
+  tickTurns,
+  turnsLeft,
   timedAugment,
   summonTemp,
 } from "./shared";

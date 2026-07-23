@@ -207,7 +207,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "ScrollText",
       name: "Divine Mandate",
       description:
-        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 3 turns. Kings cannot be swayed.",
+        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 2 turns. Kings cannot be swayed.",
       tier: 6,
       category: "pieces",
       flavor: "Kneel, and rise ours.",
@@ -229,8 +229,9 @@ export const FANTASY_DIVINE: Buff[] = [
         if (sq == null) return;
         api.setPieceColor(sq, api.me);
         // Heaven shields the defector: a square-scoped shield that follows the
-        // piece keeps it uncapturable for the opponent's next 3 turns.
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+        // piece keeps it uncapturable for the opponent's next 2 turns (balance
+        // pass: the largest duration trimmed by one).
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
       },
     ),
   ),
