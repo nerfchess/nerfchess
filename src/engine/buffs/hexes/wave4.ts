@@ -795,8 +795,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_pawn_snob", name: "Pawn Snob", description: "For your opponent's next 4 turns, their pawns will not capture other pawns. Beneath them, apparently.", flavor: "We only duel officers, sniffed the smallest soldier.", icon: "ThumbsDown", fx: { motif: "muzzle", pieces: ["p"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_pawn_snob", name: "Pawn Snob", description: "For your opponent's next 3 turns, their pawns will not capture other pawns. Beneath them, apparently.", flavor: "We only duel officers, sniffed the smallest soldier.", icon: "ThumbsDown", fx: { motif: "muzzle", pieces: ["p"] } },
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "p") return true;
         const c = capSq(m);
@@ -927,8 +927,8 @@ const T2: Buff[] = [
     },
   ),
   H2(
-    { id: "hx4_short_stirrups", name: "Short Stirrups", description: "For your opponent's next 4 turns, their knights may not land adjacent to your king. The horses refuse the last stretch.", flavor: "Even a warhorse knows a bad idea when it smells one.", icon: "OctagonAlert", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(4, (moves, api) => {
+    { id: "hx4_short_stirrups", name: "Short Stirrups", description: "For your opponent's next 3 turns, their knights may not land adjacent to your king. The horses refuse the last stretch.", flavor: "Even a warhorse knows a bad idea when it smells one.", icon: "OctagonAlert", fx: { motif: "anchor", pieces: ["n"] } },
+    curse(3, (moves, api) => {
       const k = myKing(api);
       if (k == null) return moves;
       return moves.filter((m) => m.piece !== "n" || cheb(m.to, k) > 1);
@@ -1452,8 +1452,8 @@ const T3: Buff[] = [
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H3(
-    { id: "hx4_circling_vultures", name: "Circling Vultures", description: "For your opponent's next 3 turns, any piece of theirs with no friendly piece adjacent to it is watched too closely to fight: isolated pieces cannot capture.", flavor: "The birds can tell who is alone.", icon: "Bird", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_circling_vultures", name: "Circling Vultures", description: "For your opponent's next 3 turns, any piece of theirs with no friendly piece adjacent to it is watched too closely to fight: isolated pieces cannot capture.", flavor: "The birds can tell who is alone.", icon: "Bird", fx: { motif: "muzzle", pieces: "all" }, tier: 4 },
     curse(3, (moves, api) =>
       moves.filter(
         (m) =>
@@ -1470,8 +1470,8 @@ const T3: Buff[] = [
       for (const sq of drawRandom(api, pool, 2)) nutNow(api, sq, 2);
     }),
   ),
-  H3(
-    { id: "hx4_caught_mid_stride", name: "Caught Mid Stride", description: "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.", flavor: "The world blinked and one soldier forgot to.", icon: "Camera", fx: { motif: "jail" } },
+  hex(
+    { id: "hx4_caught_mid_stride", name: "Caught Mid Stride", description: "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.", flavor: "The world blinked and one soldier forgot to.", icon: "Camera", fx: { motif: "jail" }, tier: 4 },
     instant((_inst, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
