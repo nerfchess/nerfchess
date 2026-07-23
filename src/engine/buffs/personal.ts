@@ -20,6 +20,7 @@ import {
   BuffPick,
   CardFx,
 } from "../buff";
+import { isInCheck } from "../board";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, inBoard, Move, PieceType, RANK, SQ, Square } from "../types";
 import {
