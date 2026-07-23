@@ -479,24 +479,43 @@ const DOOMSDAY_CLOCK: Nerf = nerf(
     name: "Doomsday Clock",
     tier: 8,
     icon: "hourglass",
-    description: "You must capture the enemy king by your 45th move. If you make your 45th move and the game is still going, you lose.",
+    description: "You must capture the enemy king by your 30th move, or you lose. From your 12th move on you must also give check at least once every six of your own moves: let six of your moves pass with no check and you lose.",
     flavor: "The bell was cast the day you were born.",
   },
   {
     // Distinct from siege (a rook by move 20, tier 6) and deadline_queen (the
-    // queen by move 25, tier 6): the whole game is on the clock. Managed line:
-    // play for the win from move one; 45 of your own moves is a full game's
-    // worth of attacking chances.
-    checkLoss: (_s, ctx) =>
-      ctx.moveNumber >= 45 ? { reason: "the doomsday clock struck" } : null,
+    // queen by move 25, tier 6): the whole game is on the clock, and from move
+    // 12 a second clock demands constant pressure. Managed line: play for the
+    // win from move one and keep landing checks so neither clock runs out.
+    checkLoss: (_s, ctx) => {
+      if (ctx.moveNumber >= 30) return { reason: "the doomsday clock struck" };
+      // Check clock: from move 12 on, replay to find my most recent check and
+      // lose if six of my own moves have gone by without one. Recomputed fresh
+      // from history (not onTurnStart state) so my just-made check counts now.
+      if (ctx.moveNumber >= 12) {
+        const opp = other(ctx.me);
+        let board = initialBoard();
+        let myMoves = 0;
+        let lastCheck = 0;
+        for (const m of ctx.board.history) {
+          board = makeMove(board, m);
+          if (m.color === ctx.me) {
+            myMoves += 1;
+            if (isInCheck(board, opp)) lastCheck = myMoves;
+          }
+        }
+        if (myMoves - lastCheck >= 6) return { reason: "the check clock ran dry" };
+      }
+      return null;
+    },
     progress: (_s, ctx) => ({
-      value: Math.min(ctx.moveNumber, 45),
-      max: 45,
-      label: Math.min(ctx.moveNumber, 45) + "/45 moves on the clock",
+      value: Math.min(ctx.moveNumber, 30),
+      max: 30,
+      label: Math.min(ctx.moveNumber, 30) + "/30 moves on the clock",
     }),
     hint: (_s, ctx) => {
-      const remaining = 45 - ctx.moveNumber;
-      if (remaining > 10 || remaining < 0) return null;
+      const remaining = 30 - ctx.moveNumber;
+      if (remaining > 8 || remaining < 0) return null;
       return {
         text: `Doomsday: capture the enemy king within ${remaining} more move${remaining === 1 ? "" : "s"} or lose.`,
         tone: "warn",
