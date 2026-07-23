@@ -742,8 +742,8 @@ const T2: Buff[] = [
     curse(1, (moves, api) => moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) !== 1)),
   ),
   H2(
-    { id: "hx4_shrunken_shoes", name: "Shrunken Shoes", description: "For your opponent's next 2 turns, none of their pieces may move more than 3 squares.", flavor: "The quartermaster washed everything on hot.", icon: "Shrink", fx: { motif: "anchor", pieces: "all" } },
-    curse(2, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 3)),
+    { id: "hx4_shrunken_shoes", name: "Shrunken Shoes", description: "On your opponent's next turn, none of their pieces may move more than 3 squares.", flavor: "The quartermaster washed everything on hot.", icon: "Shrink", fx: { motif: "anchor", pieces: "all" } },
+    curse(1, (moves) => moves.filter((m) => m.piece === "k" || moveDist(m) <= 3)),
   ),
   H2(
     { id: "hx4_flinching_blades", name: "Flinching Blades", description: "For your opponent's next 2 turns, they may not capture from an adjacent square: every kill must come from at least 2 squares away. Kings are exempt.", flavor: "Hard to stab someone who is making eye contact.", icon: "Eye", fx: { motif: "muzzle", pieces: "all" } },
@@ -834,8 +834,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_shadowed_meadow", name: "Shadowed Meadow", description: "For your opponent's next 2 turns, their pieces may not stop on dark squares in your half of the board. Their king is exempt.", flavor: "The shade on that side bites.", icon: "TreeDeciduous", fx: { motif: "blindfold", pieces: "all" } },
-    curse(2, (moves, api) =>
+    { id: "hx4_shadowed_meadow", name: "Shadowed Meadow", description: "On your opponent's next turn, their pieces may not stop on dark squares in your half of the board. Their king is exempt.", flavor: "The shade on that side bites.", icon: "TreeDeciduous", fx: { motif: "blindfold", pieces: "all" } },
+    curse(1, (moves, api) =>
       moves.filter((m) => m.piece === "k" || !(relRank(api.opp, m.to) >= 5 && sqShade(m.to) === 0)),
     ),
   ),
@@ -1368,8 +1368,8 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_borrowed_ladder", name: "Borrowed Ladder", description: "For your opponent's next 4 turns, their bishops may not move backward toward their own back rank.", flavor: "Ladders go up. Ask anyone.", icon: "ArrowUp", fx: { motif: "anchor", pieces: ["b"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_borrowed_ladder", name: "Borrowed Ladder", description: "For your opponent's next 3 turns, their bishops may not move backward toward their own back rank.", flavor: "Ladders go up. Ask anyone.", icon: "ArrowUp", fx: { motif: "anchor", pieces: ["b"] } },
+    curse(3, (moves, api) =>
       moves.filter((m) => m.piece !== "b" || relRank(api.opp, m.to) >= relRank(api.opp, m.from)),
     ),
   ),
