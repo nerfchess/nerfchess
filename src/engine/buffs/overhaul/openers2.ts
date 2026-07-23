@@ -362,13 +362,13 @@ function firstBlood(entry: (typeof FIRST_BLOOD)[number]): Buff {
 // automatic, detected after your move lands.
 // ---------------------------------------------------------------------------
 
-const OVERTURES: Array<OpenerMeta & { what: string; ride: (move: Move, api: BuffApi) => void }> = [
+const OVERTURES: Array<OpenerMeta & { what: string; ride: (move: Move, api: BuffApi) => void; charges?: number }> = [
   { id: "opening_chord", name: "Opening Chord", flavor: "The hall goes quiet. The clock does not, but it slows.", icon: "Music", what: "gain 3 seconds on your clock", ride: (_move, api) => api.adjustClock({ addSelfSec: 3 }) },
   { id: "stage_armor", name: "Stage Armor", flavor: "Prop steel, real confidence.", icon: "Shield", what: "the piece that gave check cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "golden_aria", name: "Golden Aria", flavor: "Hit the high note, keep the costume.", icon: "Star", what: "the piece that gave check is gilded, purely cosmetically, forever, every enemy piece it can capture flashes until your opponent replies, and you gain 5 seconds", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); const caps = capturesFrom(api, move.to, api.opp); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
   { id: "understudy_list", name: "Understudy List", flavor: "Know exactly who is covering the lead tonight.", icon: "Drama", what: "every enemy piece defending the enemy king's square flashes until your opponent replies", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) flashSquares(api, attackersOf(api.board, api.opp, k)); } },
-  { id: "intermission", name: "Intermission", flavor: "Stretch your legs, revisit the merchandise stand.", icon: "Ticket", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
-  { id: "house_lights_up", name: "House Lights Up", flavor: "Suddenly everyone can see exactly where the exits are.", icon: "Lamp", what: "every square around the enemy king flashes until your opponent replies", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) flashSquares(api, ringAround(k)); } },
+  { id: "intermission", name: "Intermission", flavor: "Stretch your legs, revisit the merchandise stand.", icon: "Ticket", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, charges: 2 },
+  { id: "house_lights_up", name: "House Lights Up", flavor: "Suddenly everyone can see exactly where the exits are.", icon: "Lamp", what: "every square around the enemy king flashes until your opponent replies, and any temporary shield on those squares is removed", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) { const ring = ringAround(k); flashSquares(api, ring); stripTempShields(api, ring, api.opp); } } },
 ];
 
 function overture(entry: (typeof OVERTURES)[number]): Buff {

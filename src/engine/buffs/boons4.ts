@@ -517,34 +517,61 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_promise_of_rest", name: "Promise of Rest", tier: 1, category: "nerf", icon: "Tent",
-      description: "The first time one of your pieces crosses into your opponent's half, your nerf is suspended for your next 2 turns.",
+      description: "The first time one of your pieces crosses into your opponent's half, your nerf is suspended for your next 2 turns and you gain 1 draft reroll.",
       flavor: "March far enough and the load lightens." },
-    reliefOn(
-      1, 2,
-      (m, api) => m.color === api.me && inHalf(api.me, m.from) && !inHalf(api.me, m.to),
-      "promises",
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        if (!(move.color === api.me && inHalf(api.me, move.from) && !inHalf(api.me, move.to))) return;
+        susp(api, 2);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 1} promises left`,
+    },
   ),
 
   // --- movement (5) ---
 
   card(
     { id: "bn4_side_shuffle", name: "Side Shuffle", tier: 1, category: "movement", icon: "MoveHorizontal",
-      description: "Once, one of your pawns may step one square sideways onto an empty square.",
+      description: "Once, one of your pawns may step one square sideways onto an empty square. The square it lands on lights up until your opponent replies.",
       flavor: "Technically forward, spiritually.", requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "p")) {
-        for (const df of [-1, 1]) {
-          const f = FILE(from) + df;
-          if (!inBoard(f, RANK(from))) continue;
-          const to = SQ(f, RANK(from));
-          if (!api.board.pieces[to]) out.push(...teleportMoves(api.board, from, [to], inst.id));
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "p")) {
+          for (const df of [-1, 1]) {
+            const f = FILE(from) + df;
+            if (!inBoard(f, RANK(from))) continue;
+            const to = SQ(f, RANK(from));
+            if (!api.board.pieces[to]) out.push(...teleportMoves(api.board, from, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }, 1),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id || !move.color) return;
+        // Telegraph the landing square: it stays lit until the opponent replies.
+        flashSquares(api, [move.to]);
+        const charges = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = charges;
+        if (charges <= 0) inst.spent = true;
+      },
+      status: () => null,
+    },
   ),
   card(
     { id: "bn4_tiptoe", name: "Tiptoe", tier: 1, category: "movement", icon: "Footprints",
