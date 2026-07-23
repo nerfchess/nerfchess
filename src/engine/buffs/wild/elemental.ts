@@ -32,17 +32,14 @@ import {
   activated,
   addEffect,
   augment,
-  barLine,
   captureExplosion,
   emptySquares,
-  explodeAt,
   freezeAllEnemies,
   freezeTarget,
   grantInventory,
   inHalf,
   instant,
   leapMoves,
-  lineSweep,
   mySquares,
   pawnRankOk,
   phasingSlideMoves,
@@ -50,14 +47,13 @@ import {
   relRank,
   relocateMany,
   removeEnemies,
-  reviveOne,
   revivable,
   shieldArmy,
   shieldZone,
   slideMoves,
+  spendOnVia,
   timedAugment,
   timedOppFilter,
-  voidSquares,
 } from "../helpers";
 
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
@@ -290,17 +286,24 @@ function barNeighbors(barTurns: number, freezeTurns: number, label: string): Mec
     (_inst, api, picks) => {
       const c = picks[0]?.square;
       if (c == null) return;
-      const squares: Square[] = [];
+      const ring: Square[] = [];
       for (const [df, dr] of ALL_DIRS) {
         const f = FILE(c) + df, r = RANK(c) + dr;
-        if (inBoard(f, r)) squares.push(SQ(f, r));
+        if (inBoard(f, r)) ring.push(SQ(f, r));
       }
-      if (squares.length) {
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: barTurns });
+      // The defender's bridge: one ring square is left open so the wall never
+      // fully seals the ring. A live defender choice is not practical in this
+      // activated (caster-driven) shape, so the gap is picked deterministically:
+      // the lowest square by coordinate.
+      const barred = ring.slice().sort((a, b) => a - b);
+      barred.shift();
+      if (barred.length) {
+        addEffect(api, { kind: "barred", squares: barred, against: api.opp, turns: barTurns });
       }
-      // The thorns bite: any enemy piece already caught in the ring is snared
-      // and cannot move for `freezeTurns` of their turns.
-      for (const sq of squares) {
+      // The thorns bite: any enemy piece already caught in the ring (the bridge
+      // square included) is snared and cannot move for `freezeTurns` of their
+      // turns.
+      for (const sq of ring) {
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") {
           addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: freezeTurns, skin: "vines" });
@@ -528,6 +531,54 @@ function summonTempStrike(
   };
 }
 
+/** Arm an effect to resolve one opponent move later: the card sits armed from
+ * the moment it is held until the opponent plays their next move, then `effect`
+ * fires during that move. Because it resolves during the opponent's own move,
+ * any freeze `effect` adds should budget one extra turn (the shared post-move
+ * tick eats one immediately), the same convention Static Field and Frost Ward
+ * already follow. */
+function delayedInstant(effect: (api: BuffApi) => void, pending: string): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.armed = true;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (inst.state.armed !== true || move.color !== api.opp) return;
+      effect(api);
+      inst.state.armed = false;
+      inst.spent = true;
+    },
+    status: (inst) => (inst.state.armed === true ? pending : null),
+  };
+}
+
+/** Diagonal landing squares for a one-capture bolt from `from`: walk each
+ * diagonal, offering the first enemy piece (never a king) and the empty squares
+ * beyond it, until a friendly piece, a king, or a second enemy blocks the ray.
+ * Mirrors lineSweep's dests with maxCaptures=1, used by the charged Lightning
+ * Bolt whose fire is delayed a turn. */
+const boltDests = (api: BuffApi, from: Square): Square[] => {
+  const out: Square[] = [];
+  for (const [df, dr] of DIAG_DIRS) {
+    let f = FILE(from) + df, r = RANK(from) + dr, swept = 0;
+    while (inBoard(f, r)) {
+      const sq = SQ(f, r);
+      const p = api.board.pieces[sq];
+      if (!p) {
+        if (swept > 0) out.push(sq);
+      } else {
+        if (p.color === api.me || p.type === "k") break;
+        swept++;
+        if (swept > 1) break;
+        out.push(sq);
+      }
+      f += df; r += dr;
+    }
+  }
+  return out;
+};
+
 // ---------------------------------------------------------------------------
 
 export const WILD_ELEMENTAL: Buff[] = [
@@ -537,7 +588,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_cinder_strike",
       name: "Cinder Strike",
       description: "Remove one of your opponent's pawns from the board, once.",
-      tier: 2,
+      tier: 3,
       category: "attack",
       flavor: "One ember, one pawn, gone.",
     },
@@ -548,7 +599,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_scorch",
       name: "Scorch",
       description: "Remove one enemy knight or bishop from the board; the fire spreads to every enemy pawn standing beside it, once.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       flavor: "Nothing minor about losing a minor.",
     },
@@ -584,7 +635,7 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_immolation",
       name: "Immolation",
-      description: "Offer one of your own pawns to the flame: it is consumed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the fire.",
+      description: "Offer one of your own pawns to the flame: it is consumed, and the blast removes up to seven enemy pieces (never kings) on the 8 squares around it. If all eight squares hold enemies, one is spared. Shielded pieces resist the fire.",
       tier: 6,
       category: "attack",
       requires: ["p"],
@@ -603,7 +654,28 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || api.board.pieces[sq]?.type !== "p") return;
         api.removePiece(sq, { uncounted: true });
-        explodeAt(api, sq);
+        // The blast still spares kings and shielded pieces, but its maximum
+        // removals drop from eight to seven: when all 8 surrounding squares hold
+        // eligible enemies, one is spared (deterministic: the highest square).
+        const isShielded = (t: Square): boolean =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              (e.turns == null || e.turns > 0) &&
+              (e.squares == null || e.squares.includes(t)),
+          );
+        const targets: Square[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(sq) + df, r = RANK(sq) + dr;
+          if (!inBoard(f, r)) continue;
+          const t = SQ(f, r);
+          const p = api.board.pieces[t];
+          if (p && p.color === api.opp && p.type !== "k" && !isShielded(t)) targets.push(t);
+        }
+        targets.sort((a, b) => a - b);
+        if (targets.length > 7) targets.pop();
+        for (const t of targets) api.removePiece(t);
       },
     ),
   ),
@@ -612,7 +684,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_conflagration",
       name: "Conflagration",
       description: "Remove two enemy pieces, each a pawn, knight, or bishop, once.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       flavor: "It spreads.",
     },
@@ -624,7 +696,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Flame Lance",
       description:
         "One of your rooks breathes a lance of flame straight up its own file, without moving: the first enemy piece in the jet, if it is not a king, burns away. Friendly pieces block the flame, once.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       requires: ["r"],
       flavor: "A straight line of ash.",
@@ -675,34 +747,60 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_hellfire_beam",
       name: "Hellfire Beam",
       description:
-        "The beam scorches an X across the board: pick any square, and both diagonals through it stay burning: your opponent cannot move onto them for their next 3 turns.",
+        "The beam scorches one diagonal: pick a square and choose one of the two diagonals through it. Every empty square along it burns: your opponent cannot move onto them for their next 2 turns. Any enemy piece already on the diagonal may leave normally.",
       tier: 6,
       category: "hex",
       flavor: "The ground remembers the beam.",
       fx: { motif: "blindfold" },
     },
     activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the square the beam crosses",
-              squares: Array.from({ length: 64 }, (_, i) => i),
-            },
       (_inst, api, picks) => {
-        const c = picks[0]?.square;
-        if (c == null) return;
-        const squares: Square[] = [c];
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the square the beam crosses",
+            squares: Array.from({ length: 64 }, (_, i) => i),
+          };
+        }
+        // Offer both diagonals through the chosen square; the pick selects which
+        // single diagonal burns (one, not both).
+        const c = picks[0].square!;
+        const opts: Square[] = [];
         for (const [df, dr] of DIAG_DIRS) {
           let f = FILE(c) + df, r = RANK(c) + dr;
           while (inBoard(f, r)) {
-            squares.push(SQ(f, r));
+            opts.push(SQ(f, r));
             f += df;
             r += dr;
           }
         }
-        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+        return { kind: "square", label: "Choose which diagonal burns", squares: opts };
+      },
+      (_inst, api, picks) => {
+        const c = picks[0]?.square, d = picks[1]?.square;
+        if (c == null || d == null) return;
+        // The picked square shares an axis sign with the one diagonal that burns:
+        // same-sign file/rank offset picks the "\" axis, opposite-sign the "/".
+        const sameAxis = Math.sign(FILE(d) - FILE(c)) === Math.sign(RANK(d) - RANK(c));
+        const dirs = sameAxis
+          ? ([[1, 1], [-1, -1]] as const)
+          : ([[1, -1], [-1, 1]] as const);
+        // Occupied squares are left open so pieces already on the diagonal may
+        // leave normally: only the empty squares of the chosen diagonal burn.
+        const squares: Square[] = api.board.pieces[c] ? [] : [c];
+        for (const [df, dr] of dirs) {
+          let f = FILE(c) + df, r = RANK(c) + dr;
+          while (inBoard(f, r)) {
+            const sq = SQ(f, r);
+            if (!api.board.pieces[sq]) squares.push(sq);
+            f += df;
+            r += dr;
+          }
+        }
+        if (squares.length) {
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+        }
       },
     ),
   ),
@@ -711,17 +809,17 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_firestorm",
       name: "Firestorm",
       description:
-        "A firestorm falls on the crossroads: every enemy piece except a king standing on the four center squares (d4, e4, d5, e5) is consumed.",
+        "After your opponent replies, a firestorm falls on the crossroads: every enemy piece except a king standing on the four center squares (d4, e4, d5, e5) is consumed.",
       tier: 5,
       category: "attack",
       flavor: "Everything near the middle catches.",
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       for (const sq of [SQ(3, 3), SQ(4, 3), SQ(3, 4), SQ(4, 4)]) {
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
       }
-    }),
+    }, "falls after your opponent replies"),
   ),
   card(
     {
@@ -741,36 +839,38 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_frost_nip",
       name: "Frost Nip",
-      description: "Frost nips at the rearguard: every enemy piece except the king still standing on its own back rank is frozen for 1 of their turns.",
+      description: "Frost nips at the rearguard: after your opponent replies, every enemy piece except the king still standing on its own back rank is frozen for 1 of their turns.",
       tier: 2,
       category: "tempo",
       flavor: "Just long enough.",
       fx: { motif: "jail" },
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       const back = api.opp === "w" ? 0 : 7;
       for (const sq of mySquares(api.board, api.opp)) {
         if (RANK(sq) !== back) continue;
         if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        // Resolves during the opponent's reply, so the shared post-move tick
+        // eats one turn immediately: 2 here leaves 1 of their turns frozen.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
       }
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
       id: "we_glaciate",
       name: "Glaciate",
       description:
-        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: every enemy piece directly beside it (up, down, left, or right) is frozen for 1 of their turns.",
+        "Freeze one enemy piece (never a king) for 3 of their turns, and the frost spreads: all but one of the enemy pieces directly beside it (up, down, left, or right) are frozen for 1 of their turns.",
       tier: 4,
       category: "tempo",
       flavor: "The cold does not stop at one. It creeps outward.",
       fx: { motif: "jail" },
     },
     // Distinct from wild/arcane's wa_time_stop (a single-target 3-turn lock): the
-    // ice spreads. The chosen piece is frozen for 3 turns, and every enemy piece
-    // orthogonally adjacent (never a king) is chilled for 1 turn. Reuses the same
-    // ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
+    // ice spreads. The chosen piece is frozen for 3 turns, and all but one of the
+    // orthogonally adjacent enemy pieces (never a king) are chilled for 1 turn.
+    // Reuses the same ORTHO_DIRS adjacency + addEffect(freeze) pattern as Stone Grip.
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -786,14 +886,20 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
+        // Remove one affected piece: the frost spreads to all but one of the
+        // orthogonal enemy neighbours (the highest square index is spared,
+        // deterministic on every replica). The primary target is always frozen.
+        const beside: Square[] = [];
         for (const [df, dr] of ORTHO_DIRS) {
           const f = FILE(sq) + df, r = RANK(sq) + dr;
           if (!inBoard(f, r)) continue;
           const asq = SQ(f, r);
           const p = api.board.pieces[asq];
-          if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
-          }
+          if (p && p.color === api.opp && p.type !== "k") beside.push(asq);
+        }
+        beside.sort((a, b) => a - b).pop();
+        for (const asq of beside) {
+          addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1, skin: "ice" });
         }
       },
     ),
@@ -803,29 +909,31 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_hailstorm",
       icon: "CloudRain",
       name: "Hailstorm",
-      description: "Freeze every one of your opponent's pawns for their next 2 turns.",
+      description: "After your opponent replies, freeze every one of their pawns for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "The whole front line, pinned under ice.",
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       for (const sq of mySquares(api.board, api.opp, "p")) {
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        // Resolves during the opponent's reply, so the shared post-move tick
+        // eats one turn immediately: 3 here leaves 2 of their turns frozen.
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3 });
       }
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
       id: "we_flash_freeze",
       name: "Flash Freeze",
       description:
-        "Freeze every enemy piece standing next to your king for their next 2 turns and bonk it where it stands.",
+        "After your opponent replies, freeze every enemy piece standing next to your king for their next 2 turns and bonk it where it stands.",
       tier: 6,
       category: "protection",
       flavor: "The bodyguard's beat: the crowd around the crown, iced.",
       fx: { motif: "jail" },
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       const king = mySquares(api.board, api.me, "k")[0];
       if (king == null) return;
       const hit: Square[] = [];
@@ -835,25 +943,52 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = SQ(f, r);
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+          // Resolves during the opponent's reply, so the shared post-move tick
+          // eats one turn immediately: 3 here leaves 2 of their turns frozen.
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
           hit.push(sq);
         }
       }
       if (hit.length) addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
       id: "we_glacier_wall",
       name: "Glacier Wall",
       description:
-        "Two walls of ice rise: pick any two squares and each of their files becomes impassable to your opponent for their next 2 turns.",
+        "Two walls of ice rise: pick any two squares, and every empty square on each of their files becomes impassable to your opponent for their next 2 turns. Any enemy piece already standing on a frozen file may leave normally.",
       tier: 6,
       category: "protection",
       flavor: "Two rivers, both frozen shut.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 2, 2),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to seal",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const file = FILE(k.square);
+          // Only empty squares freeze over, so an enemy piece already standing on
+          // a sealed file is never walled in and may leave normally.
+          const squares: Square[] = [];
+          for (let r = 0; r < 8; r++) {
+            const sq = SQ(file, r);
+            if (!api.board.pieces[sq]) squares.push(sq);
+          }
+          if (squares.length) {
+            addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+          }
+        }
+      },
+    ),
   ),
   card(
     {
@@ -862,7 +997,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Frost Ward",
       description:
         "Your king cannot be captured for your opponent's next 2 turns. Every enemy piece that ends a move next to your king in that time is frozen for 1 turn and bonked where it stands.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "A rime of protection, and it bites back.",
       fx: { motif: "ward", pieces: ["k"], self: true },
@@ -911,13 +1046,13 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_frostbite_curse",
       name: "Frostbite",
       description:
-        "Your opponent's pieces go numb: for their next 2 turns they cannot make any capture, and no piece may move more than 2 squares.",
+        "Your opponent's pieces go numb: for their next turn they cannot make any capture, and no piece may move more than 2 squares.",
       tier: 5,
       category: "protection",
       flavor: "Fingers too cold to close, joints too stiff to reach.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(2, (moves) => moves.filter((m) => !m.captured && dist(m.from, m.to) <= 2)),
+    curse(1, (moves) => moves.filter((m) => !m.captured && dist(m.from, m.to) <= 2)),
   ),
   card(
     {
@@ -925,7 +1060,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "CloudFog",
       name: "Whiteout",
       description:
-        "A blizzard freezes every enemy piece except the king and pawns for their next 2 turns. The pawns can still trudge.",
+        "A blizzard freezes every enemy piece except the king and pawns for their next turn. The pawns can still trudge.",
       tier: 7,
       category: "tempo",
       flavor: "Only the smallest feet still find the ground.",
@@ -935,7 +1070,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       for (const sq of mySquares(api.board, api.opp)) {
         const t = api.board.pieces[sq]!.type;
         if (t === "k" || t === "p") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "ice" });
       }
     }),
   ),
@@ -946,7 +1081,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_stone_grip",
       name: "Stone Grip",
       description:
-        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns.",
+        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns. Using this spends your next draft reroll, if you have one.",
       tier: 3,
       category: "tempo",
       flavor: "The ground closes over its feet, and the rock spreads.",
@@ -985,6 +1120,8 @@ export const WILD_ELEMENTAL: Buff[] = [
         inst.state.beside = beside;
         inst.state.turns = 2;
         inst.state.active = true;
+        // Using this spends your next draft reroll, if you have one.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       filterOpponentMoves: (moves, inst) => {
         const beside = inst.state.beside as Square[] | undefined;
@@ -1009,7 +1146,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_petrify_ranks",
       name: "Petrify the Ranks",
       description:
-        "Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns.",
+        "Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns. The card is spent even if your opponent has no knights or bishops to petrify.",
       tier: 5,
       category: "tempo",
       flavor: "A gallery of statues.",
@@ -1021,27 +1158,31 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_soldiers",
       name: "Stone Soldiers",
-      description: "One of your pawns is carved into a stone soldier: it cannot move and cannot be captured for your opponent's next 6 turns, then the stone crumbles and it wakes.",
+      description: "Up to four of your pieces (never your king) are carved into stone soldiers: each cannot move and cannot be captured for your opponent's next 6 turns, then the stone crumbles and they wake.",
       tier: 4,
       category: "protection",
-      requires: ["p"],
       flavor: "Cut from the bedrock. Returned to it, standing.",
-      fx: { motif: "ward", pieces: ["p"], self: true },
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     activated(
       (_inst, api, picks) =>
-        picks.length > 0
+        picks.length >= 4
           ? null
           : {
               kind: "square",
-              label: "Choose the pawn to carve into stone",
-              squares: mySquares(api.board, api.me, "p"),
+              label: `Choose a piece to carve into stone (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
             },
       (_inst, api, picks) => {
-        const sq = picks[0]?.square;
-        if (sq == null) return;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 6 });
-        addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 6, skin: "stone" });
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 6 });
+          addEffect(api, { kind: "freeze", sq, owner: api.me, turns: 6, skin: "stone" });
+        }
       },
     ),
   ),
@@ -1051,7 +1192,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Quagmire",
       description:
         "Open two patches of sucking mud on empty squares: any enemy piece except a king that steps onto one is stuck fast for its next 3 turns instead of removed. The mud stays for the rest of the game.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "It does not swallow you. It just will not let go.",
       fx: { motif: "jail" },
@@ -1064,25 +1205,41 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "ShieldAlert",
       name: "Stoneskin",
       description:
-        "Your whole army cannot be captured for your opponent's next 2 turns, and every enemy piece standing next to one of your pieces is locked in place for its next turn.",
+        "Choose up to four of your pieces: they cannot be captured for your opponent's next 2 turns, and every enemy piece standing next to one of them is locked in place for its next turn.",
       tier: 8,
       category: "protection",
       flavor: "Skin like slate, and the ground grips whoever leans on it.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
-      const mineSet = new Set(mySquares(api.board, api.me));
-      for (const sq of mySquares(api.board, api.opp)) {
-        const p = api.board.pieces[sq]!;
-        if (p.type === "k") continue;
-        const adj = ALL_DIRS.some(([df, dr]) => {
-          const f = FILE(sq) + df, r = RANK(sq) + dr;
-          return inBoard(f, r) && mineSet.has(SQ(f, r));
-        });
-        if (adj) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to sheathe in stone (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const chosen = picks.map((k) => k.square).filter((v): v is Square => v != null);
+        if (chosen.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: chosen, turns: 2 });
+        }
+        const chosenSet = new Set(chosen);
+        for (const sq of mySquares(api.board, api.opp)) {
+          const p = api.board.pieces[sq]!;
+          if (p.type === "k") continue;
+          const adj = ALL_DIRS.some(([df, dr]) => {
+            const f = FILE(sq) + df, r = RANK(sq) + dr;
+            return inBoard(f, r) && chosenSet.has(SQ(f, r));
+          });
+          if (adj) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
+        }
+      },
+    ),
   ),
   card(
     {
@@ -1091,7 +1248,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Mountain Range",
       description:
         "Three peaks heave up out of the board: pick three empty squares; your opponent's pieces can never move onto them, for the rest of the game.",
-      tier: 6,
+      tier: 7,
       category: "protection",
       flavor: "You do not go over a mountain.",
       fx: { motif: "blindfold" },
@@ -1119,7 +1276,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Rooted",
       description:
         "Roots seize the heavy pieces: your opponent's rooks and queen cannot move for their next 2 turns.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Too big to pull free.",
       fx: { motif: "jail", pieces: ["r", "q"] },
@@ -1131,7 +1288,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_landslide",
       name: "Landslide",
       description: "The whole slope gives way: every enemy piece except the king is pushed one square back toward its own home rank. Pieces with no room behind them stand fast.",
-      tier: 7,
+      tier: 8,
       category: "attack",
       flavor: "The whole hillside came down.",
     },
@@ -1159,13 +1316,57 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_lightning_bolt",
       name: "Lightning Bolt",
       description:
-        "One queen looses a bolt down a diagonal, removing the first enemy piece it hits (never a king) and landing beyond it, once.",
+        "One queen charges a bolt down a diagonal; after your opponent's next move it fires, removing the first enemy piece in its path (never a king) and landing beyond it, once.",
       tier: 4,
       category: "attack",
       requires: ["q"],
       flavor: "One target, struck clean.",
     },
-    lineSweep("q", DIAG_DIRS, 1),
+    // The largest count/range/duration is already one (a single capture, once),
+    // so the balance pass delays the strike: aim the bolt now, it fires after
+    // the opponent's next move down the diagonal you committed to.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed === true || picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the queen that charges the bolt",
+            squares: mySquares(api.board, api.me, "q").filter((sq) => boltDests(api, sq).length > 0),
+          };
+        }
+        return { kind: "square", label: "Choose where the bolt lands", squares: boltDests(api, picks[0].square!) };
+      },
+      effect: (inst, _api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null || inst.state.armed === true) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        const from = inst.state.from as Square, to = inst.state.to as Square;
+        if (from != null && to != null && from !== to) {
+          const df = Math.sign(FILE(to) - FILE(from)), dr = Math.sign(RANK(to) - RANK(from));
+          let f = FILE(from) + df, r = RANK(from) + dr;
+          while (inBoard(f, r)) {
+            const sq = SQ(f, r);
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+            if (sq === to) break;
+            f += df; r += dr;
+          }
+          if (api.board.pieces[from]?.color === api.me && !api.board.pieces[to]) api.relocate(from, to);
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "bolt fires after your opponent moves" : "activate to charge the bolt",
+    },
   ),
   card(
     {
@@ -1173,7 +1374,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Arc Lightning",
       description:
         "One rook arcs lightning along a diagonal, removing up to two enemy pieces in its path (never a king) and landing beyond them. The bolt then jumps to freeze the nearest surviving enemy piece for its next 2 turns.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       requires: ["r"],
       flavor: "It jumps where it likes.",
@@ -1186,7 +1387,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Ball Lightning",
       description:
         "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
-      tier: 3,
+      tier: 4,
       category: "attack",
       flavor: "It rolls sideways.",
     },
@@ -1197,7 +1398,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_static_field",
       name: "Static Field",
       description:
-        "Static builds on anything that runs: for your opponent's next 3 turns, any enemy piece except the king that travels 3 or more squares in one move is grounded, frozen for 1 turn where it lands.",
+        "Static builds on anything that runs: for your opponent's next 3 turns, any enemy piece except the king that travels 3 or more squares in one move without capturing is grounded, frozen for 1 turn where it lands.",
       tier: 3,
       category: "tempo",
       flavor: "The faster you move, the harder it bites.",
@@ -1217,7 +1418,7 @@ export const WILD_ELEMENTAL: Buff[] = [
           Math.abs(FILE(move.to) - FILE(move.from)),
           Math.abs(RANK(move.to) - RANK(move.from)),
         );
-        if (dist >= 3 && move.piece !== "k") {
+        if (dist >= 3 && move.piece !== "k" && !move.captured) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp) {
             // Added during their own move, so the shared post-move tick eats
@@ -1235,21 +1436,21 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_gale",
       name: "Gale",
       description:
-        "A driving wind opens gaps: for your next 2 turns your bishops may each slip through one friendly piece in their way.",
+        "A driving wind opens gaps: for your next turn your bishops may each slip through one friendly piece in their way.",
       tier: 3,
       category: "movement",
       requires: ["b"],
       flavor: "The wind holds the door.",
       fx: { motif: "empower", pieces: ["b"], self: true },
     },
-    timedAugment(2, bishopsPhaseGen),
+    timedAugment(1, bishopsPhaseGen),
   ),
   card(
     {
       id: "we_thunder_step",
       name: "Thunder Step",
       description: "One rook may move up to two squares diagonally, once.",
-      tier: 2,
+      tier: 1,
       category: "movement",
       requires: ["r"],
       flavor: "A short crack of speed.",
@@ -1261,14 +1462,23 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_updraft",
       name: "Updraft",
-      description: "One knight may make a longer 3-by-1 leap, once.",
+      description: "One knight may make a longer 3-by-1 leap, once; after the leap, gain one draft reroll.",
       tier: 1,
       category: "movement",
       requires: ["n"],
       flavor: "Caught on a thermal.",
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true },
     },
-    augment(knightCamelGen),
+    {
+      ...augment(knightCamelGen),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          // The leap resolves: reward the narrow use with one draft reroll.
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   card(
     {
@@ -1277,7 +1487,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Thunderhead",
       description:
         "A charged cloud takes shape as a knight on an empty square in your half, and its arrival blasts one enemy pawn standing beside it off the board. It fights for 3 of your turns, then rolls away.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       flavor: "Borrowed from the sky, and it lands with a crack.",
     },
@@ -1292,7 +1502,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Undertow",
       description:
         "A current sweeps one of your pieces to any empty square, then drags the nearest enemy piece one square toward where it lands.",
-      tier: 4,
+      tier: 5,
       category: "movement",
       flavor: "It takes you somewhere better and pulls them off their feet.",
     },
@@ -1304,7 +1514,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "Waves",
       name: "Riptide",
       description: "A countercurrent runs through the middle of the board: for your opponent's next 3 turns, any enemy piece except the king that ends its move on the 4th or 5th rank is dragged one square back toward its home rank, when that square is free.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "The water rearranges the shore.",
       fx: { motif: "anchor", pieces: "all" },
@@ -1344,7 +1554,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_whirlpool",
       name: "Whirlpool",
       description:
-        "A whirlpool drags one enemy pawn to your side and deposits it on your 4th rank, yours now and ready to advance.",
+        "A whirlpool drags one enemy pawn to your side and deposits it on an empty square of your 4th rank, never a capture, yours now and ready to advance.",
       tier: 3,
       category: "pieces",
       flavor: "Down on their side, up on ours.",
@@ -1373,6 +1583,8 @@ export const WILD_ELEMENTAL: Buff[] = [
         if (from == null || to == null) return;
         const p = api.board.pieces[from];
         if (!p || p.type !== "p" || p.color !== api.opp) return;
+        // The special move never captures: the pawn only surfaces on an empty,
+        // pawn-legal square of your 4th rank.
         if (api.board.pieces[to] || !pawnRankOk(to)) return;
         api.setPieceColor(from, api.me);
         api.relocate(from, to);
@@ -1385,7 +1597,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "River Flow",
       description:
         "The board runs like water: for your next 2 turns your rooks may each slip through one friendly piece in their way.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       requires: ["r"],
       flavor: "Water goes around nothing, it goes through.",
@@ -1398,12 +1610,56 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_flood",
       name: "Flood",
       description:
-        "Three floodwaters spread over empty squares: the first enemy piece to step onto each (never a king) is swept off the board. They stay for 2 of your turns.",
+        "Three floodwaters spread over empty squares: the first enemy piece to step onto one with a non-capturing move (never a king) is swept off the board. A piece that captures its way onto the water is not swept. They stay for 2 of your turns.",
       tier: 6,
       category: "attack",
       flavor: "The water finds the low ground first.",
     },
-    voidSquares(3, 2),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      // One activation only: once the floodwaters are placed they never move.
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.squares != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a floodwater square (${picks.length + 1}/3)`,
+              squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.squares != null) return;
+        inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.turns = 2;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return;
+        // The floodwater only sweeps a piece that steps onto open water: a piece
+        // that captures its way onto a flood square is not swept.
+        if (
+          move.color === api.opp &&
+          squares.includes(move.to) &&
+          move.piece !== "k" &&
+          !move.captured
+        ) {
+          api.removePiece(move.to);
+        }
+        if (move.color === api.me) {
+          const left = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares?.length) return "activate to place";
+        const names = squares
+          .map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`)
+          .join(", ");
+        return `flooding at ${names}, ${(inst.state.turns as number) ?? 0} of your turns left`;
+      },
+    },
   ),
 
   // ===================== GROWTH =====================
@@ -1412,25 +1668,43 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_regrow",
       name: "Regrow",
       description:
-        "One of your captured pawns sprouts back on your 4th rank, or the nearest rank with room, already pointed at promotion.",
+        "One of your captured pawns takes root on your 4th rank, or the nearest rank with room, and sprouts after your opponent's next move, already pointed at promotion.",
       tier: 2,
       category: "pieces",
       flavor: "It came up facing the right way this time.",
     },
+    // The revive is claimed now (aim it), but the pawn only breaks ground after
+    // the opponent's next move; if that square is taken by then it surfaces on
+    // the nearest free 4th-rank square instead.
     {
       kind: "activated",
-      spendOnUse: true,
-      targets: (_inst, api, picks) => {
-        if (picks.length > 0) return null;
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.armed === true) return null;
         const squares = revivable(api, "p") > 0 ? fourthRankSquares(api) : [];
-        return { kind: "square", label: "Choose where the pawn sprouts", squares };
+        return { kind: "square", label: "Choose where the pawn will sprout", squares };
       },
-      effect: (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || revivable(api, "p") <= 0 || api.board.pieces[sq] || !pawnRankOk(sq)) return;
-        api.place(sq, "p", api.me);
+        if (sq == null || inst.state.armed === true || revivable(api, "p") <= 0) return;
         markRevived(api, "p");
+        inst.state.sq = sq;
+        inst.state.armed = true;
       },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        let target = inst.state.sq as Square | undefined;
+        if (target == null || api.board.pieces[target] || !pawnRankOk(target)) {
+          target = fourthRankSquares(api)[0];
+        }
+        if (target != null && !api.board.pieces[target] && pawnRankOk(target)) {
+          api.place(target, "p", api.me);
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "sprouts after your opponent moves" : "activate to plant",
     },
   ),
   card(
@@ -1439,19 +1713,57 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "TreePine",
       name: "Ancient Grove",
       description:
-        "Old roots give one piece back: return a captured rook, knight, or bishop to an empty square on your back rank, once.",
+        "Old roots give one piece back: return a captured rook, knight, or bishop to an empty square on your back rank; it returns after your opponent's next move, once.",
       tier: 4,
       category: "pieces",
       flavor: "The forest remembers its own.",
     },
-    reviveOne(["r", "n", "b"], backRankZone),
+    // Everything here is already one (one piece, once), so the balance pass
+    // delays the effect: the piece is claimed now but only reappears after the
+    // opponent's next move (on the nearest free back-rank square if aimed one
+    // is taken by then).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.armed === true) return null;
+        const type = (["r", "n", "b"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        return {
+          kind: "square",
+          label: "Choose where the revived piece will return",
+          squares: type == null ? [] : emptySquares(api.board, backRankZone(api)),
+        };
+      },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        const type = (["r", "n", "b"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        if (sq == null || type == null || inst.state.armed === true) return;
+        markRevived(api, type);
+        inst.state.type = type;
+        inst.state.sq = sq;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true || move.color !== api.opp) return;
+        const type = inst.state.type as PieceType;
+        let target = inst.state.sq as Square | undefined;
+        if (target == null || api.board.pieces[target]) {
+          target = emptySquares(api.board, backRankZone(api))[0];
+        }
+        if (target != null && !api.board.pieces[target]) api.place(target, type, api.me);
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "returns after your opponent moves" : "activate to call one back",
+    },
   ),
   card(
     {
       id: "we_seedlings",
       icon: "Sprout",
       name: "Seedlings",
-      description: "Plant two seeds on empty squares in your half: after 3 of your turns, a pawn sprouts on each square that is still empty.",
+      description: "Plant two seeds on empty squares in your half: they take root after your opponent's next move, and 3 of your turns later a pawn sprouts on each square that is still empty.",
       tier: 3,
       category: "pieces",
       flavor: "Give it a season.",
@@ -1473,11 +1785,20 @@ export const WILD_ELEMENTAL: Buff[] = [
       effect: (inst, _api, picks) => {
         if (inst.state.squares != null) return;
         inst.state.squares = picks.map((k) => k.square).filter((v): v is Square => v != null);
-        inst.state.turns = 3;
+        inst.state.started = false;
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
-        if (!squares?.length || move.color !== api.me) return;
+        if (!squares?.length) return;
+        if (inst.state.started !== true) {
+          // The seeds only begin their countdown after the opponent's next move.
+          if (move.color === api.opp) {
+            inst.state.started = true;
+            inst.state.turns = 3;
+          }
+          return;
+        }
+        if (move.color !== api.me) return;
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t > 0) return;
@@ -1489,6 +1810,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       status: (inst) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return "activate to plant";
+        if (inst.state.started !== true) return "rooting after your opponent moves";
         return `sprouting in ${(inst.state.turns as number) ?? 0} of your turns`;
       },
     },
@@ -1499,7 +1821,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Creeping Roots",
       description:
         "Roots grip at the border: your opponent's pawns cannot cross into your half of the board for their next 4 turns.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       flavor: "Every furrow at the frontier holds them fast.",
       fx: { motif: "anchor", pieces: ["p"] },
@@ -1515,7 +1837,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Bramble Wall",
       description:
         "Thorns snare the clergy: your opponent's bishops cannot move or capture for their next 3 turns.",
-      tier: 3,
+      tier: 4,
       category: "protection",
       flavor: "No angle out of the thorns.",
       fx: { motif: "jail", pieces: ["b"] },
@@ -1532,36 +1854,68 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "Leaf",
       name: "Overgrowth",
       description:
-        "One of your pawns blooms into a queen for your next 3 turns, then withers back into a pawn.",
+        "Choose one of your pawns; after your opponent replies it blooms into a queen for your next 3 turns, then withers back into a pawn.",
       tier: 5,
       category: "pieces",
       requires: ["p"],
       flavor: "A season of glory.",
       fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // The bloom is aimed now but its first trigger waits: the pawn only turns to
+    // a queen after the opponent's next move. The chosen pawn is tracked, so
+    // moving it in the meantime carries the pending bloom with it.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.armed === true
           ? null
           : {
               kind: "square",
               label: "Choose a pawn to bloom into a queen",
               squares: mySquares(api.board, api.me, "p"),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
-        api.setPieceType(sq, "q");
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 4, then: "demote", into: "p" });
+        if (sq == null || inst.state.armed === true) return;
+        inst.state.sq = sq;
+        inst.state.armed = true;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.armed !== true) return;
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) {
+          inst.state.armed = false;
+          inst.spent = true;
+          return;
+        }
+        // Follow the chosen pawn if you move it before the opponent replies.
+        if (move.from === sq && move.color === api.me) {
+          inst.state.sq = move.to;
+          return;
+        }
+        if (move.color !== api.opp) return;
+        // The bloom lands after the opponent's reply on wherever the chosen pawn
+        // now sits, provided it survived and is still your pawn.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.me && p.type === "p") {
+          api.setPieceType(cur, "q");
+          addEffect(api, { kind: "timed_loss", owner: api.me, sq: cur, turns: 4, then: "demote", into: "p" });
+        }
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed === true ? "blooms after your opponent replies" : "activate to bloom a pawn",
+    },
   ),
   card(
     {
       id: "we_thorn_barrier",
       name: "Thorn Barrier",
       description:
-        "A hedge of thorns bursts up on an empty square: your opponent cannot enter any of the 8 squares around it for their next 3 turns, and any enemy piece already caught in that ring is snared and cannot move for its next 2 turns.",
+        "A hedge of thorns bursts up on an empty square: your opponent cannot enter the squares around it, save one gap left open as a bridge, for their next 3 turns, and any enemy piece already caught in that ring is snared and cannot move for its next 2 turns.",
       tier: 6,
       category: "protection",
       flavor: "Grown too fast to climb, and it grabs what it can reach.",
@@ -1575,7 +1929,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "Flower2",
       name: "Verdant Shield",
       description:
-        "A canopy of bark: all of your pawns cannot be captured for your opponent's next 2 turns. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
+        "A canopy of bark: all of your pawns cannot be captured for your opponent's next turn. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
       tier: 4,
       category: "protection",
       requires: ["p"],
@@ -1587,7 +1941,7 @@ export const WILD_ELEMENTAL: Buff[] = [
     // standing directly in front of one of yours is rooted (frozen) for 1 turn.
     instant((_inst, api) => {
       const pawns = mySquares(api.board, api.me, "p");
-      addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 2 });
+      addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 1 });
       const fwd = api.me === "w" ? 1 : -1;
       for (const sq of pawns) {
         const f = FILE(sq), r = RANK(sq) + fwd;

@@ -5,6 +5,7 @@
 
 import { Nerf } from "./shared";
 import {
+  nerf,
   tierNerf,
   filter,
   relRank,
@@ -25,11 +26,14 @@ export const NERFS_T7: Nerf[] = [
     {
       id: "relentless_hunter",
       name: "Relentless Hunter",
-      description: "You must give check on every turn you are able to.",
+      description: "You must give check on every turn you are able to. No card effect can grant a move that escapes this.",
       flavor: "The hound never lets the scent go cold.",
       icon: "target",
     },
     {
+      // The engine applies this filter after buff augmentMoves, so a card
+      // effect that adds a move cannot make an otherwise forbidden (non-check)
+      // move legal on a turn where a checking move exists.
       filterMoves: (moves, _state, ctx) => {
         const opp = other(ctx.me);
         const checks = moves.filter((m) => isInCheck(makeMove(ctx.board, m), opp));
@@ -41,28 +45,30 @@ export const NERFS_T7: Nerf[] = [
     {
       id: "onward_only",
       name: "Onward Only",
-      description: "From your 8th move on, none of your pieces may move backward toward your own back rank.",
+      description: "From your 4th move on, none of your pieces may move backward toward your own back rank.",
       flavor: "Once the march begins, there is no road home.",
       icon: "arrow-up",
     },
     {
       // Distinct from forward_march (no-backward from move 1) and
-      // no_retreat_ever (must strictly advance): the ban only switches on once
-      // the army has committed, from your 8th move onward.
+      // no_retreat_ever (must strictly advance): the ban switches on once the
+      // opening is under way, from your 4th move onward, so it cannot soft-lock
+      // the opening.
       filterMoves: (moves, _state, ctx) => {
-        if (ctx.moveNumber < 8) return moves;
+        if (ctx.moveNumber < 4) return moves;
         const fwd = moves.filter((m) => relRank(ctx.me, m.to) >= relRank(ctx.me, m.from));
         return fwd.length ? fwd : moves;
       },
     },
   ),
-  N(
+  nerf(
     {
       id: "straight_and_narrow",
       name: "Straight and Narrow",
       description: "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
       flavor: "Straight lines only.",
       icon: "flag",
+      tier: 6,
     },
     {
       filterMoves: filter((m) => {
@@ -76,7 +82,7 @@ export const NERFS_T7: Nerf[] = [
     {
       id: "compulsory_capture",
       name: "No Restraint",
-      description: "If you can capture you must, and if any available capture also gives check, you must make a checking capture.",
+      description: "From your 4th move on, if you can capture you must, and if any available capture also gives check, you must make a checking capture.",
       flavor: "See blood, draw blood.",
       icon: "swords",
     },
@@ -84,8 +90,10 @@ export const NERFS_T7: Nerf[] = [
       // Distinct from checkers (any capture forced) and the conditional
       // forced-capture family (barbarian_rage/pacman/hungry_pawns): captures
       // are always forced when available, and a checking capture is forced
-      // over a quiet one.
+      // over a quiet one. The rule holds off until your 4th move so the opening
+      // cannot be soft-locked.
       filterMoves: (moves, _state, ctx) => {
+        if (ctx.moveNumber < 4) return moves;
         const caps = moves.filter((m) => m.captured);
         if (!caps.length) return moves;
         const opp = other(ctx.me);
@@ -94,50 +102,71 @@ export const NERFS_T7: Nerf[] = [
       },
     },
   ),
-  N(
+  nerf(
     {
       id: "cloistered_queen",
       name: "Cloistered Queen",
-      description: "Your queen stays cloistered and cannot move at all until you have castled.",
+      description: "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
       flavor: "She keeps to her chambers until the king is safe behind his walls.",
       icon: "crown",
+      tier: 5,
     },
     {
       // Distinct from stay_at_home_mom and caged_queen (both spatial queen
       // confinement): this is a temporal lockout. The queen is frozen until you
-      // castle, then moves freely.
+      // castle, or until your 12th move if you never castle, then moves freely.
       filterMoves: (moves, _state, ctx) => {
         const castled = ctx.board.history.some((m) => m.color === ctx.me && !!m.castle);
-        if (castled) return moves;
+        if (castled || ctx.moveNumber >= 12) return moves;
         return moves.filter((m) => m.piece !== "q");
       },
     },
   ),
-  N(
+  nerf(
     {
       id: "retreating_bishops",
       name: "Retreating Bishops",
-      description: "Your bishops can only ever retreat toward your own back rank; they can never advance and never even hold their rank.",
+      description: "Your bishops can only retreat toward your own back rank, but once per game a bishop may make one non-retreating move.",
       flavor: "The clergy only ever falls back.",
       icon: "church",
+      tier: 5,
     },
     {
       // Distinct from timid_bishops (which merely forbids advancing, so level
       // moves are fine): here every bishop move must strictly lose rank, a pure
-      // retreat.
-      filterMoves: (moves, _state, ctx) =>
-        moves.filter(
-          (m) => !(m.piece === "b" && relRank(ctx.me, m.to) >= relRank(ctx.me, m.from)),
+      // retreat, with one exception. Once per game a bishop may take a single
+      // non-retreating step (its color is preserved by the diagonal move). The
+      // free step is spent as soon as any such move appears in history.
+      init: () => ({ usedStep: false }),
+      onTurnStart: (_state, ctx) => ({
+        usedStep: ctx.board.history.some(
+          (m) =>
+            m.color === ctx.me &&
+            m.piece === "b" &&
+            relRank(ctx.me, m.to) >= relRank(ctx.me, m.from),
         ),
+      }),
+      filterMoves: (moves, state, ctx) => {
+        const usedStep = state.usedStep as boolean;
+        return moves.filter((m) => {
+          if (m.piece !== "b") return true;
+          // Pure retreats (strictly losing rank) are always allowed.
+          if (relRank(ctx.me, m.to) < relRank(ctx.me, m.from)) return true;
+          // A non-retreating bishop move is only offered while the once-per-game
+          // step is unused.
+          return !usedStep;
+        });
+      },
     },
   ),
-  N(
+  nerf(
     {
       id: "broadside_rooks",
       name: "Broadside Rooks",
       description: "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
       flavor: "The towers roll broadside, and only creep when they climb.",
       icon: "castle",
+      tier: 4,
     },
     {
       // Distinct from sidewinder (rank-only, no vertical movement at all):
@@ -151,16 +180,22 @@ export const NERFS_T7: Nerf[] = [
       }),
     },
   ),
-  N(
+  nerf(
     {
       id: "predatory_knights",
       name: "Predatory Knights",
-      description: "Your knights can only move by capturing an enemy piece.",
+      description: "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
       flavor: "The horses hunt or stand still.",
       icon: "sword",
+      tier: 6,
     },
     {
-      filterMoves: filter((m) => !(m.piece === "n" && !m.captured)),
+      // Knights are capture-only, but on every third owner turn (moves 3, 6, 9,
+      // ...) a non-capturing knight move is allowed as well.
+      filterMoves: (moves, _state, ctx) => {
+        if (ctx.moveNumber % 3 === 0) return moves;
+        return moves.filter((m) => !(m.piece === "n" && !m.captured));
+      },
     },
   ),
   N(
@@ -187,26 +222,24 @@ export const NERFS_T7: Nerf[] = [
     {
       id: "war_footing",
       name: "War Footing",
-      description: "You lose if you make more than 14 non-capturing moves all game.",
+      description: "You lose if you make more than 12 non-capturing moves all game.",
       flavor: "Peace is a luxury you cannot afford.",
       icon: "timer",
     },
     {
-      // Rebalance 2026-07: quiet budget raised 10 -> 14. With at most 15 enemy
-      // units to capture, a 10-move budget hard-capped the whole game near 25
-      // of your moves, turning most normal wins into losses by clock-out. At
-      // 14 the card still demands a fast, violent game (about 29 moves) but a
-      // direct attacking plan can actually finish inside it.
+      // Rebalance 2026-07: quiet budget raised 10 -> 14, then trimmed 14 -> 12
+      // to tighten the grace window by two turns. The card still demands a fast,
+      // violent game but leaves room for a direct attacking plan to finish.
       init: () => ({ quiet: 0 }),
       onTurnStart: (_state, ctx) => ({
         quiet: countHistory(ctx, (m) => !m.captured),
       }),
       checkLoss: (state) =>
-        (state.quiet as number) > 14 ? { reason: "too many idle turns off the attack" } : null,
+        (state.quiet as number) > 12 ? { reason: "too many idle turns off the attack" } : null,
       progress: (state) => ({
         value: state.quiet as number,
-        max: 14,
-        label: (state.quiet as number) + "/14 quiet moves",
+        max: 12,
+        label: (state.quiet as number) + "/12 quiet moves",
       }),
     },
   ),

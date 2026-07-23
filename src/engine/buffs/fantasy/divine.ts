@@ -67,7 +67,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Divine Intervention",
       description:
         "Your king cannot be captured for your opponent's next 3 turns, and the first enemy piece to strike at your king in that time is hurled clean off the board. Kings are never banished.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Not today, the heavens say.",
       fx: { motif: "ward", pieces: ["k"], self: true },
@@ -112,7 +112,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Judgment Day",
       description:
         "A pillar of holy light smites one enemy knight, bishop, rook, or queen you name, then petrifies the two enemy pieces nearest the impact into stone for the rest of the game. Kings are never petrified.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Weighed, measured, and found wanting; the stone is left to mark the spot.",
     },
@@ -161,7 +161,7 @@ export const FANTASY_DIVINE: Buff[] = [
       name: "Hallowed Return",
       description:
         "A prayer is answered exactly: one of your captured knights, bishops, or rooks is restored to life on one of its own starting squares, if one is free, once.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "Called back from the far shore, to the very pew it left.",
     },
@@ -207,7 +207,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "ScrollText",
       name: "Divine Mandate",
       description:
-        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 3 turns. Kings cannot be swayed.",
+        "You speak with the authority of heaven: one enemy knight, bishop, or rook joins your army, and heaven shields the defection so it cannot be recaptured for your opponent's next 2 turns. Kings cannot be swayed.",
       tier: 6,
       category: "pieces",
       flavor: "Kneel, and rise ours.",
@@ -229,8 +229,9 @@ export const FANTASY_DIVINE: Buff[] = [
         if (sq == null) return;
         api.setPieceColor(sq, api.me);
         // Heaven shields the defector: a square-scoped shield that follows the
-        // piece keeps it uncapturable for the opponent's next 3 turns.
-        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 3 });
+        // piece keeps it uncapturable for the opponent's next 2 turns (balance
+        // pass: the largest duration trimmed by one).
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
       },
     ),
   ),
@@ -240,15 +241,20 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first); either way it is frozen for 2 of their turns.",
+        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first). It may make one last legal move to flee, then it is frozen for 2 of their turns.",
       tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account, and sent to their room.",
       fx: { motif: "jail", pieces: "all" },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Balance pass: the first affected piece gets one legal escape move. The
+    // exile still sends it home at once, but the freeze does not bite until the
+    // piece has taken one move; then it holds for the full 2 of their turns.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -257,9 +263,9 @@ export const FANTASY_DIVINE: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
+        if (sq == null || inst.state.sq != null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         const rank = api.opp === "w" ? 0 : 7;
@@ -276,9 +282,45 @@ export const FANTASY_DIVINE: Buff[] = [
           .find((h) => h !== sq && !api.board.pieces[h]);
         const finalSq = home != null ? home : sq;
         if (home != null) api.relocate(sq, home);
-        addEffect(api, { kind: "freeze", sq: finalSq, owner: api.opp, turns: 2 });
+        inst.state.sq = finalSq;
+        inst.state.turns = 2;
+        inst.state.escaped = false;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // The judged piece was captured or overrun: the sentence lapses.
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (!inst.state.escaped && move.color === api.opp) {
+            // That was the one legal flight: the frost takes hold where it
+            // lands. turns:3 nets 2 of their turns after the immediate tick a
+            // freeze added on the frozen side's own move receives.
+            inst.state.escaped = true;
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+            return;
+          }
+        }
+        if (move.color !== api.opp || !inst.state.escaped) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to judge"
+          : inst.state.escaped
+            ? `frozen, ${(inst.state.turns as number) ?? 0} of their turns left`
+            : "sentence pronounced: one flight remains",
+    },
   ),
   card(
     {
@@ -286,11 +328,21 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "CloudLightning",
       name: "Heaven's Wrath",
       description:
-        "The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board.",
+        "The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board. Calling the storm consumes your next unused reroll, if you have one.",
       tier: 8,
       category: "attack",
       flavor: "There is no shelter from a righteous storm.",
     },
-    removeEnemies(3, ["n", "b", "r", "q"]),
+    // Balance pass: calling the storm also consumes your next unused reroll.
+    (() => {
+      const base = removeEnemies(3, ["n", "b", "r", "q"]);
+      return {
+        ...base,
+        effect: (inst, api, picks) => {
+          base.effect?.(inst, api, picks);
+          api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+        },
+      };
+    })(),
   ),
 ];

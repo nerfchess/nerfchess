@@ -39,6 +39,7 @@ import {
   permanentAugment,
   slideMoves,
   ALL_DIRS,
+  DIAG_DIRS,
   FILE,
   RANK,
   SQ,
@@ -134,6 +135,27 @@ function homeSquares(type: PieceType, color: "w" | "b", from: Square): Square[] 
   return (files[type] ?? []).map((f) => SQ(f, back));
 }
 
+/** Remove a single-square shield the caster planted on `sq` (used when a group
+ * shield burns out early because its protected pieces have struck twice). Matches
+ * by owner and the single protected square, which follows the piece, so it lifts
+ * exactly the shelter this card placed. */
+function dropShieldAt(api: BuffApi, sq: Square): void {
+  const fx = api.bs.effects;
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const e = fx[i];
+    if (
+      e.kind === "shield" &&
+      e.owner === api.me &&
+      e.squares != null &&
+      e.squares.length === 1 &&
+      e.squares[0] === sq
+    ) {
+      fx.splice(i, 1);
+      return;
+    }
+  }
+}
+
 export const BRAINROT: Buff[] = [
   card(
     {
@@ -142,7 +164,7 @@ export const BRAINROT: Buff[] = [
       name: "Tung Tung Tung Sahur",
       description:
         "The drum-man marches on your opponent's king. On each of your next 5 turns, the two enemy pieces nearest their king are bonked and cannot move for their next 2 turns. Kings are too stubborn to bonk.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "Tung tung tung tung tung tung tung tung tung sahur.",
     },
@@ -180,14 +202,22 @@ export const BRAINROT: Buff[] = [
       icon: "Footprints",
       name: "Tralalero Tralala",
       description:
-        "The shark in sneakers sprints: dash any piece except the king to an empty square along its rank, file, or diagonal, blurring straight past anything between. It moves so fast it cannot be captured for your opponent's next 2 turns. Once.",
+        "The shark in sneakers sprints: dash any piece except the king to an empty square along its rank, file, or diagonal, blurring straight past anything between. For your opponent's next 2 turns it cannot be captured, but this speed-blur burns out early once the sprinter has captured twice. Once.",
       tier: 4,
       category: "movement",
       flavor: "Nike Air, straight through the traffic.",
       fx: { motif: "rally", pieces: "all", self: true },
     },
-    activated(
-      (_inst, api, picks) => {
+    // Group-shield nerf: the sprint shield now lifts the moment the protected
+    // piece has struck twice (each capture the sprinter makes counts), so the
+    // untouchable window can no longer double as a free two-for-one raid. Kept
+    // alive (spendOnUse:false) so its rider can watch for those captures and
+    // pull the shield when the second lands.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.sq != null) return null;
         if (picks.length === 0) {
           return {
             kind: "square",
@@ -208,9 +238,12 @@ export const BRAINROT: Buff[] = [
         }
         return null;
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
+        if (from == null || to == null || inst.state.sq != null) {
+          inst.spent = true;
+          return;
+        }
         const p = api.board.pieces[from];
         if (p && !api.board.pieces[to] && (p.type !== "p" || pawnRankOk(to))) {
           api.relocate(from, to);
@@ -218,9 +251,39 @@ export const BRAINROT: Buff[] = [
           // it moves (game.ts moves shield squares with the piece) and is
           // orphan-pruned if the piece is ever removed, so nothing lingers.
           addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 2 });
+          inst.state.sq = to;
+          inst.state.caps = 0;
+        } else {
+          inst.spent = true;
         }
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Protected piece captured or otherwise gone: the card is done.
+        if ((move.capturedSquare === sq || move.to === sq) && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (move.color === api.me && move.captured && move.captured !== "k") {
+            const caps = ((inst.state.caps as number) ?? 0) + 1;
+            inst.state.caps = caps;
+            if (caps >= 2) {
+              dropShieldAt(api, sq);
+              inst.spent = true;
+              inst.state.sq = undefined;
+            }
+          }
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "dash a piece to safety"
+          : `shielded until ${2 - ((inst.state.caps as number) ?? 0)} more captures`,
+    },
   ),
 
   card(
@@ -229,38 +292,59 @@ export const BRAINROT: Buff[] = [
       icon: "Bomb",
       name: "Bombardiro Crocodilo",
       description:
-        "The bomber-croc drops its payload on a square: every enemy piece except a king in the 5 by 5 area centred on it (that square and the 24 around it) is destroyed.",
+        "The bomber-croc paints a square, then drops its payload after your opponent's next move: up to four enemy pieces except kings in the 5 by 5 area centred on it (that square and the 24 around it) are destroyed, the four nearest the centre first. Anything that flees the area before it lands is spared.",
       tier: 8,
       category: "attack",
       flavor: "Cleared for the run, no survivors below.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Balance pass: the run is telegraphed (the target area flashes at aim time)
+    // and only lands after the opponent has had one turn to scatter, and it now
+    // fells at most four pieces, the four closest to ground zero (lowest square
+    // index breaks ties, a pure read of the synced board). Kept alive
+    // (spendOnUse:false) so the delayed detonation can fire on their reply.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.center != null
           ? null
           : {
               kind: "square",
               label: "Choose the square to bomb",
-              squares: Array.from({ length: 64 }, (_, i) => i).filter((sq) =>
+              squares: Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) =>
                 blastHitsEnemy(api, sq, 2),
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const c = picks[0]?.square;
-        if (c == null) return;
-        const struck: Square[] = [];
-        for (const sq of blastAt(c, 2)) {
-          const p = api.board.pieces[sq];
-          if (p && p.color === api.opp && p.type !== "k") {
-            api.removePiece(sq);
-            struck.push(sq);
-          }
-        }
+        if (c == null || inst.state.center != null) return;
+        inst.state.center = c;
+        // Telegraph: the whole blast area flashes so the target is warned a turn
+        // in advance and can try to clear out.
+        addEffect(api, { kind: "strike", squares: blastAt(c, 2), owner: api.me, turns: 1 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const c = inst.state.center as Square | undefined;
+        if (c == null || move.color !== api.opp) return;
+        const struck = blastAt(c, 2)
+          .filter((sq) => {
+            const p = api.board.pieces[sq];
+            return !!p && p.color === api.opp && p.type !== "k";
+          })
+          .map((sq) => ({ sq, d: dist(sq, c) }))
+          .sort((a, b) => a.d - b.d || a.sq - b.sq)
+          .slice(0, 4)
+          .map((x) => x.sq);
+        for (const sq of struck) api.removePiece(sq);
         if (struck.length) {
           addEffect(api, { kind: "strike", squares: struck, owner: api.me, turns: 1 });
         }
+        inst.spent = true;
+        inst.state.center = undefined;
       },
-    ),
+      status: (inst) =>
+        inst.state.center == null ? "aim the payload" : "payload drops after their reply",
+    },
   ),
 
   card(
@@ -310,7 +394,7 @@ export const BRAINROT: Buff[] = [
       name: "Lirili Larila",
       description:
         "The cactus-elephant trades your afternoon for its hourglass: steal 45 seconds from your opponent's clock, but you skip your own next turn.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Is it later already? For you it is.",
     },
@@ -330,7 +414,7 @@ export const BRAINROT: Buff[] = [
       name: "Brr Brr Patapim",
       description:
         "The cold finds whoever wanders alone: every enemy piece except the king with no friendly piece on any square beside it freezes solid for their next 2 turns.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "Brr brr. Stay with the group.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
@@ -365,19 +449,19 @@ export const BRAINROT: Buff[] = [
       icon: "Banana",
       name: "Chimpanzini Bananini",
       description:
-        "The banana-monkey goes ape: for the game every one of your knights may also slide like a queen, keeping its knight leap on top.",
-      // Every knight an amazon, permanently, that is Amazon Army power
-      // (tier 8, knights AND bishops) minus the bishops. Tier 7, not the
-      // laughable 3 it shipped at.
+        "The banana-monkey goes ape: for the game every one of your knights may also slide diagonally up to two squares, keeping its knight leap on top. It gains no rook movement.",
+      // Balance pass: no longer a permanent amazon on every knight. Each knight
+      // just adds a short diagonal glide (two squares, capturing), so it keeps
+      // its leap plus a little bishop reach, and never the rook lines.
       tier: 7,
       category: "movement",
       requires: ["n"],
       flavor: "Peel, then unpeel the whole board.",
-      fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true },
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "n").flatMap((sq) =>
-        slideMoves(api.board, sq, ALL_DIRS, inst.id),
+        slideMoves(api.board, sq, DIAG_DIRS, inst.id, 2),
       ),
     ),
   ),
@@ -389,7 +473,7 @@ export const BRAINROT: Buff[] = [
       name: "Boneca Ambalabu",
       description:
         "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
-      tier: 3,
+      tier: 4,
       category: "hex",
       flavor: "Heavy is the tread that bears the frog.",
       fx: { motif: "anchor", pieces: "all" },
@@ -409,7 +493,7 @@ export const BRAINROT: Buff[] = [
       name: "Cappuccino Assassino",
       description:
         "The espresso assassin strikes before the foam settles: the enemy piece nearest your king (never their king) is destroyed, and the two enemy pieces nearest the scene of the crime are stunned for their next turn.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       flavor: "Decaffeinated. Permanently.",
     },
@@ -449,7 +533,7 @@ export const BRAINROT: Buff[] = [
       name: "Ballerina Cappuccina",
       description:
         "The coffee-cup ballerina leads a formation twirl: choose one of your pieces (not the king) to step one square, then up to two allies that stood beside it may each step one square too. No captures, just choreography.",
-      tier: 4,
+      tier: 5,
       category: "tempo",
       flavor: "Plié, rond de jambe, checkmate threat.",
     },
@@ -513,32 +597,65 @@ export const BRAINROT: Buff[] = [
       icon: "Satellite",
       name: "La Vaca Saturno Saturnita",
       description:
-        "The ringed cow swings into orbit: place a new knight on any empty square along the board's outer rim. While it settles into orbit it cannot be captured for your opponent's next 2 turns.",
+        "The ringed cow swings into orbit: place a new knight on any empty square along the board's outer rim. While it settles it cannot be captured for your opponent's next 2 turns, but this orbit shelter burns out early once the new knight has captured twice.",
       tier: 7,
       category: "pieces",
       flavor: "Moo. (Heard from three planets away.)",
     },
     // Same summon-plus-shield shape as Tralalero's landing: the square shield
     // rides the knight as it moves (game.ts moves shield squares with the
-    // piece) and is orphan-pruned if it is ever removed. The turn-consuming
-    // activation gets the standard +1 shield bump so "2 turns" survives the
-    // opponent's immediate reply.
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // piece) and is orphan-pruned if it is ever removed. Group-shield nerf: the
+    // shelter now lifts the moment the orbiting knight has struck twice, so it
+    // cannot loiter untouchable while raiding. Kept alive (spendOnUse:false) so
+    // the rider can watch for those captures.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
               label: "Choose an empty rim square for the orbiting knight",
               squares: emptySquares(api.board, onRim),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || api.board.pieces[sq] || !onRim(sq)) return;
+        if (sq == null || api.board.pieces[sq] || !onRim(sq) || inst.state.sq != null) {
+          inst.spent = true;
+          return;
+        }
         api.place(sq, "n", api.me);
         addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+        inst.state.sq = sq;
+        inst.state.caps = 0;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if ((move.capturedSquare === sq || move.to === sq) && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.from === sq) {
+          inst.state.sq = move.to;
+          if (move.color === api.me && move.captured && move.captured !== "k") {
+            const caps = ((inst.state.caps as number) ?? 0) + 1;
+            inst.state.caps = caps;
+            if (caps >= 2) {
+              dropShieldAt(api, sq);
+              inst.spent = true;
+              inst.state.sq = undefined;
+            }
+          }
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "place the orbiting knight"
+          : `shielded until ${2 - ((inst.state.caps as number) ?? 0)} more captures`,
+    },
   ),
 
   card(
@@ -548,7 +665,7 @@ export const BRAINROT: Buff[] = [
       name: "Frigo Camelo",
       description:
         "The fridge-camel opens both doors: two of your pieces (never the king) are refrigerated: they cannot be captured for your opponent's next 2 turns, but each is frozen solid for 1 of your turns while it defrosts.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "Crisp. Chilled. Slightly humming.",
     },
@@ -591,17 +708,23 @@ export const BRAINROT: Buff[] = [
       icon: "Merge",
       name: "Trippi Troppi",
       description:
-        "The shrimp-cat scrambles their proprioception: up to 3 enemy pieces (never the king) grow stubby shrimp legs, and for their next 2 turns each can only shuffle one square at a time.",
+        "The shrimp-cat scrambles their proprioception: mark up to 3 enemy pieces (never the king). After your opponent's next move they grow stubby shrimp legs, and for their next 2 turns each can only shuffle one square at a time.",
       tier: 3,
       category: "hex",
       flavor: "Half shrimp. Half cat. Zero object permanence.",
     },
     // Three targeted walnuts (the engine's "heavy nut with 1-square legs"
     // effect): distinct from a freeze, the piece can still crawl a king-step.
-    // Kings are never walnutted; finishable after the first leg-swap.
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
+    // Kings are never walnutted. Balance pass: activation is delayed. The
+    // targets are parked at cast, the opponent plays one unaffected reply, and
+    // the walnuts land on your following turn (added on YOUR move so the timer
+    // is not ticked that cycle and the full 2 turns survive). Any target that
+    // has slipped off its square by then escapes.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        inst.state.pending != null || picks.length >= 3
           ? null
           : {
               kind: "square",
@@ -609,16 +732,37 @@ export const BRAINROT: Buff[] = [
               squares: enemyPrey(api, picks),
               ...(picks.length > 0 ? { finishable: true } : {}),
             },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          const sq = k.square;
-          if (sq == null || !api.board.pieces[sq]) continue;
-          if (api.board.pieces[sq]!.color !== api.opp) continue;
-          if (api.board.pieces[sq]!.type === "k") continue;
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
-        }
+      effect: (inst, _api, picks) => {
+        if (inst.state.pending != null) return;
+        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (squares.length > 0) inst.state.pending = squares;
+        else inst.spent = true;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const pending = inst.state.pending as Square[] | undefined;
+        if (pending == null) return;
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        if (move.color !== api.me) return;
+        for (const sq of pending) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
+          }
+        }
+        inst.spent = true;
+        inst.state.pending = undefined;
+        inst.state.armed = undefined;
+      },
+      status: (inst) =>
+        inst.state.pending == null
+          ? "choose up to 3 to shrimp"
+          : inst.state.armed
+            ? "the shrimp legs sprout on your turn"
+            : "arming after their next move",
+    },
   ),
 
   card(
@@ -627,16 +771,16 @@ export const BRAINROT: Buff[] = [
       icon: "Dog",
       name: "Chill Guy",
       description:
-        "He's just a chill guy: every freeze and every walnut currently stuck to YOUR pieces melts off, and you take 1 extra move. A free action. Lowkey he doesn't even care.",
+        "He's just a chill guy: every freeze and every walnut currently stuck to YOUR pieces melts off. A free action. Lowkey he doesn't even care.",
       tier: 2,
       category: "tempo",
       boon: true,
       flavor: "My honest reaction:",
     },
-    // Cleanup + tempo, both through existing rails: in-place effect pruning of
-    // my own freezes/walnuts (exactly what timers do when they expire) plus
-    // the extraMoves counter the extra-move family already uses. Free action,
-    // mirroring extraMovesNow, so playing it does not spend the turn.
+    // Cleanup only, through the existing rail: in-place effect pruning of my own
+    // freezes/walnuts (exactly what timers do when they expire). Balance pass:
+    // the bonus move it used to hand out is gone (one fewer). Still a free
+    // action, so the cleanse never costs the turn.
     {
       ...activatedSimple((_inst, api) => {
         const fx = api.bs.effects;
@@ -646,7 +790,6 @@ export const BRAINROT: Buff[] = [
             fx.splice(i, 1);
           }
         }
-        api.bs.extraMoves[api.me] += 1;
       }),
       freeAction: true,
     },
@@ -658,7 +801,7 @@ export const BRAINROT: Buff[] = [
       icon: "Cuboid",
       name: "Moai Head",
       description:
-        "A stone moai drops onto an empty square of your choice and just... stands there: for the next 4 turns of each side, NO piece from either side may move onto that square. Then it crumbles. It offers no further comment. 🗿",
+        "A stone moai drops onto an empty square of your choice (it captures nothing) and just... stands there: for the next 4 turns of each side, NO piece from either side may move onto that square. Then it crumbles. It offers no further comment. 🗿",
       tier: 4,
       category: "protection",
       flavor: "🗿",
@@ -669,6 +812,9 @@ export const BRAINROT: Buff[] = [
     // landing block (a slider may still slip PAST the monument — it is
     // surprisingly slim), and each side's bar ticks on that side's own moves,
     // so both get exactly 4 turns of stone-faced refusal.
+    // The special move cannot capture: the monument only ever drops onto an
+    // EMPTY square (emptySquares below, re-guarded in the effect), so the drop
+    // never lands on, and so never captures, a piece.
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -694,7 +840,7 @@ export const BRAINROT: Buff[] = [
       name: "Skibidi Flush",
       description:
         "The porcelain vortex opens: up to 3 chosen enemy pieces (never the king) are flushed back to their home squares (or, if home is taken, to the nearest empty square toward home). Nothing is captured; everything is humiliated.",
-      tier: 5,
+      tier: 4,
       category: "tempo",
       flavor: "Skibidi dop dop dop yes yes.",
     },

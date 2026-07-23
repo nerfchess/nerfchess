@@ -5,6 +5,7 @@
 
 import { Nerf } from "./shared";
 import {
+  nerf,
   tierNerf,
   filter,
   relRank,
@@ -26,14 +27,20 @@ const inCenter16 = (sq: Square) =>
 
 export const NERFS_T6: Nerf[] = [
   N(
-    { id: "iron_curtain", name: "Iron Curtain", description: "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6).", flavor: "The heart of the board is forbidden ground.", icon: "ban" },
+    { id: "iron_curtain", name: "Iron Curtain", description: "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.", flavor: "The heart of the board is forbidden ground.", icon: "ban" },
     {
+      // The nerf filter runs after buffs add their moves, so a card-granted
+      // move (a drop or teleport) that lands on the center is rejected too:
+      // spawned and teleported pieces obey the zone immediately.
       filterMoves: filter((m) => !inCenter16(m.to)),
     },
   ),
   N(
-    { id: "no_clean_trades", name: "No Clean Trades", description: "You can't make a capture if the enemy could immediately recapture on that square.", flavor: "Only take what you can keep.", icon: "shield" },
+    { id: "no_clean_trades", name: "No Clean Trades", description: "You can't make a capture if the enemy could immediately recapture on that square. No card effect can make such a capture legal.", flavor: "Only take what you can keep.", icon: "shield" },
     {
+      // The nerf filter runs after buffs add their moves, so a card-granted
+      // capture that could be recaptured is filtered out too: a card effect
+      // cannot make an otherwise forbidden capture legal.
       filterMoves: (moves, _state, ctx) => {
         const opp = other(ctx.me);
         return moves.filter((m) => {
@@ -45,8 +52,11 @@ export const NERFS_T6: Nerf[] = [
     },
   ),
   N(
-    { id: "no_hanging_pieces", name: "No Hanging Pieces", description: "You can't make a move that leaves any of your pieces attacked by the enemy and undefended.", flavor: "Never leave a soldier exposed.", icon: "shield-alert" },
+    { id: "no_hanging_pieces", name: "No Hanging Pieces", description: "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.", flavor: "Never leave a soldier exposed.", icon: "shield-alert" },
     {
+      // The nerf filter runs after buffs add their moves, so a card-granted
+      // move (a drop or teleport) that would leave a piece hanging is rejected
+      // too: spawned and teleported pieces obey the rule immediately.
       filterMoves: (moves, _state, ctx) => {
         const me = ctx.me;
         const opp = other(me);
@@ -65,32 +75,47 @@ export const NERFS_T6: Nerf[] = [
     },
   ),
   N(
-    { id: "statue_king", name: "Statue King", description: "Your king can only move to capture; he can never take a quiet, non-capturing step.", flavor: "The stone king stirs only to crush.", icon: "crown" },
+    { id: "statue_king", name: "Statue King", description: "Your king can only move to capture; he can never take a quiet, non-capturing step, and no card effect can grant him one.", flavor: "The stone king stirs only to crush.", icon: "crown" },
     {
       // Distinct from lame_duck (king fully frozen), sleepy_king (moves only in
       // check) and out_of_breath (moves once): the statue king may move, but
-      // only when the move captures an enemy piece.
+      // only when the move captures an enemy piece. The nerf filter runs after
+      // buffs add their moves, so a card-granted quiet king step is filtered
+      // out too: a card effect cannot make an otherwise forbidden king move
+      // legal.
       filterMoves: filter((m) => m.piece !== "k" || !!m.captured),
     },
   ),
-  N(
-    { id: "caged_queen", name: "Caged Queen", description: "Your queen may never leave your own back rank.", flavor: "She rules from the throne room and nowhere else.", icon: "crown" },
+  nerf(
+    { id: "caged_queen", name: "Caged Queen", tier: 5, description: "Until you have made 12 moves your queen may not leave your back rank; after that she may leave it but can never cross the midline into the enemy half.", flavor: "She rules from the throne room, and ventures out only late.", icon: "crown" },
     {
       // Distinct from stay_at_home_mom and cloistered_queen: this confines the
-      // queen to a single rank (her back rank), not the home two ranks.
+      // queen to her own back rank until move 12, then to her own half of the
+      // board (never past the midline) for the rest of the game.
       filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => !(m.piece === "q" && relRank(ctx.me, m.to) > 1)),
+        moves.filter((m) => {
+          if (m.piece !== "q") return true;
+          // She can never cross the midline into the enemy half.
+          if (relRank(ctx.me, m.to) > 4) return false;
+          // Before you have made 12 moves, she may not leave the back rank.
+          if (ctx.moveNumber < 12 && relRank(ctx.me, m.to) > 1) return false;
+          return true;
+        }),
     },
   ),
-  N(
-    { id: "anchored_rooks", name: "Anchored Rooks", description: "Your rooks may never leave your back rank.", flavor: "The towers have no wheels.", icon: "castle" },
+  nerf(
+    { id: "anchored_rooks", name: "Anchored Rooks", tier: 5, description: "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.", flavor: "The towers roll out once, and never roll home.", icon: "castle" },
     {
+      // A rook already off the back rank may not step back onto it. Since a
+      // departed rook can never return, each rook effectively leaves once.
       filterMoves: (moves, _state, ctx) =>
-        moves.filter((m) => !(m.piece === "r" && relRank(ctx.me, m.to) > 1)),
+        moves.filter(
+          (m) => !(m.piece === "r" && relRank(ctx.me, m.from) > 1 && relRank(ctx.me, m.to) === 1),
+        ),
     },
   ),
-  N(
-    { id: "timid_bishops", name: "Timid Bishops", description: "Your bishops may only move toward your own side; their rank can never advance toward the enemy.", flavor: "Clergy who only ever retreat.", icon: "church" },
+  nerf(
+    { id: "timid_bishops", name: "Timid Bishops", tier: 5, description: "Your bishops may only move toward your own side; their rank can never advance toward the enemy.", flavor: "Clergy who only ever retreat.", icon: "church" },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter(
@@ -98,21 +123,21 @@ export const NERFS_T6: Nerf[] = [
         ),
     },
   ),
-  N(
-    { id: "short_leash_knights", name: "Short Leash Knights", description: "Your knights may never move beyond your own first three ranks.", flavor: "The horses are tethered to the stable.", icon: "move" },
+  nerf(
+    { id: "short_leash_knights", name: "Short Leash Knights", tier: 5, description: "Your knights may never move beyond your own first three ranks.", flavor: "The horses are tethered to the stable.", icon: "move" },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter((m) => !(m.piece === "n" && relRank(ctx.me, m.to) > 3)),
     },
   ),
-  N(
-    { id: "toothless_pawns", name: "Toothless Pawns", description: "Your pawns can never capture and can never move two squares.", flavor: "Foot soldiers who only trudge forward.", icon: "flag" },
+  nerf(
+    { id: "toothless_pawns", name: "Toothless Pawns", tier: 5, description: "Your pawns can never capture and can never move two squares.", flavor: "Foot soldiers who only trudge forward.", icon: "flag" },
     {
       filterMoves: filter((m) => !(m.piece === "p" && (!!m.captured || m.isDoublePawn))),
     },
   ),
   N(
-    { id: "feast_or_famine", name: "Feast or Famine", description: "You lose if twelve of your turns pass in a row without you capturing anything.", flavor: "An army that does not feed, starves.", icon: "timer" },
+    { id: "feast_or_famine", name: "Feast or Famine", description: "You lose if ten of your turns pass in a row without you capturing anything.", flavor: "An army that does not feed, starves.", icon: "timer" },
     {
       init: () => ({ dry: 0 }),
       onTurnStart: (_state, ctx) => {
@@ -125,11 +150,11 @@ export const NERFS_T6: Nerf[] = [
         return { dry };
       },
       checkLoss: (state) =>
-        (state.dry as number) >= 12 ? { reason: "your army starved without a capture" } : null,
+        (state.dry as number) >= 10 ? { reason: "your army starved without a capture" } : null,
       progress: (state) => ({
         value: state.dry as number,
-        max: 12,
-        label: (state.dry as number) + "/12 hungry turns",
+        max: 10,
+        label: (state.dry as number) + "/10 hungry turns",
       }),
     },
   ),

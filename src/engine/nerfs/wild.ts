@@ -46,7 +46,7 @@ function db(d: Nerf): Nerf {
 // --------------------------- TIER 1 (trivial) ---------------------------
 
 export const MOONLIT_KING: Nerf = db({
-  id: "wn_moonlit_king", name: "Moonlit King", tier: 1, icon: "moon", implemented: true,
+  id: "wn_moonlit_king", name: "Moonlit King", tier: 2, icon: "moon", implemented: true,
   description: "Your king can only move to dark squares.",
   flavor: "He walks only where the moon touches.",
   filterMoves: (moves) =>
@@ -54,7 +54,7 @@ export const MOONLIT_KING: Nerf = db({
 });
 
 export const NO_TAKEBACKS: Nerf = db({
-  id: "wn_no_takebacks", name: "No Takebacks", tier: 1, icon: "rotate-ccw", implemented: true,
+  id: "wn_no_takebacks", name: "No Takebacks", tier: 2, icon: "rotate-ccw", implemented: true,
   description: "You can't move a piece to the exact square your last move started from.",
   flavor: "What's done is done.",
   filterMoves: (moves, _s, ctx) => {
@@ -65,7 +65,7 @@ export const NO_TAKEBACKS: Nerf = db({
 });
 
 export const EDGE_SHY_QUEEN: Nerf = db({
-  id: "wn_edge_shy_queen", name: "Edge-Shy Queen", tier: 1, icon: "crown", implemented: true,
+  id: "wn_edge_shy_queen", name: "Edge-Shy Queen", tier: 2, icon: "crown", implemented: true,
   description: "Your queen can't move onto the a-file or the h-file.",
   flavor: "She keeps clear of the walls.",
   filterMoves: (moves) =>
@@ -73,7 +73,7 @@ export const EDGE_SHY_QUEEN: Nerf = db({
 });
 
 export const WALLFLOWER: Nerf = db({
-  id: "wn_wallflower", name: "Wallflower", tier: 1, icon: "castle", implemented: true,
+  id: "wn_wallflower", name: "Wallflower", tier: 2, icon: "castle", implemented: true,
   description: "Your rooks can't move onto the four center squares (d4, d5, e4, e5).",
   flavor: "The towers hug the walls.",
   filterMoves: (moves) =>
@@ -84,25 +84,35 @@ export const WALLFLOWER: Nerf = db({
 
 export const SABBATH: Nerf = db({
   id: "wn_sabbath", name: "Sabbath", tier: 2, icon: "calendar", implemented: true,
-  description: "On every 7th turn of yours, you can't capture.",
+  description: "On every 7th turn of yours, you can't capture, except a capture that gets your king out of check is always legal.",
   flavor: "One day of rest in seven.",
   filterMoves: (moves, _s, ctx) => {
     const turn = ctx.moveNumber + 1;
     if (turn % 7 !== 0) return moves;
-    return moves.filter((m) => !m.captured);
+    const inCheck = isInCheck(ctx.board, ctx.me);
+    return moves.filter((m) => {
+      if (!m.captured) return true;
+      // Capturing the checking piece (a capture that resolves the check) is
+      // always allowed, even on the sabbath turn.
+      return inCheck && !isInCheck(makeMove(ctx.board, m), ctx.me);
+    });
   },
 });
 
 export const GENTLE_GIANT: Nerf = db({
   id: "wn_gentle_giant", name: "Gentle Giant", tier: 2, icon: "crown", implemented: true,
-  description: "Your queen can't capture pawns.",
+  description: "Your queen can't capture pawns, unless your king is in check.",
   flavor: "She won't stoop to swatting foot soldiers.",
-  filterMoves: (moves) =>
-    moves.filter((m) => !(m.piece === "q" && m.captured === "p")),
+  filterMoves: (moves, _s, ctx) => {
+    // The restriction pauses while your king is in check: on the turn you must
+    // answer a check, the queen may take pawns freely.
+    if (isInCheck(ctx.board, ctx.me)) return moves;
+    return moves.filter((m) => !(m.piece === "q" && m.captured === "p"));
+  },
 });
 
 export const NO_GOING_HOME: Nerf = db({
-  id: "wn_no_going_home", name: "No Going Home", tier: 2, icon: "home", implemented: true,
+  id: "wn_no_going_home", name: "No Going Home", tier: 3, icon: "home", implemented: true,
   description: "Your non-pawn pieces can't move back onto your own back rank.",
   flavor: "The officers have burned the barracks.",
   filterMoves: (moves, _s, ctx) =>
@@ -110,7 +120,7 @@ export const NO_GOING_HOME: Nerf = db({
 });
 
 export const KNIGHT_TOLL: Nerf = db({
-  id: "wn_knight_toll", name: "Knight Toll", tier: 2, icon: "swords", implemented: true,
+  id: "wn_knight_toll", name: "Knight Toll", tier: 3, icon: "swords", implemented: true,
   description: "You can't capture with a knight if a knight of yours captured on your previous turn.",
   flavor: "The horses need a turn to recover.",
   filterMoves: (moves, _s, ctx) => {
@@ -125,7 +135,7 @@ export const KNIGHT_TOLL: Nerf = db({
 // --------------------------- TIER 3 (common) ---------------------------
 
 export const PAWN_SHY: Nerf = db({
-  id: "wn_pawn_shy", name: "Pawn Shy", tier: 3, icon: "shield", implemented: true,
+  id: "wn_pawn_shy", name: "Pawn Shy", tier: 4, icon: "shield", implemented: true,
   description: "You can't move any piece onto a square guarded by an enemy pawn.",
   flavor: "The infantry's picket line is untouchable.",
   filterMoves: (moves, _s, ctx) => {
@@ -143,7 +153,7 @@ export const PAWN_SHY: Nerf = db({
 });
 
 export const LONELY_KING: Nerf = db({
-  id: "wn_lonely_king", name: "Lonely King", tier: 3, icon: "crown", implemented: true,
+  id: "wn_lonely_king", name: "Lonely King", tier: 4, icon: "crown", implemented: true,
   description: "Your king can't move to a square adjacent to one of your own pieces.",
   flavor: "His majesty demands personal space.",
   filterMoves: (moves, _s, ctx) =>
@@ -159,7 +169,7 @@ export const LONELY_KING: Nerf = db({
 });
 
 export const SHORT_QUEEN: Nerf = db({
-  id: "wn_short_queen", name: "Short Queen", tier: 3, icon: "crown", implemented: true,
+  id: "wn_short_queen", name: "Short Queen", tier: 4, icon: "crown", implemented: true,
   description: "Your queen can't move more than 4 squares in a single move.",
   flavor: "Her long game is a memory.",
   filterMoves: (moves) =>
@@ -167,7 +177,7 @@ export const SHORT_QUEEN: Nerf = db({
 });
 
 export const STAMPEDE: Nerf = db({
-  id: "wn_stampede", name: "Stampede", tier: 3, icon: "swords", implemented: true,
+  id: "wn_stampede", name: "Stampede", tier: 4, icon: "swords", implemented: true,
   description: "If you moved a knight on your last turn, you must move a knight again this turn (if you can).",
   flavor: "Once the herd starts, it can't stop.",
   filterMoves: (moves, _s, ctx) => {
@@ -188,7 +198,7 @@ export const STAMPEDE: Nerf = db({
 });
 
 export const SLOW_START: Nerf = db({
-  id: "wn_slow_start", name: "Slow Start", tier: 3, icon: "hourglass", implemented: true,
+  id: "wn_slow_start", name: "Slow Start", tier: 4, icon: "hourglass", implemented: true,
   description: "For your first 6 moves, you can only move pawns and knights.",
   flavor: "The heavy pieces sleep in.",
   filterMoves: (moves, _s, ctx) =>
@@ -198,7 +208,7 @@ export const SLOW_START: Nerf = db({
 });
 
 export const SLOW_BURN: Nerf = db({
-  id: "wn_slow_burn", name: "Slow Burn", tier: 3, icon: "clock", implemented: true,
+  id: "wn_slow_burn", name: "Slow Burn", tier: 4, icon: "clock", implemented: true,
   description: "You can't capture anything before your 6th move.",
   flavor: "Patience. Let it build.",
   filterMoves: (moves, _s, ctx) =>
@@ -206,7 +216,7 @@ export const SLOW_BURN: Nerf = db({
 });
 
 export const FLINCH: Nerf = db({
-  id: "wn_flinch", name: "Flinch", tier: 3, icon: "shield-alert", implemented: true,
+  id: "wn_flinch", name: "Flinch", tier: 4, icon: "shield-alert", implemented: true,
   description: "While your king is in check, you can't capture; you have to get out another way.",
   flavor: "Under fire, your hands shake too much to grab.",
   filterMoves: (moves, _s, ctx) => {
@@ -228,7 +238,7 @@ export const WEIGH_STATION: Nerf = db({
 
 export const QUARANTINE_ZONE: Nerf = db({
   id: "wn_quarantine_zone", name: "Quarantine Zone", tier: 4, icon: "biohazard", implemented: true,
-  description: "A random 2x2 block of squares is sealed off at game start; you can't move any piece onto it.",
+  description: "A random 2x2 block of squares is sealed off, shown from the first turn; you can't move any piece onto it, unless the seal would leave you fewer than three legal moves.",
   flavor: "Do not cross the tape.",
   init: (rng) => {
     const f = rng.int(7); // 0..6, so f+1 <= 7
@@ -238,35 +248,52 @@ export const QUARANTINE_ZONE: Nerf = db({
   filterMoves: (moves, state) => {
     const s = state as { zone: number[] };
     const set = new Set(s.zone);
-    return moves.filter((m) => !set.has(m.to));
+    const ok = moves.filter((m) => !set.has(m.to));
+    // Guarantee at least three legal moves: if the seal is too constraining,
+    // drop it for the turn rather than choke the position.
+    return ok.length >= 3 ? ok : moves;
   },
   visual: (state) => ({ bannedSquares: (state as { zone: number[] }).zone }),
+  hint: (state) => {
+    const s = state as { zone: number[] };
+    const corner = Math.min(...s.zone);
+    return { text: `A 2x2 block is sealed off (corner ${"abcdefgh"[FILE(corner)]}${RANK(corner) + 1}).`, tone: "info" };
+  },
 });
 
 export const SHIFTING_SANDS: Nerf = db({
   id: "wn_shifting_sands", name: "Shifting Sands", tier: 4, icon: "wind", implemented: true,
-  description: "Each turn, a random file is closed; you can't move any piece onto it this turn.",
+  description: "Each turn, a random file is closed; you can't move any piece onto it this turn, unless the closure would leave you fewer than three legal moves. Next turn's closed file is revealed a turn early.",
   flavor: "The dunes move overnight.",
-  init: () => ({ file: 0 }),
-  onTurnStart: (_s, _ctx, rng) => ({ file: rng.int(8) }),
+  init: (rng) => ({ file: rng.int(8), next: rng.int(8) }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { file: number; next: number };
+    return { file: s.next, next: rng.int(8) };
+  },
   filterMoves: (moves, state) => {
     const s = state as { file: number };
-    return moves.filter((m) => FILE(m.to) !== s.file);
+    const ok = moves.filter((m) => FILE(m.to) !== s.file);
+    return ok.length >= 3 ? ok : moves;
   },
   visual: (state) => {
-    const s = state as { file: number };
-    const sqs: number[] = [];
-    for (let r = 0; r < 8; r++) sqs.push(SQ(s.file, r));
-    return { bannedSquares: sqs };
+    const s = state as { file: number; next: number };
+    const banned: number[] = [];
+    for (let r = 0; r < 8; r++) banned.push(SQ(s.file, r));
+    const highlight: number[] = [];
+    for (let r = 0; r < 8; r++) highlight.push(SQ(s.next, r));
+    return { bannedSquares: banned, highlightSquares: highlight };
   },
   hint: (state) => {
-    const s = state as { file: number };
-    return { text: `The ${"abcdefgh"[s.file]}-file is buried in sand this turn.`, tone: "info" };
+    const s = state as { file: number; next: number };
+    return {
+      text: `The ${"abcdefgh"[s.file]}-file is buried in sand this turn; the ${"abcdefgh"[s.next]}-file closes next turn.`,
+      tone: "info",
+    };
   },
 });
 
 export const GLASS_JAW: Nerf = db({
-  id: "wn_glass_jaw", name: "Glass Jaw", tier: 4, icon: "crown", implemented: true,
+  id: "wn_glass_jaw", name: "Glass Jaw", tier: 5, icon: "crown", implemented: true,
   description: "You can't make a move that leaves your queen attacked by the enemy.",
   flavor: "Keep her chin tucked at all times.",
   filterMoves: (moves, _s, ctx) => {
@@ -306,7 +333,7 @@ export const TAX_SEASON: Nerf = db({
 });
 
 export const CURFEW: Nerf = db({
-  id: "wn_curfew", name: "Curfew", tier: 4, icon: "moon", implemented: true,
+  id: "wn_curfew", name: "Curfew", tier: 5, icon: "moon", implemented: true,
   description: "After your 25th move, you can't move any piece into the enemy half (relative ranks 5 to 8).",
   flavor: "The border closes at the 25th bell.",
   filterMoves: (moves, _s, ctx) => {
@@ -320,19 +347,24 @@ export const CURFEW: Nerf = db({
 
 export const GRAVITY: Nerf = db({
   id: "wn_gravity", name: "Gravity", tier: 5, icon: "arrow-down", implemented: true,
-  description: "None of your pieces may move more than two ranks ahead of your own king.",
+  description: "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
   flavor: "The army can't outrun its monarch.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const cap = relRank(ctx.me, ks) + 2;
-    const ok = moves.filter((m) => m.piece === "k" || relRank(ctx.me, m.to) <= cap);
+    const ok = moves.filter(
+      (m) =>
+        m.piece === "k" ||
+        relRank(ctx.me, m.from) > cap || // already inside the region: may leave normally
+        relRank(ctx.me, m.to) <= cap,
+    );
     return ok.length ? ok : moves;
   },
 });
 
 export const BOTTOM_FEEDER: Nerf = db({
-  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 5, icon: "fish", implemented: true,
+  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 6, icon: "fish", implemented: true,
   description: "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
   flavor: "Scraps only.",
   filterMoves: (moves) =>
@@ -340,7 +372,7 @@ export const BOTTOM_FEEDER: Nerf = db({
 });
 
 export const MIMICRY: Nerf = db({
-  id: "wn_mimicry", name: "Mimicry", tier: 5, icon: "copy", implemented: true,
+  id: "wn_mimicry", name: "Mimicry", tier: 6, icon: "copy", implemented: true,
   description: "You must move the same piece type as your opponent's last move, if you can.",
   flavor: "Whatever they did, you do.",
   filterMoves: (moves, _s, ctx) => {
@@ -360,7 +392,7 @@ export const MIMICRY: Nerf = db({
 });
 
 export const FOLLOW_THE_LEADER: Nerf = db({
-  id: "wn_follow_the_leader", name: "Follow the Leader", tier: 5, icon: "columns", implemented: true,
+  id: "wn_follow_the_leader", name: "Follow the Leader", tier: 6, icon: "columns", implemented: true,
   description: "You must move a piece onto the same file as your opponent's last move's destination, if you can.",
   flavor: "March in their column.",
   filterMoves: (moves, _s, ctx) => {
@@ -381,7 +413,7 @@ export const FOLLOW_THE_LEADER: Nerf = db({
 });
 
 export const BODYGUARD: Nerf = db({
-  id: "wn_bodyguard", name: "Bodyguard", tier: 5, icon: "shield", implemented: true,
+  id: "wn_bodyguard", name: "Bodyguard", tier: 6, icon: "shield", implemented: true,
   description: "You lose if your king ever has no friendly piece adjacent to it (after your first move).",
   flavor: "A king is never left alone.",
   checkLoss: (_s, ctx) => {
@@ -398,39 +430,55 @@ export const BODYGUARD: Nerf = db({
 
 export const METEOR_SHOWER: Nerf = db({
   id: "wn_meteor_shower", name: "Meteor Shower", tier: 5, icon: "sparkles", implemented: true,
-  description: "Each turn, five random squares are struck and sealed; you can't move any piece onto them this turn.",
+  description: "Each turn, five random squares are struck and sealed; you can't move any piece onto them this turn, unless the strike would leave you fewer than three legal moves. Next turn's five squares are revealed a turn early.",
   flavor: "Look out below.",
-  init: () => ({ banned: [] as number[] }),
-  onTurnStart: (_s, _ctx, rng) => {
+  init: (rng) => {
+    const roll = () => {
+      const set = new Set<number>();
+      while (set.size < 5) set.add(rng.int(64));
+      return Array.from(set);
+    };
+    return { banned: roll(), next: roll() };
+  },
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { banned: number[]; next: number[] };
     const set = new Set<number>();
     while (set.size < 5) set.add(rng.int(64));
-    return { banned: Array.from(set) };
+    return { banned: s.next, next: Array.from(set) };
   },
   filterMoves: (moves, state) => {
     const s = state as { banned: number[] };
     const set = new Set(s.banned);
-    return moves.filter((m) => !set.has(m.to));
+    const ok = moves.filter((m) => !set.has(m.to));
+    return ok.length >= 3 ? ok : moves;
   },
-  visual: (state) => ({ bannedSquares: (state as { banned: number[] }).banned }),
+  visual: (state) => {
+    const s = state as { banned: number[]; next: number[] };
+    return { bannedSquares: s.banned, highlightSquares: s.next };
+  },
 });
 
 // --------------------------- TIER 6 (cruel) ---------------------------
 
 export const KINGS_LEASH: Nerf = db({
   id: "wn_kings_leash", name: "King's Leash", tier: 6, icon: "crown", implemented: true,
-  description: "You can't move any piece to a square more than 3 king-steps from your own king.",
+  description: "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
   flavor: "Nobody strays far from the throne.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const ok = moves.filter((m) => cheb(m.to, ks) <= 3);
-    return ok.length ? ok : moves;
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening the whole
+    // board back up.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
 export const REGICIDE_CLOCK: Nerf = db({
   id: "wn_regicide_clock", name: "Regicide Clock", tier: 6, icon: "target", implemented: true,
-  description: "You must give check at least once every 8 of your turns, or you lose.",
+  description: "You must give check at least once every 6 of your turns, or you lose.",
   flavor: "Keep the pressure on, or the clock runs out.",
   init: () => ({ sinceCheck: 0 }),
   onTurnStart: (_s, ctx) => {
@@ -447,13 +495,13 @@ export const REGICIDE_CLOCK: Nerf = db({
   },
   filterMoves: (moves, state, ctx) => {
     const s = state as { sinceCheck: number };
-    if (s.sinceCheck < 7) return moves;
+    if (s.sinceCheck < 5) return moves;
     const opp = other(ctx.me);
     const checks = moves.filter((m) => isInCheck(makeMove(ctx.board, m), opp));
     return checks.length ? checks : moves;
   },
   checkLoss: (_state, ctx) => {
-    if (ctx.moveNumber < 8) return null;
+    if (ctx.moveNumber < 6) return null;
     // Recompute the streak fresh from history rather than reading the
     // onTurnStart-maintained state, which is one move stale at loss-check time
     // and would let the player dodge the loss (and steal a king capture) for an
@@ -467,17 +515,17 @@ export const REGICIDE_CLOCK: Nerf = db({
         streak = isInCheck(board, opp) ? 0 : streak + 1;
       }
     }
-    return streak >= 8 ? { reason: "the pressure lapsed for too long" } : null;
+    return streak >= 6 ? { reason: "the pressure lapsed for too long" } : null;
   },
   progress: (state) => {
     const s = state as { sinceCheck: number };
-    return { value: Math.min(s.sinceCheck, 8), max: 8, label: `${s.sinceCheck}/8 turns since check` };
+    return { value: Math.min(s.sinceCheck, 6), max: 6, label: `${s.sinceCheck}/6 turns since check` };
   },
 });
 
 export const EQUALIZER: Nerf = db({
   id: "wn_equalizer", name: "Equalizer", tier: 6, icon: "scale", implemented: true,
-  description: "You lose if your piece count ever differs from your opponent's by more than 3, in either direction.",
+  description: "You lose if your piece count ever differs from your opponent's by more than 3, in either direction. Every piece on the board counts, including any created or spawned mid-game.",
   flavor: "The scales must stay level.",
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
@@ -490,7 +538,7 @@ export const EQUALIZER: Nerf = db({
 
 export const DEADLINE_QUEEN: Nerf = db({
   id: "wn_deadline_queen", name: "Deadline", tier: 6, icon: "sword", implemented: true,
-  description: "You must capture the enemy queen by your 25th move, or you lose.",
+  description: "You must capture an enemy queen by your 25th move, or you lose. Any enemy queen counts, including one created or spawned mid-game.",
   flavor: "Her head, before the bell.",
   progress: (_s, ctx) => ({
     value: Math.min(ctx.capturedByMe.q, 1),
@@ -516,9 +564,11 @@ export const DEADLINE_QUEEN: Nerf = db({
 
 export const DAISY_CHAIN: Nerf = db({
   id: "wn_daisy_chain", name: "Daisy Chain", tier: 6, icon: "spline", implemented: true,
-  description: "The piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
+  description: "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
   flavor: "Link every step to the last.",
   filterMoves: (moves, _s, ctx) => {
+    // The rule starts on move 4 so the opening cannot be soft-locked.
+    if (ctx.moveNumber < 3) return moves;
     const last = ctx.myLastMove;
     if (!last) return moves;
     const chained = moves.filter((m) => m.from === last.to || adj(m.from, last.to));
@@ -529,7 +579,7 @@ export const DAISY_CHAIN: Nerf = db({
 // --------------------------- TIER 7 (punishing) ---------------------------
 
 export const GLASS_QUEEN: Nerf = db({
-  id: "wn_glass_queen", name: "Glass Queen", tier: 7, icon: "crown", implemented: true,
+  id: "wn_glass_queen", name: "Glass Queen", tier: 6, icon: "crown", implemented: true,
   description: "You lose if you end one of your turns with your queen attacked by the enemy.",
   flavor: "One touch and she shatters.",
   // Rebalance 2026-07: judged only after YOUR OWN move (the after-my-move
@@ -606,29 +656,40 @@ export const PIN_CUSHION: Nerf = db({
 
 export const ROYAL_MERIDIAN: Nerf = db({
   id: "wn_royal_meridian", name: "Royal Meridian", tier: 7, icon: "plus", implemented: true,
-  description: "Every piece you move must land on your king's file or your king's rank.",
+  description: "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
   flavor: "All roads run through the crown.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return moves;
     const kf = FILE(ks), kr = RANK(ks);
     const ok = moves.filter((m) => FILE(m.to) === kf || RANK(m.to) === kr);
-    return ok.length ? ok : moves;
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening the whole
+    // board back up.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
 export const KINGPIN: Nerf = db({
   id: "wn_kingpin", name: "Kingpin", tier: 7, icon: "crown", implemented: true,
-  description: "Only your king may capture. No other piece can make a capture.",
+  description: "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
   flavor: "The boss does all the dirty work himself.",
-  filterMoves: (moves) => moves.filter((m) => !m.captured || m.piece === "k"),
+  filterMoves: (moves) => {
+    const ok = moves.filter((m) => !m.captured || m.piece === "k");
+    if (ok.length) return ok;
+    // No compliant move: fall back to a king move rather than opening captures
+    // back up to every piece.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
+  },
 });
 
 // --------------------------- TIER 8 (unhinged) ---------------------------
 
 export const HOUSE_OF_CARDS: Nerf = db({
   id: "wn_house_of_cards", name: "House of Cards", tier: 8, icon: "layers", implemented: true,
-  description: "From your 6th move on, you lose if you end one of your turns with any of your pieces (other than the king) attacked and undefended.",
+  description: "From your 5th move on, you lose if you end one of your turns with any of your pieces or pawns (other than the king) attacked and undefended.",
   flavor: "One loose card and the whole thing falls.",
   // Rebalance 2026-07: judged only after YOUR OWN move. Previously an
   // opponent move that created the attack toppled the house immediately, with
@@ -637,7 +698,7 @@ export const HOUSE_OF_CARDS: Nerf = db({
   // to defend, trade, or retreat the loose card; failing to end your turn
   // clean is still the promised tier-8 loss.
   checkLoss: (_s, ctx) => {
-    if (ctx.moveNumber < 5) return null;
+    if (ctx.moveNumber < 4) return null;
     const h = ctx.board.history;
     const last = h[h.length - 1];
     if (!last || last.color !== ctx.me) return null;
@@ -652,7 +713,7 @@ export const HOUSE_OF_CARDS: Nerf = db({
     return null;
   },
   hint: (_s, ctx) => {
-    if (ctx.moveNumber < 5) return null;
+    if (ctx.moveNumber < 4) return null;
     const oppAtk = attackedBy(ctx.board, other(ctx.me));
     const myDef = attackedBy(ctx.board, ctx.me);
     const loose: number[] = [];
@@ -702,13 +763,21 @@ export const PERFECT_DEFENSE: Nerf = db({
 
 export const FLOOR_IS_LAVA: Nerf = db({
   id: "wn_floor_is_lava", name: "The Floor Is Lava", tier: 8, icon: "flame", implemented: true,
-  description: "Each turn, four random ranks turn to lava; you can't move a piece from or onto those ranks this turn.",
+  description: "Each turn, three random ranks turn to lava; you can't move a piece from or onto those ranks this turn. Next turn's lava ranks are revealed a turn early, and while any of your pieces stands on a rank that will ignite next turn, your move must take a piece off an igniting rank, or you lose.",
   flavor: "Mind your step.",
-  init: () => ({ ranks: [] as number[] }),
-  onTurnStart: (_s, _ctx, rng) => {
+  init: (rng) => {
+    const roll = () => {
+      const set = new Set<number>();
+      while (set.size < 3) set.add(rng.int(8));
+      return Array.from(set);
+    };
+    return { ranks: roll(), next: roll() };
+  },
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { ranks: number[]; next: number[] };
     const set = new Set<number>();
-    while (set.size < 4) set.add(rng.int(8));
-    return { ranks: Array.from(set) };
+    while (set.size < 3) set.add(rng.int(8));
+    return { ranks: s.next, next: Array.from(set) };
   },
   filterMoves: (moves, state) => {
     const s = state as { ranks: number[] };
@@ -716,11 +785,37 @@ export const FLOOR_IS_LAVA: Nerf = db({
     const ok = moves.filter((m) => !set.has(RANK(m.from)) && !set.has(RANK(m.to)));
     return ok.length ? ok : moves;
   },
+  checkLoss: (state, ctx) => {
+    // Judged only after YOUR OWN move: the reveal gives you the turn's warning,
+    // and you must spend the move evacuating a rank that ignites next turn.
+    const h = ctx.board.history;
+    const last = h[h.length - 1];
+    if (!last || last.color !== ctx.me) return null;
+    const s = state as { next: number[] };
+    const igniting = new Set(s.next);
+    const onIgniting = pieceSquares(ctx.board, ctx.me).some((sq) => igniting.has(RANK(sq)));
+    if (!onIgniting) return null;
+    // You survive if this move left an igniting rank; otherwise the floor claims you.
+    const left = igniting.has(RANK(last.from)) && !igniting.has(RANK(last.to));
+    return left ? null : { reason: "a piece was left on a rank about to ignite" };
+  },
   visual: (state) => {
-    const s = state as { ranks: number[] };
+    const s = state as { ranks: number[]; next: number[] };
     const sqs: number[] = [];
     for (const r of s.ranks) for (let f = 0; f < 8; f++) sqs.push(SQ(f, r));
-    return { bannedSquares: sqs };
+    const highlight: number[] = [];
+    for (const r of s.next) for (let f = 0; f < 8; f++) highlight.push(SQ(f, r));
+    return { bannedSquares: sqs, highlightSquares: highlight };
+  },
+  hint: (state, ctx) => {
+    const s = state as { ranks: number[]; next: number[] };
+    const igniting = new Set(s.next);
+    if (!pieceSquares(ctx.board, ctx.me).some((sq) => igniting.has(RANK(sq)))) return null;
+    const ranks = s.next.map((r) => r + 1).sort((a, b) => a - b).join(", ");
+    return {
+      text: `Ranks ${ranks} ignite next turn: take a piece off one of them or lose.`,
+      tone: "warn",
+    };
   },
 });
 

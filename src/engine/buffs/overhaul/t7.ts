@@ -15,6 +15,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   attackersOf,
   card,
   emptySquares,
@@ -91,7 +92,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "The Great Flood",
       description:
         "A wave washes every piece on the central four ranks (kings excluded) one square toward its own back rank, where that square is empty. Blocked pieces stay.",
-      tier: 7,
+      tier: 6,
       category: "movement",
       icon: "Droplets",
       flavor: "Nobody built an ark. Everybody built excuses.",
@@ -124,24 +125,38 @@ export const OVERHAUL_T7: Buff[] = [
     }),
   ),
   // 153. Write the Patch Notes ---------------------------------------------------------
-  // ADAPTED: there is no pool-pruning flag; you write the notes, so your next
-  // draft rolls one tier higher (bankBonus) and you gain a reroll to strike
-  // one bad card yourself.
+  // BALANCE: the reroll ("rolling") is traded for a guaranteed reinforcement.
+  // You take a pawn on your second rank instead of a reroll; the tier-up draft
+  // (bankBonus, the card's jackpot) is kept as the ceiling. Odds are exact:
+  // the tier lift is guaranteed, so the description states it plainly.
   card(
     {
       id: "ov_patch_notes",
       name: "Write the Patch Notes",
       description:
-        "You write the notes: your next draft rolls one tier higher and you gain 1 draft reroll.",
+        "Spend your turn: plant a new pawn on an empty square of your second rank, and your next draft is dealt exactly one tier higher.",
       tier: 7,
       category: "draft",
       icon: "PenLine",
       flavor: "Removed: everything you dislike. Buffed: you, specifically.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.bankBonus = 1;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Plant a pawn on your second rank",
+              squares: emptySquares(api.board, (sq) => relRank(api.me, sq) === 2),
+            },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || api.board.pieces[sq] || relRank(api.me, sq) !== 2) return;
+        api.place(sq, "p", api.me);
+        api.mine.flags.bankBonus = 1;
+        flashSquares(api, [sq], true);
+      },
+    ),
   ),
   // 154. Puppet Coronation ----------------------------------------------------------------
   card(
@@ -149,15 +164,17 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_puppet_coronation",
       name: "Puppet Coronation",
       description:
-        "Spend your turn moving the enemy queen yourself, to any empty square she could legally reach. No captures; the strings only pull so hard.",
+        "Choose the enemy queen and an empty square she could legally reach. After your opponent's next move, the strings pull and she is marched there, if she still stands where you chose and the square is still empty. No captures.",
       tier: 7,
       category: "movement",
       icon: "Drama",
       flavor: "All hail the queen, who walks exactly where she is told.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed || picks.length >= 2) return null;
         if (picks.length === 0) {
           return {
             kind: "square",
@@ -175,16 +192,35 @@ export const OVERHAUL_T7: Buff[] = [
             .map((m) => m.to),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
+        if (from == null || to == null || inst.state.armed) return;
+        const p = api.board.pieces[from];
+        if (!p || p.color !== api.opp || p.type !== "q" || api.board.pieces[to]) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        inst.state.armed = true;
+      },
+      // Delayed: the strings pull only after the opponent's next move, and only
+      // if the queen still stands where she was chosen and the square is free.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || inst.spent) return;
+        if (move.color !== api.opp) return;
+        const from = inst.state.from as Square, to = inst.state.to as Square;
         const p = api.board.pieces[from];
         if (p && p.color === api.opp && p.type === "q" && !api.board.pieces[to]) {
           api.relocate(from, to);
           flashSquares(api, [to], true);
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        !inst.state.armed
+          ? "activate to seize the enemy queen"
+          : inst.spent
+            ? "the strings have pulled"
+            : "the strings pull after your opponent's next move",
+    },
   ),
   // 155. Time Heist ---------------------------------------------------------------------------
   // ADAPTED: the roster's opponent-chosen revenge skip cannot be opponent
@@ -196,7 +232,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Time Heist",
       description:
         "Your opponent skips their next turn. 6 of your turns later the timeline collects: they take one extra move.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "Hourglass",
       flavor: "Every stolen minute charges interest.",
@@ -226,7 +262,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Colossal Visitor",
       description:
         "A colossal lizard crosses a chosen file: every pawn on it is trampled, every other piece (kings excluded) is shoved one file aside where empty, and two random empty squares of the file smolder: your opponent cannot enter them for their next 2 turns.",
-      tier: 7,
+      tier: 6,
       category: "attack",
       icon: "Turtle",
       flavor: "It is not angry. It is just very, very wide.",
@@ -284,7 +320,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Prophecy Engine",
       description:
         "Point at an enemy piece: for your opponent's next 6 turns, every move they make with that piece type gains you 6 seconds. If they never move one, the engine pays 40 seconds when the prophecy closes.",
-      tier: 7,
+      tier: 5,
       category: "info",
       icon: "Orbit",
       flavor: "The gears do not predict the future. They invoice it.",
@@ -340,7 +376,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_speedhack",
       name: "Speedhack",
       description: "Each of your next 5 moves puts 6 seconds back on your clock.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       icon: "Gauge",
       flavor: "The anticheat looked at your rating and shrugged.",
@@ -368,7 +404,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Split the Timeline",
       description:
         "The timeline splits and both of you act at once: you and your opponent each gain one extra move, you first.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "GitBranch",
       flavor: "Somewhere, a version of you already blundered this.",
@@ -387,7 +423,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_olympus_voicemail",
       name: "Olympus Voicemail",
       description:
-        "For your next 3 turns, after each of your moves a bolt stuns the enemy piece that moved most recently (kings excluded) for 1 turn.",
+        "For your next 2 turns, after each of your moves a bolt stuns the enemy piece that moved most recently (kings excluded) for 1 turn.",
       tier: 7,
       category: "attack",
       icon: "CloudLightning",
@@ -396,7 +432,7 @@ export const OVERHAUL_T7: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && turnsLeft(inst) > 0) {
@@ -440,7 +476,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Grail Quest",
       description:
         "Send one of your knights away on quest. After 5 of your turns it returns to a random empty square in your half as a Grail Knight, permanently able to also step one square in any direction.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "Trophy",
       flavor: "He left with a horse and returned with a cup and opinions.",
@@ -518,7 +554,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "World Serpent",
       description:
         "For 4 of your turns the serpent bites its tail: your rooks' and queen's horizontal moves wrap around the board edge.",
-      tier: 7,
+      tier: 8,
       category: "movement",
       icon: "Infinity",
       flavor: "The board was never flat. You just moved like it was.",
@@ -565,7 +601,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Insider Trading",
       description:
         "See the cards of your opponent's next draft, and pocket 10 seconds for the tip.",
-      tier: 7,
+      tier: 5,
       category: "info",
       icon: "TrendingUp",
       flavor: "Allegedly. The briefcase was allegedly open.",
@@ -582,7 +618,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Coliseum",
       description:
         "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and you gain 10 seconds per point of value difference.",
-      tier: 7,
+      tier: 5,
       category: "attack",
       icon: "Swords",
       flavor: "The sand does not care who was favored.",
@@ -635,7 +671,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_big_nap",
       name: "The Big Nap",
       description:
-        "Night falls: every knight, bishop, rook and queen on the board (both sides) sleeps and cannot move for 2 turns of its owner. Kings and pawns keep watch.",
+        "Night falls: every knight, bishop, rook and queen on the board (both sides) sleeps and cannot move for 1 turn of its owner. Kings and pawns keep watch.",
       tier: 7,
       category: "tempo",
       icon: "MoonStar",
@@ -645,49 +681,69 @@ export const OVERHAUL_T7: Buff[] = [
       for (let sq = 0 as Square; sq < 64; sq++) {
         const p = api.board.pieces[sq];
         if (!p || p.type === "k" || p.type === "p") continue;
-        addEffect(api, { kind: "freeze", sq, owner: p.color, turns: 2, skin: "sleep" });
+        addEffect(api, { kind: "freeze", sq, owner: p.color, turns: 1, skin: "sleep" });
       }
     }),
   ),
   // 167. Promotion Jubilee ------------------------------------------------------------------------------------------------
-  // ADAPTED: early promotions auto-queen (no underpromotion picker on granted
-  // moves).
+  // BALANCE: only the FIRST pawn to reach the seventh rank promotes early, and
+  // only to a rook, bishop, or knight (three explicit moves per square, never a
+  // queen). Playing any of these promotions sets `used` and ends the jubilee.
   card(
     {
       id: "ov_promotion_jubilee",
       name: "Promotion Jubilee",
       description:
-        "For 5 of your turns, your pawns stepping or capturing onto the seventh rank may promote to a queen there.",
+        "For 5 of your turns, the first of your pawns to step or capture onto the seventh rank may promote there, but only to a rook, bishop, or knight. That one early promotion ends the jubilee.",
       tier: 7,
       category: "pieces",
       icon: "PartyPopper",
       flavor: "One rank early, and nobody checked the bunting budget.",
       requires: ["p"],
-      fx: { motif: "empower", pieces: ["p"], moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    timedAugment(5, (_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (relRank(api.me, sq) !== 6) continue;
-        const fwd = sq + fwdOf(api.me);
-        if (!api.board.pieces[fwd]) {
-          out.push({ from: sq, to: fwd, piece: "p", color: api.me, promotion: "q", via: inst.id });
-        }
-        for (const df of [-1, 1]) {
-          const f = FILE(sq) + df, r = RANK(fwd);
-          if (!inBoard(f, r)) continue;
-          const cs = SQ(f, r);
-          const t = api.board.pieces[cs];
-          if (t && t.color === api.opp) {
-            out.push({
-              from: sq, to: cs, piece: "p", color: api.me,
-              captured: t.type, capturedSquare: cs, promotion: "q", via: inst.id,
-            });
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 5;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || inst.state.used) return;
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (relRank(api.me, sq) !== 6) continue;
+          const fwd = sq + fwdOf(api.me);
+          if (!api.board.pieces[fwd]) {
+            for (const promo of ["r", "b", "n"] as PieceType[]) {
+              out.push({ from: sq, to: fwd, piece: "p", color: api.me, promotion: promo, via: inst.id });
+            }
+          }
+          for (const df of [-1, 1]) {
+            const f = FILE(sq) + df, r = RANK(fwd);
+            if (!inBoard(f, r)) continue;
+            const cs = SQ(f, r);
+            const t = api.board.pieces[cs];
+            if (t && t.color === api.opp) {
+              for (const promo of ["r", "b", "n"] as PieceType[]) {
+                out.push({
+                  from: sq, to: cs, piece: "p", color: api.me,
+                  captured: t.type, capturedSquare: cs, promotion: promo, via: inst.id,
+                });
+              }
+            }
           }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.promotion) inst.state.used = true;
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) =>
+        inst.state.used
+          ? "the jubilee's early promotion is spent"
+          : `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   // 168. Fourth Wall Repair Crew -------------------------------------------------------------------------------------------
   card(
@@ -696,7 +752,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Fourth Wall Repair Crew",
       description:
         "For your next 3 turns, every enemy piece you capture is carried off-screen by the crew, gaining you 4 seconds each.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       icon: "HardHat",
       flavor: "Mind the cone. The scene is structural.",
@@ -725,7 +781,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Deja Vu",
       description:
         "You take one extra move right away, and the enemy piece that moved last (king excluded) is stuck in the loop and cannot move on your opponent's next turn.",
-      tier: 7,
+      tier: 8,
       category: "tempo",
       icon: "RotateCcw",
       flavor: "Haven't we... no. Surely not. Haven't we...",
@@ -755,7 +811,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Heavenly Bureaucracy",
       description:
         "Once within your next 8 turns: when an enemy move puts your king in check, the check is misfiled and your king is relocated to a random empty square that is not attacked. If no safe square exists, the filing stands.",
-      tier: 7,
+      tier: 6,
       category: "protection",
       icon: "Stamp",
       flavor: "Form 7-K (Regicide, Attempted) is missing a signature.",
@@ -793,7 +849,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Menagerie Stampede",
       description:
         "The herd thunders up two adjacent files: every pawn on them (both sides) is shoved to the neighboring file away from the stampede, or trampled if that square is blocked or off the board. Every other piece on them (kings excluded) is stunned for 1 turn.",
-      tier: 7,
+      tier: 8,
       category: "attack",
       icon: "PawPrint",
       flavor: "Rhinos first, ostriches second, one deeply confused cow.",
@@ -872,7 +928,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_living_board",
       name: "Living Board",
       description:
-        "Two 2x2 areas (neither containing a king, away from the back ranks) trade their entire contents, square for square.",
+        "Two 2x2 areas (neither containing a king, away from the back ranks) trade their entire contents, square for square. Then one of your pieces that moved may take a free king-step to an empty adjacent square, without capturing.",
       tier: 7,
       category: "movement",
       icon: "Grid3x3",
@@ -880,24 +936,68 @@ export const OVERHAUL_T7: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
-        const anchors = Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) => {
-          if (FILE(sq) > 6 || RANK(sq) < 1 || RANK(sq) > 5) return false;
-          if (plot(sq).some((s) => api.board.pieces[s]?.type === "k")) return false;
-          if (picks.length === 1) {
-            const first = plot(picks[0].square!);
-            if (plot(sq).some((s) => first.includes(s))) return false;
-          }
-          return true;
-        });
-        return {
-          kind: "square",
-          label:
-            picks.length === 0
-              ? "Choose the first plot's bottom-left corner"
-              : "Choose the second plot's bottom-left corner",
-          squares: anchors,
+        if (picks.length < 2) {
+          const anchors = Array.from({ length: 64 }, (_, i) => i as Square).filter((sq) => {
+            if (FILE(sq) > 6 || RANK(sq) < 1 || RANK(sq) > 5) return false;
+            if (plot(sq).some((s) => api.board.pieces[s]?.type === "k")) return false;
+            if (picks.length === 1) {
+              const first = plot(picks[0].square!);
+              if (plot(sq).some((s) => first.includes(s))) return false;
+            }
+            return true;
+          });
+          return {
+            kind: "square",
+            label:
+              picks.length === 0
+                ? "Choose the first plot's bottom-left corner"
+                : "Choose the second plot's bottom-left corner",
+            squares: anchors,
+          };
+        }
+        // After both plots are chosen, one of your moved pieces may take a free
+        // king-step. Positions are read post-swap (deterministic from the two
+        // plots), so the option is offered before the board actually trades.
+        const A = plot(picks[0].square!), B = plot(picks[1].square!);
+        const postAt = (s: Square) => {
+          const ai = A.indexOf(s);
+          if (ai >= 0) return api.board.pieces[B[ai]];
+          const bi = B.indexOf(s);
+          if (bi >= 0) return api.board.pieces[A[bi]];
+          return api.board.pieces[s];
         };
+        const kingNeighbors = (s: Square) => {
+          const out: Square[] = [];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const f = FILE(s) + df, r = RANK(s) + dr;
+              if (inBoard(f, r)) out.push(SQ(f, r));
+            }
+          }
+          return out;
+        };
+        if (picks.length === 2) {
+          const movers = [...A, ...B].filter((s) => {
+            const p = postAt(s);
+            return p && p.color === api.me && kingNeighbors(s).some((n) => !postAt(n));
+          });
+          return {
+            kind: "square",
+            label: "Optional: choose a moved piece to king-step",
+            squares: movers,
+            finishable: true,
+          };
+        }
+        if (picks.length === 3) {
+          const s = picks[2].square!;
+          return {
+            kind: "square",
+            label: "Choose the free king-step (empty adjacent square)",
+            squares: kingNeighbors(s).filter((n) => !postAt(n)),
+          };
+        }
+        return null;
       },
       (_inst, api, picks) => {
         const a = picks[0]?.square, b = picks[1]?.square;
@@ -915,6 +1015,19 @@ export const OVERHAUL_T7: Buff[] = [
           if (pa[i]) api.place(B[i], pa[i]!.type, pa[i]!.color);
         }
         flashSquares(api, [...A, ...B]);
+        // The free king-step for one moved piece (post-swap board == the plan).
+        const from = picks[2]?.square, to = picks[3]?.square;
+        if (from != null && to != null) {
+          const p = api.board.pieces[from];
+          const adj =
+            from !== to &&
+            Math.abs(FILE(from) - FILE(to)) <= 1 &&
+            Math.abs(RANK(from) - RANK(to)) <= 1;
+          if (p && p.color === api.me && adj && !api.board.pieces[to]) {
+            api.relocate(from, to);
+            flashSquares(api, [to], true);
+          }
+        }
       },
     ),
   ),
@@ -925,7 +1038,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Ancestral Audience",
       description:
         "Revive your highest-value captured piece onto an empty square in your half. In fairness before the ancestors, your opponent's best captured pawn or minor returns to a random empty square in their half.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "DoorOpen",
       flavor: "The spirits grant two doors, and dignity demands both open.",
@@ -980,7 +1093,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_cartographers_vault",
       name: "Cartographer's Vault",
       description: "Your next 2 drafts each offer 3 cards.",
-      tier: 7,
+      tier: 8,
       category: "draft",
       icon: "Map",
       flavor: "Every shelf is a coastline nobody has drafted yet.",

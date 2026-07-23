@@ -257,3 +257,30 @@ Card review fixes (each verified; several plausible soft-lock reports were confi
 Recorded for follow-up (verified real but not changed this pass): a handful of description-count / placement mismatches (bw2_early_coronation promotable-rank range, hyein blocker-skipping wording, hw3_jammed_castle "two turns" timing, reinforcements back-rank exclusion, seance return-square, promotion_phobia back-rank reachability, castle_curfew move-20 off-by-one). ww_counter_charge and wa_stone_pawns were reported but are CORRECT once the tick convention and walnut semantics are accounted for.
 
 Verified: tsc --noEmit clean, eslint clean (2 pre-existing warnings), and test:rules, test:desync, test:snapshot, test:apex, test:passive-registry, test:sound, test:card-registry all green. Audio and visuals want a preview-deploy eyeball (the build env has no audio). PR #428. OPEN.
+
+## 2026-07-23 03:11 EDT
+
+Balance overhaul (owner doc "NerfChess Balance Overhaul", 2228 named card changes). PR #445. OPEN.
+
+Rule content:
+- Full-library balance pass across all four sections: 949 buffs, 527 hexes, 404 boons, 348 nerfs. 837 tier moves, 1372 mechanical tweaks, 12 replacements, 7 renames (ids never change).
+- Recurring templates applied consistently: duration shortenings (minimum one; exactly-one-turn effects grant one defender exemption instead), delayed activations (effects begin after the opponent's reply), first-affected-piece escape moves, non-capturing special moves, lossy one-shot charges, reroll riders and reroll costs, small clock garnish (5 to 15 seconds) where a card names no target.
+- Tier 9 is now a valid apex band for hexes (special: true, never in the normal curve): The Curse Engine, Peace of the Grave, Mirror of Winter. Regicide left the apex band for the normal tier-8 pool per its retier; apex offers stay pure tier 9/10.
+- Openers may carry a balance tier (opener() honors meta.tier; the opener pool still keys off the opener flag alone).
+- Codex: every touched card gains a dated balance-history event (src/data/balanceWave1.ts, generated from the owner directives) merged into each card page's timeline.
+
+Engine fixes surfaced by the pass:
+- grantInventory now bumps the mutation counter, so pocket grants from hidden passive hooks reveal to replicas and can never desync the crazyhouse inventory (found by the desync harness).
+- Living Board's targeting chain terminates after the optional king-step pick.
+- Guardian-family openers enforce protection via move filters (the shared shield effect expired the turn it was added); flagged for a wider shield-family fix.
+
+Harness/docs: passive compositions regenerated (1333 entries), card registry + card audit + animation baseline regenerated, desync scenarios and sims (cold_snap, phantom_rook, chess_diff, balance-fixes, apex) updated to the new behaviors. Full battery green: typecheck, lint, rules, nerfs, lab 2083/2083, passive-registry, apex, desync, snapshot, fairness, sequence, purity, emdash, sound, animations, spectator/tv/replay/archive, glicko, build. Known pre-existing failure left alone: sim-capture-accounting's perfect_rewind scenario references a card that never shipped (fails on master too).
+- Draft picker: the gold selection ring now follows the card's hover lift on desktop (it sat 3px low); the minimized panel's ring rides the card itself.
+
+## 2026-07-23 04:10 EDT
+
+Owner follow-ups on PR #445 (same branch). OPEN.
+
+- Animations: summon/morph/convert/promote signature cards fell back to a generic poof (or nothing) because the board suppressed their bespoke board-wide lead unconditionally; the suppress now applies only when a removal lead was actually staged. Oversize concern audited in both the DOM play layer and canvas VFX layer: already correct (one-cell parents, square-relative sizing).
+- Draft picker selection ring: on hover-capable devices the gold ring sat 3px below the lifted card; the ring now lifts in lockstep (and the minimized panel's ring rides the card itself via glow).
+- Draft lag: profiling showed the buff-draft ambient dungeon stage (23 composited layers) was the sole in-game jank source on weak GPUs (~14fps during drafts, 60fps everywhere else). Starfields now paint once, the ambient set follows the FX intensity dial, and sustained sub-30fps auto-downgrades the ambience for the session. Verified with CDP tracing before/after; full battery green.

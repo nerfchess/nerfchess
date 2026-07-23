@@ -87,15 +87,17 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_hostile_takeover",
       name: "Hostile Takeover",
       description:
-        "Spend your turn moving one enemy piece for them: any square it could legally reach without capturing. Their king is not for sale.",
+        "Spend your turn issuing the order: name one enemy piece (not their king) and any square it could legally reach without capturing. After your opponent's next move it is reassigned there, if the piece still stands and the square is still empty.",
       tier: 6,
       category: "movement",
       icon: "Briefcase",
       flavor: "The board of directors has some exciting news for you.",
     },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 2) return null;
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.from != null || picks.length >= 2) return null;
         if (picks.length === 0) {
           return {
             kind: "square",
@@ -111,16 +113,29 @@ export const OVERHAUL_T6: Buff[] = [
           squares: quietDests(api, picks[0].square!),
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
-        if (from == null || to == null) return;
+        if (from == null || to == null || inst.state.from != null) return;
+        inst.state.from = from;
+        inst.state.to = to;
+        flashSquares(api, [from, to]);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.from == null || move.color !== api.opp) return;
+        // The reassignment lands after the opponent replies, if still valid.
+        const from = inst.state.from as Square, to = inst.state.to as Square;
         const p = api.board.pieces[from];
         if (p && p.color === api.opp && p.type !== "k" && !api.board.pieces[to]) {
           api.relocate(from, to);
           flashSquares(api, [to], true);
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.from == null
+          ? "activate to issue the order"
+          : "reassignment lands after their reply",
+    },
   ),
   // 127. Frost Wyrm ------------------------------------------------------------
   card(
@@ -128,7 +143,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_frost_wyrm",
       name: "Frost Wyrm",
       description:
-        "An ice dragon sweeps a chosen rank: every enemy piece on it (king excluded) is frozen for 2 turns, and its empty squares become ice walls your opponent cannot enter for their next 2 turns.",
+        "An ice dragon sweeps a chosen rank: every enemy piece on it (king excluded) is frozen for 2 turns, and its empty squares become ice walls your opponent cannot enter for their next turn.",
       tier: 6,
       category: "tempo",
       icon: "Snowflake",
@@ -162,7 +177,7 @@ export const OVERHAUL_T6: Buff[] = [
             addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
           }
         }
-        if (walls.length) addEffect(api, { kind: "barred", squares: walls, against: api.opp, turns: 2 });
+        if (walls.length) addEffect(api, { kind: "barred", squares: walls, against: api.opp, turns: 1 });
       },
     ),
   ),
@@ -176,7 +191,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Stack Overflow",
       description:
         "For your opponent's next 3 turns, every move they make that is not a capture costs them 4 seconds. Closed as duplicate.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "Layers",
       flavor: "Have you tried searching before moving?",
@@ -205,7 +220,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Midas Gauntlet",
       description:
         "Your next 3 captures each gain you 10 seconds, and the capturing piece is gilded for the trophy cabinet.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "HandCoins",
       flavor: "Everything he takes turns to gold. Mostly the clock.",
@@ -233,7 +248,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Tornado",
       description:
         "A funnel travels a chosen file: every piece within one file of it (kings excluded) is flung to a random empty square in its own half.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       icon: "Tornado",
       flavor: "Forecast: scattered rooks, with a chance of knights.",
@@ -287,7 +302,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Duplicate Glitch",
       description:
         "Dupe glitch: gain a second copy of a random unspent card you hold. If your hand is empty, gain 2 draft rerolls instead.",
-      tier: 6,
+      tier: 5,
       category: "draft",
       icon: "Copy",
       flavor: "Do not patch this. Do NOT patch this.",
@@ -320,7 +335,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Archmage's Sabbatical",
       description:
         "For 4 of your turns, instead of a normal move you may teleport one of your pieces (king excluded) to any empty square in your half.",
-      tier: 6,
+      tier: 5,
       category: "movement",
       icon: "Wand2",
       flavor: "He is technically on leave. The tower disagrees.",
@@ -347,7 +362,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Rage Bait",
       description:
         "For your opponent's next 4 turns, every capture they make costs them 6 seconds while the taunt plays.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       icon: "Angry",
       flavor: "EZ. Absolutely EZ. Would you like to hear the airhorn again?",
@@ -377,14 +392,14 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_high_water_mark",
       name: "High Water Mark",
       description:
-        "The middle two ranks flood: for your opponent's next 4 turns their bishops, rooks and queens cannot move through them, only into them.",
+        "The middle two ranks flood: for your opponent's next 3 turns their bishops, rooks and queens cannot move through them, only into them.",
       tier: 6,
       category: "protection",
       icon: "Waves",
       flavor: "The river remembers where it used to run.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
-    timedOppFilter(4, (moves) =>
+    timedOppFilter(3, (moves) =>
       moves.filter((m) => {
         if (m.piece !== "b" && m.piece !== "r" && m.piece !== "q") return true;
         const tr = RANK(m.to);
@@ -410,7 +425,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Golden Goose",
       description:
         "Place a goose (a pawn stuck fast in golden honey) on an empty square in your half. For your next 8 turns it lays 6 seconds onto your clock after each of your moves. If it is captured, the gold stops.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       icon: "Egg",
       flavor: "Do not ask where the eggs come from. Bank them.",
@@ -465,7 +480,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_grand_illusionist",
       name: "Grand Illusionist",
       description:
-        "For your opponent's next 2 turns, they cannot capture your knights or bishops. Which one was the real one again?",
+        "For your opponent's next 2 turns, they cannot capture your knights or bishops, and using it spends one of your unused draft rerolls if you have any. Which one was the real one again?",
       tier: 6,
       category: "protection",
       icon: "VenetianMask",
@@ -473,9 +488,21 @@ export const OVERHAUL_T6: Buff[] = [
       requires: ["n", "b"],
       fx: { motif: "muzzle" },
     },
-    timedOppFilter(2, (moves) =>
-      moves.filter((m) => m.captured !== "n" && m.captured !== "b"),
-    ),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 2;
+        // Using the illusion spends the next unused reroll, if any.
+        if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const filtered = moves.filter((m) => m.captured !== "n" && m.captured !== "b");
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   // 137. Emergency Patch --------------------------------------------------------------------------------
   card(
@@ -484,7 +511,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Emergency Patch",
       description:
         "For your opponent's next 5 turns, one randomly chosen enemy slider type (bishop, rook or queen) is limited to moves of 2 squares that turn.",
-      tier: 6,
+      tier: 5,
       category: "protection",
       icon: "Wrench",
       flavor: "Known issue: your rooks. Fix ETA: five turns.",
@@ -521,7 +548,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_regency_council",
       name: "Regency Council",
       description:
-        "For 5 of your turns, while your queen is off the board your rooks and bishops may also step one square in any direction.",
+        "For 4 of your turns, while your queen is off the board your rooks and bishops may also step one square in any direction.",
       tier: 6,
       category: "movement",
       icon: "Scale",
@@ -529,7 +556,7 @@ export const OVERHAUL_T6: Buff[] = [
       requires: ["r", "b"],
       fx: { motif: "empower", pieces: ["r", "b"], moveAs: "k", self: true },
     },
-    timedAugment(5, (_moves, inst, api) => {
+    timedAugment(4, (_moves, inst, api) => {
       if (mySquares(api.board, api.me, "q").length > 0) return [];
       const out: Move[] = [];
       for (const sq of [...mySquares(api.board, api.me, "r"), ...mySquares(api.board, api.me, "b")]) {
@@ -544,7 +571,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_meteor_golf",
       name: "Meteor Golf",
       description:
-        "Tee off at any square, in plain sight of both players. After your opponent's next move the meteor lands: any piece there (kings excluded) is destroyed and adjacent pieces are knocked one square outward onto empty squares.",
+        "Tee off at any square, in plain sight of both players. Until it lands the target and its adjacent squares are sealed shut against your opponent. After their next move the meteor strikes: any piece on the target (kings excluded) is destroyed and the seal vanishes.",
       tier: 6,
       category: "attack",
       icon: "Target",
@@ -565,30 +592,24 @@ export const OVERHAUL_T6: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         inst.state.sq = sq;
+        // Seal the target and its neighbours against the opponent until impact.
+        const sealed: Square[] = [sq];
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(sq) + df, r = RANK(sq) + dr;
+            if (inBoard(f, r)) sealed.push(SQ(f, r));
+          }
+        }
+        addEffect(api, { kind: "barred", squares: sealed, against: api.opp, turns: 1 });
         flashSquares(api, [sq]);
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || move.color !== api.opp) return;
+        // Impact: destroy the target piece; the barred seal expires this turn.
         const center = api.board.pieces[sq];
         if (center && center.type !== "k") api.removePiece(sq);
-        // Knock neighbours outward, ascending square order (deterministic).
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const f = FILE(sq) + df, r = RANK(sq) + dr;
-            if (!inBoard(f, r)) continue;
-            const nsq = SQ(f, r);
-            const p = api.board.pieces[nsq];
-            if (!p) continue;
-            const of = f + df, orr = r + dr;
-            if (!inBoard(of, orr)) continue;
-            const out = SQ(of, orr);
-            if (api.board.pieces[out]) continue;
-            if (p.type === "p" && !pawnRankOk(out)) continue;
-            api.relocate(nsq, out);
-          }
-        }
         flashSquares(api, [sq]);
         inst.spent = true;
       },
@@ -602,7 +623,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Vampire Court",
       description:
         "Up to 2 of your knights or bishops become vampires: each of their captures gains you 6 seconds, and the first time one is killed it returns 3 of your turns later on a square next to where it fell.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       icon: "Moon",
       flavor: "The court convenes at dusk and bills by the neck.",
@@ -711,7 +732,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Great Migration",
       description:
         "As your move, every one of your pawns with an empty square ahead advances one square. Blocked pawns hold their ground.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Route",
       flavor: "The herd does not ask the fence for permission.",
@@ -798,7 +819,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Coup d'Etat",
       description:
         "The queen takes the throne: she cannot be captured for your opponent's next 6 turns, and for 6 of your turns your king moves like a queen.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Crown",
       flavor: "The paperwork simply says 'restructuring'.",
@@ -834,7 +855,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Plot Armor",
       description:
         "Choose one of your pieces (king excluded): it cannot be captured during your opponent's next 6 turns. The script insists.",
-      tier: 6,
+      tier: 7,
       category: "protection",
       icon: "ScrollText",
       flavor: "Sorry, this character is contracted for two more acts.",
@@ -863,7 +884,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_feng_shui_plot",
       name: "Feng Shui Plot",
       description:
-        "Claim a 2x2 plot for 6 of your turns: your pieces standing inside it may also step one square in any direction.",
+        "Claim a 2x2 plot for 6 of your turns: your pieces standing inside it may also step one square in any direction, but that step cannot capture.",
       tier: 6,
       category: "movement",
       icon: "Home",
@@ -898,6 +919,7 @@ export const OVERHAUL_T6: Buff[] = [
           const p = api.board.pieces[sq];
           if (!p || p.color !== api.me) continue;
           for (const m of slideMoves(api.board, sq, ALL_DIRS, inst.id, 1)) {
+            if (m.captured) continue;
             if (p.type === "p" && !pawnRankOk(m.to)) continue;
             if (!moves.some((x) => x.from === m.from && x.to === m.to)) moves.push(m);
           }
@@ -920,7 +942,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_private_gallery",
       name: "Private Gallery",
       description: "Your next draft offers 3 cards, and you pocket 10 seconds at the door.",
-      tier: 6,
+      tier: 4,
       category: "draft",
       icon: "Image",
       flavor: "The velvet rope is load-bearing.",
@@ -937,7 +959,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Rolling Boulder",
       description:
         "Roll a boulder down a chosen file from your side: the first enemy pawn in its path is flattened, the next piece beyond (kings excluded) is shoved one square onward, and the crater cannot be entered by your opponent for their next 3 turns.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       icon: "Weight",
       flavor: "It gathers no moss and takes no questions.",
@@ -999,7 +1021,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Lantern Festival",
       description:
         "Revive up to 4 of your captured pawns onto empty squares of your second rank as lantern wisps. Any still on the board after 6 of your turns drift away.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       icon: "Flame",
       flavor: "Every light on the water is a soldier walking home.",
@@ -1070,7 +1092,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_paperwork_avalanche",
       name: "Paperwork Avalanche",
       description:
-        "For your opponent's next 3 turns, any enemy piece that captures is buried in forms and cannot move on their following turn.",
+        "For your opponent's next 2 turns, any enemy piece that captures is buried in forms and cannot move on their following turn.",
       tier: 6,
       category: "protection",
       icon: "FileStack",
@@ -1079,7 +1101,7 @@ export const OVERHAUL_T6: Buff[] = [
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured && move.piece !== "k") {

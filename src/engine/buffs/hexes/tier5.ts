@@ -9,6 +9,7 @@
 import { Buff } from "./shared";
 import {
   tierHexes,
+  hex,
   curse,
   walnutTarget,
   freezeAllEnemies,
@@ -35,12 +36,15 @@ export const HEXES_T5: Buff[] = [
     {
       id: "burned_dispatches",
       name: "Burned Dispatches",
-      description: "Your opponent's next draft is skipped outright, and the draft after that arrives nullified and inert.",
+      description: "Your opponent's next draft is skipped outright, and in return they gain one draft reroll for a later offer.",
       flavor: "Two orders lost: one to the fire, one to the smudge.",
     },
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      // One denied draft now, not two: the victim banks a reroll in return,
+      // spent on a later offer (the skipped one never rolls, so a reroll on
+      // it would be wasted anyway).
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
 
@@ -49,25 +53,38 @@ export const HEXES_T5: Buff[] = [
     {
       id: "medusas_verdict",
       name: "Medusa's Verdict",
-      description: "Your opponent's queen turns to a walnut for 4 of their turns, and every enemy piece standing next to her is frozen for 1 of their turns.",
+      description: "After your opponent's next move, their queen turns to a walnut for 4 of their turns, and every enemy piece then standing next to her is frozen for 1 of their turns.",
       flavor: "The lady meets a colder gaze than her own, and it spills onto her guard.",
       // Board already paints the walnut and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type !== "q") continue;
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
-        for (const asq of mySquares(api.board, api.opp)) {
-          if (asq === sq) continue;
-          const t = api.board.pieces[asq]!.type;
-          if (t === "k") continue;
-          if (Math.max(Math.abs(FILE(asq) - FILE(sq)), Math.abs(RANK(asq) - RANK(sq))) === 1) {
-            addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 1 });
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.done) return;
+        if (move.color !== api.opp) return;
+        // Delayed one opponent move. Applied during their move, so the shared
+        // post-move tick eats one turn immediately: 5 leaves exactly 4 of
+        // their turns for the queen and 2 leaves exactly 1 for her guard
+        // (both durations preserved).
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type !== "q") continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 5 });
+          for (const asq of mySquares(api.board, api.opp)) {
+            if (asq === sq) continue;
+            const t = api.board.pieces[asq]!.type;
+            if (t === "k") continue;
+            if (Math.max(Math.abs(FILE(asq) - FILE(sq)), Math.abs(RANK(asq) - RANK(sq))) === 1) {
+              addEffect(api, { kind: "freeze", sq: asq, owner: api.opp, turns: 2 });
+            }
           }
         }
-      }
-    }),
+        inst.state.done = true;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.done ? "verdict passed" : "verdict: after their next move",
+    },
   ),
 
   // --- petrify both rooks 3 turns AND seal their own back two ranks 2 turns -
@@ -75,7 +92,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "granite_ramparts",
       name: "Granite Ramparts",
-      description: "Your opponent's rooks turn to walnuts for 3 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks.",
+      description: "Your opponent's rooks turn to walnuts for 2 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks.",
       flavor: "The towers set into bedrock and the ground behind them seals shut.",
       // Board paints the walnuts and barred ranks; fx carried for consistency.
       fx: { motif: "jail", pieces: ["r"] },
@@ -83,7 +100,8 @@ export const HEXES_T5: Buff[] = [
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         if (api.board.pieces[sq]!.type === "r") {
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+          // Longest duration trimmed by one: the rook petrify was 3, now 2.
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
         }
       }
       const squares: number[] = [];
@@ -99,7 +117,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "stone_menagerie",
       name: "Stone Menagerie",
-      description: "Petrify two enemy minor pieces you target (knights or bishops) for 3 of their turns.",
+      description: "Target two enemy minor pieces (knights or bishops). After your opponent's next move, both are petrified for 3 of their turns.",
       flavor: "A gallery of statues where the cavalry stood.",
     },
     activated(
@@ -115,12 +133,38 @@ export const HEXES_T5: Buff[] = [
           }),
         };
       },
-      (_inst, api, picks) => {
-        for (const pick of picks) {
-          if (pick.square != null) {
-            addEffect(api, { kind: "walnut", sq: pick.square, owner: api.opp, turns: 3 });
+      (inst, _api, picks) => {
+        // Record the targets; the petrify lands after the opponent's next move.
+        inst.state.targets = picks
+          .map((p) => p.square)
+          .filter((s): s is number => s != null);
+      },
+      {
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          if (inst.state.applied) return;
+          if (move.color !== api.opp) return;
+          // If the opponent just moved a targeted minor, the curse follows it
+          // to its new square. Applied during their move, so the post-move tick
+          // eats one turn: 4 leaves exactly 3 of their turns (duration kept).
+          const targets = ((inst.state.targets as number[]) ?? []).map((sq) =>
+            sq === move.from ? move.to : sq,
+          );
+          for (const sq of targets) {
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") {
+              addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
+            }
           }
-        }
+          inst.state.applied = true;
+          inst.spent = true;
+        },
+        status: (inst) =>
+          inst.state.applied
+            ? "petrified"
+            : inst.state.targets != null
+            ? "petrify pending: after their next move"
+            : "activate to choose two minors",
       },
     ),
   ),
@@ -130,10 +174,55 @@ export const HEXES_T5: Buff[] = [
     {
       id: "stone_curse",
       name: "Stone Curse",
-      description: "Turn one enemy piece you target into a walnut for 4 of their turns: it can only shuffle one square at a time. Kings cannot be targeted.",
+      description: "Target one enemy piece, not a king. It gets one unaffected move; then it turns to a walnut for 4 of their turns, able only to shuffle one square at a time.",
       flavor: "Chosen, cursed, and set in stone.",
     },
-    walnutTarget(4),
+    activated(
+      (_inst, api, picks) =>
+        picks.length > 0
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to petrify",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      (inst, _api, picks) => {
+        // Record the target; the walnut sets after the opponent's next move,
+        // so the piece gets exactly one legal escape move first.
+        inst.state.target = picks[0]?.square ?? null;
+      },
+      {
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          if (inst.state.applied) return;
+          if (inst.state.target == null) {
+            inst.spent = true;
+            return;
+          }
+          if (move.color !== api.opp) return;
+          // The escape move is the opponent's next move: if they spend it on the
+          // targeted piece, the curse follows it to where it lands. Applied
+          // during their move, so the post-move tick eats one turn: 5 leaves
+          // exactly 4 of their turns (duration preserved).
+          let sq = inst.state.target as number;
+          if (move.from === sq) sq = move.to;
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 5 });
+          }
+          inst.state.applied = true;
+          inst.spent = true;
+        },
+        status: (inst) =>
+          inst.state.applied
+            ? "petrified"
+            : inst.state.target != null
+            ? "petrify pending: one escape move, then it sets"
+            : "activate to choose a piece",
+      },
+    ),
   ),
 
   // --- partial lockdown: only king and knights may move for 2 turns -------
@@ -141,12 +230,13 @@ export const HEXES_T5: Buff[] = [
     {
       id: "lone_sovereign",
       name: "Lone Sovereign",
-      description: "For your opponent's next 2 turns they may move only their king and their knights. Every other piece is stuck fast.",
+      description: "For your opponent's next turn they may move only their king and their knights. Every other piece is stuck fast.",
       flavor: "The court abandons the crown; only the cavalry stays to guard it.",
       // Board already paints the locked pieces; fx carried for consistency.
       fx: { motif: "jail", pieces: ["p", "b", "r", "q"] },
     },
-    curse(2, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "n")),
+    // Longest (only) duration trimmed by one: the lockdown was 2 turns, now 1.
+    curse(1, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "n")),
   ),
 
   // --- delayed snap-freeze: the next piece they move ices over ------------
@@ -154,7 +244,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "frozen_moment",
       name: "Frozen Moment",
-      description: "The next piece your opponent moves freezes solid the instant it lands and cannot move again for 3 of their turns.",
+      description: "The next piece your opponent moves freezes solid the instant it lands and cannot move again for 2 of their turns.",
       flavor: "One step too many, and time closes around them.",
     },
     {
@@ -165,8 +255,9 @@ export const HEXES_T5: Buff[] = [
         const p = api.board.pieces[move.to];
         if (p && p.color === api.opp && p.type !== "k") {
           // Added during their own move, so the shared post-move tick eats one
-          // turn immediately: 4 here leaves exactly 3 of their turns frozen.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 4 });
+          // turn immediately: 3 here leaves exactly 2 of their turns frozen
+          // (longest duration trimmed by one, from 3 to 2).
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
           inst.state.done = true;
           inst.spent = true;
         }
@@ -181,12 +272,15 @@ export const HEXES_T5: Buff[] = [
   // SEEDED with iron. Pawns cannot advance, and the diagonal capture they are
   // still allowed lands them on the spikes: the capturing pawn is caught fast
   // (frozen) for 2 turns where it lands.
-  H(
+  // Retiered 5 to 6 in place: the full duration is unchanged, so this card
+  // just carries an explicit tier one above the file's H(5) default.
+  hex(
     {
       id: "iron_furrow",
       name: "Iron Furrow",
       description: "The field is sown with iron spikes: your opponent's pawns cannot advance for their next 4 turns, and any enemy pawn that captures during that time is caught on the spikes, unable to move for 2 of their turns.",
       flavor: "The harvest bites back.",
+      tier: 6,
       // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
@@ -221,11 +315,12 @@ export const HEXES_T5: Buff[] = [
     {
       id: "throne_bound",
       name: "Throne Bound",
-      description: "The queen may not stray from her king: for your opponent's next 4 turns, her every move must end within 2 squares of their king.",
+      description: "The queen may not stray from her king: for your opponent's next 3 turns, her every move must end within 2 squares of their king.",
       flavor: "The queen is chained to her own throne.",
       fx: { motif: "anchor", pieces: ["q"] },
     },
-    curse(4, (moves, api) =>
+    // Longest (only) duration trimmed by one: the tether was 4 turns, now 3.
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "q") return true;
         const k = mySquares(api.board, api.opp, "k")[0];
@@ -242,14 +337,15 @@ export const HEXES_T5: Buff[] = [
     {
       id: "palsied_hands",
       name: "Palsied Hands",
-      description: "Their hands shake after every kill: for your opponent's next 6 turns, they cannot capture on two turns in a row.",
+      description: "Their hands shake after every kill: for your opponent's next 5 turns, they cannot capture on two turns in a row.",
       flavor: "Every hand in the army has gone numb.",
       fx: { motif: "muzzle", pieces: "all" },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        // Longest duration trimmed by one: the shakes lasted 6 turns, now 5.
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.turns as number) ?? 0) <= 0) return moves;
@@ -277,11 +373,12 @@ export const HEXES_T5: Buff[] = [
     {
       id: "peasant_levy",
       name: "Peasant Levy",
-      description: "The levy defends only the homeland: for your opponent's next 3 turns they may move only pieces standing in their own half of the board. Anything already across the middle is stranded.",
+      description: "The levy defends only the homeland: for your opponent's next 2 turns they may move only pieces standing in their own half of the board. Anything already across the middle is stranded.",
       flavor: "The expedition looks back and finds no relief column coming.",
       fx: { motif: "jail", pieces: "all" },
     },
-    curse(3, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) <= 4)),
+    // Longest (only) duration trimmed by one: the levy held 3 turns, now 2.
+    curse(2, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) <= 4)),
   ),
 
   // --- barred: seal the two center ranks ----------------------------------
@@ -289,7 +386,7 @@ export const HEXES_T5: Buff[] = [
     {
       id: "scorched_middle",
       name: "Scorched Middle",
-      description: "Your opponent cannot enter any square on the 4th or 5th ranks for their next 3 turns.",
+      description: "Your opponent cannot enter the 4th or 5th ranks for their next 3 turns, save one bridge: the square on their king's file, on whichever of the two ranks sits nearer their own side, stays passable.",
       flavor: "The heart of the board is a wall of fire.",
       // Board already paints barred squares; square-scoped, no pieces field.
       fx: { motif: "blindfold" },
@@ -299,7 +396,19 @@ export const HEXES_T5: Buff[] = [
       for (let f = 0; f < 8; f++) {
         squares.push(SQ(f, 3), SQ(f, 4));
       }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+      // The defender keeps one bridge across the wall. A live picker is not
+      // practical here (the caster resolves the hex), so the bridge is chosen
+      // deterministically: the barred square on their king's file, on whichever
+      // of the two ranks sits nearer the defender's home, is left passable.
+      const k = mySquares(api.board, api.opp, "k")[0];
+      let bridge: number | null = null;
+      if (k != null) {
+        const kf = FILE(k);
+        const near = SQ(kf, 3), far = SQ(kf, 4);
+        bridge = relRank(api.opp, near) <= relRank(api.opp, far) ? near : far;
+      }
+      const barred = bridge == null ? squares : squares.filter((sq) => sq !== bridge);
+      addEffect(api, { kind: "barred", squares: barred, against: api.opp, turns: 3 });
     }),
   ),
 
@@ -308,9 +417,13 @@ export const HEXES_T5: Buff[] = [
     {
       id: "hexed_satchel",
       name: "Hexed Satchel",
-      description: "Your opponent's next 2 drafted cards arrive nullified and do nothing.",
+      description: "Your opponent's next drafted card arrives nullified and does nothing, and in return they gain one draft reroll for a later offer.",
       flavor: "Every card they draw is already dead in the hand.",
     },
-    nullifyDrafts(2),
+    instant((_inst, api) => {
+      // One nullified draft now, not two: the victim banks a reroll in return.
+      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
+      api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+    }),
   ),
 ];

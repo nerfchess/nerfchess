@@ -10,7 +10,6 @@
 import { Buff } from "./shared";
 import {
   card,
-  pieceBound,
   permanentAugment,
   timedAugment,
   slideMoves,
@@ -20,6 +19,7 @@ import {
   ORTHO_DIRS,
   DIAG_DIRS,
   ALL_DIRS,
+  type Square,
 } from "./shared";
 
 export const FANTASY_ARTIFACTS: Buff[] = [
@@ -29,16 +29,71 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Sword",
       name: "Excalibur",
       description:
-        "One of your bishops also moves like a rook for the game, giving it full queen movement.",
+        "Draw the lake's blade: choose one of your bishops. Until it next moves it may also slide like a rook, giving it full queen movement, but the first move it makes, straight or diagonal, spends the blade.",
       tier: 5,
       category: "movement",
       requires: ["b"],
       flavor: "The lake gives up its blade only once.",
       fx: { motif: "empower", pieces: ["b"], moveAs: "q", self: true },
     },
-    pieceBound("b", "Choose the bishop to wield Excalibur", (board, sq, via) =>
-      slideMoves(board, sq, ORTHO_DIRS, via),
-    ),
+    // Balance pass: the rook-line grant is a single charge, not a permanent
+    // upgrade. The engine only ever offers the granted slide when legal, so a
+    // failed attempt cannot happen; instead the charge is spent the moment the
+    // chosen bishop next moves, taken (a rook slide) or not (a bishop move).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the bishop to wield Excalibur",
+              squares: mySquares(api.board, api.me, "b"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || ((inst.state.charges as number) ?? 0) <= 0) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "b") return;
+        for (const e of slideMoves(api.board, sq, ORTHO_DIRS, inst.id)) {
+          if (!moves.some((m) => m.from === e.from && m.to === e.to)) moves.push(e);
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        // Bound bishop captured or overrun: the blade is lost.
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.to === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        // The bound bishop moved: the single stroke is spent, taken or not.
+        if (move.from === sq && move.color === api.me) {
+          inst.state.charges = 0;
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a bishop";
+        return ((inst.state.charges as number) ?? 0) > 0
+          ? "the blade is drawn for one stroke"
+          : "the blade is sheathed";
+      },
+    },
   ),
   card(
     {
@@ -47,7 +102,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Horn of Summoning",
       description:
         "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       requires: ["r"],
       flavor: "One long note, and the towers themselves answer.",
@@ -65,7 +120,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Orbit",
       name: "Orb of Dominion",
       description:
-        "Take control of one enemy rook or queen for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
+        "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
       tier: 7,
       category: "pieces",
       flavor: "Its light pours in through the eyes.",
@@ -75,8 +130,13 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       // Stays in hand after use (like Excalibur) so its aura keeps running while
       // the dominated piece lives; it is never re-aimed once a piece is taken.
       spendOnUse: false,
+      // Balance pass: the orb's only "duration" is permanent (rest of the game),
+      // so there is no owner-turn timer to trim. Per the directive's fallback for
+      // a duration that cannot be shortened, the seizure instead BEGINS after the
+      // opponent replies: you name the target now and the orb takes it (and its
+      // queen-muzzle aura starts) only once the opponent has answered the summons.
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pending != null
           ? null
           : {
               kind: "square",
@@ -86,11 +146,10 @@ export const FANTASY_ARTIFACTS: Buff[] = [
                 return t === "q" || t === "r";
               }),
             },
-      effect: (inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || inst.state.sq != null) return;
-        api.setPieceColor(sq, api.me);
-        inst.state.sq = sq;
+        if (sq == null || inst.state.sq != null || inst.state.pending != null) return;
+        inst.state.pending = sq;
       },
       // The orb's aura muzzles the enemy queen while you hold the dominated
       // piece: strip the queen's capturing moves. A partial filter with the
@@ -104,6 +163,23 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
+        // Delayed dominion: seize the named piece only after the opponent has
+        // replied. If they moved it on that reply, follow it to its new square;
+        // if it is no longer an enemy rook or queen, the orb fizzles (spent).
+        if (inst.state.pending != null && inst.state.sq == null) {
+          if (move.color !== api.opp) return;
+          let target = inst.state.pending as number;
+          if (move.from === target) target = move.to;
+          const p = api.board.pieces[target];
+          if (p && p.color === api.opp && (p.type === "q" || p.type === "r")) {
+            api.setPieceColor(target, api.me);
+            inst.state.sq = target;
+          } else {
+            inst.spent = true;
+          }
+          inst.state.pending = undefined;
+          return;
+        }
         const sq = inst.state.sq as number | undefined;
         if (sq == null) return;
         // Follow the dominated piece; if it is captured or overrun the orb goes
@@ -121,7 +197,11 @@ export const FANTASY_ARTIFACTS: Buff[] = [
         }
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to dominate" : "the orb holds a champion",
+        inst.state.sq != null
+          ? "the orb holds a champion"
+          : inst.state.pending != null
+            ? "the orb gathers light, seizing after their reply"
+            : "activate to dominate",
     },
   ),
   card(
@@ -131,7 +211,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Staff of Stasis",
       description:
         "Bind the staff to one of your pieces: whoever dares capture it is locked in a bubble of frozen time for 3 of their turns. The ward lasts the rest of the game.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       flavor: "For whoever touches it, a heartbeat lasts an age.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -180,7 +260,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "ShieldPlus",
       name: "Aegis of the Ages",
       description:
-        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 3 turns.",
+        "Lift the ancient aegis and its ward falls over your whole host, your king included: nothing you own can be captured for your opponent's next 3 turns. Lifting it consumes your next unused reroll, if you have one.",
       tier: 7,
       category: "protection",
       flavor: "Forged before the first war, unbroken since.",
@@ -191,6 +271,8 @@ export const FANTASY_ARTIFACTS: Buff[] = [
     instant((_inst, api) => {
       addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+      // Balance pass: lifting the aegis consumes your next unused reroll, if any.
+      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
     }),
   ),
   card(
@@ -200,7 +282,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Banner of War",
       description:
         "Raise the banner and your cavalry surges: for your next 3 turns each of your knights may also step one square in any direction like a king.",
-      tier: 3,
+      tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "Follow the colors and do not look back.",

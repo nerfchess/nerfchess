@@ -113,11 +113,15 @@ const pieceCount = (game: NerfGame) => game.board.pieces.filter(Boolean).length;
   game.buffs!.players.w.buffs.push({ id: "phantom_rook", tier: 4, state: {} });
   const fired = activateBuff(game, "w", 0, [{ square: SQ(0, 2) }]); // a3
   check(fired, "phantom rook places");
+  // Balance pass: the spawn is delayed; the rook materializes only after the
+  // opponent's next move.
+  check(game.board.pieces[SQ(0, 2)] == null, "phantom rook has not materialized before the reply");
+  game = play(game, "g8f6"); // black replies: the rook steps through
   check(game.board.pieces[SQ(0, 2)]?.type === "r", "phantom rook stands on a3");
 
   const before = pool(game);
   // Four white moves tick the 4-turn timer down; quiet knight shuffles only.
-  const script = ["g8f6", "g1f3", "f6g8", "f3g1", "g8f6", "g1f3", "f6g8", "f3g1"];
+  const script = ["g1f3", "f6g8", "f3g1", "g8f6", "g1f3", "f6g8", "f3g1", "g8f6"];
   for (const uci of script) game = play(game, uci);
   check(game.board.pieces[SQ(0, 2)] === null, "phantom rook expired and vanished");
   check(pool(game) === before, "phantom rook expiry left the revive pools untouched");

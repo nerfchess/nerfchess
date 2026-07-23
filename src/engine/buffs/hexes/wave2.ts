@@ -20,8 +20,8 @@
 import type { Buff, BuffApi, BuffInstance, Move, Square } from "./shared";
 import {
   addEffect,
-  curse,
   emptySquares,
+  hex,
   isInCheck,
   mySquares,
   relRank,
@@ -79,7 +79,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_witchs_veto",
       name: "Witch's Veto",
       description:
-        "The witch forbids revenge: for your opponent's next 4 turns, they cannot capture the piece you moved on your previous turn. Everything else is fair game: they can attack other pieces, or simply wait a turn for the veto to move on.",
+        "The witch forbids revenge, with one loophole: their first move under the curse ignores the veto, one free strike, then for the rest of your opponent's next 4 turns they cannot capture the piece you moved on your previous turn. Everything else is always fair game: they can attack other pieces, or simply wait a turn for the veto to move on.",
       flavor: "You may not strike back. Those are the rules of the feud.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -87,9 +87,13 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // One legal escape move: the first affected piece slips the veto. Until
+        // the opponent has taken a move under the curse, nothing is forbidden.
+        if (!inst.state.escaped) return moves;
         // The piece I moved last: my most recent history entry's destination.
         const hist = api.board.history;
         let veto: Square | null = null;
@@ -104,7 +108,11 @@ export const HEX_WAVE2: Buff[] = [
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Their first move under the curse spends the one escape.
+        if (move.color === api.opp && !inst.state.escaped) inst.state.escaped = true;
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -150,7 +158,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_cold_footprints",
       name: "Cold Footprints",
       description:
-        "The ground remembers their tread: for your opponent's next 5 turns, whenever they move a piece, the square it left is frozen over for their following turn, and no enemy piece may step onto it. Retracing their own steps is what the curse hates most.",
+        "The ground remembers their tread, but wakes a beat late: their next move passes untouched, then for their following 5 turns, whenever they move a piece, the square it left is frozen over for their next turn, and no enemy piece may step onto it. Retracing their own steps is what the curse hates most.",
       flavor: "Walk away and the door ices shut behind you.",
       fx: { motif: "blindfold" },
     },
@@ -158,8 +166,15 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 5;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched; the curse
+          // arms after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.from !== move.to) {
           // Added during their own move, so the shared post-move tick eats one
           // turn immediately: 2 here seals the square for exactly 1 turn.
@@ -184,7 +199,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_long_road_home",
       name: "The Long Road Home",
       description:
-        "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank; otherwise it fades after 6 of their turns. Their other pieces are free; the victim can simply obey, stand still, or be played around.",
+        "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank; otherwise it fades after 5 of their turns. Their other pieces are free; the victim can simply obey, stand still, or be played around.",
       flavor: "Its name is spoken at the hearth, and its feet must answer.",
     },
     {
@@ -206,7 +221,7 @@ export const HEX_WAVE2: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -249,9 +264,9 @@ export const HEX_WAVE2: Buff[] = [
   H2(
     {
       id: "hw2_blood_price",
-      name: "Blood Price",
+      name: "Blood IOU",
       description:
-        "A price is set on your blood: the next time your opponent captures one of your pieces within their next 6 turns, they must skip their following turn while the debt is collected. If they hold their blades for 6 turns, the price expires unpaid.",
+        "A price is set on your blood: the next time your opponent captures one of your pieces within their next 6 turns, the debt comes due at once. They lose 12 seconds from their clock (nothing in an untimed game) and, if they still hold one, a draft reroll. If they hold their blades for 6 turns, the price expires unpaid.",
       flavor: "Take what you like. The collector calls the same evening.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -262,7 +277,11 @@ export const HEX_WAVE2: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
-          api.bs.skips[api.opp] += 1;
+          // The IOU is collected: 12 seconds off their clock (a no-op in
+          // untimed games), plus one draft reroll so the debt still bites when
+          // there is no clock to dock.
+          api.adjustClock({ subOppSec: 12 });
+          api.theirs.rerollsLeft = Math.max(0, (api.theirs.rerollsLeft ?? 0) - 1);
           inst.spent = true;
           return;
         }
@@ -281,7 +300,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tarnished_crown",
       name: "Tarnished Crown",
       description:
-        "Their coronations are cursed: for your opponent's next 6 turns, any pawn they promote arrives exhausted: the new piece is frozen for 2 of their turns the moment it is crowned. They can wait the curse out or pay the price knowingly.",
+        "Their coronations are cursed, all but the first: for your opponent's next 6 turns, any pawn they promote arrives exhausted, frozen for 2 of their turns the moment it is crowned. The first pawn to promote escapes the curse and arrives free; every coronation after it pays the price.",
       flavor: "The crown fits. It just weighs like a gravestone.",
       fx: { motif: "slow", pieces: ["p"] },
     },
@@ -289,13 +308,19 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.escaped = false;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.promotion) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp && p.type !== "k") {
-            // Added during their own move: 3 leaves exactly 2 of their turns.
-            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "rust" });
+            if (!inst.state.escaped) {
+              // One legal escape move: the first coronation arrives un-exhausted.
+              inst.state.escaped = true;
+            } else {
+              // Added during their own move: 3 leaves exactly 2 of their turns.
+              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3, skin: "rust" });
+            }
           }
         }
         tickTurns(inst, move, api.opp);
@@ -316,25 +341,25 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tolling_bell",
       name: "Tolling Bell",
       description:
-        "A cracked bell hangs over their army: starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), its toll deafens the long arms: their bishops, rooks and queen cannot move on tolling turns. On the quiet turns in between, everything moves freely. Fades after their 6th turn.",
+        "A cracked bell hangs over their army: starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), its toll deafens the long arms: their bishops, rooks and queen cannot move on tolling turns. On the quiet turns in between, everything moves freely. Fades after their 5th turn.",
       flavor: "You learn to march between the tolls.",
       fx: { motif: "slow", pieces: ["b", "r", "q"] },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       filterOpponentMoves: (moves, inst) => {
-        // Tolling turns are those with an EVEN count remaining (6, 4, 2):
+        // Tolling turns are those with an ODD count remaining (5, 3, 1):
         // their 1st, 3rd and 5th turns under the curse.
-        if (turnsLeft(inst) <= 0 || turnsLeft(inst) % 2 !== 0 || moves.length === 0) return moves;
+        if (turnsLeft(inst) <= 0 || turnsLeft(inst) % 2 === 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.piece !== "b" && m.piece !== "r" && m.piece !== "q");
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
       status: (inst) =>
-        turnsLeft(inst) % 2 === 0
+        turnsLeft(inst) % 2 !== 0
           ? `the bell tolls this turn, ${turnsLeft(inst)} of their turns left`
           : `quiet turn, ${turnsLeft(inst)} of their turns left`,
     },
@@ -344,10 +369,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Trapdoor / Riptide / Lava Floor (knockback from PLACES): the recoil
   // is triggered by the act of CAPTURING, anywhere — the capture stands, but
   // the piece never keeps the square it won.
-  H3(
+  hex(
     {
       id: "hw2_curse_of_recoil",
       name: "Curse of Recoil",
+      tier: 4,
       description:
         "Their weapons kick like cannons: for your opponent's next 3 turns, any piece of theirs that captures is flung straight back to the square it attacked from (the victim is still taken, but the ground is not). Captures that promote are too heavy to throw back.",
       flavor: "The blow lands. The armsman does not.",
@@ -385,29 +411,49 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_no_reins",
       name: "No Reins",
       description:
-        "Their long pieces bolt: for your opponent's next 4 turns, every bishop, rook or queen slide must run as far as the line allows: to the board's edge, into a capture, or right up against one of their own pieces. No stopping halfway. Knights, pawns and the king keep their footing.",
+        "Their long pieces bolt, a beat late: their next move keeps its footing, then for their following 4 turns, every bishop, rook or queen slide must run as far as the line allows: to the board's edge, into a capture, or right up against one of their own pieces. No stopping halfway. Knights, pawns and the king keep their footing.",
       flavor: "The horses took the bits in their teeth.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
-    curse(4, (moves, api) =>
-      moves.filter((m) => {
-        if ((m.piece !== "b" && m.piece !== "r" && m.piece !== "q") || m.castle) return true;
-        const adf = Math.abs(FILE(m.to) - FILE(m.from));
-        const adr = Math.abs(RANK(m.to) - RANK(m.from));
-        // Non-slide shapes (buff-granted leaps) are not runaway lines.
-        if (adf !== 0 && adr !== 0 && adf !== adr) return true;
-        if (m.captured) return true; // a capture IS the end of the line
-        const df = Math.sign(FILE(m.to) - FILE(m.from));
-        const dr = Math.sign(RANK(m.to) - RANK(m.from));
-        const f = FILE(m.to) + df;
-        const r = RANK(m.to) + dr;
-        if (!inBoard(f, r)) return true; // ran out of board
-        const next = api.board.pieces[SQ(f, r)];
-        // Stopped against their own piece: the line truly ends here. Stopping
-        // one short of an enemy piece is refusing the capture — forbidden.
-        return !!next && next.color === api.opp;
-      }),
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => {
+          if ((m.piece !== "b" && m.piece !== "r" && m.piece !== "q") || m.castle) return true;
+          const adf = Math.abs(FILE(m.to) - FILE(m.from));
+          const adr = Math.abs(RANK(m.to) - RANK(m.from));
+          // Non-slide shapes (buff-granted leaps) are not runaway lines.
+          if (adf !== 0 && adr !== 0 && adf !== adr) return true;
+          if (m.captured) return true; // a capture IS the end of the line
+          const df = Math.sign(FILE(m.to) - FILE(m.from));
+          const dr = Math.sign(RANK(m.to) - RANK(m.from));
+          const f = FILE(m.to) + df;
+          const r = RANK(m.to) + dr;
+          if (!inBoard(f, r)) return true; // ran out of board
+          const next = api.board.pieces[SQ(f, r)];
+          // Stopped against their own piece: the line truly ends here. Stopping
+          // one short of an enemy piece is refusing the capture, forbidden.
+          return !!next && next.color === api.opp;
+        });
+        // Safety net: never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move keeps its footing; the reins
+          // snap tight after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- a capture budget, spent however they like -----------------------------
@@ -419,7 +465,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_war_rations",
       name: "War Rations",
       description:
-        "Their war chest is sealed to two requisitions: across your opponent's next 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends. They pick which battles are worth the ration.",
+        "Their war chest is sealed a beat late: their next move is free, then across your opponent's following 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends. They pick which battles are worth the ration.",
       flavor: "The quartermaster stamps two chits. The rest is on credit.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -428,14 +474,21 @@ export const HEX_WAVE2: Buff[] = [
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.caps = 2;
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst) => {
-        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         if (((inst.state.caps as number) ?? 0) > 0) return moves;
         const kept = moves.filter((m) => !m.captured);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched, its captures
+          // uncounted; the ration seal binds after it.
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
           inst.state.caps = Math.max(0, ((inst.state.caps as number) ?? 0) - 1);
         }
@@ -460,14 +513,14 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_witching_hour",
       name: "The Witching Hour",
       description:
-        "Midnight creeps up on their army: for your opponent's next 4 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 4 turns, all touched pieces freeze for 2 of their turns. Moving few pieces, or only ones they can spare, keeps the damage down.",
+        "Midnight creeps up on their army: for your opponent's next 3 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 3 turns, all touched pieces freeze for 2 of their turns. Moving few pieces, or only ones they can spare, keeps the damage down.",
       flavor: "Whatever stirred after dark, the hour keeps.",
       fx: { motif: "slow", pieces: "all" },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 4;
+        inst.state.turns = 3;
         inst.state.touched = [] as Square[];
       },
       onMovePlayed: (inst, move, api) => {
@@ -501,10 +554,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Ball and Chain / Groundhog Day (which FORCE or FORBID repetition) and
   // not Rust (which punishes idleness): the third move of any single piece
   // inside the window drops it — riding one strong piece is what breaks.
-  H4(
+  hex(
     {
       id: "hw2_weight_of_toil",
       name: "Weight of Toil",
+      tier: 5,
       description:
         "The curse counts every errand: for your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns (shuffling one square at a time). Spreading the work across the army avoids it entirely. Kings never collapse.",
       flavor: "The willing horse is the one that founders.",
@@ -551,7 +605,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_compounding_misery",
       name: "Compounding Misery",
       description:
-        "Misery multiplies: freeze one enemy piece you target for 1 of their turns, plus 1 more turn for every other curse-effect already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 4 turns total. Cast onto a clean board it is a small chill; stacked on other hexes it bites deep. Kings cannot be targeted.",
+        "Misery multiplies: freeze one enemy piece you target for 1 of their turns, plus 1 more turn for every other curse-effect already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 3 turns total. Cast onto a clean board it is a small chill; stacked on other hexes it bites deep. Kings cannot be targeted.",
       flavor: "One leech is a nuisance. The third one finds the vein.",
     },
     {
@@ -580,7 +634,7 @@ export const HEX_WAVE2: Buff[] = [
           )
             count++;
         }
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: Math.min(4, 1 + count) });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: Math.min(3, 1 + count) });
       },
     },
   ),
@@ -594,7 +648,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_twinned_torment",
       name: "Twinned Torment",
       description:
-        "Stitch two enemy pieces into one fate: for your opponent's next 6 turns, whenever one of the bound pair moves, the other seizes up and is frozen for 1 turn. They can still use one of the two freely, but only by leaving its twin nailed down. A captured twin slips the bond and frees the other. Kings cannot be bound.",
+        "Stitch two enemy pieces into one fate: their next move slips the fresh bond, then for their following 6 turns, whenever one of the bound pair moves, the other seizes up and is frozen for 1 turn. They can still use one of the two freely, but only by leaving its twin nailed down. A captured twin slips the bond and frees the other. Kings cannot be bound.",
       flavor: "Two dolls, one thread. Pull either arm.",
     },
     {
@@ -618,6 +672,7 @@ export const HEX_WAVE2: Buff[] = [
         inst.state.a = a;
         inst.state.b = b;
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
         let a = (inst.state.a as Square | null | undefined) ?? null;
@@ -632,6 +687,12 @@ export const HEX_WAVE2: Buff[] = [
         if (a == null && b == null) {
           // Both twins are gone; the thread is cut.
           inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move slips the fresh bond; it
+          // tightens after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
           return;
         }
         if (move.color === api.opp && turnsLeft(inst) > 0 && (movedA || movedB)) {
@@ -670,7 +731,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_cursed_coin",
       name: "Cursed Coin",
       description:
-        "Press a cursed coin into one enemy piece's hand: for your opponent's next 8 turns the holder cannot capture and can move at most 2 squares. The coin is eager to be passed: whenever the holder ends a move beside another of their pieces, or one of their pieces ends a move beside the holder, the coin jumps to that piece. Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin. Kings never take the coin.",
+        "Press a cursed coin into one enemy piece's hand: the holder's first move slips free, then for the rest of your opponent's next 8 turns the holder cannot capture and can move at most 2 squares. The coin is eager to be passed: whenever the holder ends a move beside another of their pieces, or one of their pieces ends a move beside the holder, the coin jumps to that piece. Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin. Kings never take the coin.",
       flavor: "Everyone swears they will not hold it long.",
     },
     {
@@ -692,10 +753,13 @@ export const HEX_WAVE2: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 8;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // One legal escape move: the holder's first move slips the coin's grip.
+        if (!inst.state.escaped) return moves;
         const kept = moves.filter(
           (m) => m.from !== sq || (!m.captured && cheb(m.from, m.to) <= 2),
         );
@@ -705,6 +769,10 @@ export const HEX_WAVE2: Buff[] = [
         let sq = (inst.state.sq as Square | null | undefined) ?? null;
         if (sq == null) return;
         const heldMoved = move.from === sq && move.to !== sq;
+        if (heldMoved && move.color === api.opp && !inst.state.escaped) {
+          // The one escape is spent the first time the holder moves.
+          inst.state.escaped = true;
+        }
         sq = followSq(sq, move);
         if (sq == null) {
           // The holder was captured: the coin is destroyed with it.
@@ -749,7 +817,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_creeping_blight",
       name: "Creeping Blight",
       description:
-        "Blight one square in your opponent's half of the board: no enemy piece may move onto blighted ground (pieces already standing there may still leave). On each of their next turns the blight creeps to one more adjacent square in their half, for 5 of their turns, then the whole patch withers away. Play around the spread, or stay out of its half entirely.",
+        "Blight one square in your opponent's half of the board: their next move may still cross it, one last time, then the ground closes and no enemy piece may move onto blighted ground (pieces already standing there may still leave). On each of their following turns the blight creeps to one more adjacent square in their half, for 5 of their turns, then the whole patch withers away. Play around the spread, or stay out of its half entirely.",
       flavor: "First one flagstone went grey. By Friday, the courtyard.",
       fx: { motif: "blindfold" },
     },
@@ -764,34 +832,46 @@ export const HEX_WAVE2: Buff[] = [
               label: "Choose the square where the blight takes root",
               squares: emptySquares(api.board, (sq) => relRank(api.opp, sq) <= 4),
             },
-      effect: (inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         if (inst.state.squares != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.squares = [sq] as Square[];
         inst.state.turns = 5;
-        addEffect(api, { kind: "barred", squares: [sq], against: api.opp, turns: 5 });
+        inst.state.rooted = false;
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return;
         if (move.color === api.opp && turnsLeft(inst) > 0) {
-          const frontier: Square[] = [];
-          for (let sq = 0; sq < 64; sq++) {
-            if (relRank(api.opp, sq) > 4 || squares.includes(sq)) continue;
-            if (squares.some((b) => cheb(b, sq) === 1)) frontier.push(sq);
-          }
-          if (frontier.length) {
-            const next = frontier[api.rng.int(frontier.length)];
-            squares.push(next);
-            // Added during their move (ticked once immediately), so the fresh
-            // patch expires together with the original blight.
+          if (!inst.state.rooted) {
+            // One legal escape move: the opponent's first move may still cross
+            // the chosen square; the ground only closes once they have moved.
+            inst.state.rooted = true;
             addEffect(api, {
               kind: "barred",
-              squares: [next],
+              squares: [squares[0]],
               against: api.opp,
               turns: turnsLeft(inst),
             });
+          } else {
+            const frontier: Square[] = [];
+            for (let sq = 0; sq < 64; sq++) {
+              if (relRank(api.opp, sq) > 4 || squares.includes(sq)) continue;
+              if (squares.some((b) => cheb(b, sq) === 1)) frontier.push(sq);
+            }
+            if (frontier.length) {
+              const next = frontier[api.rng.int(frontier.length)];
+              squares.push(next);
+              // Added during their move (ticked once immediately), so the fresh
+              // patch expires together with the original blight.
+              addEffect(api, {
+                kind: "barred",
+                squares: [next],
+                against: api.opp,
+                turns: turnsLeft(inst),
+              });
+            }
           }
         }
         tickTurns(inst, move, api.opp);
@@ -814,14 +894,14 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_queens_ransom",
       name: "Queen's Ransom",
       description:
-        "A ransom is set on her majesty's steps: for your opponent's next 5 turns, each time they move their queen, two other pieces of theirs (chosen by the curse) are seized as surety and frozen for 1 turn. The queen herself is never restrained: benching her costs nothing, using her taxes the court.",
+        "A ransom is set on her majesty's steps: for your opponent's next 4 turns, each time they move their queen, two other pieces of theirs (chosen by the curse) are seized as surety and frozen for 1 turn. The queen herself is never restrained: benching her costs nothing, using her taxes the court.",
       flavor: "Her majesty may walk wherever she pleases. The escort is billed.",
       fx: { motif: "slow", pieces: ["q"] },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 5;
+        inst.state.turns = 4;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.piece === "q") {
@@ -845,10 +925,11 @@ export const HEX_WAVE2: Buff[] = [
   // Not Statue Garden / Hex of Stone (fixed-length minor petrifies): the
   // court can be FREED early, but only by marching the king to the center of
   // the board — a real, risky cleansing action the opponent must weigh.
-  H5(
+  hex(
     {
       id: "hw2_bound_court",
       name: "Chains of the Court",
+      tier: 6,
       description:
         "Your opponent's knights and bishops are chained into stone for 4 of their turns (walnuts that shuffle one square at a time). The chains have a lock: if their KING steps onto one of the four center squares (d4, e4, d5, e5) while the curse holds, every petrified courtier is freed at once. Wait it out in safety, or walk the king into the open to break it early.",
       flavor: "The key was hung in the middle of the battlefield. Of course it was.",
@@ -904,7 +985,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gathering_storm",
       name: "Gathering Storm",
       description:
-        "A storm gathers over their army and worsens every two turns, for your opponent's next 6 turns. Turns 1 and 2: their pawns cannot advance (captures still allowed). Turns 3 and 4: their knights and bishops also cannot cross into your half. Turns 5 and 6: their bishops, rooks and queen are also capped at 2 squares per move. Then it breaks all at once. The early turns are the time to act.",
+        "A storm gathers over their army, holding off for one move: their next move is clear, then it worsens every two turns across your opponent's following 6 turns. Turns 1 and 2: their pawns cannot advance (captures still allowed). Turns 3 and 4: their knights and bishops also cannot cross into your half. Turns 5 and 6: their bishops, rooks and queen are also capped at 2 squares per move. Then it breaks all at once. The early turns are the time to act.",
       flavor: "You could see it coming for miles. That was the point.",
       fx: { motif: "anchor", pieces: "all" },
     },
@@ -912,8 +993,10 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
         const left = turnsLeft(inst);
         if (left <= 0 || moves.length === 0) return moves;
         const stage = left >= 5 ? 1 : left >= 3 ? 2 : 3;
@@ -932,7 +1015,15 @@ export const HEX_WAVE2: Buff[] = [
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move is clear; the storm breaks over
+          // them after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => {
         const left = turnsLeft(inst);
         const stage = left >= 5 ? 1 : left >= 3 ? 2 : 3;
@@ -951,7 +1042,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gravebloom",
       name: "Gravebloom",
       description:
-        "Flowers with long memories: for your opponent's next 6 turns, every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms. Each kill costs them the ground it was won on; capturing less, or only on squares they don't need, is the way through.",
+        "Flowers with long memories, slow to root: their next move passes untouched, then for their following 6 turns, every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms. Each kill costs them the ground it was won on; capturing less, or only on squares they don't need, is the way through.",
       flavor: "The garden takes root where the blood went in.",
       fx: { motif: "blindfold" },
     },
@@ -959,8 +1050,15 @@ export const HEX_WAVE2: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 6;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched; the garden
+          // takes root after it (duration preserved, shifted one move later).
+          inst.state.armed = true;
+          return;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
           const sq = capSq(move) ?? move.to;
           // Added during their own move: 4 leaves exactly 3 of their turns.
@@ -982,7 +1080,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_gilded_rot",
       name: "Gilded Rot",
       description:
-        "Whatever they touch turns to gold: for your opponent's next 5 turns, each piece they move is gilded, and gilded pieces cannot capture for the rest of the curse. Unmoved pieces keep their teeth, so they must choose between developing their game and keeping their army dangerous. When the curse ends the gold flakes off everything at once.",
+        "Whatever they touch turns to gold, a beat late: their next move passes untouched, then for their following 5 turns, each piece they move is gilded, and gilded pieces cannot capture for the rest of the curse. Unmoved pieces keep their teeth, so they must choose between developing their game and keeping their army dangerous. When the curse ends the gold flakes off everything at once.",
       flavor: "The blessing of Midas, distributed fairly.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -991,6 +1089,7 @@ export const HEX_WAVE2: Buff[] = [
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.marked = [] as Square[];
+        inst.state.armed = false;
       },
       filterOpponentMoves: (moves, inst) => {
         const marked = (inst.state.marked as Square[] | undefined) ?? [];
@@ -1001,6 +1100,13 @@ export const HEX_WAVE2: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         let marked = (inst.state.marked as Square[] | undefined) ?? [];
         marked = marked.map((sq) => followSq(sq, move)).filter((sq): sq is Square => sq != null);
+        if (move.color === api.opp && !inst.state.armed) {
+          // Delayed activation: their next move passes untouched, ungilded; the
+          // rot sets in after it (duration preserved, shifted one move later).
+          inst.state.marked = marked;
+          inst.state.armed = true;
+          return;
+        }
         if (
           move.color === api.opp &&
           turnsLeft(inst) > 0 &&
@@ -1031,8 +1137,8 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_death_knell",
       name: "Death Knell",
       description:
-        "Toll the knell over one enemy piece you target: in 4 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Your opponent sees the count the whole time: they can feed the bell a pawn, spend the piece in a trade, or gamble on saving it. Kings cannot be tolled.",
-      flavor: "Four strokes. Blood on its hands buys the fifth never ringing.",
+        "Toll the knell over one enemy piece you target: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Your opponent sees the count the whole time: they can feed the bell a pawn, spend the piece in a trade, or gamble on saving it. Kings cannot be tolled.",
+      flavor: "Three strokes. Blood on its hands buys the fourth never ringing.",
     },
     {
       kind: "activated",
@@ -1052,8 +1158,8 @@ export const HEX_WAVE2: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 4;
-        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 4, then: "remove" });
+        inst.state.turns = 3;
+        addEffect(api, { kind: "timed_loss", owner: api.opp, sq, turns: 3, then: "remove" });
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -1136,7 +1242,7 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_tide_of_ash",
       name: "Tide of Ash",
       description:
-        "Ash rolls in over their homeland: their 1st rank is buried at once, and the tide swallows one more of their home ranks on each of their next 3 turns, up to their 4th rank. Buried ground cannot be moved ONTO by your opponent (pieces standing in the ash may still climb out), so their army is herded forward rank by rank. The whole tide blows away after their 6th turn.",
+        "Ash rolls in over their homeland: their 1st rank is buried at once, and the tide swallows one more of their home ranks on each of their next 3 turns, up to their 4th rank. Buried ground cannot be moved ONTO by your opponent, but the ash is a drift, not a wall: any piece already standing in it may leave normally, gliding or stepping out of the ash onto clear ground. So their army is herded forward rank by rank. The whole tide blows away after their 6th turn.",
       flavor: "The mountain did not erupt at the army. It erupted at the address.",
       fx: { motif: "blindfold" },
     },
@@ -1147,17 +1253,34 @@ export const HEX_WAVE2: Buff[] = [
         inst.state.front = 1;
         const squares: Square[] = [];
         for (let sq = 0; sq < 64; sq++) if (relRank(api.opp, sq) === 1) squares.push(sq);
+        inst.state.ash = squares.slice();
         addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
       },
       onMovePlayed: (inst, move, api) => {
         const front = (inst.state.front as number) ?? 1;
         if (move.color === api.opp && turnsLeft(inst) > 0 && front < 4) {
+          const ash = ((inst.state.ash as Square[] | undefined) ?? []).slice();
+          const add: Square[] = [];
+          for (let sq = 0; sq < 64; sq++)
+            if (relRank(api.opp, sq) === front + 1 && !ash.includes(sq)) add.push(sq);
+          const nextAsh = ash.concat(add);
+          // Extend the SINGLE ash band in place instead of stacking one barred
+          // effect per rank. A band two or more ranks thick is not a board-
+          // splitting wall, only a no-landing zone, so a piece already standing
+          // in the ash may glide or leap out of it normally (moving ONTO buried
+          // ground stays forbidden). Stacked one-rank walls would instead trap
+          // pieces caught inside behind the crossing rule.
+          const eff = api.bs.effects.find(
+            (e) =>
+              e.kind === "barred" &&
+              e.against === api.opp &&
+              e.squares.length === ash.length &&
+              ash.every((s) => e.squares.includes(s)),
+          );
+          if (eff && eff.kind === "barred") eff.squares = nextAsh;
+          else addEffect(api, { kind: "barred", squares: nextAsh, against: api.opp, turns: turnsLeft(inst) });
           inst.state.front = front + 1;
-          const squares: Square[] = [];
-          for (let sq = 0; sq < 64; sq++) if (relRank(api.opp, sq) === front + 1) squares.push(sq);
-          // Added during their move (ticked once immediately), so every band
-          // of ash expires together after their 6th turn.
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: turnsLeft(inst) });
+          inst.state.ash = nextAsh;
         }
         tickTurns(inst, move, api.opp);
       },
@@ -1181,14 +1304,14 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_crown_of_thorns",
       name: "Crown of Thorns",
       description:
-        "A briar is woven around your king, in full view: for your opponent's next 6 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts, but the attacker is rooted, and the follow-up must come from somewhere else. Attacking anything BUT your king costs them nothing.",
+        "A briar is woven around your king, in full view: for your opponent's next 5 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts, but the attacker is rooted, and the follow-up must come from somewhere else. Attacking anything BUT your king costs them nothing.",
       flavor: "By all means, reach for the crown.",
       fx: { motif: "muzzle", pieces: "all" },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && isInCheck(api.board, api.me)) {
@@ -1209,7 +1332,7 @@ export const HEX_WAVE2: Buff[] = [
   // and the engine's demote timer restores her automatically): a temporary
   // rule distortion on one piece with a stated cure — capture, and the crown
   // comes back at once.
-  H8(
+  H6(
     {
       id: "hw2_pauper_crown",
       name: "Pauper's Crown",
@@ -1287,7 +1410,7 @@ export const HEX_WAVE2: Buff[] = [
   // A countdown the victim can HUNT: the strike is huge but the cure is fully
   // in their hands — kill the bearer and the whole curse dies. Turns six of
   // their turns into a chase across the board, which is the card.
-  H8(
+  H6(
     {
       id: "hw2_beacon_of_woe",
       name: "Beacon of Woe",

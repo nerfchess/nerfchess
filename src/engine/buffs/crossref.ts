@@ -74,7 +74,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "cast_a_nerf",
       name: "Cast a Nerf",
-      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns, and their next drafted card arrives nullified.",
+      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns, though the first piece caught by the curse may still make one capture. Their next drafted card arrives nullified.",
       tier: 5,
       flavor: "If you cannot beat them, nerf them.",
       fx: { motif: "muzzle", pieces: "all" },
@@ -95,11 +95,29 @@ export const CROSSREF_CARDS: Buff[] = [
       },
       filterOpponentMoves: (moves, inst) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
-        const kept = moves.filter((m) => !m.captured);
+        const escapeUsed = !!inst.state.escapeUsed;
+        // The first affected piece gets one legal escape move: until that
+        // escape is spent, the lowest-indexed enemy piece with a capture keeps
+        // its captures; every other piece still cannot capture.
+        let exempt: Square | null = null;
+        if (!escapeUsed) {
+          for (const m of moves) {
+            if (m.captured && (exempt == null || m.from < exempt)) exempt = m.from;
+          }
+        }
+        const kept = moves.filter(
+          (m) => !m.captured || (!escapeUsed && m.from === exempt),
+        );
         return kept.length > 0 ? kept : moves;
       },
-      // Ticks on the cursed side's moves so "their next 2 turns" is exact.
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      // Ticks on the cursed side's moves so "their next 2 turns" is exact; the
+      // first capture the opponent lands spends the one-time escape.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.escapeUsed && move.color === api.opp && move.captured) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -111,7 +129,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "pawn_nerf",
       name: "Pawn Nerf",
       description: "Nerf your opponent's pawns: their two-square double step is removed for the rest of the game. Every enemy pawn crawls one square at a time.",
-      tier: 3,
+      tier: 4,
       flavor: "Patch notes: pawn movement speed reduced by 50%.",
       fx: { motif: "anchor", pieces: ["p"] },
     },
@@ -136,7 +154,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "royal_handicap",
       name: "Royal Handicap",
-      description: "Nerf the crown itself: the patch removes diagonal movement from your opponent's king for their next 4 turns.",
+      description: "Nerf the crown itself: for your opponent's next 4 turns the patch removes diagonal movement from their king, save one diagonal escape step the king may still take once.",
       tier: 5,
       flavor: "Please look forward to the royal rework in a future season.",
       fx: { motif: "anchor", pieces: ["k"] },
@@ -152,16 +170,32 @@ export const CROSSREF_CARDS: Buff[] = [
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const escapeUsed = !!inst.state.escapeUsed;
         const kept = moves.filter(
           (m) =>
             m.piece !== "k" ||
             FILE(m.to) === FILE(m.from) ||
-            RANK(m.to) === RANK(m.from),
+            RANK(m.to) === RANK(m.from) ||
+            // The king gets one legal escape move: one diagonal step is allowed
+            // until it is actually taken, then the patch bites.
+            !escapeUsed,
         );
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Spend the escape when the king actually takes a diagonal step.
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          move.piece === "k" &&
+          FILE(move.to) !== FILE(move.from) &&
+          RANK(move.to) !== RANK(move.from)
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -173,7 +207,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "hard_reset",
       name: "Hard Reset",
       description: "Turn it off and on again: your opponent's most advanced pawn is sent back to its starting square, if that square is free. Ties reboot the pawn nearest the a-file.",
-      tier: 2,
+      tier: 3,
       flavor: "Have you tried turning it off and on again?",
     },
     instant((_inst, api) => {
@@ -197,12 +231,12 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "queens_handicap",
       name: "Queen's Handicap",
-      description: "Nerf your opponent's queen: for their next 4 turns her every move must end beside another of their own pieces. No escort, no move.",
+      description: "Nerf your opponent's queen: for their next 3 turns her every move must end beside another of their own pieces. No escort, no move.",
       tier: 5,
       flavor: "She now requires a party to queue.",
       fx: { motif: "anchor", pieces: ["q"] },
     },
-    curse(4, (moves, api) =>
+    curse(3, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "q") return true;
         for (const df of [-1, 0, 1]) {
@@ -261,22 +295,30 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "nerf_this",
       name: "Nerf This",
-      description: "The balance team finally answers: one enemy queen you point at is patched down to a bishop where she stands.",
+      description: "The balance team finally answers: one enemy queen you point at is patched down to a bishop where she stands. The defender keeps one queen immune, so a lone queen shrugs the patch off.",
       tier: 6,
       flavor: "Nerf THIS.",
     },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Point at the queen to nerf",
-              squares: mySquares(api.board, api.opp, "q"),
-            },
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const queens = mySquares(api.board, api.opp, "q");
+        // The defender keeps one queen immune. A defender choice flow is not
+        // practical here, so the immunity lands deterministically on the
+        // lowest-indexed enemy queen; only the rest may be pointed at.
+        const immune = queens.length > 0 ? Math.min(...queens) : null;
+        return {
+          kind: "square",
+          label: "Point at the queen to nerf",
+          squares: queens.filter((sq) => sq !== immune),
+        };
+      },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null) return;
+        const queens = mySquares(api.board, api.opp, "q");
+        const immune = queens.length > 0 ? Math.min(...queens) : null;
+        if (sq === immune) return;
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type === "q") {
           api.setPieceType(sq, "b");
@@ -292,14 +334,28 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "patch_notes",
       name: "Patch Notes",
-      description: "The balance patch lands: your opponent's next draft is skipped, and you gain one draft reroll.",
+      description: "The balance patch lands: your opponent's next draft is skipped. Once that draft has passed, you gain one draft reroll.",
       tier: 4,
       flavor: "See the changelog. You were the change.",
     },
-    instant((_inst, api) => {
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        // Skip exactly one of the opponent's drafts.
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        // Remember the block count right after adding ours; when it drops below
+        // this mark the skipped draft has resolved and the reroll is paid out.
+        inst.state.mark = api.theirs.flags.blockedDrafts;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        const now = api.theirs.flags.blockedDrafts ?? 0;
+        if (now < (inst.state.mark as number)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+    },
   ),
 
   // -------------------------------------------------------------------------
@@ -310,7 +366,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "break_the_nerf",
       name: "Break the Nerf",
-      description: "Free action: break your nerf, suspending it for your next 3 turns, and take one extra move the moment it breaks.",
+      description: "Free action: break your nerf, suspending it for your next 3 turns.",
       tier: 3,
       category: "nerf",
       flavor: "The handicap was a suggestion. You declined.",
@@ -318,7 +374,6 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       ...activatedSimple((_inst, api) => {
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
-        api.bs.extraMoves[api.me] += 1;
       }),
       freeAction: true,
     },
@@ -367,7 +422,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "counter_nerf",
       name: "Counter-Nerf",
-      description: "The next 3 times your opponent captures one of your pieces, your nerf is suspended for your next turn.",
+      description: "The next 3 times your opponent captures one of your pieces, your nerf is suspended for one of your turns, but each suspension only begins after your opponent's next move.",
       tier: 4,
       category: "nerf",
       flavor: "Every wound you deal me loosens my chains.",
@@ -376,14 +431,35 @@ export const CROSSREF_CARDS: Buff[] = [
       kind: "passive",
       init: (inst: BuffInstance) => {
         inst.state.charges = 3;
+        inst.state.armed = 0;
       },
       onMovePlayed: (inst: BuffInstance, move: Move, api: BuffApi) => {
-        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
-        const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0) return;
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
+        if (move.color !== api.opp) return;
+        // The opponent has replied: any suspension queued on their PREVIOUS
+        // move now begins, covering the owner's upcoming turn.
+        const armed = (inst.state.armed as number) ?? 0;
+        if (armed > 0) {
+          for (let i = 0; i < armed; i++) {
+            addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+          }
+          inst.state.armed = 0;
+        }
+        // If this move captured one of my pieces, queue a suspension that only
+        // begins after the opponent's next reply (the one-turn delay).
+        if (move.captured && move.captured !== "k") {
+          const left = (inst.state.charges as number) ?? 0;
+          if (left > 0) {
+            inst.state.armed = ((inst.state.armed as number) ?? 0) + 1;
+            inst.state.charges = left - 1;
+          }
+        }
+        // Done only once every counter is spent and nothing remains armed.
+        if (
+          ((inst.state.charges as number) ?? 0) <= 0 &&
+          ((inst.state.armed as number) ?? 0) <= 0
+        ) {
+          inst.spent = true;
+        }
       },
       status: (inst: BuffInstance) => `${(inst.state.charges as number) ?? 3} counters left`,
     },
@@ -395,7 +471,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "holy_hell",
       name: "Holy Hell",
-      description: "Your pawns can never be captured en passant, for the rest of the game.",
+      description: "Your pawns can never be captured en passant for the rest of the game, except your leftmost pawn, which stays exposed to it.",
       tier: 1,
       category: "protection",
       boon: true,
@@ -403,7 +479,21 @@ export const CROSSREF_CARDS: Buff[] = [
       // Guards the pawns without a shield effect; ward is its only paint.
       fx: { motif: "ward", pieces: ["p"], self: true },
     },
-    oppFilter((moves) => moves.filter((m) => !m.isEnPassant)),
+    oppFilter((moves, _inst, api) => {
+      // Reduce the protected-pawn total by one: the leftmost of the owner's
+      // pawns is left exposed, so en passant against it still lands while every
+      // other pawn stays immune for the rest of the game.
+      const pawns = mySquares(api.board, api.me, "p");
+      let exposed: Square | null = null;
+      for (const sq of pawns) {
+        if (exposed == null || FILE(sq) < FILE(exposed)) exposed = sq;
+      }
+      return moves.filter((m) => {
+        if (!m.isEnPassant) return true;
+        const capSq = m.capturedSquare ?? m.to;
+        return capSq === exposed;
+      });
+    }),
   ),
 
   // -------------------------------------------------------------------------
@@ -418,13 +508,15 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "sahur",
       name: "Bobrito Bandito",
-      description: "Bonk one enemy piece with the log: it is stunned and cannot move for its next 2 turns. Kings are too stubborn to bonk.",
+      description: "Bonk one enemy piece with the log: the swing lands after your opponent's next move, stunning that piece so it cannot move for its next 2 turns. Kings are too stubborn to bonk.",
       tier: 5,
       flavor: "The beaver bandit collects his toll, one bonk at a time.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -433,18 +525,38 @@ export const CROSSREF_CARDS: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        const p = api.board.pieces[sq];
+        // Mark the target and arm the log: the bonk is delayed until after the
+        // opponent's next move, not applied immediately.
+        inst.state.sq = sq;
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        // The log swings after the opponent's next move. Follow the target if
+        // that very move was the piece stepping away.
+        let target = inst.state.sq as Square;
+        if (move.from === target) target = move.to;
+        inst.state.armed = false;
+        inst.spent = true;
+        const p = api.board.pieces[target];
         if (!p || p.color !== api.opp || p.type === "k") return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
+        addEffect(api, { kind: "freeze", sq: target, owner: api.opp, turns: 2, skin: "stun" });
         // Impact flash: the log's bonk, NOT Lightning Strike. A `bonk` effect
         // on the same square the freeze lands on, so the injured overlay can
         // pair the two (freeze + recent bonk = a stunned, dazed piece).
-        addEffect(api, { kind: "bonk", squares: [sq], owner: api.me, turns: 1 });
+        addEffect(api, { kind: "bonk", squares: [target], owner: api.me, turns: 1 });
       },
-    ),
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to bonk a piece"
+          : inst.state.armed
+            ? "the log swings after their next move"
+            : "bonked",
+    },
   ),
 
   // Fruit: a dropped coconut. A lighter bonk: one enemy piece is stunned for
@@ -492,7 +604,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "durian",
       name: "Durian",
-      description: "Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The stench clears after that.",
+      description: "Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The first piece caught by the stench still gets one step into the ring; after that the ring is sealed until the stench clears.",
       tier: 3,
       flavor: "Banned on public transit for a reason.",
       fx: { motif: "blindfold" },
@@ -521,10 +633,36 @@ export const CROSSREF_CARDS: Buff[] = [
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
-        const kept = moves.filter((m) => dist(sq, m.to) !== 1);
+        const escapeUsed = !!inst.state.escapeUsed;
+        // The first affected piece gets one legal escape move: until that
+        // escape is spent, the lowest-indexed enemy piece with a blocked step
+        // keeps its ring moves; every other piece is still held out.
+        let exempt: Square | null = null;
+        if (!escapeUsed) {
+          for (const m of moves) {
+            if (dist(sq, m.to) === 1 && (exempt == null || m.from < exempt)) {
+              exempt = m.from;
+            }
+          }
+        }
+        const kept = moves.filter(
+          (m) => dist(sq, m.to) !== 1 || (!escapeUsed && m.from === exempt),
+        );
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Spend the escape the moment the exempt piece steps into the stench.
+        const sq = inst.state.sq as Square | undefined;
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          sq != null &&
+          dist(sq, move.to) === 1
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) =>
         inst.state.sq == null
           ? "activate to lob the durian"
@@ -542,7 +680,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "watermelon_rind",
       name: "Watermelon Rind",
       description: "Duck behind the rind: every one of your pieces standing on your back two ranks cannot be captured for your opponent's next 2 turns. Pieces further forward are outside the shell.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       boon: true,
       flavor: "Nature's armor, mostly water, all of it at the back.",

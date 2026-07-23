@@ -47,7 +47,7 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Dices",
       name: "Roulette",
       description: "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       flavor: "Round and round she goes. Thrice.",
     },
@@ -77,7 +77,7 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "DoorOpen",
       name: "Trapdoor",
       description: "Rig a spring on an empty square. For your next 4 turns, an enemy piece except a king that steps onto it is flung one square back toward its home rank and cannot move for 1 of their turns. A slapstick trap, not a delete.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       flavor: "Mind the gap.",
     },
@@ -136,7 +136,7 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Bomb",
       name: "Minefield",
       description: "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       flavor: "Click... uh oh.",
     },
@@ -181,14 +181,14 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Fish",
       name: "Kraken",
       description:
-        "A kraken surfaces on an empty square. For your opponent's next 3 turns, at the end of each of their turns it drags the nearest enemy piece one square toward it whenever the square between is empty, then seizes any enemy piece left next to it so that piece cannot move on its next turn. Kings are never dragged or seized, and the kraken's square cannot be entered.",
+        "A kraken surfaces on an empty square. For your opponent's next 2 turns, at the end of each of their turns it drags the nearest enemy piece one square toward it whenever the square between is empty, then seizes any enemy piece left next to it so that piece cannot move on its next turn. Kings are never dragged or seized, and the kraken's square cannot be entered.",
       tier: 6,
       category: "hex",
       flavor: "Release the tentacles.",
       fx: { motif: "anchor" },
     },
     // A living hazard, not static zoning: it borrows Magnet's one-step pull and
-    // the freeze grip, run on each of the opponent's next 3 turns.
+    // the freeze grip, run on each of the opponent's next 2 turns.
     activated(
       (inst, api, picks) =>
         picks.length > 0 || inst.state.kraken != null
@@ -203,10 +203,10 @@ export const FUNNY_CHAOS: Buff[] = [
         const c = picks[0]?.square;
         if (c == null) return;
         inst.state.kraken = c;
-        inst.state.turns = 3;
+        inst.state.turns = 2;
         // Bar only the kraken's own square: it is visible to both sides and
         // cannot be entered. A single square is never a board-splitting wall.
-        addEffect(api, { kind: "barred", squares: [c], against: api.opp, turns: 3 });
+        addEffect(api, { kind: "barred", squares: [c], against: api.opp, turns: 2 });
       },
       {
         spendOnUse: false,
@@ -265,7 +265,7 @@ export const FUNNY_CHAOS: Buff[] = [
       id: "lava_floor",
       icon: "Flame",
       name: "Lava Floor",
-      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 4 turns, and the eruption throws every enemy piece already on that rank one square back toward its home rank.",
+      description: "A whole rank erupts into lava: pick any square and its entire rank is barred to your opponent for their next 4 turns, except one bridge square left open on the file of their king, and the eruption throws every enemy piece on the barred squares one square back toward its home rank.",
       tier: 5,
       category: "hex",
       flavor: "The floor is, in fact, lava.",
@@ -288,8 +288,14 @@ export const FUNNY_CHAOS: Buff[] = [
         const pick = picks[0]?.square;
         if (pick == null) return;
         const rank = RANK(pick);
+        // The defender keeps one bridge square open across the lava: the square
+        // on the erupting rank on the file their king stands on. Chosen
+        // deterministically (the caster's activation cannot prompt the
+        // defender to pick); that square is never barred and never erupts.
+        const oppKing = mySquares(api.board, api.opp, "k")[0];
+        const bridgeFile = oppKing != null ? FILE(oppKing) : 3;
         const squares: Square[] = [];
-        for (let i = 0; i < 8; i++) squares.push(SQ(i, rank));
+        for (let i = 0; i < 8; i++) if (i !== bridgeFile) squares.push(SQ(i, rank));
         addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
         const back = api.opp === "w" ? -8 : 8;
         const hit: Square[] = [];

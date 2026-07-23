@@ -8,7 +8,6 @@
 import { Buff, Square } from "./shared";
 import {
   card,
-  curse,
   inHalf,
   mySquares,
   addEffect,
@@ -16,7 +15,48 @@ import {
   tickTurns,
   FILE,
   RANK,
+  type Move,
+  type BuffApi,
+  type Mech,
 } from "./shared";
+
+// Balance pass: a DELAYED curse. Identical to `curse` (a partial, never-
+// stranding timed opponent-move filter that runs for `turns` of the opponent's
+// turns) except that the opponent's very next move after the draft passes
+// unhindered: the filter arms only once that free move has been played, then
+// bites for the full duration. Preserves the duration while pushing activation
+// one opponent move later.
+function delayedCurse(
+  turns: number,
+  filter: (moves: Move[], api: BuffApi) => Move[],
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.armed = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      const kept = filter(moves, api);
+      // Safety net: a curse can never strand the opponent with zero moves.
+      return kept.length > 0 ? kept : moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color !== api.opp) return;
+      if (!inst.state.armed) {
+        // The opponent's next move slips free; the curse arms behind it.
+        inst.state.armed = true;
+        return;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      inst.state.armed
+        ? `${turnsLeft(inst)} of their turns left`
+        : "the curse takes hold after their next move",
+  };
+}
 
 export const FANTASY_CURSES: Buff[] = [
   card(
@@ -81,13 +121,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Lock",
       name: "Shackle the Queen",
       description:
-        "Bind the enemy queen in cursed iron: your opponent cannot move their queen for their next 4 turns.",
+        "Bind the enemy queen in cursed iron: your opponent's next move slips free, then for the 4 of their turns after it they cannot move their queen.",
       tier: 4,
       category: "hex",
       flavor: "Even a crown answers to a good enough chain.",
       fx: { motif: "jail", pieces: ["q"] },
     },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "q")),
+    // Balance pass: preserve the 4-turn bind, but delay activation until after
+    // the opponent's next move.
+    delayedCurse(4, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
   card(
     {
@@ -95,13 +137,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "HeartPulse",
       name: "Curse of Frailty",
       description:
-        "A wasting curse saps the enemy's strength: for their next 3 turns your opponent cannot capture, and no piece of theirs may slide more than two squares.",
+        "A wasting curse saps the enemy's strength: their next move slips free, then for the 3 of their turns after it your opponent cannot capture, and no piece of theirs may slide more than two squares.",
       tier: 5,
       category: "hex",
       flavor: "Every sword arm goes soft as wax.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves) =>
+    // Balance pass: preserve the 3-turn wasting, but delay activation until
+    // after the opponent's next move.
+    delayedCurse(3, (moves) =>
       moves.filter((m) => {
         if (m.captured) return false;
         const dist = Math.max(
@@ -118,13 +162,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Footprints",
       name: "Doom March",
       description:
-        "The march ends where it stands: enemy pieces that have crossed into your half of the board are gripped by dread and cannot move, for your opponent's next 4 turns.",
+        "The march ends where it stands: after your opponent's next move, enemy pieces that have crossed into your half of the board are gripped by dread and cannot move, for the 4 of their turns after it.",
       tier: 5,
       category: "hex",
       flavor: "Every step forward was one step too many.",
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(4, (moves, api) => moves.filter((m) => !inHalf(api.me, m.from))),
+    // Balance pass: preserve the 4-turn grip, but delay activation until after
+    // the opponent's next move.
+    delayedCurse(4, (moves, api) => moves.filter((m) => !inHalf(api.me, m.from))),
   ),
   card(
     {
@@ -132,13 +178,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Anchor",
       name: "Chains of Binding",
       description:
-        "A spectral chain shackles the enemy's rooks to each other: while both live, neither rook may end a move more than 3 squares from the other, for your opponent's next 5 turns. A lone rook drags its broken chain and moves freely.",
+        "A spectral chain shackles the enemy's rooks to each other: the chain settles after your opponent's next move, then while both live neither rook may end a move more than 3 squares from the other, for the 5 of their turns after it. A lone rook drags its broken chain and moves freely.",
       tier: 5,
       category: "hex",
       flavor: "The clank of iron, wherever the other tower goes.",
       fx: { motif: "anchor", pieces: ["r"] },
     },
-    curse(5, (moves, api) =>
+    // Balance pass: preserve the 5-turn shackle, but delay activation until
+    // after the opponent's next move.
+    delayedCurse(5, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "r") return true;
         const other = mySquares(api.board, api.opp, "r").find((sq) => sq !== m.from);
@@ -155,7 +203,7 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Mountain",
       name: "Hex of Stone",
       description:
-        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, and for those 4 turns their rooks and queen may slide no more than two squares.",
+        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move before it too turns to a walnut; and for those 4 turns their rooks and queen may slide no more than two squares.",
       tier: 7,
       category: "hex",
       flavor: "The cavalry and the clergy, all one quarry now.",
@@ -164,13 +212,22 @@ export const FANTASY_CURSES: Buff[] = [
     {
       kind: "passive",
       // Petrify the minors for 4 turns, once, and open a 4-turn clamp window.
+      // Balance pass: the first affected minor (deterministically the lowest
+      // square) is spared the instant petrify and gets one legal escape move; it
+      // turns to a walnut only after it has moved once (glossary: the first
+      // affected piece gets one legal escape move).
       init: (inst, api) => {
         inst.state.turns = 4;
-        for (const sq of mySquares(api.board, api.opp)) {
-          const t = api.board.pieces[sq]!.type;
-          if (t === "n" || t === "b") {
-            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
-          }
+        const minors = mySquares(api.board, api.opp)
+          .filter((sq) => {
+            const t = api.board.pieces[sq]!.type;
+            return t === "n" || t === "b";
+          })
+          .sort((a, b) => a - b);
+        inst.state.escapee = minors.length > 0 ? minors[0] : null;
+        for (const sq of minors) {
+          if (sq === inst.state.escapee) continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
         }
       },
       // While the window runs, heavy pieces move like leaden things: a rook or
@@ -187,7 +244,21 @@ export const FANTASY_CURSES: Buff[] = [
         });
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        const escapee = inst.state.escapee as Square | null | undefined;
+        if (escapee != null) {
+          if (move.to === escapee && move.from !== escapee) {
+            // Felled before it could flee: the hex simply loses its escapee.
+            inst.state.escapee = null;
+          } else if (move.from === escapee && move.color === api.opp) {
+            // It spent its one escape move; now it hardens at its new square for
+            // the same 4 of their turns the rest suffered.
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 4 });
+            inst.state.escapee = null;
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),

@@ -12,6 +12,7 @@ import {
   activated,
   activatedSimple,
   addEffect,
+  addNovel,
   advancePawn,
   advanceablePawns,
   attackersOf,
@@ -28,6 +29,7 @@ import {
   pinCosmetic,
   relRank,
   slideMoves,
+  spendOnVia,
   teleportMoves,
   tickTurns,
   timedOppFilter,
@@ -42,7 +44,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_pigeon_post",
       name: "Pigeon Post",
       description:
-        "For your next 3 turns, every enemy piece attacking your queen is marked by a landing pigeon.",
+        "For your next 3 turns, every enemy piece attacking your queen is marked by a landing pigeon and loses any temporary shield covering it.",
       tier: 1,
       category: "info",
       icon: "Bird",
@@ -57,7 +59,18 @@ export const OVERHAUL_T1: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp) {
           const q = mySquares(api.board, api.me, "q")[0];
-          if (q != null) flashSquares(api, attackersOf(api.board, api.opp, q), true);
+          if (q != null) {
+            const marked = attackersOf(api.board, api.opp, q);
+            flashSquares(api, marked, true);
+            // Strip any temporary (non-permanent) enemy shield from the marked
+            // attackers. Whole-army shields (squares === null) cannot exempt a
+            // single piece, so they are left untouched.
+            for (const e of api.bs.effects) {
+              if (e.kind === "shield" && e.owner === api.opp && e.turns != null && e.squares != null) {
+                e.squares = e.squares.filter((s) => !marked.includes(s));
+              }
+            }
+          }
         }
         tickTurns(inst, move, api.me);
       },
@@ -69,7 +82,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_pebble_toss",
       name: "Pebble Toss",
-      description: "Choose an unmoved enemy pawn; it loses its two-square first move.",
+      description:
+        "Choose an unmoved enemy pawn; it loses its two-square first move on your opponent's next turn. The pebble is spent after that turn even if the pawn stays put.",
       tier: 1,
       category: "attack",
       icon: "Mountain",
@@ -103,9 +117,10 @@ export const OVERHAUL_T1: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
-        // Once the pawn moves (single-step now) or dies, the pebble's work is done.
-        if (move.from === sq || move.to === sq || move.capturedSquare === sq) inst.spent = true;
-        void api;
+        // The pebble denies the double-step for the opponent's very next move
+        // only: any opponent move spends the charge, whether or not they moved
+        // (or ignored) the bonked pawn. A failed or illegal attempt still counts.
+        if (move.color === api.opp) inst.spent = true;
       },
       status: (inst) => (inst.state.sq != null ? "pebble delivered" : "pick a pawn"),
     },
@@ -116,7 +131,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_sock_slide",
       name: "Sock Slide",
       description: "One of your pawns may slide one square sideways, once. The destination must be empty.",
-      tier: 1,
+      tier: 2,
       category: "movement",
       icon: "Footprints",
       flavor: "Hardwood floors were the real opening innovation.",
@@ -140,7 +155,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_warmup_stretch",
       name: "Warm-Up Stretch",
-      description: "One knight's next move may be a long camel leap (3,1) instead.",
+      description:
+        "One knight's next move may be a long camel leap (3,1) instead. When it makes the leap, gain one draft reroll.",
       tier: 1,
       category: "movement",
       icon: "Dumbbell",
@@ -148,16 +164,24 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const CAMEL = [
-        [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
-      ] as const;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "n")) {
-        out.push(...leapMoves(api.board, sq, CAMEL, inst.id));
-      }
-      return out;
-    }),
+    {
+      ...augment((_moves, inst, api) => {
+        const CAMEL = [
+          [1, 3], [3, 1], [-1, 3], [-3, 1], [1, -3], [3, -1], [-1, -3], [-3, -1],
+        ] as const;
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "n")) {
+          out.push(...leapMoves(api.board, sq, CAMEL, inst.id));
+        }
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 5. Free Sample ---------------------------------------------------------------
   card(
@@ -165,7 +189,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_free_sample",
       name: "Free Sample",
       description: "The next shared draft round arrives one full turn sooner for both players.",
-      tier: 1,
+      tier: 2,
       category: "draft",
       icon: "Gift",
       flavor: "The first taste is always free.",
@@ -182,7 +206,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_lucky_penny",
       name: "Lucky Penny",
       description:
-        "Pick a pawn and flip the coin. Heads, half the time: it advances one square now. Tails: it stays put.",
+        "Pick a pawn and flip the coin: 50% heads, the pawn advances one square now (the jackpot); tails, it stays put and the failed flip is banked as two draft rerolls.",
       tier: 1,
       category: "movement",
       icon: "Coins",
@@ -203,8 +227,14 @@ export const OVERHAUL_T1: Buff[] = [
         if (sq == null) return;
         const heads = api.rng.next() < 0.5;
         inst.state.result = heads ? "heads" : "tails";
-        if (heads) advancePawn(api, sq);
-        else flashSquares(api, [sq], true);
+        if (heads) {
+          advancePawn(api, sq);
+        } else {
+          flashSquares(api, [sq], true);
+          // Bank the failed flip: two draft rerolls as consolation (works in
+          // both timed and untimed play, unlike a clock payout).
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+        }
       },
       { freeAction: true },
     ),
@@ -240,7 +270,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_polite_cough",
       name: "Polite Cough",
-      description: "Ahem. Steal 5 seconds from your opponent's clock.",
+      description:
+        "Ahem. Steal 10 seconds from your opponent's clock, flag the enemy piece that moved last until your opponent replies, and gain one draft reroll. In untimed games only the flag and the reroll apply.",
       tier: 1,
       category: "tempo",
       icon: "MessageCircle",
@@ -248,7 +279,13 @@ export const OVERHAUL_T1: Buff[] = [
     },
     {
       ...instant((_inst, api) => {
-        api.adjustClock({ stealFlatSec: 5, stealCapSec: 5 });
+        api.adjustClock({ stealFlatSec: 10, stealCapSec: 10 });
+        // The clock steal is a no-op in an untimed game, so always land two
+        // effects that need no clock: mark the last enemy mover (clears once
+        // they reply) and hand back a draft reroll.
+        const last = lastMoveBy(api.board, api.opp);
+        if (last) flashSquares(api, [last.to], true);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       }),
     },
   ),
@@ -258,7 +295,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_pet_rock",
       name: "Pet Rock",
       description: "One of your pawns cannot be captured during your opponent's next turn. The rock is watching.",
-      tier: 1,
+      tier: 2,
       category: "protection",
       icon: "Gem",
       flavor: "Loyal. Vigilant. Geological.",
@@ -285,7 +322,7 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_backwards_hat",
       name: "Backwards Hat",
-      description: "One pawn may capture straight ahead on its next move.",
+      description: "One pawn may capture straight ahead on its next move, and you gain 5 seconds when it does.",
       tier: 1,
       category: "movement",
       icon: "GraduationCap",
@@ -293,16 +330,24 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
-          if (m.captured) out.push(m);
+    {
+      ...augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+            if (m.captured) out.push(m);
+          }
         }
-      }
-      return out;
-    }),
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          api.adjustClock({ addSelfSec: 5 });
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 11. Squeaky Shoes ----------------------------------------------------------------------------------
   card(
@@ -310,7 +355,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_squeaky_shoes",
       name: "Squeaky Shoes",
       description:
-        "For 5 of your turns, any enemy piece that ends a move next to your king squeaks and is marked.",
+        "For 5 of your turns, any enemy piece that ends a move next to your king squeaks and is marked. The first time one squeaks, gain one draft reroll.",
       tier: 1,
       category: "info",
       icon: "Footprints",
@@ -327,7 +372,14 @@ export const OVERHAUL_T1: Buff[] = [
           if (k != null) {
             const df = Math.abs(FILE(move.to) - FILE(k));
             const dr = Math.abs(RANK(move.to) - RANK(k));
-            if (df <= 1 && dr <= 1) flashSquares(api, [move.to], true);
+            if (df <= 1 && dr <= 1) {
+              flashSquares(api, [move.to], true);
+              // Reroll paid once, the first time the shoes squeak.
+              if (!inst.state.rewarded) {
+                api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+                inst.state.rewarded = true;
+              }
+            }
           }
         }
         tickTurns(inst, move, api.me);
@@ -341,7 +393,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_second_opinion",
       name: "Second Opinion",
       description: "A consulting monocle highlights every currently undefended enemy piece, once.",
-      tier: 1,
+      tier: 2,
       category: "info",
       icon: "Search",
       flavor: "Yes, yes. That one is definitely hanging.",
@@ -358,7 +410,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_window_shopping",
       name: "Window Shopping",
-      description: "You know exactly which shelf you want: your next draft is dealt from tier 2.",
+      description:
+        "You know exactly which shelf you want: your next draft is dealt from tier 2, and once you have seen it you gain one reroll.",
       tier: 1,
       category: "draft",
       icon: "Store",
@@ -366,6 +419,7 @@ export const OVERHAUL_T1: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.forceTier = 2;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   // 14. Growth Spurt -------------------------------------------------------------------------------------
@@ -436,13 +490,13 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_nightlight",
       name: "Nightlight",
       description:
-        "A little lamp clicks on: enemy knights cannot end a move next to your king for your opponent's next 2 turns.",
+        "A little lamp clicks on: enemy knights cannot end a move next to your king for your opponent's next turn.",
       tier: 1,
       category: "protection",
       icon: "Lamp",
       flavor: "Knights are basically monsters under the bed.",
     },
-    timedOppFilter(2, (moves, _inst, api) => {
+    timedOppFilter(1, (moves, _inst, api) => {
       const k = kingSquare(api.board, api.me);
       if (k == null) return moves;
       return moves.filter((m) => {
@@ -459,7 +513,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_whittle",
       name: "Whittle",
       description: "Carve one unmoved enemy pawn on the a-file or h-file into shavings. It is removed.",
-      tier: 1,
+      tier: 2,
       category: "attack",
       icon: "Axe",
       flavor: "Every masterpiece starts as someone else's rook pawn.",
@@ -505,7 +559,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_rain_check",
       name: "Rain Check",
-      description: "In 5 of your turns, the cloud pays out: gain 15 seconds on your clock.",
+      description:
+        "In 5 of your turns, the cloud pays out: gain 20 seconds on your clock, one draft reroll, and a look at the tier of your opponent's next draft. In untimed games only the reroll and the reveal arrive.",
       tier: 1,
       category: "tempo",
       icon: "CloudRain",
@@ -521,7 +576,11 @@ export const OVERHAUL_T1: Buff[] = [
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t <= 0) {
-          api.adjustClock({ addSelfSec: 15 });
+          api.adjustClock({ addSelfSec: 20 });
+          // The clock payout is a no-op in an untimed game, so always land the
+          // reroll and the tier reveal too.
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          api.mine.flags.seeOppTier = true;
           inst.spent = true;
         }
       },
@@ -555,25 +614,34 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_left_foot_first",
       name: "Left Foot First",
-      description: "Once, your king may lunge two squares toward the queenside if both squares are empty.",
+      description:
+        "Once, your king may lunge two squares toward the queenside if both squares are empty. Making the lunge spends your next unused draft reroll, if you have one.",
       tier: 1,
       category: "movement",
       icon: "Footprints",
       flavor: "The queenside was closer anyway.",
       fx: { motif: "empower", pieces: ["k"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "k")) {
-        const f = FILE(sq);
-        if (f < 2) continue;
-        const mid = sq - 1, to = sq - 2;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
+    {
+      ...augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "k")) {
+          const f = FILE(sq);
+          if (f < 2) continue;
+          const mid = sq - 1, to = sq - 2;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }),
+        return out;
+      }),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+        }
+        spendOnVia(inst, move);
+      },
+    },
   ),
   // 22. Spare Button ---------------------------------------------------------------------------------------------------------
   card(
@@ -581,7 +649,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_spare_button",
       name: "Spare Button",
       description:
-        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty. One use.",
+        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty, and you gain 5 seconds. One use.",
       tier: 1,
       category: "pieces",
       icon: "CircleDot",
@@ -599,6 +667,7 @@ export const OVERHAUL_T1: Buff[] = [
           // Only my own pawns count (the capture square held my pawn).
           if (!api.board.pieces[home]) {
             api.place(home, "p", api.me);
+            api.adjustClock({ addSelfSec: 5 });
             inst.spent = true;
             return;
           }
@@ -614,7 +683,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_tiny_trebuchet",
       name: "Tiny Trebuchet",
       description:
-        "Launch one of your pawns two squares straight ahead, once. Both squares must be empty; no capturing on landing.",
+        "Launch one of your pawns two squares straight ahead, once. Both squares must be empty; no capturing on landing. It arms only after your opponent's next move.",
       tier: 1,
       category: "movement",
       icon: "Landmark",
@@ -622,19 +691,34 @@ export const OVERHAUL_T1: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = fwdOf(api.me);
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const mid = sq + fwd, to = sq + fwd * 2;
-        if (to < 0 || to > 63) continue;
-        if (RANK(to) === 0 || RANK(to) === 7) continue;
-        if (!api.board.pieces[mid] && !api.board.pieces[to]) {
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.armed = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return;
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const mid = sq + fwd, to = sq + fwd * 2;
+          if (to < 0 || to > 63) continue;
+          if (RANK(to) === 0 || RANK(to) === 7) continue;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
         }
-      }
-      return out;
-    }),
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        // Delay the launch: it arms only after the opponent has moved once.
+        if (!inst.state.armed && move.color === api.opp) inst.state.armed = true;
+        spendOnVia(inst, move);
+      },
+      status: (inst) => (inst.state.armed ? null : "arms after your opponent moves"),
+    },
   ),
   // 24. Name Tag --------------------------------------------------------------------------------------------------------------------
   card(
@@ -686,7 +770,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_fresh_socks",
       name: "Fresh Socks",
-      description: "Your next move puts 8 seconds back on your clock. New socks, new you.",
+      description:
+        "Your next move puts 13 seconds back on your clock, flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. In untimed games only the flag and the reroll apply. New socks, new you.",
       tier: 1,
       category: "tempo",
       icon: "Sparkles",
@@ -696,7 +781,13 @@ export const OVERHAUL_T1: Buff[] = [
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me) return;
-        api.adjustClock({ addSelfSec: 8 });
+        api.adjustClock({ addSelfSec: 13 });
+        // The clock gain is a no-op in an untimed game, so always land two
+        // effects that need no clock: mark the last enemy mover (clears once
+        // they reply) and hand back a draft reroll.
+        const last = lastMoveBy(api.board, api.opp);
+        if (last) flashSquares(api, [last.to], true);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
         inst.spent = true;
       },
       status: () => "active on your next move",

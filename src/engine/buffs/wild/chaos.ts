@@ -36,8 +36,10 @@ import {
   mySquares,
   pawnRankOk,
   placePieces,
+  markRevived,
   relRank,
   reviveOne,
+  revivable,
   slideMoves,
   timedAugment,
   timedOppFilter,
@@ -76,6 +78,23 @@ const oppHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.opp, sq);
 // Chebyshev (king-step) distance, reused by the range / adjacency curses.
 const dist = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
+
+/** Does a queen on `from` attack `target` along a clear rank, file, or
+ * diagonal? A queen-only local copy of the board's attacksSquare, used by
+ * Stage Fright to tell whether the queen's move gives check. */
+function queenAttacks(api: BuffApi, from: Square, target: Square): boolean {
+  if (from === target) return false;
+  const df = FILE(target) - FILE(from), dr = RANK(target) - RANK(from);
+  const adf = Math.abs(df), adr = Math.abs(dr);
+  if (adf !== adr && df !== 0 && dr !== 0) return false;
+  const sf = Math.sign(df), sr = Math.sign(dr);
+  let f = FILE(from) + sf, r = RANK(from) + sr;
+  while (inBoard(f, r) && SQ(f, r) !== target) {
+    if (api.board.pieces[SQ(f, r)]) return false;
+    f += sf; r += sr;
+  }
+  return true;
+}
 
 // --- Local composite helpers (copies of the sibling shared.ts surfaces) ------
 
@@ -305,19 +324,55 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_slip_on_ice",
       name: "Slip on Ice",
-      description: "Freeze one of your opponent's rooks in place for their next 2 turns.",
+      description: "Choose one of your opponent's rooks. It skates on: only after their next move does the ice bite, freezing that rook in place for their next 2 turns.",
       tier: 3,
       category: "tempo",
       flavor: "Legs out from under it, dignity gone.",
       fx: { motif: "jail", pieces: ["r"] },
     },
-    freezeTargetTyped(2, ["r"], "Choose an enemy rook to send skidding"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy rook to send skidding",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type === "r",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The freeze lands only after the opponent's next move. Added during
+        // their own move, so the shared post-move tick eats one turn at once:
+        // turns 3 here leaves 2 of their turns frozen.
+        const cur = inst.state.sq as Square;
+        addEffect(api, { kind: "freeze", sq: cur, owner: api.opp, turns: 3 });
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to grease the ice" : "the ice bites after their next move",
+    },
   ),
   card(
     {
       id: "wc_tar_pit",
       name: "Tar Pit",
-      description: "Every one of your opponent's bishops is stuck fast and cannot move for their next 2 turns.",
+      description: "Every one of your opponent's bishops is stuck fast and cannot move or capture for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "The diagonals go nowhere today.",
@@ -330,7 +385,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_concrete_shoes",
       name: "Concrete Shoes",
       description: "Fit one of your opponent's rooks or queens with concrete shoes: it cannot move at all for their next 3 turns, then it hardens into a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       flavor: "It is not going for a swim, it is going to stand here. Forever.",
       fx: { motif: "jail", pieces: ["r", "q"] },
@@ -384,20 +439,33 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_quicksand_patch",
       name: "Quicksand Patch",
-      description: "Every one of your opponent's pawns sinks into quicksand and can only crawl one square at a time for their next 2 turns.",
+      description: "The ground gives way one move late: after your opponent's next move, every one of their pawns sinks into quicksand and can only crawl one square at a time for their next 2 turns.",
       tier: 4,
       category: "tempo",
       flavor: "Do not struggle, it only makes it worse.",
       fx: { motif: "jail", pieces: ["p"] },
     },
-    walnutAll(["p"], 2),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // Delayed one reply: the walnuts are added during the opponent's own
+        // move, so the shared post-move tick eats one turn at once. turns 3
+        // here leaves 2 of their turns crawling, matching the original.
+        for (const sq of mySquares(api.board, api.opp, "p")) {
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+        }
+        inst.spent = true;
+      },
+      status: () => "the quicksand sets after their next move",
+    },
   ),
   card(
     {
       id: "wc_double_trouble",
       name: "Double Trouble",
       description: "One of your knights or bishops splits in two: place its exact twin on an empty square right beside it.",
-      tier: 6,
+      tier: 7,
       category: "pieces",
       requires: ["n", "b"],
       flavor: "One is bad luck. Two is a bit.",
@@ -445,7 +513,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_stage_fright",
       name: "Stage Fright",
-      description: "The spotlight waits for her: the next time your opponent's queen moves, stage fright strikes and she freezes where she lands for 2 of their turns.",
+      description: "The spotlight waits for her: the next time your opponent's queen moves, she freezes where she lands for one of their turns. But if that move gives check, stage fright hits harder and she becomes a walnut that can only shuffle one square at a time for two of their turns instead.",
       tier: 3,
       category: "hex",
       flavor: "All those eyes, and she just blanks.",
@@ -457,9 +525,16 @@ export const WILD_CHAOS: Buff[] = [
         if (move.color !== api.opp || move.piece !== "q") return;
         const p = api.board.pieces[move.to];
         if (p && p.color === api.opp && p.type === "q") {
-          // Added during their own move, so the shared post-move tick eats
-          // one turn immediately: 3 here leaves 2 of their turns frozen.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+          const myKing = mySquares(api.board, api.me, "k")[0];
+          const givesCheck = myKing != null && queenAttacks(api, move.to, myKing);
+          // Added during their own move, so the shared post-move tick eats one
+          // turn immediately: a check turns her into a two-turn walnut (turns 3
+          // leaves 2), otherwise a one-turn freeze (turns 2 leaves 1).
+          if (givesCheck) {
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 3 });
+          } else {
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+          }
         }
         inst.spent = true;
       },
@@ -471,7 +546,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_sticky_floor",
       name: "Sticky Floor",
       description: "The whole floor is flypaper: every one of your opponent's pieces may move at most one square for their next 2 turns.",
-      tier: 6,
+      tier: 7,
       category: "hex",
       flavor: "Peel, step, peel, step.",
       fx: { motif: "anchor", pieces: "all" },
@@ -483,7 +558,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_shy_pieces",
       name: "Shy Pieces",
       description: "Your opponent's pieces are too shy to approach the crown: for their next 2 turns none of them may move onto a square touching your king.",
-      tier: 2,
+      tier: 3,
       category: "hex",
       flavor: "They will wave from over here, thanks.",
       fx: { motif: "blindfold", pieces: "all" },
@@ -499,7 +574,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_butterfingers",
       name: "Butterfingers",
       description: "Your whole army is slathered in butter: enemy pawns and knights cannot capture your pieces for their next 2 turns. Nothing short-armed can keep a grip.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       flavor: "So close, and it squirts right out.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -512,54 +587,127 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_backseat_driver",
       name: "Backseat Driver",
-      description: "Someone will not stop yelling push a pawn: on your opponent's next turn they must move a pawn if any pawn of theirs can legally move.",
+      description: "Someone will not stop yelling push a pawn: it takes a turn to sink in, so only after your opponent's next move, on the turn that follows, must they move a pawn if any pawn of theirs can legally move.",
       tier: 3,
       category: "hex",
       flavor: "No, the OTHER pawn.",
       fx: { motif: "slow", pieces: ["p"] },
     },
-    curse(1, (moves) => moves.filter((m) => m.piece === "p")),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+        inst.state.turns = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed || (inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "p");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The nagging lands one reply late: the opponent's first move goes
+        // through free, then the pawn demand arms for their next turn.
+        if (!inst.state.armed) { inst.state.armed = true; return; }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.state.armed
+          ? "the nagging starts after their next move"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "wc_wrong_way",
       name: "Wrong Way",
-      description: "Every one of your opponent's pieces has its map upside down: for their next 2 turns none of them may retreat toward their own back rank.",
+      description: "Every one of your opponent's pieces has its map upside down: after their next move, for the 2 turns that follow none of them may retreat toward their own back rank.",
       tier: 5,
       category: "hex",
       flavor: "Recalculating. Recalculating.",
       fx: { motif: "slow", pieces: "all" },
     },
-    curse(2, (moves, api) =>
-      moves.filter((m) => relRank(api.opp, m.to) >= relRank(api.opp, m.from)),
-    ),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+        inst.state.turns = 2;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || (inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => relRank(api.opp, m.to) >= relRank(api.opp, m.from));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The flipped map lands one reply late: the opponent's first move goes
+        // through free, then the retreat ban arms for their next 2 turns.
+        if (!inst.state.armed) { inst.state.armed = true; return; }
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.state.armed
+          ? "the map flips after their next move"
+          : `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "wc_broken_elevator",
       name: "Broken Elevator",
-      description: "The lift to your half is out of order: for their next 2 turns your opponent cannot move any piece onto either of your two back ranks.",
+      description: "The lift to your half is out of order: for their next 2 turns your opponent cannot move any piece onto either of your two back ranks. The first piece turned away still gets to make that one move.",
       tier: 5,
       category: "hex",
       flavor: "Please use the stairs. There are no stairs.",
       fx: { motif: "blindfold", pieces: "all" },
     },
-    curse(2, (moves, api) => {
-      const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
-      return moves.filter((m) => !home(m.to));
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if ((inst.state.turns as number) <= 0 || moves.length === 0) return moves;
+        const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
+        // One legal escape: the first affected piece (the lowest-square piece
+        // with a blocked move) keeps that move until the exemption is spent.
+        let exemptFrom: Square | undefined;
+        if (!inst.state.escaped) {
+          const blocked = moves.filter((m) => home(m.to)).map((m) => m.from);
+          if (blocked.length > 0) exemptFrom = Math.min(...blocked);
+        }
+        const kept = moves.filter((m) => !home(m.to) || m.from === exemptFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const home = (sq: Square) => (api.me === "w" ? RANK(sq) <= 1 : RANK(sq) >= 6);
+        // The escape is spent the moment the first affected piece uses its one
+        // free move onto the barred ranks.
+        if (!inst.state.escaped && home(move.to)) inst.state.escaped = true;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns left`,
+    },
   ),
   card(
     {
       id: "wc_hot_seat",
       name: "Hot Seat",
-      description: "The spotlight swings to their king and queen: on your opponent's next turn they may move only their king or their queen.",
+      description: "The spotlight swings to their king and queen: on your opponent's next turn they may move only their king or their queen, and neither of them may capture.",
       tier: 5,
       category: "tempo",
       flavor: "Two chairs left under the lights, everyone else in the dark.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r"] },
     },
-    curse(1, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "q")),
+    curse(1, (moves) => moves.filter((m) => (m.piece === "k" || m.piece === "q") && !m.captured)),
   ),
 
   // =========================================================================
@@ -569,12 +717,12 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_attack_goose",
       name: "Attack Goose",
-      description: "An attack goose invades your opponent's half as a knight for 3 of your turns, then honks off.",
+      description: "An attack goose invades your opponent's half as a knight for 2 of your turns, then honks off.",
       tier: 5,
       category: "pieces",
       flavor: "It has your bread and it has your king.",
     },
-    summonTemp("n", 3, oppHalfZone),
+    summonTemp("n", 2, oppHalfZone),
   ),
   card(
     {
@@ -593,7 +741,7 @@ export const WILD_CHAOS: Buff[] = [
       icon: "Car",
       name: "Clown Car",
       description: "Two knights pile out of one tiny car: place them on two empty squares that touch each other. Both are too dizzy to move on your next turn.",
-      tier: 5,
+      tier: 6,
       category: "pieces",
       flavor: "How were they both in there.",
     },
@@ -634,7 +782,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_conga_line",
       name: "Conga Line",
-      description: "The whole line dances one step to the side: every one of your pawns shifts one square toward the board edge you pick (pawns with no room sit the song out).",
+      description: "The whole line dances one step to the side: every one of your pawns shifts one square toward the board edge you pick, onto an empty square only, never a capture (pawns with no room sit the song out).",
       tier: 5,
       category: "movement",
       requires: ["p"],
@@ -671,7 +819,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_rubber_duck_squad",
       name: "Rubber Duck Squad",
-      description: "Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from.",
+      description: "Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from. Rigging the bounce burns your next unused draft reroll, if you have one.",
       tier: 5,
       category: "protection",
       requires: ["b"],
@@ -680,8 +828,10 @@ export const WILD_CHAOS: Buff[] = [
     },
     {
       kind: "passive",
-      init: (inst) => {
+      init: (inst, api) => {
         inst.state.turns = 3;
+        // Rigging the bounce burns your next unused draft reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
@@ -700,29 +850,107 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_lost_and_found",
       name: "Lost and Found",
-      description: "Dig through the lost and found: return one of your captured pieces other than the queen to an empty square in your half, once. The heaviest lost piece comes back first.",
+      description: "Dig through the lost and found: pick the empty square in your half where a captured piece other than the queen will return. It reappears only after your opponent's next move, and only if that square is still empty. The heaviest lost piece comes back first.",
       tier: 4,
       category: "pieces",
       flavor: "That has been back there for ages.",
     },
-    reviveOne(["r", "b", "n", "p"], myHalfZone),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (picks.length > 0 || inst.state.sq != null) return null;
+        const type = (["r", "b", "n", "p"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        return {
+          kind: "square",
+          label: "Choose where the revived piece will return",
+          squares:
+            type == null
+              ? []
+              : emptySquares(api.board, myHalfZone(api)).filter(
+                  (sq) => type !== "p" || pawnRankOk(sq),
+                ),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        const type = (["r", "b", "n", "p"] as PieceType[]).find((t) => revivable(api, t) > 0);
+        if (type == null) return;
+        inst.state.sq = sq;
+        inst.state.type = type;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null) return;
+        if (move.color !== api.opp) return;
+        // The piece climbs back out only after the opponent's next move, and
+        // only if the chosen square is still empty.
+        const sq = inst.state.sq as Square;
+        const type = inst.state.type as PieceType;
+        if (!api.board.pieces[sq] && (type !== "p" || pawnRankOk(sq))) {
+          api.place(sq, type, api.me);
+          markRevived(api, type);
+        }
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to dig through the lost and found" : "it returns after their next move",
+    },
   ),
   card(
     {
       id: "wc_body_double",
       name: "Body Double",
-      description: "Slip one of your opponent's knights or bishops a better offer: it switches to your side for the rest of the game, once. Kings cannot be swayed.",
+      description: "Slip one of your opponent's knights or bishops a better offer: they get one more move with it, then, after that reply, it switches to your side for the rest of the game, once. Kings cannot be swayed.",
       tier: 4,
       category: "pieces",
       flavor: "Same face, different jersey.",
     },
-    convertEnemies(1, ["n", "b"], "Choose the enemy knight or bishop to poach"),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy knight or bishop to poach",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b";
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The offer closes only after the opponent's next move.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.opp && p.type !== "k") api.setPieceColor(cur, api.me);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to make the offer" : "they defect after their next move",
+    },
   ),
   card(
     {
       id: "wc_genie_wish",
       name: "Genie Wish",
-      description: "You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns.",
+      description: "You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns, and the fine print costs you your next draft.",
       tier: 7,
       category: "pieces",
       flavor: "Should have read the terms.",
@@ -733,6 +961,8 @@ export const WILD_CHAOS: Buff[] = [
       // only writes the caster's pocket, so write theirs directly.
       const pocket = (api.theirs.inventory ??= {});
       pocket.n = (pocket.n ?? 0) + 1;
+      // More fine print: the wish costs you your own next draft.
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
@@ -743,7 +973,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_deal_with_the_devil",
       name: "Deal with the Devil",
-      description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns.",
+      description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
       tier: 5,
       category: "pieces",
       requires: ["p"],
@@ -764,6 +994,8 @@ export const WILD_CHAOS: Buff[] = [
         if (sq == null) return;
         api.setPieceType(sq, "q");
         api.bs.skips[api.me] += 2;
+        // The devil also collects your next unused draft reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     ),
   ),
@@ -772,7 +1004,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_berserk_pawn",
       name: "Berserk Pawn",
       description: "One of your pawns flies into a frenzy: for your next 3 turns it also moves like a queen, then it burns out and is removed from the board.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       requires: ["p"],
       flavor: "Glorious, brief.",
@@ -844,7 +1076,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_chaos_reigns",
       name: "Chaos Reigns",
-      description: "Fairness goes out the window: take two extra moves right now, but your opponent also takes two extra moves on their next turn.",
+      description: "Fairness goes out the window: take one extra move right now, but your opponent also takes one extra move on their next turn.",
       tier: 4,
       category: "tempo",
       flavor: "If everyone breaks the rules, is anyone.",
@@ -852,8 +1084,8 @@ export const WILD_CHAOS: Buff[] = [
     },
     {
       ...activatedSimple((_inst, api) => {
-        api.bs.extraMoves[api.me] += 2;
-        api.bs.extraMoves[api.opp] += 2;
+        api.bs.extraMoves[api.me] += 1;
+        api.bs.extraMoves[api.opp] += 1;
       }),
       freeAction: true,
     },
@@ -863,7 +1095,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_juggling_act",
       name: "Juggling Act",
       description: "Keep every plate spinning: take three extra moves right now, then it all comes crashing down and you skip your next 2 turns.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "Ta-daaa. Uh oh.",
       fx: { motif: "rally", pieces: "all", self: true },
@@ -881,7 +1113,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_clumsy_dash",
       name: "Clumsy Dash",
       description: "Bolt for it and fumble: take one extra move right now, but one of your pawns is dropped and frozen in place for your next 2 turns.",
-      tier: 3,
+      tier: 4,
       category: "tempo",
       flavor: "Legs going faster than the brain.",
     },
@@ -902,16 +1134,24 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_red_tape",
       name: "Red Tape",
-      description: "Bury your opponent in paperwork: they skip their next turn, but the forms catch up with you and you skip the turn after that.",
+      description: "Bury your opponent in paperwork: it takes a move to process, so after their next move they skip a turn, and then the forms catch up with you and you skip the turn after that.",
       tier: 3,
       category: "tempo",
       flavor: "Please take a number.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 1;
-      api.bs.skips[api.me] += 1;
-    }),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        // The paperwork lands one reply late: the opponent's next move goes
+        // through, then they skip, and the forms bill you the turn after.
+        api.bs.skips[api.opp] += 1;
+        api.bs.skips[api.me] += 1;
+        inst.spent = true;
+      },
+      status: () => "the paperwork clears after their next move",
+    },
   ),
   card(
     {
@@ -919,7 +1159,7 @@ export const WILD_CHAOS: Buff[] = [
       icon: "PartyPopper",
       name: "Pinata",
       description: "Swing wildly and hope: one random enemy piece other than the king is knocked off the board, but one of your own pawns bursts in the mess and is lost too.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       flavor: "Candy everywhere, mostly regret.",
     },
@@ -972,7 +1212,7 @@ export const WILD_CHAOS: Buff[] = [
       icon: "Pin",
       name: "Voodoo Doll",
       description: "Stitch a little doll of the enemy army: the first time your opponent captures one of your pieces, a random enemy piece of the very same type is destroyed in sympathy. Kings are never harmed.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       flavor: "Ouch. Why did that hurt me.",
     },
@@ -998,7 +1238,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_yeet",
       name: "Yeet",
-      description: "Wind up and launch one of your own pieces deep into enemy territory: send it to any empty square in your opponent's half, once. Your king stays put.",
+      description: "Wind up and launch one of your own pieces deep into enemy territory: send it to any empty square in your opponent's half, once. Your king stays put. Launching it burns your next unused draft reroll, if you have one.",
       tier: 4,
       category: "movement",
       flavor: "It is going to be fine, probably.",
@@ -1031,6 +1271,8 @@ export const WILD_CHAOS: Buff[] = [
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from != null && to != null && api.board.pieces[from] && !api.board.pieces[to]) {
           api.relocate(from, to);
+          // Using the launch spends the next unused draft reroll, if any.
+          if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
         }
       },
     ),
@@ -1041,7 +1283,7 @@ export const WILD_CHAOS: Buff[] = [
       icon: "Armchair",
       name: "Musical Chairs",
       description: "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       flavor: "Everyone scramble.",
     },
@@ -1095,7 +1337,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_moonwalk",
       name: "Moonwalk",
-      description: "Teach your pawns to moonwalk: for your next 3 turns each of your pawns may also step one square straight backward onto an empty square.",
+      description: "Teach your pawns to moonwalk: for your next 3 turns each of your pawns may also step one square straight backward onto an empty square. The backstep is never a capture.",
       tier: 3,
       category: "movement",
       requires: ["p"],
@@ -1109,7 +1351,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_kangaroo_hop",
       name: "Kangaroo Hop",
       description: "One of your knights takes a little kangaroo hop: it may also step one square in any direction, once.",
-      tier: 2,
+      tier: 3,
       category: "movement",
       requires: ["n"],
       flavor: "Boing.",
@@ -1126,7 +1368,7 @@ export const WILD_CHAOS: Buff[] = [
       // and route around; Void Rift (tier 4) is the same idea with the
       // adjacency-pull rider, so the plain hole prices a tier below it.
       description: "Open a black hole on one empty square: any enemy piece that steps onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
-      tier: 3,
+      tier: 2,
       category: "attack",
       flavor: "Do not look directly into it.",
       fx: { motif: "blindfold" },
@@ -1137,20 +1379,20 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_haunted_house",
       name: "Haunted House",
-      description: "Two rooms turn haunted: mark two empty squares and any enemy piece that enters one, never a king, vanishes. The haunting lasts 4 of your turns.",
+      description: "Two rooms turn haunted: mark two empty squares and any enemy piece that enters one, never a king, vanishes. The haunting lasts 3 of your turns.",
       tier: 5,
       category: "attack",
       flavor: "It was the butler. It is always the butler.",
       fx: { motif: "blindfold" },
     },
-    voidSquares(2, 4),
+    voidSquares(2, 3),
   ),
   card(
     {
       id: "wc_banana_peel_trail",
       icon: "Banana",
       name: "Banana Peel Trail",
-      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn.",
+      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn. An enemy king is too dignified to slip, but it still treads the peels flat and spends them.",
       tier: 4,
       category: "tempo",
       flavor: "Whoops. Whoops. Whoops.",
@@ -1176,7 +1418,10 @@ export const WILD_CHAOS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const file = inst.state.file as number | undefined;
         if (file == null) return;
-        if (move.color !== api.opp || move.piece === "k" || FILE(move.to) !== file) return;
+        if (move.color !== api.opp || FILE(move.to) !== file) return;
+        // A king cannot be slipped or dazed (kings are never affected), but the
+        // attempt still spends the charge: it flattens the peels and walks on.
+        if (move.piece === "k") { inst.spent = true; return; }
         const p = api.board.pieces[move.to];
         if (!p || p.color !== api.opp) { inst.spent = true; return; }
         // The first enemy onto the greased file slips one rank back toward its
@@ -1205,53 +1450,103 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_panic_button",
       name: "Panic Button",
-      description: "Slam the big red button: your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess.",
+      description: "Slam the big red button: your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess. The shield is defensive only: if a move leaves your king next to the enemy king, giving check, the shield pops at once.",
       tier: 4,
       category: "protection",
       flavor: "That is what it is there for.",
       fx: { motif: "ward", pieces: ["k"], self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
-      api.bs.extraMoves[api.me] += 1;
-    }),
+    {
+      kind: "passive",
+      // Applies the instant its owner acquires it (init runs on acquire, exactly
+      // where an instant card's effect would): the shield is set and the extra
+      // move is banked right now.
+      init: (inst, api) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        api.bs.extraMoves[api.me] += 1;
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // While shielded the king cannot give check. A king only ever gives
+        // check by standing next to the enemy king, so if any of my moves
+        // leaves my king adjacent to theirs, the king_safe shield pops.
+        if (move.color === api.me) {
+          const myK = mySquares(api.board, api.me, "k")[0];
+          const oppK = mySquares(api.board, api.opp, "k")[0];
+          if (myK != null && oppK != null && dist(myK, oppK) <= 1) {
+            for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+              const e = api.bs.effects[i];
+              if (e.kind === "king_safe" && e.owner === api.me) api.bs.effects.splice(i, 1);
+            }
+            inst.spent = true;
+            return;
+          }
+        }
+        // The shield covers the opponent's next turn; retire once it has passed.
+        if (move.color === api.opp) {
+          const left = ((inst.state.turns as number) ?? 0) - 1;
+          inst.state.turns = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => ((inst.state.turns as number) > 0 ? "the king is shielded" : null),
+    },
   ),
   card(
     {
       id: "wc_confetti_cannon",
       name: "Confetti Cannon",
-      description: "Your next capture goes off like a confetti cannon: every enemy piece other than a king within two squares of the captured square is blown off the board.",
+      description: "Your next capture goes off like a confetti cannon: every enemy piece other than a king within one square of the captured square is blown off the board.",
       tier: 5,
       category: "attack",
       flavor: "Cleanup is going to be a nightmare.",
     },
-    captureExplosion({ radius: 2, charges: 1 }),
+    captureExplosion({ radius: 1, charges: 1 }),
   ),
   card(
     {
       id: "wc_wrecking_ball",
       icon: "Hammer",
       name: "Wrecking Ball",
-      description: "Your queen takes one full swing in place: every enemy piece except a king on the 8 squares around her is smashed off the board. Shielded pieces resist the swing, once.",
+      description: "Your queen winds up a full swing: after your opponent's next move, every enemy piece except a king on the 8 squares around her is smashed off the board. Shielded pieces resist the swing, once.",
       tier: 6,
       category: "attack",
       requires: ["q"],
       flavor: "Structural integrity was more of a suggestion.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
               label: "Choose the queen that swings",
               squares: mySquares(api.board, api.me, "q"),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
-        if (sq == null || api.board.pieces[sq]?.type !== "q") return;
-        explodeAt(api, sq);
+        if (sq == null) return;
+        inst.state.sq = sq;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.from === sq) inst.state.sq = move.to;
+        else if (move.to === sq && move.from !== sq) { inst.spent = true; inst.state.sq = undefined; return; }
+        if (move.color !== api.opp) return;
+        // The swing lands only after the opponent's next move.
+        const cur = inst.state.sq as Square;
+        const p = api.board.pieces[cur];
+        if (p && p.color === api.me && p.type === "q") explodeAt(api, cur);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to wind up the swing" : "the swing lands after their next move",
+    },
   ),
 ];

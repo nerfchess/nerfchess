@@ -42,22 +42,25 @@ function check(ok: boolean, label: string) {
   if (!ok) failures++;
 }
 
-// --- 1. chess_diff is tier 6 and implemented -------------------------------
+// --- 1. chess_diff is tier 4 and implemented -------------------------------
+// Balance overhaul: retiered 6 -> 4; the sim keys off the card's live tier so
+// the pool and fairness checks track any future retier automatically.
 const diff = BUFF_BY_ID["chess_diff"];
-check(!!diff && diff.implemented && diff.tier === 6, "chess_diff is an implemented tier-6 card");
-check(BUFF_POOL_BY_TIER[6].some((b) => b.id === "chess_diff"), "chess_diff sits in the tier-6 draft pool");
+const DIFF_TIER = diff.tier as 4;
+check(!!diff && diff.implemented && diff.tier === 4, "chess_diff is an implemented tier-4 card");
+check(BUFF_POOL_BY_TIER[DIFF_TIER].some((b) => b.id === "chess_diff"), `chess_diff sits in the tier-${DIFF_TIER} draft pool`);
 
 // --- 2. Appears in both modes, at ~2x, off the same seeded RNG -------------
 function countOffers(mode: DraftMode, rounds: number): Record<string, number> {
   const tally: Record<string, number> = {};
   for (let seed = 1; seed <= rounds; seed++) {
     const bs = newBuffMatchState(seed * 7919 + 3, 5, mode);
-    // Force a tier-6 round for both slots by driving draftsTaken up so the
+    // Force a round at chess_diff's tier for both slots by driving draftsTaken up so the
     // curve caps out; simplest is to roll shared tiers a few times then use a
     // fixed tier-6 pair, mirroring how rollOffer resolves slot tiers.
     const board = initialBoard();
     rollSharedTiers(bs); // advance like a real round
-    const offer = rollOffer(bs, "w", [6, 6], board);
+    const offer = rollOffer(bs, "w", [DIFF_TIER, DIFF_TIER], board);
     if (!offer) continue;
     for (const c of offer.cards) tally[c.id] = (tally[c.id] ?? 0) + 1;
   }
@@ -68,12 +71,12 @@ for (const mode of ["buff", "nerf"] as DraftMode[]) {
   const tally = countOffers(mode, 4000);
   const diffCount = tally["chess_diff"] ?? 0;
   // FAIR RNG (overhaul): chess_diff has NO appearance multiplier anymore. It
-  // must roll at the same rate as any other eligible tier-6 peer in the same
+  // must roll at the same rate as any other eligible same-tier peer in the same
   // mode's pool (uniform draw), so the ratio to the peer average sits near 1.
   const peers = Object.entries(tally)
     .filter(([id]) => {
       const b = BUFF_BY_ID[id];
-      if (!b || id === "chess_diff" || b.tier !== 6) return false;
+      if (!b || id === "chess_diff" || b.tier !== DIFF_TIER) return false;
       return mode === "nerf" ? b.category !== "hex" : true;
     })
     .map(([, n]) => n);

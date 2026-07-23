@@ -3,10 +3,9 @@
 // the library's trade_up card. Nothing here touches a king's move legality in a
 // way that could soft-lock: added moves only widen the move list.
 
-import { Buff } from "./shared";
+import { Buff, Square } from "./shared";
 import {
   card,
-  pieceBound,
   permanentAugment,
   activated,
   slideMoves,
@@ -31,23 +30,93 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "amazon",
       icon: "Crown",
       name: "Amazon",
-      description: "Your queen is crowned an Amazon: for the game she also moves like a knight.",
+      description: "Your queen is crowned an Amazon: she still moves like a queen and now banks a single knight leap, regaining one every four of your turns (never more than one banked), which she may spend to jump like a knight.",
       tier: 7,
       category: "movement",
       requires: ["q"],
       flavor: "Queen was not scary enough already.",
       fx: { motif: "empower", pieces: ["q"], moveAs: "n", self: true },
     },
-    pieceBound("q", "Choose the queen to crown", (board, sq, via) =>
-      leapMoves(board, sq, KNIGHT_LEAPS, via),
-    ),
+    // Knight movement is no longer permanent: the crowned queen banks one
+    // knight-leap charge (max one), regained every four of the owner's turns,
+    // and spending a leap empties the charge and restarts the recharge.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.cd = 0;
+      },
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the queen to crown",
+              squares: mySquares(api.board, api.me, "q"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || ((inst.state.charges as number) ?? 0) < 1) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me || p.type !== "q") return;
+        const have = new Set(moves.map((m) => m.from * 64 + m.to));
+        for (const mv of leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id)) {
+          const key = mv.from * 64 + mv.to;
+          if (!have.has(key)) {
+            have.add(key);
+            moves.push(mv);
+          }
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        let consumed = false;
+        if (move.from === sq) {
+          if (move.via === inst.id) {
+            inst.state.charges = 0;
+            inst.state.cd = 4;
+            consumed = true;
+          }
+          inst.state.sq = move.to;
+        }
+        if (
+          move.color === api.me &&
+          !consumed &&
+          ((inst.state.charges as number) ?? 0) < 1
+        ) {
+          const cd = ((inst.state.cd as number) ?? 4) - 1;
+          inst.state.cd = cd;
+          if (cd <= 0) {
+            inst.state.charges = 1;
+            inst.state.cd = 0;
+          }
+        }
+      },
+      status: (inst) => {
+        if (inst.state.sq == null) return "activate to crown a queen";
+        return ((inst.state.charges as number) ?? 0) >= 1
+          ? "knight leap ready"
+          : `knight leap in ${(inst.state.cd as number) ?? 0} of your turns`;
+      },
+    },
   ),
   card(
     {
       id: "king_of_the_hill",
       icon: "Flag",
       name: "King of the Hill",
-      description: "Your king rules the hill: while it stands on or beside one of the four center squares it may move like a queen.",
+      description: "Your king rules the hill: while it stands on or beside one of the four center squares it may move like a queen, though those extended queen moves cannot capture.",
       tier: 4,
       category: "movement",
       flavor: "Plant the flag and hold the high ground.",
@@ -55,7 +124,11 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) =>
-        onHill(sq) ? slideMoves(api.board, sq, ALL_DIRS, inst.id) : [],
+        // The king rules the hill by moving like a queen, but those extended
+        // queen moves cannot capture: drop any that land on an enemy piece.
+        onHill(sq)
+          ? slideMoves(api.board, sq, ALL_DIRS, inst.id).filter((m) => !m.captured)
+          : [],
       ),
     ),
   ),
@@ -65,7 +138,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       icon: "Drama",
       name: "Understudy",
       description: "The first time your queen is captured, one of your bishops, or a knight if you have no bishop, immediately turns into a queen on its own square. If you have neither, nothing happens. Triggers once.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       flavor: "Spotlight, and a bow.",
     },
@@ -87,7 +160,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       id: "clone",
       icon: "Copy",
       name: "Clone",
-      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square within two squares of it, once.",
+      description: "Run one of your pawns through the photocopier: place an exact copy on an empty square beside it, once.",
       tier: 3,
       category: "pieces",
       requires: ["p"],
@@ -95,12 +168,12 @@ export const FUNNY_TRANSFORMS: Buff[] = [
     },
     activated(
       (_inst, api, picks) => {
-        // The copy tray reaches two squares in every direction (it used to be
-        // only the adjacent ring).
+        // The copy tray reaches only the adjacent ring, one square in every
+        // direction (it used to reach two).
         const adj = (sq: number) => {
           const out: number[] = [];
-          for (let df = -2; df <= 2; df++) {
-            for (let dr = -2; dr <= 2; dr++) {
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
               if (df === 0 && dr === 0) continue;
               const f = FILE(sq) + df, r = RANK(sq) + dr;
               if (f < 0 || f > 7 || r < 0 || r > 7) continue;

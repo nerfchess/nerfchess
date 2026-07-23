@@ -24,7 +24,7 @@ import {
 } from "./shared";
 
 /** How many of the owner's turns the permit lasts. */
-const PERMIT_TURNS = 4;
+const PERMIT_TURNS = 3;
 
 /**
  * Cylinder-wrap sliding moves for the piece on `from`: horizontal only. The
@@ -91,7 +91,7 @@ export const FUNNY_EXPANSION: Buff[] = [
       icon: "Construction",
       name: "Expansion Permit",
       description:
-        "The construction crew bolts a ninth file onto the board: for your next 4 turns your rooks and queens may slide off one side of the board and back on the other.",
+        "The construction crew bolts a ninth file onto the board: for your next 3 turns your rooks and queens may slide off one side of the board and back on the other.",
       tier: 5,
       category: "movement",
       requires: ["r", "q"],

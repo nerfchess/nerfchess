@@ -25,7 +25,7 @@
 // ---------------------------------------------------------------------------
 
 import { Buff, BuffApi, BuffCategory, CardFx } from "../buff";
-import { FILE, Move, PieceType, RANK, Square } from "../types";
+import { FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
   ALL_DIRS,
   KNIGHT_LEAPS,
@@ -36,12 +36,13 @@ import {
   bindCandidates,
   bindPiece,
   emptySquares,
+  grantInventory,
   inHalf,
+  instant,
   leapMoves,
   markRevived,
   mySquares,
   pawnRankOk,
-  placePieces,
   relRank,
   revivable,
   slideMoves,
@@ -80,6 +81,26 @@ function cheb(a: Square, b: Square): number {
   return Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
 }
 
+/** Enemy pieces the queen on `from` can see: the first piece along each of the
+ * eight queen rays, if it is an enemy non-king (pieces behind a blocker are
+ * hidden). */
+function queenVisibleEnemies(api: BuffApi, from: Square): Square[] {
+  const out: Square[] = [];
+  for (const [df, dr] of ALL_DIRS) {
+    let f = FILE(from) + df, r = RANK(from) + dr;
+    while (inBoard(f, r)) {
+      const sq = SQ(f, r);
+      const p = api.board.pieces[sq];
+      if (p) {
+        if (p.color === api.opp && p.type !== "k") out.push(sq);
+        break;
+      }
+      f += df; r += dr;
+    }
+  }
+  return out;
+}
+
 /** Empty squares in my half, ordered from my back rank outward, so a respawn
  * fills the safest ranks first. */
 function backfillSpots(api: BuffApi): Square[] {
@@ -90,71 +111,135 @@ function backfillSpots(api: BuffApi): Square[] {
 
 const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
 
+  // Regicide: your queen appears right next to the enemy king, then locks in the
+  // execution. She cannot be captured for the opponent's next 2 turns, and every
+  // enemy piece touching the king (kings excepted) freezes for the same 2 turns,
+  // so nothing can block or trade off the threat. The king itself stays free to
+  // run, so the opponent is never stranded. Soft-nerfed in the apex pass with a
+  // second relocation, but the moved pieces are chain-guarded off the king until
+  // the opponent replies, so it sets up the kill rather than landing it outright.
+  // Balance overhaul: demoted from the tier-9 apex band to a normal tier-8
+  // draftable (the owner's retier), so it lives OUTSIDE the TIER9 array; the
+  // apex offer and every apex grant stay a pure tier-9/10 pull. Built
+  // explicitly (not via apex()) because it needs the two-target pick flow and
+  // the chain-king guard.
+export const REGICIDE: Buff = {
+    id: "regicide",
+    icon: "Crown",
+    name: "Regicide",
+    description:
+      "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
+    category: "attack",
+    tier: 8,
+    implemented: true,
+    requires: ["q"],
+    flavor: "The court has reached a verdict.",
+    fx: { motif: "empower", pieces: ["q"], self: true },
+    kind: "activated",
+    targets: (_inst, api, picks) => {
+      const queen = mySquares(api.board, api.me, "q")[0];
+      if (picks.length === 0) {
+        return {
+          kind: "square",
+          label: "Choose one more piece to move (optional)",
+          squares: mySquares(api.board, api.me).filter(
+            (sq) => api.board.pieces[sq]!.type !== "k" && sq !== queen,
+          ),
+          finishable: true,
+        };
+      }
+      if (picks.length === 1 && picks[0].square != null) {
+        const from = picks[0].square;
+        return {
+          kind: "square",
+          label: "Choose its destination",
+          squares: emptySquares(api.board).filter(
+            (sq) => api.board.pieces[from]?.type !== "p" || pawnRankOk(sq),
+          ),
+        };
+      }
+      return null;
+    },
+    effect: (_inst, api, picks) => {
+      const queen = mySquares(api.board, api.me, "q")[0];
+      const king = mySquares(api.board, api.opp, "k")[0];
+      if (queen != null && king != null) {
+        const empties = emptySquares(api.board).filter((sq) => sq !== queen);
+        if (empties.length > 0) {
+          const adjacent = empties.filter((sq) => cheb(sq, king) === 1);
+          const pool = adjacent.length > 0 ? adjacent : empties;
+          // Deterministic: closest to the king, ties broken by lowest square index.
+          const dest = pool.sort((a, b) => cheb(a, king) - cheb(b, king) || a - b)[0];
+          if (dest != null) {
+            api.relocate(queen, dest);
+            // The landed queen is untouchable for two of the opponent's turns.
+            addEffect(api, { kind: "shield", owner: api.me, squares: [dest], turns: 2 });
+            // Freeze the king's escort (never the king), so it cannot be defended.
+            for (const sq of mySquares(api.board, api.opp)) {
+              if (api.board.pieces[sq]!.type === "k") continue;
+              if (cheb(sq, king) === 1) {
+                addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+              }
+            }
+          }
+        }
+      }
+      // Move one additional friendly piece to a chosen empty square.
+      const from = picks[0]?.square, to = picks[1]?.square;
+      if (
+        from != null &&
+        to != null &&
+        api.board.pieces[from]?.color === api.me &&
+        api.board.pieces[from]?.type !== "k" &&
+        !api.board.pieces[to] &&
+        (api.board.pieces[from]?.type !== "p" || pawnRankOk(to))
+      ) {
+        api.relocate(from, to);
+      }
+      // The moved pieces cannot land the killing blow until the opponent replies.
+      api.bs.chainKingGuard = api.me;
+    },
+  };
+
 export const TIER9: Buff[] = [
   // --- Game-winning boons ---------------------------------------------------
 
-  // Ice Age: the whole enemy army (kings excepted) freezes solid for 3 of the
-  // opponent's turns. They can only shuffle their king while it thaws - trimmed
-  // from 4 turns in the apex soft-nerf pass; three is still back-breaking.
+  // Ice Age: narrowed in the apex soft-nerf pass from the whole enemy army to
+  // three chosen pieces - still a three-turn deep-freeze, but the caster now
+  // picks exactly which enemy pieces (kings excepted) go solid.
   apex(
     {
       id: "ice_age",
       icon: "Snowflake",
       name: "Ice Age",
       description:
-        "Every enemy piece other than the king freezes solid and cannot move for your opponent's next 3 turns.",
+        "Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns.",
       category: "tempo",
       flavor: "The board holds its breath.",
       fx: { motif: "jail", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 3, skin: "ice" });
+          }
+        }
+      },
+    ),
   ),
 
-  // Regicide: your queen appears right next to the enemy king, then locks in the
-  // execution. She cannot be captured for the opponent's next 2 turns, and every
-  // enemy piece touching the king (kings excepted) freezes for the same 2 turns,
-  // so nothing can block or trade off the threat. The king itself stays free to
-  // run, so the opponent is never stranded.
-  apex(
-    {
-      id: "regicide",
-      icon: "Crown",
-      name: "Regicide",
-      description:
-        "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns. Every enemy piece beside the king freezes for those 2 turns.",
-      category: "attack",
-      requires: ["q"],
-      flavor: "The court has reached a verdict.",
-      fx: { motif: "empower", pieces: ["q"], self: true },
-    },
-    activatedSimple((_inst, api) => {
-      const queen = mySquares(api.board, api.me, "q")[0];
-      const king = mySquares(api.board, api.opp, "k")[0];
-      if (queen == null || king == null) return;
-      const empties = emptySquares(api.board).filter((sq) => sq !== queen);
-      if (empties.length === 0) return;
-      const adjacent = empties.filter((sq) => cheb(sq, king) === 1);
-      const pool = adjacent.length > 0 ? adjacent : empties;
-      // Deterministic: closest to the king, ties broken by lowest square index.
-      const dest = pool.sort((a, b) => cheb(a, king) - cheb(b, king) || a - b)[0];
-      if (dest == null) return;
-      api.relocate(queen, dest);
-      // The landed queen is untouchable for two of the opponent's turns.
-      addEffect(api, { kind: "shield", owner: api.me, squares: [dest], turns: 2 });
-      // Freeze the king's escort (never the king), so it cannot be defended.
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        if (cheb(sq, king) === 1) {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
-        }
-      }
-    }),
-  ),
 
   // Resurrection: your whole graveyard marches back. Every captured piece
   // (queen first, pawns last) returns to the board, filling your half from the
@@ -167,12 +252,53 @@ export const TIER9: Buff[] = [
       icon: "Sparkles",
       name: "Resurrection",
       description:
-        "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward and spilling into the rest of the board if your half runs out of room.",
+        "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward and spilling into the rest of the board if your half runs out of room. One of your pieces may first take a free non-capturing king-step to an empty square beside it.",
       category: "pieces",
       flavor: "Rise, and rise again.",
     },
-    activatedSimple((_inst, api) => {
-      const spots = backfillSpots(api);
+    activated(
+      (_inst, api, picks) => {
+        // Optional free king-step: choose the piece, then an empty neighbour.
+        const openSteps = (from: Square) =>
+          ALL_DIRS.flatMap(([df, dr]) => {
+            const f = FILE(from) + df, r = RANK(from) + dr;
+            if (!inBoard(f, r)) return [];
+            const d = SQ(f, r);
+            return !api.board.pieces[d] && (api.board.pieces[from]?.type !== "p" || pawnRankOk(d))
+              ? [d]
+              : [];
+          });
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose a piece to take a free step (optional)",
+            squares: mySquares(api.board, api.me).filter((sq) => openSteps(sq).length > 0),
+            finishable: true,
+          };
+        }
+        if (picks.length === 1 && picks[0].square != null) {
+          return {
+            kind: "square",
+            label: "Step one square to an empty square beside it",
+            squares: openSteps(picks[0].square),
+          };
+        }
+        return null;
+      },
+      (_inst, api, picks) => {
+        // The free step first: its destination was empty at pick time, so it is
+        // taken before the revive floods the empty squares.
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (
+          from != null &&
+          to != null &&
+          api.board.pieces[from]?.color === api.me &&
+          !api.board.pieces[to] &&
+          (api.board.pieces[from]?.type !== "p" || pawnRankOk(to))
+        ) {
+          api.relocate(from, to);
+        }
+        const spots = backfillSpots(api);
       // Overflow: a graveyard larger than my half spills into every remaining
       // empty square, still ordered from my side outward, so a full revive is
       // never capped by how much room my own half happens to have.
@@ -198,15 +324,15 @@ export const TIER9: Buff[] = [
 
 
   // Second Coming: a fresh queen descends onto a square you choose in your half,
-  // and your whole army is untouchable for the opponent's next 2 turns - two
-  // full turns to attack with total impunity while a brand-new queen joins in.
+  // and your whole army is untouchable for the opponent's next turn - trimmed
+  // from two turns to one in the apex soft-nerf pass.
   apex(
     {
       id: "second_coming",
       icon: "Sparkle",
       name: "Second Coming",
       description:
-        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next 2 turns.",
+        "Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next turn.",
       category: "pieces",
       flavor: "Foretold, and right on time.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -223,47 +349,49 @@ export const TIER9: Buff[] = [
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq != null && !api.board.pieces[sq]) api.place(sq, "q", api.me);
-        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
       },
     ),
   ),
 
-  // Iron Legion: a whole relief force marches in. Place a queen, a rook and two
-  // knights on empty squares in your half - a full striking force, not just a
-  // patch. A second comeback lifeline, now heavy enough to swing the game alone.
+  // Iron Legion: a relief force reports to your pocket to drop on later turns.
+  // Trimmed in the apex pass to a rook and a knight, with the queen added only
+  // when yours has already been lost - a comeback patch, not a raw power spike.
   apex(
     {
       id: "iron_legion",
       icon: "Castle",
       name: "Iron Legion",
       description:
-        "A relief force arrives: place a queen, a rook and a knight on empty squares in your half.",
+        "A rook and a knight join your pocket to drop onto empty squares on later turns; a queen joins them only if your queen has already been captured.",
       category: "pieces",
       flavor: "Reinforcements, at last.",
     },
-    placePieces(["q", "r", "n"], myHalfZone),
+    instant((_inst, api) => {
+      grantInventory(api, "r");
+      grantInventory(api, "n");
+      if ((api.capturedFromMe.q ?? 0) > 0) grantInventory(api, "q");
+    }),
   ),
 
-  // Living God: promoted from tier 8 into the apex band (owner request). One
-  // of your pieces ascends for the game: amazon movement, permanently
-  // uncapturable, and it detonates the surrounding ring whenever it captures.
-  // Same rails as its tier-8 life: bindPiece never offers the king, the
-  // permanent shield is the square-bound kind (it follows the piece), and the
-  // engine's invulnerability guard means the god itself may never be the piece
-  // that captures the enemy king.
+  // Living God: promoted from tier 8 into the apex band (owner request), then
+  // trimmed in the soft-nerf pass. One of your pieces gains amazon movement and
+  // non-chaining explosive captures for four of your turns; the permanent shield
+  // is gone, so the god is now mortal. bindPiece never offers the king, the timer
+  // ticks on your own moves, and explodeAt (default opts) does not chain.
   apex(
     {
       id: "living_god",
       icon: "Sparkles",
       name: "Living God",
       description:
-        "One piece gains amazon movement and explosive captures for the game, and cannot be captured for your opponent's next 6 turns. An uncapturable piece may never capture the king itself.",
+        "One piece gains amazon movement and explosive captures for your next 4 turns. Its captures blow up the surrounding ring but do not chain.",
       category: "movement",
       flavor: "Worship is optional. Survival is not.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
     },
     bindPiece("Choose your living god", bindCandidates(), {
-      shieldTurns: 6,
+      turns: 4,
       gen: (board, sq, via) => [
         ...slideMoves(board, sq, ALL_DIRS, via),
         ...leapMoves(board, sq, KNIGHT_LEAPS, via),
@@ -274,133 +402,201 @@ export const TIER9: Buff[] = [
 
   // --- Devastating hexes (cast on the opponent) -----------------------------
 
-  // Blackout: the lights go out on your opponent for four whole turns - four free
-  // moves in a row is enough to march a decisive attack home unopposed.
+  // Blackout: trimmed in the apex pass from three skipped turns to one skip plus
+  // two crippled turns. The lights flicker back on slowly: for the opponent's
+  // next two moves only a single non-pawn move is allowed in total, everything
+  // else must be a pawn. spendOnUse:false so it lingers to run its filter, and it
+  // self-retires when the two restricted turns tick down.
   apex(
     {
       id: "blackout",
       icon: "PowerOff",
       name: "Blackout",
-      description: "The lights go out: your opponent's next 3 turns are skipped entirely.",
+      description:
+        "Your opponent's next turn is skipped. For their following two turns they may make only a single non-pawn move in total; otherwise they must move a pawn.",
       category: "hex",
       flavor: "Nobody home.",
       fx: { motif: "slow", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      api.bs.skips[api.opp] += 3;
-    }),
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        api.bs.skips[api.opp] += 1;
+        inst.state.turns = 2;
+        inst.state.nonPawn = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        if (((inst.state.nonPawn as number) ?? 0) > 0) return moves;
+        // Non-pawn budget spent: only pawn moves remain (safety net keeps them
+        // from being stranded if no pawn can move).
+        const pawnOnly = moves.filter((m) => m.piece === "p");
+        return pawnOnly.length > 0 ? pawnOnly : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.turns == null || turnsLeft(inst) <= 0 || move.color !== api.opp) return;
+        if (move.piece !== "p") {
+          const left = ((inst.state.nonPawn as number) ?? 0) - 1;
+          inst.state.nonPawn = left < 0 ? 0 : left;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        turnsLeft(inst) > 0
+          ? `${turnsLeft(inst)} restricted turn${turnsLeft(inst) === 1 ? "" : "s"} left`
+          : null,
+    },
   ),
 
-  // Mass Petrify: every enemy queen, rook, knight and bishop turns to stone (a
-  // walnut) for 4 turns; a petrified piece can only shuffle a single square while
-  // it lasts. Only the enemy pawns and king can still act, so the opponent's
-  // whole heavy army is dead weight for four full turns - but the king stays
-  // free, so they are never stranded.
+  // Mass Petrify: trimmed in the apex pass. Choose up to five enemy non-king
+  // pieces to turn to stone (a walnut) for two turns; a petrified piece can only
+  // shuffle one square. The defender's two most valuable affected pieces resist
+  // (a deterministic stand-in for a defender choice, since the caster picks the
+  // targets), so they are spared the walnut.
   apex(
     {
       id: "mass_petrify",
       icon: "Gem",
       name: "Mass Petrify",
       description:
-        "Every enemy queen, rook, knight and bishop turns to stone for your opponent's next 3 turns. A petrified piece may only shuffle one square.",
+        "Choose up to five enemy pieces other than the king to turn to stone for your opponent's next 2 turns; the two most valuable among them resist and are spared. A petrified piece may only shuffle one square.",
       category: "hex",
       flavor: "Do not meet its gaze.",
-      fx: { motif: "jail", pieces: ["q", "r", "n", "b"] },
+      fx: { motif: "jail", pieces: "all" },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        const t = api.board.pieces[sq]!.type;
-        if (t === "q" || t === "r" || t === "n" || t === "b") {
-          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 3 });
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 5
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to petrify (${picks.length + 1}/5)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const value: Record<PieceType, number> = { q: 5, r: 4, b: 3, n: 3, p: 1, k: 0 };
+        const chosen = picks
+          .map((k) => k.square)
+          .filter(
+            (s): s is Square =>
+              s != null && api.board.pieces[s]?.color === api.opp && api.board.pieces[s]?.type !== "k",
+          );
+        // The defender's two most valuable affected pieces resist: highest value
+        // first, ties broken by lowest square index.
+        const resisters = [...chosen]
+          .sort((a, b) => value[api.board.pieces[b]!.type] - value[api.board.pieces[a]!.type] || a - b)
+          .slice(0, 2);
+        for (const sq of chosen) {
+          if (resisters.includes(sq)) continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 2 });
         }
-      }
-    }),
+      },
+    ),
   ),
 
-  // Purge: at the start of each of your next 2 turns, a random enemy piece
-  // (never the king) is dragged off the board. Held (spendOnUse:false) so it
-  // can fire twice; it arms on use and retires when all purges are spent.
-  // Two guaranteed removals still dismantles most defences.
+  // The Culling: reworked in the apex pass. On use it marks two random enemy
+  // pieces (never the king): one gets a timed_loss that removes it after the
+  // opponent's next completed turn (the mark follows the piece and is pruned if
+  // it is captured first), the other freezes for two of the opponent's turns.
+  // Both random draws run on the seeded api.rng inside the effect hook, so every
+  // replica marks the same pieces.
   apex(
     {
       id: "culling",
       icon: "Skull",
       name: "The Culling",
       description:
-        "At the start of each of your next 2 turns, a random enemy piece other than the king is captured.",
+        "Two random enemy pieces other than the king are marked: one is destroyed after your opponent's next turn, the other freezes for your opponent's next 2 turns.",
       category: "hex",
       flavor: "The list grows shorter.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    {
-      kind: "activated",
-      spendOnUse: false,
-      effect: (inst) => {
-        // Arm the purge on use; onMovePlayed does the work over the next turns.
-        if (inst.state.charges == null) inst.state.charges = 2;
-      },
-      onMovePlayed: (inst, move, api) => {
-        const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0) return;
-        // Fire at the boundary before each of my turns (the opponent's move
-        // just completed). Mirrors Voodoo Doll's rng-in-hook pattern.
-        if (move.color !== api.opp) return;
-        const targets = mySquares(api.board, api.opp).filter(
-          (sq) => api.board.pieces[sq]!.type !== "k",
-        );
-        if (targets.length === 0) return;
-        const victim = targets[api.rng.int(targets.length)];
-        api.removePiece(victim);
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
-      },
-      status: (inst) => {
-        const c = (inst.state.charges as number) ?? 0;
-        return c > 0 ? `${c} purge${c === 1 ? "" : "s"} left` : null;
-      },
-    },
+    activatedSimple((_inst, api) => {
+      const targets = mySquares(api.board, api.opp).filter(
+        (sq) => api.board.pieces[sq]!.type !== "k",
+      );
+      if (targets.length === 0) return;
+      const doomed = targets[api.rng.int(targets.length)];
+      // Removed after the opponent's next completed turn; the square follows the
+      // piece and the effect is pruned if the piece is captured first.
+      addEffect(api, { kind: "timed_loss", owner: api.opp, sq: doomed, turns: 1, then: "remove" });
+      const rest = targets.filter((sq) => sq !== doomed);
+      if (rest.length > 0) {
+        const frozen = rest[api.rng.int(rest.length)];
+        addEffect(api, { kind: "freeze", sq: frozen, owner: api.opp, turns: 2, skin: "stone" });
+      }
+    }),
   ),
 
-  // Promoted from tier 8 (owner call): one queen deleting the entire enemy
-  // army is apex-grade, not a normal draft pull.
+  // Queen's Apocalypse: trimmed in the apex pass from a board-wide wipe to a
+  // focused strike. Choose a queen and remove up to four enemy pieces it can see
+  // along its rays (the first piece on each ray, kings never targeted); the queen
+  // is then frozen for your next turn, so the blow comes at a cost.
   apex(
     {
       id: "queens_apocalypse",
       icon: "Siren",
       name: "Queen's Apocalypse",
       description:
-        "Your queen wipes every enemy piece off the board except their king and queen, once. Requires a queen.",
+        "Choose one of your queens and remove up to four enemy pieces it can see along its lines. That queen is then frozen for your next turn. Requires a queen.",
       category: "attack",
       requires: ["q"],
       flavor: "She knocks once.",
     },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the queen who brings the apocalypse",
-              squares: mySquares(api.board, api.me, "q"),
-            },
       (_inst, api, picks) => {
-        if (picks[0]?.square == null) return;
-        for (const sq of mySquares(api.board, api.opp)) {
-          const t = api.board.pieces[sq]!.type;
-          if (t !== "k" && t !== "q") api.removePiece(sq);
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the queen who brings the apocalypse",
+            squares: mySquares(api.board, api.me, "q"),
+          };
+        }
+        if (picks.length >= 5) return null;
+        const queen = picks[0].square;
+        if (queen == null) return null;
+        const visible = queenVisibleEnemies(api, queen).filter(
+          (sq) => !picks.slice(1).some((k) => k.square === sq),
+        );
+        if (visible.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Choose an enemy piece to remove (${picks.length}/4)`,
+          squares: visible,
+          finishable: true,
+        };
+      },
+      (_inst, api, picks) => {
+        const queen = picks[0]?.square;
+        if (queen == null) return;
+        for (const k of picks.slice(1)) {
+          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
+            api.removePiece(k.square);
+          }
+        }
+        // The queen who unleashed it is frozen for your next turn.
+        if (api.board.pieces[queen]?.color === api.me) {
+          addEffect(api, { kind: "freeze", sq: queen, owner: api.me, turns: 1, skin: "ice" });
         }
       },
     ),
   ),
 
-  // Promoted from tier 8 (owner call): three permanent uncapturable amazons
-  // belong in the apex band.
+  // Titan Legion: trimmed in the apex pass from three permanent uncapturable
+  // amazons to three pieces that move as amazons for only two of your turns, with
+  // just one of them briefly shielded. The augment is gated on the timer and the
+  // card self-retires when the two turns tick down (or all titans are lost).
   apex(
     {
       id: "titan_legion",
       icon: "Pyramid",
       name: "Titan Legion",
-      description: "Three of your pieces become amazons for the game, uncapturable for your opponent's next 5 turns.",
+      description:
+        "Choose three of your pieces; each moves as an amazon (a queen that also leaps like a knight) for your next 2 turns, and the first chosen piece cannot be captured for your opponent's next turn.",
       category: "movement",
       flavor: "Monuments that march.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
@@ -409,7 +605,7 @@ export const TIER9: Buff[] = [
       kind: "activated",
       spendOnUse: false,
       // One activation only: the titans are chosen once (re-activating would
-      // also stack extra permanent shield effects).
+      // also stack extra shield effects and reset the timer).
       targets: (inst, api, picks) =>
         picks.length >= 3 || inst.state.sqs != null
           ? null
@@ -423,9 +619,12 @@ export const TIER9: Buff[] = [
         const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
         if (!sqs.length) return;
         inst.state.sqs = sqs;
-        addEffect(api, { kind: "shield", owner: api.me, squares: [...sqs], turns: 5 });
+        inst.state.turns = 2;
+        // Only the first titan is shielded, and only for one opponent turn.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sqs[0]], turns: 1 });
       },
       augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
         const sqs = inst.state.sqs as Square[] | undefined;
         if (!sqs?.length) return;
         for (const sq of sqs) {
@@ -437,24 +636,29 @@ export const TIER9: Buff[] = [
             ]);
         }
       },
-      onMovePlayed: (inst, move) => {
+      onMovePlayed: (inst, move, api) => {
         const sqs = inst.state.sqs as Square[] | undefined;
-        if (!sqs?.length) return;
-        const next = sqs
-          .map((sq) => {
-            if (move.capturedSquare === sq && move.from !== sq) return null;
-            if (move.from === sq) return move.to;
-            if (move.to === sq && move.from !== sq) return null;
-            return sq;
-          })
-          .filter((s): s is Square => s != null);
-        inst.state.sqs = next;
-        if (!next.length) inst.spent = true;
+        if (sqs?.length) {
+          const next = sqs
+            .map((sq) => {
+              if (move.capturedSquare === sq && move.from !== sq) return null;
+              if (move.from === sq) return move.to;
+              if (move.to === sq && move.from !== sq) return null;
+              return sq;
+            })
+            .filter((s): s is Square => s != null);
+          inst.state.sqs = next;
+          if (!next.length) {
+            inst.spent = true;
+            return;
+          }
+        }
+        if (inst.state.turns != null) tickTurns(inst, move, api.me);
       },
       status: (inst) => {
         const sqs = inst.state.sqs as Square[] | undefined;
         if (!sqs?.length) return "activate to choose three pieces";
-        return `titans at ${sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ")}`;
+        return `titans at ${sqs.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ")}, ${turnsLeft(inst)} of your turns left`;
       },
     },
   ),
@@ -510,41 +714,59 @@ export const TIER10: Buff[] = [
       icon: "Skull",
       name: "Oblivion",
       description:
-        "Every one of your opponent's pieces except the king is destroyed, every piece you have ever lost returns to your half, and your whole army cannot be captured for your opponent's next turn. Only their lone king is left standing against your full force.",
+        "Destroy up to five enemy pieces other than the king, and restore up to five of your captured pieces onto empty squares in your half from your back rank outward. Neither side gains immunity.",
       category: "attack",
       flavor: "Nothing left to defend. Everything left to lose.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activatedSimple((_inst, api) => {
-      // Wipe the enemy army (never the king: removing pieces only frees squares
-      // around their king, so it is never stranded).
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        api.removePiece(sq);
-      }
-      // Raise your entire graveyard back onto the board, filling your half from
-      // the back rank outward and spilling across the board if it overflows.
-      const spots = backfillSpots(api);
-      spots.push(
-        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
-          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
-        ),
-      );
-      const order: PieceType[] = ["q", "r", "b", "n", "p"];
-      for (const type of order) {
-        let left = revivable(api, type);
-        while (left > 0 && spots.length > 0) {
-          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
-          if (at < 0) break;
-          const sq = spots.splice(at, 1)[0];
-          api.place(sq, type, api.me);
-          markRevived(api, type);
-          left--;
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 5
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to destroy (${picks.length + 1}/5)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        // Destroy the chosen enemy pieces (never the king).
+        for (const k of picks) {
+          if (
+            k.square != null &&
+            api.board.pieces[k.square]?.color === api.opp &&
+            api.board.pieces[k.square]?.type !== "k"
+          ) {
+            api.removePiece(k.square);
+          }
         }
-      }
-      // And nothing can touch you while you close it out.
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
-    }),
+        // Restore up to five captured pieces, filling your half from the back
+        // rank outward and spilling across the board if it overflows.
+        const spots = backfillSpots(api);
+        spots.push(
+          ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
+            (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
+          ),
+        );
+        const order: PieceType[] = ["q", "r", "b", "n", "p"];
+        let restored = 0;
+        for (const type of order) {
+          if (restored >= 5) break;
+          let left = revivable(api, type);
+          while (left > 0 && spots.length > 0 && restored < 5) {
+            const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+            if (at < 0) break;
+            const sq = spots.splice(at, 1)[0];
+            api.place(sq, type, api.me);
+            markRevived(api, type);
+            left--;
+            restored++;
+          }
+        }
+      },
+    ),
   ),
 
   // Grand Army: a whole fresh force materializes - a new queen, two rooks, two
@@ -557,29 +779,15 @@ export const TIER10: Buff[] = [
       icon: "Castle",
       name: "Grand Army",
       description:
-        "A whole fresh army answers your call: a new queen, two rooks, two bishops and two knights appear on empty squares in your half, and every remaining empty square in your half fills with a new pawn. It spills onto the rest of the board only if your half runs out of room.",
+        "A fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns.",
       category: "pieces",
       flavor: "Rank upon rank upon rank, out of nowhere.",
     },
-    activatedSimple((_inst, api) => {
-      const spots = backfillSpots(api);
-      spots.push(
-        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
-          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
-        ),
-      );
-      // Seat the heavy force first (no pawn-rank guard needed for these).
-      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
-      for (const type of force) {
-        const sq = spots.shift();
-        if (sq == null) break;
-        api.place(sq, type, api.me);
-      }
-      // Then flood the remaining legal squares of YOUR HALF with fresh pawns
-      // (the heavy force may spill past the river, the pawn tide never does).
-      for (const sq of spots) {
-        if (pawnRankOk(sq) && inHalf(api.me, sq)) api.place(sq, "p", api.me);
-      }
+    instant((_inst, api) => {
+      grantInventory(api, "q");
+      grantInventory(api, "r");
+      grantInventory(api, "b");
+      grantInventory(api, "n");
     }),
   ),
 
@@ -595,7 +803,7 @@ export const TIER10: Buff[] = [
       icon: "Crown",
       name: "Ascendancy",
       description:
-        "For your next 3 turns every one of your pieces except the king moves and captures as an amazon (a queen that also leaps like a knight), and your king cannot be captured.",
+        "Choose up to four of your pieces other than the king; each moves and captures as an amazon (a queen that also leaps like a knight) for your next 2 turns, and your king cannot be captured for your opponent's next turn.",
       category: "movement",
       flavor: "Ascend, all of you.",
       fx: { motif: "empower", pieces: "all", moveAs: "q", self: true },
@@ -603,26 +811,53 @@ export const TIER10: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      effect: (inst, api) => {
-        // One activation only; re-use is a guarded no-op.
-        if (inst.state.turns != null) return;
-        inst.state.turns = 3;
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
+      // One activation only: the ascendant pieces are chosen once.
+      targets: (inst, api, picks) =>
+        picks.length >= 4 || inst.state.sqs != null
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to ascend (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (!sqs.length) return;
+        inst.state.sqs = sqs;
+        inst.state.turns = 2;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
       },
       augmentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0) return;
-        for (const sq of mySquares(api.board, api.me)) {
-          if (api.board.pieces[sq]!.type === "k") continue;
-          addNovel(moves, amazonMoves(api, sq, inst.id));
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs?.length) return;
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.me && p.type !== "k") addNovel(moves, amazonMoves(api, sq, inst.id));
         }
       },
       onMovePlayed: (inst, move, api) => {
-        if (inst.state.turns == null) return;
-        tickTurns(inst, move, api.me);
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (sqs?.length) {
+          const next = sqs
+            .map((sq) => {
+              if (move.capturedSquare === sq && move.from !== sq) return null;
+              if (move.from === sq) return move.to;
+              if (move.to === sq && move.from !== sq) return null;
+              return sq;
+            })
+            .filter((s): s is Square => s != null);
+          inst.state.sqs = next;
+        }
+        if (inst.state.turns != null) tickTurns(inst, move, api.me);
       },
       status: (inst) =>
-        inst.state.turns == null
-          ? "activate: your whole army moves as amazons"
+        inst.state.sqs == null
+          ? "activate: choose up to four pieces to move as amazons"
           : `ascendant: ${turnsLeft(inst)} of your turns left`,
     },
   ),
@@ -639,29 +874,38 @@ export const TIER10: Buff[] = [
       icon: "Swords",
       name: "Total War",
       description:
-        "Every enemy piece except the king is destroyed, a fresh force of a queen, two rooks, two bishops and two knights lands in your half, and your whole army cannot be captured for your opponent's next turn.",
+        "Destroy up to five enemy pieces other than the king, then a fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns.",
       category: "attack",
       flavor: "Everything, everywhere, all at once.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activatedSimple((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        api.removePiece(sq);
-      }
-      const spots = backfillSpots(api);
-      spots.push(
-        ...emptySquares(api.board, (sq) => !inHalf(api.me, sq)).sort(
-          (a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b,
-        ),
-      );
-      const force: PieceType[] = ["q", "r", "r", "b", "b", "n", "n"];
-      for (const type of force) {
-        const sq = spots.shift();
-        if (sq == null) break;
-        api.place(sq, type, api.me);
-      }
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 1 });
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 5
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to destroy (${picks.length + 1}/5)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (
+            k.square != null &&
+            api.board.pieces[k.square]?.color === api.opp &&
+            api.board.pieces[k.square]?.type !== "k"
+          ) {
+            api.removePiece(k.square);
+          }
+        }
+        grantInventory(api, "q");
+        grantInventory(api, "r");
+        grantInventory(api, "b");
+        grantInventory(api, "n");
+      },
+    ),
   ),
 ];

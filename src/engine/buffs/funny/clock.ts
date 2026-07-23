@@ -10,7 +10,7 @@
 // untimed) but whose board half, a Groundhog-style forced re-move, still bites.
 
 import { Buff, Square } from "./shared";
-import { card, instant, tickTurns, turnsLeft } from "./shared";
+import { addEffect, card, instant, tickTurns, turnsLeft } from "./shared";
 
 export const FUNNY_CLOCK: Buff[] = [
   card(
@@ -20,7 +20,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Time Thief",
       description:
         "Pick your opponent's pocket: steal half of the time left on their clock (up to 75 seconds) and add it to your own.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Tick tock, that's mine now.",
     },
@@ -34,7 +34,7 @@ export const FUNNY_CLOCK: Buff[] = [
       icon: "AlarmClock",
       name: "Deadline",
       description: "Every deliverable now costs overtime: your opponent's next 3 captures each cost them 15 seconds off the clock.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "The report was due yesterday.",
     },
@@ -100,13 +100,24 @@ export const FUNNY_CLOCK: Buff[] = [
       id: "overtime_whistle",
       icon: "Bell",
       name: "Overtime Whistle",
-      description: "Blow the whistle for overtime: add 30 seconds to your own clock.",
+      description: "Blow the whistle for overtime: add 35 seconds to your own clock, flag the last enemy piece that moved until your opponent replies, and gain a draft reroll. In untimed games only the flag and the reroll apply.",
       tier: 3,
       category: "tempo",
       flavor: "We are not done yet.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 30 });
+      api.adjustClock({ addSelfSec: 35 });
+      // The clock gain does nothing in an untimed game, so always land two
+      // effects that do not need a clock: mark the last enemy mover (a purely
+      // visual flag that clears once they reply) and hand back a draft reroll.
+      const hist = api.board.history;
+      for (let i = hist.length - 1; i >= 0; i--) {
+        if (hist[i].color === api.opp) {
+          addEffect(api, { kind: "strike", squares: [hist[i].to], owner: api.me, turns: 1 });
+          break;
+        }
+      }
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   card(
@@ -116,7 +127,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Buzzer Beater",
       description:
         "Steal a buzzer-beating 20 seconds off your opponent's clock and put it on yours.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Off the glass at the buzzer.",
     },
@@ -131,7 +142,7 @@ export const FUNNY_CLOCK: Buff[] = [
       name: "Computer Virus",
       description:
         "Upload a virus to your opponent's clock. At the end of each of their next 5 turns it drains 8 seconds from their time. The clock floor still stops it from flagging them instantly.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Your files are encrypted. Also your clock.",
     },

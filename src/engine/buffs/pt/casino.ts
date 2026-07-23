@@ -34,6 +34,11 @@ import {
   addEffect,
   mySquares,
   grantInventory,
+  FILE,
+  RANK,
+  SQ,
+  inBoard,
+  pawnRankOk,
 } from "../funny/shared";
 import { grantRandomTier9 } from "../helpers";
 
@@ -110,7 +115,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Slot Machine",
       description:
         "Pull the arm and watch three reels spin. Match all three symbols for the jackpot: a rook and a knight drop into your pocket to place later, plus 45 seconds. Match two for a knight in your pocket. Match none and the machine eats your weakest piece.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       flavor: "One more pull, it is due to hit.",
     },
@@ -144,7 +149,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Roulette Wheel",
       description:
         "You put it all on red and the croupier spins. Land red for a knight in your pocket and 30 seconds. Land black and you lose your weakest piece. Land the green zero and the house cleans you out: lose your weakest piece and your next draft is skipped.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       flavor: "Red comes up. It has to, eventually.",
     },
@@ -177,7 +182,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Blackjack",
       description:
         "The dealer feeds you cards until your hand reaches seventeen, then you stand. Hit twenty one for a rook in your pocket and 45 seconds. Stand on seventeen to twenty for a minor piece in your pocket. Bust over twenty one and the house takes your weakest piece while you cool off for two turns.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       flavor: "Hit me. No, once more.",
     },
@@ -213,7 +218,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       icon: "Ticket",
       name: "Scratch Card",
       description:
-        "Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 30 seconds. Three blanks and the dud ticket costs you your weakest pawn.",
+        "Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 35 seconds, a free forward pawn step when one is open, and a draft reroll. Three blanks and the dud ticket costs you your weakest pawn.",
       tier: 3,
       category: "pieces",
       flavor: "This is the lucky one, I can feel it.",
@@ -226,8 +231,23 @@ export const PT_CASINO_CARDS: Buff[] = [
         grantInventory(api, "n", 1);
         inst.state.outcome = "Three matching symbols: a knight to your pocket";
       } else if (a === b || b === c || a === c) {
-        api.adjustClock({ addSelfSec: 30 });
-        inst.state.outcome = "Two matching symbols: 30 seconds";
+        // The printed clock gain is bumped by 5 seconds (30 to 35). Untimed play
+        // cannot be detected here, so the untimed consolation (a free forward
+        // pawn step and a draft reroll) is paid unconditionally: harmless
+        // garnish when the clock swing already landed, real value when it did not.
+        api.adjustClock({ addSelfSec: 35 });
+        const dir = api.me === "w" ? 1 : -1;
+        const step = mySquares(api.board, api.me, "p")
+          .map((sq) => ({ sq, to: SQ(FILE(sq), RANK(sq) + dir) }))
+          .find(
+            (o) =>
+              inBoard(FILE(o.sq), RANK(o.sq) + dir) &&
+              !api.board.pieces[o.to] &&
+              pawnRankOk(o.to),
+          );
+        if (step) api.relocate(step.sq, step.to);
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        inst.state.outcome = "Two matching symbols: 35 seconds, a pawn step, and a reroll";
       } else {
         const took = payTheHouse(api, ["p"]);
         inst.state.outcome = `Dud ticket: ${took}`;
@@ -247,7 +267,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Let It Ride",
       description:
         "Flip a coin and let your winnings ride. Each heads bumps the prize and flips again, up to three. One heads pays 40 seconds. Two heads pays a knight in your pocket. Three heads pays a knight and a bishop plus 20 seconds. Tails on the first flip loses the ante, your weakest pawn.",
-      tier: 4,
+      tier: 2,
       category: "pieces",
       flavor: "Let it ride, let it ride.",
     },
@@ -284,7 +304,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Loot Box",
       description:
         "Pay to crack the crate and pray to the drop table. Legendary (rare) grants a random apex card. Epic grants a bishop and 30 seconds. Rare grants a knight. Common grants a pawn. But almost one crate in three is a mimic that bites off your weakest piece and leaves you shaken for two turns.",
-      tier: 7,
+      tier: 5,
       category: "pieces",
       flavor: "The next one is guaranteed legendary. Probably.",
     },
@@ -323,7 +343,7 @@ export const PT_CASINO_CARDS: Buff[] = [
       name: "Poker Bluff",
       description:
         "You shove all in holding nothing and stare them down. Roughly forty five times in a hundred they fold and you rake one of their pieces into the pot along with 20 seconds. The rest of the time they call your bluff, and you pay your weakest piece and take a two turn walk of shame.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       flavor: "I had it the whole time. Obviously.",
     },

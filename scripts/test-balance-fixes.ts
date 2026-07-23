@@ -62,7 +62,8 @@ function play(g: NerfGame, uci: string): NerfGame {
   check(activateBuff(g, "w", idx, [{ square: d4 }]) === true, "circle activates onto d4");
   const inst = g.buffs!.players.w.buffs[idx];
   check(g.board.pieces[d4]?.type === "q" && g.board.pieces[d4]?.color === "w", "an Amazon (queen piece) stands on d4");
-  check(inst.state.sq === d4 && !inst.spent, "the circle stays bound to her (permanent, no despawn timer)");
+  check(inst.state.sq === d4 && !inst.spent, "the circle stays bound to her while she serves");
+  check(inst.state.turns === 4, "she serves for four owner turns (balance pass timer)");
   // Amazon movement: queen slides plus knight leaps. From d4 a knight leap to
   // c6... is a black knight square; use the empty leap b3? d4 -> b3 is (-2,-1):
   // a knight leap onto an empty square, never a queen slide of one step.
@@ -76,7 +77,16 @@ function play(g: NerfGame, uci: string): NerfGame {
   check(!!cap, "black knight can capture the Amazon");
   if (cap) {
     g = playMove(g, cap);
-    check(!g.board.pieces[d4], "the killer is dragged through the circle (square left empty)");
+    // Balance pass: the killer now survives, frozen in place for one of their
+    // turns, instead of being dragged through and removed.
+    check(
+      g.board.pieces[d4]?.type === "n" && g.board.pieces[d4]?.color === "b",
+      "the killer survives the circle (frozen, not destroyed)",
+    );
+    check(
+      (g.buffs!.effects ?? []).some((e) => e.kind === "freeze" && e.sq === d4 && e.owner === "b"),
+      "the killer is frozen in place by the closing circle",
+    );
     const inst2 = g.buffs!.players.w.buffs[idx];
     check(inst2.spent === true, "the circle closes once she falls");
   }

@@ -130,15 +130,36 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_heads_or_tails",
       name: "Heads or Tails",
       description:
-        "Flip the coin, half and half: heads you immediately take an extra move; tails nothing happens and the coin laughs at you.",
+        "Call the coin or take the sure thing. Gamble: flip two coins at 50% each, heads on either wins an extra move right now (75% overall), both tails and nothing. Or skip the flip to reveal the tier of your opponent's next draft offer and gain one reroll.",
       tier: 1,
       category: "tempo",
       icon: "CircleDollarSign",
       flavor: "Best out of one.",
     },
-    {
-      ...activatedSimple((inst, api) => {
-        const heads = api.rng.next() < 0.5;
+    activated(
+      (inst, api, picks) => {
+        if (inst.state.result != null || picks.length > 0) return null;
+        const k = kingSquare(api.board, api.me);
+        return {
+          kind: "square",
+          label:
+            "Flip two coins and press Done, or click your king to skip the flip: reveal your opponent's next draft tier and gain a reroll",
+          squares: k != null ? [k] : [],
+          finishable: true,
+        };
+      },
+      (inst, api, picks) => {
+        if (inst.state.result != null) return;
+        if (picks.length > 0) {
+          inst.state.result = "intel";
+          api.mine.flags.seeOppTier = true;
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          return;
+        }
+        // Two independent flips; keep the better (heads = the jackpot extra move).
+        const a = api.rng.next() < 0.5;
+        const b = api.rng.next() < 0.5;
+        const heads = a || b;
         inst.state.result = heads ? "heads" : "tails";
         if (heads) {
           api.bs.extraMoves[api.me] += 1;
@@ -146,9 +167,9 @@ export const OVERHAUL_GAMBLING: Buff[] = [
           const k = kingSquare(api.board, api.me);
           if (k != null) flashSquares(api, [k], true);
         }
-      }),
-      freeAction: true,
-    },
+      },
+      { freeAction: true },
+    ),
   ),
   // 203. Claw Machine (T1) -----------------------------------------------------------
   card(
@@ -184,7 +205,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Raffle Ticket",
       description:
         "For your next 3 turns the drum spins after your move: 1 chance in 3 each time that a random pawn of yours marches a free square forward.",
-      tier: 2,
+      tier: 1,
       category: "tempo",
       icon: "Ticket",
       flavor: "Winners are drawn hourly. Pawns are drawn onward.",
@@ -242,7 +263,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Loaded Dice",
       description:
         "Pick a pawn and roll two dice. Seven or more: it advances a square. Boxcars (twelve): it advances two. Under seven: the loaded dice grant one free re-roll before giving up.",
-      tier: 2,
+      tier: 1,
       category: "movement",
       icon: "Dices",
       flavor: "They only cheat a little. For you.",
@@ -352,7 +373,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Three-Card Monte",
       description:
         "Follow the queen, one chance in three: find her and you win a free reroll plus a look at your opponent's next draft offer. Miss and the dealer tips his hat.",
-      tier: 3,
+      tier: 2,
       category: "draft",
       icon: "Layers",
       flavor: "The hand is quicker than the eye. The odds are printed anyway.",
@@ -372,7 +393,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_underdog_parlay",
       name: "Underdog Parlay",
       description:
-        "Two legs: put the enemy king under attack within 5 of your turns AND capture within 3. Both hit: a knight joins your back rank. One: a pawn joins your second rank. Neither: your opponent gains a free reroll.",
+        "Two legs: put the enemy king under attack within 5 of your turns AND capture within 3. Both hit: a knight joins your back rank. One: a pawn joins your second rank. Neither: the parlay busts and nothing happens.",
       tier: 3,
       category: "attack",
       icon: "TrendingUp",
@@ -404,7 +425,12 @@ export const OVERHAUL_GAMBLING: Buff[] = [
             const hits = (inst.state.check ? 1 : 0) + (inst.state.cap ? 1 : 0);
             if (hits === 2) spawnRandom(api, "n", emptyHomeRank(api, 0));
             else if (hits === 1) spawnRandom(api, "p", emptyHomeRank(api, 1));
-            else api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+            else {
+              // The reroll this leg used to hand the opponent has been removed:
+              // a total miss now simply busts with no payout to either side.
+              const k = kingSquare(api.board, api.me);
+              if (k != null) flashSquares(api, [k], true);
+            }
             inst.state.result = hits;
             inst.spent = true;
           }
@@ -423,7 +449,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "River Card",
       description:
         "You and your opponent are each dealt a hidden card, ace low king high. Higher card wins: the winner steals a random enemy pawn, which walks across and defects. A tie splits the pot and nothing happens.",
-      tier: 4,
+      tier: 3,
       category: "attack",
       icon: "Diamond",
       flavor: "The river forgives nothing.",
@@ -456,7 +482,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Piece Roulette",
       description:
         "Bet one of your pawns on the wheel: 45% it comes back a knight, 10% it hits the green zero and comes back a rook, 25% nothing, 20% the house takes it.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "LifeBuoy",
       flavor: "Round and round the little pawn goes.",
@@ -498,7 +524,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Jackpot Pawn",
       description:
         "Fit one pawn with slot reels for 5 of your turns: every time it advances, the reels spin: 20% it banks a king-step charge it can spend later, 3% JACKPOT, it promotes to queen on the spot.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       icon: "Coins",
       flavor: "Ka-chunk. Ka-chunk. Believe.",
@@ -583,7 +609,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Double Down Draft",
       description:
         "Push your chips in, half and half: 50% you take BOTH cards of your next draft, 50% your next draft is skipped entirely while the dealer smiles.",
-      tier: 5,
+      tier: 6,
       category: "draft",
       icon: "Copy",
       flavor: "The dealer knocks twice. So does your heart.",
@@ -602,7 +628,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Crash Game",
       description:
         "Strap a pawn to the rocket and let it ride: 30% it lands with a free sidestep, 25% it comes back a knight, 20% a knight plus a draft reroll, 10% it comes back a ROOK, 15% the rocket crashes and the pawn burns up.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "Rocket",
       flavor: "It is not the fall that gets you. It is the multiplier.",
@@ -828,7 +854,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Seven Cases",
       description:
         "Seven cases, one opens at random: two hold pawns, one a knight, one a bishop, one a rook, one a full intelligence packet (a reroll plus your opponent's next offer revealed), and one holds absolutely nothing.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "BriefcaseBusiness",
       flavor: "The banker is not on the phone. The banker is the phone.",
@@ -858,7 +884,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Martingale",
       description:
         "Flip until you miss, half odds each flip, ladder capped at four: one win pays a pawn, two pays two pawns, three a knight and a pawn, four a rook and a knight. You keep the rung you reached, but going bust on the very first flip stuns the last piece you moved for a turn.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       icon: "Repeat",
       flavor: "The strategy is flawless. The bankroll is a pawn.",
@@ -952,7 +978,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Break the Bank",
       description:
         "Run the heist: three laser grids, 60% each to slip through. Three clean: your best captured piece returns AND a random tier 6 card joins your hand. Two: the tier 6 card. One: a consolation pawn, but a random piece of yours sits jailed for 2 turns. Zero: two of your pieces are jailed for 2 turns.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Vault",
       flavor: "The plan had one job. The plan is in custody.",
@@ -1099,46 +1125,88 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_cursed_dice",
       name: "Cursed Dice",
       description:
-        "Force your opponent to roll the bone dice: 40% one random enemy piece freezes for a turn, 35% a random enemy pawn stumbles back a square, 25% the dice grin and nothing happens.",
+        "Force your opponent to roll the bone dice: 40% one random enemy piece is cursed to freeze for a turn, but it gets one free move to escape first and freezes wherever that move leaves it (or in place if it does not move). 35% a random enemy pawn stumbles back a square. 25% the dice grin and nothing happens.",
       tier: 3,
       category: "hex",
       icon: "Dices",
       flavor: "Carved from something that still remembers being alive.",
     },
-    activatedSimple((inst, api) => {
-      const r = api.rng.next();
-      if (r < 0.4) {
-        inst.state.result = "freeze";
-        const targets = mySquares(api.board, api.opp).filter(
-          (s) => api.board.pieces[s]!.type !== "k",
-        );
-        const sq = pickRng(api, targets);
-        if (sq != null) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
-      } else if (r < 0.75) {
-        inst.state.result = "stumble";
-        const back = fwdOf(api.opp) * -1;
-        const pawns = mySquares(api.board, api.opp, "p").filter((sq) => {
-          const to = sq + back;
-          return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
-        });
-        const sq = pickRng(api, pawns);
-        if (sq != null) {
-          api.relocate(sq, sq + back);
-          flashSquares(api, [sq + back], true);
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        if (inst.state.result != null) return;
+        const r = api.rng.next();
+        if (r < 0.4) {
+          // Mark a random enemy piece. The freeze is held back one opponent
+          // move so that piece gets one legal escape move before it bites.
+          const targets = mySquares(api.board, api.opp).filter(
+            (s) => api.board.pieces[s]!.type !== "k",
+          );
+          const sq = pickRng(api, targets);
+          if (sq == null) {
+            inst.state.result = "grin";
+            inst.spent = true;
+            return;
+          }
+          inst.state.result = "freeze";
+          inst.state.escapeSq = sq;
+          flashSquares(api, [sq], true);
+        } else if (r < 0.75) {
+          inst.state.result = "stumble";
+          const back = fwdOf(api.opp) * -1;
+          const pawns = mySquares(api.board, api.opp, "p").filter((sq) => {
+            const to = sq + back;
+            return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
+          });
+          const sq = pickRng(api, pawns);
+          if (sq != null) {
+            api.relocate(sq, sq + back);
+            flashSquares(api, [sq + back], true);
+          }
+          inst.spent = true;
+        } else {
+          inst.state.result = "grin";
+          const k = kingSquare(api.board, api.opp);
+          if (k != null) flashSquares(api, [k], true);
+          inst.spent = true;
         }
-      } else {
-        inst.state.result = "grin";
-        const k = kingSquare(api.board, api.opp);
-        if (k != null) flashSquares(api, [k], true);
-      }
-    }),
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.result !== "freeze") return;
+        const esc = inst.state.escapeSq as Square | undefined;
+        if (esc == null) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color !== api.opp) {
+          // The cursed piece was captured or removed before it could resolve.
+          const p = api.board.pieces[esc];
+          if (!p || p.color !== api.opp) inst.spent = true;
+          return;
+        }
+        // The opponent has spent their one move: if they used it on the cursed
+        // piece it escaped (freeze follows to its new square); otherwise the
+        // freeze lands in place. Either way the duration stays one turn.
+        const freezeSq = move.from === esc ? move.to : esc;
+        const p = api.board.pieces[freezeSq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          addEffect(api, { kind: "freeze", sq: freezeSq, owner: api.opp, turns: 1, skin: "stone" });
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.result === "freeze" && !inst.spent
+          ? "a cursed piece may escape once before it freezes"
+          : null,
+    },
   ),
   card(
     {
       id: "gm_rigged_raffle",
       name: "Rigged Raffle",
       description:
-        "Enter your opponent in a raffle they never asked to join: for their next 3 turns, 1 chance in 3 after each of their moves that the piece they just moved is glued in place for a turn.",
+        "Enter your opponent in a raffle they never asked to join: their next move passes untouched, then for their following 3 turns, 1 chance in 3 after each of their moves that the piece they just moved is glued in place for a turn.",
       tier: 5,
       category: "hex",
       icon: "Ticket",
@@ -1148,9 +1216,16 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 3;
+        inst.state.delay = 1;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
+        // Delay activation: the opponent's next move passes before the raffle
+        // starts drawing.
+        if (((inst.state.delay as number) ?? 0) > 0) {
+          inst.state.delay = ((inst.state.delay as number) ?? 0) - 1;
+          return;
+        }
         if (api.rng.next() < 1 / 3) {
           const p = api.board.pieces[move.to];
           if (p && p.color === api.opp && p.type !== "k") {
@@ -1161,7 +1236,10 @@ export const OVERHAUL_GAMBLING: Buff[] = [
         inst.state.turns = t;
         if (t <= 0) inst.spent = true;
       },
-      status: (inst) => `${turnsLeft(inst)} of their turns in the raffle`,
+      status: (inst) =>
+        ((inst.state.delay as number) ?? 0) > 0
+          ? "the raffle drum warms up"
+          : `${turnsLeft(inst)} of their turns in the raffle`,
     },
   ),
   card(
@@ -1170,7 +1248,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Consolation Scratcher",
       description:
         "Scratch it: 50% a random pawn of yours advances a free square, 30% you gain a draft reroll, 20% dust and a lovely sentiment.",
-      tier: 2,
+      tier: 1,
       category: "tempo",
       boon: true,
       icon: "Eraser",
@@ -1232,7 +1310,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       id: "gm_the_last_bet",
       name: "The Last Bet",
       description:
-        "Push your queen across the felt: 70% she returns empowered, leaping like a knight as well as sliding, for 6 of your turns. 30% the back room keeps her for 2 of your turns, then returns her untouched to her square, or the nearest empty one.",
+        "Push your queen across the felt: 70% she returns empowered, adding knight leaps to her slides for 6 of your turns, but those knight leaps cannot capture. 30% the back room keeps her for 2 of your turns, then returns her untouched to her square, or the nearest empty one.",
       tier: 8,
       category: "pieces",
       icon: "Gem",
@@ -1275,7 +1353,12 @@ export const OVERHAUL_GAMBLING: Buff[] = [
         if (sq == null || ((inst.state.turns as number) ?? 0) <= 0) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "q") return;
-        addNovel(moves, leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id));
+        // The granted knight leaps cannot capture: drop any leap that lands on
+        // an enemy piece, leaving only the empty-square hops.
+        addNovel(
+          moves,
+          leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id).filter((m) => m.captured == null),
+        );
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.state.result === "empowered") {

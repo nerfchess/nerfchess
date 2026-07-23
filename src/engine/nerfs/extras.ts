@@ -33,7 +33,7 @@ export const TIMID: Nerf = db({
   name: "Timid",
   description: "Your pieces can't capture an enemy worth more than the capturing piece, unless that capturing piece is itself under enemy attack.",
   flavor: "Punch up? Only when cornered.",
-  tier: 3,
+  tier: 4,
   icon: "rabbit",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -50,20 +50,22 @@ export const TIMID: Nerf = db({
 export const KINGFISHER: Nerf = db({
   id: "kingfisher",
   name: "Kingfisher",
-  description: "When your king can capture, it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
+  description: "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
   flavor: "The kingfisher always dives for the biggest fish.",
   tier: 4,
   icon: "crown",
   implemented: true,
   // Distinct from escort_mission (king must take, any target): the kingfisher
   // is forced onto the HIGHEST-value king capture available.
-  filterMoves: (moves) => {
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // activation delayed until after move 3
     const kingCaps = moves.filter((m) => m.piece === "k" && m.captured);
     if (!kingCaps.length) return moves;
     const best = Math.max(...kingCaps.map((m) => (m.captured ? PIECE_VAL[m.captured] : 0)));
     return kingCaps.filter((m) => (m.captured ? PIECE_VAL[m.captured] : 0) === best);
   },
-  hint: (_s, _c, legal) => {
+  hint: (_s, ctx, legal) => {
+    if (ctx.moveNumber < 3) return null;
     const kc = legal.filter((m) => m.piece === "k" && m.captured);
     if (!kc.length) return null;
     return {
@@ -79,7 +81,7 @@ export const MAGNETIC_KINGS: Nerf = db({
   name: "Magnetic Kings",
   description: "When you move your king, it must not end up farther from the enemy king than it started (equal distance is allowed). Moving any other piece is unrestricted.",
   flavor: "An inexorable pull.",
-  tier: 5,
+  tier: 6,
   icon: "magnet",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -103,7 +105,7 @@ export const PAWN_DUTY: Nerf = db({
   name: "Pawn Duty",
   description: "Every third turn, you must move a pawn.",
   flavor: "Discipline above all.",
-  tier: 3,
+  tier: 4,
   icon: "footprints",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -117,31 +119,45 @@ export const PAWN_DUTY: Nerf = db({
 export const VAMPIRIC: Nerf = db({
   id: "vampiric",
   name: "Vampiric",
-  description: "You can only capture on dark squares.",
+  description: "You can only capture on dark squares, starting on your second move. The forbidden light squares are shown from the start.",
   flavor: "Sunlight burns.",
   tier: 4,
   icon: "moon",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 0),
+  filterMoves: (moves, _s, ctx) =>
+    ctx.moveNumber < 1
+      ? moves
+      : moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 0),
+  visual: () => {
+    const light: number[] = [];
+    for (let sq = 0; sq < 64; sq++) if ((FILE(sq) + RANK(sq)) % 2 === 1) light.push(sq);
+    return { bannedSquares: light };
+  },
 });
 
 export const SOLAR_FLARE: Nerf = db({
   id: "solar_flare",
   name: "Solar Flare",
-  description: "You can only capture on light squares.",
+  description: "You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start.",
   flavor: "Daylight, only.",
   tier: 4,
   icon: "sun",
   implemented: true,
-  filterMoves: (moves) =>
-    moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 1),
+  filterMoves: (moves, _s, ctx) =>
+    ctx.moveNumber < 1
+      ? moves
+      : moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 1),
+  visual: () => {
+    const dark: number[] = [];
+    for (let sq = 0; sq < 64; sq++) if ((FILE(sq) + RANK(sq)) % 2 === 0) dark.push(sq);
+    return { bannedSquares: dark };
+  },
 });
 
 export const CONSTRICTION: Nerf = db({
   id: "constriction",
   name: "Constriction",
-  description: "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks.",
+  description: "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
   flavor: "The walls close in.",
   tier: 6,
   icon: "minimize",
@@ -172,7 +188,7 @@ export const CONSTRICTION: Nerf = db({
 export const MIRROR_MARCH: Nerf = db({
   id: "mirror_march",
   name: "Mirror March",
-  description: "Your move must go the same file direction (left or right) as your opponent's last move.",
+  description: "Your move must go the same file direction (left or right) as your opponent's last move, except a piece already on the edge file in that direction may move any way.",
   flavor: "Copycat.",
   tier: 5,
   icon: "git-compare",
@@ -183,7 +199,11 @@ export const MIRROR_MARCH: Nerf = db({
     const dx = FILE(last.to) - FILE(last.from);
     if (dx === 0) return moves; // no constraint on perfectly straight opponent moves
     const sign = Math.sign(dx);
-    const same = moves.filter((m) => Math.sign(FILE(m.to) - FILE(m.from)) === sign);
+    const same = moves.filter((m) => {
+      if (Math.sign(FILE(m.to) - FILE(m.from)) === sign) return true;
+      // a piece already on the edge file in the forced direction may leave normally
+      return sign < 0 ? FILE(m.from) === 0 : FILE(m.from) === 7;
+    });
     return same.length ? same : moves;
   },
 });
@@ -193,7 +213,7 @@ export const RUSTY_KNIGHTS: Nerf = db({
   name: "Rusty Knights",
   description: "Knights can only move once every other turn.",
   flavor: "Their joints creak.",
-  tier: 2,
+  tier: 3,
   icon: "horse",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -207,7 +227,7 @@ export const CLERGY: Nerf = db({
   name: "Clergy",
   description: "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
   flavor: "The faith does not waver.",
-  tier: 2,
+  tier: 3,
   icon: "cross",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -223,7 +243,7 @@ export const HEAVY_BOOTS: Nerf = db({
   name: "Heavy Boots",
   description: "All non-pawn moves are distance ≤ 3.",
   flavor: "Lift, drag, place.",
-  tier: 3,
+  tier: 4,
   icon: "boot",
   implemented: true,
   filterMoves: (moves) =>
@@ -235,7 +255,7 @@ export const GOLDFISH: Nerf = db({
   name: "Goldfish",
   description: "You can't move a piece you moved 3 turns ago.",
   flavor: "Wait, what was I doing?",
-  tier: 3,
+  tier: 4,
   icon: "fish",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -249,7 +269,7 @@ export const GOLDFISH: Nerf = db({
 export const ASCETIC: Nerf = db({
   id: "ascetic",
   name: "Ascetic",
-  description: "You can capture at most one piece per piece type.",
+  description: "You can capture at most one piece per piece type. If no move complies, your king may move instead.",
   flavor: "One vice each.",
   tier: 6,
   icon: "ban",
@@ -259,7 +279,11 @@ export const ASCETIC: Nerf = db({
     for (const m of ctx.board.history) {
       if (m.color === ctx.me && m.captured) eaten.add(m.captured);
     }
-    return moves.filter((m) => !m.captured || m.captured === "k" || !eaten.has(m.captured));
+    const compliant = moves.filter((m) => !m.captured || m.captured === "k" || !eaten.has(m.captured));
+    if (compliant.length) return compliant;
+    // no compliant move exists: fall back to a king move so you are not stuck
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -268,7 +292,7 @@ export const PAWN_STORM: Nerf = db({
   name: "Pawn Storm",
   description: "If your last move wasn't a pawn move, you must move a pawn (if possible).",
   flavor: "Send in the infantry.",
-  tier: 5,
+  tier: 6,
   icon: "wind",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -283,7 +307,7 @@ export const ROYAL_GUARD: Nerf = db({
   name: "Royal Guard",
   description: "Your non-king pieces that are adjacent to your king at the start of your turn can't move. The king itself may still move.",
   flavor: "Don't leave his side.",
-  tier: 3,
+  tier: 4,
   icon: "shield-check",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -298,7 +322,7 @@ export const HONEY_TRAP: Nerf = db({
   name: "Honey Trap",
   description: "Your queen can't move unless she is currently under attack by an enemy piece.",
   flavor: "She waits, smiling.",
-  tier: 4,
+  tier: 5,
   icon: "honey",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -311,7 +335,7 @@ export const HONEY_TRAP: Nerf = db({
 export const TIDY_DESK: Nerf = db({
   id: "tidy_desk",
   name: "Tidy Desk",
-  description: "By move 25, you must have at least one piece on each rank of your half.",
+  description: "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
   flavor: "Everything in its place.",
   tier: 5,
   icon: "layout-grid",
@@ -319,14 +343,17 @@ export const TIDY_DESK: Nerf = db({
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 25) return null;
     const ranks = ctx.me === "w" ? [0, 1, 2, 3] : [4, 5, 6, 7];
+    const empty: number[] = [];
     for (const r of ranks) {
       let has = false;
       for (let f = 0; f < 8; f++) {
         const p = ctx.board.pieces[SQ(f, r)];
         if (p && p.color === ctx.me) { has = true; break; }
       }
-      if (!has) return { reason: `rank ${r + 1} empty` };
+      if (!has) empty.push(r);
     }
+    // one rank of your choosing may be left open: you only lose once two or more are empty
+    if (empty.length >= 2) return { reason: `ranks ${empty.map((r) => r + 1).join(", ")} empty` };
     return null;
   },
 });
@@ -336,7 +363,7 @@ export const PHOBIA_OF_EDGES: Nerf = db({
   name: "Phobia of Edges",
   description: "If a piece is on the rim, it must move.",
   flavor: "Don't look down.",
-  tier: 4,
+  tier: 5,
   icon: "frame",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -357,15 +384,17 @@ export const PHOBIA_OF_EDGES: Nerf = db({
 export const SACRED_FILE: Nerf = db({
   id: "sacred_file",
   name: "Sacred File",
-  description: "A random file is sacred. You can't capture on it.",
+  description: "A random file is sacred, shown from the start. From your second turn on, you can't capture on it, unless the ban would leave you fewer than three legal moves.",
   flavor: "Hallowed ground.",
   tier: 2,
   icon: "shield-question",
   implemented: true,
   init: (rng) => ({ file: rng.int(8) }),
-  filterMoves: (moves, state) => {
+  filterMoves: (moves, state, ctx) => {
     const s = state as { file: number };
-    return moves.filter((m) => !m.captured || FILE(m.to) !== s.file);
+    if (ctx.moveNumber < 1) return moves; // revealed from the start, but the ban waits one turn
+    const filtered = moves.filter((m) => !m.captured || FILE(m.to) !== s.file);
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => {
     const s = state as { file: number };
@@ -380,7 +409,7 @@ export const SUNRISE: Nerf = db({
   name: "Sunrise",
   description: "On odd turns you must move forward; on even turns you may move freely.",
   flavor: "Mornings demand progress.",
-  tier: 4,
+  tier: 5,
   icon: "sunrise",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -395,32 +424,47 @@ export const SUNRISE: Nerf = db({
 export const WAGON_TRAIN: Nerf = db({
   id: "wagon_train",
   name: "Wagon Train",
-  description: "Keep the column in its lane: each move must land on the same file as your previous move's destination or a file right next to it.",
+  description: "Keep the wagons together: each move must land within one file and one rank of your previous move's destination. A knight may leap out of the convoy only on a turn when no such move exists.",
   flavor: "Keep the column tight.",
   tier: 8,
   icon: "route",
   implemented: true,
-  // Distinct from domino (full king-adjacency of the two destinations): wagon
-  // train only constrains the file, so the column stays within a three-file
-  // lane while the rank stays free.
+  // The convoy stays within a three by three block around the last landing
+  // square (one file and one rank each way). A knight leap breaks that block, so
+  // it is allowed only as an escape valve on a turn with no convoy move.
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.myLastMove;
     if (!last) return moves;
-    const near = moves.filter((m) => Math.abs(FILE(m.to) - FILE(last.to)) <= 1);
-    return near.length ? near : moves;
+    const convoy = moves.filter(
+      (m) =>
+        Math.abs(FILE(m.to) - FILE(last.to)) <= 1 &&
+        Math.abs(RANK(m.to) - RANK(last.to)) <= 1,
+    );
+    if (convoy.length) return convoy;
+    // No convoy move available: knight leaps become legal this turn.
+    const leaps = moves.filter((m) => {
+      if (m.piece !== "n") return false;
+      const df = Math.abs(FILE(m.to) - FILE(m.from));
+      const dr = Math.abs(RANK(m.to) - RANK(m.from));
+      return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+    });
+    return leaps.length ? leaps : moves;
   },
 });
 
 export const HOARDER: Nerf = db({
   id: "hoarder",
   name: "Hoarder",
-  description: "If you ever have fewer than 8 pawns, you lose the game.",
+  description: "If you ever have fewer than 8 pawns, you lose the game. Every pawn loss counts, including self-removal and forced card sacrifices.",
   flavor: "Don't lose a single one.",
   tier: 8,
   icon: "wheat",
   implemented: true,
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber === 0) return null;
+    // Count pawns actually on the board, so the rule cannot be bypassed: a pawn
+    // removed by any means (capture, self-removal, or a forced card sacrifice)
+    // drops the count and triggers the loss just the same.
     const pawns = pieceSquares(ctx.board, ctx.me, "p").length;
     return pawns < 8 ? { reason: "lost a pawn" } : null;
   },
@@ -429,12 +473,13 @@ export const HOARDER: Nerf = db({
 export const VANISHING_POINT: Nerf = db({
   id: "vanishing_point",
   name: "Vanishing Point",
-  description: "Your pieces can't move to the same square twice in the game.",
+  description: "Starting on move 4, your pieces can't move to the same square twice in the game.",
   flavor: "Each step, the last of its kind.",
   tier: 6,
   icon: "circle-off",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const used = new Set<number>();
     for (const m of ctx.board.history) if (m.color === ctx.me) used.add(m.to);
     const fresh = moves.filter((m) => !used.has(m.to));
@@ -445,12 +490,13 @@ export const VANISHING_POINT: Nerf = db({
 export const ECHO_CHAMBER: Nerf = db({
   id: "echo_chamber",
   name: "Echo Chamber",
-  description: "You must move to the same rank as your last move's destination.",
+  description: "Starting on move 4, you must move to the same rank as your last move's destination.",
   flavor: "It bounces around in here.",
   tier: 6,
   icon: "audio-waveform",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const last = ctx.myLastMove;
     if (!last) return moves;
     const filtered = moves.filter((m) => RANK(m.to) === RANK(last.to));
@@ -461,7 +507,7 @@ export const ECHO_CHAMBER: Nerf = db({
 export const TRIPWIRE: Nerf = db({
   id: "tripwire",
   name: "Tripwire",
-  description: "A random rank is a tripwire. You can't cross it backwards.",
+  description: "A random rank is a tripwire, shown from the start. From your second turn on, you can't cross it backwards, unless the ban would leave you fewer than three legal moves.",
   flavor: "Snap.",
   tier: 4,
   icon: "trip",
@@ -469,13 +515,15 @@ export const TRIPWIRE: Nerf = db({
   init: (rng) => ({ rank: 1 + rng.int(6) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { rank: number };
+    if (ctx.moveNumber < 1) return moves; // revealed from the start, but the ban waits one turn
     const dir = ctx.me === "w" ? -1 : 1;
-    return moves.filter((m) => {
+    const filtered = moves.filter((m) => {
       // backwards crossing of the rank
       const r1 = RANK(m.from), r2 = RANK(m.to);
       if (dir === -1) return !(r1 > s.rank && r2 <= s.rank);
       return !(r1 < s.rank && r2 >= s.rank);
     });
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => {
     const s = state as { rank: number };
@@ -488,7 +536,7 @@ export const TRIPWIRE: Nerf = db({
 export const PROMOTION_PHOBIA: Nerf = db({
   id: "promotion_phobia",
   name: "Promotion Phobia",
-  description: "Your pawns can't promote. They get stuck on the back rank.",
+  description: "Your pawns can't promote, so they can't advance onto the back rank. A pawn already on the back rank may still move away normally.",
   flavor: "Stage fright.",
   tier: 3,
   icon: "x-circle",
@@ -501,7 +549,7 @@ export const KNIGHT_PARADE: Nerf = db({
   name: "Knight Parade",
   description: "You must move each knight at least once before moving the same knight twice.",
   flavor: "Take turns.",
-  tier: 3,
+  tier: 4,
   icon: "horse",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -520,7 +568,7 @@ export const KNIGHT_PARADE: Nerf = db({
 export const RHYTHM_MASTER: Nerf = db({
   id: "rhythm_master",
   name: "Rhythm Master",
-  description: "You must alternate captures and non-captures.",
+  description: "You must alternate captures and non-captures. If no move complies, your king may move instead.",
   flavor: "And one, and two, and...",
   tier: 6,
   icon: "music",
@@ -530,19 +578,23 @@ export const RHYTHM_MASTER: Nerf = db({
     if (!last) return moves;
     const wantCapture = !last.captured;
     const filtered = moves.filter((m) => !!m.captured === wantCapture);
-    return filtered.length ? filtered : moves;
+    if (filtered.length) return filtered;
+    // no compliant move exists: fall back to a king move so you are not stuck
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
 export const ICY_SQUARES: Nerf = db({
   id: "icy_squares",
   name: "Icy Squares",
-  description: "After you move a piece, it must slide once more in the same direction on your next move (if possible). Forced slides don't force another.",
+  description: "Starting on move 4, after you move a piece it must slide once more in the same direction on your next move (if possible). Forced slides don't force another.",
   flavor: "Slide.",
   tier: 6,
   icon: "snowflake",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // rule starts on move 4 so the opening cannot be soft-locked
     const last = ctx.myLastMove;
     if (!last) return moves;
     const df = Math.sign(FILE(last.to) - FILE(last.from));
@@ -575,7 +627,7 @@ export const QUARANTINE: Nerf = db({
   name: "Quarantine",
   description: "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
   flavor: "Lock down.",
-  tier: 4,
+  tier: 5,
   icon: "biohazard",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -594,7 +646,7 @@ export const FRESH_FACES: Nerf = db({
   name: "Fresh Faces",
   description: "Each turn, you must move a piece that hasn't moved yet, until none remain.",
   flavor: "Everyone gets a turn.",
-  tier: 5,
+  tier: 6,
   icon: "users",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -610,7 +662,7 @@ export const BURNING_BRIDGES: Nerf = db({
   name: "Burning Bridges",
   description: "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
   flavor: "The path collapses behind you.",
-  tier: 6,
+  tier: 5,
   icon: "flame",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -662,31 +714,48 @@ export const COURT_MARTIAL: Nerf = db({
 export const NEAT_FREAK: Nerf = db({
   id: "neat_freak",
   name: "Neat Freak",
-  description: "After turn 10, you lose if two of your pieces of the same type (pawns aside) ever share a diagonal.",
+  description: "After move 8, no two of your non-pawn pieces of the same type may share a rank, file, or diagonal. If the opponent's move creates the alignment you get one move to break it; a move of your own that makes or keeps one loses at once.",
   flavor: "Don't crowd me.",
   tier: 8,
   icon: "ruler",
   implemented: true,
   checkLoss: (_s, ctx) => {
-    if (ctx.moveNumber < 10) return null;
+    if (ctx.moveNumber < 8) return null;
     const byType: Partial<Record<PieceType, number[]>> = {};
     for (const sq of pieceSquares(ctx.board, ctx.me)) {
       const t = ctx.board.pieces[sq]!.type;
       if (t === "p" || t === "k") continue;
       (byType[t] ||= []).push(sq);
     }
-    for (const t of Object.keys(byType) as PieceType[]) {
-      const list = byType[t]!;
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
-          const a = list[i], b = list[j];
-          if (Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))) {
-            return { reason: "two same pieces share a diagonal" };
+    const aligned = (() => {
+      for (const t of Object.keys(byType) as PieceType[]) {
+        const list = byType[t]!;
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i], b = list[j];
+            if (
+              RANK(a) === RANK(b) ||
+              FILE(a) === FILE(b) ||
+              Math.abs(FILE(a) - FILE(b)) === Math.abs(RANK(a) - RANK(b))
+            ) {
+              return true;
+            }
           }
         }
       }
-    }
-    return null;
+      return false;
+    })();
+    if (!aligned) return null;
+    // One move of grace when the OPPONENT creates the alignment. checkLoss runs
+    // after every ply, so the last mover in history tells us whose move produced
+    // the current position: if it was the opponent, the alignment is freshly
+    // theirs, so hold off and let you break it next turn. An alignment still
+    // standing right after your OWN move (you made it, or failed to break a
+    // graced one) loses immediately.
+    const hist = ctx.board.history;
+    const lastMover = hist.length ? hist[hist.length - 1].color : null;
+    if (lastMover !== ctx.me) return null;
+    return { reason: "two same pieces share a rank, file, or diagonal" };
   },
 });
 
@@ -695,7 +764,7 @@ export const ARTILLERY: Nerf = db({
   name: "Artillery",
   description: "Rooks must capture at distance ≥ 4.",
   flavor: "Range is everything.",
-  tier: 3,
+  tier: 4,
   icon: "crosshair",
   implemented: true,
   filterMoves: (moves) =>
@@ -707,7 +776,7 @@ export const VERTIGO: Nerf = db({
   name: "Vertigo",
   description: "Can't move a piece more than 2 ranks in one move.",
   flavor: "Don't look up.",
-  tier: 3,
+  tier: 4,
   icon: "spiral",
   implemented: true,
   filterMoves: (moves) =>
@@ -719,7 +788,7 @@ export const COURT_JESTER: Nerf = db({
   name: "Court Jester",
   description: "Your queen can only move like a knight.",
   flavor: "A fool with a crown.",
-  tier: 4,
+  tier: 5,
   icon: "party-popper",
   implemented: true,
   filterMoves: (moves) =>
@@ -734,7 +803,7 @@ export const COURT_JESTER: Nerf = db({
 export const DOMINO: Nerf = db({
   id: "domino",
   name: "Domino",
-  description: "Each move must end adjacent to your previous move's destination.",
+  description: "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
   flavor: "Tip them over in sequence.",
   tier: 6,
   icon: "spline",
@@ -750,12 +819,23 @@ export const DOMINO: Nerf = db({
 export const SLOWPOKE: Nerf = db({
   id: "slowpoke",
   name: "Slowpoke",
-  description: "All your moves must be distance exactly 1.",
+  description: "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
   flavor: "Step. By. Step.",
   tier: 6,
   icon: "footprints",
   implemented: true,
-  filterMoves: (moves) => moves.filter((m) => cheb(m.from, m.to) === 1),
+  filterMoves: (moves, _s, ctx) => {
+    const allowLeap = (ctx.moveNumber + 1) % 5 === 0; // one knight leap every five owner turns
+    return moves.filter((m) => {
+      if (cheb(m.from, m.to) === 1) return true;
+      if (allowLeap && m.piece === "n") {
+        const df = Math.abs(FILE(m.to) - FILE(m.from));
+        const dr = Math.abs(RANK(m.to) - RANK(m.from));
+        return (df === 1 && dr === 2) || (df === 2 && dr === 1);
+      }
+      return false;
+    });
+  },
 });
 
 export const PILGRIMAGE: Nerf = db({
@@ -767,6 +847,10 @@ export const PILGRIMAGE: Nerf = db({
   icon: "map",
   implemented: true,
   checkLoss: (_s, ctx) => {
+    // The pilgrimage requirement stays dormant through the opening (it is a
+    // move-30 deadline, not a per-move filter, so it never restricts opening
+    // moves and cannot soft-lock the opening).
+    if (ctx.moveNumber < 4) return null;
     if (ctx.moveNumber < 30) return null;
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return null;
@@ -780,7 +864,7 @@ export const SCHOLARSHIP: Nerf = db({
   name: "Scholarship",
   description: "You can only move a piece type after the opponent has moved it once.",
   flavor: "Learn first; then act.",
-  tier: 4,
+  tier: 5,
   icon: "book-open",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -794,7 +878,7 @@ export const SCHOLARSHIP: Nerf = db({
 export const TRIBUTE: Nerf = db({
   id: "tribute",
   name: "Tribute",
-  description: "Every 8th turn, if you can push a pawn onto a square the enemy attacks, you must.",
+  description: "Every 8th turn, if you can push a pawn onto a square the enemy attacks, you must. This forced tribute cannot be dodged by card-granted moves.",
   flavor: "Pay the toll.",
   tier: 6,
   icon: "coins",
@@ -804,6 +888,11 @@ export const TRIBUTE: Nerf = db({
     if (turn % 8 !== 0) return moves;
     const opp = ctx.me === "w" ? "b" : "w";
     const oppAttacks = attackedBy(ctx.board, opp);
+    // Nerf filters run after buff move-injection, so any card-granted moves are
+    // already in `moves`. On the tribute turn the forced-sacrifice set wins over
+    // them: a card effect cannot make an otherwise forbidden non-tribute move
+    // legal (a card-granted pawn push onto an attacked square is itself a valid
+    // tribute and stays in the set).
     const sacrifices = moves.filter((m) => m.piece === "p" && oppAttacks.has(m.to));
     return sacrifices.length ? sacrifices : moves;
   },
@@ -830,7 +919,7 @@ export const SWITCHBACK: Nerf = db({
   name: "Switchback",
   description: "You can't move in the exact same direction (same file and rank step) twice in a row.",
   flavor: "Zig and zag.",
-  tier: 4,
+  tier: 5,
   icon: "shuffle",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -852,7 +941,7 @@ export const ARMORY: Nerf = db({
   name: "Armory",
   description: "Your rooks must stay defended at all times.",
   flavor: "Don't leave them in the open.",
-  tier: 6,
+  tier: 5,
   icon: "shield",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {
@@ -871,7 +960,7 @@ export const COUNTING_SHEEP: Nerf = db({
   name: "Counting Sheep",
   description: "Once you've moved a piece type 5 times, you can't move it again.",
   flavor: "Five's the limit.",
-  tier: 5,
+  tier: 6,
   icon: "list-ordered",
   implemented: true,
   progress: (_s, ctx) => {
@@ -898,7 +987,7 @@ export const FAMINE: Nerf = db({
   name: "Famine",
   description: "After move 15, you can't capture pawns.",
   flavor: "No more bread.",
-  tier: 3,
+  tier: 4,
   icon: "wheat-off",
   implemented: true,
   filterMoves: (moves, _s, ctx) => {

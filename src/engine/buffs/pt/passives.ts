@@ -51,7 +51,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Home Field",
       description:
         "Home advantage: while standing in your own half of the board or one rank past it, each of your knights, bishops, and rooks may also step one square in any direction.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       requires: ["n", "b", "r"],
       flavor: "The crowd, the turf, the extra step.",
@@ -74,7 +74,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "gravity_well",
       name: "Gravity Well",
       description:
-        "Your king bends space around it: enemy pieces standing within two squares of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
+        "Your king bends space around it: enemy pieces standing within one square of your king are caught in orbit and cannot move to a square farther from it. Enemy kings are not affected.",
       tier: 6,
       category: "tempo",
       flavor: "What goes near, stays near.",
@@ -87,7 +87,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         if (k == null) return moves;
         const kept = moves.filter((m) => {
           if (m.piece === "k") return true; // never trap the enemy king
-          if (dist(m.from, k) > 2) return true; // only pieces already in orbit
+          if (dist(m.from, k) > 1) return true; // only pieces already in orbit
           return dist(m.to, k) <= dist(m.from, k); // may not drift outward
         });
         return kept.length > 0 ? kept : moves;
@@ -144,7 +144,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "photosynthesis",
       name: "Photosynthesis",
       description:
-        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). It never auto-advances onto the promotion rank.",
+        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). The auto-step only ever moves onto an empty square straight ahead, so it never captures, and it never auto-advances onto the promotion rank.",
       tier: 4,
       category: "tempo",
       flavor: "Just add sunlight.",
@@ -183,7 +183,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Union Rules",
       description:
         "Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       flavor: "You cannot work them to the bone every shift.",
     },
@@ -269,7 +269,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Magnetism",
       description:
         "Your knights are magnetized: after each knight move, the nearest enemy piece (never a king) is dragged up to two squares toward that knight, as long as the squares between them are empty.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "Opposites attract, and so does the cavalry.",
     },
@@ -316,7 +316,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Radiation",
       name: "Contagion",
       description:
-        "Freezes are catching: whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
+        "Freezes are catching, but the strain lies dormant until after your opponent's next move. Once it wakes, whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
       tier: 7,
       category: "hex",
       flavor: "Cover your cough.",
@@ -324,12 +324,20 @@ export const PT_PASSIVE_CARDS: Buff[] = [
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
-        const known = new Set<number>((inst.state.frozen as number[]) ?? []);
         // Enemy squares currently under an active freeze.
         const cur = new Set<number>();
         for (const e of api.bs.effects) {
           if (e.kind === "freeze" && e.owner === api.opp && e.turns > 0) cur.add(e.sq);
         }
+        // Delay activation until after the opponent's next move: stay dormant
+        // until the opponent has moved once, recording the live freezes as the
+        // baseline so nothing that predates activation counts as newly frozen.
+        if (!inst.state.armed) {
+          inst.state.frozen = Array.from(cur);
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        const known = new Set<number>((inst.state.frozen as number[]) ?? []);
         const caught = new Set<number>();
         for (const sq of cur) {
           if (known.has(sq)) continue; // only a NEWLY frozen piece spreads
@@ -353,7 +361,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         for (const sq of caught) persist.push(sq);
         inst.state.frozen = persist;
       },
-      status: () => "spores drifting between pieces",
+      status: (inst) =>
+        inst.state.armed ? "spores drifting between pieces" : "dormant until they move",
     },
   ),
 
@@ -364,7 +373,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "HandHeart",
       name: "Guardian Angel",
       description:
-        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half.",
+        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half. The returning piece needs a moment to find its feet and cannot move (so it cannot capture) until after your opponent replies.",
       tier: 6,
       category: "protection",
       flavor: "Someone up there is watching.",
@@ -385,6 +394,12 @@ export const PT_PASSIVE_CARDS: Buff[] = [
         ).sort((a, b) => relRank(api.me, a) - relRank(api.me, b) || a - b)[0];
         if (safe == null) return; // nowhere safe right now: keep the save for later
         api.place(safe, type, api.me);
+        // The rescued piece settles for one turn: a freeze it owns, added on the
+        // opponent's capturing move, holds through your very next turn (it ticks
+        // on YOUR completed moves, not this opponent one) and thaws only after
+        // your opponent has replied. Never a king (king captures are excluded
+        // above), so this can never restrict your own king.
+        addEffect(api, { kind: "freeze", sq: safe, owner: api.me, turns: 1, skin: "bubble" });
         inst.state.saves = left - 1;
         if (left - 1 <= 0) inst.spent = true;
       },
@@ -402,7 +417,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Termites",
       description:
         "Termites gnaw at your opponent's towers: every 2 of their turns, their rooks lose one more square of reach. The decay stops at a reach of 1, so a rook can always shuffle a single square.",
-      tier: 6,
+      tier: 7,
       category: "hex",
       flavor: "You can hear them chewing.",
       fx: { motif: "anchor", pieces: ["r"] },
@@ -438,7 +453,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       icon: "Megaphone",
       name: "Fan Club",
       description:
-        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops.",
+        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops. Once two of those back-rank pawns have made a capture, the crowd goes home and the shield ends for good.",
       tier: 4,
       category: "protection",
       requires: ["p"],
@@ -453,9 +468,23 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       // with zero legal moves. onMovePlayed only mirrors the live condition into
       // state so the status line can read it (status has no api).
       kind: "passive",
-      onMovePlayed: (inst, _move, api) => {
+      onMovePlayed: (inst, move, api) => {
         inst.state.holding =
           mySquares(api.board, api.me).length >= mySquares(api.board, api.opp).length;
+        // The shield ends after two of the protected back-rank pawns capture.
+        // Count captures made BY one of your pawns starting from your back three
+        // ranks (relative rank <= 3); at the second such capture the card is
+        // spent, which drops it from heldBuffs so the filter stops guarding.
+        if (
+          move.color === api.me &&
+          move.piece === "p" &&
+          !!move.captured &&
+          relRank(api.me, move.from) <= 3
+        ) {
+          const caps = ((inst.state.caps as number) ?? 0) + 1;
+          inst.state.caps = caps;
+          if (caps >= 2) inst.spent = true;
+        }
       },
       filterOpponentMoves: (moves, _inst, api) => {
         if (mySquares(api.board, api.me).length < mySquares(api.board, api.opp).length) {

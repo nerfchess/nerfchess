@@ -230,9 +230,15 @@ for (const mode of ["nerf", "buff"] as DraftMode[]) {
   const used = aiActivateBuffs(g, "w");
   const d6 = SQ(3, 5);
   check(used?.id === "cold_snap", "bot fires Cold Snap through auto-targeting");
+  // Balance pass: the defender's single most valuable piece (here the exposed
+  // queen) is immune, so the bot freezes some other piece instead.
   check(
-    g.buffs!.effects.some((e) => e.kind === "freeze" && e.sq === d6),
-    "bot's Cold Snap freezes the exposed queen",
+    !g.buffs!.effects.some((e) => e.kind === "freeze" && e.sq === d6),
+    "bot's Cold Snap cannot touch the exempt queen",
+  );
+  check(
+    g.buffs!.effects.some((e) => e.kind === "freeze" && e.owner === "b"),
+    "bot's Cold Snap still lands a freeze on a lesser piece",
   );
 }
 

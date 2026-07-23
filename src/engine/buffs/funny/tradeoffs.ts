@@ -80,7 +80,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       name: "Berserker",
       description:
         "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       flavor: "Blood first, thinking later.",
       fx: { motif: "rally", pieces: "all", self: true },
@@ -129,7 +129,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       icon: "Gem",
       name: "Glass Cannon",
       description:
-        "Choose a bishop. For your next 4 turns it can capture any enemy except the king along its diagonals, passing through anything in between. But while it is overcharged, if it is captured, two of your pawns shatter with it.",
+        "Choose a bishop. Once your opponent replies, for your next 4 turns it can capture any enemy except the king along its diagonals, passing through anything in between. But while it is overcharged, if it is captured, two of your pawns shatter with it.",
       tier: 6,
       category: "attack",
       requires: ["b"],
@@ -153,10 +153,12 @@ export const FUNNY_TRADEOFFS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 4;
+        // The overcharge comes online only after the opponent's reply.
+        inst.state.ready = false;
       },
       augmentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
-        if (sq == null || (inst.state.turns as number) <= 0) return;
+        if (sq == null || !inst.state.ready || (inst.state.turns as number) <= 0) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "b") return;
         const have = new Set(moves.map((m) => m.from * 64 + m.to));
@@ -171,6 +173,19 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
+        // Delayed start: the overcharge is dormant until the opponent replies.
+        // While dormant the bishop is not yet brittle and grants no captures;
+        // it just follows its piece and arms on the opponent's next move.
+        if (!inst.state.ready) {
+          if (move.capturedSquare === sq && move.from !== sq) {
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          if (move.from === sq) inst.state.sq = move.to;
+          if (move.color === api.opp) inst.state.ready = true;
+          return;
+        }
         // Brittle: the overcharged bishop is captured -> two of my pawns go too.
         if (move.color === api.opp && move.capturedSquare === sq) {
           for (const pawn of mySquares(api.board, api.me, "p").slice(0, 2)) {
@@ -193,7 +208,9 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       status: (inst) =>
         inst.state.sq == null
           ? "activate to overcharge a bishop"
-          : `overcharged, ${(inst.state.turns as number) ?? 0} of your turns left`,
+          : !inst.state.ready
+            ? "overcharging: arms after their reply"
+            : `overcharged, ${(inst.state.turns as number) ?? 0} of your turns left`,
     },
   ),
   card(

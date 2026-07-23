@@ -10,7 +10,7 @@
 // Every card reuses an existing primitive; every opponent filter is partial so
 // nothing can soft-lock, and kings are never targeted.
 
-import { Buff, Move } from "./shared";
+import { Buff, Move, Square } from "./shared";
 import {
   card,
   curse,
@@ -18,14 +18,15 @@ import {
   activated,
   addEffect,
   anyEmptyZone,
+  emptySquares,
   instant,
   mySquares,
   myHalfZone,
-  petrifyTarget,
-  placePieces,
   relRank,
   removeEnemies,
   reviveOne,
+  tickTurns,
+  turnsLeft,
   timedAugment,
   summonTemp,
 } from "./shared";
@@ -37,7 +38,7 @@ export const FUNNY_META: Buff[] = [
       name: "Emotional Support Pawn",
       description:
         "A small round friend refuses to leave your side: place a new pawn on an empty square right beside your king.",
-      tier: 2,
+      tier: 3,
       category: "pieces",
       flavor: "It cannot play chess. It believes in you SO much.",
     },
@@ -73,7 +74,7 @@ export const FUNNY_META: Buff[] = [
       name: "Stream Sniper",
       description:
         "You found their stream: see your opponent's nerf for the rest of the game, and your own next draft shows three cards to pick from.",
-      tier: 2,
+      tier: 1,
       category: "info",
       boon: true,
       flavor: "Thanks for the content, streamer.",
@@ -92,13 +93,17 @@ export const FUNNY_META: Buff[] = [
       id: "lag_spike",
       name: "Lag Spike",
       description:
-        "Their connection chooses violence: your opponent's clock loses 25 seconds.",
+        "Their connection chooses violence: your opponent's clock loses 30 seconds. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply.",
       tier: 3,
       category: "tempo",
       flavor: "It is not the wifi. It is never the wifi. It is the wifi.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ subOppSec: 25 });
+      api.adjustClock({ subOppSec: 30 });
+      // The clock hit is a no-op in an untimed game, so pair it with two draft
+      // effects that always land: a reroll and a peek at their next offer tier.
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.mine.flags.seeOppTier = true;
     }),
   ),
   card(
@@ -106,25 +111,79 @@ export const FUNNY_META: Buff[] = [
       id: "ctrl_z",
       name: "Ctrl+Z",
       description:
-        "Undo. One of your captured pawns, knights, or bishops returns to an empty square in your half, once.",
+        "Undo, but the tape rewinds a beat late: only after your opponent's next move may you return one of your captured pawns, knights, or bishops to an empty square in your half, once.",
       tier: 3,
       category: "pieces",
       flavor: "History is written by whoever holds the keyboard.",
     },
-    reviveOne(["p", "n", "b"], myHalfZone),
+    // Preserve the revive payoff, but delay its first use: the card stays
+    // unusable until the opponent has played one move after it is drafted.
+    (() => {
+      const base = reviveOne(["p", "n", "b"], myHalfZone);
+      return {
+        ...base,
+        init: (inst) => {
+          inst.state.ready = false;
+        },
+        targets: (inst, api, picks) =>
+          inst.state.ready ? base.targets!(inst, api, picks) : null,
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+        },
+        status: (inst) =>
+          inst.state.ready ? "undo ready" : "buffering: waiting for their reply",
+      };
+    })(),
   ),
   card(
     {
       id: "rubber_chicken",
       name: "Rubber Chicken",
       description:
-        "Bonk one enemy piece with a rubber chicken. It is too embarrassed to move for 2 of their turns. Kings cannot be bonked.",
+        "Bonk one enemy piece with a rubber chicken. It gets one escape move; wherever it lands it is then dazed and can only shuffle one square at a time for 2 of their turns. Kings cannot be bonked.",
       tier: 3,
       category: "hex",
       flavor: "Squeak. Squeak. Checkmate energy.",
       fx: { motif: "jail", pieces: "all" },
     },
-    petrifyTarget(2, "Choose the enemy piece to bonk"),
+    // The bonk still lands, but the target gets one legal escape move first: the
+    // daze (a walnut, one-square shuffles) is applied only after that piece next
+    // moves, landing on wherever it ends up. Added inside the opponent's move
+    // hook, so the immediate same-color tick eats one turn: ask for 3 to leave 2.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to bonk",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq && move.color === api.opp) {
+          addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 3 });
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to bonk" : "the daze lands after its escape move",
+    },
   ),
   card(
     {
@@ -160,7 +219,7 @@ export const FUNNY_META: Buff[] = [
       name: "Battle Pass",
       description:
         "Season rewards trickle in: at the end of each of your next 6 turns, your clock gains 10 seconds.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       flavor: "Only 99 more tiers of grinding to go.",
     },
@@ -186,7 +245,7 @@ export const FUNNY_META: Buff[] = [
       name: "Pop-up Ad",
       description:
         "An ad nobody can close appears on the board: place a knight on any empty square. It is finally dismissed after 4 of your turns.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       flavor: "HOT SINGLES IN YOUR HALF OF THE BOARD.",
     },
@@ -197,28 +256,57 @@ export const FUNNY_META: Buff[] = [
       id: "mute_button",
       name: "Mute Button",
       description:
-        "You mute the loudest voices in their army: for their next 3 turns your opponent's queen and rooks cannot capture.",
+        "You mute the loudest voices in their army: for their next 3 turns your opponent's queen and rooks cannot capture. The first of those pieces they move gets one free move before the mute takes hold.",
       tier: 4,
       category: "hex",
       flavor: "You are now watching their attack on read.",
       fx: { motif: "muzzle", pieces: ["q", "r"] },
     },
-    curse(3, (moves) =>
-      moves.filter((m) => !(m.captured && (m.piece === "q" || m.piece === "r"))),
-    ),
+    // Preserve the 3-turn duration, but the first queen or rook the opponent
+    // moves is an unrestricted escape; the no-capture mute bites from the move
+    // after that, ticking across the same 3 of their turns.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || !inst.state.escaped || moves.length === 0) return moves;
+        const kept = moves.filter(
+          (m) => !(m.captured && (m.piece === "q" || m.piece === "r")),
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        if (
+          !inst.state.escaped &&
+          move.color === api.opp &&
+          (move.piece === "q" || move.piece === "r")
+        ) {
+          inst.state.escaped = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.escaped
+          ? `${turnsLeft(inst)} of their turns left`
+          : "one free move, then muted",
+    },
   ),
   card(
     {
       id: "skill_issue",
       name: "Skill Issue",
       description:
-        "Diagnosis delivered: their minor pieces whiff every attack: enemy knights and bishops cannot capture for their next 4 turns.",
+        "Diagnosis delivered: their minor pieces whiff every attack: enemy knights and bishops cannot capture for their next 3 turns.",
       tier: 4,
       category: "hex",
       flavor: "Have you tried simply being better?",
       fx: { motif: "muzzle", pieces: ["n", "b"] },
     },
-    curse(4, (moves) =>
+    curse(3, (moves) =>
       moves.filter((m) => !(m.captured && (m.piece === "n" || m.piece === "b"))),
     ),
   ),
@@ -228,7 +316,7 @@ export const FUNNY_META: Buff[] = [
       name: "Alt+F4",
       description:
         "Their whole client crashes to desktop and takes a minute to reboot: your opponent's clock loses 60 seconds.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Press Alt+F4 for free rating points, they said.",
     },
@@ -242,7 +330,7 @@ export const FUNNY_META: Buff[] = [
       name: "Touch Grass",
       description:
         "You step outside for your own good: add 30 seconds to your clock, and your nerf is suspended for your next 2 turns.",
-      tier: 4,
+      tier: 2,
       category: "nerf",
       flavor: "The sun. The big lamp in the sky. Go look at it.",
     },
@@ -256,15 +344,20 @@ export const FUNNY_META: Buff[] = [
       id: "main_character",
       name: "Main Character",
       description:
-        "One of your pieces gets plot armor: it cannot be captured for your opponent's next 4 turns.",
+        "One of your pieces gets plot armor: it cannot be captured for your opponent's next 4 turns, but the armor drops the instant it makes a capture.",
       tier: 5,
       category: "protection",
       flavor: "The sequel is already greenlit. It cannot die here.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Full 4-turn shield, but the plot armor ends the moment the protected
+    // piece captures: on that capture we strip its shield square before the
+    // shield-follow can carry the ward onto the piece's new home.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -273,31 +366,91 @@ export const FUNNY_META: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 4 });
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 4 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq && move.color === api.me) {
+          if (move.captured) {
+            for (const e of api.bs.effects) {
+              if (e.kind === "shield" && e.owner === api.me && e.squares) {
+                e.squares = e.squares.filter((s) => s !== sq);
+              }
+            }
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          inst.state.sq = move.to;
+        } else if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
         }
       },
-    ),
+      status: (inst) =>
+        inst.state.sq == null ? "activate to crown a lead" : "plot armor holds until it captures",
+    },
   ),
   card(
     {
       id: "smurf_account",
       name: "Smurf Account",
       description:
-        "A suspiciously strong new player joins your side mid-game: place a fresh rook on an empty square in your half.",
+        "A suspiciously strong new player joins your side mid-game: choose an empty square in your half, and a fresh rook drops in there right after your opponent's next move, so it cannot capture before they reply.",
       tier: 6,
       category: "pieces",
       flavor: "Total games played: 3. Accuracy: 99 percent.",
     },
-    placePieces(["r"], myHalfZone),
+    // Preserve the spawn and its chosen location, but the rook (the only, and so
+    // highest-value, spawn) only lands after the opponent replies: it cannot
+    // capture until then. If its square was taken meanwhile, it drops on the
+    // first open half-square instead so the reinforcement is never lost.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the smurf drops in",
+              squares: emptySquares(api.board, myHalfZone(api)),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null || move.color !== api.opp) return;
+        let sq = inst.state.sq as Square;
+        if (api.board.pieces[sq]) {
+          const open = emptySquares(api.board, myHalfZone(api));
+          if (open.length === 0) {
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          sq = open[0];
+        }
+        api.place(sq, "r", api.me);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to call in a smurf" : "smurf arrives after their reply",
+    },
   ),
   card(
     {
       id: "pay_to_win",
       name: "Pay to Win",
       description:
-        "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn.",
+        "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn. The bill comes due at the shop: you skip your next draft.",
       tier: 6,
       category: "pieces",
       requires: ["n", "b", "r"],
@@ -322,6 +475,8 @@ export const FUNNY_META: Buff[] = [
         if (t === "n" || t === "b" || t === "r") {
           const pocket = (api.mine.inventory ??= {});
           pocket[t] = (pocket[t] ?? 0) + 1;
+          // Paying up front: the purchase costs you your next draft.
+          api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
         }
       },
     ),
@@ -331,7 +486,7 @@ export const FUNNY_META: Buff[] = [
       id: "ban_hammer",
       name: "Ban Hammer",
       description:
-        "Moderator privileges activated: point at one enemy knight, bishop, or rook, and EVERY enemy piece of that type is permanently banned from the board.",
+        "Moderator privileges activated: point at one enemy knight, bishop, or rook, and up to two enemy pieces of that type are permanently banned from the board.",
       tier: 8,
       category: "attack",
       flavor: "Reason: no reason given. Appeals: closed.",

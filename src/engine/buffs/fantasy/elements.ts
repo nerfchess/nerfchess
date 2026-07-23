@@ -14,6 +14,7 @@ import {
   emptySquares,
   inHalf,
   lineSweep,
+  mySquares,
   addEffect,
   instant,
   DIAG_DIRS,
@@ -70,14 +71,14 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Star",
       name: "Starfall",
       description:
-        "A rook crashes down into your pocket, and a chip of star-iron lands with it as a pawn: drop them onto empty squares on later turns.",
+        "A rook crashes down into your pocket: drop it onto any empty square on a later turn.",
       tier: 5,
       category: "pieces",
       flavor: "The crater is still glowing.",
     },
+    // Balance pass: the star-iron pawn no longer lands, one fewer spawned piece.
     instant((_inst, api) => {
       grantInventory(api, "r", 1);
-      grantInventory(api, "p", 1);
     }),
   ),
   card(
@@ -86,16 +87,37 @@ export const FANTASY_ELEMENTS: Buff[] = [
       icon: "Snowflake",
       name: "Frost Wall",
       description:
-        "A wall of blue ice seals the keep: your opponent cannot move any piece onto your back two ranks for their next 4 turns.",
+        "A wall of blue ice seals the keep: your opponent cannot move any piece onto your back two ranks for their next 4 turns, save one bridge square left open for the defender, the wall square nearest their king.",
       tier: 5,
       category: "hex",
       flavor: "Cold enough to stop an army cold.",
       fx: { motif: "blindfold" },
     },
+    // Balance pass: the terrain is preserved, but the defender keeps one bridge
+    // across the ice. An instant has no opponent-pick flow, so the open square
+    // is chosen deterministically for the defender: the wall square nearest
+    // their king (ties break to the lower index), the crossing they would most
+    // want to hold. A pure board read, so both replicas open the same bridge.
     instant((_inst, api) => {
       const ranks = api.me === "w" ? [0, 1] : [6, 7];
       const squares = ranks.flatMap((r) => Array.from({ length: 8 }, (_, f) => SQ(f, r)));
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 4 });
+      const kingSq = mySquares(api.board, api.opp, "k")[0];
+      let bridge = -1;
+      if (kingSq != null) {
+        let best = Infinity;
+        for (const sq of squares) {
+          const d = Math.max(
+            Math.abs(FILE(sq) - FILE(kingSq)),
+            Math.abs(RANK(sq) - RANK(kingSq)),
+          );
+          if (d < best) {
+            best = d;
+            bridge = sq;
+          }
+        }
+      }
+      const walled = squares.filter((sq) => sq !== bridge);
+      addEffect(api, { kind: "barred", squares: walled, against: api.opp, turns: 4 });
     }),
   ),
   card(
@@ -105,7 +127,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Sinkhole",
       description:
         "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
-      tier: 6,
+      tier: 5,
       category: "attack",
       flavor: "The ground had other plans.",
     },
@@ -144,7 +166,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Chain Lightning",
       description:
         "One bishop captures up to three enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       requires: ["b"],
       flavor: "It leaps from soul to soul.",
@@ -158,7 +180,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Fissure Field",
       description:
         "The ground splits open behind the enemy army: your opponent cannot move any piece onto their own back rank for their next 4 turns.",
-      tier: 4,
+      tier: 5,
       category: "hex",
       flavor: "There is no falling back over a chasm.",
       fx: { motif: "blindfold" },

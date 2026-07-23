@@ -17,8 +17,10 @@ import {
   BuffApi,
   BuffCategory,
   BuffInstance,
+  BuffPick,
   CardFx,
 } from "../buff";
+import { isInCheck } from "../board";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, inBoard, Move, PieceType, RANK, SQ, Square } from "../types";
 import {
@@ -35,7 +37,6 @@ import {
   captureSquare,
   emptySquares,
   inHalf,
-  instant,
   leapMoves,
   lineSweep,
   markRevived,
@@ -45,7 +46,6 @@ import {
   placePieces,
   relocateMany,
   revivable,
-  shieldArmy,
   shieldZone,
   slideMoves,
   teleportMoves,
@@ -148,7 +148,7 @@ const GYM: Buff[] = [
       id: "waist_25",
       name: "25 Inch Waist",
       description:
-        "Lean and nimble: each of your pawns may also slip diagonally forward one square onto empty ground, no capture needed, wiggling past the traffic.",
+        "Lean and nimble: after your opponent's next move, each of your pawns may also slip diagonally forward one square onto empty ground, no capture needed, wiggling past the traffic.",
       tier: 2,
       category: "movement",
       requires: ["p"],
@@ -156,19 +156,32 @@ const GYM: Buff[] = [
       flavor: "No belt, no problem, no spare inch.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
-        const dr = fwd(api.board.pieces[sq]!.color);
-        const tos = [
-          [FILE(sq) + 1, RANK(sq) + dr],
-          [FILE(sq) - 1, RANK(sq) + dr],
-        ]
-          .filter(([f, r]) => inBoard(f, r))
-          .map(([f, r]) => SQ(f, r))
-          .filter((s) => pawnRankOk(s));
-        return teleportMoves(api.board, sq, tos, inst.id);
-      }),
-    ),
+    {
+      kind: "passive",
+      // Delayed grant: the diagonal slip only wakes after your opponent's next
+      // move, so the augment stays inert until then.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active && move.color === api.opp) inst.state.active = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.active) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "p").flatMap((sq) => {
+            const dr = fwd(api.board.pieces[sq]!.color);
+            const tos = [
+              [FILE(sq) + 1, RANK(sq) + dr],
+              [FILE(sq) - 1, RANK(sq) + dr],
+            ]
+              .filter(([f, r]) => inBoard(f, r))
+              .map(([f, r]) => SQ(f, r))
+              .filter((s) => pawnRankOk(s));
+            return teleportMoves(api.board, sq, tos, inst.id);
+          }),
+        );
+      },
+      status: (inst) => (inst.state.active ? null : "wakes after your opponent replies"),
+    },
   ),
 
   card(
@@ -177,7 +190,7 @@ const GYM: Buff[] = [
       name: "Handstand Pushup",
       description:
         "Flip one pawn upside down. Forever it may also step and capture straight back or diagonally back toward your own side, but never onto its own back rank.",
-      tier: 3,
+      tier: 2,
       category: "movement",
       requires: ["p"],
       icon: "FlipVertical",
@@ -227,7 +240,7 @@ const GYM: Buff[] = [
       id: "muscle_up",
       name: "Muscle Up",
       description:
-        "Explosive pull-up: take one of your pieces except the king and hurl it straight up its own file to any empty square, blurring past everything in the way. Once.",
+        "Explosive pull-up: take one of your pieces except the king and hurl it straight up its own file to any empty square, phasing past your own pieces but stopping short of the first enemy in its lane. Once.",
       tier: 4,
       category: "movement",
       icon: "ArrowUpFromLine",
@@ -245,7 +258,12 @@ const GYM: Buff[] = [
         let r = RANK(from) + dr;
         while (r >= 0 && r < 8) {
           const sq = SQ(FILE(from), r);
-          if (!api.board.pieces[sq] && (p.type !== "p" || pawnRankOk(sq))) out.push(sq);
+          const occ = api.board.pieces[sq];
+          if (!occ) {
+            if (p.type !== "p" || pawnRankOk(sq)) out.push(sq);
+          } else if (occ.color === api.opp) {
+            break; // the launch phases past friendlies but cannot pass an enemy
+          }
           r += dr;
         }
         return out;
@@ -284,7 +302,7 @@ const GYM: Buff[] = [
       id: "i_love_abs",
       name: "I Love Abs",
       description:
-        "Brace your core. Every one of your pieces standing in the central 16 squares becomes uncapturable for your opponent's next 3 turns.",
+        "Brace your core. Every one of your pieces standing in the central 16 squares becomes uncapturable for your opponent's next 2 turns.",
       tier: 4,
       category: "protection",
       icon: "ShieldPlus",
@@ -296,7 +314,7 @@ const GYM: Buff[] = [
         mySquares(api.board, api.me).filter(
           (sq) => FILE(sq) >= 2 && FILE(sq) <= 5 && RANK(sq) >= 2 && RANK(sq) <= 5,
         ),
-      3,
+      2,
     ),
   ),
 
@@ -305,16 +323,68 @@ const GYM: Buff[] = [
       id: "onearmmuscleupismydream",
       name: "One Arm Muscle Up Is My Dream",
       description:
-        "One chosen piece reaches for the bar: forever it also slides diagonally like a bishop, extending one long arm across the board on top of its own moves.",
+        "One chosen piece reaches for the bar: once, it may slide diagonally like a bishop, one long arm across the board. That reach is a single grasp, taking it spends it, and so does the first of your turns where the reach is available but you move without using it.",
       tier: 5,
       category: "movement",
       icon: "MoveUpRight",
       flavor: "Someday the second arm. Today, this reach.",
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "b", self: true },
     },
-    bindPiece("Choose the piece reaching for its dream", bindCandidates(), {
-      gen: (b, sq, via) => slideMoves(b, sq, DIAG_DIRS, via),
-    }),
+    (() => {
+      // Nerf: the reach is a one-charge grasp, not a permanent grant. Using it
+      // spends the charge (normal), and because the engine only ever offers a
+      // legal reach, a "failed/illegal attempt" is modeled as the fallback in
+      // the directive glossary: the charge also expires the first turn the
+      // reach was available but the owner moved without taking it.
+      const reachOf = (b: BoardState, sq: Square, via: string) =>
+        slideMoves(b, sq, DIAG_DIRS, via);
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.sq != null
+            ? null
+            : {
+                kind: "square",
+                label: "Choose the piece reaching for its dream",
+                squares: bindCandidates()(api),
+              },
+        effect: (inst, _api, picks) => {
+          if (inst.state.sq != null) return;
+          inst.state.sq = picks[0]?.square;
+        },
+        augmentMoves: (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          addNovel(moves, reachOf(api.board, sq, inst.id));
+        },
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq != null && move.color === api.me) {
+            if (move.from === sq && move.via === inst.id) {
+              inst.spent = true; // the reach was taken
+              return;
+            }
+            // A move was made without the reach: if the arm could have reached
+            // this turn (the bound piece itself moved, so it clearly could, or
+            // it still stands and has a diagonal open), the charge is spent.
+            const available =
+              move.from === sq || reachOf(api.board, sq, inst.id).length > 0;
+            if (available) {
+              inst.spent = true;
+              return;
+            }
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          return sq == null ? "activate to choose a piece" : `reaching from ${sqLabel(sq)}`;
+        },
+      };
+    })(),
   ),
 
   card(
@@ -322,7 +392,7 @@ const GYM: Buff[] = [
       id: "bench_225",
       name: "225 Bench",
       description:
-        "Press 225 and shove up to 4 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
+        "Press 225 and shove up to 3 enemy pieces one square back toward their own home rank. Blocked pieces stay put, nobody is captured.",
       tier: 6,
       category: "tempo",
       icon: "Dumbbell",
@@ -344,14 +414,14 @@ const GYM: Buff[] = [
       };
       return {
         kind: "activated",
-        // buffed: capacity raised from 3 to 4 shoved pieces (kings stay immune,
+        // Nerf: capacity reduced from 4 to 3 shoved pieces (kings stay immune,
         // no captures, per pushDest above).
         targets: (_inst, api, picks) =>
-          picks.length >= 4
+          picks.length >= 3
             ? null
             : {
                 kind: "square",
-                label: `Choose an enemy piece to shove back (${picks.length + 1}/4)`,
+                label: `Choose an enemy piece to shove back (${picks.length + 1}/3)`,
                 squares: mySquares(api.board, api.opp).filter(
                   (sq) => pushDest(api, sq) != null && !picks.some((k) => k.square === sq),
                 ),
@@ -372,17 +442,80 @@ const GYM: Buff[] = [
       id: "full_planche",
       name: "Full Planche",
       description:
-        "Lock one of your pieces into a perfect hold. It hovers uncapturable for your opponent's next 5 turns and slides like a rook along every open rank and file for the game.",
+        "Lock one of your pieces into a perfect hold. It slides like a rook along every open rank and file for the game, and hovers uncapturable for your opponent's next 5 turns, until the moment it makes a capture, which ends the immunity early.",
       tier: 6,
       category: "protection",
       icon: "StretchHorizontal",
       flavor: "Dead still, arms locked, feet floating.",
       fx: { motif: "ward", moveAs: "r", self: true },
     },
-    bindPiece("Choose a piece to hold in a planche", bindCandidates(), {
-      shieldTurns: 5,
-      gen: (b, sq, via) => slideMoves(b, sq, ORTHO_DIRS, via),
-    }),
+    (() => {
+      // Like bindPiece(shieldTurns:5) but the immunity ends the instant the
+      // held piece captures. The rook-slide movement stays for the game.
+      const gen = (b: BoardState, sq: Square, via: string) =>
+        slideMoves(b, sq, ORTHO_DIRS, via);
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) =>
+          picks.length > 0 || inst.state.sq != null
+            ? null
+            : {
+                kind: "square",
+                label: "Choose a piece to hold in a planche",
+                squares: bindCandidates()(api),
+              },
+        effect: (inst, api, picks) => {
+          const sq = picks[0]?.square;
+          if (sq == null || inst.state.sq != null) return;
+          inst.state.sq = sq;
+          inst.state.shielded = true;
+          addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 5 });
+        },
+        augmentMoves: (moves, inst, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) return;
+          addNovel(moves, gen(api.board, sq, inst.id));
+        },
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          // The hold breaks the moment the planche piece captures: drop its
+          // shield early (the shield square still reads move.from here, since
+          // shields follow the piece only after these hooks run).
+          if (
+            sq != null &&
+            inst.state.shielded &&
+            move.color === api.me &&
+            move.from === sq &&
+            move.captured
+          ) {
+            for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+              const e = api.bs.effects[i];
+              if (
+                e.kind === "shield" &&
+                e.owner === api.me &&
+                e.squares &&
+                e.squares.length === 1 &&
+                e.squares[0] === sq
+              ) {
+                api.bs.effects.splice(i, 1);
+              }
+            }
+            inst.state.shielded = false;
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return "activate to choose a piece";
+          return inst.state.shielded
+            ? `held at ${sqLabel(sq)}, immune`
+            : `sliding at ${sqLabel(sq)}`;
+        },
+      };
+    })(),
   ),
 
   card(
@@ -390,7 +523,7 @@ const GYM: Buff[] = [
       id: "fingertip_maltese",
       name: "Fingertip Maltese",
       description:
-        "Elite fingertip hold on one enemy piece: it freezes for their next 3 turns and the eight squares around it are sealed, so nothing can rescue or relieve it.",
+        "Elite fingertip hold on one enemy piece: it freezes for their next 3 turns and the empty squares around it are sealed, so no fresh piece can move in to rescue it, though pieces already beside it may leave normally.",
       tier: 7,
       category: "attack",
       icon: "Hand",
@@ -414,7 +547,15 @@ const GYM: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stun" });
-        addEffect(api, { kind: "barred", squares: neighbors8(sq), against: api.opp, turns: 3 });
+        // Nerf: only the EMPTY surrounding squares are sealed, so a piece
+        // already standing beside the pinned one is never trapped in and may
+        // leave normally; the seal still blocks any fresh piece moving in.
+        addEffect(api, {
+          kind: "barred",
+          squares: neighbors8(sq).filter((n) => !api.board.pieces[n]),
+          against: api.opp,
+          turns: 3,
+        });
       },
     ),
   ),
@@ -427,7 +568,7 @@ const GYM: Buff[] = [
       name: "Middle Part",
       description:
         "Not one hair off the axis: choose one of your pieces except the king or queen, and a perfect mirror copy of it materializes on the file-reflected square (a-file to h-file), if that square is empty. Once.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "FlipHorizontal2",
       flavor: "Split dead center. Both sides immaculate.",
@@ -469,7 +610,7 @@ const GYM: Buff[] = [
       id: "forearm_veins",
       name: "Forearm Veins",
       description:
-        "Veins run dead straight up the forearm: for the game, each of your pawns may also capture the enemy piece directly ahead of it, one square straight forward.",
+        "Veins run dead straight up the forearm: after your opponent's next move, each of your pawns may also capture the enemy piece directly ahead of it, one square straight forward, for the rest of the game.",
       tier: 4,
       category: "attack",
       requires: ["p"],
@@ -477,20 +618,33 @@ const GYM: Buff[] = [
       flavor: "Dead straight, no curve, full grip.",
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "p").flatMap((sq) => {
-        const dr = fwd(api.board.pieces[sq]!.color);
-        const f = FILE(sq), r = RANK(sq) + dr;
-        if (!inBoard(f, r)) return [];
-        const to = SQ(f, r);
-        const t = api.board.pieces[to];
-        // Only the straight-ahead CAPTURE is new (plain forward pushes are
-        // normal pawn moves); back-rank landings stay off the menu so the
-        // grant never has to reason about promotion.
-        if (!t || t.color !== api.opp || t.type === "k" || !pawnRankOk(to)) return [];
-        return leapMoves(api.board, sq, [[0, dr]], inst.id);
-      }),
-    ),
+    {
+      kind: "passive",
+      // Delayed grant: the forward grip only comes online after your opponent's
+      // next move.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.active && move.color === api.opp) inst.state.active = true;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.active) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "p").flatMap((sq) => {
+            const dr = fwd(api.board.pieces[sq]!.color);
+            const f = FILE(sq), r = RANK(sq) + dr;
+            if (!inBoard(f, r)) return [];
+            const to = SQ(f, r);
+            const t = api.board.pieces[to];
+            // Only the straight-ahead CAPTURE is new (plain forward pushes are
+            // normal pawn moves); back-rank landings stay off the menu so the
+            // grant never has to reason about promotion.
+            if (!t || t.color !== api.opp || t.type === "k" || !pawnRankOk(to)) return [];
+            return leapMoves(api.board, sq, [[0, dr]], inst.id);
+          }),
+        );
+      },
+      status: (inst) => (inst.state.active ? null : "grip sets in after your opponent replies"),
+    },
   ),
 ];
 
@@ -505,7 +659,7 @@ const FOCUS: Buff[] = [
       name: "White Monster",
       description:
         "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
-      tier: 4,
+      tier: 5,
       category: "tempo",
       icon: "Zap",
       flavor: "Zero sugar. All consequences.",
@@ -525,14 +679,14 @@ const FOCUS: Buff[] = [
       id: "monkeytype",
       name: "Monkeytype",
       description:
-        "Type at full speed: relocate up to 3 of your pieces, each exactly one square, in a rapid burst of keystrokes. Kings sit this test out.",
+        "Type at full speed: relocate up to 2 of your pieces, each exactly one square, in a rapid burst of keystrokes. Kings sit this test out.",
       tier: 3,
       category: "movement",
       icon: "Keyboard",
       flavor: "Accuracy 100 percent, patience zero.",
       fx: { motif: "rally", self: true },
     },
-    relocateMany(3, stepDest),
+    relocateMany(2, stepDest),
   ),
 
   card(
@@ -540,7 +694,7 @@ const FOCUS: Buff[] = [
       id: "rubiks_cube",
       name: "Rubik's Cube",
       description:
-        "Scramble the cube: make up to 3 twists, each swapping the spots of two of your own pieces standing within 2 squares of each other. Kings never twist.",
+        "Scramble the cube: choose up to 3 twists, each swapping the spots of two of your own pieces standing within 2 squares of each other. Kings never twist. The twists only resolve after your opponent's next move.",
       tier: 5,
       category: "movement",
       icon: "Box",
@@ -554,8 +708,9 @@ const FOCUS: Buff[] = [
       };
       return {
         kind: "activated",
-        targets: (_inst, api, picks) => {
-          if (picks.length >= 6) return null;
+        spendOnUse: false,
+        targets: (inst, api, picks) => {
+          if (inst.state.pending != null || picks.length >= 6) return null;
           const onFirstOfPair = picks.length % 2 === 0;
           if (onFirstOfPair) {
             // Pick piece A: any of my non-king pieces that has a legal partner.
@@ -599,9 +754,19 @@ const FOCUS: Buff[] = [
             ),
           };
         },
-        effect: (_inst, api, picks) => {
-          for (let i = 0; i + 1 < picks.length; i += 2) {
-            const a = picks[i].square, b = picks[i + 1].square;
+        // Nerf: the twists no longer resolve on activation. Bank the chosen
+        // pairs and apply them only after the opponent's next move.
+        effect: (inst, _api, picks) => {
+          if (inst.state.pending != null) return;
+          inst.state.pending = picks
+            .map((k) => k.square)
+            .filter((s): s is Square => s != null);
+        },
+        onMovePlayed: (inst, move, api) => {
+          const pending = inst.state.pending as Square[] | undefined;
+          if (pending == null || inst.spent || move.color !== api.opp) return;
+          for (let i = 0; i + 1 < pending.length; i += 2) {
+            const a = pending[i], b = pending[i + 1];
             if (a == null || b == null) continue;
             const pa = api.board.pieces[a], pb = api.board.pieces[b];
             if (!pa || !pb || pa.color !== api.me || pb.color !== api.me) continue;
@@ -610,7 +775,12 @@ const FOCUS: Buff[] = [
             api.setPieceType(a, tb);
             api.setPieceType(b, ta);
           }
+          inst.spent = true;
         },
+        status: (inst) =>
+          inst.state.pending == null
+            ? "activate to scramble the cube"
+            : "the twists resolve after your opponent moves",
       };
     })(),
   ),
@@ -621,7 +791,7 @@ const FOCUS: Buff[] = [
       name: "Geometry Dash",
       description:
         "One of your pieces hits the beat: it dashes straight forward, phasing over your own pieces and smashing up to 2 enemies in its lane before landing. Never kings.",
-      tier: 6,
+      tier: 7,
       category: "attack",
       icon: "Triangle",
       flavor: "Jump. Jump. Do not miss the beat.",
@@ -684,30 +854,37 @@ const FOCUS: Buff[] = [
       id: "onett",
       name: "Onett",
       description:
-        "A townsperson reports for duty: a new pawn takes the nearest open square on your pawn line, or just ahead of it if the line is packed.",
+        "After your opponent's next move, a townsperson reports for duty: a new pawn takes the nearest open square on your pawn line, or just ahead of it if the line is packed.",
       tier: 2,
       category: "pieces",
       icon: "Home",
       flavor: "Population small, spirit enormous.",
     },
-    instant((_inst, api) => {
-      const homeRank = api.me === "w" ? 1 : 6;
-      const dr = fwd(api.me);
-      for (let step = 0; step < 6; step++) {
-        const r = homeRank + dr * step;
-        if (r < 0 || r > 7) break;
-        // Nearest to the center file (3), tie-break toward file 3.
-        const spots = [0, 1, 2, 3, 4, 5, 6, 7]
-          .map((f) => SQ(f, r))
-          .filter((sq) => !api.board.pieces[sq] && pawnRankOk(sq))
-          .sort((a, b) => Math.abs(FILE(a) - 3) - Math.abs(FILE(b) - 3) || a - b);
-        if (spots.length) {
-          api.place(spots[0], "p", api.me);
-          addEffect(api, { kind: "strike", squares: [spots[0]], owner: api.me, turns: 1 });
-          return;
+    {
+      kind: "passive",
+      // Delayed arrival: the townsperson reports only after your opponent's
+      // next move, not the instant the card is drafted.
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const homeRank = api.me === "w" ? 1 : 6;
+        const dr = fwd(api.me);
+        for (let step = 0; step < 6; step++) {
+          const r = homeRank + dr * step;
+          if (r < 0 || r > 7) break;
+          // Nearest to the center file (3), tie-break toward file 3.
+          const spots = [0, 1, 2, 3, 4, 5, 6, 7]
+            .map((f) => SQ(f, r))
+            .filter((sq) => !api.board.pieces[sq] && pawnRankOk(sq))
+            .sort((a, b) => Math.abs(FILE(a) - 3) - Math.abs(FILE(b) - 3) || a - b);
+          if (spots.length) {
+            api.place(spots[0], "p", api.me);
+            addEffect(api, { kind: "strike", squares: [spots[0]], owner: api.me, turns: 1 });
+            break;
+          }
         }
-      }
-    }),
+        inst.spent = true;
+      },
+    },
   ),
 
   card(
@@ -715,13 +892,49 @@ const FOCUS: Buff[] = [
       id: "bee_swarm_simulator",
       name: "Bee Swarm Simulator",
       description:
-        "Release the hive: drop 3 bee pawns on empty squares of the two center ranks, a buzzing swarm that harasses both armies from no-mans-land.",
+        "Release the hive: choose 3 empty squares on the two center ranks, and after your opponent's next move a buzzing swarm of 3 bee pawns lands there, harassing both armies from no-mans-land.",
       tier: 5,
       category: "pieces",
       icon: "Bug",
       flavor: "Everybody buzz in, the hive is hiring.",
     },
-    placePieces(["p", "p", "p"], () => (sq: Square) => RANK(sq) === 3 || RANK(sq) === 4),
+    (() => {
+      const inZone = (sq: Square) => RANK(sq) === 3 || RANK(sq) === 4;
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        // Pick the three landing squares now; the bees only materialize after
+        // your opponent's next move (any square taken by then is skipped).
+        targets: (inst, api, picks) => {
+          if (inst.state.pending != null || picks.length >= 3) return null;
+          return {
+            kind: "square",
+            label: `Choose where a bee will land (${picks.length + 1}/3)`,
+            squares: emptySquares(api.board, inZone).filter(
+              (sq) => !picks.some((k) => k.square === sq),
+            ),
+          };
+        },
+        effect: (inst, _api, picks) => {
+          if (inst.state.pending != null) return;
+          inst.state.pending = picks
+            .map((k) => k.square)
+            .filter((s): s is Square => s != null);
+        },
+        onMovePlayed: (inst, move, api) => {
+          const pending = inst.state.pending as Square[] | undefined;
+          if (pending == null || inst.spent || move.color !== api.opp) return;
+          for (const sq of pending) {
+            if (!api.board.pieces[sq]) api.place(sq, "p", api.me);
+          }
+          inst.spent = true;
+        },
+        status: (inst) =>
+          inst.state.pending == null
+            ? "activate to ready the swarm"
+            : "the swarm arrives after your opponent moves",
+      };
+    })(),
   ),
 ];
 
@@ -735,7 +948,7 @@ const AFFECTION: Buff[] = [
       id: "i_love_my_gf",
       name: "I Love My GF",
       description:
-        "Your whole army, king included, cannot be captured for your opponent's next 3 turns, and you take two extra moves right now.",
+        "Your pieces standing in your own half cannot be captured for your opponent's next turn, and you take one bonus move right now. Your king shares the shield only if it is currently in check.",
       tier: 8,
       category: "protection",
       icon: "Heart",
@@ -746,9 +959,16 @@ const AFFECTION: Buff[] = [
       kind: "activated",
       freeAction: true,
       effect: (_inst, api) => {
-        addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 3 });
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
-        api.bs.extraMoves[api.me] += 2;
+        // Nerf: shield only the pieces in your own half, for a single opponent
+        // turn, plus one bonus move. The king is covered only when in check.
+        const squares = mySquares(api.board, api.me).filter(
+          (sq) => inHalf(api.me, sq) && api.board.pieces[sq]!.type !== "k",
+        );
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
+        if (isInCheck(api.board, api.me)) {
+          addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        }
+        api.bs.extraMoves[api.me] += 1;
       },
     },
   ),
@@ -761,7 +981,7 @@ const AFFECTION: Buff[] = [
       id: "i_love_cam",
       name: "I Love Cami",
       description:
-        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured. If she is ever taken, her captor is frozen for 2 turns.",
+        "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
       tier: 6,
       category: "pieces",
       icon: "Crosshair",
@@ -786,6 +1006,9 @@ const AFFECTION: Buff[] = [
         if (sq == null || api.board.pieces[sq] || !inHalf(api.me, sq)) return;
         api.place(sq, "q", api.me);
         inst.state.sq = sq;
+        // Nerf: Devotion is no longer permanent. The group immunity runs for
+        // the opponent's next 3 turns (counted down in onMovePlayed).
+        inst.state.devote = 3;
         addEffect(api, { kind: "strike", squares: [sq], owner: api.me, turns: 1 });
       },
       // Amazon movement: queen slides and the king-guard step are native to
@@ -805,6 +1028,8 @@ const AFFECTION: Buff[] = [
         if (sq == null) return moves;
         const her = api.board.pieces[sq];
         if (!her || her.color !== api.me || her.type !== "q") return moves;
+        // Devotion only guards while the timed window is open.
+        if (((inst.state.devote as number) ?? 0) <= 0) return moves;
         const guarded = new Set(
           neighbors8(sq).filter((n) => {
             const p = api.board.pieces[n];
@@ -820,6 +1045,11 @@ const AFFECTION: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
+        // Count down the Devotion window on the opponent's own turns.
+        if (sq != null && move.color === api.opp) {
+          const left = (inst.state.devote as number) ?? 0;
+          if (left > 0) inst.state.devote = left - 1;
+        }
         // Vengeance: the piece that takes Cami is frozen for 2 of its
         // owner's turns. Kings shrug it off (kings are never frozen).
         if (sq != null && move.color === api.opp && move.to === sq && move.from !== sq) {
@@ -847,7 +1077,7 @@ const AFFECTION: Buff[] = [
       id: "ilovemysister",
       name: "I Love My Sister",
       description:
-        "Bring your strongest fallen piece home to an empty square in your half. She arrives shielded, uncapturable for your opponent's next 2 turns.",
+        "Bring your strongest fallen piece home to an empty square in your half. She arrives shielded, uncapturable for your opponent's next 2 turns, but the shield ends once she has made two captures.",
       tier: 7,
       category: "pieces",
       icon: "HandHeart",
@@ -861,9 +1091,15 @@ const AFFECTION: Buff[] = [
         }
         return null;
       };
-      return activated(
-        (_inst, api, picks) => {
-          if (picks.length > 0) return null;
+      // Nerf: the shield still runs for 2 opponent turns, but it also ends
+      // after the protected piece captures twice. Only the one revived piece
+      // is protected, so "two protected pieces capture" is delivered as the
+      // revived piece capturing twice.
+      return {
+        kind: "activated",
+        spendOnUse: false,
+        targets: (inst, api, picks) => {
+          if (inst.state.sq != null || picks.length > 0) return null;
           const type = bestType(api);
           return {
             kind: "square",
@@ -876,7 +1112,8 @@ const AFFECTION: Buff[] = [
                   ),
           };
         },
-        (_inst, api, picks) => {
+        effect: (inst, api, picks) => {
+          if (inst.state.sq != null) return;
           const type = bestType(api);
           const sq = picks[0]?.square;
           if (type == null || sq == null || api.board.pieces[sq]) return;
@@ -884,8 +1121,48 @@ const AFFECTION: Buff[] = [
           api.place(sq, type, api.me);
           markRevived(api, type);
           addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+          inst.state.sq = sq;
+          inst.state.caps = 0;
         },
-      );
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return;
+          if (
+            move.color === api.me &&
+            move.from === sq &&
+            move.captured &&
+            move.captured !== "k"
+          ) {
+            const caps = ((inst.state.caps as number) ?? 0) + 1;
+            inst.state.caps = caps;
+            if (caps >= 2) {
+              // Drop her shield early (it still reads move.from here, before
+              // shields follow the piece).
+              for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+                const e = api.bs.effects[i];
+                if (
+                  e.kind === "shield" &&
+                  e.owner === api.me &&
+                  e.squares &&
+                  e.squares.length === 1 &&
+                  e.squares[0] === sq
+                ) {
+                  api.bs.effects.splice(i, 1);
+                }
+              }
+              inst.state.sq = move.to;
+              inst.spent = true;
+              return;
+            }
+          }
+          trackBoundPiece(inst, move);
+        },
+        status: (inst) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq == null) return "activate to bring her home";
+          return `shielded at ${sqLabel(sq)}, ${(inst.state.caps as number) ?? 0}/2 captures`;
+        },
+      };
     })(),
   ),
 
@@ -894,7 +1171,7 @@ const AFFECTION: Buff[] = [
       id: "ilovewhimperingaudios",
       name: "I Love Whimpering Audios",
       description:
-        "On each of your next 3 turns, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
+        "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
       tier: 8,
       category: "pieces",
       icon: "AudioLines",
@@ -908,6 +1185,11 @@ const AFFECTION: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
+        // Nerf: delay the first trigger until after the opponent's next move.
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
         const left = (inst.state.charges as number) ?? 0;
         if (left <= 0) return;
         const k = mySquares(api.board, api.me, "k")[0];
@@ -928,28 +1210,34 @@ const AFFECTION: Buff[] = [
       id: "ihatemyex",
       name: "I Hate My Ex",
       description:
-        "Freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
+        "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
       tier: 1,
       category: "tempo",
       icon: "HeartCrack",
       flavor: "Blocked, deleted, and still living rent free in my head.",
     },
-    instant((_inst, api) => {
-      const ek = mySquares(api.board, api.opp, "k")[0];
-      const theirPawns = mySquares(api.board, api.opp, "p");
-      if (ek != null && theirPawns.length) {
-        const t = theirPawns
-          .slice()
-          .sort((a, b) => dist(a, ek) - dist(b, ek) || a - b)[0];
-        addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "glue" });
-      }
-      const mk = mySquares(api.board, api.me, "k")[0];
-      const myPawns = mySquares(api.board, api.me, "p");
-      if (mk != null && myPawns.length) {
-        const s = myPawns.slice().sort((a, b) => dist(a, mk) - dist(b, mk) || a - b)[0];
-        addEffect(api, { kind: "freeze", sq: s, owner: api.me, turns: 2, skin: "glue" });
-      }
-    }),
+    {
+      kind: "passive",
+      // Delayed payoff: the freezes only bite after your opponent's next move.
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const ek = mySquares(api.board, api.opp, "k")[0];
+        const theirPawns = mySquares(api.board, api.opp, "p");
+        if (ek != null && theirPawns.length) {
+          const t = theirPawns
+            .slice()
+            .sort((a, b) => dist(a, ek) - dist(b, ek) || a - b)[0];
+          addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "glue" });
+        }
+        const mk = mySquares(api.board, api.me, "k")[0];
+        const myPawns = mySquares(api.board, api.me, "p");
+        if (mk != null && myPawns.length) {
+          const s = myPawns.slice().sort((a, b) => dist(a, mk) - dist(b, mk) || a - b)[0];
+          addEffect(api, { kind: "freeze", sq: s, owner: api.me, turns: 2, skin: "glue" });
+        }
+        inst.spent = true;
+      },
+    },
   ),
 
   card(
@@ -997,7 +1285,7 @@ const AFFECTION: Buff[] = [
       id: "ilovemakingout",
       name: "I Love Making Out",
       description:
-        "Bond two of your pieces for the game. Each also moves the way the other does, blending a knight with a bishop or a rook with a queen.",
+        "Bond two of your pieces for the game. Each also moves the way the other does, blending a knight with a bishop or a rook with a queen, but these borrowed moves cannot capture.",
       tier: 6,
       category: "movement",
       icon: "HeartHandshake",
@@ -1049,13 +1337,16 @@ const AFFECTION: Buff[] = [
           const b = inst.state.b as Square | undefined;
           const ta = inst.state.ta as PieceType | undefined;
           const tb = inst.state.tb as PieceType | undefined;
+          // Nerf: the borrowed moves cannot capture, so drop any that would.
           if (a != null && tb) {
             const p = api.board.pieces[a];
-            if (p && p.color === api.me) addNovel(moves, genAs(tb, api.board, a, inst.id));
+            if (p && p.color === api.me)
+              addNovel(moves, genAs(tb, api.board, a, inst.id).filter((m) => !m.captured));
           }
           if (b != null && ta) {
             const p = api.board.pieces[b];
-            if (p && p.color === api.me) addNovel(moves, genAs(ta, api.board, b, inst.id));
+            if (p && p.color === api.me)
+              addNovel(moves, genAs(ta, api.board, b, inst.id).filter((m) => !m.captured));
           }
         },
         onMovePlayed: (inst, move) => {
@@ -1087,7 +1378,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "i_love_newjeans",
       name: "I Love NewJeans",
       description:
-        "Harmony: for the game, every non-king piece of yours that stands next to a friendly piece may also step one square in any direction.",
+        "Harmony: for the game, every non-king piece of yours that stands next to a friendly piece may also step one square in any direction onto an empty square, but this step cannot capture.",
       tier: 6,
       category: "movement",
       icon: "Users",
@@ -1095,16 +1386,19 @@ export const NEWJEANS_CARDS: Buff[] = [
       fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], self: true },
     },
     permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me).flatMap((sq) => {
-        const p = api.board.pieces[sq]!;
-        // buffed: pawns now share the harmony step too (only the king is barred).
-        if (p.type === "k") return [];
-        const grouped = neighbors8(sq).some((n) => {
-          const q = api.board.pieces[n];
-          return !!q && q.color === api.me;
-        });
-        return grouped ? slideMoves(api.board, sq, ALL_DIRS, inst.id, 1) : [];
-      }),
+      mySquares(api.board, api.me)
+        .flatMap((sq) => {
+          const p = api.board.pieces[sq]!;
+          // buffed: pawns now share the harmony step too (only the king is barred).
+          if (p.type === "k") return [];
+          const grouped = neighbors8(sq).some((n) => {
+            const q = api.board.pieces[n];
+            return !!q && q.color === api.me;
+          });
+          return grouped ? slideMoves(api.board, sq, ALL_DIRS, inst.id, 1) : [];
+        })
+        // Nerf: the harmony step cannot capture, only slide onto empty ground.
+        .filter((m) => !m.captured),
     ),
   ),
 
@@ -1116,7 +1410,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "minji",
       name: "Minji",
       description:
-        "Leader's guard: every one of your pieces standing within two squares of your king links arms and cannot be captured for your opponent's next 5 turns.",
+        "Leader's guard: every one of your pieces standing within two squares of your king links arms and cannot be captured for your opponent's next 5 turns, but the guard drops the instant two of the protected pieces have captured.",
       tier: 5,
       category: "protection",
       icon: "Crown",
@@ -1125,20 +1419,72 @@ export const NEWJEANS_CARDS: Buff[] = [
     },
     // Activated (not instant) on purpose: an activated card can sit in a hand,
     // so the god panel may summon it and the player picks the moment the
-    // guard snaps in.
-    activatedSimple((_inst, api) => {
-      const k = mySquares(api.board, api.me, "k")[0];
-      if (k == null) return;
-      // buffed: the guard now reaches allies within two squares of the king
-      // (was one), while still never covering the king's own square.
-      const squares = neighbors24(k).filter((sq) => {
-        const p = api.board.pieces[sq];
-        return !!p && p.color === api.me;
-      });
-      if (squares.length) {
-        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 5 });
-      }
-    }),
+    // guard snaps in. The guard is a card-owned move filter (not a board
+    // shield effect) so the card can end it early after two protected captures.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      effect: (inst, api) => {
+        if (inst.state.squares != null) return;
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null) {
+          inst.spent = true;
+          return;
+        }
+        // The guard reaches allies within two squares of the king, while still
+        // never covering the king's own square.
+        const squares = neighbors24(k).filter((sq) => {
+          const p = api.board.pieces[sq];
+          return !!p && p.color === api.me;
+        });
+        inst.state.squares = squares;
+        inst.state.turns = 5; // opponent turns
+        inst.state.caps = 0;
+        if (squares.length === 0) inst.spent = true;
+      },
+      filterOpponentMoves: (moves, inst, _api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (!squares || squares.length === 0 || ((inst.state.turns as number) ?? 0) <= 0) {
+          return moves;
+        }
+        const guarded = new Set(squares);
+        const kept = moves.filter((m) => {
+          const cap = captureSquare(m);
+          return cap == null || !guarded.has(cap);
+        });
+        // Never strand the opponent with zero moves.
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (squares == null || squares.length === 0) return;
+        if (move.color === api.me) {
+          const idx = squares.indexOf(move.from);
+          if (idx >= 0) {
+            // A protected piece moved: count its capture and let the guard
+            // follow it to its new square.
+            if (move.captured && move.captured !== "k") {
+              inst.state.caps = ((inst.state.caps as number) ?? 0) + 1;
+            }
+            squares[idx] = move.to;
+            if (((inst.state.caps as number) ?? 0) >= 2) {
+              inst.state.squares = [];
+              inst.spent = true;
+              return;
+            }
+          }
+        }
+        if (move.color === api.opp) {
+          inst.state.turns = ((inst.state.turns as number) ?? 0) - 1;
+          if (((inst.state.turns as number) ?? 0) <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) => {
+        const squares = inst.state.squares as Square[] | undefined;
+        if (squares == null) return "activate to raise the guard";
+        return `guard up, ${(inst.state.caps as number) ?? 0}/2 captures spent`;
+      },
+    },
   ),
 
   card(
@@ -1146,7 +1492,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "hyein",
       name: "Hyein",
       description:
-        "Long legs: for the game each of your pawns may also stride straight forward to the first, second, or third empty square ahead, springing over anything in between.",
+        "Long legs: for the game each of your pawns may also stride straight forward to the first or second empty square ahead, springing over anything in between.",
       tier: 5,
       category: "movement",
       requires: ["p"],
@@ -1157,11 +1503,10 @@ export const NEWJEANS_CARDS: Buff[] = [
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "p").flatMap((sq) => {
         const dr = fwd(api.board.pieces[sq]!.color);
-        // buffed: the stride now reaches up to the third empty square ahead.
+        // The stride reaches up to the second empty square ahead.
         const tos = [
           [FILE(sq), RANK(sq) + dr],
           [FILE(sq), RANK(sq) + dr * 2],
-          [FILE(sq), RANK(sq) + dr * 3],
         ]
           .filter(([f, r]) => inBoard(f, r))
           .map(([f, r]) => SQ(f, r))
@@ -1176,7 +1521,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       id: "haerin",
       name: "Haerin",
       description:
-        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board, land yours on its square, and it stands shielded, uncapturable for your opponent's next turn.",
+        "Cat's pounce: choose one of your pieces, then an enemy a knight's leap away. Snatch that piece off the board, land yours on its square, and it stands shielded, uncapturable for your opponent's next turn, unless landing there gives check.",
       tier: 5,
       category: "attack",
       icon: "Cat",
@@ -1194,6 +1539,35 @@ export const NEWJEANS_CARDS: Buff[] = [
           if (isPawn && !pawnRankOk(sq)) return [];
           return [sq];
         });
+      };
+      // A shielded piece must not also be giving check: the guard and a check
+      // are mutually exclusive. Does a `type` piece standing on `from` attack
+      // the enemy king from there?
+      const givesCheck = (api: BuffApi, from: Square, type: PieceType): boolean => {
+        const ek = mySquares(api.board, api.opp, "k")[0];
+        if (ek == null) return false;
+        switch (type) {
+          case "p": {
+            const dr = fwd(api.me);
+            return [
+              [1, dr],
+              [-1, dr],
+            ].some(([df, d]) => {
+              const f = FILE(from) + df, r = RANK(from) + d;
+              return inBoard(f, r) && SQ(f, r) === ek;
+            });
+          }
+          case "n":
+            return leapMoves(api.board, from, KNIGHT_LEAPS, "").some((m) => m.to === ek);
+          case "b":
+            return slideMoves(api.board, from, DIAG_DIRS, "").some((m) => m.to === ek);
+          case "r":
+            return slideMoves(api.board, from, ORTHO_DIRS, "").some((m) => m.to === ek);
+          case "q":
+            return slideMoves(api.board, from, ALL_DIRS, "").some((m) => m.to === ek);
+          default:
+            return false;
+        }
       };
       return activated(
         (_inst, api, picks) =>
@@ -1221,8 +1595,12 @@ export const NEWJEANS_CARDS: Buff[] = [
           const landed = mover.type !== "p" || pawnRankOk(prey);
           if (landed) api.relocate(from, prey);
           addEffect(api, { kind: "strike", squares: [prey], owner: api.me, turns: 1 });
-          // buffed: the pouncer lands shielded for the opponent's next turn.
-          if (landed) addEffect(api, { kind: "shield", owner: api.me, squares: [prey], turns: 1 });
+          // The pouncer lands shielded for the opponent's next turn, UNLESS the
+          // pounce gives check: a checker never gets the shield (it cannot both
+          // be uncapturable and be delivering check).
+          if (landed && !givesCheck(api, prey, mover.type)) {
+            addEffect(api, { kind: "shield", owner: api.me, squares: [prey], turns: 1 });
+          }
         },
       );
     })(),
@@ -1304,7 +1682,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       name: "I Love Chaewon",
       description:
         "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Feather",
       flavor: "Every step placed on purpose. The whole formation dances into place.",
@@ -1324,14 +1702,14 @@ const NAMED: Buff[] = [
       id: "daniel_caesar",
       name: "Daniel Caesar",
       description:
-        "Smooth things over. For your opponent's next 3 turns none of their pieces may capture anything, so the board stays calm while you set up.",
+        "Smooth things over. For your opponent's next 2 turns none of their pieces may capture anything, so the board stays calm while you set up.",
       tier: 4,
       category: "hex",
       icon: "Music2",
       flavor: "Best part, right in the blue.",
       fx: { motif: "muzzle", pieces: "all" },
     },
-    timedOppFilter(3, (moves) => moves.filter((m) => !m.captured)),
+    timedOppFilter(2, (moves) => moves.filter((m) => !m.captured)),
   ),
 
   card(
@@ -1339,14 +1717,24 @@ const NAMED: Buff[] = [
       id: "fur_elise",
       name: "Fur Elise",
       description:
-        "Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands.",
+        "Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands. Using it spends your next unused draft reroll, if you have one.",
       tier: 5,
       category: "attack",
       requires: ["b"],
       icon: "Piano",
       flavor: "Every capture, a falling note.",
     },
-    lineSweep("b", DIAG_DIRS, 3),
+    (() => {
+      const base = lineSweep("b", DIAG_DIRS, 3);
+      return {
+        ...base,
+        // Preserve the sweep, but using it spends your next unused reroll.
+        effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+          base.effect?.(inst, api, picks);
+          if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+        },
+      };
+    })(),
   ),
 
   card(
@@ -1355,7 +1743,7 @@ const NAMED: Buff[] = [
       name: "Joseph Leung",
       description:
         "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "Fingerprint",
       flavor: "One name, all over it.",
@@ -1375,24 +1763,27 @@ const NAMED: Buff[] = [
       id: "rgb_keyboard",
       name: "RGB Keyboard",
       description:
-        "Light up every key. For the game your knights add a 1-square step any direction, your bishops slide 2 straight, and your rooks slide 2 diagonally.",
+        "Light up every key. For the game your knights add a 1-square step any direction, your bishops slide 2 straight, and your rooks slide 2 diagonally, but these added moves cannot capture.",
       tier: 4,
       category: "movement",
       icon: "Keyboard",
       flavor: "Red, green, blue, and the whole squad glows.",
       fx: { motif: "empower", pieces: ["n", "b", "r"], self: true },
     },
-    permanentAugment((_m, inst, api) => [
-      ...mySquares(api.board, api.me, "n").flatMap((sq) =>
-        leapMoves(api.board, sq, ALL_DIRS, inst.id),
-      ),
-      ...mySquares(api.board, api.me, "b").flatMap((sq) =>
-        slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 2),
-      ),
-      ...mySquares(api.board, api.me, "r").flatMap((sq) =>
-        slideMoves(api.board, sq, DIAG_DIRS, inst.id, 2),
-      ),
-    ]),
+    permanentAugment((_m, inst, api) =>
+      [
+        ...mySquares(api.board, api.me, "n").flatMap((sq) =>
+          leapMoves(api.board, sq, ALL_DIRS, inst.id),
+        ),
+        ...mySquares(api.board, api.me, "b").flatMap((sq) =>
+          slideMoves(api.board, sq, ORTHO_DIRS, inst.id, 2),
+        ),
+        ...mySquares(api.board, api.me, "r").flatMap((sq) =>
+          slideMoves(api.board, sq, DIAG_DIRS, inst.id, 2),
+        ),
+        // The added moves are non-capturing: drop any that would capture.
+      ].filter((m) => !m.captured),
+    ),
   ),
 
   card(
@@ -1400,14 +1791,37 @@ const NAMED: Buff[] = [
       id: "uniqlo_warrior",
       name: "Uniqlo Warrior",
       description:
-        "Suit up in the daily fit. Your entire army cannot be captured for your opponent's next 3 turns.",
+        "Suit up in the daily fit. Choose up to four of your pieces: they cannot be captured for your opponent's next 3 turns.",
       tier: 5,
       category: "protection",
       icon: "Shirt",
       flavor: "Dependable, breathable, bulletproof.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    shieldArmy(3),
+    // Nerf: protection limited to four chosen pieces (was the whole army),
+    // duration preserved at the opponent's next 3 turns.
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to suit up (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const squares = picks
+          .map((k) => k.square)
+          .filter((s): s is Square => s != null);
+        if (squares.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+        }
+      },
+    ),
   ),
 
   card(
@@ -1415,16 +1829,20 @@ const NAMED: Buff[] = [
       id: "bayview_secondary_school",
       name: "Bayview Secondary School",
       description:
-        "Detention for the whole class. Choose a square: every enemy piece except the king in the 3 by 3 around it is locked in place for their next 3 turns.",
+        "Detention for the whole class. Choose a square: after your opponent's next move, every enemy piece except the king in the 3 by 3 around it is locked in place for their next 3 turns.",
       tier: 6,
       category: "tempo",
       icon: "School",
       flavor: "Nobody leaves till the bell.",
       fx: { motif: "jail" },
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    // Nerf: the lockdown no longer bites on activation. Bank the chosen center
+    // and apply the freezes only after the opponent's next move.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        inst.state.center != null || picks.length > 0
           ? null
           : {
               kind: "square",
@@ -1436,17 +1854,26 @@ const NAMED: Buff[] = [
                 }),
               ),
             },
-      (_inst, api, picks) => {
-        const c = picks[0]?.square;
-        if (c == null) return;
+      effect: (inst, _api, picks) => {
+        if (inst.state.center != null) return;
+        if (picks[0]?.square != null) inst.state.center = picks[0].square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.center == null || inst.spent || move.color !== api.opp) return;
+        const c = inst.state.center as Square;
         for (const sq of [c, ...neighbors8(c)]) {
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
             addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "stun" });
           }
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.center == null
+          ? "activate to set detention"
+          : "detention starts after your opponent moves",
+    },
   ),
 
   card(
@@ -1454,21 +1881,41 @@ const NAMED: Buff[] = [
       id: "check_out_our_socials",
       name: "Check Out Our Socials",
       description:
-        "Go live to the whole board. Every enemy piece except the king freezes for their next 2 turns while your hyped-up side takes 2 extra moves right now.",
+        "Go live to the squad. Freeze up to 3 enemy pieces except the king for their next turn, then take one bonus move.",
       tier: 8,
       category: "tempo",
       icon: "Megaphone",
       flavor: "Like, subscribe, and stop moving.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type !== "k") {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "stun" });
+    // Nerf: no more board-wide freeze or second bonus move. Freeze up to three
+    // chosen non-king enemies for one turn, then take a single bonus move.
+    {
+      kind: "activated",
+      freeAction: true,
+      targets: (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      effect: (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const p = api.board.pieces[k.square];
+          if (p && p.color === api.opp && p.type !== "k") {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1, skin: "stun" });
+          }
         }
-      }
-      api.bs.extraMoves[api.me] += 2;
-    }),
+        api.bs.extraMoves[api.me] += 1;
+      },
+    },
   ),
 ];
 

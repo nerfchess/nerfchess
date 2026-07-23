@@ -134,7 +134,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "AlarmClockOff",
       name: "Snooze Button",
       description:
-        "Pump sleeping gas down one file you pick: every enemy piece except the king standing on that file falls asleep and cannot move for their next 2 turns.",
+        "Pump sleeping gas down one file you pick: every enemy piece except the king standing on that file falls asleep and cannot move for their next turn.",
       tier: 4,
       category: "tempo",
       flavor: "Five more minutes.",
@@ -157,7 +157,7 @@ export const PT_CURSE_CARDS: Buff[] = [
           const sq = SQ(f, r);
           const p = api.board.pieces[sq];
           if (p && p.color === api.opp && p.type !== "k") {
-            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "sleep" });
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
           }
         }
       },
@@ -174,7 +174,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Repeat",
       name: "Groundhog Day",
       description:
-        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn, they must move that same piece again on the two turns after. If that piece can no longer move, the loop is skipped.",
+        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn is caught in a loop. Their very next turn after that is one free escape and they may move anything, but on the turn after it they must move that same piece again. If that piece can no longer move, the loop is skipped.",
       tier: 6,
       category: "hex",
       flavor: "Didn't we just do this?",
@@ -189,13 +189,18 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves; // the recording turn: free choice
+        if (!inst.state.escaped) return moves; // the first affected turn is a free escape move
         const kept = moves.filter((m) => m.from === sq);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
-        if (inst.state.sq == null) inst.state.sq = move.to; // record the piece
-        else if (move.from === inst.state.sq) inst.state.sq = move.to; // follow the echo
+        if (inst.state.sq == null) {
+          inst.state.sq = move.to; // record the piece
+        } else {
+          if (move.from === inst.state.sq) inst.state.sq = move.to; // follow the piece
+          inst.state.escaped = true; // spend the one free escape move
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
@@ -305,7 +310,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Dog",
       name: "Werewolf",
       description:
-        "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. If it promotes or is captured the curse lifts.",
+        "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. The first transformation holds until your opponent replies. If it promotes or is captured the curse lifts.",
       tier: 6,
       category: "pieces",
       requires: ["p"],
@@ -353,6 +358,26 @@ export const PT_CURSE_CARDS: Buff[] = [
           inst.state.sq = undefined;
           return;
         }
+        // Flip the werewolf between pawn and knight forms, guarding sync and the
+        // back rank exactly as before.
+        const doTransform = () => {
+          const form = inst.state.form as PieceType;
+          const next: PieceType = form === "p" ? "n" : "p";
+          const p = api.board.pieces[sq!];
+          if (!p || p.color !== api.me || p.type !== form) return; // out of sync
+          if (next === "p" && !pawnRankOk(sq!)) return; // never a pawn on the back rank
+          api.setPieceType(sq!, next);
+          inst.state.form = next;
+        };
+        // The very first transformation is delayed until the opponent replies:
+        // when the countdown first reaches zero we arm `pending` instead of
+        // flipping, then the opponent's next move resolves it. Every later
+        // transformation fires immediately on the turn its countdown ends.
+        if (inst.state.pending && move.color === api.opp) {
+          inst.state.pending = false;
+          doTransform();
+          return;
+        }
         if (move.color !== api.me) return;
         const left = ((inst.state.turns as number) ?? 5) - 1;
         if (left > 0) {
@@ -360,13 +385,12 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         inst.state.turns = 5;
-        const form = inst.state.form as PieceType;
-        const next: PieceType = form === "p" ? "n" : "p";
-        const p = api.board.pieces[sq];
-        if (!p || p.color !== api.me || p.type !== form) return; // out of sync
-        if (next === "p" && !pawnRankOk(sq)) return; // never a pawn on the back rank
-        api.setPieceType(sq, next);
-        inst.state.form = next;
+        if (!inst.state.firstDone) {
+          inst.state.firstDone = true;
+          inst.state.pending = true;
+          return;
+        }
+        doTransform();
       },
       status: (inst) =>
         inst.state.sq == null
@@ -385,7 +409,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       icon: "Snail",
       name: "Slowpoke",
       description:
-        "A famously bad card. Your whole army goes sluggish: for your next turn every piece can move only one square. It shrugs, apologetically.",
+        "A famously bad card. Your whole army goes sluggish: for your next turn every piece can move only one square, and those steps cannot capture. It shrugs, apologetically.",
       tier: 2,
       category: "movement",
       flavor: "Sorry. Sorry. Coming through. Sorry.",
@@ -393,6 +417,14 @@ export const PT_CURSE_CARDS: Buff[] = [
     },
     instant((_inst, api) => {
       addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
+      // The sluggish one-square steps cannot capture: bar every square an enemy
+      // piece stands on against you for that turn, so no shuffle can take a
+      // piece. The engine still exempts a king capture (its universal
+      // unwinnability guard) and relaxes the wall rather than ever stranding you.
+      const occupied = mySquares(api.board, api.opp);
+      if (occupied.length > 0) {
+        addEffect(api, { kind: "barred", squares: occupied, against: api.me, turns: 1 });
+      }
     }),
   ),
 
@@ -407,7 +439,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Pinocchio",
       description:
         "One pawn's nose grows: each of your turns it does not capture, its reach grows by one square, up to plus four. It may capture the first enemy piece other than a king directly ahead of it within that reach. Capturing shrinks the nose back to zero.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       requires: ["p"],
       flavor: "It wasn't lying, exactly.",
@@ -476,7 +508,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "hot_potato",
       name: "Hot Potato",
       description:
-        "Curse one enemy piece other than the king into a hot potato: for their next 4 turns your opponent must move that piece if it has any legal move.",
+        "Curse one enemy piece other than the king into a hot potato: after your opponent's next move, for their following 4 turns they must move that piece if it has any legal move.",
       tier: 4,
       category: "hex",
       flavor: "Hot hot hot, pass it on.",
@@ -501,8 +533,10 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 4;
+        inst.state.pending = true; // delay the forced-move rule one opponent reply
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (inst.state.pending) return moves; // not active until after their next move
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
@@ -520,10 +554,20 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // Their next move is the free delay turn: consume `pending` and do not
+        // start the timer until the move after it.
+        if (move.color === api.opp && inst.state.pending) {
+          inst.state.pending = false;
+          return;
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to choose the potato" : `hot potato: ${turnsLeft(inst)} of their turns left`,
+        inst.state.sq == null
+          ? "activate to choose the potato"
+          : inst.state.pending
+            ? "hot potato: takes hold after their next move"
+            : `hot potato: ${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -536,7 +580,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "stinky",
       name: "Stinky",
       description:
-        "One enemy piece other than the king reeks: for your opponent's next 3 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
+        "One enemy piece other than the king reeks: after your opponent's next move, for their following 3 turns their other pieces cannot move onto any square adjacent to it. The smelly piece itself may still move anywhere.",
       tier: 3,
       category: "hex",
       flavor: "Somebody skipped bath day.",
@@ -561,8 +605,10 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 3;
+        inst.state.pending = true; // delay the stink cloud one opponent reply
       },
       filterOpponentMoves: (moves, inst, api) => {
+        if (inst.state.pending) return moves; // not active until after their next move
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return moves;
@@ -581,10 +627,19 @@ export const PT_CURSE_CARDS: Buff[] = [
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // Their next move is the free delay turn; the cloud starts after it.
+        if (move.color === api.opp && inst.state.pending) {
+          inst.state.pending = false;
+          return;
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to choose the stinker" : `stink cloud: ${turnsLeft(inst)} of their turns left`,
+        inst.state.sq == null
+          ? "activate to choose the stinker"
+          : inst.state.pending
+            ? "stink cloud: settles after their next move"
+            : `stink cloud: ${turnsLeft(inst)} of their turns left`,
     },
   ),
 
@@ -598,7 +653,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "allergies",
       name: "Allergies",
       description:
-        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 3 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
+        "One enemy piece other than the king comes down with the sniffles. On each of your opponent's next 2 turns there is a chance it sneezes and cannot move that turn. Their other pieces are unaffected.",
       tier: 3,
       category: "hex",
       flavor: "Bless you.",
@@ -622,10 +677,9 @@ export const PT_CURSE_CARDS: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 2;
         // Roll the sneeze schedule once, deterministically, at cast time.
         inst.state.schedule = [
-          api.rng.next() < 0.6,
           api.rng.next() < 0.6,
           api.rng.next() < 0.6,
         ];
@@ -637,7 +691,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp) return moves;
         const schedule = (inst.state.schedule as boolean[]) ?? [];
-        const idx = 3 - turnsLeft(inst); // 0 on the first restricted turn, then 1, 2
+        const idx = 2 - turnsLeft(inst); // 0 on the first restricted turn, then 1
         if (!schedule[idx]) return moves; // no sneeze this turn
         const kept = moves.filter((m) => m.from !== sq); // the sneezing piece is stuck
         return kept.length > 0 ? kept : moves;
@@ -667,7 +721,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "necromancer",
       name: "Necromancer",
       description:
-        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 6 of your turns. If nothing of yours has been captured, nothing rises.",
+        "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 5 of your turns. If nothing of yours has been captured, nothing rises.",
       tier: 7,
       category: "pieces",
       flavor: "The grave was more of a suggestion.",
@@ -692,7 +746,7 @@ export const PT_CURSE_CARDS: Buff[] = [
         if (type === "p" && !pawnRankOk(sq)) return;
         api.place(sq, type, api.me);
         markRevived(api, type);
-        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 6, then: "remove" });
+        addEffect(api, { kind: "timed_loss", owner: api.me, sq, turns: 5, then: "remove" });
       },
     ),
   ),
@@ -708,7 +762,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Sea Monkeys",
       description:
         "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       flavor: "The instructions promised a castle.",
     },
@@ -730,7 +784,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "understaffed",
       name: "Understaffed",
       description:
-        "Half the office calls in sick: for their next 2 turns your opponent cannot move any piece standing on files a through d.",
+        "Half the office calls in sick. The first piece your opponent moves gets out freely; then for their next 2 turns they cannot move any piece standing on files a through d.",
       tier: 3,
       category: "hex",
       flavor: "Gone to break, back never.",
@@ -742,13 +796,24 @@ export const PT_CURSE_CARDS: Buff[] = [
         inst.state.turns = 2;
       },
       filterOpponentMoves: (moves, inst) => {
+        // The first affected piece gets one legal escape move: their opening
+        // move under the sickout is unrestricted, then the lockdown bites for
+        // its full duration.
+        if (!inst.state.escaped) return moves;
         if (turnsLeft(inst) <= 0) return moves;
         const kept = moves.filter((m) => FILE(m.from) >= 4);
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && !inst.state.escaped) {
+          inst.state.escaped = true; // the escape move; the timer has not started
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.escaped ? `${turnsLeft(inst)} of their turns left` : "one free escape, then lockdown",
     },
   ),
 
@@ -762,7 +827,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Greenhouse",
       description:
         "Raise a glass dome over one file. For the game, your pawns may promote one rank early, on your 7th rank instead of your 8th, when they advance along that file, capture out of it, or capture into it.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       requires: ["p"],
       flavor: "Everything grows faster under glass.",
@@ -807,7 +872,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Chaos Theory",
       description:
         "A tornado sweeps the board: every pawn, yours and your opponent's, is randomly reshuffled among the squares pawns currently stand on. Happens once.",
-      tier: 7,
+      tier: 6,
       category: "pieces",
       flavor: "A butterfly flapped somewhere.",
     },
@@ -841,7 +906,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Wheel of Fortune",
       description:
         "Spin the wheel for one of six random effects: plus 55 seconds to your clock, minus 55 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       flavor: "Big money, big money, no whammies.",
     },

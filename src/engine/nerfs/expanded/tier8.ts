@@ -5,7 +5,7 @@
 // Import only from ./shared, one nerf per N(...).
 
 import { Nerf } from "./shared";
-import { tierNerf, filter, relRank, cheb, isInCheck } from "./shared";
+import { nerf, tierNerf, filter, relRank, cheb, isInCheck, FILE } from "./shared";
 
 const N = tierNerf(8);
 
@@ -43,7 +43,7 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "own_half_only",
       name: "Own Half Only",
-      description: "You can't move any piece past your own fourth rank; the enemy half of the board is off limits.",
+      description: "You can't move any piece past your own fourth rank; the enemy half of the board is off limits. Spawned pieces and teleports can't bypass the boundary either.",
       flavor: "Cross the line and you never come back, so no one crosses.",
       icon: "fence",
     },
@@ -56,7 +56,7 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "total_pacifism",
       name: "Total Pacifism",
-      description: "You can never capture an enemy piece, except the king to win.",
+      description: "You can never capture an enemy piece, except the king to win. No card effect can capture on your behalf either, except one that captures the king.",
       flavor: "A war fought entirely by dancing around each other, right up to the last step.",
       icon: "heart",
     },
@@ -68,40 +68,61 @@ export const NERFS_T8: Nerf[] = [
       filterMoves: filter((m) => !m.captured || m.captured === "k"),
     },
   ),
-  N(
+  nerf(
     {
       id: "retrograde_knights",
       name: "Retrograde Knights",
-      description: "Your knights can only move backward toward your own side; a knight's rank can never advance.",
+      description: "Your knights can only move homeward, toward your own side, and can never advance, except that each knight's first move off its home square is exempt from the homeward rule.",
       flavor: "Horses that only ever bolt for the stable.",
       icon: "move",
+      tier: 5,
     },
     {
       filterMoves: (moves, _state, ctx) =>
-        moves.filter(
-          (m) => !(m.piece === "n" && relRank(ctx.me, m.to) >= relRank(ctx.me, m.from)),
-        ),
+        moves.filter((m) => {
+          if (m.piece !== "n") return true;
+          // Homeward (strictly toward own back rank) is always allowed.
+          if (relRank(ctx.me, m.to) < relRank(ctx.me, m.from)) return true;
+          // First-move exception: a knight still on its home square (b/g file,
+          // own back rank) that has not moved yet gets one move exempt from the
+          // homeward rule, so it can leave the wall it would otherwise be stuck
+          // against. History with no prior knight move from this square proves
+          // it is still the first move.
+          const home =
+            relRank(ctx.me, m.from) === 1 && (FILE(m.from) === 1 || FILE(m.from) === 6);
+          if (
+            home &&
+            !ctx.board.history.some(
+              (h) => h.color === ctx.me && h.piece === "n" && h.from === m.from,
+            )
+          ) {
+            return true;
+          }
+          return false;
+        }),
     },
   ),
-  N(
+  nerf(
     {
       id: "crippled_clergy",
       name: "Crippled Clergy",
       description: "Your bishops can only move one square at a time.",
       flavor: "The priests hobble along on canes.",
       icon: "church",
+      tier: 4,
     },
     {
       filterMoves: filter((m) => !(m.piece === "b" && cheb(m.from, m.to) > 1)),
     },
   ),
-  N(
+  nerf(
     {
       id: "hobbled_queen",
       name: "Hobbled Queen",
       description: "Your queen can only move one square at a time, like a second king.",
       flavor: "Her crown is heavy and her feet are sore.",
       icon: "crown",
+      tier: 5,
     },
     {
       filterMoves: filter((m) => !(m.piece === "q" && cheb(m.from, m.to) > 1)),
@@ -111,16 +132,17 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "glass_king",
       name: "Glass King",
-      description: "Your king is made of glass: you lose the instant he is checked while standing beyond your own first two ranks. Kept at home, he can weather a check.",
+      description: "Your king is made of glass. From your move 10 on he is exiled from his own back two ranks: he must leave them if he is still there and may never step back onto them, and from that move any check anywhere on the board loses instantly. Before move 10 he is safe at home.",
       flavor: "Safe in his chambers, shattered in the open.",
       icon: "shield-alert",
     },
     {
-      // Distinct from always_check (any check loses) and three_check (three
-      // checks lose): the glass king only shatters when he is checked while
-      // advanced past his home two ranks. Stateless, reads the live board only.
-      checkLoss: (_state, ctx) => {
-        if (!isInCheck(ctx.board, ctx.me)) return null;
+      // Timed exile: through move 9 the king is unrestricted and safe. From
+      // move 10 the glass sets: he can never move onto his home two ranks, must
+      // be driven off them if still there, and any check at all is fatal.
+      // Reads the live board and my move number only, no persistent state.
+      filterMoves: (moves, _state, ctx) => {
+        if (ctx.moveNumber < 10) return moves;
         let ks = -1;
         for (let sq = 0; sq < 64; sq++) {
           const p = ctx.board.pieces[sq];
@@ -129,20 +151,36 @@ export const NERFS_T8: Nerf[] = [
             break;
           }
         }
-        if (ks < 0) return null;
-        return relRank(ctx.me, ks) > 2
+        // The king may never move onto his own back two ranks.
+        let out = moves.filter(
+          (m) => !(m.piece === "k" && relRank(ctx.me, m.to) <= 2),
+        );
+        // If he is still on those ranks, he must leave: allow only king moves
+        // that carry him off, unless no such move exists (never soft-lock).
+        if (ks >= 0 && relRank(ctx.me, ks) <= 2) {
+          const exits = out.filter(
+            (m) => m.piece === "k" && relRank(ctx.me, m.to) > 2,
+          );
+          if (exits.length > 0) out = exits;
+        }
+        return out;
+      },
+      checkLoss: (_state, ctx) => {
+        if (ctx.moveNumber < 10) return null;
+        return isInCheck(ctx.board, ctx.me)
           ? { reason: "your glass king shattered in the open" }
           : null;
       },
     },
   ),
-  N(
+  nerf(
     {
       id: "march_or_die",
       name: "March or Die",
-      description: "You lose if six of your turns pass in a row without you moving a pawn.",
+      description: "You lose if four of your turns pass in a row without you moving a pawn.",
       flavor: "The drum never stops, and neither can the column.",
       icon: "timer",
+      tier: 5,
     },
     {
       init: () => ({ dry: 0 }),
@@ -156,11 +194,11 @@ export const NERFS_T8: Nerf[] = [
         return { dry };
       },
       checkLoss: (state) =>
-        (state.dry as number) >= 6 ? { reason: "the column halted and was overrun" } : null,
+        (state.dry as number) >= 4 ? { reason: "the column halted and was overrun" } : null,
       progress: (state) => ({
         value: state.dry as number,
-        max: 6,
-        label: (state.dry as number) + "/6 turns since a pawn moved",
+        max: 4,
+        label: (state.dry as number) + "/4 turns since a pawn moved",
       }),
     },
   ),

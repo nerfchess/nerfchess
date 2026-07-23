@@ -61,7 +61,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Cloud Serpent",
       description:
         "A serpent coils a chosen rank: enemy pieces cannot enter or cross it for your opponent's next 5 turns (yours can). As it lands it may crush one enemy pawn on an adjacent rank.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       icon: "Wind",
       flavor: "It flows in like weather with opinions.",
@@ -116,7 +116,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Wizard Duel",
       description:
         "One of your bishops duels an enemy bishop: 50% either way, the loser is removed. If your bishop wins, it also gains single king steps for 3 of your turns.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Wand2",
       flavor: "Two beams meet, spark, and one hat goes home empty.",
@@ -213,7 +213,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Royal Wedding",
       description:
         "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       icon: "Church",
       flavor: "Bells, rice, and a suspicious amount of new infantry.",
@@ -259,7 +259,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Chat Vote",
       description:
         "Chat votes on your prize, winner random: gain 25 seconds, every one of your pawns with an open square ahead advances one, or a random enemy minor is stunned for 1 turn.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       icon: "MessageSquare",
       flavor: "The poll bars race. Democracy has never been this loud.",
@@ -433,7 +433,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Volcanic Vent",
       description:
         "Open a vent on an empty square for 9 of your turns. Every 3rd of your turns it erupts: pawns of both sides adjacent to it are destroyed, and other adjacent pieces except kings are pushed one square outward if the square is free.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Flame",
       flavor: "The crack glows. The neighborhood reconsiders.",
@@ -494,7 +494,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_pied_piper",
       name: "Pied Piper",
       description:
-        "Choose a file: up to three enemy pawns on it are lured one square toward you, onto empty squares, most advanced first.",
+        "Choose a file: up to two enemy pawns on it are lured one square toward you, onto empty squares, most advanced first.",
       tier: 5,
       category: "movement",
       icon: "Music2",
@@ -519,7 +519,7 @@ export const OVERHAUL_T5: Buff[] = [
           .sort((a, b) => relRank(api.opp, b) - relRank(api.opp, a));
         let lured = 0;
         for (const sq of pawns) {
-          if (lured >= 3) break;
+          if (lured >= 2) break;
           const to = sq + fwdOf(api.opp);
           if (to >= 0 && to <= 63 && !api.board.pieces[to] && pawnRankOk(to)) {
             api.relocate(sq, to);
@@ -536,7 +536,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_off_broadway_queen",
       name: "Off-Broadway Queen",
       description:
-        "Choose one of your pawns: it promotes to a queen the moment it stands on your 6th rank.",
+        "Choose one of your pawns: it promotes to a queen the moment it stands on your 6th rank. Using it consumes your next unused reroll, if any.",
       tier: 5,
       category: "pieces",
       icon: "Theater",
@@ -559,6 +559,7 @@ export const OVERHAUL_T5: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         inst.state.sq = sq;
+        if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
         if (relRank(api.me, sq) >= 6) {
           api.setPieceType(sq, "q");
           flashSquares(api, [sq], true);
@@ -628,7 +629,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_locust_swarm",
       name: "Locust Swarm",
       description: "Choose a rank: every pawn on it, yours and theirs, is devoured.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       icon: "Bug",
       flavor: "The cloud arrives hungry and leaves punctual.",
@@ -674,7 +675,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Compound Interest",
       description:
         "The vault locks for 6 of your turns. When it opens, if your queen is still on the board: your next draft offers three cards and you gain 20 seconds. If she is gone, the investment is lost.",
-      tier: 5,
+      tier: 3,
       category: "draft",
       icon: "TrendingUp",
       flavor: "The dial spins. The queen is the collateral.",
@@ -709,7 +710,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_nesting_doll",
       name: "Nesting Doll",
       description:
-        "For 10 of your turns your royal line nests: when your queen is captured, a rook appears on an empty square beside her fall; when that rook falls, a bishop; when that bishop falls, a pawn.",
+        "For 10 of your turns your royal line nests: when your queen is captured, a rook appears on an empty square beside her fall; when that rook falls, a bishop; when that bishop falls, a pawn. The first nested piece to appear skips your next draft.",
       tier: 5,
       category: "pieces",
       icon: "Layers",
@@ -745,6 +746,10 @@ export const OVERHAUL_T5: Buff[] = [
             api.place(spot, next, api.me);
             pinCosmetic(api, spot, api.me, "matryoshka", null, "Nesting Doll");
             flashSquares(api, [spot], true);
+            if (!inst.state.skipped) {
+              api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+              inst.state.skipped = true;
+            }
             if (next === "p") {
               inst.spent = true;
               return;
@@ -769,7 +774,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_ghost_ship",
       name: "Ghost Ship",
       description:
-        "A ghost ship sails a chosen file from your back rank, one square per your turn for 6 turns, passing through everything: any enemy piece except a king on the square it crosses is frozen for 1 turn.",
+        "A ghost ship sails a chosen file from your back rank, one square per your turn for 6 turns, passing through everything: any enemy piece except a king on the square it crosses is frozen for 1 turn. As it sets sail, one of your pieces may take a free step to an empty adjacent square.",
       tier: 5,
       category: "tempo",
       icon: "Ship",
@@ -778,20 +783,59 @@ export const OVERHAUL_T5: Buff[] = [
     {
       kind: "activated",
       spendOnUse: false,
-      targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.file != null
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the ship's file",
-              squares: ALL_SQUARES(),
-            },
+      targets: (inst, api, picks) => {
+        if (inst.state.file != null) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the ship's file",
+            squares: ALL_SQUARES(),
+          };
+        }
+        if (picks.length === 1) {
+          const steppers = mySquares(api.board, api.me).filter((sq) =>
+            neighbors(sq).some(
+              (n) =>
+                !api.board.pieces[n] &&
+                (api.board.pieces[sq]!.type !== "p" || pawnRankOk(n)),
+            ),
+          );
+          if (steppers.length === 0) return null;
+          return {
+            kind: "square",
+            label: "Optionally step one piece to an empty adjacent square",
+            squares: steppers,
+            finishable: true,
+          };
+        }
+        if (picks.length === 2) {
+          const from = picks[1].square!;
+          return {
+            kind: "square",
+            label: "Step it to an empty adjacent square",
+            squares: neighbors(from).filter(
+              (n) =>
+                !api.board.pieces[n] &&
+                (api.board.pieces[from]!.type !== "p" || pawnRankOk(n)),
+            ),
+          };
+        }
+        return null;
+      },
       effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null || inst.state.file != null) return;
         inst.state.file = FILE(sq);
         inst.state.step = 0;
         flashSquares(api, [SQ(FILE(sq), ownRank(api.me, 0))]);
+        const from = picks[1]?.square, to = picks[2]?.square;
+        if (from != null && to != null && adjacent(from, to) && !api.board.pieces[to]) {
+          const p = api.board.pieces[from];
+          if (p && p.color === api.me && (p.type !== "p" || pawnRankOk(to))) {
+            api.relocate(from, to);
+            flashSquares(api, [to], true);
+          }
+        }
       },
       onMovePlayed: (inst, move, api) => {
         const file = inst.state.file as number | undefined;
@@ -817,15 +861,26 @@ export const OVERHAUL_T5: Buff[] = [
     {
       id: "ov_upper_shelf",
       name: "Upper Shelf",
-      description: "Your next draft is dealt from one tier higher.",
+      description: "Your next draft is dealt from one tier higher. If it goes unused, the lift expires after two of your drafts.",
       tier: 5,
       category: "draft",
       icon: "ArrowBigUp",
       flavor: "The ladder slides over. The good stuff glints.",
     },
-    instant((_inst, api) => {
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+        inst.state.start = api.mine.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (api.mine.draftsTaken - ((inst.state.start as number) ?? 0) >= 2) {
+          if ((api.mine.flags.bankBonus ?? 0) > 0) api.mine.flags.bankBonus = undefined;
+          inst.spent = true;
+        }
+      },
+      status: () => "next draft dealt one tier higher",
+    },
   ),
   // 117. Algorithm Boost -------------------------------------------------------
   // ADAPTED: the 4-card offer and the 8-second pick timer are client UX the
@@ -835,7 +890,7 @@ export const OVERHAUL_T5: Buff[] = [
     {
       id: "ov_algorithm_boost",
       name: "Algorithm Boost",
-      description: "The algorithm optimizes your feed: your next draft offers three cards, and you gain a draft reroll.",
+      description: "The algorithm optimizes your feed: your next draft offers three cards, you gain a draft reroll, and you gain 15 seconds.",
       tier: 5,
       category: "draft",
       icon: "Cpu",
@@ -844,6 +899,7 @@ export const OVERHAUL_T5: Buff[] = [
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      api.adjustClock({ addSelfSec: 15 });
     }),
   ),
   // 118. Winter Palace ---------------------------------------------------------
@@ -887,7 +943,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Puppeteer's Gala",
       description:
         "Pull the strings: move up to two different enemy minor pieces yourself, each along its own normal non-capture moves, onto empty squares.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "Grab",
       flavor: "Gloved hands, taut strings, a jerky little waltz.",
@@ -961,7 +1017,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Demolition Derby",
       description:
         "Choose a 3x3 arena: every piece inside except kings lurches one random square (blocked pieces stay put), and any two that crash into the same square are both wrecked.",
-      tier: 5,
+      tier: 4,
       category: "attack",
       icon: "Car",
       flavor: "Engines rev. Nobody signed a waiver.",
@@ -1045,7 +1101,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_squires_ascension",
       name: "Squire's Ascension",
       description:
-        "One of your pawns is knighted, permanently becoming a knight. If it ever captures a queen, it is crowned a queen.",
+        "After your opponent's next move, one of your pawns is knighted, permanently becoming a knight. If it ever captures a queen, it is crowned a queen.",
       tier: 5,
       category: "pieces",
       icon: "Sword",
@@ -1068,9 +1124,9 @@ export const OVERHAUL_T5: Buff[] = [
         if (sq == null || inst.state.sq != null) return;
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.me || p.type !== "p") return;
-        api.setPieceType(sq, "n");
         inst.state.sq = sq;
-        flashSquares(api, [sq], true);
+        inst.state.pending = true;
+        flashSquares(api, [sq]);
       },
       onMovePlayed: (inst, move, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -1080,16 +1136,34 @@ export const OVERHAUL_T5: Buff[] = [
           return;
         }
         if (move.from === sq) {
+          if (inst.state.pending && move.promotion) {
+            inst.spent = true;
+            return;
+          }
           inst.state.sq = move.to;
-          if (move.color === api.me && move.captured === "q") {
+          if (!inst.state.pending && move.color === api.me && move.captured === "q") {
             api.setPieceType(move.to, "q");
             flashSquares(api, [move.to], true);
             inst.spent = true;
+            return;
           }
+        }
+        if (inst.state.pending && move.color === api.opp) {
+          const cur = inst.state.sq as Square;
+          const p = api.board.pieces[cur];
+          if (p && p.color === api.me && p.type === "p") {
+            api.setPieceType(cur, "n");
+            flashSquares(api, [cur], true);
+          }
+          inst.state.pending = false;
         }
       },
       status: (inst) =>
-        inst.state.sq == null ? "knight a pawn" : "the squire dreams of a crown",
+        inst.state.sq == null
+          ? "knight a pawn"
+          : inst.state.pending
+            ? "the squire is knighted after the opponent replies"
+            : "the squire dreams of a crown",
     },
   ),
   // 123. Flash Mob -------------------------------------------------------------
@@ -1099,7 +1173,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Flash Mob",
       description:
         "Four pawns appear on random empty squares of your third rank. They hold the final pose (cannot move) for 1 turn.",
-      tier: 5,
+      tier: 4,
       category: "pieces",
       icon: "Speaker",
       flavor: "The boombox clicks on and infantry materializes.",
@@ -1126,7 +1200,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Gravity Flip",
       description:
         "For 2 of your turns, your pawns may also step one square straight backward onto an empty square. No backward captures.",
-      tier: 5,
+      tier: 6,
       category: "movement",
       icon: "ArrowDownUp",
       flavor: "The board tilts and the infantry discovers reverse.",
@@ -1153,14 +1227,17 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_player_trade",
       name: "Player Trade",
       description:
-        "Swap the squares of two of your pieces. Kings sit out, and a pawn may not land on the first or last rank.",
+        "After your opponent replies, swap the squares of two of your chosen pieces. Kings sit out, and a pawn may not land on the first or last rank.",
       tier: 5,
       category: "movement",
       icon: "Repeat",
       flavor: "The whistle blows. Two jersey numbers flash.",
     },
-    activated(
-      (_inst, api, picks) => {
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.armed) return null;
         const canPair = (a: Square, b: Square) => {
           const ta = api.board.pieces[a]!.type, tb = api.board.pieces[b]!.type;
           if (ta === tb) return false;
@@ -1188,9 +1265,23 @@ export const OVERHAUL_T5: Buff[] = [
         }
         return null;
       },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
         const a = picks[0]?.square, b = picks[1]?.square;
-        if (a == null || b == null || a === b) return;
+        if (a == null || b == null || a === b || inst.state.armed) return;
+        const pa = api.board.pieces[a], pb = api.board.pieces[b];
+        if (!pa || !pb || pa.color !== api.me || pb.color !== api.me) return;
+        if (pa.type === "k" || pb.type === "k") return;
+        if (pa.type === "p" && !pawnRankOk(b)) return;
+        if (pb.type === "p" && !pawnRankOk(a)) return;
+        inst.state.a = a;
+        inst.state.b = b;
+        inst.state.armed = true;
+        flashSquares(api, [a, b]);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        inst.spent = true;
+        const a = inst.state.a as Square, b = inst.state.b as Square;
         const pa = api.board.pieces[a], pb = api.board.pieces[b];
         if (!pa || !pb || pa.color !== api.me || pb.color !== api.me) return;
         if (pa.type === "k" || pb.type === "k") return;
@@ -1201,6 +1292,10 @@ export const OVERHAUL_T5: Buff[] = [
         api.setPieceType(b, ta);
         flashSquares(api, [a, b], true);
       },
-    ),
+      status: (inst) =>
+        inst.state.armed
+          ? "the trade resolves after your opponent replies"
+          : "choose two pieces to trade",
+    },
   ),
 ];

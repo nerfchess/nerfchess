@@ -2481,9 +2481,6 @@ export function Board({
       signatureCard && signatureCard.key > sigSeenKeyRef.current && resolveSignature(signatureCard.id)
         ? signatureCard.id
         : null;
-    // A diff claimed this play key: the cast-level generated lead stands down
-    // (the diff path renders the lead on its own lead square).
-    if (activeSig && signatureCard) castLeadSuppressKeyRef.current = signatureCard.key;
     if (signatureCard) sigSeenKeyRef.current = signatureCard.key;
     fxRef.current = computeBoardFx(
       prevFxPiecesRef.current,
@@ -2496,6 +2493,24 @@ export function Board({
       activeSig,
       orientation,
     );
+    // Suppress the board-wide diff-less cast lead ONLY when the removal diff
+    // actually staged a bespoke LEAD flourish on its own square (otherwise the
+    // two would double up). A signature card that summons / morphs / converts
+    // (or removes nothing at all) produces no removal lead here; its board-wide
+    // flourish IS its only lead, so it must NOT be suppressed — suppressing it
+    // unconditionally left those cards showing only the generic summon poof
+    // ("generic poof instead of the card's animation"). Zone-sourced leads are
+    // suppressed separately by zoneLeadClaimKeyRef at the render site.
+    if (activeSig && signatureCard) {
+      let stagedSigLead = false;
+      for (const bfx of fxRef.current.values()) {
+        if (bfx.kind === "detonate" && bfx.sig === activeSig && bfx.sigRole === "lead") {
+          stagedSigLead = true;
+          break;
+        }
+      }
+      if (stagedSigLead) castLeadSuppressKeyRef.current = signatureCard.key;
+    }
     // Canvas VFX for the claimed play: the card's fiction-matched spec
     // (vfxSpecs) travels from its true source square to the exact squares the
     // effect landed on, staggered in choreography order. Staged into a ref

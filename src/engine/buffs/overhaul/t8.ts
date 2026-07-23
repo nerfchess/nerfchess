@@ -42,7 +42,6 @@ import {
   teleportMoves,
   tickTurns,
   turnsLeft,
-  undefendedPieces,
 } from "./shared";
 
 /** Random element of a possibly-empty array off the effect RNG. */
@@ -63,7 +62,7 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_elder_wyrm",
       name: "The Elder Wyrm",
       description:
-        "The great dragon lands on a chosen empty 2x2 area for 6 of your turns: nothing may enter its footprint, and after each of your moves it acts on its own: it burns an enemy pawn near its perch, or failing that its wingbeat hurls an adjacent enemy piece one square away.",
+        "The great dragon lands on a chosen empty 2x2 area for 6 of your turns: nothing may enter its footprint, and after each of your moves its wingbeat hurls one adjacent enemy piece, never a king, one square away into an empty square. The dragon cannot capture.",
       tier: 8,
       category: "pieces",
       icon: "Flame",
@@ -71,7 +70,8 @@ export const OVERHAUL_T8: Buff[] = [
     },
     // ADAPTED: the roster's per-turn command menu (breath/gust/tail) needs a
     // choice UI the engine does not have; the wyrm instead acts automatically
-    // each turn with the same vocabulary (burn a pawn, else gust-push).
+    // each turn. Balance pass: its special action can no longer capture, so the
+    // pawn-burn is gone and only the non-capturing gust-push remains.
     {
       kind: "activated",
       spendOnUse: false,
@@ -100,32 +100,24 @@ export const OVERHAUL_T8: Buff[] = [
         const sq = inst.state.sq as Square | undefined;
         if (sq == null || move.color !== api.me) return;
         const foot = block2x2(sq);
-        const near = (s: Square) =>
-          foot.some(
-            (f) => Math.abs(FILE(f) - FILE(s)) <= 2 && Math.abs(RANK(f) - RANK(s)) <= 2,
-          );
-        const pawns = mySquares(api.board, api.opp, "p").filter(near);
-        const burned = pickRng(api, pawns);
-        if (burned != null) {
-          api.removePiece(burned);
-          flashSquares(api, [burned]);
-        } else {
-          const adj = mySquares(api.board, api.opp).filter(
-            (s) =>
-              api.board.pieces[s]!.type !== "k" &&
-              foot.some(
-                (f) => Math.abs(FILE(f) - FILE(s)) <= 1 && Math.abs(RANK(f) - RANK(s)) <= 1,
-              ),
-          );
-          const target = pickRng(api, adj);
-          if (target != null) {
-            const cf = FILE(sq) + 0.5, cr = RANK(sq) + 0.5;
-            const df = Math.sign(FILE(target) - cf), dr = Math.sign(RANK(target) - cr);
-            const f = FILE(target) + df, r = RANK(target) + dr;
-            if (f >= 0 && f <= 7 && r >= 0 && r <= 7 && !api.board.pieces[SQ(f, r)]) {
-              api.relocate(target, SQ(f, r));
-              flashSquares(api, [SQ(f, r)], true);
-            }
+        // Movement identity only: the wingbeat hurls one adjacent enemy piece
+        // one square away into empty space. It can no longer capture (the old
+        // pawn-burn is gone), so nothing is ever removed from the board here.
+        const adj = mySquares(api.board, api.opp).filter(
+          (s) =>
+            api.board.pieces[s]!.type !== "k" &&
+            foot.some(
+              (f) => Math.abs(FILE(f) - FILE(s)) <= 1 && Math.abs(RANK(f) - RANK(s)) <= 1,
+            ),
+        );
+        const target = pickRng(api, adj);
+        if (target != null) {
+          const cf = FILE(sq) + 0.5, cr = RANK(sq) + 0.5;
+          const df = Math.sign(FILE(target) - cf), dr = Math.sign(RANK(target) - cr);
+          const f = FILE(target) + df, r = RANK(target) + dr;
+          if (f >= 0 && f <= 7 && r >= 0 && r <= 7 && !api.board.pieces[SQ(f, r)]) {
+            api.relocate(target, SQ(f, r));
+            flashSquares(api, [SQ(f, r)], true);
           }
         }
         const t = ((inst.state.turns as number) ?? 0) - 1;
@@ -156,7 +148,7 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_rapture_of_pawns",
       name: "The Rapture of Pawns",
       description:
-        "Your pawns are permanently uplifted: they may also step one square sideways or diagonally forward without capturing. Captures stay diagonal, as the heavens intended.",
+        "Choose up to three of your pawns to uplift permanently: each may also step one square sideways or diagonally forward without capturing. Captures stay diagonal, as the heavens intended.",
       tier: 8,
       category: "movement",
       icon: "Feather",
@@ -164,17 +156,40 @@ export const OVERHAUL_T8: Buff[] = [
       requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true },
     },
+    // Balance pass: the uplift no longer touches the whole army. You designate
+    // up to three pawns (a free action); those pawns keep the gift permanently,
+    // and the card tracks them across the board until they are captured or
+    // promote away.
     {
-      kind: "passive",
-      init: (_inst, api) => {
-        for (const sq of mySquares(api.board, api.me, "p")) {
-          pinCosmetic(api, sq, api.me, "wings", null);
-        }
+      kind: "activated",
+      spendOnUse: false,
+      freeAction: true,
+      targets: (inst, api, picks) => {
+        if (inst.state.sqs != null || picks.length >= 3) return null;
+        const chosen = picks.map((k) => k.square);
+        const squares = mySquares(api.board, api.me, "p").filter((sq) => !chosen.includes(sq));
+        if (squares.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Choose pawn ${picks.length + 1} of up to 3 to uplift`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.sqs != null) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.sqs = sqs;
+        for (const sq of sqs) pinCosmetic(api, sq, api.me, "wings", null);
       },
       augmentMoves: (moves, inst, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs) return;
         const out: Move[] = [];
         const fwd = api.me === "w" ? 1 : -1;
-        for (const sq of mySquares(api.board, api.me, "p")) {
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me || p.type !== "p") continue;
           const tos: Square[] = [];
           const f = FILE(sq), r = RANK(sq);
           if (f > 0) tos.push(SQ(f - 1, r));
@@ -194,7 +209,28 @@ export const OVERHAUL_T8: Buff[] = [
         }
         addNovel(moves, out);
       },
-      status: () => "your pawns walk on air",
+      onMovePlayed: (inst, move) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs) return;
+        const next: Square[] = [];
+        for (const sq of sqs) {
+          if (move.capturedSquare === sq && move.from !== sq) continue;
+          if (move.from === sq) {
+            if (move.promotion) continue;
+            next.push(move.to);
+          } else if (move.to === sq && move.from !== sq) {
+            continue;
+          } else {
+            next.push(sq);
+          }
+        }
+        inst.state.sqs = next;
+      },
+      status: (inst) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (sqs == null) return "activate to uplift up to three pawns";
+        return `${sqs.length} uplifted ${sqs.length === 1 ? "pawn walks" : "pawns walk"} on air`;
+      },
     },
   ),
   // 178. Board of Directors ---------------------------------------------------------
@@ -203,29 +239,79 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_board_of_directors",
       name: "Board of Directors",
       description:
-        "For 6 of your turns, the Board issues a directive after each of your moves: a 6 second bonus, a scouting report marking undefended enemy pieces, a free pawn advance, or a draft reroll. Their pick, not yours.",
+        "Convene the Board and appoint two of its four departments for 6 of your turns. After each of your moves your chosen departments report: Operations advances one of your pawns every third turn; Intelligence reveals enemy pieces you attack that stand undefended; Treasury adds 12 seconds to your clock; Drafting grants a reroll and lifts your next draft one tier. You pick the two departments, not the Board.",
       tier: 8,
       category: "info",
       icon: "Briefcase",
       flavor: "Synergy. Alignment. A pawn to e4 going forward.",
     },
+    // Balance pass: the player now appoints the departments. The engine has no
+    // abstract option menu, so the two-of-four choice is collected through the
+    // four marker squares a-d on your back rank (the label maps each file to a
+    // department); picking a marker appoints that department and moves nothing.
     {
-      kind: "passive",
-      init: (inst) => {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.depts != null || picks.length >= 2) return null;
+        const r = ownRank(api.me, 0);
+        const chosen = picks.map((k) => k.square);
+        const squares = [0, 1, 2, 3]
+          .map((f) => SQ(f, r))
+          .filter((sq) => !chosen.includes(sq));
+        return {
+          kind: "square",
+          label: `Appoint department ${picks.length + 1} of 2 (pick its back-rank marker): a = Operations (a pawn step every third turn), b = Intelligence (reveal undefended targets), c = Treasury (12 seconds each turn), d = Drafting (a reroll and a tier-up draft).`,
+          squares,
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.depts != null) return;
+        const depts = picks
+          .map((k) => (k.square != null ? FILE(k.square) : -1))
+          .filter((f) => f >= 0 && f <= 3);
+        inst.state.depts = depts;
         inst.state.turns = 6;
+        inst.state.opsCount = 0;
+        const r = ownRank(api.me, 0);
+        flashSquares(api, depts.map((f) => SQ(f, r)));
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color !== api.me) return;
-        const roll = api.rng.int(4);
-        if (roll === 0) api.adjustClock({ addSelfSec: 6 });
-        else if (roll === 1) flashSquares(api, undefendedPieces(api.board, api.opp));
-        else if (roll === 2) {
-          const pawn = pickRng(api, advanceablePawns(api));
-          if (pawn != null) advancePawn(api, pawn);
-        } else api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        const depts = inst.state.depts as number[] | undefined;
+        if (!depts || move.color !== api.me) return;
+        if (depts.includes(0)) {
+          const c = ((inst.state.opsCount as number) ?? 0) + 1;
+          inst.state.opsCount = c;
+          if (c % 3 === 0) {
+            const pawn = pickRng(api, advanceablePawns(api));
+            if (pawn != null) advancePawn(api, pawn);
+          }
+        }
+        if (depts.includes(1)) {
+          const hanging = mySquares(api.board, api.opp).filter((sq) => {
+            const p = api.board.pieces[sq]!;
+            if (p.type === "k") return false;
+            const attacked = mySquares(api.board, api.me).some((a) =>
+              attacksSquare(api.board, a, sq),
+            );
+            const defended = mySquares(api.board, api.opp).some(
+              (d) => d !== sq && attacksSquare(api.board, d, sq),
+            );
+            return attacked && !defended;
+          });
+          flashSquares(api, hanging);
+        }
+        if (depts.includes(2)) api.adjustClock({ addSelfSec: 12 });
+        if (depts.includes(3)) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          api.mine.flags.bankBonus = 1;
+        }
         tickTurns(inst, move, api.me);
       },
-      status: (inst) => `${turnsLeft(inst)} board meetings left`,
+      status: (inst) =>
+        inst.state.depts == null
+          ? "convene to appoint two departments"
+          : `${turnsLeft(inst)} board meetings left`,
     },
   ),
   // 179. Continental Drift --------------------------------------------------------------
@@ -235,7 +321,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Continental Drift",
       description:
         "A chasm tears the board between the fourth and fifth ranks for your opponent's next 5 turns: their pieces cannot cross it, except knights or through the two bridge squares you choose.",
-      tier: 8,
+      tier: 9,
       category: "protection",
       icon: "Mountain",
       flavor: "The tectonic plates have picked a side.",
@@ -311,7 +397,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Let Me Play For You",
       description:
         "Three times, at most once per your turn and as a free action, move one of your opponent's pieces yourself: any empty square its normal movement reaches. No captures, kings excluded.",
-      tier: 8,
+      tier: 9,
       category: "movement",
       icon: "Hand",
       flavor: "Player two controller connected.",
@@ -364,12 +450,16 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_deus_ex_machina",
       name: "Deus Ex Machina",
       description:
-        "The machine god intervenes once: if your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn.",
+        "The machine god intervenes once: if your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn. Using it spends the card even if the intervention finds nothing to do.",
       tier: 8,
       category: "pieces",
       icon: "Cog",
       flavor: "Act five, on schedule, with hydraulics.",
     },
+    // Balance pass: a failed or illegal attempt still spends the charge. The
+    // card is an always-offered one-shot (activatedSimple defaults to
+    // spendOnUse), so activation consumes it whether or not the effect below
+    // changes anything (queen already alive, no freezes, no recent enemy move).
     activatedSimple((_inst, api) => {
       if (revivable(api, "q") > 0) {
         const home = [...emptyHomeRank(api, 0), ...emptyHomeRank(api, 1)];
@@ -459,19 +549,56 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_ninth_rank",
       name: "The Ninth Rank",
       description:
-        "A phantom rank opens behind your first: enemy pieces cannot set foot anywhere on your back rank for your opponent's next 6 turns.",
+        "The phantom rank opens behind your first: as a free action, reposition one of your pieces onto an empty square of your back rank, and enemy pieces cannot set foot anywhere on your back rank for your opponent's next 6 turns. If you reposition a piece, you may not capture the enemy king until your opponent replies.",
       tier: 8,
       category: "protection",
       icon: "DoorClosed",
       flavor: "There is another room behind the throne room. There always was.",
     },
-    // ADAPTED: true extra squares beyond the board would need renderer
-    // surgery; the sanctuary reads as your back rank being unreachable.
-    instant((_inst, api) => {
-      const r = ownRank(api.me, 0);
-      const squares = Array.from({ length: 8 }, (_, f) => SQ(f, r));
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
-    }),
+    // ADAPTED: true extra squares beyond the board would need renderer surgery;
+    // the sanctuary reads as your back rank being unreachable. Balance pass:
+    // you may also pull one piece into that rank (a free action). To stop the
+    // free retreat from teeing up an instant king capture, chainKingGuard bars
+    // capturing the enemy king until the opponent replies (the engine has no
+    // general "no captures" own-move filter; the king guard is its primitive).
+    {
+      kind: "activated",
+      spendOnUse: true,
+      freeAction: true,
+      targets: (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        const backRank = ownRank(api.me, 0);
+        const empties = emptyHomeRank(api, 0);
+        if (picks.length === 0) {
+          if (empties.length === 0) return null;
+          return {
+            kind: "square",
+            label: "Choose a piece to pull into the phantom rank (or finish to only raise the wall)",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && RANK(sq) !== backRank,
+            ),
+            finishable: true,
+          };
+        }
+        return {
+          kind: "square",
+          label: "Choose its empty back-rank square",
+          squares: empties,
+        };
+      },
+      effect: (inst, api, picks) => {
+        const r = ownRank(api.me, 0);
+        const squares = Array.from({ length: 8 }, (_, f) => SQ(f, r));
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from != null && to != null && api.board.pieces[from] && !api.board.pieces[to]) {
+          api.relocate(from, to);
+          flashSquares(api, [to], true);
+          api.bs.chainKingGuard = api.me;
+        }
+      },
+      status: () => "opens the phantom rank",
+    },
   ),
   // 185. All the King's Men -------------------------------------------------------------------------------
   card(
@@ -480,7 +607,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "All the King's Men",
       description:
         "Up to four of your captured pieces return at once, strongest first, on random empty squares in your half.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Users",
       flavor: "Humpty was beyond saving. The cavalry was not.",
@@ -511,7 +638,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Anti-Gravity Gala",
       description:
         "For 3 of your turns everything floats: your sliding pieces may pass over the first piece in their path, friend or foe, and continue beyond it. Kings are too dignified to be floated over.",
-      tier: 8,
+      tier: 9,
       category: "movement",
       icon: "Sparkles",
       flavor: "Dress code: weightless.",
@@ -545,43 +672,69 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_thousand_ducks",
       name: "One Thousand Ducks",
       description:
-        "A tide of rubber ducks floods the board: every enemy pawn standing next to one of your pieces is swept one square back toward its own side, and three ducks stay behind as squares nobody may enter for 4 turns.",
+        "A tide of rubber ducks floods in: sweep up to three chosen enemy pawns, each standing next to one of your pieces, one square back toward their own side, and three ducks stay behind as squares nobody may enter for 4 turns.",
       tier: 8,
       category: "attack",
       icon: "Bird",
       flavor: "Individually adorable. Collectively a war crime.",
     },
-    activatedSimple((_inst, api) => {
-      const mine = mySquares(api.board, api.me);
-      const back = fwdOf(api.opp);
-      const swept: Square[] = [];
-      for (const sq of mySquares(api.board, api.opp, "p")) {
-        const adjacent = mine.some(
-          (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
-        );
-        if (!adjacent) continue;
-        const to = sq + back;
-        if (to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7) {
-          api.relocate(sq, to);
-          swept.push(to);
+    // Balance pass: the flood no longer sweeps every adjacent enemy pawn. You
+    // choose up to three sweepable enemy pawns; the three ducks still settle
+    // afterward for 4 turns.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 3) return null;
+        const mine = mySquares(api.board, api.me);
+        const back = fwdOf(api.opp);
+        const chosen = picks.map((k) => k.square);
+        const squares = mySquares(api.board, api.opp, "p").filter((sq) => {
+          if (chosen.includes(sq)) return false;
+          const adjacent = mine.some(
+            (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
+          );
+          if (!adjacent) return false;
+          const to = sq + back;
+          return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
+        });
+        if (squares.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Sweep enemy pawn ${picks.length + 1} of up to 3`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      (_inst, api, picks) => {
+        const back = fwdOf(api.opp);
+        const swept: Square[] = [];
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.opp || p.type !== "p") continue;
+          const to = sq + back;
+          if (to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7) {
+            api.relocate(sq, to);
+            swept.push(to);
+          }
         }
-      }
-      const ducks: Square[] = [];
-      for (let i = 0; i < 3; i++) {
-        const sq = pickRng(
-          api,
-          emptySquares(api.board).filter((s) => !ducks.includes(s)),
-        );
-        if (sq == null) break;
-        ducks.push(sq);
-      }
-      if (ducks.length) {
-        addEffect(api, { kind: "barred", squares: ducks, against: api.opp, turns: 4 });
-        addEffect(api, { kind: "barred", squares: ducks, against: api.me, turns: 4 });
-        flashSquares(api, ducks, true);
-      }
-      flashSquares(api, swept, true);
-    }),
+        const ducks: Square[] = [];
+        for (let i = 0; i < 3; i++) {
+          const sq = pickRng(
+            api,
+            emptySquares(api.board).filter((s) => !ducks.includes(s)),
+          );
+          if (sq == null) break;
+          ducks.push(sq);
+        }
+        if (ducks.length) {
+          addEffect(api, { kind: "barred", squares: ducks, against: api.opp, turns: 4 });
+          addEffect(api, { kind: "barred", squares: ducks, against: api.me, turns: 4 });
+          flashSquares(api, ducks, true);
+        }
+        flashSquares(api, swept, true);
+      },
+    ),
   ),
   // 188. Crown of the Undying ---------------------------------------------------------------------------------------
   card(
@@ -629,7 +782,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Symphony of the Legion",
       description:
         "Three movements, each a free action, at most one per your turn, played in order: first every pawn you own advances a square; second each of your knights and bishops drifts one random empty step; third your rooks and queen may pass through friendly pieces until your turn ends.",
-      tier: 8,
+      tier: 7,
       category: "tempo",
       icon: "Music2",
       flavor: "The conductor taps the podium. The army inhales.",
@@ -711,7 +864,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "The Tutorial",
       description:
         "A relentlessly cheerful tutorial haunts your opponent for their next 3 turns: every enemy move is marked and reviewed, and whenever their moved piece ends up hanging you are paid 8 seconds while it congratulates them.",
-      tier: 8,
+      tier: 6,
       category: "info",
       icon: "MousePointerClick",
       flavor: "GREAT JOB! That was a blunder.",
@@ -743,7 +896,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Ragnarok Postponed",
       description:
         "The doomsday bell begins to toll: in 10 of your turns, every piece on the board except kings and pawns is removed. Both armies. No exceptions, no cancellations.",
-      tier: 8,
+      tier: 9,
       category: "attack",
       icon: "Bell",
       flavor: "Rescheduled, not cancelled. The wolves apologize for the delay.",
@@ -843,32 +996,63 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_terraform",
       name: "Terraform",
       description:
-        "Claim up to three empty squares as your homeland, permanently: enemy pieces may never enter them again.",
+        "Claim up to three empty squares as your homeland for your opponent's next 4 turns: enemy pieces cannot enter them, though the enemy may capture a piece standing on a claimed square once to break that square. Occupied squares cannot be claimed.",
       tier: 8,
       category: "protection",
       icon: "Globe2",
       flavor: "The land remembers who planted the flag.",
     },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
-          ? null
-          : {
-              kind: "square",
-              label: `Claim square ${picks.length + 1} of up to 3`,
-              squares: emptySquares(api.board).filter(
-                (sq) => !picks.some((k) => k.square === sq),
-              ),
-              ...(picks.length > 0 ? { finishable: true } : {}),
-            },
-      (_inst, api, picks) => {
-        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
-        if (squares.length) {
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: null });
-          flashSquares(api, squares);
+    // Balance pass: the claim is temporary (four opponent turns) and now has a
+    // counter. The enemy cannot step into a claimed square, but a capture onto
+    // one (only possible when a piece is sheltering there) breaks that square.
+    // Enforced through filterOpponentMoves rather than a barred effect so the
+    // capture exception can be allowed (a plain barred blocks captures too).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.claimed != null || picks.length >= 3) return null;
+        return {
+          kind: "square",
+          label: `Claim square ${picks.length + 1} of up to 3`,
+          squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, api, picks) => {
+        if (inst.state.claimed != null) return;
+        const claimed = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.claimed = claimed;
+        inst.state.turns = 4;
+        if (claimed.length) {
+          addEffect(api, { kind: "strike", squares: claimed, owner: api.me, turns: 4 });
+          flashSquares(api, claimed);
         }
       },
-    ),
+      filterOpponentMoves: (moves, inst) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (!claimed || claimed.length === 0 || ((inst.state.turns as number) ?? 0) <= 0) {
+          return moves;
+        }
+        return moves.filter((m) => !claimed.includes(m.to) || m.captured != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (!claimed || move.color !== api.opp) return;
+        if (claimed.includes(move.to)) {
+          inst.state.claimed = claimed.filter((sq) => sq !== move.to);
+          flashSquares(api, [move.to], true);
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0 || (inst.state.claimed as Square[]).length === 0) inst.spent = true;
+      },
+      status: (inst) => {
+        const claimed = inst.state.claimed as Square[] | undefined;
+        if (claimed == null) return "activate to claim your homeland";
+        return `${claimed.length} claimed for ${turnsLeft(inst)} of their turns`;
+      },
+    },
   ),
   // 194. Standing Ovation ---------------------------------------------------------------------------------------------------------
   card(
@@ -877,7 +1061,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Standing Ovation",
       description:
         "An audience gathers for 5 of your turns: each of your moves that leaves the enemy king under attack earns 10 seconds of applause.",
-      tier: 8,
+      tier: 6,
       category: "tempo",
       icon: "Theater",
       flavor: "They paid for blood. They will settle for checks.",
@@ -910,7 +1094,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Leviathan Below",
       description:
         "Mark three squares; both players see the water darken. The moment your opponent's next move ends, tentacles erupt from all three at once: any piece standing there except a king is dragged below, and the wreckage blocks those squares for 2 turns.",
-      tier: 8,
+      tier: 9,
       category: "attack",
       icon: "Waves",
       flavor: "The board is only the surface.",
@@ -959,7 +1143,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Dev Console",
       description:
         "Open the console once and run the whole macro: spawn a pawn on a chosen empty square in your half, add 20 seconds to your clock, and dump your opponent's next draft offer to your screen.",
-      tier: 8,
+      tier: 6,
       category: "draft",
       icon: "Terminal",
       flavor: "sudo win. Command not found. The pawn worked though.",
@@ -990,7 +1174,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Democracy",
       description:
         "Parliament sits for 3 of your turns. After each of your moves the house votes: usually applause worth 8 seconds, sometimes a motion that marches a random pawn of yours forward, occasionally a filibuster where nothing happens at all.",
-      tier: 8,
+      tier: 6,
       category: "tempo",
       icon: "Landmark",
       flavor: "The rook party demands open files for all.",
@@ -1020,7 +1204,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Monks of the Fifth Bell",
       description:
         "Permanent: every fifth of your turns the bell tolls and one random pawn of yours takes a free step forward.",
-      tier: 8,
+      tier: 7,
       category: "tempo",
       icon: "Church",
       flavor: "They keep no clock. They ARE the clock.",
@@ -1126,7 +1310,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "NerfChess: The Musical",
       description:
         "The whole board takes the stage, once: rearrange up to five of your pieces onto empty squares in your half, then collect 10 seconds for putting on a show.",
-      tier: 8,
+      tier: 6,
       category: "movement",
       icon: "Clapperboard",
       flavor: "Tonight only. The pawns learned choreography and one of them cries.",

@@ -102,6 +102,9 @@ export type HexMeta = {
   /** Board motif drawn on the cursed pieces while the constraint runs.
    * Display metadata only; never consulted by move generation. */
   fx?: CardFx;
+  /** Apex hexes (tier 9): never offered by the tier curve; won only through
+   * apex channels, exactly like tier 9-10 buffs. Required when tier is 9. */
+  special?: boolean;
 };
 
 /** Build a fully implemented hex from metadata + mechanics. Mirrors the `def`

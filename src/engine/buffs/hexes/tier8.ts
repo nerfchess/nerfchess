@@ -11,8 +11,8 @@
 import { Buff } from "./shared";
 import {
   tierHexes,
+  hex,
   curse,
-  permaOppFilter,
   walnutAll,
   instant,
   activated,
@@ -35,30 +35,46 @@ const H = tierHexes(8);
 const STATUE_TURNS = 999;
 
 export const HEXES_T8: Buff[] = [
-  // --- skip 2 turns, then a delayed mass freeze the moment they return ----
-  // The skip and the freeze are queued together, but a freeze only ticks on
+  // --- skip 1 turn, then a delayed targeted freeze the moment they return --
+  // The skip and the freezes are queued together, but a freeze only ticks on
   // the owner's OWN completed moves. The opponent completes none during the
-  // two skips, so the 1-turn freeze survives untouched and bites on exactly
-  // the turn they finally move again: that turn only their king is free.
+  // skip, so the 1-turn freezes survive untouched and bite on exactly the turn
+  // they finally move again: up to four pieces the caster chose stay locked
+  // that turn while everything else is free.
   H(
     {
       id: "endless_night",
       name: "Endless Night",
-      description: "Your opponent skips their next 2 turns. On the turn they finally return, every enemy piece except their king is frozen for that one turn, so only their king may move.",
+      description: "Your opponent skips their next turn. On the turn they return, up to four non-king enemy pieces you choose are frozen for that one turn.",
       flavor: "The sun forgets to rise, and the whole court is still asleep when the dark lifts.",
       fx: { motif: "slow", pieces: "all" },
     },
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 2;
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) =>
+                  api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        api.bs.skips[api.opp] += 1;
+        for (const k of picks) {
+          if (k.square != null) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1, skin: "sleep" });
+          }
+        }
+      },
+    ),
   ),
 
   // --- petrify all: the whole royal battery, queen AND both rooks ----------
-  H(
+  hex(
     {
       id: "crown_and_castle",
       name: "Crown and Castle",
@@ -66,6 +82,9 @@ export const HEXES_T8: Buff[] = [
       flavor: "The heaviest pieces set like mortar overnight.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["q", "r"] },
+      // Retiered 8 -> 6: a narrow queen-and-rooks petrify does not fill an
+      // Unhinged slot without a second board impact.
+      tier: 6,
     },
     walnutAll(["q", "r"], 2),
   ),
@@ -75,14 +94,43 @@ export const HEXES_T8: Buff[] = [
     {
       id: "abdication_edict",
       name: "Abdication Edict",
-      description: "For your opponent's next 3 turns they may move only their king. Every other piece is stuck fast.",
+      description: "For your opponent's next turn they may move only their king. For the two turns after that, they may also move their single most valuable non-king piece, chosen fresh each turn; every other piece stays stuck fast.",
       flavor: "The crown rules alone, and the court simply stops answering.",
-      // Board already paints king_only; fx carried for consistency.
       fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const left = turnsLeft(inst);
+        if (left <= 0 || moves.length === 0) return moves;
+        // First of their three turns: only the king may move.
+        if (left >= 3) {
+          const kept = moves.filter((m) => m.piece === "k");
+          return kept.length > 0 ? kept : moves;
+        }
+        // Turns two and three: the king plus one non-king piece, picked
+        // deterministically as the most valuable non-king piece with a legal
+        // move (ties broken by lowest square) and re-picked every turn.
+        const VAL: Record<string, number> = { q: 5, r: 4, b: 3, n: 3, p: 1, k: 0 };
+        let bestFrom: number | null = null;
+        let bestVal = -1;
+        for (const m of moves) {
+          if (m.piece === "k") continue;
+          const v = VAL[m.piece] ?? 0;
+          if (bestFrom === null || v > bestVal || (v === bestVal && m.from < bestFrom)) {
+            bestVal = v;
+            bestFrom = m.from;
+          }
+        }
+        const kept = moves.filter((m) => m.piece === "k" || m.from === bestFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- freeze all, and the cold LINGERS in their limbs after the thaw ------
@@ -94,20 +142,38 @@ export const HEXES_T8: Buff[] = [
     {
       id: "absolute_zero",
       name: "Absolute Zero",
-      description: "Freeze all of your opponent's pieces except their king for 2 of their turns. The cold outlives the ice: for their next 2 turns after the thaw, every piece they move can only step a single square.",
+      description: "Freeze all of your opponent's pieces except their king and pawns for 2 of their turns. The cold outlives the ice: for their next 2 turns after the thaw, each of those pieces can only step a single square. Kings and pawns move freely throughout.",
       flavor: "The ice lets go long before the cold does.",
-      // Board already paints freezes; fx carried for consistency.
-      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
+      fx: { motif: "jail", pieces: ["n", "b", "r", "q"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
-      }
-      // 4 of their turns total: the leash is moot for the 2 frozen turns
-      // (only the one-square king moves anyway), then bites for 2 more.
-      addEffect(api, { kind: "short_leash", owner: api.opp, turns: 4 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        for (const sq of mySquares(api.board, api.opp)) {
+          const t = api.board.pieces[sq]!.type;
+          if (t === "k" || t === "p") continue;
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        }
+        // 4 of their turns total: the one-square leash is moot for the 2 frozen
+        // turns, then bites for 2 more. Kings and pawns are always exempt.
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter(
+          (m) =>
+            m.piece === "k" ||
+            m.piece === "p" ||
+            Math.max(
+              Math.abs(FILE(m.to) - FILE(m.from)),
+              Math.abs(RANK(m.to) - RANK(m.from)),
+            ) <= 1,
+        );
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- petrify all minors, and the forest GRABS whoever walks among them ----
@@ -119,7 +185,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, and the forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
+      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may make one move before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
       flavor: "The trees were cavalry once. They still take prisoners.",
       // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -128,13 +194,32 @@ export const HEXES_T8: Buff[] = [
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 4;
-        for (const sq of mySquares(api.board, api.opp)) {
+        const minors = mySquares(api.board, api.opp).filter((sq) => {
           const t = api.board.pieces[sq]!.type;
-          if (t !== "n" && t !== "b") continue;
+          return t === "n" || t === "b";
+        });
+        // The first affected minor (lowest square) is spared for now: it may
+        // make one move before it too petrifies. Every other minor stones over
+        // at once.
+        const escapee = minors.length > 0 ? minors[0] : null;
+        inst.state.escapeSq = escapee;
+        for (const sq of minors) {
+          if (sq === escapee) continue;
           addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
         }
       },
       onMovePlayed: (inst, move, api) => {
+        const escapeSq = inst.state.escapeSq as number | null | undefined;
+        if (escapeSq != null && move.color === api.opp) {
+          if (move.from === escapeSq) {
+            // The spared minor used its one escape move: it petrifies now on its
+            // new square, for the rest of the forest's duration.
+            inst.state.escapeSq = null;
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: turnsLeft(inst) });
+          } else if (move.capturedSquare === escapeSq || move.to === escapeSq) {
+            inst.state.escapeSq = null;
+          }
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0) {
           // Stone trees: active walnuts standing on enemy minors (they shuffle
           // at most a king-step, so the live effect list tracks them exactly).
@@ -169,7 +254,7 @@ export const HEXES_T8: Buff[] = [
     {
       id: "medusa_stare",
       name: "Basilisk's Stare",
-      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only ever shuffle one square at a time. Its gaze lingers, so any enemy piece that ends a move next to the statue is frozen for 1 of their turns. Kings cannot be targeted.",
+      description: "Turn one enemy piece you target into a walnut for the rest of the game: it can only ever shuffle one square at a time. Its gaze lingers, so any enemy piece that ends a move next to the statue is frozen for 3 of their turns. Kings cannot be targeted.",
       flavor: "Meet its eyes once and you are a garden ornament, and so is anyone who comes to help.",
     },
     activated(
@@ -211,7 +296,7 @@ export const HEXES_T8: Buff[] = [
             return;
           }
           // One of their pieces ended its move beside the statue: the gaze
-          // freezes it. Added on their move, so 2 leaves 1 of their turns.
+          // freezes it. Added on their move, so 4 leaves 3 of their turns.
           if (move.color === api.opp && move.to !== sq) {
             const step = Math.max(
               Math.abs(FILE(move.to) - FILE(sq)),
@@ -219,7 +304,7 @@ export const HEXES_T8: Buff[] = [
             );
             const p = api.board.pieces[move.to];
             if (step === 1 && p && p.color === api.opp && p.type !== "k") {
-              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+              addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 4 });
             }
           }
         },
@@ -242,38 +327,82 @@ export const HEXES_T8: Buff[] = [
     {
       id: "blighted_furrows",
       name: "Blighted Furrows",
-      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns.",
+      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns, though the first pawn to try may make one advance before the lock takes hold.",
       flavor: "The fields are poisoned; the tallest stalks fall first.",
-      // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "p")) {
-        if (relRank(api.opp, sq) >= 5) api.removePiece(sq);
-      }
-      addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 4 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        for (const sq of mySquares(api.board, api.opp, "p")) {
+          if (relRank(api.opp, sq) >= 5) api.removePiece(sq);
+        }
+        inst.state.turns = 4;
+        inst.state.escapeUsed = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // A pawn advance is a non-capturing forward push (file unchanged).
+        const isAdvance = (m: (typeof moves)[number]) =>
+          m.piece === "p" && FILE(m.from) === FILE(m.to);
+        if (inst.state.escapeUsed) {
+          const kept = moves.filter((m) => !isAdvance(m));
+          return kept.length > 0 ? kept : moves;
+        }
+        // Escape unused: the first affected pawn (lowest square with an advance)
+        // keeps its advance; every other pawn's advance is blocked.
+        let escapeFrom: number | null = null;
+        for (const m of moves) {
+          if (isAdvance(m) && (escapeFrom === null || m.from < escapeFrom)) escapeFrom = m.from;
+        }
+        const kept = moves.filter((m) => !isAdvance(m) || m.from === escapeFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          move.piece === "p" &&
+          FILE(move.from) === FILE(move.to)
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- combo: skip a whole turn AND block the next 2 drafts ----------------
   H(
     {
-      // The scaled-up sibling of Time Lock (one skip, two blocked drafts):
-      // a full two turns stripped on top of the two drafts.
       id: "sacked_capital",
       name: "Sacked Capital",
-      description: "Your opponent skips their next 2 turns entirely, and their next draft is skipped as well.",
+      description: "Your opponent skips their next turn and their next draft. On the turn they return, they may move only pawns or their king.",
       flavor: "The capital burns, the messengers scatter, and no orders reach the field.",
       // fx covers the turn skip; the draft denial half shows no board motif.
       fx: { motif: "slow", pieces: "all" },
     },
-    // Rebalance: two skipped turns AND two skipped drafts was double denial on
-    // both axes. The turn skip (the card's identity) is kept at 2; the draft
-    // denial drops to one (blockedDrafts +2 -> +1).
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 2;
-      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
-    }),
+    // Rebalance: the old double skip plus a draft skip was denial on every axis.
+    // Now a single skipped turn and a single skipped draft, and the return turn
+    // is hobbled to pawn or king moves only. The 1-turn filter cannot tick
+    // during the skip (no completed opponent move), so it bites on the turn
+    // they finally return.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.bs.skips[api.opp] += 1;
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        inst.state.turns = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
   // --- barred: seal the victim's 4th, 5th and 6th ranks for 3 turns --------
@@ -284,31 +413,75 @@ export const HEXES_T8: Buff[] = [
     {
       id: "scorched_earth",
       name: "Scorched Earth",
-      description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns.",
+      description: "Your opponent cannot move any piece onto their own 4th, 5th, or 6th ranks for their next 3 turns, except the first piece to try, which may step there once before the ban takes hold.",
       flavor: "A cratered killing field where no army dares set foot.",
-      // Board already paints barred squares; square-scoped, no pieces field.
       fx: { motif: "blindfold" },
     },
-    instant((_inst, api) => {
-      const squares: number[] = [];
-      for (let sq = 0; sq < 64; sq++) {
-        const r = relRank(api.opp, sq);
-        if (r >= 4 && r <= 6) squares.push(sq);
-      }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.escapeUsed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const barred = (to: number) => {
+          const r = relRank(api.opp, to);
+          return r >= 4 && r <= 6;
+        };
+        if (inst.state.escapeUsed) {
+          const kept = moves.filter((m) => !barred(m.to));
+          return kept.length > 0 ? kept : moves;
+        }
+        // Escape unused: the first affected piece (lowest square with a barred
+        // destination) may still step into the band; all others are blocked.
+        let escapeFrom: number | null = null;
+        for (const m of moves) {
+          if (barred(m.to) && (escapeFrom === null || m.from < escapeFrom)) escapeFrom = m.from;
+        }
+        const kept = moves.filter((m) => !barred(m.to) || m.from === escapeFrom);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.escapeUsed && move.color === api.opp) {
+          const r = relRank(api.opp, move.to);
+          if (r >= 4 && r <= 6) inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
 
-  // --- permanent filter: the opponent's rooks can never move again ---------
+  // --- freeze the rooks briefly, then cap them at three squares forever -----
   H(
     {
       id: "sealed_ramparts",
       name: "Sealed Ramparts",
-      description: "Your opponent's rooks can never move again for the rest of the game. Their other pieces are unaffected.",
-      flavor: "The gates are bricked over for good; the towers will never open.",
+      description: "Your opponent's rooks are frozen for their next 2 turns, then for the rest of the game each rook may move at most three squares in a single move. They are never fully disabled.",
+      flavor: "The gates are bricked shut, then cracked open just a sliver for good.",
       fx: { motif: "jail", pieces: ["r"] },
     },
-    permaOppFilter((moves) => moves.filter((m) => m.piece !== "r")),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        for (const sq of mySquares(api.board, api.opp, "r")) {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+        }
+      },
+      filterOpponentMoves: (moves) => {
+        if (moves.length === 0) return moves;
+        const kept = moves.filter((m) => {
+          if (m.piece !== "r") return true;
+          const dist = Math.max(
+            Math.abs(FILE(m.to) - FILE(m.from)),
+            Math.abs(RANK(m.to) - RANK(m.from)),
+          );
+          return dist <= 3;
+        });
+        return kept.length > 0 ? kept : moves;
+      },
+    },
   ),
 
   // --- timed filter: every piece hobbled to one square for 3 turns ---------
@@ -316,12 +489,12 @@ export const HEXES_T8: Buff[] = [
     {
       id: "leaden_limbs",
       name: "Leaden Limbs",
-      description: "Your opponent may move each piece at most one square in any direction for their next 3 turns.",
+      description: "Your opponent may move each piece at most one square in any direction for their next 2 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",
       // "all" is right: the filter also strips castling off the king.
       fx: { motif: "anchor", pieces: "all" },
     },
-    curse(3, (moves) =>
+    curse(2, (moves) =>
       moves.filter(
         (m) =>
           Math.max(
@@ -337,12 +510,15 @@ export const HEXES_T8: Buff[] = [
   // WEATHER SYSTEM. The pierced piece is iced for 4 of their turns, and for
   // those turns your opponent cannot move anything onto the squares around
   // it, so the frozen piece cannot be defended or huddled behind.
-  H(
+  hex(
     {
       id: "everfrost_shard",
       name: "Everfrost Shard",
       description: "Freeze one enemy piece you target for 4 of their turns. The shard radiates: for those 4 turns your opponent cannot move any piece onto a square beside it. Kings cannot be targeted.",
       flavor: "Nothing grows near it. Nothing stands near it. Nothing helps it.",
+      // Retiered 8 -> 6: a single-target freeze plus a small barred ring does
+      // not fill an Unhinged slot without a second board impact.
+      tier: 6,
     },
     activated(
       (_inst, api, picks) =>
@@ -382,26 +558,27 @@ export const HEXES_T8: Buff[] = [
     {
       id: "poisoned_counsel",
       name: "Poisoned Counsel",
-      description: "Your opponent's next drafted card arrives nullified and does nothing, and the venom drawn from their counsel sweetens yours: your next draft rolls one tier higher.",
-      flavor: "Every advisor whispers rot, and the rot pays its way to the other tent.",
+      description: "Your opponent's next drafted card arrives nullified and does nothing.",
+      flavor: "Every advisor whispers rot, and the next order they hand down comes to nothing.",
     },
-    // Rebalance: nullifying their next two drafts plus lifting your own tier was
-    // a heavy two-sided swing. The nullify drops to a single card
-    // (nullifyIncoming +2 -> +1); the self tier lift is kept.
+    // Rebalance: affect one draft only. The card no longer lifts your own next
+    // draft; it just nullifies the opponent's next drafted card. It carries no
+    // board-control rider, so the opponent is owed no protected offer.
     instant((_inst, api) => {
       api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
     }),
   ),
 
   // --- no captures for 3 turns AND a sealed ring around your own king ------
-  H(
+  hex(
     {
       id: "peace_of_the_grave",
       name: "Peace of the Grave",
       description: "Your opponent cannot capture with any piece for their next 3 turns, and for those turns they cannot move any piece onto a square next to your king.",
       flavor: "A forced truce enforced by the dead, with a cordon drawn around the crown.",
       fx: { motif: "muzzle", pieces: "all" },
+      // Retiered 8 -> 9 (apex): the full three-turn duration is unchanged.
+      tier: 9, special: true,
     },
     {
       kind: "passive",

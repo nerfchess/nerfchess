@@ -13,6 +13,7 @@
 // recorded in the card_override_history table and merged in client-side by
 // the CardInsights panel.
 
+import { BALANCE_WAVE_2026_07_22 } from "./balanceWave1";
 import { isBoon, type Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { buffCollection } from "@/lib/cardCollections";
@@ -136,9 +137,12 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {};
 // --- Lookup ---------------------------------------------------------------------
 
 /** The full editorial timeline for a card: its wave-introduction event plus
- * any curated events, oldest first. Never empty. */
+ * any generated balance-wave events and curated events, oldest first. Never
+ * empty. */
 export function historyFor(kind: "buff" | "nerf", card: Buff | Nerf): CardHistoryEvent[] {
   const wave = kind === "buff" ? buffWave(card as Buff) : nerfWave(card as Nerf);
-  const curated = CARD_HISTORY[`${kind}:${card.id}`] ?? [];
-  return [WAVES[wave], ...curated].sort((a, b) => a.date.localeCompare(b.date));
+  const key = `${kind}:${card.id}`;
+  const balance = BALANCE_WAVE_2026_07_22[key] ?? [];
+  const curated = CARD_HISTORY[key] ?? [];
+  return [WAVES[wave], ...balance, ...curated].sort((a, b) => a.date.localeCompare(b.date));
 }
