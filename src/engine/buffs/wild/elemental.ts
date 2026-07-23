@@ -1140,7 +1140,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_petrify_ranks",
       name: "Petrify the Ranks",
       description:
-        "Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns.",
+        "Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns. The card is spent even if your opponent has no knights or bishops to petrify.",
       tier: 5,
       category: "tempo",
       flavor: "A gallery of statues.",

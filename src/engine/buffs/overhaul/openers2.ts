@@ -812,6 +812,14 @@ const SPRING_THAW: Array<
     bankRetry?: boolean;
     /** Seconds granted the first time a bankRetry roll fails. */
     consolationSec?: number;
+    /** Roll two eligible pawns independently and advance the one nearer
+     * promotion (the auto-resolved "player's choice" between two rolls). */
+    doubleRoll?: boolean;
+    /** Guaranteed floor / alternative paid when the roll whiffs (no eligible
+     * pawn). Replaces the plain spend on a failed roll. */
+    jackpotAlt?: (api: BuffApi) => void;
+    /** Sentence appended to the description for the jackpotAlt branch. */
+    altDesc?: string;
   }
 > = [
   { id: "snowdrop", name: "Snowdrop", flavor: "The first green thing on the queenside every year.", icon: "Flower2", after: 6, files: [0, 1, 2, 3], who: "queenside (files a through d)" },
