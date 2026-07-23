@@ -1235,7 +1235,7 @@ const AFFECTION: Buff[] = [
       id: "ilovemakingout",
       name: "I Love Making Out",
       description:
-        "Bond two of your pieces for the game. Each also moves the way the other does, blending a knight with a bishop or a rook with a queen.",
+        "Bond two of your pieces for the game. Each also moves the way the other does, blending a knight with a bishop or a rook with a queen, but these borrowed moves cannot capture.",
       tier: 6,
       category: "movement",
       icon: "HeartHandshake",
@@ -1287,13 +1287,16 @@ const AFFECTION: Buff[] = [
           const b = inst.state.b as Square | undefined;
           const ta = inst.state.ta as PieceType | undefined;
           const tb = inst.state.tb as PieceType | undefined;
+          // Nerf: the borrowed moves cannot capture, so drop any that would.
           if (a != null && tb) {
             const p = api.board.pieces[a];
-            if (p && p.color === api.me) addNovel(moves, genAs(tb, api.board, a, inst.id));
+            if (p && p.color === api.me)
+              addNovel(moves, genAs(tb, api.board, a, inst.id).filter((m) => !m.captured));
           }
           if (b != null && ta) {
             const p = api.board.pieces[b];
-            if (p && p.color === api.me) addNovel(moves, genAs(ta, api.board, b, inst.id));
+            if (p && p.color === api.me)
+              addNovel(moves, genAs(ta, api.board, b, inst.id).filter((m) => !m.captured));
           }
         },
         onMovePlayed: (inst, move) => {

@@ -1529,9 +1529,12 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_masons_lodge", name: "Mason's Lodge", tier: 6, category: "pieces", icon: "Pickaxe",
-      description: "A rook joins your pocket, ready to be dropped onto an empty square on a later turn (the drop spends that turn).",
+      description: "A rook joins your pocket, ready to be dropped onto an empty square on a later turn (the drop spends that turn). Your next draft is then skipped.",
       flavor: "They build towers. It is the whole guild charter." },
-    instant((_inst, api) => grantInventory(api, "r", 1)),
+    instant((_inst, api) => {
+      grantInventory(api, "r", 1);
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+    }),
   ),
 
   // --- protection (5) ---
@@ -1604,18 +1607,40 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_shieldmaidens", name: "Shieldmaidens", tier: 6, category: "protection", icon: "Swords",
-      description: "Every one of your pieces standing beside your queen cannot be captured for your opponent's next 3 turns.",
+      description: "Every one of your pieces standing beside your queen cannot be captured for your opponent's next 3 turns. The protection ends the moment one of those pieces makes a capture.",
       flavor: "Her circle holds. Ask anyone who tested it.", requires: ["q"],
       fx: { motif: "ward", pieces: "all", self: true } },
-    instant((_inst, api) => {
-      const qs = mySquares(api.board, api.me, "q")[0];
-      if (qs == null) return;
-      const squares = adjSquares(qs).filter((s) => {
-        const p = api.board.pieces[s];
-        return !!p && p.color === api.me;
-      });
-      if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const qs = mySquares(api.board, api.me, "q")[0];
+        if (qs == null) return;
+        const squares = adjSquares(qs).filter((s) => {
+          const p = api.board.pieces[s];
+          return !!p && p.color === api.me;
+        });
+        if (squares.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+          // Keep the effect's own squares array (it follows the pieces): the
+          // rider reads it to spot a protected piece striking.
+          inst.state.squares = squares;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me || !move.captured) return;
+        const squares = inst.state.squares as Square[] | undefined;
+        // onMovePlayed runs before shield squares follow the piece, so
+        // move.from is still a guarded square here.
+        if (!squares || !squares.includes(move.from)) return;
+        const fx = api.bs.effects;
+        for (let i = fx.length - 1; i >= 0; i--) {
+          const e = fx[i];
+          if (e.kind === "shield" && e.owner === api.me && e.squares === squares) fx.splice(i, 1);
+        }
+        inst.spent = true;
+      },
+      status: (inst) => (inst.spent ? "the circle is broken" : "the circle holds"),
+    },
   ),
   card(
     { id: "bn4_winter_palace", name: "Winter Palace", tier: 6, category: "protection", icon: "Snowflake",
