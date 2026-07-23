@@ -1,4 +1,4 @@
-import { isInCheck } from "../board";
+import { cloneBoard, isInCheck } from "../board";
 import { NEW_HEXES } from "./hexes";
 import { HEX_WAVE4 } from "./hexes/wave4";
 import { BOON_WAVE2 } from "./boons2";
@@ -451,6 +451,21 @@ function adjacent(a: Square, b: Square): boolean {
 /** Amazon movement: queen slides plus knight leaps. */
 function amazonGen(board: BoardState, sq: Square, via: string): Move[] {
   return [...slideMoves(board, sq, ALL_DIRS, via), ...leapMoves(board, sq, KNIGHT_LEAPS, via)];
+}
+
+/** Would the piece at `from`, moving to `to`, put the opponent's king in
+ * check? Probes with amazon movement from the landing square so a knight that
+ * has been granted amazon reach is judged by the moves it actually has (a
+ * queen-line check a plain isInCheck would miss). Pure board-copy simulation. */
+function boundGivesCheck(api: BuffApi, from: Square, to: Square): boolean {
+  const b = cloneBoard(api.board);
+  const p = b.pieces[from];
+  if (!p) return false;
+  b.pieces[to] = p;
+  b.pieces[from] = null;
+  const ek = mySquares(b, api.opp, "k")[0];
+  if (ek == null) return false;
+  return amazonGen(b, to, "probe").some((m) => m.to === ek);
 }
 
 /** A line sweep (mirrors helpers.ts lineSweep for target selection and removal)
