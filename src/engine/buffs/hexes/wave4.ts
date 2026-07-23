@@ -1604,13 +1604,25 @@ const T4: Buff[] = [
     },
   ),
   H4(
-    { id: "hx4_sagging_shelves", name: "Sagging Shelves", description: "Their undeveloped officers are shelved: every enemy knight and bishop still standing on its own back rank is frozen for 2 of their turns.", flavor: "Use it or dust it.", icon: "Library", fx: { motif: "jail", pieces: ["n", "b"] } },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        const t = api.board.pieces[sq]!.type;
-        if ((t === "n" || t === "b") && relRank(api.opp, sq) === 1) freezeNow(api, sq, 2, "cement");
-      }
-    }),
+    { id: "hx4_sagging_shelves", name: "Sagging Shelves", description: "Their undeveloped officers are shelved: starting after your opponent's next move, every enemy knight and bishop still standing on its own back rank is frozen for 2 of their turns.", flavor: "Use it or dust it.", icon: "Library", fx: { motif: "jail", pieces: ["n", "b"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          for (const sq of mySquares(api.board, api.opp)) {
+            const t = api.board.pieces[sq]!.type;
+            if ((t === "n" || t === "b") && relRank(api.opp, sq) === 1) sting(api, sq, 2, "cement");
+          }
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the shelves are sagging" : null),
+    },
   ),
   hex(
     { id: "hx4_lockstep", name: "Lockstep", description: "For your opponent's next 3 turns, every move they make must cover exactly the same distance as the move you made just before it. Their king is exempt, and if nothing matches they move freely.", flavor: "Left. Left. Left, curse you.", icon: "Footprints", fx: { motif: "slow", pieces: "all" }, tier: 5 },
@@ -1629,11 +1641,23 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_rogue_river", name: "Rogue River", description: "A river jumps its banks along one random file: your opponent's pieces cannot stop anywhere on that file for their next 2 turns.", flavor: "Rivers keep no treaties.", icon: "Waves", fx: { motif: "blindfold" } },
-    instant((_inst, api) => {
-      const f = api.rng.int(8);
-      barNow(api, Array.from({ length: 8 }, (_, r) => SQ(f, r)), 2);
-    }),
+    { id: "hx4_rogue_river", name: "Rogue River", description: "A river jumps its banks along one random file: starting after your opponent's next move, their pieces cannot stop anywhere on that file for their following 2 turns.", flavor: "Rivers keep no treaties.", icon: "Waves", fx: { motif: "blindfold" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          const f = api.rng.int(8);
+          barNow(api, Array.from({ length: 8 }, (_, r) => SQ(f, r)), 3);
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the river is rising" : null),
+    },
   ),
   H4(
     { id: "hx4_reined_back", name: "Reined Back", description: "For your opponent's next 2 turns, their knights may not leap toward your side of the board: sideways and backward leaps only.", flavor: "The reins are held by someone very cautious and very far away.", icon: "ArrowDown", fx: { motif: "anchor", pieces: ["n"] } },
@@ -1992,14 +2016,26 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_moth_plague", name: "Moth Plague", description: "A plague of very judgemental pigeons descends: 3 of your opponent's pieces, chosen at random (never the king), are dressed as pigeons for 6 of their turns and stunned for 1.", flavor: "They coo in disapproval. Constantly.", icon: "Bird", fx: { motif: "jail" } },
-    instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
-      for (const sq of drawRandom(api, pool, 3)) {
-        dressUp(api, sq, "pigeon", 6);
-        freezeNow(api, sq, 1, "stun");
-      }
-    }),
+    { id: "hx4_moth_plague", name: "Moth Plague", description: "A plague of very judgemental pigeons descends: starting after your opponent's next move, 3 of their pieces, chosen at random (never the king), are dressed as pigeons for 6 of their turns and stunned for 1.", flavor: "They coo in disapproval. Constantly.", icon: "Bird", fx: { motif: "jail" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
+          for (const sq of drawRandom(api, pool, 3)) {
+            dressUp(api, sq, "pigeon", 7);
+            sting(api, sq, 1, "stun");
+          }
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the plague gathers" : null),
+    },
   ),
   hex(
     { id: "hx4_ironglass_mirror", name: "Ironglass Mirror", description: "Your threats harden into glass: for your opponent's next 2 turns, any piece of theirs standing on a square one of your pieces attacks cannot move. Their king is exempt.", flavor: "Held by nothing but being seen.", icon: "Scan", fx: { motif: "jail", pieces: "all" }, tier: 5 },
