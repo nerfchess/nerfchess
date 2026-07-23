@@ -2908,6 +2908,24 @@ export class GameServer extends DurableObject<Env> {
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
     const clocks = { ...match.clocks };
     if (!match.setup.timeSec || match.result || !match.startedAt || match.runningSince === null) return clocks;
+    // Draft free lock-in window: BOTH clocks pause for the shared window,
+    // opening and recurring rounds alike (the single, authoritative clock rule
+    // for drafts). The correct roll/open paths already null runningSince so the
+    // guard above catches them; this is the belt-and-braces backstop for any
+    // start or reconnect path that failed to pause (see openStartDraftWindow) —
+    // it makes an opening draft physically unable to burn clock, matching what
+    // recurring rounds already do. Once the window ends (now >= dtDeadline) or
+    // the offers resolve (offerSeats cleared) normal charging — including the
+    // straggler rule in chargedColor — resumes.
+    if (
+      match.draft &&
+      !match.diff &&
+      match.dtDeadline != null &&
+      now < match.dtDeadline &&
+      (match.offerSeats?.w || match.offerSeats?.b)
+    ) {
+      return clocks;
+    }
     const active = this.chargedColor(match);
     let elapsed = now - match.runningSince;
     // Start-of-game grace: the first move of each side gets 10 free seconds.

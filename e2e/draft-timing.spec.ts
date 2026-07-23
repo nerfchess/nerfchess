@@ -7,8 +7,12 @@ import { test, expect, type Page } from "@playwright/test";
 // must never run while the chest opening or card dealing plays; it appears
 // only once both cards are dealt and interactive, carrying the (nearly) full
 // window; reduced motion follows the same sequence without deadlocking; and
-// an expired window moves the draft, unresolved and with all its state, to
-// the compact pending panel, from which it can still be resolved.
+// an expired window resolves the draft DETERMINISTICALLY — a selected card is
+// auto-confirmed, otherwise one of the offered cards is taken — so the match
+// never lands in a "Draft pending" recovery state the player must clear by
+// hand. The precise "the selected card is the one confirmed" guarantee is
+// pinned by the deterministic unit tests (npm run test:draft-timeout); this
+// browser flow proves the draft actually resolves and play resumes.
 //
 // Uses the fully client-side bot game (no worker backend needed) and its
 // game-start opening pick, so every test reaches a draft within seconds.
@@ -84,47 +88,34 @@ test.describe("draft decision timing (reduced motion)", () => {
     expect(secs).toBeGreaterThanOrEqual(18);
   });
 
-  test("an expired window moves the draft, unresolved, to the pending panel", async ({
+  test("an expired window auto-resolves the draft — no pending panel", async ({
     page,
   }) => {
     // Sits through the full 20s window on purpose.
     test.slow();
     await freshGameSetup(page);
     await page.goto(GAME_URL);
-    await expect(decisionTimer(page)).toBeVisible({ timeout: 60_000 });
 
-    // Let the window run out without acting. The draft must survive: the
-    // compact "Draft pending" panel (or its tucked Resolve chip) appears,
-    // and since this game has NO clock, no clock warning is shown.
-    const pendingText = page.getByText("Draft pending.").first();
-    const resolveChip = page.getByRole("button", { name: /resolve your buff draft/i });
-    await expect(pendingText.or(resolveChip)).toBeVisible({ timeout: 40_000 });
-    await expect(page.getByText("Your game clock is running")).toHaveCount(0);
+    // Cards are dealt and the decision countdown is armed.
+    await expect(page.locator(".draft-deal-grid")).toBeVisible({ timeout: 60_000 });
+    await expect(decisionTimer(page)).toBeVisible({ timeout: 10_000 });
 
-    // Reopen from the tucked chip when needed, then resolve from the compact
-    // panel: select the first card, then confirm it by name.
-    if (await resolveChip.isVisible().catch(() => false)) {
-      await resolveChip.click();
-    }
-    const cards = page.locator("[data-draft-compact-cards] button");
-    await expect(cards.first()).toBeVisible({ timeout: 10_000 });
-    await cards.first().click();
-    const confirm = page.getByRole("button", { name: /^confirm /i });
-    await expect(confirm).toBeVisible({ timeout: 5_000 });
-    // The confirm control names the selected card; that exact card must land
-    // in the dock, proving the selection survived the compact-panel expiry.
-    const pickedName = (await confirm.innerText()).replace(/^confirm\s*/i, "").trim();
-    await confirm.click();
+    // Tentatively select the first card, then walk away — never press Confirm.
+    await page.locator(".draft-deal-grid button").first().click();
 
-    // Resolved: the pending panel is gone, play continues, and the picked
-    // card sits in the buff dock (this is the game-start opening pick, so no
-    // "next draft" chip exists yet; it appears with the first move).
+    // The window runs out. Deterministic recovery: the draft resolves itself,
+    // the overlay closes, and play resumes. The old "Draft pending" recovery
+    // panel / Resolve chip must NEVER appear, and nothing is left for the
+    // player to clear by hand.
+    await expect(decisionTimer(page)).toHaveCount(0, { timeout: 40_000 });
+    await expect(page.locator(".draft-deal-grid")).toHaveCount(0);
     await expect(page.getByText("Draft pending.")).toHaveCount(0);
-    await expect(resolveChip).toHaveCount(0);
-    if (pickedName) {
-      await expect(page.locator("aside [data-buff-dock]")).toContainText(pickedName, {
-        timeout: 15_000,
-      });
-    }
+    await expect(
+      page.getByRole("button", { name: /resolve your .* draft/i }),
+    ).toHaveCount(0);
+
+    // The board is back and interactive: a labelled square is present, so the
+    // game returned to a playable state rather than sitting stuck on a draft.
+    await expect(page.getByRole("gridcell").first()).toBeVisible();
   });
 });

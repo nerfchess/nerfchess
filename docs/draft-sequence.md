@@ -63,30 +63,54 @@ become interactive the countdown appears as "Choose within Ns" with a single
 soft two-note cue (`playDecisionStart`) and one restrained pulse, both stood
 down by the usual sound and motion settings.
 
-When the countdown expires the draft is NOT discarded: it moves to the
-compact side panel labeled "Draft pending", preserving the offered cards, any
-selection, rerolls, and the bank option. In timed games the panel says "Your
-game clock is running"; untimed bot games instead say "No clock in this game;
-resolve it whenever you are ready" and nothing is charged.
+When the countdown expires the draft resolves itself, deterministically and
+idempotently — it is never parked in a "resolve me later" recovery panel that
+the player must clear by hand. The rule (`src/lib/draftTimeout.ts`,
+`resolveDraftTimeout`):
+
+- a **selected** card (highlighted but not yet confirmed) is auto-confirmed;
+- otherwise one of the currently **offered** cards is taken, chosen via the
+  authoritative RNG;
+- **Skip & Bank is never granted this way** — banking only ever results from
+  the player explicitly pressing Skip & Bank.
+
+Idempotency is layered: `DraftOverlay` resolves once per offer version
+(`autoResolvedRef`, reset on each deal) and once per commit (`committedRef`),
+and a resolved offer is cleared, so a refresh, a doubled interval tick, a
+reconnect echo, or the render-branch race (a parent minimizing at the same
+instant) can never grant two cards. A deadline-keyed backstop resolves even if
+the visible countdown was unmounted by a same-instant minimize. `DraftOverlay`
+takes `autoResolveOnExpire` (default true) and an optional `rng`; the unit
+tests (`npm run test:draft-timeout`) pin the full timeout matrix with a seeded
+RNG (selected/none, reroll-before-timeout, reconnect during reveal/selection,
+duplicate event, opening and recurring rounds).
 
 ## Clock authority
 
 - **Local bot games** (`src/app/game/page.tsx`): the game clock pauses the
-  instant an offer opens; the 20 second deadline is armed only by the
-  machine's `onDecisionStart`, after cards are ready. The expired-window state
-  (`offerOnClockIndex`) persists into the local save
-  (`draftOnClockIndex` in `SavedAiGame`) so a refresh cannot convert an
-  expired draft back into a fresh paused one; an unexpired draft restarts
-  preparation on restore and receives a complete fresh window.
+  instant an offer opens (opening and recurring drafts alike), and the 20
+  second deadline is armed only by the machine's `onDecisionStart`, after cards
+  are ready. There is no on-clock "pending" state: when the window ends the
+  draft auto-resolves (above), `onPick` clears the offer, and the pause-resume
+  effect shifts the turn start forward so the pick cost no clock time. A
+  refresh always restores an unresolved draft to a fresh paused window (never a
+  parked one).
 - **Online games** (`worker.ts` + `OnlineMatch.tsx`): the server remains the
   clock authority. When an offer rolls (mid game, at the buff-mode game start,
   or on a reroll inside the window) the shared deadline is
   `now + draftPrepMs + draftLockInMs`: a presentation budget on top of the
-  full decision window, with both clocks paused throughout. The client hides
-  the countdown until its own cards-ready signal, so the full window remains
-  when it appears; a faster client simply sees a few extra seconds. The live
-  deadline also rides every `dtState` frame, which is how a reroll's
-  restarted window reaches both clients.
+  full decision window, with both clocks paused throughout. Opening and
+  recurring rounds share exactly one pause rule: `currentClocks` treats clocks
+  as paused for the whole shared lock-in window (`dtDeadline` in the future
+  with an offer open), a backstop that makes an opening draft physically unable
+  to burn clock even if a start/reconnect path failed to null `runningSince`.
+  On expiry the client auto-resolves through the same `DraftOverlay` path
+  (`onPick` sends a server-validated, recorded `draftPick`), so a straggler is
+  no longer parked on their own clock. The client hides the countdown until its
+  own cards-ready signal, so the full window remains when it appears; a faster
+  client simply sees a few extra seconds. The live deadline also rides every
+  `dtState` frame, which is how a reroll's restarted window reaches both
+  clients.
 
 ## Interruption control
 
@@ -111,8 +135,15 @@ draft state.
   failed and lost animations cannot deadlock, rerolls restart cleanly,
   double confirmation is impossible at the machine level, priority queueing
   and holds behave.
+- `npm run test:draft-timeout`: deterministic unit tests (seeded RNG, no
+  sleeps) for `resolveDraftTimeout` and the per-offer idempotency guard across
+  the full timeout matrix — selection confirmed normally, timeout with a
+  selection, timeout with none, reroll immediately before timeout, reconnect
+  during reveal and during selection, duplicate timeout event, and both
+  opening and recurring rounds; plus the invariant that a silent timeout never
+  banks.
 - `e2e/draft-timing.spec.ts`: real browser flows on the bot game: the
   countdown stays hidden through chest and deal (full motion), appears with
   at least 18 of 20 seconds, reduced motion arms it immediately, and an
-  expired window lands in the pending panel from which the draft still
-  resolves.
+  expired window auto-resolves the draft with no "Draft pending" recovery
+  panel, returning the board to a playable state.

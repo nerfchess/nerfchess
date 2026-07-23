@@ -1,0 +1,11 @@
+# Cloudflare Workers static-assets header rules (the ASSETS binding serves
+# these files directly, before the OpenNext worker runs, so a Next.js
+# headers() rule alone does not reach them).
+#
+# Everything under /_next/static/ is content-hashed: the filename changes
+# whenever the bytes do, so a year-long immutable cache is both safe and
+# correct. Do NOT add HTML (or any non-hashed route) here — HTML must stay
+# revalidatable so a deploy is picked up promptly.
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
