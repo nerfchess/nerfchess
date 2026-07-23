@@ -3756,8 +3756,20 @@ const TIER6: Buff[] = [
     },
   ),
   def(
-    { id: "warp_storm", name: "Warp Storm", description: "Move up to four of your pieces, your king aside, one square each in any direction onto an empty square, once.", tier: 6, category: "movement" },
-    relocateMany(4, stepDest),
+    { id: "warp_storm", name: "Warp Storm", description: "Move up to four of your pieces, your king aside, one square each in any direction onto an empty square, once. The attempt is spent even if a chosen relocation turns out illegal when it resolves.", tier: 6, category: "movement" },
+    (() => {
+      const base = relocateMany(4, stepDest);
+      return {
+        ...base,
+        // A failed or illegal attempt still spends the charge: an activation
+        // whose chosen relocations are all skipped at resolve time (a
+        // destination filled, a piece already gone) still consumes the card.
+        effect: (inst, api, picks) => {
+          base.effect?.(inst, api, picks);
+          inst.spent = true;
+        },
+      };
+    })(),
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
