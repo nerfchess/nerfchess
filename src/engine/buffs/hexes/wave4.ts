@@ -122,8 +122,8 @@ function delayedCurse(turns: number, filter: (moves: Move[], api: BuffApi) => Mo
 // Pinpricks: one pawn inconvenienced, one-turn quirks, cosmetic jabs.
 
 const T1: Buff[] = [
-  H1(
-    { id: "hx4_pebble_in_the_shoe", name: "Pebble in the Shoe", description: "One enemy pawn you target stops to shake out a pebble: it is frozen for 1 of their turns.", flavor: "Small stone, long sigh.", icon: "Footprints", fx: { motif: "jail", pieces: ["p"] } },
+  hex(
+    { id: "hx4_pebble_in_the_shoe", name: "Pebble in the Shoe", description: "One enemy pawn you target stops to shake out a pebble: it is frozen for 1 of their turns.", flavor: "Small stone, long sigh.", icon: "Footprints", fx: { motif: "jail", pieces: ["p"] }, tier: 2 },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -134,8 +134,8 @@ const T1: Buff[] = [
       },
     ),
   ),
-  H1(
-    { id: "hx4_wet_matches", name: "Wet Matches", description: "Your opponent's pawns cannot capture on their next turn.", flavor: "Strike all you like.", icon: "Flame", fx: { motif: "muzzle", pieces: ["p"] } },
+  hex(
+    { id: "hx4_wet_matches", name: "Wet Matches", description: "Your opponent's pawns cannot capture on their next turn.", flavor: "Strike all you like.", icon: "Flame", fx: { motif: "muzzle", pieces: ["p"] }, tier: 2 },
     curse(1, (moves) => moves.filter((m) => m.piece !== "p" || !m.captured)),
   ),
   hex(
@@ -172,8 +172,8 @@ const T1: Buff[] = [
       for (const sq of drawRandom(api, pool, 1)) nutNow(api, sq, 1);
     }),
   ),
-  H1(
-    { id: "hx4_left_glove", name: "The Left Glove", description: "Your opponent's bishops cannot capture for their next 2 turns.", flavor: "Try holding a sword in mittens.", icon: "Hand", fx: { motif: "muzzle", pieces: ["b"] } },
+  hex(
+    { id: "hx4_left_glove", name: "The Left Glove", description: "Your opponent's bishops cannot capture for their next 2 turns.", flavor: "Try holding a sword in mittens.", icon: "Hand", fx: { motif: "muzzle", pieces: ["b"] }, tier: 2 },
     curse(2, (moves) => moves.filter((m) => m.piece !== "b" || !m.captured)),
   ),
   H1(
