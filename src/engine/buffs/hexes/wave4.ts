@@ -177,8 +177,8 @@ const T1: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece !== "b" || !m.captured)),
   ),
   H1(
-    { id: "hx4_tangled_reins", name: "Tangled Reins", description: "For your opponent's next 3 turns, their knights may not land on any edge square of the board.", flavor: "A knight on the rim is dim. Now it is also forbidden.", icon: "Cable", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(3, (moves) =>
+    { id: "hx4_tangled_reins", name: "Tangled Reins", description: "For your opponent's next 2 turns, their knights may not land on any edge square of the board.", flavor: "A knight on the rim is dim. Now it is also forbidden.", icon: "Cable", fx: { motif: "anchor", pieces: ["n"] } },
+    curse(2, (moves) =>
       moves.filter((m) => {
         if (m.piece !== "n") return true;
         const f = FILE(m.to);
@@ -240,8 +240,8 @@ const T1: Buff[] = [
     }),
   ),
   H1(
-    { id: "hx4_polite_infantry", name: "Polite Infantry", description: "For your opponent's next 4 turns, their pawns may not capture toward the a side of the board. Captures toward the h side are still allowed.", flavor: "After you. No, after YOU.", icon: "HandHeart", fx: { motif: "muzzle", pieces: ["p"] } },
-    curse(4, (moves) =>
+    { id: "hx4_polite_infantry", name: "Polite Infantry", description: "For your opponent's next 3 turns, their pawns may not capture toward the a side of the board. Captures toward the h side are still allowed.", flavor: "After you. No, after YOU.", icon: "HandHeart", fx: { motif: "muzzle", pieces: ["p"] } },
+    curse(3, (moves) =>
       moves.filter((m) => m.piece !== "p" || !m.captured || FILE(m.to) > FILE(m.from)),
     ),
   ),
@@ -299,13 +299,13 @@ const T1: Buff[] = [
     escapeCurse(1, (m, api) => relRank(api.opp, m.from) <= 4),
   ),
   H1(
-    { id: "hx4_royal_nametag", name: "Royal Name Tag", description: "Their queen is issued a conference name tag reading SUSAN for 5 of their turns, and the indignity shows: she cannot capture on their next turn.", flavor: "HELLO my name is regicide, apparently not today.", icon: "Tag", fx: { motif: "muzzle", pieces: ["q"] } },
+    { id: "hx4_royal_nametag", name: "Royal Name Tag", description: "Their queen is issued a conference name tag reading SUSAN for 4 of their turns, and the indignity shows: she cannot capture on their next turn.", flavor: "HELLO my name is regicide, apparently not today.", icon: "Tag", fx: { motif: "muzzle", pieces: ["q"] } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 1;
         for (const sq of mySquares(api.board, api.opp, "q")) {
-          addEffect(api, { kind: "cosmetic", sq, owner: api.opp, turns: 5, skin: "nametag", label: "SUSAN" });
+          addEffect(api, { kind: "cosmetic", sq, owner: api.opp, turns: 4, skin: "nametag", label: "SUSAN" });
         }
       },
       filterOpponentMoves: (moves, inst) => {
@@ -375,8 +375,8 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_thin_ice_patch", name: "Thin Ice Patch", description: "The two central squares on your side of the midline (your d and e entry squares) turn to thin ice: your opponent's pieces may not stop on them for their next 2 turns. Their king is exempt.", flavor: "Listen for the crack before you commit.", icon: "Snowflake", fx: { motif: "blindfold", pieces: "all" } },
-    curse(2, (moves, api) =>
+    { id: "hx4_thin_ice_patch", name: "Thin Ice Patch", description: "The two central squares on your side of the midline (your d and e entry squares) turn to thin ice: your opponent's pieces may not stop on them for their next turn. Their king is exempt.", flavor: "Listen for the crack before you commit.", icon: "Snowflake", fx: { motif: "blindfold", pieces: "all" } },
+    curse(1, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece === "k" ||
@@ -428,8 +428,8 @@ const T1: Buff[] = [
     curse(3, (moves, api) => moves.filter((m) => m.piece !== "n" || relRank(api.opp, m.to) <= 6)),
   ),
   H1(
-    { id: "hx4_one_way_cloister", name: "One Way Cloister", description: "For your opponent's next 2 turns, their bishops may only move toward the a side of the board.", flavor: "The corridor only runs west.", icon: "ArrowLeft", fx: { motif: "anchor", pieces: ["b"] } },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "b" || FILE(m.to) < FILE(m.from))),
+    { id: "hx4_one_way_cloister", name: "One Way Cloister", description: "On your opponent's next turn, their bishops may only move toward the a side of the board.", flavor: "The corridor only runs west.", icon: "ArrowLeft", fx: { motif: "anchor", pieces: ["b"] } },
+    curse(1, (moves) => moves.filter((m) => m.piece !== "b" || FILE(m.to) < FILE(m.from))),
   ),
   H1(
     { id: "hx4_matins_bell", name: "Matins Bell", description: "On your opponent's next turn, their pieces standing on the queenside files (a to d) may not capture: they are at morning prayers. The first such capture slips through as one escape, then the restriction holds.", flavor: "Violence resumes after the second hymn.", icon: "Church", fx: { motif: "muzzle", pieces: "all" } },
@@ -479,8 +479,8 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_squeaky_wheel", name: "Squeaky Wheel", description: "Your opponent's rooks cannot capture for their next 2 turns.", flavor: "Hard to ambush anyone at that volume.", icon: "Volume2", fx: { motif: "muzzle", pieces: ["r"] } },
-    curse(2, (moves) => moves.filter((m) => m.piece !== "r" || !m.captured)),
+    { id: "hx4_squeaky_wheel", name: "Squeaky Wheel", description: "Your opponent's rooks cannot capture on their next turn.", flavor: "Hard to ambush anyone at that volume.", icon: "Volume2", fx: { motif: "muzzle", pieces: ["r"] } },
+    curse(1, (moves) => moves.filter((m) => m.piece !== "r" || !m.captured)),
   ),
   H1(
     { id: "hx4_hopscotch", name: "Hopscotch", description: "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move. The first such pawn slips through as one escape, then the restriction holds.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
@@ -614,8 +614,8 @@ const T2: Buff[] = [
     curse(2, (moves) => moves.filter((m) => m.piece === "k" || !m.captured || moveDist(m) >= 2)),
   ),
   H2(
-    { id: "hx4_borrowed_lantern", name: "Borrowed Lantern", description: "For your opponent's next 2 turns, they cannot capture anything standing on a dark square. The lantern only lights half the world.", flavor: "Cheap oil, cheap light, expensive mistakes.", icon: "Lightbulb", fx: { motif: "muzzle", pieces: "all" } },
-    curse(2, (moves) => {
+    { id: "hx4_borrowed_lantern", name: "Borrowed Lantern", description: "On your opponent's next turn, they cannot capture anything standing on a dark square. The lantern only lights half the world.", flavor: "Cheap oil, cheap light, expensive mistakes.", icon: "Lightbulb", fx: { motif: "muzzle", pieces: "all" } },
+    curse(1, (moves) => {
       return moves.filter((m) => {
         const c = capSq(m);
         return c == null || sqShade(c) === 1;
@@ -800,8 +800,8 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_bridge_toll", name: "Bridge Toll", description: "For your opponent's next 3 turns, only their pawns and king may cross the midline into your half. The bridge keeper distrusts officers.", flavor: "Boots pay a penny. Horses pay in paperwork.", icon: "Landmark", fx: { motif: "anchor", pieces: ["n", "b", "r", "q"] } },
-    curse(3, (moves, api) =>
+    { id: "hx4_bridge_toll", name: "Bridge Toll", description: "For your opponent's next 2 turns, only their pawns and king may cross the midline into your half. The bridge keeper distrusts officers.", flavor: "Boots pay a penny. Horses pay in paperwork.", icon: "Landmark", fx: { motif: "anchor", pieces: ["n", "b", "r", "q"] } },
+    curse(2, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece === "p" ||
