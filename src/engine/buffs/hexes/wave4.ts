@@ -1636,8 +1636,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_reined_back", name: "Reined Back", description: "For your opponent's next 3 turns, their knights may not leap toward your side of the board: sideways and backward leaps only.", flavor: "The reins are held by someone very cautious and very far away.", icon: "ArrowDown", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(3, (moves, api) =>
+    { id: "hx4_reined_back", name: "Reined Back", description: "For your opponent's next 2 turns, their knights may not leap toward your side of the board: sideways and backward leaps only.", flavor: "The reins are held by someone very cautious and very far away.", icon: "ArrowDown", fx: { motif: "anchor", pieces: ["n"] } },
+    curse(2, (moves, api) =>
       moves.filter((m) => m.piece !== "n" || relRank(api.opp, m.to) <= relRank(api.opp, m.from)),
     ),
   ),
@@ -1687,8 +1687,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_slack_bowstrings", name: "Slack Bowstrings", description: "For your opponent's next 3 turns, the piece they moved on their previous turn is too winded to fight: it cannot capture this turn.", flavor: "Draw, breathe, loose. They keep skipping the middle one.", icon: "Target", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_slack_bowstrings", name: "Slack Bowstrings", description: "For your opponent's next 2 turns, the piece they moved on their previous turn is too winded to fight: it cannot capture this turn.", flavor: "Draw, breathe, loose. They keep skipping the middle one.", icon: "Target", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
@@ -1955,8 +1955,8 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_solstice_shadow", name: "Solstice Shadow", description: "For your opponent's next 3 turns, the solstice shadow falls on their king's square color: pieces of theirs standing on that color cannot capture.", flavor: "Half the world is in the king's shadow today.", icon: "SunDim", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_solstice_shadow", name: "Solstice Shadow", description: "For your opponent's next 2 turns, the solstice shadow falls on their king's square color: pieces of theirs standing on that color cannot capture.", flavor: "Half the world is in the king's shadow today.", icon: "SunDim", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       const shade = sqShade(k);

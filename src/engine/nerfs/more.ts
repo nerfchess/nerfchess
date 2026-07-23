@@ -1128,15 +1128,16 @@ export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
 
 export const GLORIOUS_BATTLE: Nerf = db({
   id: "glorious_battle", name: "Glorious Battle", tier: 7, implemented: true,
-  description: "On a midgame move drawn at random (you are warned two turns ahead), the battle begins: for 3 consecutive moves you must capture, or lose.",
+  description: "On a midgame move drawn at random, the battle begins: for 3 consecutive moves you must capture, or lose.",
   // Rebalance 2026-07, three surgical changes to what was a pure lottery:
   //  - the window now starts on move 9-16 (was 4-11, often before any contact
   //    exists, making the required captures physically unavailable);
   //  - the window is 3 turns (was 4): needing an available capture on four
   //    consecutive turns was rarely survivable even with perfect prep;
-  //  - the start is announced two turns in advance via hint, so the owner can
-  //    build up capture targets (keep tension, refuse early trades) instead of
-  //    being executed by hidden state. Still tier 7.
+  //  - owner balance change (this pass): the two-turn advance warning is removed.
+  //    The battle's start is no longer disclosed ahead of time through any
+  //    channel (hint or progress), so its onset is once again a surprise.
+  //    Still tier 7.
   init: (rng) => ({ start: 9 + rng.int(8) }),
   filterMoves: (moves, state, ctx) => {
     const s = state as { start: number };
