@@ -1259,32 +1259,34 @@ const TIER2: Buff[] = [
     instant((_inst, api) => grantInventory(api, "n", 1)),
   ),
   def(
-    { id: "recall", name: "Recall", description: "Return one piece to any empty square in your back two ranks, once.", tier: 2, category: "movement" },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length === 0) {
-          return {
-            kind: "square",
-            label: "Choose the piece to recall",
-            squares: mySquares(api.board, api.me).filter((sq) => api.board.pieces[sq]!.type !== "k"),
-          };
-        }
-        if (picks.length === 1) {
-          return {
-            kind: "square",
-            label: "Choose where it returns",
-            squares: emptySquares(api.board, (sq) =>
-              api.me === "w" ? RANK(sq) < 2 : RANK(sq) >= 6,
-            ),
-          };
-        }
-        return null;
-      },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null && picks[1]?.square != null) {
-          api.relocate(picks[0].square, picks[1].square);
-        }
-      },
+    { id: "recall", name: "Recall", description: "Return one piece to any empty square in your back two ranks, once. Using it spends your next unused reroll, if any.", tier: 2, category: "movement" },
+    consumeRerollOnUse(
+      activated(
+        (_inst, api, picks) => {
+          if (picks.length === 0) {
+            return {
+              kind: "square",
+              label: "Choose the piece to recall",
+              squares: mySquares(api.board, api.me).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            };
+          }
+          if (picks.length === 1) {
+            return {
+              kind: "square",
+              label: "Choose where it returns",
+              squares: emptySquares(api.board, (sq) =>
+                api.me === "w" ? RANK(sq) < 2 : RANK(sq) >= 6,
+              ),
+            };
+          }
+          return null;
+        },
+        (_inst, api, picks) => {
+          if (picks[0]?.square != null && picks[1]?.square != null) {
+            api.relocate(picks[0].square, picks[1].square);
+          }
+        },
+      ),
     ),
   ),
   def(
@@ -1396,8 +1398,42 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "piece_swap", name: "Piece Swap", description: "Swap positions of any two of your own pieces, once.", tier: 2, category: "movement" },
-    swapOwnPieces(),
+    { id: "piece_swap", name: "Piece Swap", description: "Choose any two of your own pieces; they swap places after your opponent's next move, once.", tier: 2, category: "movement" },
+    // All of its counts are one, so the effect is delayed: the two pieces are
+    // parked at activation and swapped only after the opponent has replied.
+    activated(
+      (inst, api, picks) =>
+        inst.state.pending != null || picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: picks.length === 0 ? "Choose the first piece" : "Choose the piece to swap with",
+              squares: mySquares(api.board, api.me).filter((sq) => !picks.some((k) => k.square === sq)),
+            },
+      (inst, _api, picks) => {
+        if (inst.state.pending != null) return;
+        const a = picks[0]?.square, b = picks[1]?.square;
+        if (a != null && b != null) inst.state.pending = [a, b];
+        else inst.spent = true; // stopped at one pick: discard, nothing to swap
+      },
+      {
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          const pend = inst.state.pending as [Square, Square] | undefined;
+          if (!pend || move.color !== api.opp) return;
+          const [a, b] = pend;
+          const pa = api.board.pieces[a], pb = api.board.pieces[b];
+          if (pa && pb && pa.color === api.me && pb.color === api.me) {
+            api.board.pieces[a] = pb;
+            api.board.pieces[b] = pa;
+            api.bs.historyDiverged = true;
+          }
+          inst.state.pending = null;
+          inst.spent = true;
+        },
+        status: (inst) => (inst.state.pending != null ? "swap lands after their reply" : null),
+      },
+    ),
   ),
   def(
     { id: "wazir_bishop", requires: ["b"], name: "Wazir Bishop", description: "Choose one bishop; for the game it may also step one square horizontally or vertically.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true } },
@@ -1819,19 +1855,31 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "board_quake", name: "Board Quake", description: "Push every enemy pawn back one square where empty behind.", tier: 3, category: "attack" },
-    instant((_inst, api) => {
-      const back = fwdOf(api.me); // toward the opponent's back rank
-      const pawns = mySquares(api.board, api.opp, "p");
-      // Push the pawns closest to their back rank first so chains don't collide.
-      pawns.sort((a, b) => (api.me === "w" ? b - a : a - b));
-      for (const sq of pawns) {
-        const dest = sq + back;
-        if (dest >= 0 && dest < 64 && !api.board.pieces[dest] && relRank(api.opp, dest) > 1) {
-          api.relocate(sq, dest);
+    { id: "board_quake", name: "Board Quake", description: "After your opponent's next move, push every enemy pawn back one square where empty behind.", tier: 3, category: "attack" },
+    // Delayed: the quake is armed on acquisition and only strikes once the
+    // opponent has replied.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const back = fwdOf(api.me); // toward the opponent's back rank
+        const pawns = mySquares(api.board, api.opp, "p");
+        // Push the pawns closest to their back rank first so chains don't collide.
+        pawns.sort((a, b) => (api.me === "w" ? b - a : a - b));
+        for (const sq of pawns) {
+          const dest = sq + back;
+          if (dest >= 0 && dest < 64 && !api.board.pieces[dest] && relRank(api.opp, dest) > 1) {
+            api.relocate(sq, dest);
+          }
         }
-      }
-    }),
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.pending ? "quake strikes after their next move" : null),
+    },
   ),
   def(
     { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once.", tier: 4, category: "pieces" },
@@ -2018,9 +2066,13 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "frost", name: "Frost", description: "Freeze two adjacent enemy pieces for 1 turn each.", tier: 3, category: "tempo" },
+    { id: "frost", name: "Frost", description: "Freeze two adjacent enemy pieces for 1 turn each, starting after your opponent's next move.", tier: 3, category: "tempo" },
+    // Delayed: the two targets are parked at activation and the freeze only
+    // lands once the opponent has replied (any target that has slipped off its
+    // square by then escapes).
     activated(
-      (_inst, api, picks) => {
+      (inst, api, picks) => {
+        if (inst.state.pending != null) return null;
         const enemies = mySquares(api.board, api.opp).filter(
           (sq) => api.board.pieces[sq]!.type !== "k",
         );
@@ -2040,12 +2092,30 @@ const TIER3: Buff[] = [
         }
         return null;
       },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square != null) {
-            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 1 });
+      (inst, _api, picks) => {
+        if (inst.state.pending != null) return;
+        const squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (squares.length > 0) inst.state.pending = squares;
+        else inst.spent = true;
+      },
+      {
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          const pend = inst.state.pending as Square[] | undefined;
+          if (!pend || move.color !== api.opp) return;
+          // Applied on the opponent's reply. A freeze ticks on the frozen side's
+          // turns, so this reply move ticks it once immediately: turns:2 leaves
+          // exactly one frozen opponent turn after the delay.
+          for (const sq of pend) {
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.opp && p.type !== "k") {
+              addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
+            }
           }
-        }
+          inst.state.pending = null;
+          inst.spent = true;
+        },
+        status: (inst) => (inst.state.pending != null ? "freeze lands after their reply" : null),
       },
     ),
   ),

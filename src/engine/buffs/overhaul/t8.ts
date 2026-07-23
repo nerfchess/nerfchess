@@ -549,19 +549,56 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_ninth_rank",
       name: "The Ninth Rank",
       description:
-        "A phantom rank opens behind your first: enemy pieces cannot set foot anywhere on your back rank for your opponent's next 6 turns.",
+        "The phantom rank opens behind your first: as a free action, reposition one of your pieces onto an empty square of your back rank, and enemy pieces cannot set foot anywhere on your back rank for your opponent's next 6 turns. If you reposition a piece, you may not capture the enemy king until your opponent replies.",
       tier: 8,
       category: "protection",
       icon: "DoorClosed",
       flavor: "There is another room behind the throne room. There always was.",
     },
-    // ADAPTED: true extra squares beyond the board would need renderer
-    // surgery; the sanctuary reads as your back rank being unreachable.
-    instant((_inst, api) => {
-      const r = ownRank(api.me, 0);
-      const squares = Array.from({ length: 8 }, (_, f) => SQ(f, r));
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
-    }),
+    // ADAPTED: true extra squares beyond the board would need renderer surgery;
+    // the sanctuary reads as your back rank being unreachable. Balance pass:
+    // you may also pull one piece into that rank (a free action). To stop the
+    // free retreat from teeing up an instant king capture, chainKingGuard bars
+    // capturing the enemy king until the opponent replies (the engine has no
+    // general "no captures" own-move filter; the king guard is its primitive).
+    {
+      kind: "activated",
+      spendOnUse: true,
+      freeAction: true,
+      targets: (_inst, api, picks) => {
+        if (picks.length >= 2) return null;
+        const backRank = ownRank(api.me, 0);
+        const empties = emptyHomeRank(api, 0);
+        if (picks.length === 0) {
+          if (empties.length === 0) return null;
+          return {
+            kind: "square",
+            label: "Choose a piece to pull into the phantom rank (or finish to only raise the wall)",
+            squares: mySquares(api.board, api.me).filter(
+              (sq) => api.board.pieces[sq]!.type !== "k" && RANK(sq) !== backRank,
+            ),
+            finishable: true,
+          };
+        }
+        return {
+          kind: "square",
+          label: "Choose its empty back-rank square",
+          squares: empties,
+        };
+      },
+      effect: (inst, api, picks) => {
+        const r = ownRank(api.me, 0);
+        const squares = Array.from({ length: 8 }, (_, f) => SQ(f, r));
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 6 });
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from != null && to != null && api.board.pieces[from] && !api.board.pieces[to]) {
+          api.relocate(from, to);
+          flashSquares(api, [to], true);
+          api.bs.chainKingGuard = api.me;
+        }
+      },
+      status: () => "opens the phantom rank",
+    },
   ),
   // 185. All the King's Men -------------------------------------------------------------------------------
   card(
@@ -635,43 +672,69 @@ export const OVERHAUL_T8: Buff[] = [
       id: "ov_thousand_ducks",
       name: "One Thousand Ducks",
       description:
-        "A tide of rubber ducks floods the board: every enemy pawn standing next to one of your pieces is swept one square back toward its own side, and three ducks stay behind as squares nobody may enter for 4 turns.",
+        "A tide of rubber ducks floods in: sweep up to three chosen enemy pawns, each standing next to one of your pieces, one square back toward their own side, and three ducks stay behind as squares nobody may enter for 4 turns.",
       tier: 8,
       category: "attack",
       icon: "Bird",
       flavor: "Individually adorable. Collectively a war crime.",
     },
-    activatedSimple((_inst, api) => {
-      const mine = mySquares(api.board, api.me);
-      const back = fwdOf(api.opp);
-      const swept: Square[] = [];
-      for (const sq of mySquares(api.board, api.opp, "p")) {
-        const adjacent = mine.some(
-          (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
-        );
-        if (!adjacent) continue;
-        const to = sq + back;
-        if (to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7) {
-          api.relocate(sq, to);
-          swept.push(to);
+    // Balance pass: the flood no longer sweeps every adjacent enemy pawn. You
+    // choose up to three sweepable enemy pawns; the three ducks still settle
+    // afterward for 4 turns.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length >= 3) return null;
+        const mine = mySquares(api.board, api.me);
+        const back = fwdOf(api.opp);
+        const chosen = picks.map((k) => k.square);
+        const squares = mySquares(api.board, api.opp, "p").filter((sq) => {
+          if (chosen.includes(sq)) return false;
+          const adjacent = mine.some(
+            (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
+          );
+          if (!adjacent) return false;
+          const to = sq + back;
+          return to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7;
+        });
+        if (squares.length === 0) return null;
+        return {
+          kind: "square",
+          label: `Sweep enemy pawn ${picks.length + 1} of up to 3`,
+          squares,
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      (_inst, api, picks) => {
+        const back = fwdOf(api.opp);
+        const swept: Square[] = [];
+        for (const k of picks) {
+          const sq = k.square;
+          if (sq == null) continue;
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.opp || p.type !== "p") continue;
+          const to = sq + back;
+          if (to >= 0 && to <= 63 && !api.board.pieces[to] && RANK(to) !== 0 && RANK(to) !== 7) {
+            api.relocate(sq, to);
+            swept.push(to);
+          }
         }
-      }
-      const ducks: Square[] = [];
-      for (let i = 0; i < 3; i++) {
-        const sq = pickRng(
-          api,
-          emptySquares(api.board).filter((s) => !ducks.includes(s)),
-        );
-        if (sq == null) break;
-        ducks.push(sq);
-      }
-      if (ducks.length) {
-        addEffect(api, { kind: "barred", squares: ducks, against: api.opp, turns: 4 });
-        addEffect(api, { kind: "barred", squares: ducks, against: api.me, turns: 4 });
-        flashSquares(api, ducks, true);
-      }
-      flashSquares(api, swept, true);
-    }),
+        const ducks: Square[] = [];
+        for (let i = 0; i < 3; i++) {
+          const sq = pickRng(
+            api,
+            emptySquares(api.board).filter((s) => !ducks.includes(s)),
+          );
+          if (sq == null) break;
+          ducks.push(sq);
+        }
+        if (ducks.length) {
+          addEffect(api, { kind: "barred", squares: ducks, against: api.opp, turns: 4 });
+          addEffect(api, { kind: "barred", squares: ducks, against: api.me, turns: 4 });
+          flashSquares(api, ducks, true);
+        }
+        flashSquares(api, swept, true);
+      },
+    ),
   ),
   // 188. Crown of the Undying ---------------------------------------------------------------------------------------
   card(

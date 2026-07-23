@@ -1537,14 +1537,33 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_castle_ditch", name: "Castle Ditch", tier: 6, category: "protection", icon: "Waves",
-      description: "Every empty square around your king becomes a moat for 5 turns: no enemy piece may move onto them.",
+      description: "Every empty square around your king becomes a moat for your opponent's next 5 turns: no enemy piece may advance onto them, though the moat cannot stop a capture that lands there.",
       flavor: "Dig first. Gloat later." },
-    instant((_inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return;
-      const squares = adjSquares(ks).filter((s) => !api.board.pieces[s]);
-      if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 5 });
-    }),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const ks = kingSquare(api.board, api.me);
+        inst.state.squares = ks == null ? [] : adjSquares(ks).filter((s) => !api.board.pieces[s]);
+        inst.state.turns = 5;
+      },
+      filterOpponentMoves: (moves, inst, _api) => {
+        if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const squares = (inst.state.squares as Square[] | undefined) ?? [];
+        if (squares.length === 0) return moves;
+        // The moat halts advances, but its walls cannot stop a blade: an enemy
+        // may still capture a piece standing on a moat square, only never move
+        // there quietly.
+        const kept = moves.filter((m) => m.captured != null || !squares.includes(m.to));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 0} of their turns of moat left`,
+    },
   ),
   card(
     { id: "bn4_shieldmaidens", name: "Shieldmaidens", tier: 6, category: "protection", icon: "Swords",
