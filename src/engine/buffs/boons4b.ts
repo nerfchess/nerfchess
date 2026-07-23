@@ -1910,12 +1910,13 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_half_moon_charter", name: "Half-Moon Charter", tier: 7, category: "nerf", icon: "Moon",
-      description: "For the rest of the game, your nerf is suspended on every other one of your turns, starting with your next.",
+      description: "For the rest of the game, your nerf is suspended on every other one of your turns, starting with your next. The charter costs you your next two drafts, which are skipped.",
       flavor: "Half the nights are yours. It is in writing." },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.phase = 0;
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
         susp(api, 1);
       },
       onMovePlayed: (inst, move, api) => {
@@ -2226,7 +2227,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_griffins_brood", name: "Griffin's Brood", tier: 7, category: "protection", icon: "Egg",
-      description: "Your knights and bishops cannot be captured for your opponent's next 4 turns.",
+      description: "Your knights and bishops cannot be captured for your opponent's next 3 turns.",
       flavor: "Touch the nest. See what hatches.",
       fx: { motif: "ward", pieces: ["n", "b"], self: true } },
     shieldZone(
@@ -2235,7 +2236,7 @@ export const BOON_WAVE4B: Buff[] = [
           const t = api.board.pieces[sq]!.type;
           return t === "n" || t === "b";
         }),
-      4,
+      3,
     ),
   ),
   card(
@@ -2282,13 +2283,13 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_frozen_moat", name: "Frozen Moat", tier: 7, category: "tempo", icon: "Snowflake",
-      description: "Every enemy piece standing in your half of the board (their king excepted) is frozen for your opponent's next 2 turns.",
+      description: "Every enemy piece standing in your half of the board (their king excepted) is frozen for your opponent's next turn.",
       flavor: "The invaders are welcome to stay. Indefinitely. Rigidly." },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
         if (!inHalf(api.me, sq)) continue;
         if (api.board.pieces[sq]!.type === "k") continue;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "ice" });
       }
     }),
   ),

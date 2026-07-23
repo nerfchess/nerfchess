@@ -3464,9 +3464,34 @@ const TIER6: Buff[] = [
     )),
   ),
   def(
-    // freezeAllEnemies spares the king; the freezes are painted by the board.
-    { id: "mass_freeze", name: "Mass Freeze", description: "Freeze every enemy piece except the king for 1 full turn.", tier: 4, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
-    freezeAllEnemies(1),
+    // Delayed freeze: armed on acquisition, it only bites after the opponent
+    // has replied. The king is always spared; the freezes are painted by the
+    // board. Applied on the caster's move following that reply so the 1-turn
+    // freeze survives (a freeze added on the opponent's own move would be
+    // ticked away by that same move before it could bind them).
+    { id: "mass_freeze", name: "Mass Freeze", description: "After your opponent replies, freeze every enemy piece except the king for 1 full turn.", tier: 4, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.phase = "wait";
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.phase === "wait") {
+          if (move.color === api.opp) inst.state.phase = "armed";
+          return;
+        }
+        if (inst.state.phase === "armed" && move.color === api.me) {
+          for (const sq of mySquares(api.board, api.opp)) {
+            if (api.board.pieces[sq]!.type === "k") continue;
+            addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+          }
+          inst.state.phase = "done";
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.phase === "done" ? null : "freeze strikes after their next reply",
+    },
   ),
   def(
     { id: "resurrect_major", name: "Resurrect Major", description: "Revive a captured rook or bishop to any empty square, once.", tier: 5, category: "pieces" },

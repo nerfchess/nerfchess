@@ -930,20 +930,30 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_plush_cavalry", name: "Plush Cavalry", description: "Your opponent's knights become adorable plush toys for 6 of their turns, and stuffed hooves cannot fight: their knights cannot capture for their next 2 turns.", flavor: "Squeeze one. We dare you.", icon: "ToyBrick", fx: { motif: "muzzle", pieces: ["n"] } },
+    { id: "hx4_plush_cavalry", name: "Plush Cavalry", description: "Your opponent's knights become adorable plush toys for 6 of their turns; stuffed hooves cannot fight, and after their next move their knights cannot capture for 2 of their turns.", flavor: "Squeeze one. We dare you.", icon: "ToyBrick", fx: { motif: "muzzle", pieces: ["n"] } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 2;
+        inst.state.armed = false;
         for (const sq of mySquares(api.board, api.opp, "n")) dressUp(api, sq, "plush", 6);
       },
       filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed) return moves;
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.piece !== "n" || !m.captured);
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the stuffing sets in after their next move",
     },
   ),
   H6(
@@ -955,13 +965,33 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_quagmire_march", name: "Quagmire March", description: "Your half of the board turns to bog: for your opponent's next 3 turns, any piece of theirs standing in your half may move at most 1 square. Their king is exempt.", flavor: "The deeper they push, the deeper they sink.", icon: "Shovel", fx: { motif: "anchor", pieces: "all" } },
-    curse(3, (moves, api) =>
-      moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) <= 4 || moveDist(m) <= 1),
-    ),
+    { id: "hx4_quagmire_march", name: "Quagmire March", description: "Your half of the board turns to bog: your opponent's next move passes freely, then for their following 3 turns, any piece of theirs standing in your half may move at most 1 square. Their king is exempt.", flavor: "The deeper they push, the deeper they sink.", icon: "Shovel", fx: { motif: "anchor", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 3;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "k" || relRank(api.opp, m.from) <= 4 || moveDist(m) <= 1);
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the bog forms after their next move",
+    },
   ),
-  H6(
-    { id: "hx4_watchmans_whistle", name: "Watchman's Whistle", description: "For your opponent's next 5 turns, any piece of theirs that gives check to your king is arrested on the spot and frozen for 2 of their turns. Kings are never arrested.", flavor: "Disturbing the peace, one count.", icon: "Siren", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_watchmans_whistle", name: "Watchman's Whistle", description: "For your opponent's next 5 turns, any piece of theirs that gives check to your king is arrested on the spot and frozen for 2 of their turns. Kings are never arrested.", flavor: "Disturbing the peace, one count.", icon: "Siren", fx: { motif: "muzzle", pieces: "all" }, tier: 7 },
     onTheirMove(5, (move, api) => {
       if (move.piece !== "k" && isInCheck(api.board, api.me)) sting(api, move.to, 2, "chains");
     }),

@@ -1252,16 +1252,32 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_gate_key", name: "Gate Key", tier: 2, category: "movement", icon: "Key",
-      description: "Once, one of your rooks may step a single square diagonally (capturing allowed).",
+      description: "Once, one of your rooks may step a single square diagonally (capturing allowed). The square it lands on lights up until your opponent replies.",
       flavor: "Every tower keeps a key to the door it pretends not to have.", requires: ["r"],
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true } },
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "r")) {
-        out.push(...leapMoves(api.board, from, [[1, 1], [1, -1], [-1, 1], [-1, -1]], inst.id));
-      }
-      return out;
-    }, 1),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "r")) {
+          out.push(...leapMoves(api.board, from, [[1, 1], [1, -1], [-1, 1], [-1, -1]], inst.id));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via !== inst.id || !move.color) return;
+        // Telegraph the landing square before the opponent replies.
+        flashSquares(api, [move.to]);
+        const charges = ((inst.state.charges as number) ?? 1) - 1;
+        inst.state.charges = charges;
+        if (charges <= 0) inst.spent = true;
+      },
+      status: () => null,
+    },
   ),
   card(
     { id: "bn4_vaulting_pole", name: "Vaulting Pole", tier: 2, category: "movement", icon: "Wand",
@@ -1502,11 +1518,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_thorn_hedge", name: "Thorn Hedge", tier: 2, category: "protection", icon: "Flower2",
-      description: "For your opponent's next 4 turns, their knights cannot move into your half of the board.",
+      description: "For your opponent's next 4 turns, their knights cannot move into your half of the board, except to capture.",
       flavor: "Horses have strong opinions about brambles.",
       fx: { motif: "blindfold", pieces: ["n"] } },
+    // The block spares captures: a knight may still take a piece standing in
+    // your half, but cannot make a quiet incursion there.
     timedOppFilter(4, (moves, _inst, api) =>
-      moves.filter((m) => !(m.piece === "n" && inHalf(api.me, m.to))),
+      moves.filter((m) => !(m.piece === "n" && inHalf(api.me, m.to) && !m.captured)),
     ),
   ),
 
@@ -1520,9 +1538,11 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_slow_doors", name: "Slow Doors", tier: 2, category: "tempo", icon: "DoorOpen",
-      description: "Your opponent's pawns cannot advance for their next 2 turns.",
+      description: "Your opponent's pawns cannot advance for their next 2 turns, though they may still capture.",
       flavor: "After you. No, after you. No, after you.",
       fx: { motif: "slow", pieces: ["p"] } },
+    // no_pawn_advance blocks only straight advances; diagonal captures are
+    // never in the restricted move set, so the special move cannot capture.
     instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 2 })),
   ),
   card(

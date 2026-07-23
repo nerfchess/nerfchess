@@ -515,7 +515,7 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
 // ---------------------------------------------------------------------------
 
 const FIRST_STEPS: Array<OpenerMeta & { after: number; prize: "reroll" | "peek" | "seconds" }> = [
-  { id: "slow_burn", name: "Slow Burn", flavor: "Patience is a position too.", icon: "FlameKindling", after: 6, prize: "reroll" },
+  { id: "slow_burn", name: "Slow Burn", flavor: "Patience is a position too.", icon: "FlameKindling", after: 6, prize: "reroll", tier: 2 },
   { id: "early_bird", name: "Early Bird", flavor: "It does not catch the worm. It reads the worm's mail.", icon: "Sunrise", after: 4, prize: "peek" },
   { id: "second_wind_sip", name: "Water Break", flavor: "Hydration wins endgames.", icon: "GlassWater", after: 8, prize: "seconds" },
 ];
