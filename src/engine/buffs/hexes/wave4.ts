@@ -2046,14 +2046,26 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_second_frost", name: "Second Frost", description: "The cold doubles down: every freeze and every walnut currently gripping your opponent's pieces lasts 1 of their turns longer.", flavor: "Just when the thaw was in sight.", icon: "Snowflake", fx: { motif: "slow" } },
-    instant((_inst, api) => {
-      for (const e of api.bs.effects) {
-        if ((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.opp && e.turns > 0) {
-          e.turns += 1;
+    { id: "hx4_second_frost", name: "Second Frost", description: "The cold doubles down: starting after your opponent's next move, every freeze and every walnut then gripping your opponent's pieces lasts 1 of their turns longer.", flavor: "Just when the thaw was in sight.", icon: "Snowflake", fx: { motif: "slow" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          for (const e of api.bs.effects) {
+            if ((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.opp && e.turns > 0) {
+              e.turns += 1;
+            }
+          }
+          inst.spent = true;
+          return;
         }
-      }
-    }),
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => (turnsLeft(inst) > 0 ? "the frost deepens" : null),
+    },
   ),
   H4(
     { id: "hx4_coronation_bill", name: "Coronation Bill", description: "For your opponent's next 6 turns, promotions come with an itemized invoice: the first pawn they promote costs them their following turn, skipped outright while they settle the bill.", flavor: "Line 14: one crown, ceremonial, non refundable.", icon: "ReceiptText", fx: { motif: "slow", pieces: ["p"] } },
