@@ -2749,17 +2749,40 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_kings_own_wings", name: "The King's Own Wings", tier: 8, category: "movement", icon: "Feather",
-      description: "For the rest of the game, your king may leap like a knight (capturing allowed).",
+      description: "For your opponent's next 4 turns, your king may leap like a knight (capturing allowed). The moment he captures, the wings fold and the power ends.",
       flavor: "Thrones are for sitting. Skies are for kings.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true } },
-    permanentAugment((_moves, inst, api) => {
-      const ks = kingSquare(api.board, api.me);
-      if (ks == null) return [];
-      const leaps = [
-        [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
-      ] as const;
-      return leapMoves(api.board, ks, leaps, inst.id);
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (inst.spent || ((inst.state.turns as number) ?? 0) <= 0) return;
+        const ks = kingSquare(api.board, api.me);
+        if (ks == null) return;
+        const leaps = [
+          [1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1],
+        ] as const;
+        addNovel(moves, leapMoves(api.board, ks, leaps, inst.id));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        // Ends the moment the king captures.
+        if (move.color === api.me && move.piece === "k" && move.captured && move.captured !== "k") {
+          inst.spent = true;
+          return;
+        }
+        // Active for the opponent's next 4 turns.
+        if (move.color === api.opp) {
+          const t = ((inst.state.turns as number) ?? 4) - 1;
+          inst.state.turns = t;
+          if (t <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.spent ? "the wings have folded" : `${(inst.state.turns as number) ?? 4} of their turns aloft`,
+    },
   ),
   card(
     { id: "bn4_worldgate", name: "Worldgate", tier: 8, category: "movement", icon: "Orbit",

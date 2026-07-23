@@ -1978,20 +1978,66 @@ const T8: Buff[] = [
       },
     ),
   ),
-  H8(
-    { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 4 of their turns. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" } },
-    freezeTarget(4, "sleep"),
+  hex(
+    { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" }, tier: 6 },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to enchant",
+              squares: mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k"),
+            },
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        freezeNow(api, sq, 3, "sleep");
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null) return;
+        const now = followSq(inst.state.sq as Square, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+        const attacked = mySquares(api.board, api.me).some((s) => attacks(api, s, now));
+        if (attacked) {
+          for (const e of api.bs.effects) {
+            if (e.kind === "freeze" && e.sq === now && e.owner === api.opp) e.turns = 0;
+          }
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to enchant a piece" : inst.spent ? "the sleeper woke" : "sleeping",
+    },
   ),
   hex(
     { id: "hx4_brittle_arsenal", name: "Brittle Arsenal", description: "Every enemy bishop, rook and queen turns to a walnut for 1 of their turns: the whole long range arsenal reduced to shuffling.", flavor: "All that reach, and nothing to reach with.", icon: "Hammer", fx: { motif: "anchor", pieces: ["b", "r", "q"] }, tier: 6 },
     walnutAll(["b", "r", "q"], 1),
   ),
   H8(
-    { id: "hx4_royal_lockdown", name: "Royal Lockdown", description: "Their realm grinds to a halt: your opponent skips their next turn, and on their first turn after that only their king may move.", flavor: "By royal decree, nothing happens.", icon: "Landmark", fx: { motif: "slow", pieces: "all" } },
-    instant((_inst, api) => {
-      api.bs.skips[api.opp] += 1;
-      addEffect(api, { kind: "king_only", against: api.opp, turns: 1 });
-    }),
+    { id: "hx4_royal_lockdown", name: "Royal Lockdown", description: "Their realm grinds to a halt: your opponent skips their next turn, and on their first turn after that they may move only a pawn, a knight, or their king.", flavor: "By royal decree, nothing happens.", icon: "Landmark", fx: { motif: "slow", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.turns = 1;
+        api.bs.skips[api.opp] += 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece === "p" || m.piece === "n" || m.piece === "k");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H8(
     { id: "hx4_winter_that_stays", name: "The Winter That Stays", description: "For your opponent's next 5 turns, any piece of theirs that travels more than 2 squares in one move arrives frostbitten and is frozen for 1 of their turns. Kings endure the cold.", flavor: "Speed is a summer habit.", icon: "ThermometerSnowflake", fx: { motif: "slow", pieces: "all" } },

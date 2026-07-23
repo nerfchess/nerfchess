@@ -3976,10 +3976,14 @@ const TIER6: Buff[] = [
     },
   ),
   def(
-    { id: "lightning_strike", name: "Lightning Strike", description: "Call lightning down on up to three enemy knights, bishops, or pawns, removing them from the board.", tier: 6, category: "attack" },
-    activated(
-      (_inst, api, picks) => {
-        if (picks.length >= 3) return null;
+    { id: "lightning_strike", name: "Lightning Strike", description: "Mark up to three enemy knights, bishops, or pawns; after your opponent's next move, lightning falls and removes each marked piece that still stands.", tier: 6, category: "attack" },
+    // Balance: the payoff is preserved but delayed. Targets are marked now; the
+    // strike lands only after the opponent has had their reply.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.pending || picks.length >= 3) return null;
         const squares = mySquares(api.board, api.opp).filter((sq) => {
           const t = api.board.pieces[sq]!.type;
           return (t === "n" || t === "b" || t === "p") && !picks.some((k) => k.square === sq);
@@ -3987,26 +3991,40 @@ const TIER6: Buff[] = [
         if (!squares.length && picks.length > 0) return null;
         return {
           kind: "square",
-          label: `Choose a piece to strike (${picks.length + 1}/3)`,
+          label: `Mark a piece for lightning (${picks.length + 1}/3)`,
           squares,
         };
       },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.pending) return;
+        const marked = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        if (!marked.length) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.marked = marked;
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
         const struck: Square[] = [];
-        for (const k of picks) {
-          if (k.square == null) continue;
-          const p = api.board.pieces[k.square];
+        for (const sq of (inst.state.marked as Square[]) ?? []) {
+          const p = api.board.pieces[sq];
           if (p && p.color === api.opp && (p.type === "n" || p.type === "b" || p.type === "p")) {
-            api.removePiece(k.square);
-            struck.push(k.square);
+            api.removePiece(sq);
+            struck.push(sq);
           }
         }
         // Visual only: the struck squares flash until the opponent replies.
         if (struck.length) {
           addEffect(api, { kind: "strike", squares: struck, owner: api.me, turns: 1 });
         }
+        inst.state.pending = false;
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.pending ? "lightning falls after their next move" : "activate to mark targets",
+    },
   ),
   def(
     { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past your 4th rank back to your 3rd rank where empty, once. Using it spends your next unused reroll, if any.", tier: 4, category: "movement" },
