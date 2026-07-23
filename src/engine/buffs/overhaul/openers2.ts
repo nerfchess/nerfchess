@@ -855,11 +855,24 @@ function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
         (sq) => entry.files == null || entry.files.includes(FILE(sq)),
       );
       if (candidates.length > 0) {
-        advancePawn(api, candidates[api.rng.int(candidates.length)]);
+        let chosen: Square;
+        if (entry.doubleRoll && candidates.length > 1) {
+          const a = candidates[api.rng.int(candidates.length)];
+          const b = candidates[api.rng.int(candidates.length)];
+          chosen = relRank(api.me, a) >= relRank(api.me, b) ? a : b;
+        } else {
+          chosen = candidates[api.rng.int(candidates.length)];
+        }
+        advancePawn(api, chosen);
         inst.spent = true;
         return;
       }
-      // Failed roll.
+      // Failed roll: pay the guaranteed floor / alternative when one exists.
+      if (entry.jackpotAlt) {
+        entry.jackpotAlt(api);
+        inst.spent = true;
+        return;
+      }
       if (!entry.bankRetry) {
         inst.spent = true;
         return;

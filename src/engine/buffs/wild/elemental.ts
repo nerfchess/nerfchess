@@ -1199,25 +1199,41 @@ export const WILD_ELEMENTAL: Buff[] = [
       icon: "ShieldAlert",
       name: "Stoneskin",
       description:
-        "Your whole army cannot be captured for your opponent's next 2 turns, and every enemy piece standing next to one of your pieces is locked in place for its next turn.",
+        "Choose up to four of your pieces: they cannot be captured for your opponent's next 2 turns, and every enemy piece standing next to one of them is locked in place for its next turn.",
       tier: 8,
       category: "protection",
       flavor: "Skin like slate, and the ground grips whoever leans on it.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
-      const mineSet = new Set(mySquares(api.board, api.me));
-      for (const sq of mySquares(api.board, api.opp)) {
-        const p = api.board.pieces[sq]!;
-        if (p.type === "k") continue;
-        const adj = ALL_DIRS.some(([df, dr]) => {
-          const f = FILE(sq) + df, r = RANK(sq) + dr;
-          return inBoard(f, r) && mineSet.has(SQ(f, r));
-        });
-        if (adj) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
-      }
-    }),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 4
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a piece to sheathe in stone (${picks.length + 1}/4)`,
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const chosen = picks.map((k) => k.square).filter((v): v is Square => v != null);
+        if (chosen.length) {
+          addEffect(api, { kind: "shield", owner: api.me, squares: chosen, turns: 2 });
+        }
+        const chosenSet = new Set(chosen);
+        for (const sq of mySquares(api.board, api.opp)) {
+          const p = api.board.pieces[sq]!;
+          if (p.type === "k") continue;
+          const adj = ALL_DIRS.some(([df, dr]) => {
+            const f = FILE(sq) + df, r = RANK(sq) + dr;
+            return inBoard(f, r) && chosenSet.has(SQ(f, r));
+          });
+          if (adj) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "stone" });
+        }
+      },
+    ),
   ),
   card(
     {

@@ -382,9 +382,11 @@ const BOON_WAVE4A: Buff[] = [
         const t = ((inst.state.turns as number) ?? 3) - 1;
         inst.state.turns = t;
         if (t <= 0) {
-          susp(api, 1);
-          // The final breath applies only to movement restrictions: a one-square
-          // leash rides that turn (turns:2, since the same-move tick eats one).
+          // The final breath applies only to movement restrictions: the nerf is
+          // suspended AND a one-square leash rides that turn. Both are added on
+          // your own move, so the same-move tick eats one from each: ask for 2
+          // to leave 1, so the suspension and the leash cover the same one turn.
+          susp(api, 2);
           addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
           inst.spent = true;
         }
