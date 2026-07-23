@@ -3066,18 +3066,43 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_haven_law", name: "Haven Law", tier: 8, category: "protection", icon: "Home",
-      description: "For your opponent's next 3 turns, nothing of yours standing in your own half of the board can be captured.",
+      description: "Beginning after your opponent's next move, nothing of yours standing in your own half of the board can be captured for their next 3 turns.",
       flavor: "Within these borders, the old law holds: guests do not bite hosts.",
       fx: { motif: "ward", pieces: "all", self: true } },
-    timedOppFilter(3, (moves, _inst, api) =>
-      moves.filter((m) => {
-        const cs = captureSquare(m);
-        if (cs == null) return true;
-        const p = api.board.pieces[cs];
-        if (!p || p.color !== api.me) return true;
-        return !inHalf(api.me, cs);
-      }),
-    ),
+    {
+      // Delayed start: the opponent's first move passes unfiltered; the haven
+      // then covers their next 3 turns (mirrors timedOppFilter, armed one
+      // opponent move late).
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+        inst.state.turns = 3;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed || ((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const filtered = moves.filter((m) => {
+          const cs = captureSquare(m);
+          if (cs == null) return true;
+          const p = api.board.pieces[cs];
+          if (!p || p.color !== api.me) return true;
+          return !inHalf(api.me, cs);
+        });
+        // Never strand the opponent with zero moves.
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        const t = ((inst.state.turns as number) ?? 3) - 1;
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.armed ? `${(inst.state.turns as number) ?? 3} of their turns of haven` : "the haven opens after their reply",
+    },
   ),
   card(
     { id: "bn4_guardian_of_the_line", name: "Guardian of the Line", tier: 8, category: "protection", icon: "ShieldCheck",
@@ -3135,10 +3160,10 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_kings_champion", name: "The King's Champion", tier: 8, category: "protection", icon: "Swords",
-      description: "Name one of your pieces (your king excepted) champion: for the rest of the game it can never be captured, and it may also step one square in any direction (capturing allowed).",
+      description: "Name one of your pieces (your king excepted) champion: it cannot be captured for your opponent's next 2 turns, and for the rest of the game it may also step one square in any direction (capturing allowed).",
       flavor: "The title comes with a sword, a salary, and functional immortality." },
     bindPiece("Name your champion", bindCandidates(), {
-      shieldTurns: null,
+      shieldTurns: 2,
       gen: (board, sq, via) => leapMoves(board, sq, ALL_DIRS, via),
     }),
   ),

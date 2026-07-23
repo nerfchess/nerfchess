@@ -2162,8 +2162,8 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_maze_of_thorns", name: "Maze of Thorns", description: "Thorn hedges spring up across every lane: for your opponent's next 5 turns, no piece of theirs may move more than 1 square, except knights, who leap the hedges. Their king is exempt.", flavor: "The garden won the war.", icon: "Flower2", fx: { motif: "anchor", pieces: "all" } },
-    curse(5, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "n" || moveDist(m) <= 1)),
+    { id: "hx4_maze_of_thorns", name: "Maze of Thorns", description: "Thorn hedges spring up across every lane: for your opponent's next 4 turns, no piece of theirs may move more than 1 square, except knights, who leap the hedges. Their king is exempt.", flavor: "The garden won the war.", icon: "Flower2", fx: { motif: "anchor", pieces: "all" } },
+    curse(4, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "n" || moveDist(m) <= 1)),
   ),
   H8(
     { id: "hx4_frozen_reserves", name: "Frozen Reserves", description: "The reserves never got the mobilization order: every enemy piece standing on their own back rank, except pawns and the king, is frozen for 2 of their turns.", flavor: "The barracks doors froze shut from the inside.", icon: "Warehouse", fx: { motif: "jail", pieces: "all" } },
@@ -2214,13 +2214,19 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_kings_ransom", name: "King's Ransom", description: "For your opponent's next 4 turns, every time their king moves, the ransom is collected: 2 of their other pieces, chosen at random, are frozen for 1 of their turns.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
+    { id: "hx4_kings_ransom", name: "King's Ransom", description: "For your opponent's next 4 turns, every time their king moves, the ransom is collected: 2 of their other pieces, chosen at random, are frozen for 1 of their turns. The very first piece the ransom would seize slips free; every piece it reaches after that is frozen.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(4, (move, api, inst) => {
       if (move.piece !== "k") return;
       const pool = mySquares(api.board, api.opp).filter(
         (sq) => sq !== move.to && api.board.pieces[sq]!.type !== "k",
       );
-      for (const sq of drawRandom(api, pool, 2)) sting(api, sq, 1, "chains");
+      for (const sq of drawRandom(api, pool, 2)) {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          continue;
+        }
+        sting(api, sq, 1, "chains");
+      }
     }),
   ),
   H8(
