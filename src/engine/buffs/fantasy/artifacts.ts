@@ -120,7 +120,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       icon: "Orbit",
       name: "Orb of Dominion",
       description:
-        "Take control of one enemy rook or queen for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
+        "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
       tier: 7,
       category: "pieces",
       flavor: "Its light pours in through the eyes.",
@@ -130,8 +130,13 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       // Stays in hand after use (like Excalibur) so its aura keeps running while
       // the dominated piece lives; it is never re-aimed once a piece is taken.
       spendOnUse: false,
+      // Balance pass: the orb's only "duration" is permanent (rest of the game),
+      // so there is no owner-turn timer to trim. Per the directive's fallback for
+      // a duration that cannot be shortened, the seizure instead BEGINS after the
+      // opponent replies: you name the target now and the orb takes it (and its
+      // queen-muzzle aura starts) only once the opponent has answered the summons.
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pending != null
           ? null
           : {
               kind: "square",
@@ -141,11 +146,10 @@ export const FANTASY_ARTIFACTS: Buff[] = [
                 return t === "q" || t === "r";
               }),
             },
-      effect: (inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || inst.state.sq != null) return;
-        api.setPieceColor(sq, api.me);
-        inst.state.sq = sq;
+        if (sq == null || inst.state.sq != null || inst.state.pending != null) return;
+        inst.state.pending = sq;
       },
       // The orb's aura muzzles the enemy queen while you hold the dominated
       // piece: strip the queen's capturing moves. A partial filter with the

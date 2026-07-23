@@ -1304,14 +1304,14 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_crown_of_thorns",
       name: "Crown of Thorns",
       description:
-        "A briar is woven around your king, in full view: for your opponent's next 6 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts, but the attacker is rooted, and the follow-up must come from somewhere else. Attacking anything BUT your king costs them nothing.",
+        "A briar is woven around your king, in full view: for your opponent's next 5 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts, but the attacker is rooted, and the follow-up must come from somewhere else. Attacking anything BUT your king costs them nothing.",
       flavor: "By all means, reach for the crown.",
       fx: { motif: "muzzle", pieces: "all" },
     },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && isInCheck(api.board, api.me)) {
@@ -1332,7 +1332,7 @@ export const HEX_WAVE2: Buff[] = [
   // and the engine's demote timer restores her automatically): a temporary
   // rule distortion on one piece with a stated cure — capture, and the crown
   // comes back at once.
-  H8(
+  H6(
     {
       id: "hw2_pauper_crown",
       name: "Pauper's Crown",
@@ -1410,7 +1410,7 @@ export const HEX_WAVE2: Buff[] = [
   // A countdown the victim can HUNT: the strike is huge but the cure is fully
   // in their hands — kill the bearer and the whole curse dies. Turns six of
   // their turns into a chase across the board, which is the card.
-  H8(
+  H6(
     {
       id: "hw2_beacon_of_woe",
       name: "Beacon of Woe",
