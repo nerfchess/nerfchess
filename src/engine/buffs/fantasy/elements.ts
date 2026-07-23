@@ -14,6 +14,7 @@ import {
   emptySquares,
   inHalf,
   lineSweep,
+  mySquares,
   addEffect,
   instant,
   DIAG_DIRS,

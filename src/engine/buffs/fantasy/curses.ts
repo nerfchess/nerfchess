@@ -8,7 +8,6 @@
 import { Buff, Square } from "./shared";
 import {
   card,
-  curse,
   inHalf,
   mySquares,
   addEffect,

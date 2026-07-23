@@ -53,13 +53,15 @@ export const FANTASY_FEY: Buff[] = [
       id: "faerie_ring",
       name: "Faerie Ring",
       description:
-        "A ring of pale mushrooms springs up around a square you choose: the 8 squares surrounding it are impassable to your opponent for their next 3 turns.",
+        "A ring of pale mushrooms springs up around a square you choose: the 8 squares surrounding it are impassable to your opponent for their next 2 turns.",
       tier: 4,
       category: "hex",
       flavor: "Step inside and dance a hundred years.",
       fx: { motif: "blindfold" },
     },
-    barNeighbors(3, "Choose the center of the faerie ring"),
+    // Balance pass: the ring's longest (and only) duration is trimmed by one
+    // opponent turn, 3 to 2.
+    barNeighbors(2, "Choose the center of the faerie ring"),
   ),
   card(
     {
