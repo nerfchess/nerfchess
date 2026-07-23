@@ -709,14 +709,14 @@ const SUPERSTITIONS: Array<
 > = [
   { id: "threshold_blessing", name: "Threshold Blessing", flavor: "Cross boldly and the doorframe looks after you.", icon: "DoorOpen", what: "If your first move is a pawn double-step, that pawn cannot be captured during your opponent's next turn", cond: (move) => !!move.isDoublePawn, pay: (move, api) => shield1(api, move.to) },
   { id: "lucky_stirrup", name: "Lucky Stirrup", flavor: "Mount from the left and the horse forgives everything.", icon: "Medal", what: "If your first move is a knight move, that knight becomes a plush toy, purely cosmetically, forever", cond: (move) => move.piece === "n", pay: (move, api) => { pinCosmetic(api, move.to, api.me, "plush", null); flashSquares(api, [move.to], true); } },
-  { id: "hearth_blessing", name: "Hearth Blessing", flavor: "Feed the center fire first and the house stays warm.", icon: "Flame", what: "If your first move is a d- or e-pawn move, the four center squares flash until your opponent replies", cond: (move) => move.piece === "p" && (FILE(move.from) === 3 || FILE(move.from) === 4), pay: (_move, api) => flashSquares(api, [...CENTER4], true) },
+  { id: "hearth_blessing", name: "Hearth Blessing", flavor: "Feed the center fire first and the house stays warm.", icon: "Flame", what: "If your first move is a d- or e-pawn move, the four center squares flash until your opponent replies", cond: (move) => move.piece === "p" && (FILE(move.from) === 3 || FILE(move.from) === 4), pay: (_move, api) => flashSquares(api, [...CENTER4], true), note: "Your first move spends the card even when it is not a qualifying d- or e-pawn move." },
   { id: "widdershins", name: "Widdershins", flavor: "Counterclockwise round the church, straight into luck.", icon: "RotateCcw", what: "If your first move starts on the queenside files (a through d), gain a draft reroll", cond: (move) => FILE(move.from) <= 3, pay: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
   { id: "sunwise_turn", name: "Sunwise Turn", flavor: "With the sun, with the tide, with a peek at the ledger.", icon: "Sun", what: "If your first move starts on the kingside files (e through h), you learn the tier of your opponent's next draft offer", cond: (move) => FILE(move.from) >= 4, pay: (_move, api) => { api.mine.flags.seeOppTier = true; } },
   { id: "prophecy_fulfilled", name: "Prophecy Fulfilled", flavor: "The scroll named no names, so any move qualifies.", icon: "ScrollText", what: "Whatever your first move is, that piece is named The Chosen One, purely cosmetically, forever", cond: () => true, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "nametag", null, "The Chosen One"); flashSquares(api, [move.to], true); } },
 ];
 
 function superstition(entry: (typeof SUPERSTITIONS)[number]): Buff {
-  return opener(entry, `${entry.what}. Judged once, on your first move.`, {
+  return opener(entry, `${entry.what}. Judged once, on your first move.${entry.note ? ` ${entry.note}` : ""}`, {
     kind: "passive",
     onMovePlayed: (inst, move, api) => {
       if (inst.spent || move.color !== api.me) return;

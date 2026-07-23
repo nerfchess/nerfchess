@@ -922,13 +922,13 @@ export const WILD_ELEMENTAL: Buff[] = [
       id: "we_flash_freeze",
       name: "Flash Freeze",
       description:
-        "Freeze every enemy piece standing next to your king for their next 2 turns and bonk it where it stands.",
+        "After your opponent replies, freeze every enemy piece standing next to your king for their next 2 turns and bonk it where it stands.",
       tier: 6,
       category: "protection",
       flavor: "The bodyguard's beat: the crowd around the crown, iced.",
       fx: { motif: "jail" },
     },
-    instant((_inst, api) => {
+    delayedInstant((api) => {
       const king = mySquares(api.board, api.me, "k")[0];
       if (king == null) return;
       const hit: Square[] = [];
@@ -938,25 +938,52 @@ export const WILD_ELEMENTAL: Buff[] = [
         const sq = SQ(f, r);
         const p = api.board.pieces[sq];
         if (p && p.color === api.opp && p.type !== "k") {
-          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2, skin: "ice" });
+          // Resolves during the opponent's reply, so the shared post-move tick
+          // eats one turn immediately: 3 here leaves 2 of their turns frozen.
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3, skin: "ice" });
           hit.push(sq);
         }
       }
       if (hit.length) addEffect(api, { kind: "bonk", squares: hit, owner: api.me, turns: 1 });
-    }),
+    }, "freezes after your opponent replies"),
   ),
   card(
     {
       id: "we_glacier_wall",
       name: "Glacier Wall",
       description:
-        "Two walls of ice rise: pick any two squares and each of their files becomes impassable to your opponent for their next 2 turns.",
+        "Two walls of ice rise: pick any two squares, and every empty square on each of their files becomes impassable to your opponent for their next 2 turns. Any enemy piece already standing on a frozen file may leave normally.",
       tier: 6,
       category: "protection",
       flavor: "Two rivers, both frozen shut.",
       fx: { motif: "blindfold" },
     },
-    barLine("file", 2, 2),
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the file to seal",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square == null) continue;
+          const file = FILE(k.square);
+          // Only empty squares freeze over, so an enemy piece already standing on
+          // a sealed file is never walled in and may leave normally.
+          const squares: Square[] = [];
+          for (let r = 0; r < 8; r++) {
+            const sq = SQ(file, r);
+            if (!api.board.pieces[sq]) squares.push(sq);
+          }
+          if (squares.length) {
+            addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+          }
+        }
+      },
+    ),
   ),
   card(
     {
