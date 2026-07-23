@@ -524,6 +524,37 @@ function pushPawnMoves(out: Move[], api: BuffApi, from: Square, to: Square, via:
   }
 }
 
+/** Would a Colossus at `from` moving to `to` give check to the enemy king?
+ * The Colossus always has queen movement (its granted power), so its attacks
+ * from the destination are computed as a queen slide; a knight-type Colossus
+ * also keeps its native leaps. Used to strip the Colossus's own check-giving
+ * moves while it is shielded (the engine has no own-move filter hook). */
+function colossusChecks(api: BuffApi, from: Square, to: Square, type: PieceType): boolean {
+  const kSq = mySquares(api.board, api.opp, "k")[0];
+  if (kSq == null) return false;
+  const pc = api.board.pieces.slice();
+  pc[to] = pc[from];
+  pc[from] = null;
+  for (const [df, dr] of ALL_DIRS) {
+    let f = FILE(to) + df, r = RANK(to) + dr;
+    while (inBoard(f, r)) {
+      const sq = SQ(f, r);
+      if (pc[sq]) {
+        if (sq === kSq) return true;
+        break;
+      }
+      f += df; r += dr;
+    }
+  }
+  if (type === "n") {
+    for (const [df, dr] of KNIGHT_LEAPS) {
+      const f = FILE(to) + df, r = RANK(to) + dr;
+      if (inBoard(f, r) && SQ(f, r) === kSq) return true;
+    }
+  }
+  return false;
+}
+
 /** A one-charge move augment that runs `onResolve` (a clock or reroll garnish)
  * once its granted move is actually played, then spends the charge. Mirrors the
  * charge/spend shape of the shared `augment` helper. */
@@ -2294,8 +2325,40 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "double_queen", requires: ["p"], name: "Double Queen", description: "Promote any pawn to a queen instantly, even mid-board.", tier: 5, category: "pieces" },
-    promotePawns(1, 1, "q"),
+    { id: "double_queen", requires: ["p"], name: "Double Queen", description: "Choose any one of your pawns, even mid-board; after your opponent's next move it promotes to a queen, unless it has moved or been lost.", tier: 5, category: "pieces" },
+    // All of its counts are one (a single pawn, no range, no duration), so the
+    // effect is delayed: the pawn is chosen now but only promotes after the
+    // opponent replies.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a pawn to promote after your opponent replies",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq != null) {
+          inst.state.sq = sq;
+          inst.state.pending = true;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const sq = inst.state.sq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.me && p.type === "p") api.setPieceType(sq, "q");
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "promotes after their next move" : "activate to choose a pawn",
+    },
   ),
   def(
     { id: "piece_steal", name: "Piece Steal", description: "Convert one enemy pawn to your color, once. Using it spends your next unused reroll, if any.", tier: 3, category: "pieces" },
@@ -2769,11 +2832,11 @@ const TIER5: Buff[] = [
     captureExplosion({ sparePawns: true }),
   ),
   def(
-    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row every turn for 2 full turns. You cannot capture the king on the bonus moves: your opponent replies first.", tier: 5, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "extra_move_repeat", name: "Extra Move (Repeat)", description: "Take two moves in a row on your next full turn. You cannot capture the king on the bonus move: your opponent replies first.", tier: 5, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.rounds = 2;
+        inst.state.rounds = 1;
         inst.state.armed = true;
       },
       onMovePlayed: (inst, move, api) => {
@@ -2911,8 +2974,45 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "mind_control", name: "Mind Control", description: "Take control of one enemy knight or bishop (turn it to your color) for the rest of the game.", tier: 5, category: "pieces" },
-    convertEnemies(1, ["n", "b"]),
+    { id: "mind_control", name: "Mind Control", description: "Choose one enemy knight or bishop; after your opponent's next move it turns to your color for the rest of the game, unless it has moved or been lost.", tier: 5, category: "pieces" },
+    // The control is game-long (no finite duration to shorten), so the closest
+    // faithful softening is the one-turn branch: it now begins one opponent
+    // reply later instead of at once.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy knight or bishop to take control of",
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const t = api.board.pieces[sq]!.type;
+                return t === "n" || t === "b";
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq != null) {
+          inst.state.sq = sq;
+          inst.state.pending = true;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const sq = inst.state.sq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && (p.type === "n" || p.type === "b")) {
+          api.setPieceColor(sq, api.me);
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "converts after their next move" : "activate to choose a piece",
+    },
   ),
   def(
     { id: "board_lock", name: "Board Lock", description: "The whole board seizes up: no enemy piece may travel more than 3 squares in a single move, for your opponent's next 3 turns.", tier: 4, category: "tempo", fx: { motif: "slow", pieces: "all" }, flavor: "Somebody glued the grid." },
@@ -2987,20 +3087,75 @@ const TIER5: Buff[] = [
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
-    { id: "great_wall", name: "Great Wall", description: "One full rank you pick is impassable to enemies for 3 turns.", tier: 5, category: "protection", fx: { motif: "blindfold" } },
-    barLine("rank", 3),
+    { id: "great_wall", name: "Great Wall", description: "One full rank you pick is impassable to enemies for 3 turns, but any enemy piece already standing on that rank is left free to move off it.", tier: 5, category: "protection", fx: { motif: "blindfold" } },
+    // Duration preserved (3). Squares where an enemy piece already stands are
+    // left open so those pieces may leave normally; every other square on the
+    // rank is barred to the opponent.
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 1
+          ? null
+          : {
+              kind: "square",
+              label: "Pick any square on the rank to seal",
+              squares: Array.from({ length: 64 }, (_, i) => i),
+            },
+      (_inst, api, picks) => {
+        const k = picks[0]?.square;
+        if (k == null) return;
+        const squares: Square[] = [];
+        for (let i = 0; i < 8; i++) {
+          const sq = SQ(i, RANK(k));
+          const p = api.board.pieces[sq];
+          if (!p || p.color === api.me) squares.push(sq);
+        }
+        if (squares.length) addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
+      },
+    ),
   ),
   def(
     // Board paints the barred lane; blindfold motif marks the sealed ground.
-    { id: "siege_rook", requires: ["r"], name: "Siege Rook", description: "One rook captures every enemy piece in a straight line in one move, then the swept rank or file stays barred to your opponent for their next 2 turns.", tier: 5, category: "attack", fx: { motif: "blindfold" } },
-    lineSweepThen("r", ORTHO_DIRS, null, (api, _from, to, df) => {
-      const squares: Square[] = [];
-      // df !== 0: swept along a rank (bar that rank). df === 0: swept along a
-      // file (bar that file). The rook now holds the lane it cleared.
-      if (df === 0) for (let i = 0; i < 8; i++) squares.push(SQ(FILE(to), i));
-      else for (let i = 0; i < 8; i++) squares.push(SQ(i, RANK(to)));
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
-    }),
+    { id: "siege_rook", requires: ["r"], name: "Siege Rook", description: "One rook slides along a clear rank or file to an empty square: it cannot capture, but the rank or file it travels stays barred to your opponent for their next 2 turns.", tier: 5, category: "attack", fx: { motif: "blindfold" } },
+    // Movement identity kept (slide a lane, then seal it), but the special move
+    // can no longer capture: the rook only travels over empty squares, stopping
+    // before any piece, and bars the lane it took.
+    activated(
+      (_inst, api, picks) => {
+        const dests = (from: Square): Square[] => {
+          const out: Square[] = [];
+          for (const [df, dr] of ORTHO_DIRS) {
+            let f = FILE(from) + df, r = RANK(from) + dr;
+            while (inBoard(f, r)) {
+              const sq = SQ(f, r);
+              if (api.board.pieces[sq]) break;
+              out.push(sq);
+              f += df; r += dr;
+            }
+          }
+          return out;
+        };
+        if (picks.length >= 2) return null;
+        if (picks.length === 0) {
+          return {
+            kind: "square",
+            label: "Choose the rook",
+            squares: mySquares(api.board, api.me, "r").filter((sq) => dests(sq).length > 0),
+          };
+        }
+        return { kind: "square", label: "Choose where the rook stops", squares: dests(picks[0].square!) };
+      },
+      (_inst, api, picks) => {
+        const from = picks[0]?.square, to = picks[1]?.square;
+        if (from == null || to == null || from === to || api.board.pieces[to]) return;
+        const df = Math.sign(FILE(to) - FILE(from));
+        api.relocate(from, to);
+        const squares: Square[] = [];
+        // df === 0: travelled along a file (bar that file); else along a rank.
+        if (df === 0) for (let i = 0; i < 8; i++) squares.push(SQ(FILE(to), i));
+        else for (let i = 0; i < 8; i++) squares.push(SQ(i, RANK(to)));
+        addEffect(api, { kind: "barred", squares, against: api.opp, turns: 2 });
+      },
+    ),
   ),
   def(
     { id: "phase_army", requires: ["b", "r", "q"], name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 1 turn.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["b", "r", "q"], self: true } },
@@ -3147,18 +3302,44 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "ghost_legion", requires: ["p"], name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
-    timedAugment(2, (_m, inst, api) => {
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
-        if (two < 0 || two > 63) continue;
-        if (api.board.pieces[one] && !api.board.pieces[two]) {
-          pushPawnMoves(out, api, sq, two, inst.id);
+    { id: "ghost_legion", requires: ["p"], name: "Ghost Legion", description: "All your pawns may jump over a blocker one square ahead, landing two ahead where empty, for 2 turns. The jump is use-it-or-lose-it: the first turn a jump is available but you move otherwise, Ghost Legion ends.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    // The engine only ever offers a jump when it is legal, so a "failed attempt"
+    // cannot happen. Instead the charge expires the first time a jump was
+    // available but a different move was chosen.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        const jumps: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          const one = sq + fwdOf(api.me), two = sq + 2 * fwdOf(api.me);
+          if (two < 0 || two > 63) continue;
+          if (api.board.pieces[one] && !api.board.pieces[two]) {
+            pushPawnMoves(jumps, api, sq, two, inst.id);
+          }
         }
-      }
-      return out;
-    }),
+        inst.state.offered = jumps.length > 0;
+        addNovel(moves, jumps);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me) return;
+        if (move.via === inst.id) {
+          tickTurns(inst, move, api.me);
+          return;
+        }
+        // A jump was available this turn but a different move was played: the
+        // charge is spent even though no jump was attempted.
+        if (inst.state.offered) {
+          inst.spent = true;
+          return;
+        }
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   def(
     { id: "draft_seize", name: "Draft Seize", description: "Take both cards in your next draft and skip your opponent's next, though they gain a reroll in return.", tier: 6, category: "draft" },
@@ -3171,10 +3352,12 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "rampart", name: "Rampart", description: "Place a pawn on each of three empty squares you choose in your half; those three pawns cannot be captured for your opponent's next 5 turns.", tier: 5, category: "protection" },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
+    { id: "rampart", name: "Rampart", description: "Place a pawn on each of three empty squares you choose in your half; those pawns cannot be captured for your opponent's next 5 turns, but the shield ends early once two of the protected pawns have made a capture.", tier: 5, category: "protection" },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.placed
           ? null
           : {
               kind: "square",
@@ -3183,20 +3366,62 @@ const TIER5: Buff[] = [
                 (sq) => !picks.some((k) => k.square === sq),
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
+        if (inst.state.placed) return;
         const squares = picks
           .map((k) => k.square)
           .filter((s): s is Square => s != null && pawnRankOk(s));
         for (const sq of squares) api.place(sq, "p", api.me);
-        if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 5 });
+        inst.state.placed = true;
+        inst.state.captures = 0;
+        if (squares.length) {
+          // Keep a reference to the exact shield effect so it can be lifted the
+          // moment two protected pawns have captured. Its squares follow the
+          // pawns as they move (engine shield-follow), so membership stays true.
+          const shield = { kind: "shield" as const, owner: api.me, squares: [...squares], turns: 5 };
+          addEffect(api, shield);
+          inst.state.shield = shield;
+        } else {
+          inst.spent = true;
+        }
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const shield = inst.state.shield as
+          | { kind: "shield"; owner: Color; squares: Square[] | null; turns: number | null }
+          | undefined;
+        if (!shield) return;
+        // Shield gone (its 5 turns elapsed, or all pawns lost): nothing to guard.
+        if (!api.bs.effects.includes(shield)) {
+          inst.spent = true;
+          return;
+        }
+        // A protected pawn capturing. Buff hooks run before the engine's
+        // shield-follow, so shield.squares still holds the pre-move square here.
+        if (move.color === api.me && move.captured && shield.squares?.includes(move.from)) {
+          inst.state.captures = ((inst.state.captures as number) ?? 0) + 1;
+          if ((inst.state.captures as number) >= 2) {
+            const i = api.bs.effects.indexOf(shield);
+            if (i >= 0) api.bs.effects.splice(i, 1);
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) => {
+        if (!inst.state.placed) return "activate to raise the wall";
+        if (!inst.state.shield) return null;
+        return `${2 - ((inst.state.captures as number) ?? 0)} protected captures until the wall falls`;
+      },
+    },
   ),
   def(
-    { id: "shatter", name: "Shatter", description: "Shatter one enemy rook, bishop, or knight into a walnut for the rest of the game: it can only shuffle one square at a time.", tier: 5, category: "attack" },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    { id: "shatter", name: "Shatter", description: "Choose one enemy rook, bishop, or knight; after your opponent's next move it shatters into a walnut for the rest of the game (it can only shuffle one square at a time), unless it has moved or been lost.", tier: 5, category: "attack" },
+    // First trigger delayed: the target is chosen now but only shatters once the
+    // opponent has replied.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -3206,16 +3431,29 @@ const TIER5: Buff[] = [
                 return t === "r" || t === "b" || t === "n";
               }),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
-        if (sq == null) return;
-        const p = api.board.pieces[sq];
-        if (!p || p.color !== api.opp || !(p.type === "r" || p.type === "b" || p.type === "n")) return;
-        // turns: 99 is the "rest of the game" convention used by other
-        // permanent petrifies (necromancy / divine).
-        addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
+        if (sq != null) {
+          inst.state.sq = sq;
+          inst.state.pending = true;
+        }
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const sq = inst.state.sq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && (p.type === "r" || p.type === "b" || p.type === "n")) {
+          // turns: 99 is the "rest of the game" convention used by other
+          // permanent petrifies (necromancy / divine).
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 99 });
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "shatters after their next move" : "activate to choose a piece",
+    },
   ),
   // Nerf-modifiers (cross-cutting)
   def(
@@ -3463,19 +3701,66 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
-    bindPiece("Choose the colossus", bindCandidates(), {
-      turns: 3,
-      // turns - 1: the +1 activation bump lifts the shield back to 3, so the
-      // ward co-terminates with the movement grant instead of outlasting it.
-      shieldTurns: 2,
-      gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
-    }),
+    { id: "colossus", name: "Colossus", description: "One piece becomes uncapturable and gains queen movement for 3 turns, but while it is shielded it cannot give check.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
+    // Full duration kept. The bind mirrors the shared bindPiece (turns 3, a
+    // shield of turns 2 that the +1 activation bump lifts to 3 so the ward
+    // co-terminates with the move grant), but adds an own-move filter: while
+    // the shield stands, any move by the Colossus that would give check is
+    // stripped from its legal moves.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : { kind: "square", label: "Choose the colossus", squares: bindCandidates()(api) },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
+        inst.state.turns = 3;
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || turnsLeft(inst) <= 0) return;
+        const p = api.board.pieces[sq];
+        if (!p || p.color !== api.me) return;
+        addNovel(moves, slideMoves(api.board, sq, ALL_DIRS, inst.id));
+        const shielded = api.bs.effects.some(
+          (e) =>
+            e.kind === "shield" &&
+            e.owner === api.me &&
+            !!e.squares &&
+            e.squares.includes(sq) &&
+            (e.turns == null || e.turns > 0),
+        );
+        if (shielded) {
+          for (let i = moves.length - 1; i >= 0; i--) {
+            if (moves[i].from === sq && colossusChecks(api, sq, moves[i].to, p.type)) {
+              moves.splice(i, 1);
+            }
+          }
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        trackBoundPiece(inst, move);
+        tickTurns(inst, move, api.me);
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return "activate to choose a piece";
+        return `bound to ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}, ${turnsLeft(inst)} of your turns left`;
+      },
+    },
   ),
   def(
-    { id: "cataclysm", name: "Cataclysm", description: "Clear all enemy pawns on the board.", tier: 6, category: "attack" },
+    { id: "cataclysm", name: "Cataclysm", description: "Clear all but one of the enemy pawns on the board.", tier: 6, category: "attack" },
     instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "p")) api.removePiece(sq);
+      // Maximum removals reduced by one: the last enemy pawn (highest square) is
+      // spared, so a full board keeps exactly one enemy pawn standing.
+      const pawns = mySquares(api.board, api.opp, "p");
+      for (let i = 0; i < pawns.length - 1; i++) api.removePiece(pawns[i]);
     }),
   ),
   def(
@@ -3594,12 +3879,11 @@ const TIER6: Buff[] = [
     }, 2),
   ),
   def(
-    { id: "ascendant_knight", requires: ["n"], name: "Ascendant Knight", description: "One knight moves as an amazon and cannot be captured, for 2 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    { id: "ascendant_knight", requires: ["n"], name: "Ascendant Knight", description: "One knight moves as an amazon for your next 2 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
-      // turns - 1: the +1 activation bump restores the shield to 2, matching
-      // the movement grant so it does not outlast the stated duration.
-      shieldTurns: 1,
+      // Uncapturable removed (balance pass): the amazon movement now stands on
+      // its own with no shield, so nothing is added beyond the move grant.
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
     }),
   ),

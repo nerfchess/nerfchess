@@ -1141,8 +1141,8 @@ const T3: Buff[] = [
       if (c != null && move.piece !== "k" && relRank(api.opp, c) >= 5) sting(api, move.to, 1, "tar");
     }),
   ),
-  H3(
-    { id: "hx4_toad_pond", name: "Toad Pond", description: "Choose an empty square: for your opponent's next 6 turns it is a cursed pond, and the first piece of theirs to stop in it becomes a walnut for 1 of their turns. Kings do not fit in ponds.", flavor: "Everything that touches the water comes out rounder.", icon: "Droplet", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_toad_pond", name: "Toad Pond", description: "Choose an empty square: for your opponent's next 6 turns it is a cursed pond, and the first piece of theirs to stop in it becomes a walnut for 1 of their turns. Kings do not fit in ponds.", flavor: "Everything that touches the water comes out rounder.", icon: "Droplet", fx: { motif: "blindfold" }, tier: 4 },
     {
       kind: "activated",
       spendOnUse: false,
@@ -1220,8 +1220,8 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_the_ides", name: "The Ides", description: "A dreadful date circled on their calendar: on your opponent's 3rd turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.", flavor: "Beware. You know the rest.", icon: "CalendarX", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(3, (move, api, inst) => {
+    { id: "hx4_the_ides", name: "The Ides", description: "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.", flavor: "Beware. You know the rest.", icon: "CalendarX", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(4, (move, api, inst) => {
       if (turnsLeft(inst) === 1 && move.piece !== "k") sting(api, move.to, 1, "stun");
     }),
   ),
@@ -1250,8 +1250,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_wrong_map", name: "Wrong Map", description: "For your opponent's next 3 turns, their knights may only land on dark squares. Someone printed the map inverted.", flavor: "According to this, the tavern is a lake.", icon: "Map", fx: { motif: "anchor", pieces: ["n"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "n" || sqShade(m.to) === 0)),
+    { id: "hx4_wrong_map", name: "Wrong Map", description: "For your opponent's next 3 turns, their knights may only land on dark squares. The first knight to try a light square slips through as one escape, then the restriction holds. Someone printed the map inverted.", flavor: "According to this, the tavern is a lake.", icon: "Map", fx: { motif: "anchor", pieces: ["n"] } },
+    escapeCurse(3, (m) => m.piece !== "n" || sqShade(m.to) === 0),
   ),
   hex(
     { id: "hx4_fresh_crater", name: "Fresh Crater", description: "For your opponent's next 2 turns, pieces standing adjacent to the piece you last moved cannot move: everyone is staring at the crater. Their king is exempt.", flavor: "It is still smoking. Give it a minute.", icon: "CircleDot", fx: { motif: "jail", pieces: "all" }, tier: 4 },
@@ -1334,8 +1334,8 @@ const T3: Buff[] = [
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H3(
-    { id: "hx4_wet_powder", name: "Wet Powder", description: "For your opponent's next 3 turns, their rooks may not capture along files: straight ahead kills misfire, only sideways captures along ranks work.", flavor: "The barrels face the rain. The rain wins.", icon: "CloudRain", fx: { motif: "muzzle", pieces: ["r"] } },
+  hex(
+    { id: "hx4_wet_powder", name: "Wet Powder", description: "For your opponent's next 3 turns, their rooks may not capture along files: straight ahead kills misfire, only sideways captures along ranks work.", flavor: "The barrels face the rain. The rain wins.", icon: "CloudRain", fx: { motif: "muzzle", pieces: ["r"] }, tier: 4 },
     curse(3, (moves) =>
       moves.filter((m) => m.piece !== "r" || !m.captured || RANK(m.from) === RANK(m.to)),
     ),
@@ -1403,8 +1403,8 @@ const T3: Buff[] = [
       return moves.filter((m) => m.piece === "k" || RANK(m.to) !== RANK(k));
     }),
   ),
-  H3(
-    { id: "hx4_the_quarrel", name: "The Quarrel", description: "The royal couple is not speaking: for your opponent's next 4 turns, their queen may not end a move adjacent to their king.", flavor: "The argument was about curtains. It is always curtains.", icon: "HeartCrack", fx: { motif: "anchor", pieces: ["q"] } },
+  hex(
+    { id: "hx4_the_quarrel", name: "The Quarrel", description: "The royal couple is not speaking: for your opponent's next 4 turns, their queen may not end a move adjacent to their king.", flavor: "The argument was about curtains. It is always curtains.", icon: "HeartCrack", fx: { motif: "anchor", pieces: ["q"] }, tier: 4 },
     curse(4, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
@@ -1412,8 +1412,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_soot_fall", name: "Soot Fall", description: "Soot blankets both long diagonals: for your opponent's next 3 turns, their bishops may not stop on any square of the a1 to h8 or h1 to a8 diagonals.", flavor: "The chimneys of war are terrible neighbors.", icon: "Factory", fx: { motif: "blindfold", pieces: ["b"] } },
-    curse(3, (moves) =>
+    { id: "hx4_soot_fall", name: "Soot Fall", description: "Soot blankets both long diagonals: for your opponent's next 2 turns, their bishops may not stop on any square of the a1 to h8 or h1 to a8 diagonals.", flavor: "The chimneys of war are terrible neighbors.", icon: "Factory", fx: { motif: "blindfold", pieces: ["b"] } },
+    curse(2, (moves) =>
       moves.filter((m) => {
         if (m.piece !== "b") return true;
         const f = FILE(m.to);
@@ -1464,20 +1464,26 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_stunned_grief", name: "Stunned Grief", description: "For your opponent's next 4 turns, grief slows their revenge: after you capture one of their pieces, they may not recapture on that square on their very next turn.", flavor: "Stand there a moment. Then do something rash.", icon: "HeartOff", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_stunned_grief", name: "Stunned Grief", description: "Starting after your opponent's next move, for their following 4 turns, grief slows their revenge: after you capture one of their pieces, they may not recapture on that square on their very next turn.", flavor: "Stand there a moment. Then do something rash.", icon: "HeartOff", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
         inst.state.grief = null;
+        inst.state.delay = 1;
       },
       filterOpponentMoves: (moves, inst) => {
+        if ((inst.state.delay as number) > 0) return moves;
         const g = inst.state.grief as Square | null | undefined;
         if (g == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => capSq(m) !== g);
         return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
+        if ((inst.state.delay as number) > 0) {
+          if (move.color === api.opp) inst.state.delay = (inst.state.delay as number) - 1;
+          return;
+        }
         if (move.color === api.me && move.captured) {
           inst.state.grief = capSq(move);
           return;
@@ -1487,7 +1493,8 @@ const T3: Buff[] = [
           tickTurns(inst, move, api.opp);
         }
       },
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      status: (inst) =>
+        (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
     },
   ),
   hex(
@@ -1552,8 +1559,8 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_will_o_wisps", name: "Will o' Wisps", description: "For your opponent's next 3 turns, wisp lights dance through their camp: each of their turns, one random empty square in their half becomes briefly impassable to them.", flavor: "Follow the light, lose the war.", icon: "Sparkles", fx: { motif: "blindfold" } },
-    onTheirMove(3, (_move, api) => {
+    { id: "hx4_will_o_wisps", name: "Will o' Wisps", description: "For your opponent's next 2 turns, wisp lights dance through their camp: each of their turns, one random empty square in their half becomes briefly impassable to them.", flavor: "Follow the light, lose the war.", icon: "Sparkles", fx: { motif: "blindfold" } },
+    onTheirMove(2, (_move, api) => {
       const pool = emptySquares(api.board, (sq) => relRank(api.opp, sq) <= 4);
       for (const sq of drawRandom(api, pool, 1)) {
         addEffect(api, { kind: "barred", squares: [sq], against: api.opp, turns: 2 });
@@ -1578,11 +1585,11 @@ const quadOf = (sq: Square) => (FILE(sq) >= 4 ? 1 : 0) + (RANK(sq) >= 4 ? 2 : 0)
 
 const T4: Buff[] = [
   H4(
-    { id: "hx4_bounty_posted", name: "Bounty Posted", description: "Post a bounty for 6 of your opponent's turns: whenever YOU capture one of their pieces in that window, panic spreads and another of their pieces, chosen at random, is frozen for 1 of their turns.", flavor: "The poster does not even name a crime.", icon: "ScrollText", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_bounty_posted", name: "Bounty Posted", description: "Post a bounty for 5 of your opponent's turns: whenever YOU capture one of their pieces in that window, panic spreads and another of their pieces, chosen at random, is frozen for 1 of their turns.", flavor: "The poster does not even name a crime.", icon: "ScrollText", fx: { motif: "slow", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.turns = 6;
+        inst.state.turns = 5;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.me && turnsLeft(inst) > 0 && move.captured && move.captured !== "k") {
@@ -1635,8 +1642,8 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_broken_compass", name: "Broken Compass", description: "For your opponent's next 3 turns, every move must end in a different quadrant of the board than it started in. The needle spins and nobody trusts a short walk. Their king is exempt.", flavor: "North is a matter of opinion now.", icon: "Compass", fx: { motif: "anchor", pieces: "all" } },
-    curse(3, (moves) => moves.filter((m) => m.piece === "k" || quadOf(m.from) !== quadOf(m.to))),
+    { id: "hx4_broken_compass", name: "Broken Compass", description: "For your opponent's next 3 turns, every move must end in a different quadrant of the board than it started in. The first piece to break the rule slips through as one escape, then the restriction holds. The needle spins and nobody trusts a short walk. Their king is exempt.", flavor: "North is a matter of opinion now.", icon: "Compass", fx: { motif: "anchor", pieces: "all" } },
+    escapeCurse(3, (m) => m.piece === "k" || quadOf(m.from) !== quadOf(m.to)),
   ),
   H4(
     { id: "hx4_tin_soldiers", name: "Tin Soldiers", description: "Their knights and bishops are recast as toy soldiers: wooden for 6 of their turns, and stiff jointed for the first 2, during which they may move at most 2 squares.", flavor: "Painted smiles, glued elbows.", icon: "ToyBrick", fx: { motif: "anchor", pieces: ["n", "b"] } },
@@ -1673,8 +1680,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_crime_scene", name: "Crime Scene", description: "For your opponent's next 4 turns, every capture they make gets roped off: the square where the capture happened is sealed against them for 2 of their turns after the deed.", flavor: "Nothing to see here. Legally, nothing to stand on either.", icon: "SearchX", fx: { motif: "blindfold", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
+    { id: "hx4_crime_scene", name: "Crime Scene", description: "Starting after your opponent's next move, for their following 4 turns, every capture they make gets roped off: the square where the capture happened is sealed against them for 2 of their turns after the deed.", flavor: "Nothing to see here. Legally, nothing to stand on either.", icon: "SearchX", fx: { motif: "blindfold", pieces: "all" } },
+    delayedOnTheirMove(4, (move, api) => {
       const c = capSq(move);
       if (c != null) addEffect(api, { kind: "barred", squares: [c], against: api.opp, turns: 3 });
     }),
@@ -1693,16 +1700,32 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_ferrymans_coin", name: "Ferryman's Coin", description: "For your opponent's next 4 turns, crossing into your half costs the road home: when a piece of theirs crosses the midline, the square it left is sealed against them for 3 of their turns.", flavor: "One coin, one way.", icon: "Coins", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
-      if (relRank(api.opp, move.from) <= 4 && relRank(api.opp, move.to) >= 5) {
-        addEffect(api, { kind: "barred", squares: [move.from], against: api.opp, turns: 4 });
-      }
-    }),
+    { id: "hx4_ferrymans_coin", name: "Ferryman's Coin", description: "For your opponent's next 4 turns, crossing into your half costs the road home: when a piece of theirs crosses the midline, the square it left is sealed against them for 3 of their turns. The first piece to cross does so freely, then the toll holds.", flavor: "One coin, one way.", icon: "Coins", fx: { motif: "slow", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.escaped = false;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          if (relRank(api.opp, move.from) <= 4 && relRank(api.opp, move.to) >= 5) {
+            if (!inst.state.escaped) {
+              inst.state.escaped = true;
+            } else {
+              addEffect(api, { kind: "barred", squares: [move.from], against: api.opp, turns: 4 });
+            }
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        !inst.state.escaped ? "one free crossing remains" : `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H4(
-    { id: "hx4_dead_mans_boots", name: "Dead Man's Boots", description: "For your opponent's next 3 turns, their pieces refuse to stand where anyone has died: they may not end a move on any square where a piece has been captured this game. Their king is exempt.", flavor: "The board remembers every square that went quiet.", icon: "Skull", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_dead_mans_boots", name: "Dead Man's Boots", description: "For your opponent's next 3 turns, their pieces refuse to stand where anyone has died: they may not end a move on any square where a piece has been captured this game. The first piece to step onto a grave slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "The board remembers every square that went quiet.", icon: "Skull", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurseBoard(3, (moves, api) => {
       const graves = new Set<Square>();
       for (const h of api.board.history) {
         if (h.captured) graves.add(h.capturedSquare ?? h.to);
@@ -1726,8 +1749,8 @@ const T4: Buff[] = [
     { id: "hx4_iron_quota", name: "Iron Quota", description: "For your opponent's next 6 turns, the royal smithy only stocks battlements: any pawn they promote must become a rook.", flavor: "The queen molds are being cleaned. Indefinitely.", icon: "Anvil", fx: { motif: "slow", pieces: ["p"] } },
     curse(6, (moves) => moves.filter((m) => !m.promotion || m.promotion === "r")),
   ),
-  H4(
-    { id: "hx4_clay_hooves", name: "Clay Hooves", description: "Every enemy knight that has left its starting square hardens into clay and is frozen for 2 of their turns. Knights still at home are spared.", flavor: "Adventure has a firing temperature.", icon: "Amphora", fx: { motif: "jail", pieces: ["n"] } },
+  hex(
+    { id: "hx4_clay_hooves", name: "Clay Hooves", description: "Every enemy knight that has left its starting square hardens into clay and is frozen for 2 of their turns. Knights still at home are spared.", flavor: "Adventure has a firing temperature.", icon: "Amphora", fx: { motif: "jail", pieces: ["n"] }, tier: 5 },
     instant((_inst, api) => {
       const home =
         api.opp === "w" ? [SQ(1, 0), SQ(6, 0)] : [SQ(1, 7), SQ(6, 7)];
@@ -1736,8 +1759,8 @@ const T4: Buff[] = [
       }
     }),
   ),
-  H4(
-    { id: "hx4_ashen_bread", name: "Ashen Bread", description: "For your opponent's next 4 turns, killing the little ones curdles the stomach: any piece of theirs that captures one of your pawns is frozen for 2 of their turns.", flavor: "It tastes like the field it came from.", icon: "Wheat", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_ashen_bread", name: "Ashen Bread", description: "For your opponent's next 4 turns, killing the little ones curdles the stomach: any piece of theirs that captures one of your pawns is frozen for 2 of their turns.", flavor: "It tastes like the field it came from.", icon: "Wheat", fx: { motif: "muzzle", pieces: "all" }, tier: 5 },
     onTheirMove(4, (move, api) => {
       if (move.captured === "p" && move.piece !== "k") sting(api, move.to, 2, "tar");
     }),
@@ -1764,8 +1787,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_cracked_lens", name: "Cracked Lens", description: "For your opponent's next 3 turns, their bishops cannot judge distance: they may only capture within 2 squares.", flavor: "Faith moves mountains. Optics hit them.", icon: "Glasses", fx: { motif: "muzzle", pieces: ["b"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "b" || !m.captured || moveDist(m) <= 2)),
+    { id: "hx4_cracked_lens", name: "Cracked Lens", description: "For your opponent's next 3 turns, their bishops cannot judge distance: they may only capture within 2 squares. The first bishop to reach further slips through as one escape, then the restriction holds.", flavor: "Faith moves mountains. Optics hit them.", icon: "Glasses", fx: { motif: "muzzle", pieces: ["b"] } },
+    escapeCurse(3, (m) => m.piece !== "b" || !m.captured || moveDist(m) <= 2),
   ),
   H4(
     { id: "hx4_haunted_gallery", name: "Haunted Gallery", description: "Ghosts walk the great dark diagonal (a1 to h8): every enemy piece standing on it is frozen in dread for 1 of their turns. Their king is spared.", flavor: "The portraits follow you. The floor holds you.", icon: "Ghost", fx: { motif: "jail", pieces: "all" } },
@@ -1784,7 +1807,7 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_bell_jar", name: "Bell Jar", description: "Drop a bell jar over one enemy piece you target: it and every enemy piece adjacent to it become walnuts for 1 of their turns. Kings never fit under glass.", flavor: "Science requires the whole cluster.", icon: "FlaskRound", fx: { motif: "anchor" } },
+    { id: "hx4_bell_jar", name: "Bell Jar", description: "Drop a bell jar over one enemy piece you target: it and every enemy piece adjacent to it become walnuts for 1 of their turns, except the defender's most valuable piece under the jar, which is spared. Kings never fit under glass.", flavor: "Science requires the whole cluster.", icon: "FlaskRound", fx: { motif: "anchor" } },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1793,8 +1816,21 @@ const T4: Buff[] = [
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
-        for (const sq of mySquares(api.board, api.opp)) {
-          if (cheb(sq, c) <= 1) nutNow(api, sq, 1);
+        // One-turn effect: no defender choice flow fits an activated cast, so
+        // exempt the defender's most valuable affected piece deterministically
+        // (ties by lowest square).
+        const affected = mySquares(api.board, api.opp).filter(
+          (sq) => cheb(sq, c) <= 1 && api.board.pieces[sq]!.type !== "k",
+        );
+        if (affected.length === 0) return;
+        let exempt = affected[0];
+        for (const sq of affected) {
+          if (PIECE_VAL[api.board.pieces[sq]!.type] > PIECE_VAL[api.board.pieces[exempt]!.type]) {
+            exempt = sq;
+          }
+        }
+        for (const sq of affected) {
+          if (sq !== exempt) nutNow(api, sq, 1);
         }
       },
     ),
@@ -1840,8 +1876,8 @@ const T4: Buff[] = [
     },
   ),
   H4(
-    { id: "hx4_censors_ink", name: "Censor's Ink", description: "For your opponent's next 4 turns, the censor blacks out your latest position: they may not end a move on the file where your last moved piece stands. Their king is exempt.", flavor: "That column has been redacted for their protection.", icon: "PenTool", fx: { motif: "blindfold", pieces: "all" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_censors_ink", name: "Censor's Ink", description: "Starting after your opponent's next move, for their following 4 turns, the censor blacks out your latest position: they may not end a move on the file where your last moved piece stands. Their king is exempt.", flavor: "That column has been redacted for their protection.", icon: "PenTool", fx: { motif: "blindfold", pieces: "all" } },
+    delayedCurse(4, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.me) {
@@ -1881,8 +1917,31 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_candle_curfew", name: "Candle Curfew", description: "The candles are rationed, and everyone knows the schedule: on the 5th and 6th of your opponent's next 6 turns, they may only move a pawn or their king.", flavor: "Wax today, war tomorrow.", icon: "Lamp", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
-    cadenceCurse(6, (e) => e >= 4, (moves) => moves.filter((m) => m.piece === "p" || m.piece === "k")),
+    { id: "hx4_candle_curfew", name: "Candle Curfew", description: "The candles are rationed, and everyone knows the schedule: on the 5th and 6th of your opponent's next 6 turns, they may only move a pawn or their king. The first piece the curfew would stop slips through as one escape, then the restriction holds.", flavor: "Wax today, war tomorrow.", icon: "Lamp", fx: { motif: "slow", pieces: ["n", "b", "r", "q"] } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 6;
+        inst.state.escaped = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const left = turnsLeft(inst);
+        if (left <= 0 || moves.length === 0) return moves;
+        if (6 - left < 4) return moves;
+        if (!inst.state.escaped) return moves;
+        const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && turnsLeft(inst) > 0) {
+          if (6 - turnsLeft(inst) >= 4 && !inst.state.escaped && move.piece !== "p" && move.piece !== "k") {
+            inst.state.escaped = true;
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+    },
   ),
   H4(
     { id: "hx4_feuding_towers", name: "Feuding Towers", description: "Their rooks are not speaking to each other: for your opponent's next 4 turns, a rook may not end a move on the same rank or file as another of their rooks.", flavor: "It began over a bishop. It always begins over a bishop.", icon: "Castle", fx: { motif: "anchor", pieces: ["r"] } },
@@ -1905,8 +1964,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_broken_oars", name: "Broken Oars", description: "For your opponent's next 3 turns, no move may travel in the same direction as their previous move. The crew cannot row the same stroke twice. Their king is exempt.", flavor: "Port! No, the OTHER port!", icon: "Ship", fx: { motif: "slow", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_broken_oars", name: "Broken Oars", description: "Starting after your opponent's next move, for their following 3 turns, no move may travel in the same direction as their previous move. The crew cannot row the same stroke twice. Their king is exempt.", flavor: "Port! No, the OTHER port!", icon: "Ship", fx: { motif: "slow", pieces: "all" } },
+    delayedCurse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {

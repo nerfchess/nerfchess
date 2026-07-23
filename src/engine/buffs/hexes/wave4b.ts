@@ -15,7 +15,6 @@ import type { Mech } from "./shared";
 import {
   activated,
   addEffect,
-  blockDrafts,
   curse,
   emptySquares,
   freezeAllEnemies,
@@ -1359,18 +1358,67 @@ const T6: Buff[] = [
 
 const T7: Buff[] = [
   H7(
-    { id: "hx4_iron_portcullis", name: "Iron Portcullis", description: "The armory gate slams shut: your opponent's next 2 drafts are skipped outright. They get nothing those rounds.", flavor: "Requisitions are closed until further notice.", icon: "Grid3x3" },
-    blockDrafts(2),
+    { id: "hx4_iron_portcullis", name: "Iron Portcullis", description: "The armory gate slams shut: your opponent's next draft is skipped outright, and their following draft offers only two cards and cannot be rerolled.", flavor: "Requisitions are closed until further notice.", icon: "Grid3x3" },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        // Skip their next draft entirely.
+        api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+        inst.state.base = api.theirs.draftsTaken;
+        // Hold the following draft to a plain, unrerollable two-card offer.
+        api.theirs.rerollsLeft = 0;
+        api.theirs.flags.prepThree = undefined;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        // Once the following draft has actually been dealt, stop holding.
+        if (api.theirs.draftsTaken > (inst.state.base as number)) {
+          inst.spent = true;
+          return;
+        }
+        api.theirs.rerollsLeft = 0;
+        api.theirs.flags.prepThree = undefined;
+      },
+      status: (inst) => (inst.spent ? "the gate has done its work" : "the armory gate is shut"),
+    },
   ),
   H7(
     { id: "hx4_stone_garden", name: "Stone Garden", description: "All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square at a time.", flavor: "Arranged tastefully. Screaming silently.", icon: "Trees", fx: { motif: "anchor", pieces: ["n", "b", "r"] } },
     walnutAll(["n", "b", "r"], 1),
   ),
   H7(
-    { id: "hx4_lovestruck_majesty", name: "Lovestruck Majesty", description: "Your opponent's queen falls head over heels and is frozen, swooning, for 2 of their turns.", flavor: "She has written four sonnets already.", icon: "Heart", fx: { motif: "jail", pieces: ["q"] } },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "q")) freezeNow(api, sq, 2, "charm");
-    }),
+    { id: "hx4_lovestruck_majesty", name: "Lovestruck Majesty", description: "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.", flavor: "She has written four sonnets already.", icon: "Heart", fx: { motif: "jail", pieces: ["q"] } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const qs = mySquares(api.board, api.opp, "q");
+        if (qs.length === 0) {
+          inst.spent = true;
+          return;
+        }
+        let esc = qs[0];
+        for (const q of qs) if (q < esc) esc = q;
+        for (const q of qs) if (q !== esc) freezeNow(api, q, 2, "charm");
+        inst.state.sq = esc;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null || move.color !== api.opp) return;
+        const before = inst.state.sq as Square;
+        if (move.from === before) {
+          const now = followSq(before, move);
+          if (now != null) sting(api, now, 2, "charm");
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(before, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+      },
+      status: (inst) => (inst.spent ? "the swoon takes hold" : "one move, then she swoons"),
+    },
   ),
   H7(
     { id: "hx4_royal_quarantine", name: "Royal Quarantine", description: "Their king is declared contagious: for your opponent's next 4 turns, none of their pieces may end a move adjacent to their own king. The king itself moves freely.", flavor: "Get well soon, Your Majesty. From a distance.", icon: "ShieldAlert", fx: { motif: "blindfold", pieces: "all" } },
@@ -1403,10 +1451,10 @@ const T7: Buff[] = [
     instant((_inst, api) => addEffect(api, { kind: "short_leash", owner: api.opp, turns: 2 })),
   ),
   H7(
-    { id: "hx4_kraken_arms", name: "Kraken Arms", description: "Three tentacles burst from the board: choose 3 enemy pieces (never the king), and each is held fast, frozen for 1 of their turns.", flavor: "It only has three arms free. Lucky you.", icon: "Shell", fx: { motif: "jail" } },
+    { id: "hx4_kraken_arms", name: "Kraken Arms", description: "Three tentacles burst from the board: choose 3 enemy pieces (never the king). The first you choose may make one move before the tentacle seizes it; each of the three is held fast, frozen for 1 of their turns.", flavor: "It only has three arms free. Lucky you.", icon: "Shell", fx: { motif: "jail" } },
     activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
+      (inst, api, picks) =>
+        picks.length >= 3 || inst.state.chosen
           ? null
           : {
               kind: "square",
@@ -1415,10 +1463,39 @@ const T7: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
               ),
             },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square != null) freezeNow(api, k.square, 1, "slime");
-        }
+      (inst, api, picks) => {
+        if (inst.state.chosen) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is number => s != null);
+        if (sqs.length === 0) return;
+        inst.state.chosen = true;
+        // The first piece chosen gets one escape move; the rest are held now.
+        for (let i = 1; i < sqs.length; i++) freezeNow(api, sqs[i], 1, "slime");
+        inst.state.sq = sqs[0];
+      },
+      {
+        spendOnUse: false,
+        onMovePlayed: (inst, move, api) => {
+          if (inst.spent || !inst.state.chosen || inst.state.sq == null || move.color !== api.opp) return;
+          const before = inst.state.sq as Square;
+          if (move.from === before) {
+            const now = followSq(before, move);
+            if (now != null) sting(api, now, 1, "slime");
+            inst.spent = true;
+            return;
+          }
+          const now = followSq(before, move);
+          if (now == null) {
+            inst.spent = true;
+            return;
+          }
+          inst.state.sq = now;
+        },
+        status: (inst) =>
+          !inst.state.chosen
+            ? "activate to grab three pieces"
+            : inst.spent
+              ? "the tentacles have hold"
+              : "one prey may still slip once",
       },
     ),
   ),
@@ -1451,12 +1528,18 @@ const T7: Buff[] = [
     }),
   ),
   H7(
-    { id: "hx4_hearth_frost", name: "Hearth Frost", description: "Frost creeps into their barracks: every enemy pawn still standing on its owner's second rank is frozen for 2 of their turns.", flavor: "The fire went out sometime around midnight.", icon: "House", fx: { motif: "jail", pieces: ["p"] } },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "p")) {
-        if (relRank(api.opp, sq) === 2) freezeNow(api, sq, 2, "ice");
-      }
-    }),
+    { id: "hx4_hearth_frost", name: "Hearth Frost", description: "After your opponent's next move, frost creeps into their barracks: every enemy pawn still standing on its owner's second rank is frozen for 2 of their turns.", flavor: "The fire went out sometime around midnight.", icon: "House", fx: { motif: "jail", pieces: ["p"] } },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        for (const sq of mySquares(api.board, api.opp, "p")) {
+          if (relRank(api.opp, sq) === 2) sting(api, sq, 2, "ice");
+        }
+        inst.spent = true;
+      },
+      status: (inst) => (inst.spent ? "the frost has set in" : "the frost sets in after their next move"),
+    },
   ),
   H7(
     { id: "hx4_command_paralysis", name: "Command Paralysis", description: "Their high command falls silent: for your opponent's next 3 turns, they may only move pieces standing in your half of the board. The first piece the silence would stop may move once regardless, then it binds fully. If they have none in your half, they move freely that turn.", flavor: "The ones at the front stopped waiting for orders.", icon: "Radio", fx: { motif: "jail", pieces: "all" } },
@@ -1477,9 +1560,12 @@ const T7: Buff[] = [
     }),
   ),
   H7(
-    { id: "hx4_lead_rain", name: "Lead Rain", description: "A rain of lead pins the field: 4 of your opponent's pieces, chosen at random (never the king), are frozen for 1 of their turns.", flavor: "The forecast said scattered showers.", icon: "CloudHail", fx: { motif: "jail" } },
+    { id: "hx4_lead_rain", name: "Lead Rain", description: "A rain of lead pins the field: 4 of your opponent's pieces, chosen at random (never the king), are frozen for 1 of their turns. Their single most valuable piece is immune and is never among them.", flavor: "The forecast said scattered showers.", icon: "CloudHail", fx: { motif: "jail" } },
     instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
+      const immune = victimByValue(api)[0] ?? null;
+      const pool = mySquares(api.board, api.opp).filter(
+        (sq) => api.board.pieces[sq]!.type !== "k" && sq !== immune,
+      );
       for (const sq of drawRandom(api, pool, 4)) freezeNow(api, sq, 1, "cement");
     }),
   ),

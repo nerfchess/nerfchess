@@ -1072,7 +1072,9 @@ export const MEDUSA: Nerf = db({
 
 export const FISCHER_RANDOM_ENDGAME: Nerf = db({
   id: "fischer_random_endgame", name: "Fischer Random Endgame", tier: 7, implemented: true,
-  description: "By move 20, all your non-pawns must be on home row AND on a square they couldn't have started on.",
+  description: "By move 20, all your non-pawns must be on home row AND on a square they couldn't have started on. Pieces a card spawns or teleports in must comply too.",
+  // The scan reads every one of my non-pawns off the live board, so spawned and
+  // teleported pieces are judged the same as the rest, immediately.
   checkLoss: (_s, ctx) => {
     if (ctx.moveNumber < 20) return null;
     const homeR = ctx.me === "w" ? 0 : 7;
@@ -1118,7 +1120,9 @@ export const STAND_YOUR_GROUND: Nerf = db({
 
 export const ALWAYS_CHECK_IT_MIGHT_BE_MATE: Nerf = db({
   id: "always_check_it_might_be_mate", name: "Always Check, It Might Be Mate", tier: 7, implemented: true,
-  description: "If you are checked, you lose.",
+  description: "If you are checked, you lose. A temporary shield or suspension can't spare you: the check is read straight from the board.",
+  // isInCheck judges the raw board position, so no temporary shield or suspension
+  // buff can satisfy the condition by masking an actual check.
   checkLoss: (_s, ctx) => (isInCheck(ctx.board, ctx.me) ? { reason: "in check" } : null),
 });
 
@@ -1611,7 +1615,7 @@ export const COVERING_FIRE: Nerf = db({
 
 export const UNLUCKY: Nerf = db({
   id: "unlucky", name: "Unlucky", tier: 6, implemented: true,
-  description: "Half the squares are unusable each turn, re-randomized.",
+  description: "20 random squares are unusable each turn, re-randomized and shown on the board. The restriction never leaves you fewer than three legal moves.",
   init: () => ({ banned: [] as number[] }),
   onTurnStart: (_s, _ctx, rng) => {
     const all = Array.from({ length: 64 }, (_, i) => i);
@@ -1619,12 +1623,13 @@ export const UNLUCKY: Nerf = db({
       const j = rng.int(i + 1);
       [all[i], all[j]] = [all[j], all[i]];
     }
-    return { banned: all.slice(0, 32) };
+    return { banned: all.slice(0, 20) };
   },
   filterMoves: (moves, state) => {
     const s = state as { banned: number[] };
     const set = new Set(s.banned);
-    return moves.filter((m) => !set.has(m.from) && !set.has(m.to));
+    const filtered = moves.filter((m) => !set.has(m.from) && !set.has(m.to));
+    return filtered.length >= 3 ? filtered : moves;
   },
   visual: (state) => ({ bannedSquares: (state as { banned: number[] }).banned }),
 });
@@ -2282,7 +2287,9 @@ export const SECRET_GARDEN: Nerf = db({
 export const THUNDERDOME: Nerf = db({
   id: "thunderdome", name: "Thunderdome", tier: 6, implemented: true,
   description:
-    "The center 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is on those squares it can never move out of the zone for the rest of the game (it may still move within the zone). Pieces enter; pieces do not leave.",
+    "The center 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is on those squares it can never move out of the zone for the rest of the game (it may still move within the zone). Pieces enter; pieces do not leave. A move granted by another card can't carry a piece out of the zone.",
+  // The filter runs over every offered move (card-injected moves included) with no
+  // escape hatch, so a dome piece stays locked in however the move was granted.
   filterMoves: (moves) => {
     const inDome = (sq: number) => {
       const f = FILE(sq), r = RANK(sq);
@@ -2304,16 +2311,20 @@ export const INDECISIVE: Nerf = db({
 
 export const UNREQUITED_LOVE: Nerf = db({
   id: "unrequited_love", name: "Unrequited Love", tier: 6, implemented: true,
-  description: "King can't move away from queen; queen can't move toward king.",
+  description: "King can't move away from queen; queen can't move toward king. If no compliant move exists, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     const qs = pieceSquares(ctx.board, ctx.me, "q")[0];
     if (qs == null || ks == null) return moves;
-    return moves.filter((m) => {
+    const filtered = moves.filter((m) => {
       if (m.piece === "k") return cheb(m.to, qs) <= cheb(m.from, qs);
       if (m.piece === "q") return cheb(m.to, ks) >= cheb(m.from, ks);
       return true;
     });
+    if (filtered.length) return filtered;
+    // No compliant move exists: allow a king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -2371,8 +2382,10 @@ export const BOTTLED_LIGHTNING: Nerf = db({
 
 export const FOG_OF_WAR_OLD: Nerf = db({
   id: "fog_of_war_old", name: "Fog of War (extended)", tier: 7, icon: "cloud-fog", implemented: true,
-  description: "Hide opponent pieces entirely.",
-  visual: () => ({ fogged: true }),
+  description: "Hide opponent pieces entirely, starting on your move 4. The opening is shown in the clear so it cannot be soft-locked.",
+  // The fog only sets in from your move 4 (moveNumber >= 3); the first three moves
+  // are played with full vision.
+  visual: (_s, ctx) => (ctx.moveNumber >= 3 ? { fogged: true } : {}),
 });
 
 // ------------------------- AGGREGATE -------------------------
