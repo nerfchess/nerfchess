@@ -3958,6 +3958,12 @@ const TIER6: Buff[] = [
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return;
         if (move.color === api.opp && squares.includes(move.to) && move.piece !== "k") {
+          // The defender's one bridge: the first enemy piece to enter the void
+          // crosses it safely; every later entry is swallowed.
+          if (!inst.state.bridged) {
+            inst.state.bridged = true;
+            return;
+          }
           api.removePiece(move.to);
         }
       },

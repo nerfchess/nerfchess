@@ -2635,9 +2635,18 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_royal_privilege", name: "Royal Privilege", tier: 8, category: "nerf", icon: "Gem",
-      description: "For the rest of the game, every time you move your queen, your nerf is suspended for your next 2 turns.",
+      description: "For the rest of the game, every time you move your queen, your nerf is suspended for your next 2 turns. Your next 2 drafts are skipped.",
       flavor: "When she is working, the law looks away.", requires: ["q"] },
-    reliefEvery(2, (m, api) => m.color === api.me && m.piece === "q", "the court defers to her"),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+      },
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color === api.me && move.piece === "q") susp(api, 2);
+      },
+      status: () => "the court defers to her",
+    },
   ),
   card(
     { id: "bn4_tithe_of_time", name: "Tithe of Time", tier: 6, category: "nerf", icon: "Hourglass",
@@ -2647,19 +2656,24 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_liberators_march", name: "Liberator's March", tier: 8, category: "nerf", icon: "Footprints",
-      description: "For the rest of the game, every capture you make suspends your nerf for your next turn AND shields the capturing piece from capture on your opponent's next turn.",
+      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
       flavor: "Each blow rings twice: once for you, once for the ones still chained." },
     {
       kind: "passive",
-      onMovePlayed: (_inst, move, api) => {
-        if (move.color !== api.me || !move.captured || move.captured === "k") return;
-        susp(api, 1);
-        const p = api.board.pieces[move.to];
-        if (p && p.color === api.me) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 });
+      init: (inst, api) => {
+        susp(api, 18);
+        inst.state.turns = 18;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 18) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
         }
       },
-      status: () => "the march never stops",
+      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
     },
   ),
   card(
@@ -2717,12 +2731,18 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_meek_inherit", name: "The Meek Inherit", tier: 8, category: "nerf", icon: "Bird",
-      description: "While your opponent has at least as many pieces as you (kings aside), your nerf is suspended. Pull ahead in material, and it wakes.",
+      description: "Beginning after your opponent's next move, your nerf is suspended while your opponent has at least as many pieces as you (kings aside). Pull ahead in material, and it wakes.",
       flavor: "Blessed are the down-a-piece, for the rules shall carry them." },
-    reliefWhile(
-      (api) => armySize(api.board, api.me) <= armySize(api.board, api.opp),
-      "counting both camps",
-    ),
+    {
+      // Delayed start: no init suspension, so relief begins only after the
+      // opponent replies; it re-checks material on each of their moves.
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (armSize(api.board, api.me) <= armSize(api.board, api.opp)) susp(api, 1);
+      },
+      status: () => "counting both camps",
+    },
   ),
 
   // --- movement (5) ---

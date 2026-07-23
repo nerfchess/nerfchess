@@ -2089,10 +2089,10 @@ const T8: Buff[] = [
     curse(5, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "n" || moveDist(m) <= 1)),
   ),
   H8(
-    { id: "hx4_frozen_reserves", name: "Frozen Reserves", description: "The reserves never got the mobilization order: every enemy piece standing on their own back rank is frozen for 2 of their turns. Their king is spared.", flavor: "The barracks doors froze shut from the inside.", icon: "Warehouse", fx: { motif: "jail", pieces: "all" } },
+    { id: "hx4_frozen_reserves", name: "Frozen Reserves", description: "The reserves never got the mobilization order: every enemy piece standing on their own back rank, except pawns and the king, is frozen for 2 of their turns.", flavor: "The barracks doors froze shut from the inside.", icon: "Warehouse", fx: { motif: "jail", pieces: "all" } },
     instant((_inst, api) => {
       for (const sq of mySquares(api.board, api.opp)) {
-        if (relRank(api.opp, sq) === 1) freezeNow(api, sq, 2, "ice");
+        if (relRank(api.opp, sq) === 1 && api.board.pieces[sq]!.type !== "p") freezeNow(api, sq, 2, "ice");
       }
     }),
   ),
