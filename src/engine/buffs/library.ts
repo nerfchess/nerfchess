@@ -4285,8 +4285,47 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "mind_empire", name: "Mind Empire", description: "Take control of one enemy piece of any type below queen for the game.", tier: 7, category: "pieces" },
-    convertEnemies(1, ["p", "n", "b", "r"]),
+    { id: "mind_empire", name: "Mind Empire", description: "Take control of one enemy piece of any type below queen. Your control ends the moment that piece makes a capture, and it returns to your opponent.", tier: 7, category: "pieces" },
+    // Single-target rebalance: instead of controlling the piece for the game, the
+    // control lapses the first time the seized piece captures (it reverts then).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose an enemy piece to take control of",
+              squares: mySquares(api.board, api.opp).filter((sq) =>
+                ["p", "n", "b", "r"].includes(api.board.pieces[sq]!.type),
+              ),
+            },
+      effect: (inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || inst.state.sq != null) return;
+        api.setPieceColor(sq, api.me);
+        inst.state.sq = sq;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq && move.color === api.me && move.captured && move.captured !== "k") {
+          // The seized piece captured: control ends, it reverts to the enemy.
+          api.setPieceColor(move.to, api.opp);
+          inst.state.sq = undefined;
+          inst.spent = true;
+          return;
+        }
+        trackBoundPiece(inst, move);
+      },
+      status: (inst) => {
+        const sq = inst.state.sq as Square | undefined;
+        return sq == null
+          ? "activate to seize a piece"
+          : `controlling ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1} until it captures`;
+      },
+    },
   ),
   def(
     { id: "annihilation", name: "Annihilation", description: "Remove any two enemy pieces below the queen from the board.", tier: 8, category: "attack" },
@@ -4677,7 +4716,7 @@ const TIER7: Buff[] = [
     activatedSimple((_inst, api) => reformArmy(api)),
   ),
   def(
-    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft, and that draft rolls one tier higher.", tier: 7, category: "draft" },
+    { id: "sovereign_draft", name: "Sovereign Draft", description: "Take both cards in your next draft, that draft rolls one tier higher, and you see the tier of your opponent's next offer.", tier: 7, category: "draft" },
     // Overhaul balance pass: the old text ("take both cards in your next
     // draft") was an exact duplicate of Greed (wa_greed, tier 6) one tier
     // higher, i.e. strictly dominated. The sovereign now also lifts the offer
