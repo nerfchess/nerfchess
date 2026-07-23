@@ -1309,21 +1309,41 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_vaulting_pole", name: "Vaulting Pole", tier: 2, category: "movement", icon: "Wand",
-      description: "Once, one of your pawns may vault straight over a piece directly ahead of it, landing on the empty square beyond (never onto the final rank).",
+      description: "Once, after your opponent's next move, one of your pawns may vault straight over a piece directly ahead of it, landing on the empty square beyond (never onto the final rank).",
       flavor: "Regulation height. Unregulated courage.", requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true } },
-    augment((_moves, inst, api) => {
-      const fwd = api.me === "w" ? 1 : -1;
-      const out: Move[] = [];
-      for (const from of mySquares(api.board, api.me, "p")) {
-        const midR = RANK(from) + fwd, toR = RANK(from) + 2 * fwd;
-        if (!inBoard(FILE(from), toR)) continue;
-        const mid = SQ(FILE(from), midR), to = SQ(FILE(from), toR);
-        if (!api.board.pieces[mid] || api.board.pieces[to] || !pawnRankOk(to)) continue;
-        out.push(...teleportMoves(api.board, from, [to], inst.id));
-      }
-      return out;
-    }, 1),
+    {
+      // The vault is preserved but delayed: it is offered only once the
+      // opponent has replied (ready flips on their next move).
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.ready = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+        const fwd = api.me === "w" ? 1 : -1;
+        const out: Move[] = [];
+        for (const from of mySquares(api.board, api.me, "p")) {
+          const midR = RANK(from) + fwd, toR = RANK(from) + 2 * fwd;
+          if (!inBoard(FILE(from), toR)) continue;
+          const mid = SQ(FILE(from), midR), to = SQ(FILE(from), toR);
+          if (!api.board.pieces[mid] || api.board.pieces[to] || !pawnRankOk(to)) continue;
+          out.push(...teleportMoves(api.board, from, [to], inst.id));
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id) {
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp) inst.state.ready = true;
+      },
+      status: (inst) => (inst.state.ready ? null : "vault ready after their reply"),
+    },
   ),
   card(
     { id: "bn4_royal_stroll", name: "Royal Stroll", tier: 2, category: "movement", icon: "PersonStanding",
@@ -1755,9 +1775,9 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_lone_crown", name: "Lone Crown", tier: 3, category: "nerf", icon: "Crown",
-      description: "While no piece of yours stands beside your king, your nerf is suspended.",
+      description: "While no piece of yours stands beside your king, your nerf is suspended. When a piece returns to your king's side, one final turn stays suspended but applies only to movement restrictions: you may move only one square at a time.",
       flavor: "Solitude has its privileges." },
-    reliefWhile((api) => {
+    reliefWhileGrace((api) => {
       const ks = kingSquare(api.board, api.me);
       if (ks == null) return false;
       return !adjSquares(ks).some((s) => {
@@ -1774,11 +1794,27 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_bribe_the_clerk", name: "Bribe the Clerk", tier: 3, category: "nerf", icon: "Wallet",
-      description: "Suspend your nerf for your next 5 turns. The clerk pockets one of your draft rerolls, if you have any.",
+      description: "After your opponent's next move, your nerf is suspended for your next 5 turns. The clerk pockets one of your draft rerolls, if you have any.",
       flavor: "Everything is negotiable before lunch." },
-    suspendNow(5, (api) => {
-      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
-    }),
+    {
+      // The 5-turn duration is preserved but begins after the opponent replies
+      // (the bartered_calm delay idiom). The bribe is paid up front on cast.
+      kind: "passive",
+      init: (inst, api) => {
+        inst.state.delay = 1;
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        const d = (inst.state.delay as number) ?? 1;
+        inst.state.delay = d - 1;
+        if (d - 1 <= 0) {
+          susp(api, 5);
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? null : "the bribe clears after their reply"),
+    },
   ),
   card(
     { id: "bn4_pawns_ransom", name: "Pawn's Ransom", tier: 3, category: "nerf", icon: "HandCoins",

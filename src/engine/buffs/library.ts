@@ -2924,8 +2924,8 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "twin_queens", requires: ["p"], name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on your 5th rank or beyond.", tier: 5, category: "pieces" },
-    promotePawns(2, 5, "q"),
+    { id: "twin_queens", requires: ["p"], name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.", tier: 5, category: "pieces" },
+    consumeRerollOnUse(promotePawns(2, 5, "q")),
   ),
   def(
     { id: "warp_legion", name: "Warp Legion", description: "The legion rallies to the crown: up to three of your pieces teleport to empty squares beside your king, once.", tier: 4, category: "movement" },
@@ -3003,8 +3003,8 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "phase_army", requires: ["b", "r", "q"], name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["b", "r", "q"], self: true } },
-    timedAugment(2, (_m, inst, api) => {
+    { id: "phase_army", requires: ["b", "r", "q"], name: "Phase Army", description: "Your bishops, rooks, and queen pass through one friendly piece per move for 1 turn.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["b", "r", "q"], self: true } },
+    timedAugment(1, (_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me)) {
         const t = api.board.pieces[sq]!.type;
@@ -3125,8 +3125,8 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "mass_promote_minor", requires: ["p"], name: "Mass Promote Minor", description: "Two pawns on your 4th rank or beyond become knights instantly.", tier: 5, category: "pieces" },
-    promotePawns(2, 4, "n"),
+    { id: "mass_promote_minor", requires: ["p"], name: "Mass Promote Minor", description: "Two pawns on your 4th rank or beyond become knights instantly. Using it spends your next unused reroll, if any.", tier: 5, category: "pieces" },
+    consumeRerollOnUse(promotePawns(2, 4, "n")),
   ),
   def(
     { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king one square toward their back rank across the whole board, once.", tier: 4, category: "attack" },
@@ -3336,8 +3336,8 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "atomic_reaction", name: "Atomic Reaction", description: "Whenever one of your pieces captures, every enemy piece except a king on the 8 squares around the captured square is removed, and each removed piece sets off the same blast around itself. Lasts the whole game.", tier: 6, category: "attack" },
-    captureExplosion({ chain: true }),
+    { id: "atomic_reaction", name: "Atomic Reaction", description: "Your next two captures each detonate: the two enemy pieces immediately left and right of the captured square, kings aside, are removed. The blast never chains.", tier: 6, category: "attack" },
+    captureExplosion({ beside: true, charges: 2 }),
   ),
   def(
     { id: "double_amazon", requires: ["n"], name: "Double Amazon", description: "All your knights move as amazons for your next 3 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },

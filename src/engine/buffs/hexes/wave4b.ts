@@ -1463,8 +1463,8 @@ const T7: Buff[] = [
     escapeCurse(3, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) >= 5)),
   ),
   H7(
-    { id: "hx4_gorgon_field", name: "Gorgon Field", description: "A gorgon's gaze sweeps the middle of the board: for your opponent's next 4 turns, any piece of theirs that ends a move on the central 4x4 (c3 to f6) becomes a walnut for 1 of their turns. Kings resist the gaze.", flavor: "Admire the centre from a distance.", icon: "Eye", fx: { motif: "anchor", pieces: "all" } },
-    onTheirMove(4, (move, api) => {
+    { id: "hx4_gorgon_field", name: "Gorgon Field", description: "A gorgon's gaze sweeps the middle of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on the central 4x4 (c3 to f6) becomes a walnut for 1 of their turns. Kings resist the gaze.", flavor: "Admire the centre from a distance.", icon: "Eye", fx: { motif: "anchor", pieces: "all" } },
+    onTheirMove(3, (move, api) => {
       const f = FILE(move.to);
       const r = RANK(move.to);
       if (move.piece !== "k" && f >= 2 && f <= 5 && r >= 2 && r <= 5) nutSting(api, move.to, 1);
@@ -1601,8 +1601,8 @@ const T7: Buff[] = [
     ),
   ),
   H7(
-    { id: "hx4_muster_silence", name: "Muster of Silence", description: "For your opponent's next 3 turns, any piece of theirs that is defended by another of their pieces may not move. Only the unguarded stragglers may act. Their king is exempt.", flavor: "The protected wait. The forgotten work.", icon: "VolumeX", fx: { motif: "jail", pieces: "all" } },
-    curse(3, (moves, api) =>
+    { id: "hx4_muster_silence", name: "Muster of Silence", description: "For your opponent's next 2 turns, any piece of theirs that is defended by another of their pieces may not move. Only the unguarded stragglers may act. Their king is exempt.", flavor: "The protected wait. The forgotten work.", icon: "VolumeX", fx: { motif: "jail", pieces: "all" } },
+    curse(2, (moves, api) =>
       moves.filter(
         (m) =>
           m.piece === "k" ||
@@ -1611,8 +1611,8 @@ const T7: Buff[] = [
     ),
   ),
   H7(
-    { id: "hx4_grim_procession", name: "Grim Procession", description: "For your opponent's next 4 turns, no piece of theirs may end a move farther from their own king than it started. The army huddles toward the crown. Their king walks free.", flavor: "The court draws in like a fist closing.", icon: "Users", fx: { motif: "anchor", pieces: "all" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_grim_procession", name: "Grim Procession", description: "For your opponent's next 3 turns, no piece of theirs may end a move farther from their own king than it started. The army huddles toward the crown. Their king walks free.", flavor: "The court draws in like a fist closing.", icon: "Users", fx: { motif: "anchor", pieces: "all" } },
+    curse(3, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       return moves.filter((m) => m.piece === "k" || cheb(m.to, k) <= cheb(m.from, k));

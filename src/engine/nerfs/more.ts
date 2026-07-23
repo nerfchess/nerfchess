@@ -619,11 +619,13 @@ export const TOWER_DEFENSE: Nerf = db({
 
 export const PARANOID: Nerf = db({
   id: "paranoid", name: "Paranoid", tier: 6, implemented: true,
-  description: "Your king must always be defended, or you lose.",
+  description: "Your king must always be defended, or you lose. Any piece of yours can be the defender, including pieces a card spawns or teleports in.",
   checkLoss: (_s, ctx) => {
     const ks = findKing(ctx.board, ctx.me);
     if (ks == null) return null;
     if (ctx.moveNumber === 0) return null;
+    // attackedBy reads the live board, so every piece of mine counts toward the
+    // defense, whatever its origin (card-created and spawned pieces included).
     const defenders = attackedBy(ctx.board, ctx.me);
     return defenders.has(ks) ? null : { reason: "king undefended" };
   },
@@ -1949,15 +1951,26 @@ export const REFLECTIVE: Nerf = db({
 
 export const OBSESSION: Nerf = db({
   id: "obsession", name: "Obsession", tier: 6, implemented: true,
-  description: "Each turn, a random square. If you can move to it, you must.",
-  init: () => ({ sq: 0 }),
-  onTurnStart: (_s, _ctx, rng) => ({ sq: rng.int(64) }),
-  filterMoves: (moves, state) => {
-    const s = state as { sq: number };
-    const hits = moves.filter((m) => m.to === s.sq);
-    return hits.length ? hits : moves;
+  description: "Each turn fixates on a random square, revealed a turn ahead. If at least three of your moves reach the current square, you must play one of them.",
+  // Rebalance: the square is now shown a turn early (next in state), and the
+  // compulsion only bites when three or more moves can reach it, so it can never
+  // strand you on a single forced move. The filter forces the compliant moves
+  // when it applies, so obeying is not optional; there is no soft-penalty path.
+  init: (rng) => ({ target: rng.int(64), next: rng.int(64) }),
+  onTurnStart: (state, _ctx, rng) => {
+    const s = state as { target: number; next: number };
+    return { target: s.next, next: rng.int(64) };
   },
-  visual: (state) => ({ highlightSquares: [(state as { sq: number }).sq] }),
+  filterMoves: (moves, state) => {
+    const s = state as { target: number };
+    const hits = moves.filter((m) => m.to === s.target);
+    return hits.length >= 3 ? hits : moves;
+  },
+  visual: (state) => ({ highlightSquares: [(state as { target: number }).target] }),
+  hint: (state) => {
+    const s = state as { target: number; next: number };
+    return { text: `Obsession: this turn ${squareName(s.target)}, next turn ${squareName(s.next)}.`, tone: "info" };
+  },
 });
 
 export const BOXING_WITH_SHADOW: Nerf = db({
@@ -1988,7 +2001,7 @@ export const NOBLE_STEED: Nerf = db({
 
 export const TAKING_TURNS: Nerf = db({
   id: "taking_turns", name: "Taking Turns", tier: 6, implemented: true,
-  description: "Can't move a piece a second time until every piece of its type has moved once.",
+  description: "Can't move a piece a second time until every piece of its type has moved once. A piece a card spawns or teleports in obeys the restriction at once: it counts as an unmoved piece of its type until it makes its own move.",
   filterMoves: (moves, _s, ctx) => {
     // A piece has moved iff its current square was ever a destination of one of
     // my moves (my moves can't land on my own pieces, so the occupant of such a
