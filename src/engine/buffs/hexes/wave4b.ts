@@ -927,19 +927,41 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_dockmasters_fee", name: "Dockmaster's Fee", description: "For your opponent's next 4 turns, every capture they make is taxed: on the turn after a capture they may only move a pawn or their king.", flavor: "Cargo in, coin out.", icon: "Anchor", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_dockmasters_fee", name: "Dockmaster's Fee", description: "For your opponent's next 4 turns, every capture they make is taxed: on the turn after a capture they may only move a pawn or their king. The first piece the tax would hold back may make one move regardless, then it binds fully.", flavor: "Cargo in, coin out.", icon: "Anchor", fx: { motif: "slow", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
         inst.state.tax = 0;
+        inst.state.escaped = false;
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.tax as number) ?? 0) <= 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.piece === "p" || m.piece === "k");
-        return kept.length > 0 ? kept : moves;
+        if (kept.length === 0) return moves;
+        if (inst.state.escaped) return kept;
+        const keptSet = new Set(kept);
+        const blocked = moves.filter((m) => !keptSet.has(m));
+        if (blocked.length === 0) return kept;
+        let escapeFrom = blocked[0].from;
+        for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+        const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+        inst.state.escapeFrom = escapeFrom;
+        inst.state.escapeTos = escapeMoves.map((m) => m.to);
+        return [...kept, ...escapeMoves];
       },
       onMovePlayed: (inst, move, api) => {
+        if (
+          move.color === api.opp &&
+          ((inst.state.tax as number) ?? 0) > 0 &&
+          !inst.state.escaped &&
+          inst.state.escapeFrom != null &&
+          move.from === inst.state.escapeFrom &&
+          Array.isArray(inst.state.escapeTos) &&
+          (inst.state.escapeTos as Square[]).includes(move.to)
+        ) {
+          inst.state.escaped = true;
+        }
         if (move.color === api.opp && turnsLeft(inst) > 0) {
           inst.state.tax = move.captured ? 1 : 0;
         }
@@ -952,10 +974,32 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_ivory_tower", name: "Ivory Tower", description: "For your opponent's next 4 turns, their king may not move toward your side of the board. Sideways and homeward steps are free.", flavor: "The view is lovely. The stairs go only up.", icon: "Building", fx: { motif: "anchor" } },
-    curse(4, (moves, api) =>
-      moves.filter((m) => m.piece !== "k" || relRank(api.opp, m.to) <= relRank(api.opp, m.from)),
-    ),
+    { id: "hx4_ivory_tower", name: "Ivory Tower", description: "Your opponent's next move passes freely. Then, for their next 4 turns, their king may not move toward your side of the board. Sideways and homeward steps are free.", flavor: "The view is lovely. The stairs go only up.", icon: "Building", fx: { motif: "anchor" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const kept = moves.filter((m) => m.piece !== "k" || relRank(api.opp, m.to) <= relRank(api.opp, m.from));
+        return kept.length > 0 ? kept : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `${turnsLeft(inst)} of their turns left`
+          : "the tower rises after their next move",
+    },
   ),
   H6(
     { id: "hx4_silken_net", name: "Silken Net", description: "Cast a net over a square you choose: every enemy piece except the king within one square of it is frozen for 1 of their turns.", flavor: "One throw, many flies.", icon: "Torus", fx: { motif: "jail" } },
@@ -974,8 +1018,8 @@ const T6: Buff[] = [
     ),
   ),
   H6(
-    { id: "hx4_lantern_out", name: "Lantern Out", description: "The lights go out at home: for your opponent's next 3 turns, they cannot capture anything standing in their own half of the board.", flavor: "Hard to aim in your own dark hallway.", icon: "LampOff", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) =>
+    { id: "hx4_lantern_out", name: "Lantern Out", description: "The lights go out at home: for your opponent's next 2 turns, they cannot capture anything standing in their own half of the board.", flavor: "Hard to aim in your own dark hallway.", icon: "LampOff", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
         return c == null || relRank(api.opp, c) >= 5;
@@ -990,8 +1034,8 @@ const T6: Buff[] = [
       return moves.filter((m) => m.piece === "k" || FILE(m.to) !== FILE(k));
     }),
   ),
-  H6(
-    { id: "hx4_donkey_ears", name: "Donkey Ears", description: "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.", flavor: "The portrait painters are thrilled.", icon: "Crown", fx: { motif: "muzzle" } },
+  hex(
+    { id: "hx4_donkey_ears", name: "Donkey Ears", description: "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.", flavor: "The portrait painters are thrilled.", icon: "Crown", fx: { motif: "muzzle" }, tier: 7 },
     {
       kind: "passive",
       init: (inst, api) => {
@@ -1008,9 +1052,9 @@ const T6: Buff[] = [
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H6(
-    { id: "hx4_flooded_flanks", name: "Flooded Flanks", description: "Both edge files (a and h) flood: your opponent's pieces cannot stop on them for their next 3 turns.", flavor: "The riverbanks reclaim their own.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },
-    instant((_inst, api) => barNow(api, [...fileSquares(0), ...fileSquares(7)], 3)),
+  hex(
+    { id: "hx4_flooded_flanks", name: "Flooded Flanks", description: "Both edge files (a and h) flood: your opponent's pieces cannot stop on them for their next 2 turns.", flavor: "The riverbanks reclaim their own.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" }, tier: 7 },
+    instant((_inst, api) => barNow(api, [...fileSquares(0), ...fileSquares(7)], 2)),
   ),
   H6(
     { id: "hx4_sleepwalkers", name: "Sleepwalkers", description: "For your opponent's next 3 turns, pieces that start a move in their own half cannot capture. Only their pieces already in your half may fight.", flavor: "You cannot swing a sword you dreamt of packing.", icon: "MoonStar", fx: { motif: "muzzle", pieces: "all" } },
@@ -1018,16 +1062,37 @@ const T6: Buff[] = [
       moves.filter((m) => !m.captured || relRank(api.opp, m.from) >= 5),
     ),
   ),
-  H6(
-    { id: "hx4_glass_floor", name: "Glass Floor", description: "Every dark square becomes thin glass: for your opponent's next 3 turns their pieces may not stop on dark squares. Their king is exempt.", flavor: "Mind the crunch.", icon: "Square", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves) => moves.filter((m) => m.piece === "k" || sqShade(m.to) === 1)),
+  hex(
+    { id: "hx4_glass_floor", name: "Glass Floor", description: "Every dark square becomes thin glass: for your opponent's next 2 turns their pieces may not stop on dark squares. Their king is exempt.", flavor: "Mind the crunch.", icon: "Square", fx: { motif: "blindfold", pieces: "all" }, tier: 7 },
+    curse(2, (moves) => moves.filter((m) => m.piece === "k" || sqShade(m.to) === 1)),
   ),
   H6(
-    { id: "hx4_pied_piper", name: "Pied Piper", description: "The pipe plays and the infantry follows: for your opponent's next 2 turns, if any pawn move is available they must move a pawn.", flavor: "The tune is older than the town.", icon: "Music2", fx: { motif: "slow", pieces: "all" } },
-    curse(2, (moves) => {
-      const pawns = moves.filter((m) => m.piece === "p");
-      return pawns.length > 0 ? pawns : moves;
-    }),
+    { id: "hx4_pied_piper", name: "Pied Piper", description: "Your opponent's next move passes freely. Then the pipe plays and the infantry follows: for their next 2 turns, if any pawn move is available they must move a pawn.", flavor: "The tune is older than the town.", icon: "Music2", fx: { motif: "slow", pieces: "all" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+        inst.state.armed = false;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.armed) return moves;
+        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        const pawns = moves.filter((m) => m.piece === "p");
+        return pawns.length > 0 ? pawns : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.armed
+          ? `${turnsLeft(inst)} of their turns left`
+          : "the pipe begins after their next move",
+    },
   ),
   H6(
     { id: "hx4_wax_seal", name: "Wax Seal", description: "Their supply lines are sealed: your opponent's next drafted card arrives nullified, and their next offer excludes draft manipulation cards.", flavor: "Stamped by an authority that does not exist.", icon: "Stamp" },

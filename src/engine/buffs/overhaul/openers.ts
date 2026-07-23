@@ -810,6 +810,20 @@ function backstagePass(entry: (typeof BACKSTAGE)[number]): Buff {
         !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
     });
   }
+  if (entry.id === "prompt_corner") {
+    // Preserve the hop; taking it consumes your next unused reroll, if any.
+    return opener(entry, `${baseDesc} Taking this hop consumes your next unused reroll, if any.`, {
+      ...augment(gen),
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color === api.me) {
+          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+    });
+  }
   return opener(entry, baseDesc, augment(gen));
 }
 
@@ -873,6 +887,44 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
     }
     return out;
   };
+  if (entry.id === "quickstep") {
+    // Preserve the narrow king-dash identity; if unused by the owner's 12th
+    // move, the charge converts into one draft reroll.
+    return opener(entry, `${desc} If unused by your 12th move, the charge becomes one draft reroll.`, {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.moves = 0;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (((inst.state.charges as number) ?? 0) <= 0) return;
+        addNovel(moves, gen(moves, inst, api));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.via === inst.id && move.color) {
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+        if (move.color === api.me) {
+          inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
+          if (
+            ((inst.state.moves as number) ?? 0) >= 12 &&
+            ((inst.state.charges as number) ?? 0) > 0 &&
+            !inst.spent
+          ) {
+            api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+            inst.state.charges = 0;
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) => {
+        const c = (inst.state.charges as number) ?? 1;
+        return c > 0 ? "1 left, reroll at your 12th move" : null;
+      },
+    });
+  }
   if (entry.id === "grand_march") {
     return opener(entry, desc, lossyAugment(gen));
   }
@@ -1029,6 +1081,44 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
       entry,
       `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
       filterGuard({ exceptPawns: true }),
+    );
+  }
+
+  if (entry.id === "lady_in_waiting") {
+    // Retier + "ends after preventing one capture": the one-turn guard lasts
+    // through the opponent's single reply, turning that capture aside, then ends.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that queen cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
+      filterGuard({}),
+    );
+  }
+
+  if (entry.id === "lighthouse_keeper") {
+    // Retier + "ends after preventing one capture": the one-turn guard lasts
+    // through the opponent's single reply, turning that capture aside, then ends.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
+      filterGuard({}),
+    );
+  }
+
+  if (entry.id === "market_dog") {
+    // Retier + the shield does not stop pawn captures.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
+      filterGuard({ exceptPawns: true }),
+    );
+  }
+
+  if (entry.id === "parade_marshal") {
+    // Retier + the protection ends the moment the guarded pawn makes a capture.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.`,
+      filterGuard({ endOnCapture: true }),
     );
   }
 
@@ -1480,6 +1570,49 @@ function deadLetter(entry: (typeof DEAD_LETTERS)[number]): Buff {
           inst.spent = true;
         },
         status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "general delivery" : null),
+      },
+    );
+  }
+
+  if (entry.id === "homing_pigeon") {
+    // Preserve the narrow h-file identity, but grant a second charge. The effect
+    // names a target (the piece directly ahead), so the repeated use must land
+    // on a different square than the first.
+    return opener(
+      entry,
+      "Twice, your h-file pawn may capture the enemy piece directly in front of it. The second capture must be on a different square than the first.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 2;
+          inst.state.usedTarget = null;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+          const used = inst.state.usedTarget as number | null;
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== entry.file) continue;
+            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+              if (!m.captured) continue;
+              if (used != null && (m.capturedSquare ?? m.to) === used) continue;
+              out.push(m);
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id || move.color !== api.me) return;
+          inst.state.usedTarget = move.capturedSquare ?? move.to;
+          const left = ((inst.state.charges as number) ?? 2) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        },
+        status: (inst) => {
+          const c = (inst.state.charges as number) ?? 2;
+          return c > 0 ? `${c} capture${c > 1 ? "s" : ""} left` : null;
+        },
       },
     );
   }

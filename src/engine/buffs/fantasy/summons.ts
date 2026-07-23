@@ -14,11 +14,11 @@ import {
   summonTemp,
   barNeighbors,
   myHalfZone,
-  anyEmptyZone,
   backRankZone,
   emptySquares,
   explodeAt,
   captureSquare,
+  addEffect,
   leapMoves,
   KNIGHT_LEAPS,
   FILE,
@@ -178,16 +178,14 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Hexagon",
       name: "Summoning Circle",
       description:
-        "Chalk the circle and speak a greater name: an Amazon steps through onto any empty square and serves for the rest of the game, moving as queen and knight both. Whoever fells her is dragged into the circle after her. Kings are too large to pull through.",
+        "Chalk the circle and speak a greater name: an Amazon steps through onto an empty square in your half and serves for four of your turns, moving as queen and knight both, then fades back through the circle. Whoever fells her is frozen in place for one of their turns instead of destroyed. Kings are too large to freeze in the circle.",
       tier: 8,
       category: "pieces",
       flavor: "One name spoken, and the candles all lean away.",
     },
-    // Overhaul balance pass: the old 6-turn loaner queen was strictly worse
-    // than Summon Dragon one tier BELOW it (permanent queen + fire breath).
-    // The circle now delivers a tier-8 moment: a permanent Amazon (queen +
-    // knight mover) with a revenge clause that makes every trade against her
-    // cost the capturer too (kings exempt, so she creates no mate immunity).
+    // Balance pass: the Amazon now serves only four of your turns (in your half)
+    // and her revenge clause freezes her captor for one of their turns rather
+    // than destroying it (kings exempt, so she creates no mate immunity).
     {
       kind: "activated",
       spendOnUse: false,
@@ -197,13 +195,14 @@ export const FANTASY_SUMMONS: Buff[] = [
           : {
               kind: "square",
               label: "Choose where the Amazon steps through",
-              squares: emptySquares(api.board, anyEmptyZone(api)),
+              squares: emptySquares(api.board, myHalfZone(api)),
             },
       effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
         if (sq == null || inst.state.sq != null) return;
         api.place(sq, "q", api.me);
         inst.state.sq = sq;
+        inst.state.turns = 4;
       },
       // She also leaps like a knight (the amazon movement grant).
       augmentMoves: (moves, inst, api) => {
@@ -217,22 +216,34 @@ export const FANTASY_SUMMONS: Buff[] = [
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.to === sq && move.from !== sq) {
-          // She was slain: the circle drags her killer through after her.
-          // Kings are exempt (no accidental win/mate immunity through her).
+          // She was slain: the circle freezes her killer in place for one of
+          // their turns (turns:2 nets one after the immediate tick a freeze
+          // added on the frozen side's own move receives). Kings are exempt.
           const killer = api.board.pieces[move.to];
           if (killer && killer.color !== api.me && killer.type !== "k") {
-            api.removePiece(move.to);
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
           }
           inst.spent = true;
+          inst.state.sq = undefined;
           return;
         }
         if (move.from === sq) inst.state.sq = move.to;
+        // She serves for four of your turns, then fades back through the circle.
+        if (move.color !== api.me) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          const cur = inst.state.sq as Square | undefined;
+          if (cur != null && api.board.pieces[cur]) api.removePiece(cur, { uncounted: true });
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
       },
       status: (inst) => {
         const sq = inst.state.sq as Square | undefined;
         return sq == null
           ? "activate to open the circle"
-          : `Amazon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+          : `Amazon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}, ${(inst.state.turns as number) ?? 0} of your turns left`;
       },
     },
   ),
@@ -242,7 +253,7 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Sparkle",
       name: "Summon Dragon",
       description:
-        "An actual dragon answers: place a new queen on an empty square in your half. Whenever she captures, she breathes fire: every enemy piece except a king on the 8 squares around her kill is also removed. Shielded pieces resist the flame.",
+        "An actual dragon answers, but takes a beat to descend: choose an empty square in your half now, and after your opponent's next move a new queen lands there, so she cannot capture until they have replied. Whenever she captures, she breathes fire: every enemy piece except a king on the 8 squares around her kill is also removed. Shielded pieces resist the flame.",
       tier: 7,
       category: "pieces",
       flavor: "The oldest thing on the board, and the hungriest.",
@@ -252,20 +263,42 @@ export const FANTASY_SUMMONS: Buff[] = [
       spendOnUse: false,
       // One activation only: one dragon per horn call.
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pending != null
           ? null
           : {
               kind: "square",
-              label: "Choose where the dragon lands",
+              label: "Choose where the dragon will land",
               squares: emptySquares(api.board, myHalfZone(api)),
             },
-      effect: (inst, api, picks) => {
+      // Balance pass: the dragon (the sole, highest-value spawn) cannot capture
+      // until the opponent replies. Since there is no own-move filter, this is
+      // enforced by delaying her arrival: you pick the square now and she is not
+      // placed until after the opponent's next move.
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || inst.state.sq != null) return;
-        api.place(sq, "q", api.me);
-        inst.state.sq = sq;
+        if (sq == null || inst.state.sq != null || inst.state.pending != null) return;
+        inst.state.pending = sq;
       },
       onMovePlayed: (inst, move, api) => {
+        // Delayed descent: hold until the opponent has replied, then materialize
+        // (on a deterministic empty half-square if the chosen one has filled).
+        if (inst.state.pending != null && inst.state.sq == null) {
+          if (move.color !== api.opp) return;
+          let sq = inst.state.pending as Square;
+          if (api.board.pieces[sq]) {
+            const alt = emptySquares(api.board, myHalfZone(api))[0];
+            if (alt == null) {
+              inst.state.pending = undefined;
+              inst.spent = true;
+              return;
+            }
+            sq = alt;
+          }
+          api.place(sq, "q", api.me);
+          inst.state.sq = sq;
+          inst.state.pending = undefined;
+          return;
+        }
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         // Follow the dragon; the buff retires when she is slain.
@@ -282,9 +315,11 @@ export const FANTASY_SUMMONS: Buff[] = [
       },
       status: (inst) => {
         const sq = inst.state.sq as Square | undefined;
-        return sq == null
-          ? "activate to summon the dragon"
-          : `dragon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
+        return inst.state.pending != null && sq == null
+          ? "the dragon descends after your opponent's reply"
+          : sq == null
+            ? "activate to summon the dragon"
+            : `dragon at ${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`;
       },
     },
   ),
