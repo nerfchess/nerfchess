@@ -1735,8 +1735,8 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_no_easy_pickings", name: "No Easy Pickings", description: "A code of honor is imposed for your opponent's next 4 turns: they may only capture your pieces that are defended by another of your pieces. Undefended stragglers are off limits.", flavor: "There is no glory in an unguarded purse.", icon: "Handshake", fx: { motif: "muzzle", pieces: "all" } },
-    curse(4, (moves, api) =>
+    { id: "hx4_no_easy_pickings", name: "No Easy Pickings", description: "A code of honor is imposed for your opponent's next 4 turns: they may only capture your pieces that are defended by another of your pieces. Undefended stragglers are off limits. The first forbidden capture slips through as one escape, then the code holds.", flavor: "There is no glory in an unguarded purse.", icon: "Handshake", fx: { motif: "muzzle", pieces: "all" } },
+    escapeCurseBoard(4, (moves, api) =>
       moves.filter((m) => {
         const c = capSq(m);
         if (c == null) return true;
@@ -1889,15 +1889,15 @@ const T4: Buff[] = [
     }),
   ),
   H4(
-    { id: "hx4_thistle_crown", name: "Thistle Crown", description: "For your opponent's next 4 turns, when your pieces give check, only their king may answer: they cannot block the check or capture the checker with another piece. The king must move itself.", flavor: "A crown of thistles concentrates the mind wonderfully.", icon: "Crown", fx: { motif: "slow" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_thistle_crown", name: "Thistle Crown", description: "Starting after your opponent's next move, for their following 4 turns, when your pieces give check only their king may answer: they cannot block the check or capture the checker with another piece. The king must move itself.", flavor: "A crown of thistles concentrates the mind wonderfully.", icon: "Crown", fx: { motif: "slow" } },
+    delayedCurse(4, (moves, api) => {
       if (!isInCheck(api.board, api.opp)) return moves;
       return moves.filter((m) => m.piece === "k");
     }),
   ),
   H4(
-    { id: "hx4_tangled_marionettes", name: "Tangled Marionettes", description: "For your opponent's next 3 turns, the strings cross: they may not move any piece standing adjacent to the piece they moved last turn. That piece itself may move on. Their king is exempt.", flavor: "Pull one string, three puppets bow.", icon: "Spline", fx: { motif: "slow", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_tangled_marionettes", name: "Tangled Marionettes", description: "Starting after your opponent's next move, for their following 3 turns the strings cross: they may not move any piece standing adjacent to the piece they moved last turn. That piece itself may move on. Their king is exempt.", flavor: "Pull one string, three puppets bow.", icon: "Spline", fx: { motif: "slow", pieces: "all" } },
+    delayedCurse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {

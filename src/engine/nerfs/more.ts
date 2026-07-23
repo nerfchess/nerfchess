@@ -1537,9 +1537,10 @@ export const DEATH_WISH: Nerf = db({
   // more lethal than bottled_lightning (any king move forced, tier 8). The
   // counterplay (keep every square around the king occupied or unattacked) is
   // the same boxed-king puzzle as bottled_lightning, so it belongs on the same
-  // rung. Mechanics unchanged.
+  // rung. This pass (owner balance change): when several suicidal squares qualify
+  // the opponent chooses the destination, resolved deterministically below.
   id: "death_wish", name: "Death Wish", tier: 8, implemented: true,
-  description: "If you can move king into check, you must.",
+  description: "If your king can move onto a square where it would be captured, it must. When several such squares qualify, the opponent chooses the destination: the king is forced onto the one where it would face the most attackers (ties break to the lowest-numbered square).",
   filterMoves: (moves, _s, ctx) => {
     const opp = ctx.me === "w" ? "b" : "w";
     const suicidal = moves.filter((m) => {
@@ -1547,7 +1548,22 @@ export const DEATH_WISH: Nerf = db({
       const nb = makeMove(ctx.board, m);
       return attackedBy(nb, opp).has(m.to);
     });
-    return suicidal.length ? suicidal : moves;
+    if (suicidal.length <= 1) return suicidal.length ? suicidal : moves;
+    // Several suicidal squares qualify: the opponent chooses the destination. No
+    // UI can prompt them mid-turn, so resolve it deterministically the way the
+    // opponent would: force the king onto the square where it faces the most
+    // attackers, ties broken by the lowest-numbered square.
+    let chosen = suicidal[0];
+    let bestCount = -1;
+    for (const m of suicidal) {
+      const nb = makeMove(ctx.board, m);
+      const attackers = checkingSquares(nb, ctx.me).size;
+      if (attackers > bestCount || (attackers === bestCount && m.to < chosen.to)) {
+        bestCount = attackers;
+        chosen = m;
+      }
+    }
+    return [chosen];
   },
 });
 
@@ -2372,10 +2388,26 @@ export const THEOCRACY: Nerf = db({
 
 export const BOTTLED_LIGHTNING: Nerf = db({
   id: "bottled_lightning", name: "Bottled Lightning", tier: 8, implemented: true,
-  description: "If you can move your king, you must.",
-  filterMoves: (moves) => {
-    const km = moves.filter((m) => m.piece === "k");
-    return km.length ? km : moves;
+  description: "If your king can move forward or sideways, it must, and it may never move backward toward your own side. When every king move would go backward you may move another piece instead, but the move right after any non-king move must be a king move. The king moves backward only as a last resort with no other legal move.",
+  filterMoves: (moves, _s, ctx) => {
+    const dir = ctx.me === "w" ? 1 : -1;
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    // Forward or sideways only: a backward king step is one that loses forward
+    // ground toward your own back rank.
+    const forwardKing = kingMoves.filter((m) => (RANK(m.to) - RANK(m.from)) * dir >= 0);
+    const lastWasNonKing = !!ctx.myLastMove && ctx.myLastMove.piece !== "k";
+    // After any non-king move, the next move must be a king move.
+    if (lastWasNonKing && kingMoves.length) {
+      return forwardKing.length ? forwardKing : kingMoves;
+    }
+    // A non-backward king move exists: the king must move (never backward).
+    if (forwardKing.length) return forwardKing;
+    // Only backward king moves (or none) remain: the king may not move backward,
+    // so a non-king move is allowed this turn. If nothing but king moves exist,
+    // fall back to them so a backward step is the sole legal move rather than a
+    // soft-lock.
+    const nonKing = moves.filter((m) => m.piece !== "k");
+    return nonKing.length ? nonKing : moves;
   },
 });
 
