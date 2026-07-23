@@ -1668,8 +1668,8 @@ const T4: Buff[] = [
     },
   ),
   H4(
-    { id: "hx4_smoke_line", name: "Smoke Line", description: "Signal smoke streams from your king's tower: for your opponent's next 3 turns, none of their pieces may end a move on a diagonal your king stands on. Their king is exempt.", flavor: "Where there is smoke, there is a very specific no.", icon: "Cloudy", fx: { motif: "blindfold", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_smoke_line", name: "Smoke Line", description: "Signal smoke streams from your king's tower: for your opponent's next 3 turns, none of their pieces may end a move on a diagonal your king stands on. The first piece to try slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "Where there is smoke, there is a very specific no.", icon: "Cloudy", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurseBoard(3, (moves, api) => {
       const k = myKing(api);
       if (k == null) return moves;
       return moves.filter(
