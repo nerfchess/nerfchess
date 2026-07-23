@@ -27,7 +27,6 @@ import {
   reviveOne,
   skipOpponent,
   slideMoves,
-  timedAugment,
   transformOwn,
   ALL_DIRS,
   DIAG_DIRS,
@@ -440,18 +439,72 @@ export const FANTASY_LEGENDS: Buff[] = [
       id: "age_of_heroes",
       name: "Age of Heroes",
       description:
-        "For your next 2 turns the old songs come true: each of your knights, bishops, and rooks may also move like a queen.",
+        "The old songs come true for three champions: choose one of your knights, one bishop, and one rook. Until each next moves it may also move like a queen, a single stroke apiece.",
       tier: 8,
       category: "movement",
       flavor: "For one bright hour, everyone is the chosen one.",
       fx: { motif: "rally", pieces: ["n", "b", "r"], self: true },
     },
-    timedAugment(2, (_m, inst, api) =>
-      mySquares(api.board, api.me).flatMap((sq) => {
-        const t = api.board.pieces[sq]!.type;
-        if (t !== "n" && t !== "b" && t !== "r") return [];
-        return slideMoves(api.board, sq, ALL_DIRS, inst.id);
-      }),
-    ),
+    // Balance pass: no longer a 2-turn blanket. You crown exactly one knight,
+    // one bishop, and one rook; each gains queen movement for its next move
+    // only, the gift spent the moment that piece moves (taken or not).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) => {
+        if (inst.state.sqs != null) return null;
+        const names: Record<string, string> = { n: "knight", b: "bishop", r: "rook" };
+        const pickedTypes = new Set(picks.map((k) => api.board.pieces[k.square!]?.type));
+        const next = (["n", "b", "r"] as const).find(
+          (t) => !pickedTypes.has(t) && mySquares(api.board, api.me, t).length > 0,
+        );
+        if (next == null) return null;
+        return {
+          kind: "square",
+          label: `Choose the ${names[next]} to crown`,
+          squares: mySquares(api.board, api.me, next).filter(
+            (sq) => !picks.some((k) => k.square === sq),
+          ),
+          ...(picks.length > 0 ? { finishable: true } : {}),
+        };
+      },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sqs != null) return;
+        inst.state.sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      augmentMoves: (moves, inst, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs || sqs.length === 0) return;
+        for (const sq of sqs) {
+          const p = api.board.pieces[sq];
+          if (!p || p.color !== api.me) continue;
+          for (const e of slideMoves(api.board, sq, ALL_DIRS, inst.id)) {
+            if (!moves.some((m) => m.from === e.from && m.to === e.to)) moves.push(e);
+          }
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        if (!sqs || sqs.length === 0) return;
+        let next = sqs;
+        if (move.color === api.me && sqs.includes(move.from)) {
+          // A crowned piece moved: its single stroke is spent.
+          next = sqs.filter((s) => s !== move.from);
+        } else if (sqs.includes(move.to) && move.from !== move.to) {
+          // A crowned piece was captured or overrun: drop it.
+          next = sqs.filter((s) => s !== move.to);
+        }
+        inst.state.sqs = next;
+        if (next.length === 0) inst.spent = true;
+      },
+      status: (inst) => {
+        const sqs = inst.state.sqs as Square[] | undefined;
+        return sqs == null
+          ? "activate to crown three champions"
+          : sqs.length === 0
+            ? "the age has passed"
+            : `${sqs.length} champion${sqs.length === 1 ? "" : "s"} still crowned`;
+      },
+    },
   ),
 ];

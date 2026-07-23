@@ -287,11 +287,21 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "CloudLightning",
       name: "Heaven's Wrath",
       description:
-        "The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board.",
+        "The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board. Calling the storm consumes your next unused reroll, if you have one.",
       tier: 8,
       category: "attack",
       flavor: "There is no shelter from a righteous storm.",
     },
-    removeEnemies(3, ["n", "b", "r", "q"]),
+    // Balance pass: calling the storm also consumes your next unused reroll.
+    (() => {
+      const base = removeEnemies(3, ["n", "b", "r", "q"]);
+      return {
+        ...base,
+        effect: (inst, api, picks) => {
+          base.effect?.(inst, api, picks);
+          api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+        },
+      };
+    })(),
   ),
 ];

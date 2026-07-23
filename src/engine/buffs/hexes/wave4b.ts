@@ -1102,10 +1102,12 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_iron_maiden", name: "Iron Maiden", description: "Clamp one enemy rook or queen you target in iron: it is frozen for 2 of their turns.", flavor: "A snug fit, by design.", icon: "Box", fx: { motif: "jail", pieces: ["r", "q"] } },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    { id: "hx4_iron_maiden", name: "Iron Maiden", description: "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.", flavor: "A snug fit, by design.", icon: "Box", fx: { motif: "jail", pieces: ["r", "q"] } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -1115,10 +1117,21 @@ const T6: Buff[] = [
                 return t === "r" || t === "q";
               }),
             },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) freezeNow(api, picks[0].square, 2, "chains");
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        if (picks[0]?.square != null) inst.state.sq = picks[0].square;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null) return;
+        if (move.color === api.opp) {
+          const sq = followSq(inst.state.sq as Square, move);
+          if (sq != null) sting(api, sq, 2, "chains");
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to clamp a piece" : "the iron bites after their next move",
+    },
   ),
   H6(
     { id: "hx4_thunderhead", name: "Thunderhead", description: "A storm gathers over their throne, in plain sight: after 2 of your opponent's turns, lightning falls and every piece adjacent to their king is frozen for 1 of their turns.", flavor: "Count the seconds between flash and ruin.", icon: "CloudLightning", fx: { motif: "slow", pieces: "all" } },
@@ -1144,23 +1157,35 @@ const T6: Buff[] = [
     ),
   ),
   H6(
-    { id: "hx4_gale_warning", name: "Gale Warning", description: "A gale rakes the rim of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on an edge square is pinned flat and frozen for 1 of their turns. Kings keep their footing.", flavor: "The edge of the world has weather.", icon: "Tornado", fx: { motif: "slow", pieces: "all" } },
-    onTheirMove(3, (move, api) => {
+    { id: "hx4_gale_warning", name: "Gale Warning", description: "A gale rakes the rim of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on an edge square is pinned flat and frozen for 1 of their turns. The first piece the gale would pin keeps its footing; every piece after it is frozen. Kings keep their footing.", flavor: "The edge of the world has weather.", icon: "Tornado", fx: { motif: "slow", pieces: "all" } },
+    onTheirMove(3, (move, api, inst) => {
       const f = FILE(move.to);
       const r = RANK(move.to);
-      if (move.piece !== "k" && (f === 0 || f === 7 || r === 0 || r === 7)) sting(api, move.to, 1, "petal");
+      if (move.piece !== "k" && (f === 0 || f === 7 || r === 0 || r === 7)) {
+        if (!inst.state.escaped) {
+          inst.state.escaped = true;
+          return;
+        }
+        sting(api, move.to, 1, "petal");
+      }
     }),
   ),
   H6(
-    { id: "hx4_debt_collector", name: "Debt Collector", description: "The collector watches for 5 of your opponent's turns: their second capture in that window is repossessed on the spot, and the capturing piece becomes a walnut for 2 of their turns.", flavor: "The first one is on credit.", icon: "Receipt", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_debt_collector", name: "Debt Collector", description: "The collector holds off for one move, then watches for 5 of your opponent's turns: their second capture in that window makes the capturing piece a walnut for 2 of their turns.", flavor: "The first one is on credit.", icon: "Receipt", fx: { motif: "muzzle", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 5;
         inst.state.caps = 0;
+        inst.state.armed = false;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured) {
+        if (move.color !== api.opp) return;
+        if (!inst.state.armed) {
+          inst.state.armed = true;
+          return;
+        }
+        if (turnsLeft(inst) > 0 && move.captured) {
           const caps = ((inst.state.caps as number) ?? 0) + 1;
           inst.state.caps = caps;
           if (caps >= 2) {
@@ -1171,7 +1196,10 @@ const T6: Buff[] = [
         }
         tickTurns(inst, move, api.opp);
       },
-      status: (inst) => `${(inst.state.caps as number) ?? 0}/2 captures, ${turnsLeft(inst)} of their turns left`,
+      status: (inst) =>
+        !inst.state.armed
+          ? "the collector waits for their next move"
+          : `${(inst.state.caps as number) ?? 0}/2 captures, ${turnsLeft(inst)} of their turns left`,
     },
   ),
   H6(
@@ -1179,17 +1207,30 @@ const T6: Buff[] = [
     instant((_inst, api) => barNow(api, rankSquares(api.me === "w" ? 0 : 7), 4)),
   ),
   H6(
-    { id: "hx4_narcolepsy", name: "Narcolepsy", description: "Two of your opponent's pieces, chosen at random (never the king), fall asleep mid campaign and are frozen for 2 of their turns.", flavor: "The war can wait five minutes.", icon: "BedDouble", fx: { motif: "jail" } },
+    { id: "hx4_narcolepsy", name: "Narcolepsy", description: "Two of your opponent's pieces, chosen at random (never the king), fall asleep mid campaign and are frozen for 1 of their turns.", flavor: "The war can wait five minutes.", icon: "BedDouble", fx: { motif: "jail" } },
     instant((_inst, api) => {
       const pool = mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k");
-      for (const sq of drawRandom(api, pool, 2)) freezeNow(api, sq, 2, "sleep");
+      for (const sq of drawRandom(api, pool, 2)) freezeNow(api, sq, 1, "sleep");
     }),
   ),
   H6(
-    { id: "hx4_moat_diggers", name: "Moat Diggers", description: "Your sappers dig 4 pits at random empty squares in your opponent's half: their pieces cannot stop on those squares for their next 3 turns.", flavor: "They work nights. You will notice mornings.", icon: "Pickaxe", fx: { motif: "blindfold" } },
+    { id: "hx4_moat_diggers", name: "Moat Diggers", description: "Your sappers dig 4 pits at random empty squares in your opponent's half. The defender keeps one as a bridge, the pit nearest their king; their pieces cannot stop on the other 3 for their next 3 turns.", flavor: "They work nights. You will notice mornings.", icon: "Pickaxe", fx: { motif: "blindfold" } },
     instant((_inst, api) => {
       const pool = emptySquares(api.board, (sq) => relRank(api.opp, sq) <= 4);
-      barNow(api, drawRandom(api, pool, 4), 3);
+      const pits = drawRandom(api, pool, 4);
+      if (pits.length === 0) return;
+      const k = oppKing(api);
+      let bridge = pits[0];
+      for (const sq of pits) {
+        if (k == null) {
+          if (sq < bridge) bridge = sq;
+        } else {
+          const db = cheb(bridge, k);
+          const ds = cheb(sq, k);
+          if (ds < db || (ds === db && sq < bridge)) bridge = sq;
+        }
+      }
+      barNow(api, pits.filter((s) => s !== bridge), 3);
     }),
   ),
 ];
