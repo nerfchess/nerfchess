@@ -631,7 +631,7 @@ const STRANGE_GAITS: Array<
   { id: "camel_fair", name: "Camel Fair", flavor: "Rented by the hour. Spits at bishops.", icon: "Tent", leaps: symLeaps(3, 1), how: "a camel leap, 3 by 1, in any direction", capture: "none" },
   { id: "zebra_crossing", name: "Zebra Crossing", flavor: "Look both ways, then confuse everyone.", icon: "Fence", leaps: symLeaps(3, 2), how: "a zebra leap, 3 by 2, in any direction" },
   { id: "parade_elephant", name: "Parade Elephant", flavor: "Ceremonial, enormous, and surprisingly diagonal.", icon: "Landmark", leaps: symLeaps(2, 2), how: "an elephant hop, exactly 2 diagonally, jumping anything between", capture: "none" },
-  { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between" },
+  { id: "siege_wagon", name: "Siege Wagon", flavor: "It only knows one trick: straight ahead, loudly.", icon: "Castle", leaps: symLeaps(2, 0), how: "a wagon hop, exactly 2 straight, jumping anything between", tier: 2 },
   { id: "viziers_errand", name: "Vizier's Errand", flavor: "One dignified step. No hopping. There are appearances.", icon: "Crown", leaps: symLeaps(1, 0), how: "a single step to an adjacent square, straight only" },
   { id: "old_counselor", name: "Old Counselor", flavor: "He moves one diagonal square per decade, but he is never wrong.", icon: "Glasses", leaps: symLeaps(1, 1), how: "a single diagonal step to an adjacent square", tier: 2 },
   { id: "pole_vault", name: "Pole Vault", flavor: "Plant, swing, and clear the whole hedgerow.", icon: "TrendingUp", leaps: symLeaps(3, 0), how: "a vault of exactly 3 straight, jumping anything between", capture: "none" },
@@ -697,8 +697,8 @@ const LEAPFROGS: Array<
 > = [
   { id: "leapfrog_lesson", name: "Leapfrog Lesson", flavor: "Hands on the shoulders, eyes on the diagonal.", icon: "Rabbit", mover: "b", over: "p", dirs: DIAG_DIRS, what: "One of your bishops may hop over an adjacent friendly pawn on its diagonal", tier: 2 },
   { id: "vaulting_horse", name: "Vaulting Horse", flavor: "For once, the horse is the obstacle.", icon: "Dumbbell", mover: "b", over: "n", dirs: DIAG_DIRS, what: "One of your bishops may hop over an adjacent friendly knight on its diagonal" },
-  { id: "sandbag_hurdle", name: "Sandbag Hurdle", flavor: "Sappers stack them; towers clear them.", icon: "Layers", mover: "r", over: "p", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly pawn on its rank or file" },
-  { id: "stable_gate", name: "Stable Gate", flavor: "The rook took the fence like it owed him money.", icon: "DoorOpen", mover: "r", over: "n", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly knight on its rank or file" },
+  { id: "sandbag_hurdle", name: "Sandbag Hurdle", flavor: "Sappers stack them; towers clear them.", icon: "Layers", mover: "r", over: "p", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly pawn on its rank or file", tier: 2 },
+  { id: "stable_gate", name: "Stable Gate", flavor: "The rook took the fence like it owed him money.", icon: "DoorOpen", mover: "r", over: "n", dirs: ORTHO4, what: "One of your rooks may hop over an adjacent friendly knight on its rank or file", tier: 2 },
   { id: "garden_hedge", name: "Garden Hedge", flavor: "Her majesty does not walk around topiary.", icon: "Shrub", mover: "q", over: "p", dirs: ALL8, what: "Your queen may hop over an adjacent friendly pawn in any direction" },
   { id: "piggyback", name: "Piggyback", flavor: "Infantry regulations are silent on the matter.", icon: "Baby", mover: "p", over: "p", dirs: [[0, 1]], oriented: true, what: "One of your pawns may hop over the friendly pawn directly ahead of it" },
   { id: "silk_curtain", name: "Silk Curtain", flavor: "She stepped through the bishop's shadow and out the other side.", icon: "Wand", mover: "q", over: "b", dirs: DIAG_DIRS, what: "Your queen may hop over an adjacent friendly bishop on a diagonal" },
@@ -962,9 +962,9 @@ const GUARDIANS: Array<OpenerMeta & { file?: number; piece?: "q" | "r" | "b" | "
   { id: "gallery_docent", name: "Gallery Docent", flavor: "Please do not touch the g-file exhibit.", icon: "Frame", file: 6, tier: 2 },
   { id: "lighthouse_keeper", name: "Lighthouse Keeper", flavor: "The lamp swings round the moment trouble sails in.", icon: "Flashlight", file: 7, tier: 2 },
   { id: "lady_in_waiting", name: "Lady in Waiting", flavor: "She steps in front of the first blade, exactly once.", icon: "Crown", piece: "q", tier: 2 },
-  { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r" },
+  { id: "tower_warden", name: "Tower Warden", flavor: "First knock on the tower door gets a bolted answer.", icon: "Castle", piece: "r", tier: 2 },
   { id: "chapel_warden", name: "Chapel Warden", flavor: "The first heckler finds the pulpit warded.", icon: "Church", piece: "b", tier: 2 },
-  { id: "stable_groom", name: "Stable Groom", flavor: "Touch the horse and answer to the groom.", icon: "PawPrint", piece: "n" },
+  { id: "stable_groom", name: "Stable Groom", flavor: "Touch the horse and answer to the groom.", icon: "PawPrint", piece: "n", tier: 2 },
 ];
 
 function guardian(entry: (typeof GUARDIANS)[number]): Buff {
@@ -1157,7 +1157,7 @@ const SIDE_DOORS: Array<OpenerMeta & { files?: number[]; mode?: "in" | "out" }> 
   { id: "palace_gate", name: "Palace Gate", flavor: "The d- and e-pawns bow once and step through sideways.", icon: "Landmark", files: [3, 4] },
   { id: "cellar_hatch", name: "Cellar Hatch", flavor: "The edge files hide a trapdoor under the barrels.", icon: "Archive", files: [0, 1, 6, 7] },
   { id: "drawbridge_in", name: "Drawbridge", flavor: "Lowered once, toward the middle of things.", icon: "Castle", mode: "in" },
-  { id: "storm_door", name: "Storm Door", flavor: "When weather comes, pawns angle for the walls.", icon: "CloudRain", mode: "out" },
+  { id: "storm_door", name: "Storm Door", flavor: "When weather comes, pawns angle for the walls.", icon: "CloudRain", mode: "out", tier: 2 },
 ];
 
 function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {

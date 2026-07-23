@@ -1072,7 +1072,7 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_silken_net", name: "Silken Net", description: "Cast a net over a square you choose: every enemy piece except the king within one square of it is frozen for 1 of their turns.", flavor: "One throw, many flies.", icon: "Torus", fx: { motif: "jail" } },
+    { id: "hx4_silken_net", name: "Silken Net", description: "Cast a net over a square you choose: every enemy piece except the king within one square of it is frozen for 1 of their turns, save the strongest caught piece, which slips the mesh.", flavor: "One throw, many flies.", icon: "Torus", fx: { motif: "jail" } },
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -1081,8 +1081,17 @@ const T6: Buff[] = [
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
-        for (const sq of mySquares(api.board, api.opp)) {
-          if (cheb(sq, c) <= 1) freezeNow(api, sq, 1, "web");
+        const caught = mySquares(api.board, api.opp).filter(
+          (sq) => api.board.pieces[sq]!.type !== "k" && cheb(sq, c) <= 1,
+        );
+        if (caught.length === 0) return;
+        let spared = caught[0];
+        for (const sq of caught) {
+          const dv = PIECE_VAL[api.board.pieces[sq]!.type] - PIECE_VAL[api.board.pieces[spared]!.type];
+          if (dv > 0 || (dv === 0 && sq < spared)) spared = sq;
+        }
+        for (const sq of caught) {
+          if (sq !== spared) freezeNow(api, sq, 1, "web");
         }
       },
     ),

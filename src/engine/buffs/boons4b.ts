@@ -2092,11 +2092,13 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_house_of_banners", name: "House of Banners", tier: 7, category: "pieces", icon: "Flag",
-      description: "Up to two of your pawns that have reached the fifth rank or beyond are knighted where they stand.",
+      description: "Choose up to two of your pawns that have reached the fifth rank or beyond. After your opponent's next move, each chosen pawn still standing is knighted where it stands.",
       flavor: "Two fields, two banners, one very loud herald.", requires: ["p"] },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 2
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 2 || inst.state.pawns != null
           ? null
           : {
               kind: "square",
@@ -2106,17 +2108,24 @@ export const BOON_WAVE4B: Buff[] = [
               ),
               ...(picks.length > 0 ? { finishable: true } : {}),
             },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          const sq = k.square;
-          if (sq == null) continue;
+      effect: (inst, _api, picks) => {
+        if (inst.state.pawns != null) return;
+        inst.state.pawns = picks.map((k) => k.square).filter((s): s is Square => s != null);
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.pawns == null || move.color !== api.opp) return;
+        // Delayed payoff: the banners rise only after the opponent replies.
+        for (const sq of inst.state.pawns as Square[]) {
           const p = api.board.pieces[sq];
           if (!p || p.color !== api.me || p.type !== "p") continue;
           if (relRank(api.me, sq) < 5) continue;
           api.setPieceType(sq, "n");
         }
+        inst.spent = true;
       },
-    ),
+      status: (inst) =>
+        inst.state.pawns == null ? "activate to choose pawns" : "knighting after their reply",
+    },
   ),
   card(
     { id: "bn4_second_spring", name: "Second Spring", tier: 7, category: "pieces", icon: "Sprout",

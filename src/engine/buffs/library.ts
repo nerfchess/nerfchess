@@ -2331,10 +2331,41 @@ const TIER4: Buff[] = [
     })),
   ),
   def(
-    { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for 2 turns (still loses on capture).", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
-    timedAugment(2, (_m, inst, api) =>
-      mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
-    ),
+    { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for up to 2 of your turns, but the decree is spent the first turn a decreed move is available and your king does not take it (the king still loses on capture).", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 2;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        addNovel(
+          moves,
+          mySquares(api.board, api.me, "k").flatMap((sq) =>
+            slideMoves(api.board, sq, ALL_DIRS, inst.id),
+          ),
+        );
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.me || turnsLeft(inst) <= 0) return;
+        if (move.via === inst.id) {
+          // Took the decreed move: the grant runs down its normal window.
+          tickTurns(inst, move, api.me);
+          return;
+        }
+        // Did not take a decreed move this turn. If one was on offer (the king
+        // moved on its own, or is still in place with a decreed slide
+        // available), the charge is wasted now; otherwise just tick the timer.
+        const decreedAvailable =
+          move.piece === "k" ||
+          mySquares(api.board, api.me, "k").some(
+            (sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id).length > 0,
+          );
+        if (decreedAvailable) inst.spent = true;
+        else tickTurns(inst, move, api.me);
+      },
+      status: (inst) => `${turnsLeft(inst)} of your turns left`,
+    },
   ),
   def(
     { id: "purge", name: "Purge", description: "Remove one enemy piece below queen rank from the board.", tier: 6, category: "attack" },
@@ -2572,12 +2603,12 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "phantom_rook", name: "Phantom Rook", description: "Spawn a rook that vanishes after 4 turns, on any empty square in your half.", tier: 4, category: "pieces" },
+    { id: "phantom_rook", name: "Phantom Rook", description: "Choose an empty square in your half; after your opponent's next move a rook appears there and vanishes after 4 of your turns.", tier: 4, category: "pieces" },
     {
       kind: "activated",
       spendOnUse: false,
       targets: (inst, api, picks) =>
-        picks.length > 0 || inst.state.sq != null
+        picks.length > 0 || inst.state.sq != null || inst.state.pendingSq != null
           ? null
           : {
               kind: "square",
@@ -2586,12 +2617,27 @@ const TIER4: Buff[] = [
             },
       effect: (inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null || inst.state.sq != null || api.board.pieces[sq]) return;
-        api.place(sq, "r", api.me);
-        inst.state.sq = sq;
-        inst.state.turns = 4;
+        if (sq == null || inst.state.sq != null || inst.state.pendingSq != null || api.board.pieces[sq]) return;
+        // Delayed spawn: only mark the target now; the rook itself materializes
+        // after the opponent has replied (see onMovePlayed).
+        inst.state.pendingSq = sq;
       },
       onMovePlayed: (inst, move, api) => {
+        // Pending spawn: wait for the opponent's next move, then place the rook.
+        if (inst.state.pendingSq != null && inst.state.sq == null) {
+          if (move.color !== api.opp) return;
+          const sq = inst.state.pendingSq as Square;
+          inst.state.pendingSq = null;
+          if (api.board.pieces[sq]) {
+            // The chosen square was taken before the rook could appear: fizzle.
+            inst.spent = true;
+            return;
+          }
+          api.place(sq, "r", api.me);
+          inst.state.sq = sq;
+          inst.state.turns = 4;
+          return;
+        }
         if (inst.state.sq == null) return;
         trackBoundPiece(inst, move);
         if (inst.spent || move.color !== api.me) return;
@@ -2607,9 +2653,11 @@ const TIER4: Buff[] = [
         }
       },
       status: (inst) =>
-        inst.state.sq == null
-          ? "activate to place"
-          : `vanishes in ${turnsLeft(inst)} of your turns`,
+        inst.state.pendingSq != null
+          ? "the rook appears after their next move"
+          : inst.state.sq == null
+            ? "activate to place"
+            : `vanishes in ${turnsLeft(inst)} of your turns`,
     },
   ),
   def(

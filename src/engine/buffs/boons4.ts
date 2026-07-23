@@ -1547,11 +1547,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_sleepy_dust", name: "Sleepy Dust", tier: 2, category: "tempo", icon: "MoonStar",
-      description: "Sprinkle sleep over one enemy piece (their king excepted): it dozes through your opponent's next turn.",
+      description: "Sprinkle sleep over one enemy piece (their king excepted). After your opponent's next move, it dozes through their following turn. If they move the marked piece first, the sleep follows it.",
       flavor: "Straight from the sandman's coat pocket." },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : {
               kind: "square",
@@ -1560,14 +1562,29 @@ const BOON_WAVE4A: Buff[] = [
                 (sq) => api.board.pieces[sq]!.type !== "k",
               ),
             },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
-        const p = api.board.pieces[sq];
-        if (!p || p.color !== api.opp || p.type === "k") return;
-        addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1, skin: "sleep" });
+        if (sq == null || inst.state.sq != null) return;
+        inst.state.sq = sq;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null || move.color !== api.opp) return;
+        // The opponent has now made their next move; the sleep lands. If they
+        // moved the marked piece, it follows to the new square. turns:2 so the
+        // same-move tick (freeze runs on the opponent's turns) leaves exactly
+        // their following turn covered.
+        const target = move.from === sq ? move.to : sq;
+        const p = api.board.pieces[target];
+        if (p && p.color === api.opp && p.type !== "k") {
+          addEffect(api, { kind: "freeze", sq: target, owner: api.opp, turns: 2, skin: "sleep" });
+        }
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "choose a piece to lull" : "sleep falls after their reply",
+    },
   ),
   card(
     { id: "bn4_puddle_freeze", name: "Puddle Freeze", tier: 3, category: "tempo", icon: "CloudSnow",
