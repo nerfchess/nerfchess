@@ -725,8 +725,8 @@ const T2: Buff[] = [
     ),
   ),
   H2(
-    { id: "hx4_winded_monarch", name: "Winded Monarch", description: "For your opponent's next 4 turns, their king cannot move on two consecutive turns: after any king move, it must rest a turn.", flavor: "Stairs were involved.", icon: "HeartPulse", fx: { motif: "slow" } },
-    curse(4, (moves, api) => {
+    { id: "hx4_winded_monarch", name: "Winded Monarch", description: "For your opponent's next 4 turns, their king cannot move on two consecutive turns: after any king move, it must rest a turn. The first blocked king move slips through as one escape, then the restriction holds.", flavor: "Stairs were involved.", icon: "HeartPulse", fx: { motif: "slow" } },
+    escapeCurseBoard(4, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
@@ -806,11 +806,10 @@ const T2: Buff[] = [
     },
   ),
   H2(
-    { id: "hx4_tilted_crown", name: "Tilted Crown", description: "For your opponent's next 3 turns, their queen may only move diagonally. The crown slid over one eye.", flavor: "She can see the corners perfectly, thank you.", icon: "Crown", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves) =>
-      moves.filter(
-        (m) => m.piece !== "q" || Math.abs(FILE(m.to) - FILE(m.from)) === Math.abs(RANK(m.to) - RANK(m.from)),
-      ),
+    { id: "hx4_tilted_crown", name: "Tilted Crown", description: "For your opponent's next 3 turns, their queen may only move diagonally. Her first straight move slips through as one escape, then the restriction holds. The crown slid over one eye.", flavor: "She can see the corners perfectly, thank you.", icon: "Crown", fx: { motif: "anchor", pieces: ["q"] } },
+    escapeCurse(
+      3,
+      (m) => m.piece !== "q" || Math.abs(FILE(m.to) - FILE(m.from)) === Math.abs(RANK(m.to) - RANK(m.from)),
     ),
   ),
   H2(
@@ -828,8 +827,8 @@ const T2: Buff[] = [
     escapeCurse(3, (m, api) => m.piece !== "r" || relRank(api.opp, m.to) !== 1),
   ),
   H2(
-    { id: "hx4_two_step", name: "Two Step", description: "For your opponent's next 3 turns, no move may cover the same distance as their previous move. The dance master insists on variety.", flavor: "One long, one short. Feel the rhythm.", icon: "AudioLines", fx: { motif: "slow", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_two_step", name: "Two Step", description: "Starting after your opponent's next move, for their following 3 turns, no move may cover the same distance as their previous move. The dance master insists on variety.", flavor: "One long, one short. Feel the rhythm.", icon: "AudioLines", fx: { motif: "slow", pieces: "all" } },
+    delayedCurse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
@@ -915,8 +914,8 @@ const T2: Buff[] = [
     },
   ),
   H2(
-    { id: "hx4_tea_break", name: "Tea Break", description: "On your opponent's next turn, only pieces within 2 squares of their king may move. Everyone else is at tea.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
-    curse(1, (moves, api) => {
+    { id: "hx4_tea_break", name: "Tea Break", description: "On your opponent's next turn, only pieces within 2 squares of their king may move. The first piece from farther out slips through as one escape, then the restriction holds. Everyone else is at tea.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
+    escapeCurseBoard(1, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
       return moves.filter((m) => cheb(m.from, k) <= 2);
@@ -1013,8 +1012,8 @@ const T2: Buff[] = [
     curse(4, (moves, api) => moves.filter((m) => m.piece !== "k" || relRank(api.opp, m.to) <= 2)),
   ),
   H2(
-    { id: "hx4_slippery_scepter", name: "Slippery Scepter", description: "For your opponent's next 3 turns, their queen cannot move on two consecutive turns: after she moves, she must rest a turn to regrip the scepter.", flavor: "Gilded, jeweled, and impossible to hold.", icon: "Wand", fx: { motif: "slow", pieces: ["q"] } },
-    curse(3, (moves, api) => {
+    { id: "hx4_slippery_scepter", name: "Slippery Scepter", description: "Starting after your opponent's next move, for their following 3 turns, their queen cannot move on two consecutive turns: after she moves, she must rest a turn to regrip the scepter.", flavor: "Gilded, jeweled, and impossible to hold.", icon: "Wand", fx: { motif: "slow", pieces: ["q"] } },
+    delayedCurse(3, (moves, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {
         if (hist[i].color === api.opp) {
@@ -1523,8 +1522,8 @@ const T3: Buff[] = [
     }),
   ),
   H3(
-    { id: "hx4_court_gossip", name: "Court Gossip", description: "For your opponent's next 2 turns, none of their pieces may end a move adjacent to your queen: everyone is terrified of being mentioned.", flavor: "She keeps a list. Everyone has seen the list.", icon: "MessageCircle", fx: { motif: "anchor", pieces: "all" } },
-    curse(2, (moves, api) => {
+    { id: "hx4_court_gossip", name: "Court Gossip", description: "Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to your queen: everyone is terrified of being mentioned.", flavor: "She keeps a list. Everyone has seen the list.", icon: "MessageCircle", fx: { motif: "anchor", pieces: "all" } },
+    delayedCurse(2, (moves, api) => {
       const queens = mySquares(api.board, api.me, "q");
       if (queens.length === 0) return moves;
       return moves.filter((m) => m.piece === "k" || !queens.some((q) => cheb(m.to, q) <= 1));

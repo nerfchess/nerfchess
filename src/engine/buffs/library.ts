@@ -1910,8 +1910,8 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once.", tier: 4, category: "pieces" },
-    reviveOne(["q", "r", "b", "n", "p"], anyHalfZone),
+    { id: "resurrect", name: "Resurrect", description: "Bring back your strongest captured piece to your half, once. Using it spends your next unused reroll, if any.", tier: 4, category: "pieces" },
+    consumeRerollOnUse(reviveOne(["q", "r", "b", "n", "p"], anyHalfZone)),
   ),
   def(
     { id: "deflect", requires: ["q"], name: "Deflect", description: "Your queen cannot be captured for your opponent's next 4 turns.", tier: 4, category: "protection" },
@@ -2320,15 +2320,15 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "mass_recall", name: "Mass Recall", description: "Return any two pieces to your back rank, once.", tier: 4, category: "movement" },
-    relocateMany(2, backRankDest),
+    { id: "mass_recall", name: "Mass Recall", description: "Return any two pieces to your back rank, once. Using it spends your next unused reroll, if any.", tier: 4, category: "movement" },
+    consumeRerollOnUse(relocateMany(2, backRankDest)),
   ),
   def(
-    { id: "immobilizer", name: "Immobilizer", description: "One piece freezes all adjacent enemy pieces except kings while it stands there.", tier: 4, category: "tempo" },
-    bindPiece("Choose the immobilizer", bindCandidates(), {
+    { id: "immobilizer", name: "Immobilizer", description: "One piece freezes all adjacent enemy pieces except kings while it stands there. Using it spends your next unused reroll, if any.", tier: 4, category: "tempo" },
+    consumeRerollOnUse(bindPiece("Choose the immobilizer", bindCandidates(), {
       filterOpp: (moves, sq) =>
         moves.filter((m) => m.piece === "k" || !adjacent(m.from, sq)),
-    }),
+    })),
   ),
   def(
     { id: "royal_decree", name: "Royal Decree", description: "Your king gains queen movement for 2 turns (still loses on capture).", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
@@ -2658,8 +2658,8 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "grand_recall", requires: ["q"], name: "Grand Recall", description: "Return your queen (if on board) to any empty square in your half, once.", tier: 4, category: "movement" },
-    activated(
+    { id: "grand_recall", requires: ["q"], name: "Grand Recall", description: "Return your queen (if on board) to any empty square in your half, once. Using it spends your next unused reroll, if any.", tier: 4, category: "movement" },
+    consumeRerollOnUse(activated(
       (_inst, api, picks) => {
         if (picks.length === 0) {
           return {
@@ -2681,7 +2681,7 @@ const TIER4: Buff[] = [
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from != null && to != null && !api.board.pieces[to]) api.relocate(from, to);
       },
-    ),
+    )),
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
@@ -2792,8 +2792,8 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "buff_thief", name: "Buff Thief", description: "Steal one active buff of any tier from your opponent. Locked-in upgrades stay put.", tier: 5, category: "draft" },
-    stealBuffs(1, undefined, notLockedIn),
+    { id: "buff_thief", name: "Buff Thief", description: "Steal one active buff of any tier from your opponent. Locked-in upgrades stay put. Using it spends your next unused reroll, if any.", tier: 5, category: "draft" },
+    consumeRerollOnUse(stealBuffs(1, undefined, notLockedIn)),
   ),
   def(
     { id: "promotion_storm", name: "Promotion Storm", description: "All pawns on your 5th rank or beyond promote to knights.", tier: 6, category: "pieces" },
@@ -3432,8 +3432,8 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "warp_reign", requires: ["q"], name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for your opponent's next 3 turns.", tier: 4, category: "protection" },
-    activated(
+    { id: "warp_reign", requires: ["q"], name: "Warp Reign", description: "Swap the positions of your king and queen and shield both for your opponent's next 3 turns. Using it spends your next unused reroll, if any.", tier: 4, category: "protection" },
+    consumeRerollOnUse(activated(
       (_inst, api, picks) =>
         picks.length > 0
           ? null
