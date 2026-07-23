@@ -111,45 +111,6 @@ function backfillSpots(api: BuffApi): Square[] {
 
 const myHalfZone = (api: BuffApi) => (sq: Square) => inHalf(api.me, sq);
 
-export const TIER9: Buff[] = [
-  // --- Game-winning boons ---------------------------------------------------
-
-  // Ice Age: narrowed in the apex soft-nerf pass from the whole enemy army to
-  // three chosen pieces - still a three-turn deep-freeze, but the caster now
-  // picks exactly which enemy pieces (kings excepted) go solid.
-  apex(
-    {
-      id: "ice_age",
-      icon: "Snowflake",
-      name: "Ice Age",
-      description:
-        "Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns.",
-      category: "tempo",
-      flavor: "The board holds its breath.",
-      fx: { motif: "jail", pieces: "all" },
-    },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
-          ? null
-          : {
-              kind: "square",
-              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
-              squares: mySquares(api.board, api.opp).filter(
-                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
-              ),
-              ...(picks.length > 0 ? { finishable: true } : {}),
-            },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
-            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 3, skin: "ice" });
-          }
-        }
-      },
-    ),
-  ),
-
   // Regicide: your queen appears right next to the enemy king, then locks in the
   // execution. She cannot be captured for the opponent's next 2 turns, and every
   // enemy piece touching the king (kings excepted) freezes for the same 2 turns,
@@ -157,19 +118,19 @@ export const TIER9: Buff[] = [
   // run, so the opponent is never stranded. Soft-nerfed in the apex pass with a
   // second relocation, but the moved pieces are chain-guarded off the king until
   // the opponent replies, so it sets up the kill rather than landing it outright.
-  // Stays a tier-9 apex card (the whole apex band is tier 9/10, grant-only): the
-  // soft-nerf is mechanical, not a tier demotion, so it keeps the apex offer and
-  // every apex grant a pure tier-9/10 pull. Built explicitly (not via apex())
-  // only because it needs the two-target pick flow and the chain-king guard.
-  {
+  // Balance overhaul: demoted from the tier-9 apex band to a normal tier-8
+  // draftable (the owner's retier), so it lives OUTSIDE the TIER9 array; the
+  // apex offer and every apex grant stay a pure tier-9/10 pull. Built
+  // explicitly (not via apex()) because it needs the two-target pick flow and
+  // the chain-king guard.
+export const REGICIDE: Buff = {
     id: "regicide",
     icon: "Crown",
     name: "Regicide",
     description:
       "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
     category: "attack",
-    tier: 9,
-    special: true,
+    tier: 8,
     implemented: true,
     requires: ["q"],
     flavor: "The court has reached a verdict.",
@@ -238,7 +199,47 @@ export const TIER9: Buff[] = [
       // The moved pieces cannot land the killing blow until the opponent replies.
       api.bs.chainKingGuard = api.me;
     },
-  },
+  };
+
+export const TIER9: Buff[] = [
+  // --- Game-winning boons ---------------------------------------------------
+
+  // Ice Age: narrowed in the apex soft-nerf pass from the whole enemy army to
+  // three chosen pieces - still a three-turn deep-freeze, but the caster now
+  // picks exactly which enemy pieces (kings excepted) go solid.
+  apex(
+    {
+      id: "ice_age",
+      icon: "Snowflake",
+      name: "Ice Age",
+      description:
+        "Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns.",
+      category: "tempo",
+      flavor: "The board holds its breath.",
+      fx: { motif: "jail", pieces: "all" },
+    },
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 3
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to freeze (${picks.length + 1}/3)`,
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length > 0 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        for (const k of picks) {
+          if (k.square != null && api.board.pieces[k.square]?.color === api.opp) {
+            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 3, skin: "ice" });
+          }
+        }
+      },
+    ),
+  ),
+
 
   // Resurrection: your whole graveyard marches back. Every captured piece
   // (queen first, pawns last) returns to the board, filling your half from the

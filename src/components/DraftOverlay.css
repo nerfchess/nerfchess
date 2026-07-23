@@ -52,8 +52,18 @@
   .draft-fx:hover .card-juicy {
     transform: translateY(-3px);
   }
+  /* The tier edge / selection ring lives on .draft-fx__glow, a sibling of the
+     card that the hover lift above does NOT reach — so on pointer devices the
+     lifted face floated 3px above its own ring and the selected outline read
+     visibly off-center (touch has no hover, so it was never seen there). Lift
+     the ring by the same amount, on the same easing, so it stays concentric
+     with the face it frames. */
+  .draft-fx:hover .draft-fx__glow {
+    transform: translateY(-3px);
+  }
 }
-html[data-anim="off"] .draft-fx:hover .card-juicy {
+html[data-anim="off"] .draft-fx:hover .card-juicy,
+html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
   transform: none;
 }
 
@@ -775,6 +785,9 @@ html[data-anim="off"] .dock-pocket-flash { animation: none; }
   z-index: 0;
   pointer-events: none;
   border-radius: inherit;
+  /* Match the card face's hover-lift easing so the ring rises with it as one
+     piece (see the .draft-fx:hover lift rules above). */
+  transition: transform 160ms var(--ease-spring);
   opacity: calc(0.12 + var(--fx, 0) * 0.38);
   box-shadow:
     0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / calc(var(--fx, 0) * 0.3)),

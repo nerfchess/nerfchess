@@ -2,11 +2,11 @@
  "summary": {
   "total": 2443,
   "byKind": {
-   "buff": 965,
+   "buff": 966,
    "hex": 543,
    "boon": 418,
    "item": 129,
-   "apex": 28,
+   "apex": 27,
    "nerf": 360
   },
   "flagged": {
@@ -21,24 +21,6 @@
   "reviewed": 2384
  },
  "rows": [
-  {
-   "id": "regicide",
-   "name": "Regicide",
-   "kind": "apex",
-   "tier": 8,
-   "effect": "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
-   "trigger": "activated",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "attack|activated|effect+targets|2-turns|enemy|capture,freeze,king,move,n:2,n:2,queen,square,teleport",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/tier9.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
   {
    "id": "blackout",
    "name": "Blackout",
@@ -26021,6 +26003,24 @@
    "signature": "attack|activated|effect+targets|one-shot|enemy|king,move,queen,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "regicide",
+   "name": "Regicide",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
+   "trigger": "activated",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "attack|activated|effect+targets|2-turns|enemy|capture,freeze,king,move,n:2,n:2,queen,square,teleport",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/tier9.ts",
    "tests": [
     "lab-run-all.ts"
    ],

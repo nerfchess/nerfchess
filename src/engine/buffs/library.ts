@@ -10,7 +10,7 @@ import { MYSTIC_CARDS } from "./mystic";
 import { WILD_CARDS } from "./wild";
 import { CROSSREF_CARDS } from "./crossref";
 import { PT_CARDS } from "./pt";
-import { TIER9, TIER10 } from "./tier9";
+import { REGICIDE, TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
 import { OVERHAUL_CARDS } from "./overhaul";
 import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
@@ -6316,6 +6316,7 @@ export const ALL_BUFFS: Buff[] = [
   ...NEWJEANS_CARDS,
   ...ITEMS,
   ...OVERHAUL_CARDS,
+  REGICIDE,
   ...TIER9,
   ...TIER10,
 ];
