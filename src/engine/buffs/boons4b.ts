@@ -3182,16 +3182,22 @@ export const BOON_WAVE4B: Buff[] = [
         }
         addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
       },
-      onMovePlayed: (_inst, move, api) => {
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
         // The only protection is the king's safety; it lifts the moment the
         // protected piece (your king) makes a capture.
-        if (move.color !== api.me || move.piece !== "k" || !move.captured || move.captured === "k") {
+        if (move.color === api.me && move.piece === "k" && move.captured && move.captured !== "k") {
+          for (let i = api.bs.effects.length - 1; i >= 0; i--) {
+            const e = api.bs.effects[i];
+            if (e.kind === "king_safe" && e.owner === api.me) api.bs.effects.splice(i, 1);
+          }
+          inst.spent = true;
           return;
         }
-        for (let i = api.bs.effects.length - 1; i >= 0; i--) {
-          const e = api.bs.effects[i];
-          if (e.kind === "king_safe" && e.owner === api.me) api.bs.effects.splice(i, 1);
-        }
+        // The king's safety only covers the opponent's next turn; once they
+        // have moved it has expired, so stop watching (never touch a later
+        // king_safe granted by another card).
+        if (move.color === api.opp) inst.spent = true;
       },
       status: () => "winter holds",
     },
