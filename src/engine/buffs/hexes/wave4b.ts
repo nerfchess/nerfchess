@@ -1265,8 +1265,8 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_old_laws", name: "The Old Laws", description: "The ancient rulebook is enforced: for your opponent's next 4 turns there is no castling, no two square pawn advance, and no en passant.", flavor: "Before your fancy modern conveniences.", icon: "Scale", fx: { motif: "slow", pieces: ["p", "k"] } },
-    curse(4, (moves) =>
+    { id: "hx4_old_laws", name: "The Old Laws", description: "The ancient rulebook is enforced: for your opponent's next 4 turns there is no castling, no two square pawn advance, and no en passant. The first piece the old law would forbid may make one such move, then it binds fully.", flavor: "Before your fancy modern conveniences.", icon: "Scale", fx: { motif: "slow", pieces: ["p", "k"] } },
+    escapeCurse(4, (moves) =>
       moves.filter(
         (m) =>
           !m.castle &&
@@ -1321,9 +1321,9 @@ const T6: Buff[] = [
           : `${(inst.state.caps as number) ?? 0}/2 captures, ${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H6(
-    { id: "hx4_velvet_rope", name: "Velvet Rope", description: "Your back rank is roped off: your opponent's pieces cannot stop anywhere on it for their next 4 turns. No entry, no promotion party.", flavor: "Your name is not on the list.", icon: "Ban", fx: { motif: "blindfold", pieces: "all" } },
-    instant((_inst, api) => barNow(api, rankSquares(api.me === "w" ? 0 : 7), 4)),
+  hex(
+    { id: "hx4_velvet_rope", name: "Velvet Rope", description: "Your back rank is roped off: your opponent's pieces cannot stop anywhere on it for their next 3 turns. No entry, no promotion party.", flavor: "Your name is not on the list.", icon: "Ban", fx: { motif: "blindfold", pieces: "all" }, tier: 7 },
+    instant((_inst, api) => barNow(api, rankSquares(api.me === "w" ? 0 : 7), 3)),
   ),
   H6(
     { id: "hx4_narcolepsy", name: "Narcolepsy", description: "Two of your opponent's pieces, chosen at random (never the king), fall asleep mid campaign and are frozen for 1 of their turns.", flavor: "The war can wait five minutes.", icon: "BedDouble", fx: { motif: "jail" } },
@@ -1514,8 +1514,8 @@ const T7: Buff[] = [
     ),
   ),
   H7(
-    { id: "hx4_broken_supply", name: "Broken Supply", description: "Their supply wagons are looted: your opponent's next 3 drafted cards arrive nullified. They still pick; the cards do nothing.", flavor: "The crates arrived. The contents did not.", icon: "PackageX" },
-    nullifyDrafts(3),
+    { id: "hx4_broken_supply", name: "Broken Supply", description: "Their supply wagon is looted: your opponent's next drafted card arrives nullified. They still pick; the card does nothing.", flavor: "The crates arrived. The contents did not.", icon: "PackageX" },
+    nullifyDrafts(1),
   ),
   H7(
     { id: "hx4_tidal_wall", name: "Tidal Wall", description: "A wall of seawater stands across the middle of the board: your opponent's pieces cannot stop on either central rank (the 4th and 5th) for their next 2 turns.", flavor: "The tide takes sides.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },

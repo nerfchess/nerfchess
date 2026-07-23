@@ -1175,6 +1175,9 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
         ? " The step must angle toward the board's edge."
         : "";
   const lossy = entry.id === "drawbridge_in" || entry.id === "fire_escape" || entry.id === "palace_gate";
+  // The diagonal step already lands only on an empty square (teleportMoves), so
+  // this filter is explicit insurance matching the "cannot capture" wording.
+  const noCapture = entry.id === "revolving_door";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const dir = api.me === "w" ? 1 : -1;
     const out: Move[] = [];
@@ -1194,7 +1197,7 @@ function sideDoor(entry: (typeof SIDE_DOORS)[number]): Buff {
         out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
     }
-    return out;
+    return noCapture ? out.filter((m) => !m.captured) : out;
   };
   return opener(
     entry,
@@ -1229,6 +1232,12 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
     : "";
   const how = entry.diag ? "one square diagonally backward" : "one square straight backward";
   const uses = entry.uses ?? 1;
+  // The backward step already lands only on an empty square (teleportMoves), so
+  // this filter is explicit insurance matching the "cannot capture" wording.
+  const noCapture = entry.id === "sidestep_and_bow" || entry.id === "tactical_withdrawal";
+  // "A failed or illegal attempt still spends the charge": a turn where the
+  // retreat is on offer but not taken forfeits one charge (lossy stand-in).
+  const lossy = entry.id === "squires_errand";
   const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
     const back = api.me === "w" ? -1 : 1;
     const out: Move[] = [];
@@ -1242,9 +1251,11 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
         out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
     }
-    return out;
+    return noCapture ? out.filter((m) => !m.captured) : out;
   };
-  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}`;
+  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your pawns ${who}may step ${how} onto an empty square.${uses > 1 ? " The narrower district runs the errand twice." : ""}${
+    lossy ? " If the retreat is on offer on your turn but you play something else, the charge is spent." : ""
+  }`;
   if (entry.id === "edge_of_the_map") {
     // Preserve the narrow (edge-file) identity; if the retreat is never used by
     // the owner's 12th move, the remaining charge converts into one draft reroll.

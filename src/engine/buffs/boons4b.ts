@@ -2320,12 +2320,12 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_lightning_rod", name: "Lightning Rod", tier: 7, category: "tempo", icon: "Zap",
-      description: "The next 2 times your opponent puts your king in check, you immediately gain an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
+      description: "The next time your opponent puts your king in check, you immediately gain an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
       flavor: "Every strike grounds itself through you, and you keep the charge." },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.charges = 2;
+        inst.state.charges = 1;
       },
       onMovePlayed: (inst, move, api) => {
         const left = (inst.state.charges as number) ?? 0;
@@ -2334,7 +2334,7 @@ export const BOON_WAVE4B: Buff[] = [
         inst.state.charges = left - 1;
         if (left - 1 <= 0) inst.spent = true;
       },
-      status: (inst) => `${(inst.state.charges as number) ?? 2} charges left`,
+      status: (inst) => `${(inst.state.charges as number) ?? 1} charges left`,
     },
   ),
 
