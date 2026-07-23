@@ -153,14 +153,80 @@ export const FANTASY_SUMMONS: Buff[] = [
       icon: "Fence",
       name: "Wall of Thorns",
       description:
-        "A thicket of undying thorns bursts up around an empty square: your opponent can never enter any of the 8 squares around it, for the rest of the game.",
+        "A thicket of thorns bursts up around one of your pieces: the up to 8 squares surrounding it are barred to your opponent for 3 of their turns. If your opponent captures that piece, the wall of thorns falls at once.",
       tier: 6,
       category: "hex",
-      flavor: "Every branch is a spear, and none of them wither.",
+      flavor: "Every branch a spear, ringing the one it guards.",
       fx: { motif: "blindfold" },
     },
-    // 999 turns: outlasts any realistic game, so the card reads "for the game".
-    barNeighbors(999, "Choose the empty square the thorns burst from"),
+    // Balance pass: the thorns are no longer permanent and no longer seal an
+    // empty square. They ring one of your pieces (the center object): the up to
+    // 8 neighbors are barred against the opponent for 3 of their turns. The
+    // barred effect self-expires after 3 opponent turns; capturing the ringed
+    // piece lifts it early. The ring is fixed where it burst; the object piece
+    // is tracked as it moves so its capture is still detected.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.obj != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose one of your pieces for the thorns to ring",
+              squares: mySquares(api.board, api.me).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, api, picks) => {
+        const c = picks[0]?.square;
+        if (c == null || inst.state.obj != null) return;
+        const ring: Square[] = [];
+        for (const [df, dr] of ALL_DIRS) {
+          const f = FILE(c) + df, r = RANK(c) + dr;
+          if (inBoard(f, r)) ring.push(SQ(f, r));
+        }
+        if (ring.length) {
+          addEffect(api, { kind: "barred", squares: ring, against: api.opp, turns: 3 });
+        }
+        inst.state.obj = c;
+        inst.state.ring = ring;
+        inst.state.turns = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const obj = inst.state.obj as Square | undefined;
+        if (obj == null) return;
+        // Capturing the ringed piece tears the wall down at once.
+        if (move.to === obj && move.from !== obj && move.color === api.opp) {
+          const ring = (inst.state.ring as Square[]) ?? [];
+          const idx = api.bs.effects.findIndex(
+            (e) =>
+              e.kind === "barred" &&
+              e.against === api.opp &&
+              e.squares.length === ring.length &&
+              e.squares.every((s, i) => s === ring[i]),
+          );
+          if (idx >= 0) api.bs.effects.splice(idx, 1);
+          inst.spent = true;
+          inst.state.obj = undefined;
+          return;
+        }
+        // The ringed piece may wander; follow it so its capture is still caught.
+        if (move.from === obj) inst.state.obj = move.to;
+        // The barred ring runs for 3 of the opponent's turns, then lifts.
+        if (move.color !== api.opp) return;
+        const left = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = left;
+        if (left <= 0) {
+          inst.spent = true;
+          inst.state.obj = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.obj == null
+          ? "activate to raise the wall"
+          : `thorns hold for ${(inst.state.turns as number) ?? 0} of their turns`,
+    },
   ),
   card(
     {

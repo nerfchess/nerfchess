@@ -1761,13 +1761,17 @@ export const FRIENDLY_FIRE: Nerf = db({
 
 export const GOING_THE_DISTANCE: Nerf = db({
   id: "going_the_distance", name: "Going the Distance", tier: 6, implemented: true,
-  description: "Must move at least as far as opponent's last move, if able.",
+  description: "Must move at least as far as opponent's last move. If nothing reaches that far, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     const last = ctx.opponentLastMove;
     if (!last) return moves;
     const need = cheb(last.from, last.to);
     const filtered = moves.filter((m) => cheb(m.from, m.to) >= need);
-    return filtered.length ? filtered : moves;
+    if (filtered.length) return filtered;
+    // No compliant move exists (nothing reaches the required distance): allow a
+    // king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -1947,8 +1951,9 @@ export const OBSESSION: Nerf = db({
 
 export const BOXING_WITH_SHADOW: Nerf = db({
   id: "boxing_with_shadow", name: "Boxing with Shadow", tier: 6, implemented: true,
-  description: "When opponent moves, if you can move to the square they vacated, you must.",
+  description: "From your move 4 on, when opponent moves, if you can move to the square they vacated, you must.",
   filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // the rule starts on your move 4
     const last = ctx.opponentLastMove;
     if (!last) return moves;
     const hits = moves.filter((m) => m.to === last.from);
@@ -2079,7 +2084,7 @@ export const PRINCE_CHARMING: Nerf = db({
 
 export const ABSOLUTION: Nerf = db({
   id: "absolution", name: "Absolution", tier: 6, implemented: true,
-  description: "After a non-bishop captures, it must start a turn adjacent to a bishop before it can capture again.",
+  description: "After a non-bishop captures, it must start a turn adjacent to a bishop before it can capture again. If that would leave you no legal move, a king move is allowed.",
   filterMoves: (moves, _s, ctx) => {
     // Track per-source-square whether it captured (non-bishop) and hasn't been "absolved".
     const sinful = new Set<number>();
@@ -2096,7 +2101,12 @@ export const ABSOLUTION: Nerf = db({
     for (const sq of Array.from(sinful)) {
       if (bishops.some((b) => adj(b, sq))) sinful.delete(sq);
     }
-    return moves.filter((m) => !(m.captured && sinful.has(m.from)));
+    const filtered = moves.filter((m) => !(m.captured && sinful.has(m.from)));
+    if (filtered.length) return filtered;
+    // No compliant move exists (every legal move is a barred capture): allow a
+    // king move as the escape.
+    const kingMoves = moves.filter((m) => m.piece === "k");
+    return kingMoves.length ? kingMoves : moves;
   },
 });
 
@@ -2180,14 +2190,16 @@ export const LADIES_FIRST: Nerf = db({
 
 export const BRIDGE_OVER_TROUBLED_WATER: Nerf = db({
   id: "bridge_over_troubled_water", name: "Bridge Over Troubled Water", tier: 6, implemented: true,
-  description: "A river runs through the middle. Cross only via the center files.",
-  filterMoves: (moves) =>
-    moves.filter((m) => {
+  description: "A river runs through the middle. From your move 4 on, cross only via the center files.",
+  filterMoves: (moves, _s, ctx) => {
+    if (ctx.moveNumber < 3) return moves; // the rule starts on your move 4
+    return moves.filter((m) => {
       const r1 = RANK(m.from), r2 = RANK(m.to);
       const crosses = (r1 <= 3 && r2 >= 4) || (r1 >= 4 && r2 <= 3);
       if (!crosses) return true;
       return FILE(m.to) === 3 || FILE(m.to) === 4;
-    }),
+    });
+  },
 });
 
 export const ROYAL_BERTH: Nerf = db({

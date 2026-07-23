@@ -1087,7 +1087,7 @@ const T2: Buff[] = [
 
 const T3: Buff[] = [
   H3(
-    { id: "hx4_hobble_strap", name: "Hobble Strap", description: "Buckle a hobble onto one enemy piece (never the king): for your opponent's next 3 turns it may move at most 1 square at a time.", flavor: "It can still walk. It just cannot be dramatic about it.", icon: "Link", fx: { motif: "anchor" } },
+    { id: "hx4_hobble_strap", name: "Hobble Strap", description: "Buckle a hobble onto one enemy piece (never the king): starting after your opponent's next move, for their following 3 turns it may move at most 1 square at a time.", flavor: "It can still walk. It just cannot be dramatic about it.", icon: "Link", fx: { motif: "anchor" } },
     {
       kind: "activated",
       spendOnUse: false,
@@ -1101,10 +1101,11 @@ const T3: Buff[] = [
         if (sq == null) return;
         inst.state.sq = sq;
         inst.state.turns = 3;
+        inst.state.delay = 1;
       },
       filterOpponentMoves: (moves, inst) => {
         const sq = inst.state.sq as Square | undefined;
-        if (sq == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if (sq == null || (inst.state.delay as number) > 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const kept = moves.filter((m) => m.from !== sq || moveDist(m) <= 1);
         return kept.length > 0 ? kept : moves;
       },
@@ -1119,10 +1120,18 @@ const T3: Buff[] = [
           inst.spent = true;
           return;
         }
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          return;
+        }
         tickTurns(inst, move, api.opp);
       },
       status: (inst) =>
-        inst.state.sq == null ? "activate to hobble a piece" : `${turnsLeft(inst)} of their turns left`,
+        inst.state.sq == null
+          ? "activate to hobble a piece"
+          : (inst.state.delay as number) > 0
+            ? "the strap is not yet cinched"
+            : `${turnsLeft(inst)} of their turns left`,
     },
   ),
   H3(
@@ -1294,35 +1303,14 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_loyal_hound", name: "Loyal Hound", description: "A spectral hound sits directly in front of their king (on the square toward your side) and follows him for 3 of your opponent's turns: they cannot stop on that square.", flavor: "Good boy. Terrible omen.", icon: "Dog", fx: { motif: "blindfold" } },
-    {
-      kind: "instant",
-      init: (inst, api) => {
-        inst.state.turns = 3;
-        const k = oppKing(api);
-        if (k == null) {
-          inst.spent = true;
-          return;
-        }
-        const front = k + (api.opp === "w" ? 8 : -8);
-        if (front >= 0 && front <= 63) {
-          addEffect(api, { kind: "barred", squares: [front], against: api.opp, turns: 1 });
-        }
-      },
-      onMovePlayed: (inst, move, api) => {
-        if (move.color === api.opp && turnsLeft(inst) > 1) {
-          const k = oppKing(api);
-          if (k != null) {
-            const front = k + (api.opp === "w" ? 8 : -8);
-            if (front >= 0 && front <= 63) {
-              addEffect(api, { kind: "barred", squares: [front], against: api.opp, turns: 2 });
-            }
-          }
-        }
-        tickTurns(inst, move, api.opp);
-      },
-      status: (inst) => `the hound follows, ${turnsLeft(inst)} of their turns left`,
-    },
+    { id: "hx4_loyal_hound", name: "Loyal Hound", description: "A spectral hound sits directly in front of their king (on the square toward your side) and follows him for 3 of your opponent's turns: they cannot stop on that square. The first piece to try slips through as one escape, then the restriction holds.", flavor: "Good boy. Terrible omen.", icon: "Dog", fx: { motif: "blindfold" } },
+    escapeCurseBoard(3, (moves, api) => {
+      const k = oppKing(api);
+      if (k == null) return moves;
+      const front = k + (api.opp === "w" ? 8 : -8);
+      if (front < 0 || front > 63) return moves;
+      return moves.filter((m) => m.to !== front);
+    }),
   ),
   H3(
     { id: "hx4_restless_blades", name: "Restless Blades", description: "For your opponent's next 4 turns, their swords demand rhythm: if their previous move was quiet and a capture is available, they must capture.", flavor: "A blade left dry too long starts making decisions.", icon: "Sword", fx: { motif: "muzzle", pieces: "all" } },
@@ -1353,20 +1341,37 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_jam_on_the_row", name: "Jam on the Row", description: "Pick any square: every enemy piece on that rank (never the king) is stuck in spilled jam and frozen for 1 of their turns.", flavor: "The whole row is sticky and nobody is confessing.", icon: "Cherry", fx: { motif: "jail" } },
-    activated(
-      (_inst, _api, picks) =>
-        picks.length > 0
+    { id: "hx4_jam_on_the_row", name: "Jam on the Row", description: "Pick any square: starting after your opponent's next move, every enemy piece then on that rank (never the king) is stuck in spilled jam and frozen for 1 of their turns.", flavor: "The whole row is sticky and nobody is confessing.", icon: "Cherry", fx: { motif: "jail" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, _api, picks) =>
+        picks.length > 0 || inst.state.rank != null
           ? null
           : { kind: "square", label: "Pick any square on the rank to jam", squares: Array.from({ length: 64 }, (_, i) => i) },
-      (_inst, api, picks) => {
+      effect: (inst, _api, picks) => {
+        if (inst.state.rank != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        for (const s of mySquares(api.board, api.opp)) {
-          if (RANK(s) === RANK(sq)) freezeNow(api, s, 1, "honey");
+        inst.state.rank = RANK(sq);
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.rank == null || inst.spent) return;
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          if ((inst.state.delay as number) <= 0) {
+            const rank = inst.state.rank as number;
+            for (const s of mySquares(api.board, api.opp)) {
+              if (RANK(s) === rank) sting(api, s, 1, "honey");
+            }
+            inst.spent = true;
+          }
         }
       },
-    ),
+      status: (inst) =>
+        inst.state.rank == null ? "activate to choose a rank" : "the jam spreads next turn",
+    },
   ),
   H3(
     { id: "hx4_no_sidling", name: "No Sidling", description: "For your opponent's next 3 turns, purely horizontal moves are forbidden: every move must change rank. The first horizontal move slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "Approach or retreat. The crab act fools no one.", icon: "MoveVertical", fx: { motif: "anchor", pieces: "all" } },
@@ -1497,11 +1502,30 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_soft_shells", name: "Soft Shells", description: "Two of your opponent's pawns, chosen at random, molt into walnuts for 2 of their turns: one square shuffles only.", flavor: "Between armors, everything is tender.", icon: "Shell", fx: { motif: "anchor", pieces: ["p"] } },
-    instant((_inst, api) => {
-      const pool = mySquares(api.board, api.opp, "p");
-      for (const sq of drawRandom(api, pool, 2)) nutNow(api, sq, 2);
-    }),
+    { id: "hx4_soft_shells", name: "Soft Shells", description: "Two of your opponent's pawns, chosen at random, molt into walnuts for 2 of their turns: one square shuffles only. The first affected pawn gets one legal escape move before it molts.", flavor: "Between armors, everything is tender.", icon: "Shell", fx: { motif: "anchor", pieces: ["p"] } },
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const picks = drawRandom(api, mySquares(api.board, api.opp, "p"), 2);
+        // The second pawn molts at once; the first affected pawn gets one legal
+        // escape move, then molts wherever it lands.
+        if (picks.length >= 2) nutNow(api, picks[1], 2);
+        inst.state.sq = picks[0] ?? null;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        const sq = (inst.state.sq as Square | null | undefined) ?? null;
+        if (sq == null) {
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(sq, move);
+        if (now != null) nutSting(api, now, 2);
+        inst.spent = true;
+      },
+      status: (inst) =>
+        !inst.spent && inst.state.sq != null ? "one escape move remains, then it molts" : null,
+    },
   ),
   hex(
     { id: "hx4_caught_mid_stride", name: "Caught Mid Stride", description: "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.", flavor: "The world blinked and one soldier forgot to.", icon: "Camera", fx: { motif: "jail" }, tier: 4 },
