@@ -1755,17 +1755,16 @@ const T6: Buff[] = [
         api.place(sq, "n", api.me);
         inst.state.sq = sq;
         inst.state.turns = 6;
-        // Seed the aura for the victim's first turn (added on my turn: 1 turn).
-        const ring0: Square[] = [];
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const f = FILE(sq) + df;
-            const r = RANK(sq) + dr;
-            if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) ring0.push(SQ(f, r));
-          }
-        }
-        if (ring0.length) addEffect(api, { kind: "barred", squares: ring0, against: api.opp, turns: 1 });
+      },
+      filterOpponentMoves: (moves, inst) => {
+        const sq = inst.state.sq as Square | null | undefined;
+        if (sq == null || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        // Bar the ring of squares around the effigy - but a piece already
+        // standing inside that ring may leave normally, so only non-capturing
+        // moves whose ORIGIN is outside the ring are blocked from entering it.
+        const inRing = (s: Square) => s !== sq && cheb(s, sq) === 1;
+        const kept = moves.filter((m) => !inRing(m.to) || inRing(m.from) || m.captured);
+        return kept.length > 0 ? kept : moves;
       },
       onMovePlayed: (inst, move, api) => {
         let sq = (inst.state.sq as Square | null | undefined) ?? null;
@@ -1775,18 +1774,6 @@ const T6: Buff[] = [
         if (sq == null) {
           inst.spent = true; // effigy smashed
           return;
-        }
-        if (move.color === api.opp && turnsLeft(inst) > 0) {
-          const ring: Square[] = [];
-          for (let df = -1; df <= 1; df++) {
-            for (let dr = -1; dr <= 1; dr++) {
-              if (df === 0 && dr === 0) continue;
-              const f = FILE(sq) + df;
-              const r = RANK(sq) + dr;
-              if (inBoard(f, r) && !api.board.pieces[SQ(f, r)]) ring.push(SQ(f, r));
-            }
-          }
-          if (ring.length) addEffect(api, { kind: "barred", squares: ring, against: api.opp, turns: 2 });
         }
         // On expiry, topple the effigy (it was never really theirs to keep).
         if (turnsLeft(inst) === 1 && move.color === api.opp) {
@@ -1810,7 +1797,7 @@ const T6: Buff[] = [
       id: "hw3_avalanche",
       name: "Avalanche",
       description:
-        "Snow gathers silently over their half for 3 of their turns, then comes down all at once. For the 3 turns after it falls, their pieces may not move onto any empty square in their own half - only captures and moves into your half remain. Whatever ground they already hold is safe footing, so spreading out before it drops is the counter. If it ever leaves them no move, they play freely that turn.",
+        "Snow gathers silently over their half for 3 of their turns, then comes down all at once. For the 3 turns after it falls, their pieces may not move onto any empty square in their own half - only captures and moves into your half remain - except the first piece they move once it falls gets one legal escape move onto open ground. Whatever ground they already hold is safe footing, so spreading out before it drops is the counter. If it ever leaves them no move, they play freely that turn.",
       flavor: "Quiet, quiet, quiet, and then the whole mountainside.",
       fx: { motif: "blindfold" },
     },

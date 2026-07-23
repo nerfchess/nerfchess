@@ -22,7 +22,6 @@ import {
   instant,
   mySquares,
   myHalfZone,
-  placePieces,
   relRank,
   removeEnemies,
   reviveOne,
@@ -402,12 +401,49 @@ export const FUNNY_META: Buff[] = [
       id: "smurf_account",
       name: "Smurf Account",
       description:
-        "A suspiciously strong new player joins your side mid-game: place a fresh rook on an empty square in your half.",
+        "A suspiciously strong new player joins your side mid-game: choose an empty square in your half, and a fresh rook drops in there right after your opponent's next move, so it cannot capture before they reply.",
       tier: 6,
       category: "pieces",
       flavor: "Total games played: 3. Accuracy: 99 percent.",
     },
-    placePieces(["r"], myHalfZone),
+    // Preserve the spawn and its chosen location, but the rook (the only, and so
+    // highest-value, spawn) only lands after the opponent replies: it cannot
+    // capture until then. If its square was taken meanwhile, it drops on the
+    // first open half-square instead so the reinforcement is never lost.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose where the smurf drops in",
+              squares: emptySquares(api.board, myHalfZone(api)),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.sq == null || move.color !== api.opp) return;
+        let sq = inst.state.sq as Square;
+        if (api.board.pieces[sq]) {
+          const open = emptySquares(api.board, myHalfZone(api));
+          if (open.length === 0) {
+            inst.spent = true;
+            inst.state.sq = undefined;
+            return;
+          }
+          sq = open[0];
+        }
+        api.place(sq, "r", api.me);
+        inst.spent = true;
+        inst.state.sq = undefined;
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to call in a smurf" : "smurf arrives after their reply",
+    },
   ),
   card(
     {

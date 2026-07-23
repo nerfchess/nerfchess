@@ -1301,6 +1301,77 @@ function deadLetter(entry: (typeof DEAD_LETTERS)[number]): Buff {
     );
   }
 
+  if (entry.id === "first_class_stamp") {
+    // Replace: keep the straight-ahead capture, and reward the delivery. The
+    // clock gain is a no-op in an untimed game, so the reroll is always granted
+    // alongside it (matching the roster's timed/untimed idiom); in untimed play
+    // only the reroll is felt.
+    return opener(
+      entry,
+      "Once, your f-file pawn may capture the enemy piece directly ahead; when it does you gain 5 seconds and one draft reroll. In untimed games only the reroll applies.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 5) continue;
+            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+              if (m.captured) out.push(m);
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id) return;
+          api.adjustClock({ addSelfSec: 5 });
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.state.charges = 0;
+          inst.spent = true;
+        },
+        status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "special delivery" : null),
+      },
+    );
+  }
+
+  if (entry.id === "general_delivery") {
+    // Replace: keep the straight-ahead capture; the captured piece becomes
+    // public draft intel, revealing the tier of the opponent's next offer.
+    return opener(
+      entry,
+      "Once, your g-file pawn may capture the enemy piece directly ahead; doing so reveals the tier of your opponent's next draft offer.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const dir: readonly [number, number] = api.me === "w" ? [0, 1] : [0, -1];
+          const out: Move[] = [];
+          for (const sq of mySquares(api.board, api.me, "p")) {
+            if (FILE(sq) !== 6) continue;
+            for (const m of slideMoves(api.board, sq, [dir], inst.id, 1)) {
+              if (m.captured) out.push(m);
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id || !move.captured) return;
+          api.mine.flags.seeOppTier = true;
+          inst.state.charges = 0;
+          inst.spent = true;
+        },
+        status: (inst) => (((inst.state.charges as number) ?? 0) > 0 ? "general delivery" : null),
+      },
+    );
+  }
+
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may capture the enemy piece directly in front of it.`,
@@ -1340,19 +1411,23 @@ function siteWork(entry: (typeof SITE_WORKS)[number]): Buff {
   const lineText =
     entry.line === "fwd" ? "straight forward" : entry.line === "lat" ? "sideways along its rank" : "along its diagonals";
   const owner = entry.type === "q" ? "your queen" : `one of your ${names[entry.type]}`;
+  const lossy = entry.id === "freight_elevator";
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const dir = api.me === "w" ? 1 : -1;
+    const dirs: readonly (readonly [number, number])[] =
+      entry.line === "fwd" ? [[0, dir]] : entry.line === "lat" ? [[1, 0], [-1, 0]] : DIAG_DIRS;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, entry.type)) {
+      out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, entry.through));
+    }
+    return out;
+  };
   return opener(
     entry,
-    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond as normal.`,
-    augment((_moves, inst, api) => {
-      const dir = api.me === "w" ? 1 : -1;
-      const dirs: readonly (readonly [number, number])[] =
-        entry.line === "fwd" ? [[0, dir]] : entry.line === "lat" ? [[1, 0], [-1, 0]] : DIAG_DIRS;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, entry.type)) {
-        out.push(...phasingSlideMoves(api.board, sq, dirs, inst.id, entry.through));
-      }
-      return out;
-    }),
+    `Once, ${owner} may slide ${lineText} passing through up to ${entry.through} friendly piece${entry.through > 1 ? "s" : ""} (never capturing them), landing beyond as normal.${
+      lossy ? " If the slide is on offer on your turn but you play something else, the charge is spent." : ""
+    }`,
+    lossy ? lossyAugment(gen) : augment(gen),
   );
 }
 

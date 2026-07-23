@@ -1358,7 +1358,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_spelltheft",
       icon: "WandSparkles",
       name: "Spelltheft",
-      description: "A trade, technically: steal any one of your opponent's unused buffs, but the spell demands payment: your own lowest-tier unused card goes to them in exchange.",
+      description: "A trade, technically: steal any one of your opponent's unused buffs, but the spell demands payment: your own lowest-tier unused card goes to them in exchange. Casting it also spends one of your draft rerolls, if you have any.",
       tier: 5,
       category: "draft",
       flavor: "Nice card. Mine now. Here, have this one.",
@@ -1391,6 +1391,8 @@ export const WILD_ARCANE: Buff[] = [
             api.theirs.buffs.push(paid);
           }
         }
+        // Balance: casting also consumes the next unused reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     },
   ),

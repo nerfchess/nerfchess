@@ -513,7 +513,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_stage_fright",
       name: "Stage Fright",
-      description: "The spotlight waits for her: the next time your opponent's queen moves, stage fright strikes and she freezes where she lands for 2 of their turns.",
+      description: "The spotlight waits for her: the next time your opponent's queen moves, she freezes where she lands for one of their turns. But if that move gives check, stage fright hits harder and she becomes a walnut that can only shuffle one square at a time for two of their turns instead.",
       tier: 3,
       category: "hex",
       flavor: "All those eyes, and she just blanks.",
@@ -525,9 +525,16 @@ export const WILD_CHAOS: Buff[] = [
         if (move.color !== api.opp || move.piece !== "q") return;
         const p = api.board.pieces[move.to];
         if (p && p.color === api.opp && p.type === "q") {
-          // Added during their own move, so the shared post-move tick eats
-          // one turn immediately: 3 here leaves 2 of their turns frozen.
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 3 });
+          const myKing = mySquares(api.board, api.me, "k")[0];
+          const givesCheck = myKing != null && queenAttacks(api, move.to, myKing);
+          // Added during their own move, so the shared post-move tick eats one
+          // turn immediately: a check turns her into a two-turn walnut (turns 3
+          // leaves 2), otherwise a one-turn freeze (turns 2 leaves 1).
+          if (givesCheck) {
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 3 });
+          } else {
+            addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2 });
+          }
         }
         inst.spent = true;
       },
