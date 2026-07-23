@@ -285,15 +285,18 @@ function assertConverged(env, label) {
   opMove(env, "e7e5");
   opMove(env, "d1h5");
   opMove(env, "b8c6");
-  opMove(env, "h5f7"); // Qxf7: the capture detonates g8/f8/g7 on the server
+  opMove(env, "h5f7"); // Qxf7: the capture removes ONE adjacent enemy on the server
   const fired = env.server.buffs.lastHookMutations || [];
   check(
     fired.some((f) => f.color === "w" && f.index === 0),
     "detonation_field: engine did not log the fired hook",
   );
-  check(!env.server.board.pieces[sq("g8")], "detonation_field: server g8 survived the blast");
-  check(!env.server.board.pieces[sq("f8")], "detonation_field: server f8 survived the blast");
-  check(!env.server.board.pieces[sq("g7")], "detonation_field: server g7 survived the blast");
+  // Balance pass: each capture now removes only the single most valuable
+  // adjacent enemy non-king (the g8 knight beats the f8 bishop on ALL_DIRS
+  // order, then the g7 pawn) — no full-neighbourhood detonation, no chain.
+  check(!env.server.board.pieces[sq("g8")], "detonation_field: server g8 (the top pick) survived the blast");
+  check(!!env.server.board.pieces[sq("f8")], "detonation_field: f8 should survive (only one piece falls)");
+  check(!!env.server.board.pieces[sq("g7")], "detonation_field: g7 should survive (only one piece falls)");
   check(!!env.server.board.pieces[sq("e8")], "detonation_field: the king must survive");
   assertConverged(env, "detonation_field");
 
@@ -424,16 +427,24 @@ function assertConverged(env, label) {
   opPick(env, "w", "oblivion", 10); // masked at pick (activated)
   opMove(env, "e2e4");
   opMove(env, "e7e5");
-  check(opUse(env, "w", 0, []), "oblivion: activation failed");
-  const blackLeft = [];
+  // Balance pass: no longer a lone-king wipe. Oblivion destroys UP TO FIVE
+  // chosen enemy non-kings (and restores up to five of your own losses). The
+  // chosen removals must land byte-identically on both sides.
+  const doomed = ["a8", "b8", "c8", "d8", "h8"];
+  check(opUse(env, "w", 0, doomed.map((s) => ({ square: sq(s) }))), "oblivion: activation failed");
+  for (const s of doomed) {
+    check(!env.server.board.pieces[sq(s)], `oblivion: server ${s} survived the purge`);
+    check(!env.replica.board.pieces[sq(s)], `oblivion: replica ${s} survived (mass removal did not replicate)`);
+  }
+  let blackLeft = 0;
   for (let i = 0; i < 64; i++) {
     const p = env.server.board.pieces[i];
-    if (p && p.color === "b") blackLeft.push(p.type);
+    if (p && p.color === "b") blackLeft++;
   }
-  check(
-    blackLeft.length === 1 && blackLeft[0] === "k",
-    `oblivion: server left ${blackLeft.join(",") || "nothing"} (expected a lone king)`,
-  );
+  // Sixteen black pieces, five destroyed: eleven stand (the rest of the army
+  // is untouched — no full wipe), including the king.
+  check(blackLeft === 11, `oblivion: expected 11 black pieces after five fall, saw ${blackLeft}`);
+  check(!!env.server.board.pieces[sq("f8")], "oblivion: an untargeted black piece was wrongly removed");
   check(!!env.server.board.pieces[sq("e8")], "oblivion: the black king must survive");
   check(env.server.buffs.historyDiverged === true, "oblivion: historyDiverged not set");
   check(env.replica.buffs.historyDiverged === true, "oblivion: replica historyDiverged not set");
@@ -461,26 +472,31 @@ function assertConverged(env, label) {
   opPick(env, "w", "culling", 9); // masked at pick (activated)
   check(opUse(env, "w", 0, []), "culling: activation failed (arming)");
   const before = countBlack(env.server);
-  opMove(env, "e7e5"); // black moves; white's culling hook removes a black piece
+  // Balance pass: activation MARKS two random enemy pieces on the seeded rng
+  // (same draw on both replicas). One is doomed via a timed_loss that fires
+  // after the opponent's next completed turn; the other is only frozen. So
+  // exactly ONE piece ever dies, and it dies through the synced effect timer,
+  // not an rng-in-hook draw — both replicas must land the identical victim.
+  opMove(env, "e7e5"); // black completes a turn; the doomed piece falls
   check(
     countBlack(env.server) === before - 1,
-    "culling: server did not remove a black piece on the first tick",
+    "culling: server did not remove the doomed piece after the reply",
   );
   check(
     countBlack(env.replica) === before - 1,
-    "culling: replica did not remove the same black piece (rng-in-hook desync)",
+    "culling: replica did not remove the same doomed piece (marked-removal desync)",
   );
   check(!!env.server.board.pieces[sq("e8")], "culling: the black king must never be the victim");
   assertConverged(env, "culling-1");
-  opMove(env, "a2a3"); // white reply: no hook (it only fires on black moves)
-  opMove(env, "d7d5"); // black moves again; the second charge fires
+  opMove(env, "a2a3"); // white reply
+  opMove(env, "d7d5"); // black again; the freeze merely expires, no second death
   check(
-    countBlack(env.server) === before - 2,
-    "culling: server did not remove a second black piece on the next tick",
+    countBlack(env.server) === before - 1,
+    "culling: a second black piece was wrongly removed (only one dies now)",
   );
   check(
-    countBlack(env.replica) === before - 2,
-    "culling: replica second removal diverged",
+    countBlack(env.replica) === before - 1,
+    "culling: replica second-tick diverged",
   );
   assertConverged(env, "culling-2");
 }
@@ -872,7 +888,13 @@ function bareBoard(seed) {
   opPick(env, "w", "wa_banish", 3); // activated targeted removal, masked at pick
   opMove(env, "e2e4");
   opMove(env, "b8c6"); // a black knight to banish
-  check(opUse(env, "w", 0, [{ square: sq("c6") }]), "banish: activation failed");
+  // Balance pass: the banish is DELAYED. Activation only marks the target
+  // (a turn-consuming activation, so the turn passes to black); the piece is
+  // removed after black plays one reply move.
+  check(opUse(env, "w", 0, [{ square: sq("c6") }]), "banish: activation (mark) failed");
+  check(!!env.server.board.pieces[sq("c6")], "banish: knight removed early (the mark must wait for the reply)");
+  check(!!env.replica.board.pieces[sq("c6")], "banish: replica removed the knight early");
+  opMove(env, "e7e5"); // black's reply lands the banish
   check(!env.server.board.pieces[sq("c6")], "banish: server knight survived the removal");
   check(
     !env.replica.board.pieces[sq("c6")],
@@ -970,14 +992,21 @@ function bareBoard(seed) {
   };
   setup(env.server);
   setup(env.replica);
-  opPick(env, "w", "atomic_reaction", 6); // passive chain explosion, masked at pick
-  opMove(env, "d1d5"); // Rxd5: detonates the whole ring in one action
-  for (const s of ["c5", "e5", "c6", "d6", "e6"]) {
+  opPick(env, "w", "atomic_reaction", 6); // passive beside-blast, masked at pick
+  opMove(env, "d1d5"); // Rxd5: detonates the two enemies immediately beside d5
+  // Balance pass: the blast is now only the two squares immediately LEFT and
+  // RIGHT of the captured square (c5, e5), kings aside, and never chains.
+  for (const s of ["c5", "e5"]) {
     check(!env.server.board.pieces[sq(s)], `atomic_reaction: server ${s} survived the blast`);
     check(
       !env.replica.board.pieces[sq(s)],
-      `atomic_reaction: replica ${s} survived (multi-piece explosion not fully replicated)`,
+      `atomic_reaction: replica ${s} survived (beside-blast not fully replicated)`,
     );
+  }
+  // The rank-above ring is outside the beside-blast and never chains.
+  for (const s of ["c6", "d6", "e6"]) {
+    check(!!env.server.board.pieces[sq(s)], `atomic_reaction: server ${s} should survive (no chain / not beside)`);
+    check(!!env.replica.board.pieces[sq(s)], `atomic_reaction: replica ${s} should survive`);
   }
   check(!!env.server.board.pieces[sq("a8")], "atomic_reaction: black king must survive the blast");
   assertConverged(env, "atomic_reaction-chain");
@@ -1054,13 +1083,16 @@ function bareBoard(seed) {
   );
   opMove(env, "a8b7"); // black tempo move
   opMove(env, "d3f5"); // Qxf5: real blast, charge 2 -> 1, revealed with pre-move charge
-  for (const s of ["e5", "g5", "f6"]) {
-    check(!env.server.board.pieces[sq(s)], `charge-sync: server ${s} survived the blast`);
-    check(
-      !env.replica.board.pieces[sq(s)],
-      `charge-sync: replica ${s} survived (charged explosion did not re-sync via the reveal)`,
-    );
-  }
+  // Balance pass: the blast removes only the single most valuable adjacent
+  // non-king (the g5 bishop wins on ALL_DIRS order over the e5 knight / f6
+  // bishop). The re-sync via the reveal must land that same one removal.
+  check(!env.server.board.pieces[sq("g5")], "charge-sync: server g5 (the top pick) survived the blast");
+  check(
+    !env.replica.board.pieces[sq("g5")],
+    "charge-sync: replica g5 survived (charged blast did not re-sync via the reveal)",
+  );
+  check(!!env.server.board.pieces[sq("e5")], "charge-sync: e5 should survive (only one piece falls)");
+  check(!!env.server.board.pieces[sq("f6")], "charge-sync: f6 should survive (only one piece falls)");
   check(
     (env.server.buffs.players.w.buffs[0].state.charges ?? null) ===
       (env.replica.buffs.players.w.buffs[0].state.charges ?? null),
