@@ -74,7 +74,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "cast_a_nerf",
       name: "Cast a Nerf",
-      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns, and their next drafted card arrives nullified.",
+      description: "Cast a nerf on your opponent: they cannot capture for their next 2 turns, though the first piece caught by the curse may still make one capture. Their next drafted card arrives nullified.",
       tier: 5,
       flavor: "If you cannot beat them, nerf them.",
       fx: { motif: "muzzle", pieces: "all" },
@@ -95,11 +95,29 @@ export const CROSSREF_CARDS: Buff[] = [
       },
       filterOpponentMoves: (moves, inst) => {
         if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
-        const kept = moves.filter((m) => !m.captured);
+        const escapeUsed = !!inst.state.escapeUsed;
+        // The first affected piece gets one legal escape move: until that
+        // escape is spent, the lowest-indexed enemy piece with a capture keeps
+        // its captures; every other piece still cannot capture.
+        let exempt: Square | null = null;
+        if (!escapeUsed) {
+          for (const m of moves) {
+            if (m.captured && (exempt == null || m.from < exempt)) exempt = m.from;
+          }
+        }
+        const kept = moves.filter(
+          (m) => !m.captured || (!escapeUsed && m.from === exempt),
+        );
         return kept.length > 0 ? kept : moves;
       },
-      // Ticks on the cursed side's moves so "their next 2 turns" is exact.
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      // Ticks on the cursed side's moves so "their next 2 turns" is exact; the
+      // first capture the opponent lands spends the one-time escape.
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.escapeUsed && move.color === api.opp && move.captured) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),
@@ -136,7 +154,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "royal_handicap",
       name: "Royal Handicap",
-      description: "Nerf the crown itself: the patch removes diagonal movement from your opponent's king for their next 4 turns.",
+      description: "Nerf the crown itself: for your opponent's next 4 turns the patch removes diagonal movement from their king, save one diagonal escape step the king may still take once.",
       tier: 5,
       flavor: "Please look forward to the royal rework in a future season.",
       fx: { motif: "anchor", pieces: ["k"] },
@@ -152,16 +170,32 @@ export const CROSSREF_CARDS: Buff[] = [
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.turns as number) ?? 0) <= 0) return moves;
+        const escapeUsed = !!inst.state.escapeUsed;
         const kept = moves.filter(
           (m) =>
             m.piece !== "k" ||
             FILE(m.to) === FILE(m.from) ||
-            RANK(m.to) === RANK(m.from),
+            RANK(m.to) === RANK(m.from) ||
+            // The king gets one legal escape move: one diagonal step is allowed
+            // until it is actually taken, then the patch bites.
+            !escapeUsed,
         );
         // Safety net: never strand the opponent with zero moves.
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        // Spend the escape when the king actually takes a diagonal step.
+        if (
+          !inst.state.escapeUsed &&
+          move.color === api.opp &&
+          move.piece === "k" &&
+          FILE(move.to) !== FILE(move.from) &&
+          RANK(move.to) !== RANK(move.from)
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),

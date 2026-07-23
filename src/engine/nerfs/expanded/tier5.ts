@@ -5,6 +5,7 @@
 
 import { Nerf } from "./shared";
 import {
+  nerf,
   tierNerf,
   filter,
   relRank,
@@ -22,8 +23,8 @@ const N = tierNerf(5);
 const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
 export const NERFS_T5: Nerf[] = [
-  N(
-    { id: "defanged_queen", name: "Defanged Queen", description: "Your queen can't capture and can't give check.", flavor: "All crown, no claws.", icon: "crown" },
+  nerf(
+    { id: "defanged_queen", name: "Defanged Queen", description: "Your queen can't capture and can't give check.", flavor: "All crown, no claws.", icon: "crown", tier: 6 },
     {
       filterMoves: (moves, _state, ctx) => {
         const opp = other(ctx.me);
