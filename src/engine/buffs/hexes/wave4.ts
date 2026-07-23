@@ -1432,10 +1432,26 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_cobweb_corners", name: "Cobweb Corners", description: "Great webs fill all four corners: for your opponent's next 3 turns, their pieces may not stop on the corner squares or the diagonal squares beside them (b2, g2, b7, g7).", flavor: "Something with eight legs pays the rent there now.", icon: "Webhook", fx: { motif: "blindfold" } },
-    instant((_inst, api) => {
-      barNow(api, [SQ(0, 0), SQ(7, 0), SQ(0, 7), SQ(7, 7), SQ(1, 1), SQ(6, 1), SQ(1, 6), SQ(6, 6)], 3);
-    }),
+    { id: "hx4_cobweb_corners", name: "Cobweb Corners", description: "Starting after your opponent's next move, great webs fill all four corners for their following 3 turns: their pieces may not stop on the corner squares or the diagonal squares beside them (b2, g2, b7, g7).", flavor: "Something with eight legs pays the rent there now.", icon: "Webhook", fx: { motif: "blindfold" } },
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          if ((inst.state.delay as number) <= 0) {
+            // Added during their move, so the shared post-move pass ticks it
+            // once immediately: turns = 3 + 1 to leave 3 of their turns barred.
+            barNow(api, [SQ(0, 0), SQ(7, 0), SQ(0, 7), SQ(7, 7), SQ(1, 1), SQ(6, 1), SQ(1, 6), SQ(6, 6)], 4);
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) => (inst.spent ? "the webs are spun" : "not yet in effect"),
+    },
   ),
   H3(
     { id: "hx4_leaking_boats", name: "Leaking Boats", description: "For your opponent's next 4 turns, their pieces standing on the a and h files are too busy bailing water to fight: they cannot capture.", flavor: "The flank fleet is mostly bucket.", icon: "Sailboat", fx: { motif: "muzzle", pieces: "all" } },

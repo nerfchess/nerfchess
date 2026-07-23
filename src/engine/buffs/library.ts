@@ -2427,8 +2427,8 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "warp_field", name: "Warp Field", description: "Move any two of your pieces one square each ignoring rules, once.", tier: 4, category: "movement" },
-    relocateMany(2, stepDest),
+    { id: "warp_field", name: "Warp Field", description: "Move any one of your pieces one square ignoring rules, once.", tier: 4, category: "movement" },
+    relocateMany(1, stepDest),
   ),
   def(
     { id: "detonate", requires: ["p"], name: "Detonate", description: "Sacrifice one pawn to clear all pieces on its adjacent squares except kings.", tier: 3, category: "attack" },
@@ -2613,16 +2613,18 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "kingslide", name: "Kingslide", description: "Your king moves any distance in a straight line, once.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    { id: "kingslide", name: "Kingslide", description: "Your king slides any distance in a straight line to an empty square, once. This move cannot capture.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
+      mySquares(api.board, api.me, "k")
+        .flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id))
+        .filter((m) => !m.captured),
     ),
   ),
   def(
-    { id: "suppress", name: "Suppress", description: "Your opponent cannot draft manipulation buffs next draft.", tier: 4, category: "draft" },
-    instant((_inst, api) => {
+    { id: "suppress", name: "Suppress", description: "Your opponent cannot draft manipulation buffs next draft. Using it spends your next unused reroll, if any.", tier: 4, category: "draft" },
+    consumeRerollOnUse(instant((_inst, api) => {
       api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
-    }),
+    })),
   ),
   def(
     { id: "blink_army", requires: ["p"], name: "Blink Army", description: "Teleport two pawns forward two squares each if empty, once.", tier: 3, category: "movement" },
@@ -3454,7 +3456,7 @@ const TIER6: Buff[] = [
         addEffect(api, { kind: "shield", owner: api.me, squares: [kSq], turns: 2 });
         addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
       },
-    ),
+    )),
   ),
   def(
     // freezeAllEnemies spares the king; the freezes are painted by the board.
@@ -3595,15 +3597,15 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past your 4th rank back to your 3rd rank where empty, once.", tier: 4, category: "movement" },
-    activatedSimple((_inst, api) => {
+    { id: "total_recall", name: "Total Recall", description: "Pull each of your pieces past your 4th rank back to your 3rd rank where empty, once. Using it spends your next unused reroll, if any.", tier: 4, category: "movement" },
+    consumeRerollOnUse(activatedSimple((_inst, api) => {
       const third = api.me === "w" ? 2 : 5;
       for (const sq of mySquares(api.board, api.me)) {
         if (relRank(api.me, sq) <= 4) continue;
         const dest = SQ(FILE(sq), third);
         if (!api.board.pieces[dest]) api.relocate(sq, dest);
       }
-    }),
+    })),
   ),
   // Nerf-modifiers (cross-cutting)
   def(
