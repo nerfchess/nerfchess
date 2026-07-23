@@ -2715,9 +2715,25 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_year_of_jubilee", name: "Year of Jubilee", tier: 8, category: "nerf", icon: "Sun",
-      description: "Suspend your nerf for your next 25 turns.",
+      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
       flavor: "Not forever. Just longer than most games dare to last." },
-    suspendNow(25),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        susp(api, 18);
+        inst.state.turns = 18;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        const t = ((inst.state.turns as number) ?? 18) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+    },
   ),
   card(
     { id: "bn4_unequal_treaty", name: "The Unequal Treaty", tier: 8, category: "nerf", icon: "Scale",
@@ -2785,28 +2801,58 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_worldgate", name: "Worldgate", tier: 8, category: "movement", icon: "Orbit",
-      description: "Open the great door: move up to 2 of your pieces (your king excepted) to empty squares anywhere on the board, all at once.",
+      description: "Open the great door: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board, all at once.",
       flavor: "Distance is a rumor." },
-    relocateMany(2, (api) => emptySquares(api.board)),
+    relocateMany(3, (api) => emptySquares(api.board)),
   ),
   card(
     { id: "bn4_tide_of_pawns", name: "Tide of Pawns", tier: 8, category: "movement", icon: "Waves",
-      description: "For the rest of the game, any of your pawns may advance two squares in one move from wherever it stands (both squares ahead must be empty, never onto the final rank).",
+      description: "For the rest of the game, each of your pawns may once advance two squares in one move from wherever it stands (both squares ahead must be empty, and it may not land on your seventh or eighth rank). The charge is spent per pawn and never refreshes.",
       flavor: "The sea does not ask which rank it started on.", requires: ["p"],
       fx: { motif: "rally", pieces: ["p"], self: true } },
-    permanentAugment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const fwd = api.me === "w" ? 1 : -1;
-      for (const from of mySquares(api.board, api.me, "p")) {
-        const midr = RANK(from) + fwd, tr = RANK(from) + 2 * fwd;
-        if (tr < 0 || tr > 7) continue;
-        const to = SQ(FILE(from), tr);
-        if (relRank(api.me, to) > 7) continue;
-        if (api.board.pieces[SQ(FILE(from), midr)] || api.board.pieces[to]) continue;
-        out.push({ from, to, piece: "p", color: api.me, via: inst.id } as Move);
-      }
-      return out;
-    }),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.spent = [] as Square[];
+      },
+      augmentMoves: (moves, inst, api) => {
+        const spent = (inst.state.spent as Square[]) ?? [];
+        const out: Move[] = [];
+        const fwd = api.me === "w" ? 1 : -1;
+        for (const from of mySquares(api.board, api.me, "p")) {
+          if (spent.includes(from)) continue;
+          const midr = RANK(from) + fwd, tr = RANK(from) + 2 * fwd;
+          if (tr < 0 || tr > 7) continue;
+          const to = SQ(FILE(from), tr);
+          // May not carry a pawn onto its seventh or eighth rank.
+          if (relRank(api.me, to) > 6) continue;
+          if (api.board.pieces[SQ(FILE(from), midr)] || api.board.pieces[to]) continue;
+          out.push({ from, to, piece: "p", color: api.me, via: inst.id } as Move);
+        }
+        addNovel(moves, out);
+      },
+      onMovePlayed: (inst, move, api) => {
+        const spent = (inst.state.spent as Square[]) ?? [];
+        // Follow, or drop, pawns that have already spent their charge so each
+        // one stays spent for good (and never blocks a fresh pawn's square).
+        for (let i = spent.length - 1; i >= 0; i--) {
+          const sq = spent[i];
+          if (move.capturedSquare === sq && move.from !== sq) {
+            spent.splice(i, 1);
+          } else if (move.from === sq) {
+            if (move.promotion) spent.splice(i, 1);
+            else spent[i] = move.to;
+          } else if (move.to === sq && move.from !== sq) {
+            spent.splice(i, 1);
+          }
+        }
+        // A pawn that just used its two-square charge is spent from now on.
+        if (move.via === inst.id && move.color === api.me && !spent.includes(move.to)) {
+          spent.push(move.to);
+        }
+        inst.state.spent = spent;
+      },
+    },
   ),
   card(
     { id: "bn4_dukes_patent", name: "The Duke's Patent", tier: 8, category: "movement", icon: "Stamp",
@@ -2925,30 +2971,33 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_winter_garrison", name: "Winter Garrison", tier: 8, category: "pieces", icon: "Tent",
-      description: "Place four new pawns on empty squares in your half. Each cannot be captured on your opponent's next turn while the camp is raised.",
-      flavor: "Four tents, one stove, zero complaints worth writing down." },
+      description: "Place three new pawns on empty squares on your second through fourth ranks. Only the first pawn you place cannot be captured on your opponent's next turn.",
+      flavor: "Three tents, one stove, zero complaints worth writing down." },
     activated(
       (_inst, api, picks) =>
-        picks.length >= 4
+        picks.length >= 3
           ? null
           : {
               kind: "square",
-              label: `Pitch a tent (${picks.length + 1}/4)`,
-              squares: emptySquares(api.board, (sq) => inHalf(api.me, sq) && pawnRankOk(sq)).filter(
-                (sq) => !picks.some((k) => k.square === sq),
-              ),
+              label: `Pitch a tent (${picks.length + 1}/3)`,
+              squares: emptySquares(
+                api.board,
+                (sq) => relRank(api.me, sq) >= 2 && relRank(api.me, sq) <= 4,
+              ).filter((sq) => !picks.some((k) => k.square === sq)),
               ...(picks.length > 0 ? { finishable: true } : {}),
             },
       (_inst, api, picks) => {
         const placed: Square[] = [];
         for (const k of picks) {
           const sq = k.square;
-          if (sq == null || api.board.pieces[sq] || !pawnRankOk(sq)) continue;
+          if (sq == null || api.board.pieces[sq]) continue;
+          if (relRank(api.me, sq) < 2 || relRank(api.me, sq) > 4) continue;
           api.place(sq, "p", api.me);
           placed.push(sq);
         }
+        // Only the first placed pawn gets the shield.
         if (placed.length) {
-          addEffect(api, { kind: "shield", owner: api.me, squares: placed, turns: 1 });
+          addEffect(api, { kind: "shield", owner: api.me, squares: [placed[0]], turns: 1 });
         }
       },
     ),
@@ -3135,7 +3184,7 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_wall_of_faith", name: "Wall of Faith", tier: 8, category: "protection", icon: "BrickWall",
-      description: "Consecrate 6 empty squares of your choice: no enemy piece may ever move onto them, for the rest of the game.",
+      description: "Consecrate 6 empty squares of your choice, no two of them touching: no enemy piece may move onto them for your opponent's next 3 turns.",
       flavor: "Stone believes nothing. This wall is not stone." },
     activated(
       (_inst, api, picks) =>
@@ -3144,15 +3193,24 @@ export const BOON_WAVE4B: Buff[] = [
           : {
               kind: "square",
               label: `Raise a wall segment (${picks.length + 1}/6)`,
-              squares: emptySquares(api.board).filter((sq) => !picks.some((k) => k.square === sq)),
+              squares: emptySquares(api.board).filter(
+                (sq) =>
+                  !picks.some((k) => k.square === sq) &&
+                  !picks.some((k) => k.square != null && adjSquares(k.square).includes(sq)),
+              ),
               ...(picks.length > 0 ? { finishable: true } : {}),
             },
       (_inst, api, picks) => {
-        const squares = picks
-          .map((k) => k.square)
-          .filter((s): s is Square => s != null && !api.board.pieces[s]);
+        // No two chosen squares may touch: enforce non-adjacency deterministically.
+        const squares: Square[] = [];
+        for (const k of picks) {
+          const s = k.square;
+          if (s == null || api.board.pieces[s]) continue;
+          if (squares.some((c) => adjSquares(c).includes(s))) continue;
+          squares.push(s);
+        }
         if (squares.length) {
-          addEffect(api, { kind: "barred", squares, against: api.opp, turns: null });
+          addEffect(api, { kind: "barred", squares, against: api.opp, turns: 3 });
         }
       },
     ),
@@ -3212,22 +3270,30 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_triumphal_arch", name: "Triumphal Arch", tier: 8, category: "tempo", icon: "Landmark",
-      description: "Your next 3 captures each grant you an immediate extra move. You cannot capture the king on a bonus move: your opponent replies first.",
+      description: "Your next capture grants you an immediate extra move. You cannot capture the king on that bonus move: your opponent replies first. Each of the two captures after that grants you 1 draft reroll instead.",
       flavor: "March through, wheel around, march through again." },
     {
       kind: "passive",
       init: (inst) => {
-        inst.state.charges = 3;
+        inst.state.count = 0;
       },
       onMovePlayed: (inst, move, api) => {
-        const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0 || move.color !== api.me) return;
+        const done = (inst.state.count as number) ?? 0;
+        if (done >= 3 || move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
-        api.bs.extraMoves[api.me] += 1;
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
+        if (done === 0) {
+          api.bs.extraMoves[api.me] += 1;
+        } else {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        }
+        const n = done + 1;
+        inst.state.count = n;
+        if (n >= 3) inst.spent = true;
       },
-      status: (inst) => `${(inst.state.charges as number) ?? 3} triumphs left`,
+      status: (inst) => {
+        const done = (inst.state.count as number) ?? 0;
+        return done === 0 ? "first capture grants an extra move" : `${3 - done} rerolls left`;
+      },
     },
   ),
 

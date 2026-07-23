@@ -1958,13 +1958,19 @@ const T7: Buff[] = [
 // Events: the board changes shape for a while and everyone can feel it.
 
 const T8: Buff[] = [
-  H8(
-    { id: "hx4_walnut_crown", name: "The Walnut Crown", description: "Your opponent's queen becomes a walnut for 2 of their turns: the mightiest piece on the board reduced to a slow, dignified shuffle.", flavor: "Heavy is the head. Heavier is the shell.", icon: "Nut", fx: { motif: "anchor", pieces: ["q"] } },
+  hex(
+    { id: "hx4_walnut_crown", name: "The Walnut Crown", description: "Your opponent's queen becomes a walnut for 2 of their turns: the mightiest piece on the board reduced to a slow, dignified shuffle.", flavor: "Heavy is the head. Heavier is the shell.", icon: "Nut", fx: { motif: "anchor", pieces: ["q"] }, tier: 6 },
     walnutAll(["q"], 2),
   ),
   H8(
-    { id: "hx4_great_glacier", name: "The Great Glacier", description: "A glacier grinds across their entire army: every enemy piece except the king is frozen for 1 of their turns.", flavor: "The age of ice does not negotiate.", icon: "Snowflake", fx: { motif: "jail", pieces: "all" } },
-    freezeAllEnemies(1, "ice"),
+    { id: "hx4_great_glacier", name: "The Great Glacier", description: "A glacier grinds across their army: every enemy piece except pawns and the king is frozen for 1 of their turns.", flavor: "The age of ice does not negotiate.", icon: "Snowflake", fx: { motif: "jail", pieces: ["n", "b", "r", "q"] } },
+    instant((_inst, api) => {
+      for (const sq of mySquares(api.board, api.opp)) {
+        const t = api.board.pieces[sq]!.type;
+        if (t === "k" || t === "p") continue;
+        freezeNow(api, sq, 1, "ice");
+      }
+    }),
   ),
   H8(
     { id: "hx4_sealed_meridian", name: "Sealed Meridian", description: "Choose a file: for 2 of your opponent's turns none of their pieces may cross it, though they may move along it, stop on it, or leave it. Your pieces pass freely.", flavor: "The cartographers simply removed the road.", icon: "AlignVerticalJustifyCenter", fx: { motif: "blindfold" } },
@@ -2066,8 +2072,20 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_the_long_siege", name: "The Long Siege", description: "Your opponent's pawns cannot advance for their next 8 turns. Diagonal captures remain their only forward step.", flavor: "The walls will still be here in spring.", icon: "Castle", fx: { motif: "anchor", pieces: ["p"] } },
-    instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 8 })),
+    { id: "hx4_the_long_siege", name: "The Long Siege", description: "For your opponent's next 4 turns, their pawns cannot advance; diagonal captures remain legal, and their most advanced pawn may still advance each turn.", flavor: "The walls will still be here in spring.", icon: "Castle", fx: { motif: "anchor", pieces: ["p"] } },
+    curse(4, (moves, api) => {
+      let exempt: Square | null = null;
+      for (const sq of mySquares(api.board, api.opp, "p")) {
+        if (
+          exempt == null ||
+          relRank(api.opp, sq) > relRank(api.opp, exempt) ||
+          (relRank(api.opp, sq) === relRank(api.opp, exempt) && sq < exempt)
+        ) {
+          exempt = sq;
+        }
+      }
+      return moves.filter((m) => m.piece !== "p" || m.captured || m.from === exempt);
+    }),
   ),
   H8(
     { id: "hx4_shattered_council", name: "Shattered Council", description: "Their war council collapses: their queen and both rooks are frozen for 1 of their turns, and their next drafted card arrives nullified. In recompense for the ruined council, their next offer deals three cards to choose from instead of two.", flavor: "The table broke first. The alliance followed.", icon: "Users", fx: { motif: "jail", pieces: ["q", "r"] } },
@@ -2081,7 +2099,7 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_iron_ring", name: "The Iron Ring", description: "An iron ring closes around the board's rim: your opponent's pieces cannot stop on any edge square for their next 2 turns.", flavor: "The world got smaller while they slept.", icon: "Circle", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_iron_ring", name: "The Iron Ring", description: "An iron ring closes around the board's rim: your opponent's pieces cannot stop on any edge square for their next turn.", flavor: "The world got smaller while they slept.", icon: "Circle", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {
       const edge: number[] = [];
       for (let sq = 0; sq < 64; sq++) {
@@ -2089,7 +2107,7 @@ const T8: Buff[] = [
         const r = RANK(sq);
         if (f === 0 || f === 7 || r === 0 || r === 7) edge.push(sq);
       }
-      barNow(api, edge, 2);
+      barNow(api, edge, 1);
     }),
   ),
   H8(
@@ -2193,14 +2211,9 @@ const T8: Buff[] = [
       }
     }),
   ),
-  H8(
-    { id: "hx4_toy_box", name: "The Toy Box", description: "Their entire army is turned into plush toys for 8 of their turns (a purely cosmetic indignity), and toys need a moment to remember war: on their next turn every piece may move at most 1 square.", flavor: "Please keep all buttons and stuffing inside the board.", icon: "Gift", fx: { motif: "slow", pieces: "all" } },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type !== "k") dressUp(api, sq, "plush", 8);
-      }
-      addEffect(api, { kind: "short_leash", owner: api.opp, turns: 1 });
-    }),
+  hex(
+    { id: "hx4_toy_box", name: "The Toy Box", description: "On your opponent's next turn, their non-knight pieces may move at most 1 square; their knights move normally.", flavor: "Please keep all buttons and stuffing inside the board.", icon: "Gift", fx: { motif: "slow", pieces: "all" }, tier: 5 },
+    curse(1, (moves) => moves.filter((m) => m.piece === "n" || moveDist(m) <= 1)),
   ),
   H8(
     { id: "hx4_severed_lines", name: "Severed Lines", description: "Their supply roads are cut: your opponent's pieces cannot stop on their own 3rd or 4th rank for their next turn.", flavor: "An army is a stomach with banners.", icon: "Unlink", fx: { motif: "blindfold", pieces: "all" } },
