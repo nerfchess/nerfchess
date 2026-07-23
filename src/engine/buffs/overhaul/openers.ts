@@ -362,6 +362,7 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
             if (p && p.color === api.me && p.type === "p") neighbors.push(SQ(f, r));
           }
           if (neighbors.length > 0) inst.state.guarded = [dest, neighbors[0]];
+          else inst.spent = true; // No pair to ward: nothing left to do.
         },
         filterOpponentMoves: (moves, inst) => {
           const guarded = (inst.state.guarded as Square[]) ?? [];

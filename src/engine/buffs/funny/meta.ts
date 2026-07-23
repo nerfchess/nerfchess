@@ -508,7 +508,9 @@ export const FUNNY_META: Buff[] = [
         if (!p || p.color !== api.opp) return;
         const banned = p.type;
         if (banned === "k" || banned === "q" || banned === "p") return;
-        for (const s of mySquares(api.board, api.opp, banned)) api.removePiece(s);
+        // The hammer's docket closes after two: only the first two enemy pieces
+        // of that type (deterministic, lowest square first) are banned.
+        for (const s of mySquares(api.board, api.opp, banned).slice(0, 2)) api.removePiece(s);
       },
     ),
   ),

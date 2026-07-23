@@ -1838,7 +1838,7 @@ const T6: Buff[] = [
       id: "hw3_kings_guard",
       name: "Standing Guard",
       description:
-        "A cruel duty binds their bodyguard: for your opponent's next 6 turns, every time their king moves, whichever of their pieces stands nearest the king is frozen in place for 1 of their turns, rooted to watch over the empty throne. Keeping the king still keeps the guard free. The king itself is never frozen.",
+        "A cruel duty binds their bodyguard: for your opponent's next 6 turns, every time their king moves, whichever of their pieces stands nearest the king is frozen in place for 1 of their turns, rooted to watch over the empty throne. The first piece caught this way is spared, left free to make one move instead. Keeping the king still keeps the guard free. The king itself is never frozen.",
       flavor: "The king may wander. Someone must always mind the chair.",
       fx: { motif: "slow", pieces: ["k"] },
     },

@@ -208,12 +208,36 @@ export const FUNNY_SUMMONS: Buff[] = [
       id: "rent_a_rook",
       icon: "Building2",
       name: "Rent-a-Rook",
-      description: "A rook arrives on loan: place it on an empty square in your half. It cannot be captured while it is on loan (it is not yours to lose), then it drives off after 5 of your turns.",
+      description: "A rook arrives on loan: place it on an empty square in your half. It cannot be captured while on loan, but that loaner protection lapses once it has made two captures, and it drives off after 5 of your turns.",
       tier: 5,
       category: "pieces",
       flavor: "Please return it with a full tank.",
     },
-    summonTemp("r", 5, myHalfZone, { shield: true }),
+    // The loaner shield now only covers two captures: after the rented rook's
+    // second capture its ward is stripped and it can be taken like any piece.
+    // Everything else (placement, following, the 5-turn despawn) stays the
+    // shared summonTemp behavior.
+    (() => {
+      const base = summonTemp("r", 5, myHalfZone, { shield: true });
+      return {
+        ...base,
+        onMovePlayed: (inst, move, api) => {
+          const sq = inst.state.sq as Square | undefined;
+          if (sq != null && move.from === sq && move.color === api.me && move.captured) {
+            const caps = ((inst.state.caps as number) ?? 0) + 1;
+            inst.state.caps = caps;
+            if (caps >= 2) {
+              for (const e of api.bs.effects) {
+                if (e.kind === "shield" && e.owner === api.me && e.squares) {
+                  e.squares = e.squares.filter((s) => s !== sq);
+                }
+              }
+            }
+          }
+          base.onMovePlayed!(inst, move, api);
+        },
+      };
+    })(),
   ),
   card(
     {
