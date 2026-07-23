@@ -2568,14 +2568,31 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_pact_of_the_dawn", name: "Pact of the Dawn", tier: 8, category: "nerf", icon: "Sunrise",
-      description: "Suspend your nerf for your next 12 turns, and every one of your captured pawns returns at once to squares nearest your home rank.",
+      description: "Suspend your nerf for your next 12 turns, and every one of your captured pawns returns at once to squares nearest your home rank. The most advanced returning pawn cannot move until your opponent replies.",
       flavor: "The sun signed first." },
     suspendNow(12, (api) => {
+      const placed: Square[] = [];
       while (revivable(api, "p") > 0) {
         const sq = autoPlace(api, api.me, "p");
         if (sq == null) break;
         api.place(sq, "p", api.me);
         markRevived(api, "p");
+        placed.push(sq);
+      }
+      // Highest-value arrival: with only pawns returning, the most advanced one
+      // (furthest up the board, ties broken by lowest square) is picked
+      // deterministically and frozen for one of your turns, so it cannot move
+      // (hence cannot capture) until the opponent replies. No own-move filter
+      // exists, so a one-turn freeze is the faithful "cannot act yet".
+      if (placed.length) {
+        let best = placed[0];
+        for (const sq of placed) {
+          const better =
+            relRank(api.me, sq) > relRank(api.me, best) ||
+            (relRank(api.me, sq) === relRank(api.me, best) && sq < best);
+          if (better) best = sq;
+        }
+        addEffect(api, { kind: "freeze", sq: best, owner: api.me, turns: 1, skin: "ice" });
       }
     }),
   ),
@@ -2601,9 +2618,20 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_hundred_year_lease", name: "Hundred-Year Lease", tier: 8, category: "nerf", icon: "ScrollText",
-      description: "After your next 5 turns, the lease begins: your nerf is suspended for the 30 turns that follow.",
+      description: "After your opponent's next move, the lease begins: your nerf is suspended for the 30 turns that follow.",
       flavor: "Practically forever, notarized." },
-    reliefAfter(5, 30),
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        // Delayed start: the lease begins only after the opponent replies.
+        // nerf_suspended ticks on MY turns, so this opponent move does not
+        // consume one of the 30 (no compensation needed).
+        susp(api, 30);
+        inst.spent = true;
+      },
+      status: () => "the lease begins after their reply",
+    },
   ),
   card(
     { id: "bn4_royal_privilege", name: "Royal Privilege", tier: 8, category: "nerf", icon: "Gem",

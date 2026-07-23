@@ -3643,8 +3643,42 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "second_king", requires: ["p"], name: "Second King", description: "Turn one of your pawns, on any rank, into a second king. Your opponent must capture both of your kings to win.", tier: 6, category: "pieces" },
-    promotePawns(1, 1, "k"),
+    { id: "second_king", requires: ["p"], name: "Second King", description: "Choose one of your pawns, on any rank; after your opponent's next move it becomes a second king. Your opponent must capture both of your kings to win.", tier: 6, category: "pieces" },
+    // Balance: the crown no longer lands at once. The pawn is chosen now, but the
+    // promotion resolves only after the opponent has replied (it fizzles if that
+    // pawn is captured or is no longer a pawn of yours by then).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.pending
+          ? null
+          : {
+              kind: "square",
+              label: "Choose a pawn to crown after your opponent replies",
+              squares: mySquares(api.board, api.me, "p"),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.pending) return;
+        const sq = picks[0]?.square;
+        if (sq == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = sq;
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const sq = inst.state.sq as Square;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.me && p.type === "p") api.setPieceType(sq, "k");
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending ? "crowns a second king after their next move" : "activate to choose a pawn",
+    },
   ),
   def(
     { id: "warp_storm", name: "Warp Storm", description: "Move up to four of your pieces, your king aside, one square each in any direction onto an empty square, once.", tier: 6, category: "movement" },
@@ -3898,7 +3932,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "void", name: "Void", description: "The void takes one enemy pawn, knight, or bishop, and the square it stood on stays a void that swallows any enemy piece except a king that enters it, for the game.", tier: 6, category: "attack" },
+    { id: "void", name: "Void", description: "The void takes one enemy pawn, knight, or bishop, and the square it stood on stays a void that swallows any enemy piece except a king that enters it, for the game; the defender gets one bridge, so the first enemy piece to enter crosses it safely.", tier: 6, category: "attack" },
     {
       kind: "activated",
       spendOnUse: false,

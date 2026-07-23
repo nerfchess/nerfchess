@@ -1881,22 +1881,30 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_wilted_garland", name: "Wilted Garland", description: "Their queen is crowned with a nesting doll shell for 6 of their turns, and the humiliation keeps her at arm's length: for their next 3 turns she may not end a move within 2 squares of your king.", flavor: "There is a smaller queen inside. And a smaller grudge.", icon: "Flower", fx: { motif: "anchor", pieces: ["q"] } },
+    { id: "hx4_wilted_garland", name: "Wilted Garland", description: "Their queen is crowned with a nesting doll shell for 6 of their turns, and the humiliation keeps her at arm's length: starting after your opponent's next move, for their following 3 turns she may not end a move within 2 squares of your king.", flavor: "There is a smaller queen inside. And a smaller grudge.", icon: "Flower", fx: { motif: "anchor", pieces: ["q"] } },
     {
       kind: "passive",
       init: (inst, api) => {
         inst.state.turns = 3;
+        inst.state.delay = 1;
         for (const sq of mySquares(api.board, api.opp, "q")) dressUp(api, sq, "matryoshka", 6);
       },
       filterOpponentMoves: (moves, inst, api) => {
-        if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+        if ((inst.state.delay as number) > 0 || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
         const k = myKing(api);
         if (k == null) return moves;
         const kept = moves.filter((m) => m.piece !== "q" || cheb(m.to, k) > 2);
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
-      status: (inst) => `${turnsLeft(inst)} of their turns left`,
+      onMovePlayed: (inst, move, api) => {
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
     },
   ),
   H4(
@@ -2006,8 +2014,8 @@ const T4: Buff[] = [
       return moves;
     }),
   ),
-  H4(
-    { id: "hx4_waste_not", name: "Waste Not", description: "Thrift is enforced for your opponent's next 3 turns: when they capture, they must use the least valuable piece that can capture that turn. Quiet moves stay free.", flavor: "Why send a queen when a pawn holds a grudge for less?", icon: "PiggyBank", fx: { motif: "muzzle", pieces: "all" } },
+  hex(
+    { id: "hx4_waste_not", name: "Waste Not", description: "Thrift is enforced for your opponent's next 3 turns: when they capture, they must use the least valuable piece that can capture that turn. Quiet moves stay free.", flavor: "Why send a queen when a pawn holds a grudge for less?", icon: "PiggyBank", fx: { motif: "muzzle", pieces: "all" }, tier: 5 },
     curse(3, (moves) => {
       const caps = moves.filter((m) => m.captured);
       if (caps.length === 0) return moves;
