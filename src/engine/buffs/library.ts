@@ -2917,7 +2917,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "time_stop_short", name: "Time Stop (Short)", description: "Time stops: freeze every enemy piece except the king for 1 turn, then take one extra move right now, once. You cannot capture the king during the bonus move: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "time_stop_short", name: "Time Stop (Short)", description: "Time stops: freeze every enemy piece except the king for 1 turn, then take one extra move right now, once. You cannot capture the king during the bonus move: your opponent replies first. Afterward your next draft is skipped.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       ...activatedSimple((_inst, api) => {
         for (const sq of mySquares(api.board, api.opp)) {
@@ -2925,6 +2925,7 @@ const TIER5: Buff[] = [
           addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
         }
         api.bs.extraMoves[api.me] += 1;
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       }),
       freeAction: true,
     },
@@ -2933,7 +2934,7 @@ const TIER5: Buff[] = [
     // Tier 6 (owner call). Pools are built by the card's own `tier` field
     // (poolAtTier filters b.tier === t), so it drafts as a tier-6 card even
     // though it's declared in this file's TIER5 block.
-    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next 2 turns.", tier: 6, category: "pieces" },
+    { id: "resurrect_queen", name: "Resurrect Queen", description: "Bring your captured queen back to any empty square on the board, and she cannot be captured for your opponent's next turn.", tier: 6, category: "pieces" },
     activated(
       (_inst, api, picks) => {
         if (picks.length > 0) return null;
@@ -2947,7 +2948,7 @@ const TIER5: Buff[] = [
         if (revivable(api, "q") <= 0 || picks[0]?.square == null) return;
         api.place(picks[0].square, "q", api.me);
         markRevived(api, "q");
-        addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 2 });
+        addEffect(api, { kind: "shield", owner: api.me, squares: [picks[0].square], turns: 1 });
       },
     ),
   ),
@@ -3602,9 +3603,11 @@ const TIER6: Buff[] = [
     revivePawnsToStart(4),
   ),
   def(
-    { id: "royal_ascension", name: "Royal Ascension", description: "Your king gains queen movement permanently (still loses on capture).", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    { id: "royal_ascension", name: "Royal Ascension", description: "Your king gains queen movement permanently, but its added long-range moves cannot capture; it still captures as a normal king (and still loses on capture).", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "k").flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
+      mySquares(api.board, api.me, "k").flatMap((sq) =>
+        slideMoves(api.board, sq, ALL_DIRS, inst.id).filter((mv) => !mv.captured),
+      ),
     ),
   ),
   def(
@@ -3630,8 +3633,11 @@ const TIER6: Buff[] = [
     convertEnemies(1, ["r", "b"]),
   ),
   def(
-    { id: "total_nullify", name: "Total Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in piece upgrades resist.", tier: 6, category: "draft" },
-    instant((_inst, api) => broadNullify(api)),
+    { id: "total_nullify", name: "Total Nullify", description: "Cancel your opponent's unused and temporary buffs. Locked-in piece upgrades resist. Using it spends your next unused reroll, if any.", tier: 6, category: "draft" },
+    instant((_inst, api) => {
+      broadNullify(api);
+      if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+    }),
   ),
   def(
     { id: "second_king", requires: ["p"], name: "Second King", description: "Turn one of your pawns, on any rank, into a second king. Your opponent must capture both of your kings to win.", tier: 6, category: "pieces" },
@@ -3643,8 +3649,8 @@ const TIER6: Buff[] = [
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
-    { id: "fissure", name: "Fissure", description: "One file becomes impassable to enemies for the rest of the game.", tier: 6, category: "protection", fx: { motif: "blindfold" } },
-    barLine("file", null),
+    { id: "fissure", name: "Fissure", description: "Split one file you pick: enemy pieces cannot cross it for your opponent's next 2 turns.", tier: 6, category: "protection", fx: { motif: "blindfold" } },
+    barLine("file", 2),
   ),
   def(
     { id: "queens_wrath", requires: ["q"], name: "Queen's Wrath", description: "In one move, your queen sweeps along one straight line, removing up to two enemy pieces on it, then freezes every enemy piece beside her landing square for their next turn; a friendly piece or an enemy king ends the line, once.", tier: 6, category: "attack" },
@@ -3673,8 +3679,8 @@ const TIER6: Buff[] = [
     ),
   ),
   def(
-    { id: "overwhelm", name: "Overwhelm", description: "Take three moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
-    extraMovesNow(2),
+    { id: "overwhelm", name: "Overwhelm", description: "Take two moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    extraMovesNow(1),
   ),
   def(
     { id: "buff_siphon", name: "Buff Siphon", description: "Steal two active buffs from your opponent. Locked-in upgrades stay put.", tier: 7, category: "draft" },
@@ -3685,10 +3691,11 @@ const TIER6: Buff[] = [
     captureExplosion({ charges: 3 }),
   ),
   def(
-    { id: "grand_summon", name: "Grand Summon", description: "Add a knight and a bishop to your pocket, then drop them onto empty squares on later turns.", tier: 6, category: "pieces" },
+    { id: "grand_summon", name: "Grand Summon", description: "Add a knight and a bishop to your pocket, then drop them onto empty squares on later turns; your next draft is skipped.", tier: 6, category: "pieces" },
     instant((_inst, api) => {
       grantInventory(api, "n", 1);
       grantInventory(api, "b", 1);
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   def(
