@@ -744,17 +744,23 @@ export function followSq(sq: Square | null, move: Move): Square | null {
 
 const T6: Buff[] = [
   H6(
-    { id: "hx4_rusted_battlements", name: "Rusted Battlements", description: "Both of your opponent's rooks seize with rust and cannot move for 2 of their turns.", flavor: "Nobody oiled the towers this century.", icon: "Castle", fx: { motif: "jail", pieces: ["r"] } },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp, "r")) freezeNow(api, sq, 2, "rust");
-    }),
+    { id: "hx4_rusted_battlements", name: "Rusted Battlements", description: "After your opponent's next move, both of their rooks seize with rust and cannot move for 2 of their turns.", flavor: "Nobody oiled the towers this century.", icon: "Castle", fx: { motif: "jail", pieces: ["r"] } },
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.opp) return;
+        for (const sq of mySquares(api.board, api.opp, "r")) sting(api, sq, 2, "rust");
+        inst.spent = true;
+      },
+      status: (inst) => (inst.spent ? "the rust has set in" : "the rust sets in after their next move"),
+    },
   ),
   hex(
     { id: "hx4_crown_malaise", name: "Crown Malaise", description: "For your opponent's next 4 turns, their queen is bedridden every other turn (the 1st and 3rd) and cannot move on those turns.", flavor: "The physicians prescribe rest and defeat.", icon: "Thermometer", fx: { motif: "slow", pieces: ["q"] }, tier: 7 },
     cadenceCurse(4, (e) => e % 2 === 0, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
-  H6(
-    { id: "hx4_the_bell_tolls", name: "The Bell Tolls", description: "Your opponent skips their next turn entirely. The board waits for no one, except them.", flavor: "One toll, one silence.", icon: "BellRing", fx: { motif: "slow", pieces: "all" } },
+  hex(
+    { id: "hx4_the_bell_tolls", name: "The Bell Tolls", description: "Your opponent skips their next turn entirely. The board waits for no one, except them.", flavor: "One toll, one silence.", icon: "BellRing", fx: { motif: "slow", pieces: "all" }, tier: 5 },
     skipOpponent(1),
   ),
   H6(
@@ -789,12 +795,23 @@ const T6: Buff[] = [
       });
     }),
   ),
-  H6(
-    { id: "hx4_stone_orchard", name: "Stone Orchard", description: "All of your opponent's knights and bishops turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square.", flavor: "A fine crop of statues this year.", icon: "TreePine", fx: { motif: "anchor", pieces: ["n", "b"] } },
-    walnutAll(["n", "b"], 1),
+  hex(
+    { id: "hx4_stone_orchard", name: "Stone Orchard", description: "All of your opponent's knights and bishops turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square. One resists: the affected piece nearest the a1 corner keeps its footing.", flavor: "A fine crop of statues this year.", icon: "TreePine", fx: { motif: "anchor", pieces: ["n", "b"] }, tier: 7 },
+    instant((_inst, api) => {
+      const targets = mySquares(api.board, api.opp).filter((sq) => {
+        const t = api.board.pieces[sq]!.type;
+        return t === "n" || t === "b";
+      });
+      if (targets.length === 0) return;
+      let spared = targets[0];
+      for (const sq of targets) if (sq < spared) spared = sq;
+      for (const sq of targets) {
+        if (sq !== spared) addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 1 });
+      }
+    }),
   ),
   H6(
-    { id: "hx4_siren_song", name: "Siren Song", description: "Mark one enemy piece: for your opponent's next 3 turns, every move it makes must bring it closer to your king. The rest of their army is free. Kings cannot be marked.", flavor: "The music is lovely. The rocks are not.", icon: "Music", fx: { motif: "anchor" } },
+    { id: "hx4_siren_song", name: "Siren Song", description: "Mark one enemy piece: for your opponent's next 2 turns, every move it makes must bring it closer to your king. The rest of their army is free. Kings cannot be marked.", flavor: "The music is lovely. The rocks are not.", icon: "Music", fx: { motif: "anchor" } },
     {
       kind: "activated",
       spendOnUse: false,
@@ -807,7 +824,7 @@ const T6: Buff[] = [
         const sq = picks[0]?.square;
         if (sq == null) return;
         inst.state.sq = sq;
-        inst.state.turns = 3;
+        inst.state.turns = 2;
       },
       filterOpponentMoves: (moves, inst, api) => {
         const sq = inst.state.sq as Square | undefined;
@@ -830,32 +847,55 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_tar_flood", name: "Tar Flood", description: "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it.", flavor: "Development is postponed indefinitely.", icon: "Layers", fx: { motif: "blindfold", pieces: "all" } },
-    instant((_inst, api) => {
-      barNow(api, rankSquares(api.opp === "w" ? 2 : 5), 2);
-    }),
+    { id: "hx4_tar_flood", name: "Tar Flood", description: "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.", flavor: "Development is postponed indefinitely.", icon: "Layers", fx: { motif: "blindfold", pieces: "all" } },
+    escapeCurse(2, (moves, api) => moves.filter((m) => relRank(api.opp, m.to) !== 3)),
   ),
   H6(
     { id: "hx4_dead_calm", name: "Dead Calm", description: "The wind dies: for your opponent's next 2 turns, their bishops, rooks and queen may slide at most 1 square. The first piece the calm would rein in may slide freely once, then it binds fully.", flavor: "A fleet of sails and not a breath to fill them.", icon: "Sailboat", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
     escapeCurse(2, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 1)),
   ),
   H6(
-    { id: "hx4_pillory", name: "Pillory", description: "Lock one enemy piece you target in the pillory: it is frozen for 2 of their turns and wears the dunce cap for 6. Kings cannot be locked up.", flavor: "Rotten fruit sold separately.", icon: "UserX", fx: { motif: "jail" } },
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
+    { id: "hx4_pillory", name: "Pillory", description: "Lock one enemy piece you target in the pillory: it wears the dunce cap for 6 of their turns, and after it makes one move it is frozen for 2 of their turns. Kings cannot be locked up.", flavor: "Rotten fruit sold separately.", icon: "UserX", fx: { motif: "jail" } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
           ? null
           : { kind: "square", label: "Choose the prisoner", squares: mySquares(api.board, api.opp).filter((sq) => api.board.pieces[sq]!.type !== "k") },
-      (_inst, api, picks) => {
+      effect: (inst, api, picks) => {
+        if (inst.state.sq != null) return;
         const sq = picks[0]?.square;
         if (sq == null) return;
-        freezeNow(api, sq, 2, "chains");
+        inst.state.sq = sq;
         dressUp(api, sq, "dunce", 6);
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || inst.state.sq == null || move.color !== api.opp) return;
+        const before = inst.state.sq as Square;
+        if (move.from === before) {
+          const now = followSq(before, move);
+          if (now != null) sting(api, now, 2, "chains");
+          inst.spent = true;
+          return;
+        }
+        const now = followSq(before, move);
+        if (now == null) {
+          inst.spent = true;
+          return;
+        }
+        inst.state.sq = now;
+      },
+      status: (inst) =>
+        inst.state.sq == null
+          ? "activate to choose the prisoner"
+          : inst.spent
+            ? "the pillory is shut"
+            : "one escape move, then the pillory shuts",
+    },
   ),
-  H6(
-    { id: "hx4_poachers_snare", name: "Poacher's Snare", description: "A snare waits at the border: within your opponent's next 6 turns, the first piece of theirs to enter your half of the board is caught and frozen for 3 of their turns. Kings slip the noose.", flavor: "The border bites first.", icon: "Scan", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_poachers_snare", name: "Poacher's Snare", description: "A snare waits at the border: within your opponent's next 6 turns, the first piece of theirs to enter your half of the board is caught and frozen for 3 of their turns. Kings slip the noose.", flavor: "The border bites first.", icon: "Scan", fx: { motif: "blindfold" }, tier: 7 },
     {
       kind: "passive",
       init: (inst) => {
@@ -879,8 +919,8 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_rusted_crown", name: "Rusted Crown", description: "For your opponent's next 3 turns, their queen may move only 1 square at a time, like a stiff old king.", flavor: "Majesty, corroded at the joints.", icon: "Crown", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 1)),
+    { id: "hx4_rusted_crown", name: "Rusted Crown", description: "For your opponent's next 2 turns, their queen may move only 1 square at a time, like a stiff old king.", flavor: "Majesty, corroded at the joints.", icon: "Crown", fx: { motif: "anchor", pieces: ["q"] } },
+    curse(2, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 1)),
   ),
   H6(
     { id: "hx4_checkers_law", name: "Checkers Law", description: "For your opponent's next 2 turns, if any capture is available to them, they must play a capture. The old rules apply.", flavor: "You touched the board. You take the piece.", icon: "Grid2x2", fx: { motif: "muzzle", pieces: "all" } },

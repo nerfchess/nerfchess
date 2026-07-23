@@ -990,47 +990,94 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_steady_hands", name: "Steady Hands", tier: 2, category: "nerf", icon: "Hand",
-      description: "Suspend your nerf for your next 2 turns, and none of your pawns can be captured on your opponent's next turn.",
+      description: "Suspend your nerf for your next turn, and none of your pawns can be captured on your opponent's next turn.",
       flavor: "Breathe out before the stitch, not during." },
-    suspendNow(2, (api) => {
+    suspendNow(1, (api) => {
       const pawns = mySquares(api.board, api.me, "p");
       if (pawns.length) addEffect(api, { kind: "shield", owner: api.me, squares: pawns, turns: 1 });
     }),
   ),
   card(
     { id: "bn4_trophy_rest", name: "Trophy Rest", tier: 2, category: "nerf", icon: "Trophy",
-      description: "The next 2 times you capture a knight, bishop, rook or queen, your nerf is suspended for your next 2 turns.",
+      description: "The next 2 times you capture a knight, bishop, rook or queen, your nerf is suspended for your next turn.",
       flavor: "Big game earns a long sit by the fire." },
     reliefOn(
-      2, 2,
+      2, 1,
       (m, api) => m.color === api.me && !!m.captured && m.captured !== "k" && m.captured !== "p",
       "trophies",
     ),
   ),
   card(
     { id: "bn4_dowagers_patience", name: "Dowager's Patience", tier: 2, category: "nerf", icon: "Armchair",
-      description: "While your opponent has a queen on the board and you do not, your nerf is suspended.",
+      description: "While your opponent has a queen on the board and you do not, your nerf is suspended, beginning the turn after each of your opponent's moves.",
       flavor: "She has outlasted worse than this." },
-    reliefWhile(
-      (api) =>
-        mySquares(api.board, api.me, "q").length === 0 &&
-        mySquares(api.board, api.opp, "q").length > 0,
-      "watching the thrones",
-    ),
+    // A one-turn suspension that begins after the opponent replies: unlike the
+    // reliefWhile idiom there is no immediate init grant, so the relief only
+    // starts once the opponent has moved while the condition holds. Added on
+    // their move, the nerf_suspended timer is not self-ticked, so turns:1
+    // covers exactly your following turn (refreshed after each of their moves).
+    {
+      kind: "passive",
+      onMovePlayed: (_inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (
+          mySquares(api.board, api.me, "q").length === 0 &&
+          mySquares(api.board, api.opp, "q").length > 0
+        ) {
+          susp(api, 1);
+        }
+      },
+      status: () => "watching the thrones",
+    },
   ),
   card(
     { id: "bn4_measured_breath", name: "Measured Breath", tier: 2, category: "nerf", icon: "Waves",
-      description: "Free action: suspend your nerf for your next 2 turns and gain 1 draft reroll, used at the moment you choose.",
+      description: "Free action: suspend your nerf for your next turn and gain 1 draft reroll, used at the moment you choose.",
       flavor: "Four counts in, four counts out, one better card." },
-    suspendFree(2, (api) => {
+    suspendFree(1, (api) => {
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   card(
     { id: "bn4_saints_day", name: "Saint's Day", tier: 2, category: "nerf", icon: "CalendarHeart",
-      description: "After your next 4 turns, your nerf is suspended for the 4 turns that follow.",
+      description: "After your next 4 turns, your nerf is suspended for the 4 turns that follow. On the final turn the relief applies only to movement restrictions: you may move only one square at a time.",
       flavor: "The feast is marked on the calendar. The calendar is law." },
-    reliefAfter(4, 4),
+    // reliefAfter(4, 4) inlined so the final suspended turn can be made
+    // movement-only. After the 4-turn delay the suspension covers the first 3
+    // turns in full; a fourth, movement-only turn is added when those run out
+    // (nerf_suspended plus a short_leash, both granted on the same own move so
+    // the same-move tick leaves each covering exactly that one final turn).
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+        inst.state.phase = "delay";
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me) return;
+        if (inst.state.phase === "delay") {
+          const t = ((inst.state.turns as number) ?? 4) - 1;
+          inst.state.turns = t;
+          if (t <= 0) {
+            susp(api, 4);
+            inst.state.phase = "relief";
+            inst.state.turns = 3;
+          }
+          return;
+        }
+        const t = ((inst.state.turns as number) ?? 0) - 1;
+        inst.state.turns = t;
+        if (t <= 0) {
+          susp(api, 2);
+          addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
+          inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        inst.state.phase === "delay"
+          ? `${(inst.state.turns as number) ?? 4} of your turns until relief`
+          : "resting",
+    },
   ),
   card(
     { id: "bn4_barter_calm", name: "Bartered Calm", tier: 2, category: "nerf", icon: "Scale",
@@ -1056,9 +1103,32 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_knights_vigil", name: "Knight's Vigil", tier: 2, category: "nerf", icon: "Sword",
-      description: "The next 3 times you move a knight, your nerf is suspended for your next turn.",
+      description: "The next 3 times you move a knight, your nerf is suspended for one of your turns, beginning after your opponent's following move.",
       flavor: "The horse keeps watch so you can rest.", requires: ["n"] },
-    reliefOn(3, 1, (m, api) => m.color === api.me && m.piece === "n", "vigils"),
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+        inst.state.pending = 0;
+      },
+      onMovePlayed: (inst, move, api) => {
+        // A suspension armed by an earlier knight move begins now, after this reply.
+        if (move.color === api.opp && ((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          susp(api, 1);
+        }
+        // Moving a knight arms a suspension that begins after the next reply.
+        const left = (inst.state.charges as number) ?? 0;
+        if (left > 0 && move.color === api.me && move.piece === "n") {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+          inst.state.charges = left - 1;
+        }
+        if (((inst.state.charges as number) ?? 0) <= 0 && ((inst.state.pending as number) ?? 0) <= 0) {
+          inst.spent = true;
+        }
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} vigils left`,
+    },
   ),
   card(
     { id: "bn4_over_the_wall", name: "Over the Wall", tier: 3, category: "nerf", icon: "BrickWall",
@@ -1093,21 +1163,34 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_spring_in_the_step", name: "Spring in the Step", tier: 2, category: "nerf", icon: "Rabbit",
-      description: "Suspend your nerf for your next 2 turns, and your most advanced pawn immediately steps one square forward if the way is clear.",
+      description: "Suspend your nerf for your next 2 turns, and your most advanced pawn immediately steps one square forward if the way is clear. On the second of those turns the relief applies only to movement restrictions: you may move only one square at a time.",
       flavor: "Lighter load, longer stride." },
-    suspendNow(2, (api) => {
-      const fwd = api.me === "w" ? 1 : -1;
-      const pawns = mySquares(api.board, api.me, "p")
-        .sort((a, b) => relRank(api.me, b) - relRank(api.me, a) || a - b);
-      for (const from of pawns) {
-        const r = RANK(from) + fwd;
-        if (!inBoard(FILE(from), r)) continue;
-        const to = SQ(FILE(from), r);
-        if (api.board.pieces[to] || !pawnRankOk(to)) continue;
-        api.relocate(from, to);
-        break;
-      }
-    }),
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        susp(api, 2);
+        const fwd = api.me === "w" ? 1 : -1;
+        const pawns = mySquares(api.board, api.me, "p")
+          .sort((a, b) => relRank(api.me, b) - relRank(api.me, a) || a - b);
+        for (const from of pawns) {
+          const r = RANK(from) + fwd;
+          if (!inBoard(FILE(from), r)) continue;
+          const to = SQ(FILE(from), r);
+          if (api.board.pieces[to] || !pawnRankOk(to)) continue;
+          api.relocate(from, to);
+          break;
+        }
+      },
+      onMovePlayed: (inst, move, api) => {
+        // On your first suspended turn, arm the second (final) turn to be
+        // movement-only: a short_leash added on this own move ticks down to
+        // cover exactly your following turn, the second of the two.
+        if (inst.spent || move.color !== api.me) return;
+        addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
+        inst.spent = true;
+      },
+      status: () => null,
+    },
   ),
   card(
     { id: "bn4_cold_compress", name: "Cold Compress", tier: 2, category: "nerf", icon: "Snowflake",
@@ -1200,10 +1283,10 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_royal_stroll", name: "Royal Stroll", tier: 2, category: "movement", icon: "PersonStanding",
-      description: "For your next 2 turns, your king may move two squares in a straight line, if both squares are empty.",
+      description: "For your next turn, your king may move two squares in a straight line, if both squares are empty.",
       flavor: "Constitutionals are constitutional.",
       fx: { motif: "empower", pieces: ["k"], self: true } },
-    timedAugment(2, (_moves, inst, api) => {
+    timedAugment(1, (_moves, inst, api) => {
       const ks = kingSquare(api.board, api.me);
       if (ks == null) return [];
       const out: Move[] = [];

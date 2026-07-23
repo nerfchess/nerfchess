@@ -2348,11 +2348,11 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_feast_of_fools", name: "Feast of Fools", tier: 7, category: "draft", icon: "Drumstick",
-      description: "You keep every card offered in each of your next 2 drafts. Afterward the kitchen closes: the 2 drafts after those are skipped.",
+      description: "You keep both cards of your next draft offer, and gain 2 draft rerolls.",
       flavor: "Eat like a king. Fast like a monk. In that order." },
     instant((_inst, api) => {
-      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 2;
-      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
+      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
     }),
   ),
 

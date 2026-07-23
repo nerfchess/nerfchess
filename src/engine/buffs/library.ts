@@ -2842,15 +2842,20 @@ const TIER5: Buff[] = [
   ),
   def(
     // Conditional king guard (king_safe has no square paint); ward marks it.
-    { id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first time your king is checked, it cannot be captured on the following turn, once.", tier: 5, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
+    { id: "checkmate_immunity", name: "Checkmate Immunity", description: "The first time your king is checked it is briefly warded, but the ward is now one opponent turn shorter: it only blocks capture when your own move left the king in check, once.", tier: 5, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (!isInCheck(api.board, api.me)) return;
+        // Balance pass: the immunity is shortened by one opponent turn. The
+        // king_safe timer ticks on the opponent's moves, so a ward added on
+        // the opponent's own checking move is spent by that same move and no
+        // longer covers their reply; only a self-inflicted check leaves a full
+        // opponent turn of cover (mirrors the King's Sanctuary shortening).
         addEffect(api, {
           kind: "king_safe",
           owner: api.me,
-          turns: move.color === api.opp ? 2 : 1,
+          turns: 1,
         });
         inst.spent = true;
       },
