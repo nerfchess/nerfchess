@@ -991,7 +991,10 @@ html[data-anim="off"] .draft-frame::after {
    slowly they read as parallax depth, not motion. */
 .draft-stage__stars {
   position: absolute;
-  inset: -12%;
+  /* No drift (see below) means the layer no longer needs the -12% bleed the
+     translate used to hide, so it covers exactly the viewport: same starfield,
+     ~35% less pixel area to paint. */
+  inset: 0;
   background-image:
     radial-gradient(1px 1px at 22px 34px, rgb(214 224 255 / 0.7), transparent 100%),
     radial-gradient(1px 1px at 118px 92px, rgb(190 205 255 / 0.5), transparent 100%),
@@ -999,18 +1002,18 @@ html[data-anim="off"] .draft-frame::after {
     radial-gradient(1px 1px at 166px 42px, rgb(168 200 255 / 0.45), transparent 100%);
   background-size: 190px 190px;
   opacity: 0.5;
-  will-change: transform;
-  animation: dgn-star-drift 90s linear infinite alternate;
+  /* The two star layers were the single largest paint cost of the ambient
+     stage (a tiled radial-gradient over a full-viewport element, x2). The old
+     drift moved them 2% over 90-140s — imperceptible within any draft's
+     lifetime ("parallax depth, not motion"), yet it kept both giant gradient
+     layers churning on the compositor every frame. Painting them once and
+     holding them on their own static layer (translateZ promotion, no keyframe)
+     keeps the exact look while dropping that per-frame churn. */
+  transform: translateZ(0);
 }
 .draft-stage__stars--far {
   background-size: 120px 120px;
   opacity: 0.3;
-  animation-duration: 140s;
-  animation-direction: alternate-reverse;
-}
-@keyframes dgn-star-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(2%, -2%, 0); }
 }
 /* Nebula: two vast soft energy clouds (void purple, abyssal teal) breathing
    behind the chamber. Oversized radial blobs moved by transform only. */

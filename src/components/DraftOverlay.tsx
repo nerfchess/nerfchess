@@ -292,6 +292,55 @@ function CheckIcon({ className = "" }: { className?: string }) {
 /** Session-persisted position (top-left px) of the dragged minimized panel. */
 const DRAFT_PANEL_POS_KEY = "nerfchess.draftPanelPos.v1";
 
+// --- Adaptive ambient-stage degradation --------------------------------------
+// The dungeon stage's ambient layers (torches, nebulae, fog, aurora, motes)
+// are pure compositor load. On weak GPUs they can drag the whole draft under
+// 30fps even though script cost is ~zero. While the stage runs at full
+// intensity we sample real frame deltas; sustained slowness flips a one-way
+// session latch that downgrades the ambience to the same reduced set the
+// Calm intensity uses. Capable machines never trip it and keep the full look;
+// the FX dial still overrides everything (Off/Calm always reduced).
+let ambientAutoCalm = false;
+
+function useAmbientAutoCalm(active: boolean): boolean {
+  const [autoCalm, setAutoCalm] = useState(ambientAutoCalm);
+  useEffect(() => {
+    if (!active || autoCalm || ambientAutoCalm) return;
+    let raf = 0;
+    let frames = 0;
+    let slow = 0;
+    let last = 0;
+    const loop = (t: number) => {
+      if (last > 0) {
+        const dt = t - last;
+        // Ignore tab-hidden gaps and one-off spikes; count real slow frames.
+        if (dt > 40 && dt < 500) slow++;
+        if (dt < 500) frames++;
+        if (frames >= 20) {
+          if (slow >= 12) {
+            ambientAutoCalm = true;
+            setAutoCalm(true);
+            return;
+          }
+          frames = 0;
+          slow = 0;
+        }
+      }
+      last = t;
+      raf = requestAnimationFrame(loop);
+    };
+    // Warm-up delay: skip the mount/deal jank so we only measure steady state.
+    const timer = window.setTimeout(() => {
+      raf = requestAnimationFrame(loop);
+    }, 1200);
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+  }, [active, autoCalm]);
+  return autoCalm || ambientAutoCalm;
+}
+
 /** Small six-dot drag grip (no emoji). Signals the header is grabbable. */
 function GripIcon({ className = "" }: { className?: string }) {
   return (
@@ -496,7 +545,10 @@ export function DraftOverlay({
   // The board-effects dial also governs the draft spectacle: Off/Calm strips
   // the chest's particle/ray layers and stands down the shake + confetti.
   const fxLevel = useFxLevel();
-  const fxCalm = fxLevel <= 1;
+  // Calm when the dial says so, or when measured frame times say this device
+  // cannot afford the full ambient stage (one-way session latch).
+  const autoCalm = useAmbientAutoCalm(fxLevel > 1 && !reduceMotion);
+  const fxCalm = fxLevel <= 1 || autoCalm;
   const fxShake = FX_LEVELS[fxLevel].shake !== "none";
   // The strongest card in the offer decides the chest's material (wood ->
   // iron -> gilded -> arcane -> apex -> mythic) and whether the reveal earns
@@ -1327,10 +1379,27 @@ export function DraftOverlay({
           the moving layers are skipped entirely under reduced motion. */}
       <div aria-hidden className="draft-stage" data-mood={packStage === "open" ? stageMood : undefined}>
         <span className="draft-stage__vignette" />
+        {/* The starfield is a pair of static, painted-once gradient layers (see
+            .draft-stage__stars) — cheap enough to keep as the base backdrop at
+            every intensity, including Calm/Off. */}
         {!reduceMotion && (
           <>
             <span className="draft-stage__stars" />
             <span className="draft-stage__stars draft-stage__stars--far" />
+          </>
+        )}
+        {/* The heavy moving ambiance — two guttering torch glows, two breathing
+            nebulae, crawling fog, the firelight aurora and 14 rising motes — is
+            ~10 large, full-viewport, continuously-composited layers. That is
+            the single biggest paint/compositing cost of a buff draft and is
+            what dragged the whole screen to a crawl on weaker GPUs while any
+            draft was on screen. It is decorative garnish, so it now honors the
+            FX intensity dial the same way the canvas VFX do: full at Normal/High
+            (the default, unchanged), dropped at Calm/Off — giving players who
+            feel the lag a real relief valve short of turning motion off
+            entirely (the card reveals themselves keep animating). */}
+        {!reduceMotion && !fxCalm && (
+          <>
             <span className="draft-stage__nebula" />
             <span className="draft-stage__nebula draft-stage__nebula--teal" />
             <span className="draft-stage__torch draft-stage__torch--l" />
