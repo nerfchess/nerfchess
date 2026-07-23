@@ -343,6 +343,43 @@ function claymoreSquares(count: number): Mech {
   };
 }
 
+/** True when my piece on `from` attacks the opponent's king by its normal
+ * movement (i.e. gives check): pawns by their capture diagonals, sliders
+ * blocked by any intervening piece. Pure board geometry, read inside a move
+ * filter only. */
+function givesCheck(api: BuffApi, from: Square): boolean {
+  const king = mySquares(api.board, api.opp, "k")[0];
+  if (king == null) return false;
+  const p = api.board.pieces[from];
+  if (!p) return false;
+  const df = FILE(king) - FILE(from), dr = RANK(king) - RANK(from);
+  const adf = Math.abs(df), adr = Math.abs(dr);
+  switch (p.type) {
+    case "p":
+      return dr === (p.color === "w" ? 1 : -1) && adf === 1;
+    case "n":
+      return (adf === 1 && adr === 2) || (adf === 2 && adr === 1);
+    case "k":
+      return adf <= 1 && adr <= 1;
+    case "b":
+      if (adf !== adr) return false;
+      break;
+    case "r":
+      if (df !== 0 && dr !== 0) return false;
+      break;
+    case "q":
+      if (adf !== adr && df !== 0 && dr !== 0) return false;
+      break;
+  }
+  const sf = Math.sign(df), sr = Math.sign(dr);
+  let f = FILE(from) + sf, r = RANK(from) + sr;
+  while (inBoard(f, r) && SQ(f, r) !== king) {
+    if (api.board.pieces[SQ(f, r)]) return false;
+    f += sf; r += sr;
+  }
+  return true;
+}
+
 export const WILD_WARFARE: Buff[] = [
   // -------------------------------------------------------------------------
   // REINFORCEMENTS: bring more soldiers to the field.
@@ -1753,12 +1790,15 @@ export const WILD_WARFARE: Buff[] = [
     {
       id: "ww_relentless_assault",
       name: "Relentless Assault",
-      description: "Each of your next two capturing moves immediately grants you an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
+      description: "Each of your next two capturing moves immediately grants you an extra move. You cannot capture the king on a bonus move: your opponent replies first. Once both bonus moves are spent, you skip your next draft.",
       tier: 5,
       category: "tempo",
       flavor: "Do not let them set their feet.",
       fx: { motif: "rally", pieces: "all", self: true },
     },
+    // Overhaul balance pass: every bonus move is preserved, but the tempo burst
+    // now costs you tempo in the draft, once the sequence resolves you skip your
+    // next draft (self blockedDrafts +1).
     {
       kind: "passive",
       init: (inst) => {
@@ -1769,7 +1809,10 @@ export const WILD_WARFARE: Buff[] = [
         const left = ((inst.state.charges as number) ?? 0) - 1;
         inst.state.charges = left;
         api.bs.extraMoves[api.me] += 1;
-        if (left <= 0) inst.spent = true;
+        if (left <= 0) {
+          api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
+          inst.spent = true;
+        }
       },
       status: (inst) => `${(inst.state.charges as number) ?? 2} follow-up assaults left`,
     },

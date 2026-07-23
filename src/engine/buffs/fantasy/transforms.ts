@@ -166,15 +166,17 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       icon: "Church",
       name: "God-King",
       description:
-        "Your king walks between heartbeats: it may also leap like a knight, for the rest of the game.",
+        "Your king walks between heartbeats: it may also leap like a knight to an empty square, for the rest of the game. The leap cannot capture.",
       tier: 6,
       category: "movement",
       flavor: "The throne goes where it pleases now.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true },
     },
+    // Balance pass: the added knight-leap cannot capture; captures are dropped
+    // from the granted move set (the king's normal moves are unaffected).
     permanentAugment((_m, inst, api) =>
       mySquares(api.board, api.me, "k").flatMap((sq) =>
-        leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
+        leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id).filter((m) => !m.captured),
       ),
     ),
   ),

@@ -604,13 +604,13 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_hot_seat",
       name: "Hot Seat",
-      description: "The spotlight swings to their king and queen: on your opponent's next turn they may move only their king or their queen.",
+      description: "The spotlight swings to their king and queen: on your opponent's next turn they may move only their king or their queen, and neither of them may capture.",
       tier: 5,
       category: "tempo",
       flavor: "Two chairs left under the lights, everyone else in the dark.",
       fx: { motif: "jail", pieces: ["p", "n", "b", "r"] },
     },
-    curse(1, (moves) => moves.filter((m) => m.piece === "k" || m.piece === "q")),
+    curse(1, (moves) => moves.filter((m) => (m.piece === "k" || m.piece === "q") && !m.captured)),
   ),
 
   // =========================================================================
@@ -722,7 +722,7 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_rubber_duck_squad",
       name: "Rubber Duck Squad",
-      description: "Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from.",
+      description: "Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from. Rigging the bounce burns your next unused draft reroll, if you have one.",
       tier: 5,
       category: "protection",
       requires: ["b"],
@@ -731,8 +731,10 @@ export const WILD_CHAOS: Buff[] = [
     },
     {
       kind: "passive",
-      init: (inst) => {
+      init: (inst, api) => {
         inst.state.turns = 3;
+        // Rigging the bounce burns your next unused draft reroll, if any.
+        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;

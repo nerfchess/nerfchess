@@ -671,7 +671,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_big_nap",
       name: "The Big Nap",
       description:
-        "Night falls: every knight, bishop, rook and queen on the board (both sides) sleeps and cannot move for 2 turns of its owner. Kings and pawns keep watch.",
+        "Night falls: every knight, bishop, rook and queen on the board (both sides) sleeps and cannot move for 1 turn of its owner. Kings and pawns keep watch.",
       tier: 7,
       category: "tempo",
       icon: "MoonStar",
@@ -681,7 +681,7 @@ export const OVERHAUL_T7: Buff[] = [
       for (let sq = 0 as Square; sq < 64; sq++) {
         const p = api.board.pieces[sq];
         if (!p || p.type === "k" || p.type === "p") continue;
-        addEffect(api, { kind: "freeze", sq, owner: p.color, turns: 2, skin: "sleep" });
+        addEffect(api, { kind: "freeze", sq, owner: p.color, turns: 1, skin: "sleep" });
       }
     }),
   ),

@@ -1397,6 +1397,11 @@ const T5: Buff[] = [
         const sq = cands[Math.floor(cands.length / 2)];
         inst.state.sq = sq;
         inst.state.turns = 6;
+        // The defender keeps one bridge square: a deterministic safe crossing
+        // (the central empty square one rank deeper) the maw can never bar or
+        // devour. A caster-cast hex has no defender-pick step, so it is fixed.
+        const bridges = emptySquares(api.board, (s) => relRank(api.opp, s) === 3 && s !== sq);
+        inst.state.bridge = bridges.length ? bridges[Math.floor(bridges.length / 2)] : null;
         // Only ever bar the maw's current square (turns=1 on my turn, refreshed
         // as 2 during their move) so it stays a single roaming tile.
         addEffect(api, { kind: "barred", squares: [sq], against: api.opp, turns: 1 });
@@ -1405,12 +1410,15 @@ const T5: Buff[] = [
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.color === api.opp && turnsLeft(inst) > 0) {
+          const bridge = inst.state.bridge as Square | null | undefined;
           const prey = nearestVictimPiece(api, sq);
           if (prey != null && sq !== prey) {
             const next = stepToward(sq, prey);
             const p = api.board.pieces[next];
-            if (p && p.color === api.opp && p.type !== "k") api.removePiece(next);
-            if (!api.board.pieces[next] || next === prey) {
+            if (p && p.color === api.opp && p.type !== "k" && next !== bridge) api.removePiece(next);
+            if (next === bridge) {
+              inst.state.sq = next; // the maw may drift onto the bridge but never bars it
+            } else if (!api.board.pieces[next] || next === prey) {
               inst.state.sq = next;
               addEffect(api, { kind: "barred", squares: [next], against: api.opp, turns: 2 });
             }
@@ -1433,7 +1441,7 @@ const T5: Buff[] = [
       id: "hw3_shared_fate",
       name: "Shared Fate",
       description:
-        "Stitch the fates of two enemy pieces together for the next 8 of their turns: if you capture one of the pair, the other drops dead in the same instant, wherever it stands. They can break the link by trading one of the two away themselves, or by keeping the pair well guarded so you never take either. A king can never be fate-bound.",
+        "Stitch the fates of two enemy pieces together for the next 8 of their turns: if you capture one of the pair, the other is doomed, but granted one escape: if they move that piece on their very next turn it slips free, otherwise it drops dead wherever it stands. They can also break the link by trading one of the two away themselves, or by keeping the pair well guarded so you never take either. A king can never be fate-bound.",
       flavor: "Cut one thread and the whole tapestry unravels.",
       fx: { motif: "slow" },
     },

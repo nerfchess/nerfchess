@@ -595,28 +595,51 @@ const LEAPFROGS: Array<
 ];
 
 function leapfrog(entry: (typeof LEAPFROGS)[number]): Buff {
-  return opener(
-    entry,
-    `${entry.what}, landing on the square directly beyond, once. The landing square must be empty.`,
-    augment((_moves, inst, api) => {
-      const dir = api.me === "w" ? 1 : -1;
-      const out: Move[] = [];
-      for (const sq of mySquares(api.board, api.me, entry.mover)) {
-        for (const [df, dr0] of entry.dirs) {
-          const dr = entry.oriented ? dr0 * dir : dr0;
-          const f1 = FILE(sq) + df, r1 = RANK(sq) + dr;
-          const f2 = FILE(sq) + df * 2, r2 = RANK(sq) + dr * 2;
-          if (!inBoard(f1, r1) || !inBoard(f2, r2)) continue;
-          const mid = api.board.pieces[SQ(f1, r1)];
-          if (!mid || mid.color !== api.me || mid.type !== entry.over) continue;
-          const to = SQ(f2, r2);
-          if (entry.mover === "p" && !pawnRankOk(to)) continue;
-          out.push(...teleportMoves(api.board, sq, [to], inst.id));
-        }
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const dir = api.me === "w" ? 1 : -1;
+    const out: Move[] = [];
+    for (const sq of mySquares(api.board, api.me, entry.mover)) {
+      for (const [df, dr0] of entry.dirs) {
+        const dr = entry.oriented ? dr0 * dir : dr0;
+        const f1 = FILE(sq) + df, r1 = RANK(sq) + dr;
+        const f2 = FILE(sq) + df * 2, r2 = RANK(sq) + dr * 2;
+        if (!inBoard(f1, r1) || !inBoard(f2, r2)) continue;
+        const mid = api.board.pieces[SQ(f1, r1)];
+        if (!mid || mid.color !== api.me || mid.type !== entry.over) continue;
+        const to = SQ(f2, r2);
+        if (entry.mover === "p" && !pawnRankOk(to)) continue;
+        out.push(...teleportMoves(api.board, sq, [to], inst.id));
       }
-      return out;
-    }),
-  );
+    }
+    return out;
+  };
+  const baseDesc = `${entry.what}, landing on the square directly beyond, once. The landing square must be empty.`;
+  if (entry.id === "garden_hedge") {
+    // Preserve the payoff, but delay its first trigger: the hop is not offered
+    // until after the opponent's next move.
+    return opener(entry, `${baseDesc} The hop becomes available only after your opponent's next move.`, {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.ready = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+        addNovel(moves, gen(moves, inst, api));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+        if (move.via === inst.id && move.color === api.me) {
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
+    });
+  }
+  return opener(entry, baseDesc, augment(gen));
 }
 
 // ---------------------------------------------------------------------------
@@ -636,23 +659,46 @@ const BACKSTAGE: Array<OpenerMeta & { type: "n" | "b" | "r" | "q"; dist: number 
 
 function backstagePass(entry: (typeof BACKSTAGE)[number]): Buff {
   const names: Record<string, string> = { n: "knight", b: "bishop", r: "rook", q: "queen" };
-  return opener(
-    entry,
-    `Once, while on your back rank, one of your ${names[entry.type]}s may hop exactly ${entry.dist} square${entry.dist > 1 ? "s" : ""} sideways along it, ignoring anything between. The destination must be empty.`,
-    augment((_moves, inst, api) => {
-      const out: Move[] = [];
-      const home = ownRank(api.me, 0);
-      for (const sq of mySquares(api.board, api.me, entry.type)) {
-        if (RANK(sq) !== home) continue;
-        for (const s of [-1, 1]) {
-          const f = FILE(sq) + s * entry.dist;
-          if (f < 0 || f > 7) continue;
-          out.push(...teleportMoves(api.board, sq, [SQ(f, home)], inst.id));
-        }
+  const gen: Parameters<typeof augment>[0] = (_moves, inst, api) => {
+    const out: Move[] = [];
+    const home = ownRank(api.me, 0);
+    for (const sq of mySquares(api.board, api.me, entry.type)) {
+      if (RANK(sq) !== home) continue;
+      for (const s of [-1, 1]) {
+        const f = FILE(sq) + s * entry.dist;
+        if (f < 0 || f > 7) continue;
+        out.push(...teleportMoves(api.board, sq, [SQ(f, home)], inst.id));
       }
-      return out;
-    }),
-  );
+    }
+    return out;
+  };
+  const baseDesc = `Once, while on your back rank, one of your ${names[entry.type]}s may hop exactly ${entry.dist} square${entry.dist > 1 ? "s" : ""} sideways along it, ignoring anything between. The destination must be empty.`;
+  if (entry.id === "green_room") {
+    // Preserve the payoff, but delay its first trigger: the hop is not offered
+    // until after the opponent's next move.
+    return opener(entry, `${baseDesc} The hop becomes available only after your opponent's next move.`, {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 1;
+        inst.state.ready = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+        addNovel(moves, gen(moves, inst, api));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+        if (move.via === inst.id && move.color === api.me) {
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
+    });
+  }
+  return opener(entry, baseDesc, augment(gen));
 }
 
 // ---------------------------------------------------------------------------

@@ -21,7 +21,6 @@ import {
   instant,
   mySquares,
   myHalfZone,
-  petrifyTarget,
   placePieces,
   relRank,
   removeEnemies,
@@ -141,13 +140,50 @@ export const FUNNY_META: Buff[] = [
       id: "rubber_chicken",
       name: "Rubber Chicken",
       description:
-        "Bonk one enemy piece with a rubber chicken. It is too embarrassed to move for 2 of their turns. Kings cannot be bonked.",
+        "Bonk one enemy piece with a rubber chicken. It gets one escape move; wherever it lands it is then dazed and can only shuffle one square at a time for 2 of their turns. Kings cannot be bonked.",
       tier: 3,
       category: "hex",
       flavor: "Squeak. Squeak. Checkmate energy.",
       fx: { motif: "jail", pieces: "all" },
     },
-    petrifyTarget(2, "Choose the enemy piece to bonk"),
+    // The bonk still lands, but the target gets one legal escape move first: the
+    // daze (a walnut, one-square shuffles) is applied only after that piece next
+    // moves, landing on wherever it ends up. Added inside the opponent's move
+    // hook, so the immediate same-color tick eats one turn: ask for 3 to leave 2.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : {
+              kind: "square",
+              label: "Choose the enemy piece to bonk",
+              squares: mySquares(api.board, api.opp).filter(
+                (sq) => api.board.pieces[sq]!.type !== "k",
+              ),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        inst.state.sq = picks[0]?.square;
+      },
+      onMovePlayed: (inst, move, api) => {
+        const sq = inst.state.sq as Square | undefined;
+        if (sq == null) return;
+        if (move.from === sq && move.color === api.opp) {
+          addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 3 });
+          inst.spent = true;
+          inst.state.sq = undefined;
+          return;
+        }
+        if (move.capturedSquare === sq && move.from !== sq) {
+          inst.spent = true;
+          inst.state.sq = undefined;
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to bonk" : "the daze lands after its escape move",
+    },
   ),
   card(
     {

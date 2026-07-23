@@ -1178,7 +1178,7 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "wall", name: "Wall", description: "Raise a wall on one empty square you pick: enemy pieces can never move onto it, for the game.", tier: 3, category: "protection", flavor: "It was not there yesterday." },
+    { id: "wall", name: "Wall", description: "Raise a wall on one empty square you pick: enemy pieces can never move onto it, for the game. The wall only rises on an empty square and captures nothing.", tier: 3, category: "protection", flavor: "It was not there yesterday." },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1742,7 +1742,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       // Snap-freeze the piece the opponent last moved (it now sits on that
@@ -2274,8 +2274,24 @@ const TIER3: Buff[] = [
 
 const TIER4: Buff[] = [
   def(
-    { id: "atomic_captures_small", name: "Atomic Captures (Small)", description: "Your captures clear enemy pieces on the two squares beside the captured piece.", tier: 4, category: "attack" },
-    captureExplosion({ beside: true }),
+    { id: "atomic_captures_small", name: "Atomic Captures (Small)", description: "Starting after your opponent's next move, your captures clear enemy pieces on the two squares beside the captured piece.", tier: 4, category: "attack" },
+    // Delayed: the detonation is dormant until the opponent has replied once
+    // after acquisition; from then on it is permanently live.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.armed = false;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed) {
+          if (move.color === api.opp) inst.state.armed = true;
+          return;
+        }
+        if (move.color !== api.me || !move.captured || move.captured === "k") return;
+        explodeAt(api, captureSquare(move) ?? move.to, { beside: true });
+      },
+      status: (inst) => (inst.state.armed ? null : "arms after their next move"),
+    },
   ),
   def(
     { id: "double_queen", requires: ["p"], name: "Double Queen", description: "Promote any pawn to a queen instantly, even mid-board.", tier: 5, category: "pieces" },
@@ -2389,8 +2405,8 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "buff_thief_minor", name: "Buff Thief (Minor)", description: "Steal one tier 1 or 2 buff from your opponent. Locked-in upgrades stay put.", tier: 4, category: "draft" },
-    stealBuffs(1, 2, notLockedIn),
+    { id: "buff_thief_minor", name: "Buff Thief (Minor)", description: "Steal one tier 1 buff from your opponent. Locked-in upgrades stay put.", tier: 4, category: "draft" },
+    stealBuffs(1, 1, notLockedIn),
   ),
   def(
     { id: "chain_nullify", name: "Chain Nullify", description: "Cancel the next buff your opponent drafts before use.", tier: 4, category: "draft" },
