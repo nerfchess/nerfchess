@@ -349,8 +349,8 @@ const T1: Buff[] = [
         (inst.state.delay as number) > 0 ? "not yet in effect" : `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H1(
-    { id: "hx4_slow_clap", name: "Slow Clap", description: "For your opponent's next 6 turns, castling draws sarcastic applause: if they castle in that window, on their following turn they may only move a pawn or their king.", flavor: "Bravo. Truly. A door, closed.", icon: "Hand", fx: { motif: "slow" } },
+  hex(
+    { id: "hx4_slow_clap", name: "Slow Clap", description: "For your opponent's next 6 turns, castling draws sarcastic applause: if they castle in that window, on their following turn they may only move a pawn or their king.", flavor: "Bravo. Truly. A door, closed.", icon: "Hand", fx: { motif: "slow" }, tier: 2 },
     {
       kind: "passive",
       init: (inst) => {
@@ -486,12 +486,12 @@ const T1: Buff[] = [
     { id: "hx4_hopscotch", name: "Hopscotch", description: "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move. The first such pawn slips through as one escape, then the restriction holds.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
     escapeCurse(1, (m) => m.piece !== "p" || sqShade(m.from) !== 1),
   ),
-  H1(
-    { id: "hx4_overslept_officers", name: "Overslept Officers", description: "On your opponent's next turn, their knights and bishops cannot move. The officers overslept.", flavor: "The trumpeter also overslept. It compounds.", icon: "AlarmClockOff", fx: { motif: "slow", pieces: ["n", "b"] } },
+  hex(
+    { id: "hx4_overslept_officers", name: "Overslept Officers", description: "On your opponent's next turn, their knights and bishops cannot move. The officers overslept.", flavor: "The trumpeter also overslept. It compounds.", icon: "AlarmClockOff", fx: { motif: "slow", pieces: ["n", "b"] }, tier: 2 },
     curse(1, (moves) => moves.filter((m) => m.piece !== "n" && m.piece !== "b")),
   ),
-  H1(
-    { id: "hx4_narrow_lane", name: "Narrow Lane", description: "On your opponent's next turn, their bishops, rooks and queen may slide at most 2 squares.", flavor: "The parade does not fit down Tanner Street.", icon: "AlignJustify", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
+  hex(
+    { id: "hx4_narrow_lane", name: "Narrow Lane", description: "On your opponent's next turn, their bishops, rooks and queen may slide at most 2 squares.", flavor: "The parade does not fit down Tanner Street.", icon: "AlignJustify", fx: { motif: "anchor", pieces: ["b", "r", "q"] }, tier: 2 },
     curse(1, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 2)),
   ),
   H1(
@@ -551,8 +551,8 @@ const T2: Buff[] = [
       });
     }),
   ),
-  H2(
-    { id: "hx4_bramble_patch", name: "Bramble Patch", description: "Choose 2 empty squares: brambles cover them for 2 of your opponent's turns, and none of their pieces may stop there.", flavor: "Every path has a plant with opinions.", icon: "Flower2", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_bramble_patch", name: "Bramble Patch", description: "Choose 2 empty squares: brambles cover them for 2 of your opponent's turns, and none of their pieces may stop there.", flavor: "Every path has a plant with opinions.", icon: "Flower2", fx: { motif: "blindfold" }, tier: 3 },
     activated(
       (_inst, api, picks) =>
         picks.length >= 2
@@ -860,8 +860,8 @@ const T2: Buff[] = [
       }
     }),
   ),
-  H2(
-    { id: "hx4_borrowed_crown", name: "Borrowed Crown", description: "One of your opponent's pawns, chosen at random, finds a crown and gets ideas: it is gilded for 6 of their turns and, weighed down by delusion, becomes a walnut for 1.", flavor: "Heavy is the head that found it in a ditch.", icon: "Crown", fx: { motif: "anchor", pieces: ["p"] } },
+  hex(
+    { id: "hx4_borrowed_crown", name: "Borrowed Crown", description: "One of your opponent's pawns, chosen at random, finds a crown and gets ideas: it is gilded for 6 of their turns and, weighed down by delusion, becomes a walnut for 1.", flavor: "Heavy is the head that found it in a ditch.", icon: "Crown", fx: { motif: "anchor", pieces: ["p"] }, tier: 3 },
     instant((_inst, api) => {
       const pool = mySquares(api.board, api.opp, "p");
       for (const sq of drawRandom(api, pool, 1)) {
