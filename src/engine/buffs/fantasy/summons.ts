@@ -12,7 +12,6 @@ import { Buff, Square, PieceType, BuffApi, Mech } from "./shared";
 import {
   card,
   summonTemp,
-  barNeighbors,
   myHalfZone,
   backRankZone,
   emptySquares,
@@ -20,6 +19,10 @@ import {
   captureSquare,
   addEffect,
   leapMoves,
+  mySquares,
+  ALL_DIRS,
+  SQ,
+  inBoard,
   KNIGHT_LEAPS,
   FILE,
   RANK,

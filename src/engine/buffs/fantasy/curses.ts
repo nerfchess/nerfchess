@@ -212,13 +212,22 @@ export const FANTASY_CURSES: Buff[] = [
     {
       kind: "passive",
       // Petrify the minors for 4 turns, once, and open a 4-turn clamp window.
+      // Balance pass: the first affected minor (deterministically the lowest
+      // square) is spared the instant petrify and gets one legal escape move; it
+      // turns to a walnut only after it has moved once (glossary: the first
+      // affected piece gets one legal escape move).
       init: (inst, api) => {
         inst.state.turns = 4;
-        for (const sq of mySquares(api.board, api.opp)) {
-          const t = api.board.pieces[sq]!.type;
-          if (t === "n" || t === "b") {
-            addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
-          }
+        const minors = mySquares(api.board, api.opp)
+          .filter((sq) => {
+            const t = api.board.pieces[sq]!.type;
+            return t === "n" || t === "b";
+          })
+          .sort((a, b) => a - b);
+        inst.state.escapee = minors.length > 0 ? minors[0] : null;
+        for (const sq of minors) {
+          if (sq === inst.state.escapee) continue;
+          addEffect(api, { kind: "walnut", sq, owner: api.opp, turns: 4 });
         }
       },
       // While the window runs, heavy pieces move like leaden things: a rook or
@@ -235,7 +244,21 @@ export const FANTASY_CURSES: Buff[] = [
         });
         return kept.length > 0 ? kept : moves;
       },
-      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      onMovePlayed: (inst, move, api) => {
+        const escapee = inst.state.escapee as Square | null | undefined;
+        if (escapee != null) {
+          if (move.to === escapee && move.from !== escapee) {
+            // Felled before it could flee: the hex simply loses its escapee.
+            inst.state.escapee = null;
+          } else if (move.from === escapee && move.color === api.opp) {
+            // It spent its one escape move; now it hardens at its new square for
+            // the same 4 of their turns the rest suffered.
+            addEffect(api, { kind: "walnut", sq: move.to, owner: api.opp, turns: 4 });
+            inst.state.escapee = null;
+          }
+        }
+        tickTurns(inst, move, api.opp);
+      },
       status: (inst) => `${turnsLeft(inst)} of their turns left`,
     },
   ),

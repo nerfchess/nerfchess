@@ -1201,14 +1201,13 @@ const T3: Buff[] = [
     curse(5, (moves) => moves.filter((m) => !m.promotion)),
   ),
   H3(
-    { id: "hx4_rope_bridge", name: "Rope Bridge", description: "For your opponent's next 3 turns, pieces may cross the midline into your half only on the central files (c to f). The flanks have no bridge.", flavor: "It sways. It creaks. It is the only way over.", icon: "Cable", fx: { motif: "anchor", pieces: "all" } },
-    curse(3, (moves, api) =>
-      moves.filter(
-        (m) =>
-          relRank(api.opp, m.from) >= 5 ||
-          relRank(api.opp, m.to) <= 4 ||
-          (FILE(m.to) >= 2 && FILE(m.to) <= 5),
-      ),
+    { id: "hx4_rope_bridge", name: "Rope Bridge", description: "For your opponent's next 3 turns, pieces may cross the midline into your half only on the central files (c to f). The first piece to cross elsewhere slips through as one escape, then the restriction holds. The flanks have no bridge.", flavor: "It sways. It creaks. It is the only way over.", icon: "Cable", fx: { motif: "anchor", pieces: "all" } },
+    escapeCurse(
+      3,
+      (m, api) =>
+        relRank(api.opp, m.from) >= 5 ||
+        relRank(api.opp, m.to) <= 4 ||
+        (FILE(m.to) >= 2 && FILE(m.to) <= 5),
     ),
   ),
   H3(
@@ -1370,12 +1369,12 @@ const T3: Buff[] = [
     ),
   ),
   H3(
-    { id: "hx4_no_sidling", name: "No Sidling", description: "For your opponent's next 3 turns, purely horizontal moves are forbidden: every move must change rank. Their king is exempt.", flavor: "Approach or retreat. The crab act fools no one.", icon: "MoveVertical", fx: { motif: "anchor", pieces: "all" } },
-    curse(3, (moves) => moves.filter((m) => m.piece === "k" || RANK(m.from) !== RANK(m.to))),
+    { id: "hx4_no_sidling", name: "No Sidling", description: "For your opponent's next 3 turns, purely horizontal moves are forbidden: every move must change rank. The first horizontal move slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "Approach or retreat. The crab act fools no one.", icon: "MoveVertical", fx: { motif: "anchor", pieces: "all" } },
+    escapeCurse(3, (m) => m.piece === "k" || RANK(m.from) !== RANK(m.to)),
   ),
   H3(
-    { id: "hx4_know_your_place", name: "Know Your Place", description: "For your opponent's next 4 turns, their knights and bishops may not capture rooks or queens. Rank has its privileges.", flavor: "File a complaint with the heralds, corporal.", icon: "Scale", fx: { motif: "muzzle", pieces: ["n", "b"] } },
-    curse(4, (moves, api) =>
+    { id: "hx4_know_your_place", name: "Know Your Place", description: "For your opponent's next 4 turns, their knights and bishops may not capture rooks or queens. The first such capture slips through as one escape, then the restriction holds. Rank has its privileges.", flavor: "File a complaint with the heralds, corporal.", icon: "Scale", fx: { motif: "muzzle", pieces: ["n", "b"] } },
+    escapeCurseBoard(4, (moves, api) =>
       moves.filter((m) => {
         if (m.piece !== "n" && m.piece !== "b") return true;
         const c = capSq(m);

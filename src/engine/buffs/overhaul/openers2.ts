@@ -284,6 +284,9 @@ const SLOW_SEASONS: Array<
     revealEarly?: boolean;
     /** The (single-use) reward lapses if unused after this many of your drafts. */
     expireAfterDrafts?: number;
+    /** Ripen as usual after your Nth move, but apply the reward only once the
+     * opponent has replied (one opponent turn later). */
+    payAfterReply?: boolean;
   }
 > = [
   { id: "title_deed", name: "Title Deed", flavor: "The clerk finds the castle paperwork behind a radiator.", icon: "ScrollText", after: 8, what: "your castling rights are restored if you had lost them", pay: (api) => api.restoreCastling() },
@@ -291,13 +294,15 @@ const SLOW_SEASONS: Array<
   { id: "early_sprout", name: "Early Sprout", flavor: "One green number pokes out of the draft soil.", icon: "Sprout", after: 4, what: "you learn the tier of your opponent's next draft offer", pay: (api) => { api.mine.flags.seeOppTier = true; }, expireAfterDrafts: 2 },
   { id: "bumper_crop", name: "Bumper Crop", flavor: "Some years the cart simply comes back fuller.", icon: "Wheat", tier: 2, after: 7, what: "your next draft offers three cards instead of two", pay: (api) => { api.mine.flags.prepThree = true; }, revealEarly: true },
   { id: "compost_heap", name: "Future Compost", flavor: "Give it seven moves. Good things rot upward.", icon: "Recycle", after: 7, what: "your next draft offer rolls one tier higher", pay: (api) => { api.mine.flags.bankBonus = 1; }, revealEarly: true },
-  { id: "trellis", name: "Trellis", flavor: "The climbing pawn gets one lattice of protection.", icon: "Fence", after: 6, what: "your most advanced pawn cannot be captured during your opponent's next turn", pay: (api) => { const p = vanguardPawn(api); if (p != null) shield1(api, p); } },
+  { id: "trellis", name: "Trellis", flavor: "The climbing pawn gets one lattice of protection.", icon: "Fence", tier: 2, after: 6, payAfterReply: true, what: "your most advanced pawn cannot be captured during your opponent's next turn", pay: (api) => { const p = vanguardPawn(api); if (p != null) shield1(api, p); } },
   { id: "late_bloom", name: "Late Bloom", flavor: "Ten moves of patience, one burst of gold leaf.", icon: "Flower", after: 10, what: "your queen is gilded, purely cosmetically, forever, and since that reveals nothing you could act on you also gain a draft reroll and learn the tier of your next draft offer", pay: (api) => { const q = mySquares(api.board, api.me, "q")[0]; if (q != null) { pinCosmetic(api, q, api.me, "gilded", null); flashSquares(api, [q], true); } api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "second_harvest", name: "Second Harvest", flavor: "The field you already reaped owes you two more rows.", icon: "Tractor", after: 12, what: "gain a draft reroll", pay: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; } },
 ];
 
 function slowSeason(entry: (typeof SLOW_SEASONS)[number]): Buff {
-  let desc = `After your ${entry.after}th move, ${entry.what}.`;
+  let desc = entry.payAfterReply
+    ? `After your ${entry.after}th move, once your opponent has replied, ${entry.what}.`
+    : `After your ${entry.after}th move, ${entry.what}.`;
   if (entry.revealEarly) desc += " You are shown the pending reward one of your moves before it lands.";
   if (entry.expireAfterDrafts != null)
     desc += ` If left unused, the reveal lapses after ${entry.expireAfterDrafts} of your drafts.`;
