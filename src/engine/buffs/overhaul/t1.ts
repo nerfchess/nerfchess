@@ -410,7 +410,8 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_window_shopping",
       name: "Window Shopping",
-      description: "You know exactly which shelf you want: your next draft is dealt from tier 2.",
+      description:
+        "You know exactly which shelf you want: your next draft is dealt from tier 2, and once you have seen it you gain one reroll.",
       tier: 1,
       category: "draft",
       icon: "Store",
@@ -418,6 +419,7 @@ export const OVERHAUL_T1: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.forceTier = 2;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   // 14. Growth Spurt -------------------------------------------------------------------------------------

@@ -1199,7 +1199,7 @@ export const BOON_WAVE2: Buff[] = [
       addEffect(api, { kind: "shield", owner: api.opp, squares: null, turns: 2 });
       addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
       addEffect(api, { kind: "king_safe", owner: api.opp, turns: 2 });
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 4 });
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
     }),
   ),
 
@@ -1211,20 +1211,28 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_great_return",
       name: "The Great Return",
       description:
-        "The gates of the underworld open both ways: every captured piece of BOTH sides still owed to the board returns at once, each placed on empty squares nearest its own home rank. The side that has lost more, regains more.",
+        "The gates of the underworld open both ways: every captured piece of BOTH sides still owed to the board returns at once, each placed on empty squares nearest its own home rank. The side that has lost more, regains more. Your most valuable returning piece arrives rooted and cannot move on your next turn.",
       tier: 8,
       category: "pieces",
       icon: "Sparkles",
       flavor: "The river gave back everything it was ever paid.",
     },
     instant((_inst, api) => {
+      let firstSq: Square | null = null;
       for (const t of VALUE_ORDER) {
         while (revivable(api, t) > 0) {
           const sq = autoPlaceSquare(api, api.me, t);
           if (sq == null) break;
           api.place(sq, t, api.me);
           markRevived(api, t);
+          if (firstSq == null) firstSq = sq;
         }
+      }
+      // The highest-value arrival on your side (VALUE_ORDER runs queen-first)
+      // cannot capture until the opponent replies. The engine has no
+      // capture-only lock, so a one-turn freeze holds it until then.
+      if (firstSq != null) {
+        addEffect(api, { kind: "freeze", sq: firstSq, owner: api.me, turns: 1, skin: "stone" });
       }
       for (const t of VALUE_ORDER) {
         while ((api.capturedByMe[t] ?? 0) - (api.theirs.revived[t] ?? 0) > 0) {
@@ -1266,24 +1274,29 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_eternal_keep",
       name: "The Eternal Keep",
       description:
-        "Your home rank is raised into a fortress that never falls: your pieces standing on your first rank (your king excepted) can never be captured, for the rest of the game. Step off the rampart, and the stone no longer knows you.",
+        "Your home rank is raised into a fortress: for the opponent's next 4 turns, your pieces standing on your first rank (your king excepted) can never be captured. The ward ends the moment your king crosses the midline into the opponent's half. Step off the rampart, and the stone no longer knows you.",
       tier: 8,
       category: "protection",
       icon: "Castle",
-      flavor: "The masons built for forever. Forever showed up.",
+      flavor: "The masons built for a season. The season held.",
       fx: { motif: "ward", pieces: "all", self: true },
     },
-    oppFilter((moves, _inst, api) => {
-      const kept = moves.filter((m) => {
+    timedOppFilter(4, (moves, inst, api) => {
+      // The ward ends for good the moment your king crosses the midline into
+      // the opponent's half; once ended it never resumes.
+      if (inst.state.ended) return moves;
+      const kingSq = mySquares(api.board, api.me, "k")[0];
+      if (kingSq != null && !inHalf(api.me, kingSq)) {
+        inst.state.ended = true;
+        return moves;
+      }
+      return moves.filter((m) => {
         const cs = captureSquare(m);
         if (cs == null) return true;
         const p = api.board.pieces[cs];
         if (!p || p.color !== api.me || p.type === "k") return true;
         return relRank(api.me, cs) !== 1;
       });
-      // Never strand the opponent with zero moves (same rail as every
-      // permanent filter in the pool).
-      return kept.length > 0 ? kept : moves;
     }),
   ),
 ];
