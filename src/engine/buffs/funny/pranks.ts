@@ -108,16 +108,34 @@ export const FUNNY_PRANKS: Buff[] = [
       id: "pr_phishing",
       name: "Phishing Email",
       description:
-        "You are the prince now: a spoofed email talks your opponent out of their secrets. Reveal their hidden nerf for the rest of the game, and peek at the cards in their next draft offer.",
+        "You are the prince now: a spoofed email talks your opponent out of their secrets. Reveal their hidden nerf and peek at the cards in their next draft offer. The stolen credentials go stale, so the nerf reveal lapses once you have taken two more drafts.",
       tier: 3,
       category: "info",
       boon: true,
       flavor: "Dear valued user, kindly confirm your entire hand. Warm regards.",
     },
-    instant((_inst, api) => {
-      api.mine.oppNerfRevealed = true;
-      api.mine.flags.seeOppCards = true;
-    }),
+    // The reward lands on acquire (init), but the nerf reveal is no longer
+    // permanent: it expires after two of the holder's own drafts. draftsTaken
+    // is synced draft state, so both replicas expire it on the same move. The
+    // one-shot offer peek resolves on the very next offer, well inside the
+    // window, so only the reveal needs a timer.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.oppNerfRevealed = true;
+        api.mine.flags.seeOppCards = true;
+        inst.state.draftBaseline = api.mine.draftsTaken;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.spent) return;
+        const baseline = (inst.state.draftBaseline as number) ?? 0;
+        if (api.mine.draftsTaken - baseline >= 2) {
+          api.mine.oppNerfRevealed = false;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "the credentials expired" : "reading their nerf"),
+    },
   ),
   card(
     {

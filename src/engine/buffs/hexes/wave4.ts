@@ -28,7 +28,6 @@ import {
   tickTurns,
   tierHexes,
   turnsLeft,
-  walnutTarget,
   FILE,
   RANK,
   SQ,
@@ -860,8 +859,41 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_gum_wrapper", name: "Gum Wrapper", description: "One enemy pawn you target is wrapped up like a sweet: it becomes a walnut for 2 of their turns, shuffling one square at best.", flavor: "Collectible wrapper. Non collectible pawn.", icon: "Candy", fx: { motif: "anchor", pieces: ["p"] } },
-    walnutTarget(2, ["p"]),
+    { id: "hx4_gum_wrapper", name: "Gum Wrapper", description: "One enemy pawn you target is wrapped up like a sweet: after your opponent's next move it becomes a walnut for 2 of their turns, shuffling one square at best.", flavor: "Collectible wrapper. Non collectible pawn.", icon: "Candy", fx: { motif: "anchor", pieces: ["p"] } },
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length > 0 || inst.state.sq != null
+          ? null
+          : { kind: "square", label: "Choose an enemy pawn", squares: mySquares(api.board, api.opp, "p") },
+      effect: (inst, _api, picks) => {
+        if (inst.state.sq != null) return;
+        const sq = picks[0]?.square;
+        if (sq == null) return;
+        inst.state.sq = sq;
+        inst.state.delay = 1;
+      },
+      onMovePlayed: (inst, move, api) => {
+        let sq = (inst.state.sq as Square | null | undefined) ?? null;
+        if (sq == null) return;
+        sq = followSq(sq, move);
+        inst.state.sq = sq;
+        if (sq == null) {
+          inst.spent = true;
+          return;
+        }
+        if (move.color === api.opp && (inst.state.delay as number) > 0) {
+          inst.state.delay = (inst.state.delay as number) - 1;
+          if ((inst.state.delay as number) <= 0) {
+            nutSting(api, sq, 2);
+            inst.spent = true;
+          }
+        }
+      },
+      status: (inst) =>
+        inst.state.sq == null ? "activate to target a pawn" : "the wrapper is closing",
+    },
   ),
   H2(
     { id: "hx4_tea_break", name: "Tea Break", description: "On your opponent's next turn, only pieces within 2 squares of their king may move. Everyone else is at tea.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
@@ -925,8 +957,8 @@ const T2: Buff[] = [
     }),
   ),
   H2(
-    { id: "hx4_leaky_quiver", name: "Leaky Quiver", description: "For your opponent's next 3 turns, their queen may slide at most 4 squares.", flavor: "Half her arrows are somewhere on the road.", icon: "Target", fx: { motif: "anchor", pieces: ["q"] } },
-    curse(3, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 4)),
+    { id: "hx4_leaky_quiver", name: "Leaky Quiver", description: "Starting after your opponent's next move, for their following 3 turns, their queen may slide at most 4 squares.", flavor: "Half her arrows are somewhere on the road.", icon: "Target", fx: { motif: "anchor", pieces: ["q"] } },
+    delayedCurse(3, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 4)),
   ),
   H2(
     { id: "hx4_frost_footprints", name: "Frost Footprints", description: "For your opponent's next 2 turns, every square one of their pieces leaves ices over behind it: no piece of theirs may stop there on their following turn.", flavor: "You cannot go home by the road you froze.", icon: "Snowflake", fx: { motif: "blindfold", pieces: "all" } },
