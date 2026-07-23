@@ -10,7 +10,7 @@
 // not resolve the alias, and the engine must build for the server tests.
 
 import { isInCheck } from "../board";
-import { Buff, BuffApi, BuffInstance, CardFx } from "../buff";
+import { Buff, BuffApi, BuffInstance, BuffPick, CardFx } from "../buff";
 import { Tier } from "../nerf";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, inBoard } from "../types";
 import {
@@ -2007,7 +2007,7 @@ export const BOON_WAVE4B: Buff[] = [
       ...base,
       // Keep the original relocation, then shield the first arrival for one
       // opponent turn (turns: 1 is auto-compensated for the activation turn).
-      effect: (inst: BuffInstance, api: BuffApi, picks) => {
+      effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
         base.effect!(inst, api, picks);
         for (let i = 0; i + 1 < picks.length; i += 2) {
           const to = picks[i + 1].square;

@@ -589,6 +589,60 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
     }
     return noCapture ? out.filter((m) => !m.captured) : out;
   };
+  if (entry.id === "towpath") {
+    // Names a target (the a-file pawn), so eligibility widens one adjacent file.
+    // The a-file is an edge file, so it widens inward to include the b-file.
+    return opener(
+      entry,
+      "Once, your a-file or b-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.",
+      augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== 0 && FILE(sq) !== 1) continue;
+          const mid = sq + fwd, to = sq + fwd * 2;
+          if (to < 0 || to > 63) continue;
+          if (!pawnRankOk(to)) continue;
+          if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+            out.push(...teleportMoves(api.board, sq, [to], inst.id));
+          }
+        }
+        return out;
+      }),
+    );
+  }
+  if (entry.id === "smugglers_lane") {
+    // Preserve the narrow h-file identity, but grant a second charge. The effect
+    // names a target (the h-file pawn), so the repeated advance must start from a
+    // different square than the first.
+    return opener(
+      entry,
+      `Twice, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. The second advance must start from a different square than the first.`,
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 2;
+          inst.state.usedFrom = null;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          const usedFrom = inst.state.usedFrom as number | null;
+          addNovel(moves, gen(moves, inst, api).filter((m) => usedFrom == null || m.from !== usedFrom));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id || move.color !== api.me) return;
+          inst.state.usedFrom = move.from;
+          const left = ((inst.state.charges as number) ?? 2) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        },
+        status: (inst) => {
+          const c = (inst.state.charges as number) ?? 2;
+          return c > 0 ? `${c} advance${c > 1 ? "s" : ""} left` : null;
+        },
+      },
+    );
+  }
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.${
@@ -670,11 +724,33 @@ function strangeGait(entry: (typeof STRANGE_GAITS)[number]): Buff {
     }
     return out;
   };
-  return opener(
-    entry,
-    `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}.${captureNote}${lossyNote}`,
-    entry.lossy ? lossyAugment(gen, uses) : augment(gen, uses),
-  );
+  const baseDesc = `${uses > 1 ? "Twice" : "Once"}, one of your knights may make ${entry.how}.${captureNote}${lossyNote}`;
+  if (entry.id === "signal_rocket") {
+    // Preserve the payoff, but delay its first trigger: the leap is not offered
+    // until after the opponent's next move.
+    return opener(entry, `${baseDesc} The leap becomes available only after your opponent's next move.`, {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = uses;
+        inst.state.ready = false;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+        addNovel(moves, gen(moves, inst, api));
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+        if (move.via === inst.id && move.color === api.me) {
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        }
+      },
+      status: (inst) =>
+        !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one leap ready" : null,
+    });
+  }
+  return opener(entry, baseDesc, entry.lossy ? lossyAugment(gen, uses) : augment(gen, uses));
 }
 
 // ---------------------------------------------------------------------------

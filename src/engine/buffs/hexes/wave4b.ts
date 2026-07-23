@@ -1659,13 +1659,14 @@ const T7: Buff[] = [
       }
     }),
   ),
-  H7(
-    { id: "hx4_burden_of_command", name: "Burden of Command", description: "For your opponent's next 4 turns, every time their queen moves, the whole army stops to salute: on their following turn they may move only their king.", flavor: "Protocol is the heaviest piece on the board.", icon: "Medal", fx: { motif: "slow", pieces: ["q"] } },
+  hex(
+    { id: "hx4_burden_of_command", name: "Burden of Command", description: "For your opponent's next 4 turns, every time their queen moves, the whole army stops to salute: on their following turn they may move only their king. When the burden lifts, they bank one draft reroll.", flavor: "Protocol is the heaviest piece on the board.", icon: "Medal", fx: { motif: "slow", pieces: ["q"] }, tier: 8 },
     {
       kind: "passive",
       init: (inst) => {
         inst.state.turns = 4;
         inst.state.tax = 0;
+        inst.state.banked = false;
       },
       filterOpponentMoves: (moves, inst) => {
         if (((inst.state.tax as number) ?? 0) <= 0 || moves.length === 0) return moves;
@@ -1676,7 +1677,12 @@ const T7: Buff[] = [
         if (move.color === api.opp && turnsLeft(inst) > 0) {
           inst.state.tax = move.piece === "q" ? 1 : 0;
         }
+        const wasActive = turnsLeft(inst) > 0;
         tickTurns(inst, move, api.opp);
+        if (wasActive && turnsLeft(inst) <= 0 && !inst.state.banked) {
+          api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
+          inst.state.banked = true;
+        }
       },
       status: (inst) =>
         ((inst.state.tax as number) ?? 0) > 0
