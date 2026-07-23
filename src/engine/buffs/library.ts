@@ -690,8 +690,11 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game.", tier: 1, category: "info", boon: true },
-    instant((_inst, api) => { api.mine.oppNerfRevealed = true; }),
+    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game, and gain 5 seconds.", tier: 1, category: "info", boon: true },
+    instant((_inst, api) => {
+      api.mine.oppNerfRevealed = true;
+      api.adjustClock({ addSelfSec: 5 });
+    }),
   ),
   def(
     { id: "castle_early", name: "Castle Early", description: "Castle even if your king has already moved once.", tier: 2, category: "movement" },
@@ -721,11 +724,12 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    // Reworked for the full-transparency era (hands and offers are public, so
-    // "see their next options" revealed nothing): a peek at the deck is now a
-    // do-over token. Sole card granting exactly +1 reroll and nothing else.
-    { id: "peek", name: "Peek", description: "Gain one draft reroll.", tier: 1, category: "draft", boon: true, flavor: "One look was enough to want a different look." },
-    instant((_inst, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }),
+    // Rebalance: the bundled reroll is removed. Peek returns to its namesake
+    // effect, revealing the opponent's next draft offer (the seeOppCards
+    // "Peek" flag). That reveal resolves at their next offer, well within two
+    // drafts, so it never lingers.
+    { id: "peek", name: "Peek", description: "See your opponent's next draft offer.", tier: 1, category: "draft", boon: true, flavor: "One look was enough to want a different look." },
+    instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
   ),
   def(
     { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. Gain 5 seconds when it promotes.", tier: 1, category: "pieces" },
@@ -777,13 +781,31 @@ const TIER1: Buff[] = [
     // random reveal showed nothing new): the scout now raids the supply line.
     // Sole card granting exactly takeBoth+1 with no rider (Draft Seize and
     // Greed bundle it with a block / prepThree); priced against those peers.
-    { id: "scout", name: "Scout", description: "Take both cards in your next draft instead of one, but spend one of your rerolls.", tier: 4, category: "draft", boon: true, flavor: "Sent ahead to look. Came back with the wagon." },
+    { id: "scout", name: "Scout", description: "Take both cards in your next draft instead of one, but spend one of your rerolls. The take-both offer expires after two drafts if unused.", tier: 4, category: "draft", boon: true, flavor: "Sent ahead to look. Came back with the wagon." },
     // Rebalance: the free takeBoth+1 now carries a real cost (a lost reroll),
     // roughly a 20-30% trim on the tier's strongest no-rider draft grab.
-    instant((_inst, api) => {
-      api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
-      api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
-    }),
+    // Owner tweak: the take-both grant now lapses two of your drafts later if it
+    // was never cashed in (a blocked/dry draft can leave it sitting), so it can
+    // no longer be banked indefinitely. Passive so the expiry hook can run.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) + 1;
+        api.mine.rerollsLeft = Math.max(0, (api.mine.rerollsLeft ?? 0) - 1);
+        inst.state.expireAt = (api.mine.draftsTaken ?? 0) + 2;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.state.expireAt == null) return;
+        if ((api.mine.draftsTaken ?? 0) >= (inst.state.expireAt as number)) {
+          if ((api.mine.flags.takeBoth ?? 0) > 0) {
+            api.mine.flags.takeBoth = (api.mine.flags.takeBoth ?? 0) - 1;
+          }
+          inst.state.expireAt = null;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.state.expireAt != null ? "take-both expires within two drafts" : null),
+    },
   ),
   def(
     // Guards the king without a shield effect, so the ward motif is the only
@@ -1123,9 +1145,10 @@ const TIER1: Buff[] = [
     }),
   ),
   def(
-    { id: "watchtower", name: "Watchtower", description: "The tower spots the cavalry a mile out: enemy knights cannot move into your half of the board for your opponent's next 3 turns.", tier: 1, category: "protection", boon: true, fx: { motif: "ward", pieces: ["n"] }, flavor: "Nothing on four legs sneaks past the watch." },
+    { id: "watchtower", name: "Watchtower", description: "The tower spots the cavalry a mile out: enemy knights cannot move into your half of the board, except to capture, for your opponent's next 3 turns.", tier: 1, category: "protection", boon: true, fx: { motif: "ward", pieces: ["n"] }, flavor: "Nothing on four legs sneaks past the watch." },
+    // Rebalance: the ward no longer stops captures, only non-capturing entry.
     timedOppFilter(3, (moves, _inst, api) =>
-      moves.filter((m) => !(m.piece === "n" && inHalf(api.me, m.to))),
+      moves.filter((m) => !(m.piece === "n" && inHalf(api.me, m.to) && !m.captured)),
     ),
   ),
   def(
@@ -1146,18 +1169,38 @@ const TIER1: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "reprieve", name: "Reprieve", description: "Suspend your nerf for your next 2 turns.", tier: 1, category: "nerf" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
-    }),
+    { id: "reprieve", name: "Reprieve", description: "Suspend your nerf for your next 2 turns, beginning after your opponent's next move.", tier: 1, category: "nerf" },
+    // Rebalance: the suspension now begins after the opponent replies. Added on
+    // their move, it is not self-ticked, so turns:2 covers your next 2 turns.
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+        inst.spent = true;
+      },
+      status: () => "suspends after their reply",
+    },
   ),
   def(
-    { id: "deep_breath", name: "Deep Breath", description: "Free action: ignore your nerf for one move, used at the moment you choose.", tier: 1, category: "nerf" },
+    { id: "deep_breath", name: "Deep Breath", description: "Free action: suspend your nerf for one move, beginning after your opponent's next reply, used at the moment you choose.", tier: 1, category: "nerf" },
+    // Rebalance: the one-move suspension is delayed. Activating arms it; the
+    // opponent's next reply releases it (added on their move, not self-ticked,
+    // so turns:1 covers your following move).
     {
-      ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
-      }),
+      kind: "activated",
       freeAction: true,
+      spendOnUse: false,
+      effect: (inst) => {
+        inst.state.armed = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.armed || move.color !== api.opp) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        inst.state.armed = false;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.armed ? "suspends after their reply" : "free action ready"),
     },
   ),
   def(
@@ -1669,21 +1712,31 @@ const TIER2: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "loosen_the_leash", name: "Loosen the Leash", description: "Each of your next 3 captures loosens the leash: your nerf is suspended for your following turn.", tier: 2, category: "nerf" },
+    { id: "loosen_the_leash", name: "Loosen the Leash", description: "Each of your next 3 captures loosens the leash: after your opponent's next move, your nerf is suspended for one of your turns.", tier: 2, category: "nerf" },
     // Distinct from Small Mercies (which triggers when the OPPONENT captures
     // you): this rewards YOUR captures, so pushing forward buys nerf relief.
+    // Rebalance: the relief now begins after the opponent replies. A capture
+    // arms a pending suspension; the opponent's next move releases it (added on
+    // their move, so it is not self-ticked and covers your following turn).
     {
       kind: "passive",
       init: (inst) => {
         inst.state.charges = 3;
+        inst.state.pending = 0;
       },
       onMovePlayed: (inst, move, api) => {
-        if (move.color !== api.me || !move.captured || move.captured === "k") return;
+        if (move.color === api.opp && ((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        }
         const left = (inst.state.charges as number) ?? 0;
-        if (left <= 0) return;
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
-        inst.state.charges = left - 1;
-        if (left - 1 <= 0) inst.spent = true;
+        if (left > 0 && move.color === api.me && move.captured && move.captured !== "k") {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+          inst.state.charges = left - 1;
+        }
+        if (((inst.state.charges as number) ?? 0) <= 0 && ((inst.state.pending as number) ?? 0) <= 0) {
+          inst.spent = true;
+        }
       },
       status: (inst) => `${(inst.state.charges as number) ?? 3} loosenings left`,
     },
@@ -1695,16 +1748,24 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for your next 3 turns, used at the moment you choose.", tier: 2, category: "nerf" },
+    { id: "held_breath", name: "Held Breath", description: "Free action: suspend your nerf for this turn and your next turn, used at the moment you choose. Cannot be used while your king is in check.", tier: 2, category: "nerf" },
     {
-      ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
-      }),
+      kind: "activated",
       freeAction: true,
+      // Blocked while in check: the target step offers no candidates then, so
+      // the card is unusable until the check is answered.
+      targets: (_inst, api) =>
+        isInCheck(api.board, api.me)
+          ? { kind: "square", label: "Cannot be used while your king is in check", squares: [] }
+          : null,
+      effect: (_inst, api) => {
+        if (isInCheck(api.board, api.me)) return;
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      },
     },
   ),
   def(
-    { id: "hunters_relief", name: "Hunter's Relief", description: "Your next 2 captures each suspend your nerf for your next turn.", tier: 2, category: "nerf" },
+    { id: "hunters_relief", name: "Hunter's Relief", description: "Your next 2 captures each suspend your nerf for your next turn, but on that turn the relief applies only to movement restrictions: you may move only one square at a time.", tier: 2, category: "nerf" },
     {
       kind: "passive",
       init: (inst) => {
@@ -1714,9 +1775,12 @@ const TIER2: Buff[] = [
         if (move.color !== api.me || !move.captured || move.captured === "k") return;
         const left = (inst.state.charges as number) ?? 0;
         if (left <= 0) return;
-        // Two ticks: this effect loses one tick to the capturing move itself
-        // (timers tick right after onMovePlayed), leaving the next turn free.
+        // Two ticks: both effects lose one tick to the capturing move itself
+        // (timers tick right after onMovePlayed), leaving the next turn covered.
+        // A one-square leash rides that turn, so the relief applies only to
+        // movement restrictions.
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+        addEffect(api, { kind: "short_leash", owner: api.me, turns: 2 });
         inst.state.charges = left - 1;
         if (left - 1 <= 0) inst.spent = true;
       },
@@ -1978,8 +2042,10 @@ const TIER3: Buff[] = [
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
-    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns.", tier: 3, category: "protection", boon: true, fx: { motif: "blindfold" } },
+    { id: "bunker", name: "Bunker", description: "Three squares in front of your king are barred to enemies for 4 turns, then your next draft is skipped.", tier: 3, category: "protection", boon: true, fx: { motif: "blindfold" } },
     instant((_inst, api) => {
+      // Rebalance cost: skip your next draft after Bunker resolves.
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       const k = mySquares(api.board, api.me, "k")[0];
       if (k == null) return;
       const r = RANK(k) + (api.me === "w" ? 1 : -1);
@@ -2285,10 +2351,11 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "respite", name: "Respite", description: "Free action: suspend your nerf for your next 5 turns, used at the moment you choose.", tier: 4, category: "nerf" },
+    { id: "respite", name: "Respite", description: "Free action: suspend your nerf for your next 4 turns, used at the moment you choose.", tier: 4, category: "nerf" },
+    // Owner tweak: the suspension is shortened by one owner turn (5 -> 4).
     {
       ...activatedSimple((_inst, api) => {
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 5 });
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 4 });
       }),
       freeAction: true,
     },
@@ -2304,13 +2371,22 @@ const TIER3: Buff[] = [
     },
   ),
   def(
-    { id: "underdogs_grit", name: "Underdog's Grit", description: "While you have fewer pieces than your opponent, your nerf is suspended.", tier: 3, category: "nerf" },
+    { id: "underdogs_grit", name: "Underdog's Grit", description: "While you have fewer pieces than your opponent, your nerf is suspended, but the relief lags: each turn behind takes hold only after your opponent's following move.", tier: 3, category: "nerf" },
+    // Rebalance: the one-turn suspension begins after the opponent replies. A
+    // turn spent behind on material arms a pending suspension; the opponent's
+    // next move releases it (added on their move, not self-ticked, so turns:1
+    // covers your following turn).
     {
       kind: "passive",
-      onMovePlayed: (_inst, move, api) => {
+      onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp) return;
-        if (mySquares(api.board, api.me).length >= mySquares(api.board, api.opp).length) return;
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        if (((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        }
+        if (mySquares(api.board, api.me).length < mySquares(api.board, api.opp).length) {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+        }
       },
       status: () => "watching the material count",
     },
@@ -2587,13 +2663,13 @@ const TIER4: Buff[] = [
     }, 2),
   ),
   def(
-    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 2 of its turns.", tier: 3, category: "tempo", boon: true },
+    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 1 of its turns.", tier: 3, category: "tempo", boon: true },
     instant((_inst, api) => {
       const last = [...api.board.history].reverse().find((m) => m.color === api.opp);
       if (!last) return;
       const p = api.board.pieces[last.to];
       if (p && p.color === api.opp && p.type !== "k") {
-        addEffect(api, { kind: "freeze", sq: last.to, owner: api.opp, turns: 2 });
+        addEffect(api, { kind: "freeze", sq: last.to, owner: api.opp, turns: 1 });
       }
     }),
   ),
@@ -2674,14 +2750,31 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "recast", name: "Recast", description: "Gain an extra draft reroll, and your next draft rolls one tier higher.", tier: 4, category: "draft", boon: true },
-    instant((_inst, api) => {
-      // A real reroll token (the reroll system supports these: rerollsLeft
-      // starts at 1 and draft cards grant more) plus the one-tier lift on the
-      // next offer, so the card is no longer a silent duplicate of banking.
-      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
-    }),
+    { id: "recast", name: "Recast", description: "Gain an extra draft reroll, and your next draft rolls one tier higher. The bonus reroll expires after two drafts if unspent.", tier: 4, category: "draft", boon: true },
+    // Owner tweak: keep the reward, but the extra reroll now lapses two of your
+    // drafts later if a reroll is still unspent, so it cannot be hoarded.
+    // Passive so the expiry hook can run.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        // A real reroll token (the reroll system supports these: rerollsLeft
+        // starts at 1 and draft cards grant more) plus the one-tier lift on the
+        // next offer, so the card is no longer a silent duplicate of banking.
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+        inst.state.expireAt = (api.mine.draftsTaken ?? 0) + 2;
+      },
+      onMovePlayed: (inst, _move, api) => {
+        if (inst.state.expireAt == null) return;
+        if ((api.mine.draftsTaken ?? 0) >= (inst.state.expireAt as number)) {
+          // Two drafts on: reclaim the bonus reroll if any reroll is still unspent.
+          if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
+          inst.state.expireAt = null;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.state.expireAt != null ? "bonus reroll expires within two drafts" : null),
+    },
   ),
   def(
     { id: "phantom_rook", name: "Phantom Rook", description: "Choose an empty square in your half; after your opponent's next move a rook appears there and vanishes after 4 of your turns.", tier: 4, category: "pieces" },
@@ -2827,13 +2920,17 @@ const TIER4: Buff[] = [
     }),
   ),
   def(
-    { id: "adrenaline", name: "Adrenaline", description: "Whenever your king is in check, your nerf is suspended for your next turn.", tier: 4, category: "nerf" },
+    { id: "adrenaline", name: "Adrenaline", description: "Whenever your king is in check, your nerf is suspended for your next turn, but that turn the relief applies only to movement restrictions: you may move only one square at a time.", tier: 4, category: "nerf" },
     {
       kind: "passive",
       onMovePlayed: (_inst, move, api) => {
         if (move.color !== api.opp) return;
         if (!isInCheck(api.board, api.me)) return;
+        // The relief is movement-only: a one-square leash rides the suspended
+        // turn. Both are added on the opponent's move, so neither is self-ticked
+        // and turns:1 covers exactly your following turn.
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        addEffect(api, { kind: "short_leash", owner: api.me, turns: 1 });
       },
       status: () => "arms while your king is in check",
     },
@@ -2877,17 +2974,31 @@ const TIER5: Buff[] = [
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via)),
   ),
   def(
-    { id: "total_freeze", name: "Total Freeze", description: "Freeze every enemy piece except the king that stands on a square next to one of your pieces, for 1 turn.", tier: 5, category: "tempo", boon: true },
-    instant((_inst, api) => {
-      const mineSqs = mySquares(api.board, api.me);
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (api.board.pieces[sq]!.type === "k") continue;
-        const near = mineSqs.some(
-          (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
-        );
-        if (near) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
-      }
-    }),
+    { id: "total_freeze", name: "Total Freeze", description: "After your opponent's next move, freeze every enemy piece except the king that stands on a square next to one of your pieces, for 1 turn.", tier: 5, category: "tempo", boon: true },
+    // Owner tweak: every tunable constant here is one (the freeze lasts 1 turn
+    // and the piece count is board-driven), so per the directive the effect is
+    // delayed until after the opponent replies. Passive: arm on pick, resolve on
+    // the opponent's first move using the board as it then stands.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        inst.state.pending = false;
+        inst.spent = true;
+        const mineSqs = mySquares(api.board, api.me);
+        for (const sq of mySquares(api.board, api.opp)) {
+          if (api.board.pieces[sq]!.type === "k") continue;
+          const near = mineSqs.some(
+            (m) => Math.abs(FILE(m) - FILE(sq)) <= 1 && Math.abs(RANK(m) - RANK(sq)) <= 1,
+          );
+          if (near) addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 1 });
+        }
+      },
+      status: (inst) => (inst.state.pending ? "freezes after their next move" : null),
+    },
   ),
   def(
     { id: "annihilate", name: "Annihilate", description: "Remove one enemy piece below the queen, and freeze every enemy piece orthogonally beside it for their next 2 turns.", tier: 6, category: "attack" },
@@ -3293,9 +3404,10 @@ const TIER5: Buff[] = [
   ),
   def(
     // king_safe has no square paint of its own; ward marks the king.
-    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be captured for 2 full turns.", tier: 5, category: "protection", boon: true, fx: { motif: "ward", pieces: ["k"], self: true } },
+    { id: "iron_reign", name: "Iron Reign", description: "Your king cannot be captured for 1 full turn.", tier: 5, category: "protection", boon: true, fx: { motif: "ward", pieces: ["k"], self: true } },
+    // Owner tweak: the protection is shortened by one opponent turn (2 -> 1).
     instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 2 });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
     }),
   ),
   def(
@@ -3476,12 +3588,14 @@ const TIER5: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "rehab", name: "Rehab", description: "Check into rehab: your nerf is suspended permanently for the rest of the game.", tier: 5, category: "nerf" },
+    { id: "rehab", name: "Rehab", description: "Check into rehab: your nerf is suspended permanently for the rest of the game, but your next two drafts are skipped.", tier: 5, category: "nerf" },
     // A permanent (null-turn) suspension, distinct from the flat-removal cards
     // (Nerf Breaker and kin) which set nerfRemoved: this leaves a dispellable
     // effect on the board rather than deleting the handicap outright.
+    // Owner tweak: the permanent removal now costs your next two drafts.
     instant((_inst, api) => {
       addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: null });
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 2;
     }),
   ),
   def(
@@ -4166,8 +4280,15 @@ const TIER6: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "nerf_breaker", name: "Nerf Breaker", description: "Remove your nerf entirely for the rest of the game.", tier: 6, category: "nerf" },
-    instant((_inst, api) => api.removeMyNerf()),
+    { id: "nerf_breaker", name: "Nerf Breaker", description: "Suspend your nerf for your next 10 turns.", tier: 6, category: "nerf" },
+    // Owner tweak: no more permanent removal. The nerf is only suspended for ten
+    // of your turns and then returns. (The directive's "reduce its tier by one
+    // afterward" has no mechanical handle: a nerf's tier is a difficulty label
+    // with no in-game effect and the buff API exposes no way to mutate it, so
+    // the enforceable half, the ten-turn suspension, is what ships.)
+    instant((_inst, api) => {
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+    }),
   ),
   def(
     { id: "wardens_bribe", name: "Warden's Bribe", description: "Free action: suspend your nerf for your next 6 turns, used at the moment you choose.", tier: 5, category: "nerf" },
@@ -4181,14 +4302,24 @@ const TIER6: Buff[] = [
   def(
     // Owner call: reactive relief was underwhelming at tier 6, so it now
     // rolls one tier lower (nerf-mode boon pool, tier 5).
-    { id: "iron_will", name: "Iron Will", description: "Whenever your opponent captures one of your pieces, your nerf is suspended for your next 2 turns.", tier: 5, category: "nerf" },
+    { id: "iron_will", name: "Iron Will", description: "Whenever your opponent captures one of your pieces, your nerf is suspended for your next turn, beginning after your opponent's following move.", tier: 5, category: "nerf" },
+    // Owner tweak: the suspension is shortened by one owner turn (2 -> 1), and a
+    // one-turn suspension now begins after the opponent replies. A capture arms a
+    // pending relief; the opponent's next move releases it (added on their move,
+    // so turns:1 covers your following turn).
     {
       kind: "passive",
-      onMovePlayed: (_inst, move, api) => {
-        if (move.color !== api.opp || !move.captured || move.captured === "k") return;
-        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (((inst.state.pending as number) ?? 0) > 0) {
+          inst.state.pending = (inst.state.pending as number) - 1;
+          addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 1 });
+        }
+        if (move.captured && move.captured !== "k") {
+          inst.state.pending = ((inst.state.pending as number) ?? 0) + 1;
+        }
       },
-      status: () => "answers every loss with relief",
+      status: () => "answers every loss with delayed relief",
     },
   ),
 ];
@@ -4386,7 +4517,10 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "fortress_realm", name: "Fortress Realm", description: "A 3x3 zone you pick makes your pieces there, your king aside, uncapturable for your opponent's next 5 turns.", tier: 7, category: "protection", boon: true },
+    { id: "fortress_realm", name: "Fortress Realm", description: "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.", tier: 7, category: "protection", boon: true },
+    // Owner tweak: the zone now shields at most three of your pieces (king aside)
+    // for a single opponent turn, then expires. Shield squares track the pieces
+    // standing on them, so only the chosen pieces are protected, not the tiles.
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -4401,9 +4535,23 @@ const TIER7: Buff[] = [
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
-        const squares: Square[] = [];
-        for (const df of [-1, 0, 1]) for (const dr of [-1, 0, 1]) squares.push(c + df + 8 * dr);
-        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 4 });
+        // Your own pieces (king excluded) standing in the 3x3 zone, capped at
+        // three by square order for a deterministic, replica-safe choice.
+        const shielded: Square[] = [];
+        for (const dr of [-1, 0, 1]) {
+          for (const df of [-1, 0, 1]) {
+            const f = FILE(c) + df, r = RANK(c) + dr;
+            if (!inBoard(f, r)) continue;
+            const sq = SQ(f, r);
+            const p = api.board.pieces[sq];
+            if (p && p.color === api.me && p.type !== "k") shielded.push(sq);
+          }
+        }
+        shielded.sort((a, b) => a - b);
+        const capped = shielded.slice(0, 3);
+        // turns:0 -> the +1 activation bump (see deflect / godslayer_knight)
+        // makes this exactly one opponent turn of protection.
+        if (capped.length) addEffect(api, { kind: "shield", owner: api.me, squares: capped, turns: 0 });
       },
     ),
   ),
@@ -4417,8 +4565,9 @@ const TIER7: Buff[] = [
     ),
   ),
   def(
-    { id: "buff_plunder", name: "Buff Plunder", description: "Steal three active buffs from your opponent. Locked-in upgrades stay put.", tier: 8, category: "draft" },
-    stealBuffs(3, undefined, notLockedIn),
+    { id: "buff_plunder", name: "Buff Plunder", description: "Steal two active buffs from your opponent. Locked-in upgrades stay put.", tier: 8, category: "draft" },
+    // Rebalance: the largest count (3 stolen buffs) drops by one to 2.
+    stealBuffs(2, undefined, notLockedIn),
   ),
   def(
     { id: "meteor", name: "Meteor", description: "Pick an impact square, then a rank or a file through it, not both. Remove up to three enemy pieces on that line, kings aside, nearest the impact square.", tier: 7, category: "attack" },
@@ -4476,8 +4625,10 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "titan", name: "Titan", description: "One piece gains amazon movement for the rest of the game and cannot be captured for your opponent's next 6 turns.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
-    bindPiece("Choose the titan", bindCandidates(), { shieldTurns: 6, gen: amazonGen }),
+    { id: "titan", name: "Titan", description: "One piece gains amazon movement for your next 3 turns and cannot be captured for your opponent's next turn.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true } },
+    // Rebalance: the amazon grant is now three of your turns (was permanent) and
+    // the immunity is your opponent's next turn only (was six).
+    bindPiece("Choose the titan", bindCandidates(), { turns: 3, shieldTurns: 1, gen: amazonGen }),
   ),
   def(
     { id: "ruin", name: "Ruin", description: "Clear all enemy pawns, and destroy one enemy minor piece (or a rook if they have no minor).", tier: 7, category: "attack" },
@@ -4756,29 +4907,47 @@ const TIER7: Buff[] = [
   ),
   // Nerf-modifiers (cross-cutting)
   def(
-    { id: "nerf_reversal", name: "Nerf Reversal", description: "Turn your nerf against itself: remove it for good, and your whole army cannot be captured for your opponent's next 2 turns.", tier: 7, category: "nerf", fx: { motif: "ward", pieces: "all", self: true } },
-    // The only nerf-removal card that also flips into an offensive boon: a brief
-    // whole-army shield as the "inverse benefit" of shedding the handicap.
+    { id: "nerf_reversal", name: "Nerf Reversal", description: "Turn your nerf against itself: suspend it for your next 10 turns, and your pieces in your own half cannot be captured for your opponent's next turn.", tier: 7, category: "nerf", fx: { motif: "ward", pieces: "all", self: true } },
+    // Owner tweak: no permanent removal. The nerf is only suspended (ten turns),
+    // and the "inverse benefit" shield is trimmed to your own-half pieces for a
+    // single opponent turn (instant, so no activation bump: turns:1 = one turn).
     instant((_inst, api) => {
-      api.removeMyNerf();
-      addEffect(api, { kind: "shield", owner: api.me, squares: null, turns: 2 });
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+      const squares = mySquares(api.board, api.me).filter((sq) => inHalf(api.me, sq));
+      if (squares.length) addEffect(api, { kind: "shield", owner: api.me, squares, turns: 1 });
     }),
   ),
   def(
-    { id: "sabbatical", name: "Sabbatical", description: "Free action: suspend your nerf for your next 10 turns, used at the moment you choose.", tier: 7, category: "nerf" },
+    { id: "sabbatical", name: "Sabbatical", description: "Free action: suspend your nerf for your next 10 turns, used at the moment you choose, but your next draft is skipped.", tier: 7, category: "nerf" },
+    // Owner tweak: the ten-turn suspension now costs your next draft.
     {
       ...activatedSimple((_inst, api) => {
         addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 10 });
+        api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
       }),
       freeAction: true,
     },
   ),
   def(
-    { id: "full_pardon", name: "Full Pardon", description: "Remove your nerf for good and take an extra move on your next turn. You cannot capture the king on the bonus move: your opponent replies first.", tier: 7, category: "nerf" },
-    instant((_inst, api) => {
-      api.removeMyNerf();
-      api.bs.extraMoves[api.me] += 1;
-    }),
+    { id: "full_pardon", name: "Full Pardon", description: "Suspend your nerf for your next 12 turns and store one bonus move: after your opponent's next move you take an extra move on your following turn.", tier: 7, category: "nerf" },
+    // Owner tweak: no permanent removal. The nerf is suspended for twelve turns,
+    // and the extra move is stored rather than taken now: passive so the stored
+    // move can be released after the opponent's reply (extraMoves granted then
+    // become a bonus move on your following turn).
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 12 });
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        inst.state.pending = false;
+        inst.spent = true;
+        api.bs.extraMoves[api.me] += 1;
+      },
+      status: (inst) => (inst.state.pending ? "bonus move stored, arrives after their reply" : null),
+    },
   ),
 ];
 
@@ -4788,30 +4957,114 @@ const TIER7: Buff[] = [
 
 const TIER8: Buff[] = [
   def(
-    { id: "total_atomic", name: "Total Atomic", description: "Every capture by your pieces detonates two squares in every direction and each removed piece chains its own blast, for the game.", tier: 8, category: "attack" },
-    captureExplosion({ chain: true, radius: 2 }),
+    { id: "total_atomic", name: "Total Atomic", description: "Your next three captures each detonate one square in every direction, destroying up to two adjacent enemy pieces. Shielded pieces resist, and the blast never chains.", tier: 8, category: "attack" },
+    // Rebalance: was every capture, radius two, chaining, for the game. Now only
+    // the next three captures blast, at radius one, collateral capped at two and
+    // never chaining. Custom (captureExplosion has no collateral cap): shielded
+    // enemy pieces resist and the two hits are taken in a fixed scan order so
+    // every replica agrees.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 3;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!move.captured || move.captured === "k" || move.color !== api.me) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
+        const center = captureSquare(move) ?? move.to;
+        const isShielded = (sq: Square) =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              (e.turns == null || e.turns > 0) &&
+              (e.squares ? e.squares.includes(sq) : true),
+          );
+        const hits: Square[] = [];
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(center) + df, r = RANK(center) + dr;
+            if (!inBoard(f, r)) continue;
+            const sq = SQ(f, r);
+            const q = api.board.pieces[sq];
+            if (q && q.color === api.opp && q.type !== "k" && !isShielded(sq)) hits.push(sq);
+          }
+        }
+        for (const sq of hits.slice(0, 2)) api.removePiece(sq);
+      },
+      status: (inst) => `${(inst.state.charges as number) ?? 3} captures left`,
+    },
   ),
   def(
-    { id: "amazon_army", requires: ["n", "b"], name: "Amazon Army", description: "All your knights and bishops become amazons for the game.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n", "b"], moveAs: "q", self: true } },
-    permanentAugment((_m, inst, api) =>
-      ["n", "b"].flatMap((t) =>
-        mySquares(api.board, api.me, t as PieceType).flatMap((sq) => [
-          ...slideMoves(api.board, sq, ALL_DIRS, inst.id),
-          ...leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
-        ]),
+    { id: "amazon_army", requires: ["n", "b"], name: "Amazon Army", description: "For your next three turns your knights also move as bishops and your bishops also move as knights. Neither becomes a full amazon.", tier: 8, category: "movement", fx: { motif: "empower", pieces: ["n", "b"], moveAs: "q", self: true } },
+    // Rebalance: was a permanent full-amazon grant on both types. Now a
+    // three-turn cross-training: knights borrow bishop slides, bishops borrow
+    // knight leaps, and neither reaches the full amazon (queen + knight) set.
+    timedAugment(3, (_m, inst, api) => [
+      ...mySquares(api.board, api.me, "n").flatMap((sq) =>
+        slideMoves(api.board, sq, DIAG_DIRS, inst.id),
       ),
-    ),
+      ...mySquares(api.board, api.me, "b").flatMap((sq) =>
+        leapMoves(api.board, sq, KNIGHT_LEAPS, inst.id),
+      ),
+    ]),
   ),
   def(
     { id: "divine_legion", name: "Divine Legion", description: "Add a queen to your pocket, then spend a later turn to drop it onto any empty square.", tier: 7, category: "pieces" },
     instant((_inst, api) => grantInventory(api, "q", 1)),
   ),
   def(
-    { id: "mass_mind_control", name: "Mass Mind Control", description: "Take control of two enemy pieces of any type below queen, for the game.", tier: 8, category: "pieces" },
-    convertEnemies(2, ["p", "n", "b", "r"]),
+    { id: "mass_mind_control", name: "Mass Mind Control", description: "Mark two enemy pieces of any type below queen. After your opponent's next move, any of them still in place defect to your side for the game.", tier: 8, category: "pieces" },
+    // Rebalance: the seizure is permanent (no finite duration to shorten), so
+    // per the "begins after the opponent replies" clause the conversion is
+    // delayed: you mark the pieces now, and they defect only after the opponent
+    // has taken a turn (during which they may move a marked piece to safety).
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        inst.state.marked != null || picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Choose an enemy piece to seize (${picks.length + 1}/2)`,
+              squares: mySquares(api.board, api.opp).filter((sq) => {
+                const p = api.board.pieces[sq]!;
+                return ["p", "n", "b", "r"].includes(p.type) && !picks.some((k) => k.square === sq);
+              }),
+            },
+      effect: (inst, _api, picks) => {
+        if (inst.state.marked != null) return;
+        inst.state.marked = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        for (const sq of inst.state.marked as Square[]) {
+          const p = api.board.pieces[sq];
+          if (p && p.color === api.opp && p.type !== "k") api.setPieceColor(sq, api.me);
+        }
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pending
+          ? "your marked pieces defect after their reply"
+          : inst.state.marked != null
+            ? "used"
+            : "activate to seize two enemy pieces",
+    },
   ),
   def(
-    { id: "total_annihilation", name: "Total Annihilation", description: "Choose any square: every enemy piece except a king standing on it or beside it is removed from the board. Shielded pieces resist the blast.", tier: 8, category: "attack" },
+    { id: "total_annihilation", name: "Total Annihilation", description: "Choose any square: the enemy piece there, unless it is a king, is removed, along with up to two adjacent enemy pieces. Shielded pieces and pawns survive the collateral blast.", tier: 8, category: "attack" },
+    // Rebalance: was the target plus EVERY adjacent enemy non-king. Now the
+    // collateral is capped at two adjacent pieces, and shielded pieces and pawns
+    // survive the splash (the named target still falls if it is a non-king). The
+    // two collateral hits are taken in a fixed scan order so replicas agree.
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -4825,23 +5078,58 @@ const TIER8: Buff[] = [
         const c = picks[0]?.square;
         if (c == null) return;
         const p = api.board.pieces[c];
-        const shielded = api.bs.effects.some(
-          (e) =>
-            e.kind === "shield" &&
-            e.owner === api.opp &&
-            (e.turns == null || e.turns > 0) &&
-            (e.squares ? e.squares.includes(c) : true),
-        );
-        if (p && p.color === api.opp && p.type !== "k" && !shielded) api.removePiece(c);
-        explodeAt(api, c);
+        if (p && p.color === api.opp && p.type !== "k") api.removePiece(c);
+        const isShielded = (sq: Square) =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.opp &&
+              (e.turns == null || e.turns > 0) &&
+              (e.squares ? e.squares.includes(sq) : true),
+          );
+        const hits: Square[] = [];
+        for (let df = -1; df <= 1; df++) {
+          for (let dr = -1; dr <= 1; dr++) {
+            if (df === 0 && dr === 0) continue;
+            const f = FILE(c) + df, r = RANK(c) + dr;
+            if (!inBoard(f, r)) continue;
+            const sq = SQ(f, r);
+            const q = api.board.pieces[sq];
+            if (q && q.color === api.opp && q.type !== "k" && q.type !== "p" && !isShielded(sq)) {
+              hits.push(sq);
+            }
+          }
+        }
+        for (const sq of hits.slice(0, 2)) api.removePiece(sq);
       },
     ),
   ),
   def(
-    { id: "immortal_king", name: "Immortal King", description: "Your king cannot be captured for your opponent's next 8 turns. You can still lose by running out of moves.", tier: 8, category: "protection" },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 8 });
-    }),
+    { id: "immortal_king", name: "Immortal King", description: "Your king cannot be captured for your opponent's next 8 turns, but this protection ends the instant your king captures a piece. You can still lose by running out of moves.", tier: 8, category: "protection" },
+    // Rebalance: full 8-turn duration kept, but the immunity ends early the
+    // moment the king itself makes a capture (it cannot both hide and hunt).
+    {
+      kind: "passive",
+      init: (_inst, api) => {
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 8 });
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent) return;
+        if (
+          move.color === api.me &&
+          move.piece === "k" &&
+          move.captured &&
+          move.captured !== "k"
+        ) {
+          const idx = api.bs.effects.findIndex(
+            (e) => e.kind === "king_safe" && e.owner === api.me,
+          );
+          if (idx >= 0) api.bs.effects.splice(idx, 1);
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.spent ? "spent" : "your king is immortal until it captures"),
+    },
   ),
   def(
     { id: "absolute_nullify", name: "Absolute Nullify", description: "Cancel your opponent's unused and temporary buffs and block their next draft, but they gain a reroll in return. Locked-in upgrades resist.", tier: 8, category: "draft" },
@@ -4854,12 +5142,28 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "queen_storm", name: "Queen Storm", description: "Promote all your pawns on your 4th rank or beyond to queens.", tier: 8, category: "pieces" },
-    instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.me, "p")) {
-        if (relRank(api.me, sq) >= 4) api.setPieceType(sq, "q");
-      }
-    }),
+    { id: "queen_storm", name: "Queen Storm", description: "Promote up to two of your pawns on your 4th rank or beyond: the first becomes a queen, the second a rook. No two promotions are alike, so there is no mass of queens.", tier: 8, category: "pieces" },
+    // Rebalance: was a mass promotion of every advanced pawn to a queen. Now at
+    // most two pawns promote, and their targets must differ (queen, then rook).
+    activated(
+      (_inst, api, picks) =>
+        picks.length >= 2
+          ? null
+          : {
+              kind: "square",
+              label: `Choose a pawn to promote (${picks.length + 1}/2)`,
+              squares: mySquares(api.board, api.me, "p").filter(
+                (sq) => relRank(api.me, sq) >= 4 && !picks.some((k) => k.square === sq),
+              ),
+              ...(picks.length === 1 ? { finishable: true } : {}),
+            },
+      (_inst, api, picks) => {
+        const into: PieceType[] = ["q", "r"];
+        picks.forEach((k, i) => {
+          if (k.square != null) api.setPieceType(k.square, into[i]);
+        });
+      },
+    ),
   ),
   def(
     { id: "reality_warp", name: "Reality Warp", description: "Rewrite the rules of matter: any two of your pieces, king aside, become queens.", tier: 9, category: "pieces" },
@@ -4882,13 +5186,16 @@ const TIER8: Buff[] = [
   ),
   def(
     // Board already paints barred squares; square-scoped, no pieces field.
-    { id: "sundering", name: "Sundering", description: "Three files become impassable to enemies for the rest of the game.", tier: 8, category: "protection", fx: { motif: "blindfold" } },
-    barLine("file", null, 3),
+    { id: "sundering", name: "Sundering", description: "Choose three files: each is barred to your opponent until the end of their next turn, then collapses.", tier: 8, category: "protection", fx: { motif: "blindfold" } },
+    // Rebalance: the three barred files no longer last the whole game. Each holds
+    // for one of the opponent's turns (the barred timer ticks on their moves),
+    // then collapses.
+    barLine("file", 1, 3),
   ),
   def(
     // Demoted from the tier-9 apex band (owner call): a five-turn royal
     // rampage is huge but earnable in the normal tier-8 pool.
-    { id: "divine_right", icon: "Crown", name: "Divine Right", description: "For your next 5 turns your king may move and capture as a queen, and it cannot be captured.", tier: 8, category: "movement", flavor: "By the grace of no one in particular.", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
+    { id: "divine_right", icon: "Crown", name: "Divine Right", description: "For your next 5 turns your king may move and capture as a queen, and it cannot be captured for your opponent's next 4 turns.", tier: 8, category: "movement", flavor: "By the grace of no one in particular.", fx: { motif: "empower", pieces: ["k"], moveAs: "q", self: true } },
     {
       kind: "activated",
       spendOnUse: false,
@@ -4896,7 +5203,9 @@ const TIER8: Buff[] = [
         // One activation only; re-use is a guarded no-op.
         if (inst.state.turns != null) return;
         inst.state.turns = 5;
-        addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
+        // Rebalance: immunity shortened by one opponent turn (5 -> 4); the
+        // queen-move grant still runs its full 5 of your turns.
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 4 });
       },
       augmentMoves: (moves, inst, api) => {
         if (turnsLeft(inst) <= 0) return;
@@ -4920,53 +5229,112 @@ const TIER8: Buff[] = [
     // shatters it and refunds the remaining skips, so you must choose between
     // quiet maneuvering with total tempo or cashing in material and waking
     // your opponent early.
-    { id: "time_prison", name: "Time Prison", description: "Your opponent skips their next three turns, but the prison is fragile: if you capture anything while it holds, it shatters and their remaining skipped turns are refunded.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_prison", name: "Time Prison", description: "Skip your opponent's next turn. For their following two turns they may move only pawns, knights, or the king; any capture, by either player, ends the restriction early.", tier: 8, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    // Rebalance: was three skipped turns with a capture-shatter refund. Now one
+    // skip, then a two-turn limit to pawn / knight / king moves that any capture
+    // (by either side) breaks.
     {
       kind: "passive",
       init: (inst, api) => {
-        api.bs.skips[api.opp] += 3;
+        api.bs.skips[api.opp] += 1;
+        inst.state.turns = 2;
         inst.state.active = true;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (!inst.state.active || turnsLeft(inst) <= 0) return moves;
+        const allowed = moves.filter(
+          (m) => m.piece === "p" || m.piece === "n" || m.piece === "k",
+        );
+        return allowed.length > 0 ? allowed : moves;
       },
       onMovePlayed: (inst, move, api) => {
         if (!inst.state.active) return;
-        if (api.bs.skips[api.opp] <= 0) {
-          // Served in full: the prison dissolves on its own.
+        if (move.captured) {
+          // Any capture springs the lock.
+          inst.state.active = false;
           inst.spent = true;
           return;
         }
-        if (move.color === api.me && move.captured && move.captured !== "k") {
-          api.bs.skips[api.opp] = 0;
-          inst.spent = true;
-        }
+        tickTurns(inst, move, api.opp);
       },
-      status: (inst) => (inst.state.active ? "holds while you hold your fire" : null),
+      status: (inst) =>
+        inst.state.active && turnsLeft(inst) > 0
+          ? `their pieces are shackled, ${turnsLeft(inst)} of their turns left`
+          : null,
     },
   ),
   def(
-    { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns.", tier: 8, category: "protection" },
-    shieldZone(
-      (api) => Array.from({ length: 64 }, (_, i) => i).filter((sq) => inHalf(api.me, sq)),
-      3,
-    ),
+    { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns, but while the fortress stands those pieces cannot give check.", tier: 8, category: "protection" },
+    // Rebalance: full 3-turn duration kept, but a shielded piece may not deliver
+    // check while the fortress holds. The engine has no own-move filter hook, so
+    // (as Colossus does) the strip happens inside augmentMoves: any move by a
+    // shielded piece that would leave the enemy king in check is removed.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const squares = Array.from({ length: 64 }, (_, i) => i).filter((sq) => inHalf(api.me, sq));
+        addEffect(api, { kind: "shield", owner: api.me, squares, turns: 3 });
+        inst.state.turns = 3;
+      },
+      augmentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0) return;
+        const isShielded = (sq: Square) =>
+          api.bs.effects.some(
+            (e) =>
+              e.kind === "shield" &&
+              e.owner === api.me &&
+              !!e.squares &&
+              e.squares.includes(sq) &&
+              (e.turns == null || e.turns > 0),
+          );
+        for (let i = moves.length - 1; i >= 0; i--) {
+          const m = moves[i];
+          if (m.captured === "k" || !isShielded(m.from)) continue;
+          const b = cloneBoard(api.board);
+          b.pieces[m.to] = b.pieces[m.from];
+          b.pieces[m.from] = null;
+          if (isInCheck(b, api.opp)) moves.splice(i, 1);
+        }
+      },
+      // Co-terminate with the shield: both tick on the opponent's turns.
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) =>
+        turnsLeft(inst) > 0 ? `fortress holds, ${turnsLeft(inst)} of their turns left` : null,
+    },
   ),
   def(
-    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take four moves in a row, once. You cannot capture the king during these bonus moves: your opponent replies first.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
-    extraMovesNow(3),
+    { id: "blitzkrieg", name: "Blitzkrieg", description: "Take one bonus move now, then one more stored bonus move on your next turn after your opponent replies. You cannot capture the king during a bonus move: your opponent replies first.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    // Rebalance: was four moves in a row. Now one bonus move now and one stored
+    // bonus move that lands only after the opponent has taken a turn.
+    {
+      kind: "activated",
+      freeAction: true,
+      spendOnUse: false,
+      effect: (inst, api) => {
+        api.bs.extraMoves[api.me] += 1;
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.pending && move.color === api.opp) {
+          api.bs.extraMoves[api.me] += 1;
+          inst.state.pending = false;
+          inst.spent = true;
+        }
+      },
+      status: (inst) => (inst.state.pending ? "one stored bonus move after their reply" : null),
+    },
   ),
   def(
-    { id: "total_plunder", name: "Total Plunder", description: "Steal all your opponent's active buffs except locked-in upgrades.", tier: 8, category: "draft" },
-    instant((_inst, api) => {
-      const stolen = api.theirs.buffs.filter(
-        (b) => !b.spent && !b.nullified && !boundUpgrade(b),
-      );
-      api.theirs.buffs = api.theirs.buffs.filter(
-        (b) => b.spent || b.nullified || boundUpgrade(b),
-      );
-      api.mine.buffs.push(...stolen);
-    }),
+    { id: "total_plunder", name: "Total Plunder", description: "Steal up to three of your opponent's active buffs, chosen by you, except locked-in upgrades.", tier: 8, category: "draft" },
+    // Rebalance: was every stealable buff at once. Now you pick at most three;
+    // the steal is still permanent.
+    stealBuffs(3, undefined, notLockedIn),
   ),
   def(
-    { id: "cataclysmic_meteor", name: "Cataclysmic Meteor", description: "Destroy every enemy piece within a 3x3 area you pick except the king.", tier: 8, category: "attack" },
+    { id: "cataclysmic_meteor", name: "Cataclysmic Meteor", description: "Pick a 3x3 area. Remove up to three enemy pieces in it, kings aside. If more than three are present the least valuable are destroyed, so the defender keeps their strongest.", tier: 8, category: "attack" },
+    // Rebalance: was a full wipe of the 3x3. Now at most three enemy non-kings
+    // fall; when more are present the survivors are the defender's most
+    // valuable pieces (a deterministic stand-in for the defender's choice).
     activated(
       (_inst, _api, picks) =>
         picks.length > 0
@@ -4975,15 +5343,22 @@ const TIER8: Buff[] = [
       (_inst, api, picks) => {
         const c = picks[0]?.square;
         if (c == null) return;
+        const VAL: Partial<Record<PieceType, number>> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+        const zone: Square[] = [];
         for (const df of [-1, 0, 1]) {
           for (const dr of [-1, 0, 1]) {
             const f = FILE(c) + df, r = RANK(c) + dr;
             if (!inBoard(f, r)) continue;
             const sq = SQ(f, r);
             const p = api.board.pieces[sq];
-            if (p && p.color === api.opp && p.type !== "k") api.removePiece(sq);
+            if (p && p.color === api.opp && p.type !== "k") zone.push(sq);
           }
         }
+        zone.sort(
+          (a, b) =>
+            (VAL[api.board.pieces[a]!.type] ?? 0) - (VAL[api.board.pieces[b]!.type] ?? 0) || a - b,
+        );
+        for (const sq of zone.slice(0, 3)) api.removePiece(sq);
       },
     ),
   ),
@@ -4992,21 +5367,47 @@ const TIER8: Buff[] = [
     autoRevive(["q", "r", "r", ["n", "b"]]),
   ),
   def(
-    // Board already paints king_only; fx carried for consistency.
-    { id: "world_end", name: "World End", description: "The edges of the world crumble away: your opponent can never move onto the outer rim of the board again, for the rest of the game.", tier: 8, category: "tempo", fx: { motif: "blindfold" } },
-    instant((_inst, api) => {
-      const squares: Square[] = [];
-      for (let sq = 0; sq < 64; sq++) {
-        if (FILE(sq) === 0 || FILE(sq) === 7 || RANK(sq) === 0 || RANK(sq) === 7) squares.push(sq);
-      }
-      addEffect(api, { kind: "barred", squares, against: api.opp, turns: null });
-    }),
+    // Board already paints barred squares; fx carried for consistency.
+    { id: "world_end", name: "World End", description: "The outer rim of the board is barred to your opponent for their next two turns. Then it collapses inward: the next ring is barred for one more of their turns.", tier: 8, category: "tempo", fx: { motif: "blindfold" } },
+    // Rebalance: was a permanent bar on the outer rim. Now the outer rim holds
+    // for two opponent turns, then the restriction steps one ring inward for one
+    // turn. The inner ring is added during an opponent move, so the shared
+    // post-move tick eats one turn: turns 2 leaves the promised one.
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const ringDist = (sq: Square) =>
+          Math.min(FILE(sq), 7 - FILE(sq), RANK(sq), 7 - RANK(sq));
+        const rim: Square[] = [];
+        for (let sq = 0; sq < 64; sq++) if (ringDist(sq) === 0) rim.push(sq);
+        addEffect(api, { kind: "barred", squares: rim, against: api.opp, turns: 2 });
+        inst.state.turns = 2;
+        inst.state.phase = "outer";
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp || inst.state.phase !== "outer") return;
+        const t = (inst.state.turns as number) - 1;
+        inst.state.turns = t;
+        if (t > 0) return;
+        const ringDist = (sq: Square) =>
+          Math.min(FILE(sq), 7 - FILE(sq), RANK(sq), 7 - RANK(sq));
+        const ring: Square[] = [];
+        for (let sq = 0; sq < 64; sq++) if (ringDist(sq) === 1) ring.push(sq);
+        addEffect(api, { kind: "barred", squares: ring, against: api.opp, turns: 2 });
+        inst.state.phase = "inner";
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.phase === "outer" ? "the outer rim is barred" : null),
+    },
   ),
   // Living God moved to the tier-9 apex band (owner request): see
   // buffs/tier9.ts. Apex cards never roll in the normal pools, so it now
   // arrives only through the apex grants (banking at the top tier, Jackpot).
   def(
-    { id: "void_realm", name: "The Void Realm", description: "Three squares you pick become voids for the game: any enemy piece except a king that enters one, or ends its move beside one, is swallowed.", tier: 8, category: "attack" },
+    { id: "void_realm", name: "The Void Realm", description: "Three squares you pick become voids for your opponent's next three turns: any enemy piece except a king that lands directly on one is swallowed. Pieces beside a void are safe.", tier: 8, category: "attack" },
+    // Rebalance: the voids no longer last the game and no longer swallow adjacent
+    // pieces. They hold for three of the opponent's turns and take only a piece
+    // that ends its move on the void square itself.
     {
       kind: "activated",
       spendOnUse: false,
@@ -5022,33 +5423,34 @@ const TIER8: Buff[] = [
       effect: (inst, _api, picks) => {
         if (inst.state.squares != null) return;
         inst.state.squares = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        inst.state.turns = 3;
       },
       onMovePlayed: (inst, move, api) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return;
-        if (move.color !== api.opp || move.piece === "k") return;
-        const near = squares.some(
-          (v) =>
-            Math.abs(FILE(v) - FILE(move.to)) <= 1 && Math.abs(RANK(v) - RANK(move.to)) <= 1,
-        );
-        if (near) api.removePiece(move.to);
+        if (move.color === api.opp && move.piece !== "k" && squares.includes(move.to)) {
+          api.removePiece(move.to);
+        }
+        tickTurns(inst, move, api.opp);
       },
       status: (inst) => {
         const squares = inst.state.squares as Square[] | undefined;
         if (!squares?.length) return "activate to place";
         const names = squares.map((sq) => `${"abcdefgh"[FILE(sq)]}${RANK(sq) + 1}`).join(", ");
-        return `swallowing at and beside ${names}`;
+        return `swallowing at ${names}, ${turnsLeft(inst)} of their turns left`;
       },
     },
   ),
   def(
-    { id: "grand_reset", name: "Grand Reset", description: "Add replacements to your pocket until your army would be back to full starting strength, then drop them onto empty squares on later turns.", tier: 8, category: "pieces" },
+    { id: "grand_reset", name: "Grand Reset", description: "Add replacements to your pocket until your army would be back to full starting strength, then drop them onto empty squares on later turns. You skip your next draft in exchange.", tier: 8, category: "pieces" },
     instant((_inst, api) => {
       const full: [PieceType, number][] = [["q", 1], ["r", 2], ["b", 2], ["n", 2], ["p", 8]];
       for (const [type, want] of full) {
         const missing = want - mySquares(api.board, api.me, type).length;
         if (missing > 0) grantInventory(api, type, missing);
       }
+      // Rebalance: the full refill now costs your next draft.
+      api.mine.flags.blockedDrafts = (api.mine.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
   def(
@@ -5072,31 +5474,53 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "phoenix_rebirth", name: "Phoenix Rebirth", description: "Revive every captured piece you have to your half, once.", tier: 8, category: "pieces" },
-    instant((_inst, api) => {
-      const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
-        (a, b) => relRank(api.me, a) - relRank(api.me, b),
-      );
-      for (const type of ["q", "r", "b", "n", "p"] as PieceType[]) {
-        while (revivable(api, type) > 0) {
-          const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
-          if (at < 0) break;
-          api.place(spots.splice(at, 1)[0], type, api.me);
-          markRevived(api, type);
+    { id: "phoenix_rebirth", name: "Phoenix Rebirth", description: "After your opponent's next move, revive every captured piece you have to your half, once.", tier: 8, category: "pieces" },
+    // Rebalance: same revival, but its first (and only) trigger is delayed until
+    // the opponent has replied.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (!inst.state.pending || move.color !== api.opp) return;
+        const spots = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
+          (a, b) => relRank(api.me, a) - relRank(api.me, b),
+        );
+        for (const type of ["q", "r", "b", "n", "p"] as PieceType[]) {
+          while (revivable(api, type) > 0) {
+            const at = spots.findIndex((sq) => type !== "p" || pawnRankOk(sq));
+            if (at < 0) break;
+            api.place(spots.splice(at, 1)[0], type, api.me);
+            markRevived(api, type);
+          }
         }
-      }
-    }),
+        inst.state.pending = false;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.pending ? "your fallen return after their reply" : null),
+    },
   ),
   def(
     { id: "total_warp", name: "Total Warp", description: "Teleport your whole army except the king anywhere you like, once. Pawns stay off the first and last ranks.", tier: 7, category: "movement" },
     relocateMany(15, anyDestPawnSafe),
   ),
   def(
-    { id: "extinction", name: "Extinction", description: "Remove every enemy minor and pawn piece from the board.", tier: 8, category: "attack" },
+    { id: "extinction", name: "Extinction", description: "Remove every enemy minor and pawn from the board except one: the defender's strongest such piece is spared.", tier: 8, category: "attack" },
+    // Rebalance: the maximum removals drop by one. Same targeting shape (every
+    // enemy minor and pawn), but the single strongest eligible piece survives.
     instant((_inst, api) => {
-      for (const sq of mySquares(api.board, api.opp)) {
-        if (["p", "n", "b"].includes(api.board.pieces[sq]!.type)) api.removePiece(sq);
-      }
+      const VAL: Partial<Record<PieceType, number>> = { p: 1, n: 3, b: 3 };
+      const targets = mySquares(api.board, api.opp).filter((sq) =>
+        ["p", "n", "b"].includes(api.board.pieces[sq]!.type),
+      );
+      const spare = targets
+        .slice()
+        .sort(
+          (a, b) =>
+            (VAL[api.board.pieces[b]!.type] ?? 0) - (VAL[api.board.pieces[a]!.type] ?? 0) || a - b,
+        )[0];
+      for (const sq of targets) if (sq !== spare) api.removePiece(sq);
     }),
   ),
   def(
@@ -5112,32 +5536,78 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "endless_turn", name: "Endless Turn", description: "Take moves until you make a capture, once (minimum one move).", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "endless_turn", name: "Endless Turn", description: "Take exactly one bonus move. If that bonus move does not capture, take one more bonus move after your opponent replies.", tier: 8, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    // Rebalance: was moves-until-a-capture. Now a single bonus move; if it is
+    // non-capturing you get one follow-up bonus move after the opponent's reply
+    // (a general extra move, standing in for "that piece may move again").
     {
       kind: "activated",
       freeAction: true,
       spendOnUse: false,
       effect: (inst) => {
-        inst.state.active = true;
+        inst.state.phase = "armed";
       },
       onMovePlayed: (inst, move, api) => {
-        if (!inst.state.active || move.color !== api.me) return;
-        const count = ((inst.state.count as number) ?? 0) + 1;
-        inst.state.count = count;
-        // End on a capture, or after a bounded run of quiet moves so an
-        // unreachable capture (e.g. only a lone enemy king left) cannot grant
-        // extra moves forever and hang the turn.
-        if (move.captured || count >= 16) inst.spent = true;
-        else api.bs.extraMoves[api.me] += 1;
+        if (inst.state.phase === "armed" && move.color === api.me) {
+          // Your normal move just resolved: grant the one bonus move.
+          api.bs.extraMoves[api.me] += 1;
+          inst.state.phase = "bonus";
+          return;
+        }
+        if (inst.state.phase === "bonus" && move.color === api.me) {
+          // The bonus move just resolved. A capture ends it; a quiet bonus
+          // stores one follow-up move for after the opponent replies.
+          if (move.captured) inst.spent = true;
+          else inst.state.phase = "stored";
+          return;
+        }
+        if (inst.state.phase === "stored" && move.color === api.opp) {
+          api.bs.extraMoves[api.me] += 1;
+          inst.spent = true;
+        }
       },
-      status: (inst) => (inst.state.active ? "moving until you capture" : null),
+      status: (inst) =>
+        inst.state.phase === "stored"
+          ? "one more bonus move after their reply"
+          : inst.state.phase === "armed" || inst.state.phase === "bonus"
+            ? "one bonus move"
+            : null,
     },
   ),
   def(
-    { id: "checkmate_denial", name: "Checkmate Denial", description: "Your king cannot be captured for the next 5 turns.", tier: 7, category: "protection", boon: true },
-    instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 5 });
-    }),
+    { id: "checkmate_denial", name: "Checkmate Denial", description: "Once, when your king would be captured, it survives and is moved to the nearest safe square in your own half. No timed immunity.", tier: 7, category: "protection", boon: true },
+    // Owner tweak: the flat five-turn immunity is gone. Instead the king survives
+    // the first otherwise-legal capture exactly once. onMovePlayed runs BEFORE
+    // the king-capture loss check, so reviving the king onto a safe home-half
+    // square keeps the game going. "Safe" = not in check there (standard-move
+    // attack scan via isInCheck on a board copy); nearest = least squared
+    // distance to where the king fell, square index breaking ties.
+    {
+      kind: "passive",
+      onMovePlayed: (inst, move, api) => {
+        if (inst.state.used || move.color !== api.opp || move.captured !== "k") return;
+        const fell = captureSquare(move);
+        if (fell == null) return;
+        // Undo the king "loss" so the revive pools stay consistent.
+        if (api.capturedFromMe.k > 0) api.capturedFromMe.k -= 1;
+        const dest = emptySquares(api.board, (sq) => inHalf(api.me, sq))
+          .filter((sq) => {
+            const b = cloneBoard(api.board);
+            b.pieces[sq] = { type: "k", color: api.me };
+            return !isInCheck(b, api.me);
+          })
+          .sort((a, z) => {
+            const da = (FILE(a) - FILE(fell)) ** 2 + (RANK(a) - RANK(fell)) ** 2;
+            const dz = (FILE(z) - FILE(fell)) ** 2 + (RANK(z) - RANK(fell)) ** 2;
+            return da - dz || a - z;
+          })[0];
+        if (dest == null) return;
+        api.place(dest, "k", api.me);
+        inst.state.used = true;
+        inst.spent = true;
+      },
+      status: (inst) => (inst.state.used ? "the king has been saved" : "the king survives one fatal capture"),
+    },
   ),
   def(
     { id: "genesis", name: "Genesis", description: "Reset the entire board to the opening position, once. Every lingering effect is washed away.", tier: 7, category: "pieces" },
@@ -5219,40 +5689,122 @@ function homeStep(sq: Square, color: Color): Square | null {
 
 const HEXES: Buff[] = [
   def(
-    { id: "heavy_boots", name: "Heavy Boots", description: "Your opponent's pawns cannot double-step for their next 4 turns.", tier: 1, category: "hex", fx: { motif: "anchor", pieces: ["p"] } },
-    timedOppFilter(4, (moves) =>
+    { id: "heavy_boots", name: "Heavy Boots", description: "Your opponent's pawns cannot double-step for their next 3 turns.", tier: 1, category: "hex", fx: { motif: "anchor", pieces: ["p"] } },
+    // Rebalance: duration shortened by one opponent turn (4 -> 3).
+    timedOppFilter(3, (moves) =>
       moves.filter((m) => !(m.piece === "p" && Math.abs(RANK(m.to) - RANK(m.from)) === 2)),
     ),
   ),
   def(
-    { id: "toll_gate", name: "Toll Gate", description: "Your opponent cannot capture en passant for their next 6 turns.", tier: 1, category: "hex", fx: { motif: "muzzle", pieces: ["p"] } },
-    timedOppFilter(6, (moves) =>
+    { id: "toll_gate", name: "Toll Gate", description: "Your opponent cannot capture en passant for their next 5 turns.", tier: 1, category: "hex", fx: { motif: "muzzle", pieces: ["p"] } },
+    // Rebalance: duration shortened by one opponent turn (6 -> 5).
+    timedOppFilter(5, (moves) =>
       moves.filter(
         (m) => !(m.piece === "p" && m.capturedSquare != null && m.capturedSquare !== m.to),
       ),
     ),
   ),
   def(
-    { id: "cold_snap", name: "Cold Snap", description: "Freeze one enemy piece (not the king) for 1 of its owner's turns.", tier: 1, category: "hex" },
-    freezeTarget(1),
-  ),
-  def(
-    { id: "butter_bishops", name: "Butter Bishops", description: "Your opponent's bishops slide at most 2 squares for their next 4 turns.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["b"] } },
-    timedOppFilter(4, (moves) =>
-      moves.filter(
-        (m) =>
-          m.piece !== "b" ||
-          Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
-      ),
+    { id: "cold_snap", name: "Cold Snap", description: "Freeze one enemy piece, other than the king or your opponent's single most valuable piece, for 1 of its owner's turns.", tier: 1, category: "hex" },
+    // Rebalance: a one-turn freeze cannot be shortened, so the defender keeps one
+    // immune piece. A defender-choice flow is not practical here, so it is taken
+    // deterministically as their most valuable piece (highest value, then lowest
+    // square index), which can never be chosen as the freeze target.
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const VAL: Partial<Record<PieceType, number>> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+        const enemies = mySquares(api.board, api.opp).filter(
+          (sq) => api.board.pieces[sq]!.type !== "k",
+        );
+        const immune = enemies
+          .slice()
+          .sort(
+            (a, b) =>
+              (VAL[api.board.pieces[b]!.type] ?? 0) - (VAL[api.board.pieces[a]!.type] ?? 0) ||
+              a - b,
+          )[0];
+        return {
+          kind: "square",
+          label: "Choose an enemy piece to freeze",
+          squares: enemies.filter((sq) => sq !== immune),
+        };
+      },
+      (_inst, api, picks) => {
+        if (picks[0]?.square != null) {
+          addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns: 1 });
+        }
+      },
     ),
   ),
   def(
-    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights go lame and refuse to turn around: they cannot move backward for their next 4 turns.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["n"] } },
-    timedOppFilter(4, (moves, _inst, api) =>
-      moves.filter(
-        (m) => m.piece !== "n" || relRank(api.opp, m.to) >= relRank(api.opp, m.from),
-      ),
-    ),
+    { id: "butter_bishops", name: "Butter Bishops", description: "After your opponent's next move, their bishops slide at most 2 squares for their following 4 turns.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["b"] } },
+    // Rebalance: same 4-turn duration, but activation is delayed one opponent
+    // move: their first move is unrestricted, then the curse arms.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.pending = true;
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (inst.state.pending || turnsLeft(inst) <= 0) return moves;
+        const filtered = moves.filter(
+          (m) =>
+            m.piece !== "b" ||
+            Math.max(Math.abs(FILE(m.to) - FILE(m.from)), Math.abs(RANK(m.to) - RANK(m.from))) <= 2,
+        );
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (inst.state.pending) {
+          inst.state.pending = false;
+          return;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        inst.state.pending
+          ? "butter sets after their next move"
+          : `${turnsLeft(inst)} of their turns left`,
+    },
+  ),
+  def(
+    { id: "lame_horses", name: "Lame Horses", description: "Your opponent's knights cannot move backward for their next 4 turns, except the first knight to retreat may do so once before the lameness sets in.", tier: 2, category: "hex", fx: { motif: "anchor", pieces: ["n"] } },
+    // Rebalance: same 4-turn duration, but the first affected knight keeps one
+    // legal escape: the first backward knight move is allowed, and only after it
+    // is spent does the no-retreat rule bite.
+    {
+      kind: "passive",
+      init: (inst) => {
+        inst.state.turns = 4;
+      },
+      filterOpponentMoves: (moves, inst, api) => {
+        if (turnsLeft(inst) <= 0 || !inst.state.escapeUsed) return moves;
+        const filtered = moves.filter(
+          (m) => m.piece !== "n" || relRank(api.opp, m.to) >= relRank(api.opp, m.from),
+        );
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => {
+        if (move.color !== api.opp) return;
+        if (
+          !inst.state.escapeUsed &&
+          move.piece === "n" &&
+          relRank(api.opp, move.to) < relRank(api.opp, move.from)
+        ) {
+          inst.state.escapeUsed = true;
+        }
+        tickTurns(inst, move, api.opp);
+      },
+      status: (inst) =>
+        turnsLeft(inst) <= 0
+          ? null
+          : inst.state.escapeUsed
+            ? `${turnsLeft(inst)} of their turns left`
+            : "one backward escape remains",
+    },
   ),
   def(
     // Tempo tax on captures; kings are exempt from the freeze, so no "all".
@@ -5324,11 +5876,13 @@ const HEXES: Buff[] = [
     },
   ),
   def(
-    { id: "dead_letter", name: "Dead Letter", description: "Your opponent's next draft is skipped, but they gain one reroll in return.", tier: 4, category: "hex" },
-    // Rebalance: the skip now comes with a consolation reroll for the victim,
-    // trimming the raw draft-denial by roughly a quarter.
+    { id: "dead_letter", name: "Returned to Sender", description: "Your opponent's next draft is skipped, but their following draft offers three cards instead of two, plus one free reroll.", tier: 4, category: "hex" },
+    // Rebalance: renamed (id kept). The skip now buys the victim a bigger later
+    // draft: their next draft is blocked, and the round after (blockedDrafts
+    // does not consume prepThree) deals three cards, with a spare reroll banked.
     instant((_inst, api) => {
       api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
+      api.theirs.flags.prepThree = true;
       api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) + 1;
     }),
   ),
@@ -5394,10 +5948,17 @@ const HEXES: Buff[] = [
     }),
   ),
   def(
-    { id: "creeping_frost", name: "Creeping Frost", description: "Freeze three enemy pieces (not the king) for 2 of their owner's turns.", tier: 6, category: "hex" },
-    activated(
-      (_inst, api, picks) =>
-        picks.length >= 3
+    { id: "creeping_frost", name: "Creeping Frost", description: "Freeze three enemy pieces (not the king) for 2 of their owner's turns. The first piece you choose gets one escape move: its freeze sets in only after your opponent's next move.", tier: 6, category: "hex" },
+    // Rebalance: same 2-turn freeze on three pieces, but the first-chosen piece
+    // gets one legal escape. The other two freeze at once; the first is frozen
+    // after the opponent's next move (freed to move once first). That delayed
+    // freeze is added during their move, so the shared post-move tick eats one
+    // turn: turns 3 leaves the promised 2.
+    {
+      kind: "activated",
+      spendOnUse: false,
+      targets: (inst, api, picks) =>
+        picks.length >= 3 || inst.state.done
           ? null
           : {
               kind: "square",
@@ -5407,14 +5968,30 @@ const HEXES: Buff[] = [
                   api.board.pieces[sq]!.type !== "k" && !picks.some((k) => k.square === sq),
               ),
             },
-      (_inst, api, picks) => {
-        for (const k of picks) {
-          if (k.square != null) {
-            addEffect(api, { kind: "freeze", sq: k.square, owner: api.opp, turns: 2 });
-          }
+      effect: (inst, api, picks) => {
+        if (inst.state.done) return;
+        const sqs = picks.map((k) => k.square).filter((s): s is Square => s != null);
+        for (const sq of sqs.slice(1)) {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 2 });
         }
+        inst.state.pendingSq = sqs[0];
+        inst.state.done = true;
       },
-    ),
+      onMovePlayed: (inst, move, api) => {
+        const pending = inst.state.pendingSq as Square | undefined;
+        if (pending == null || move.color !== api.opp) return;
+        // The escaping piece may have just spent its one free move.
+        const sq = move.from === pending ? move.to : pending;
+        const p = api.board.pieces[sq];
+        if (p && p.color === api.opp && p.type !== "k") {
+          addEffect(api, { kind: "freeze", sq, owner: api.opp, turns: 3 });
+        }
+        inst.state.pendingSq = undefined;
+        inst.spent = true;
+      },
+      status: (inst) =>
+        inst.state.pendingSq != null ? "one piece freezes after their next move" : null,
+    },
   ),
   def(
     // Board already paints walnuts; fx carried for consistency.
@@ -5429,13 +6006,13 @@ const HEXES: Buff[] = [
     }),
   ),
   def(
-    // fx covers the turn skip; the draft denial half shows no board motif.
-    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn, and the next card they draft arrives nullified and inert.", tier: 7, category: "hex", fx: { motif: "slow", pieces: "all" } },
-    // Rebalance: incoming-nullify halved from their next two drafted cards to
-    // one (nullifyIncoming +2 -> +1), keeping the turn skip.
+    // fx covers the turn skip.
+    { id: "grand_malediction", name: "Grand Malediction", description: "Your opponent skips their next turn.", tier: 7, category: "hex", fx: { motif: "slow", pieces: "all" } },
+    // Rebalance: the two halves no longer both apply. With no in-engine binary
+    // choice prompt, the hex resolves deterministically to the turn skip (its
+    // headline, board-visible effect); the draft-nullify half is dropped.
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
-      api.theirs.flags.nullifyIncoming = (api.theirs.flags.nullifyIncoming ?? 0) + 1;
     }),
   ),
 ];
