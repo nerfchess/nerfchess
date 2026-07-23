@@ -1462,7 +1462,7 @@ export const EAT_YOUR_VEGETABLES: Nerf = db({
 
 export const BLOODTHIRSTY: Nerf = db({
   id: "bloodthirsty", name: "Bloodthirsty", tier: 6, implemented: true,
-  description: "After turn 3, if you go 2 turns without capturing, you must capture if able.",
+  description: "After turn 3, if you go 2 turns without capturing, you must capture if able. No move granted by another card can dodge the required capture.",
   filterMoves: (moves, _s, ctx) => {
     if (ctx.moveNumber < 3) return moves;
     const mine = ctx.board.history.filter((m) => m.color === ctx.me);
@@ -1653,7 +1653,7 @@ export const HOPSCOTCH: Nerf = db({
 
 export const LEAPS_AND_BOUNDS: Nerf = db({
   id: "leaps_and_bounds", name: "Leaps and Bounds", tier: 6, implemented: true,
-  description: "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving.",
+  description: "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving. A move granted by another card must also be a leap.",
   // Bans any move of chebyshev distance 1 (the most common bug report was that this
   // drawback "had no effect": the old version only restricted the exact piece that
   // moved last turn, so it almost never triggered). Since every pawn promotion is a
@@ -1747,7 +1747,7 @@ export const LEFT_TO_RIGHT: Nerf = db({
 
 export const FRIENDLY_FIRE: Nerf = db({
   id: "friendly_fire", name: "Friendly Fire", tier: 6, implemented: true,
-  description: "Can only move to squares defended by another of your pieces.",
+  description: "Can only move to squares defended by another of your pieces. A move granted by another card must also land on a defended square.",
   filterMoves: (moves, _s, ctx) => {
     // We need defenders excluding the moving piece. Simulate by removing the piece from its square.
     const defended = moves.filter((m) => {
@@ -1812,7 +1812,7 @@ export const HELICOPTER_PARENT: Nerf = db({
 
 export const EXCLUSIVITY_CLAUSE: Nerf = db({
   id: "exclusivity_clause", name: "Exclusivity Clause", tier: 6, implemented: true,
-  description: "Can't move to squares more than one of your pieces can move to.",
+  description: "Can't move to squares more than one of your pieces can move to. Pieces a card spawns or teleports in are counted at once.",
   filterMoves: (moves) => {
     const counts = new Map<number, number>();
     for (const m of moves) counts.set(m.to, (counts.get(m.to) ?? 0) + 1);
@@ -1850,7 +1850,7 @@ function pickWorstMove(moves: Move[]): Move | null {
 
 export const DEVIL_ON_SHOULDER: Nerf = db({
   id: "devil_on_shoulder", name: "Devil on Your Shoulder", tier: 6, implemented: true,
-  description: "Each turn the devil suggests a bad move. Ignore him 7 turns in a row and on the 8th you must obey.",
+  description: "Each turn the devil suggests a bad move. Ignore him 7 turns in a row and on the 8th you must obey. A piece a card spawns or teleports in can be the demanded move at once.",
   init: () => ({ streak: 0 }),
   onTurnStart: (state, ctx) => {
     const prev = (state as { streak: number }).streak ?? 0;

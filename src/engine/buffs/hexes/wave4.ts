@@ -1163,8 +1163,8 @@ const T3: Buff[] = [
         inst.state.trap == null ? "activate to curse a square" : `pond set, ${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H3(
-    { id: "hx4_one_ladle_each", name: "One Ladle Each", description: "For your opponent's next 4 turns, the mess line is strict: after any pawn move, their pawns cannot move on the following turn.", flavor: "Seconds are a court martial offence.", icon: "Soup", fx: { motif: "slow", pieces: ["p"] } },
+  hex(
+    { id: "hx4_one_ladle_each", name: "One Ladle Each", description: "For your opponent's next 4 turns, the mess line is strict: after any pawn move, their pawns cannot move on the following turn.", flavor: "Seconds are a court martial offence.", icon: "Soup", fx: { motif: "slow", pieces: ["p"] }, tier: 4 },
     {
       kind: "passive",
       init: (inst) => {
@@ -1189,15 +1189,15 @@ const T3: Buff[] = [
     { id: "hx4_crooked_arrow", name: "Crooked Arrow", description: "For your opponent's next 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7.", flavor: "The fletcher was drunk. The rook is coping.", icon: "MoveDiagonal", fx: { motif: "anchor", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || moveDist(m) % 2 === 1)),
   ),
-  H3(
-    { id: "hx4_night_soil", name: "Night Soil", description: "The first rank of your half of the board is freshly manured: your opponent's pieces cannot stop anywhere on it for their next 2 turns.", flavor: "Strategically vital. Nasally unbearable.", icon: "Tractor", fx: { motif: "blindfold" } },
+  hex(
+    { id: "hx4_night_soil", name: "Night Soil", description: "The first rank of your half of the board is freshly manured: your opponent's pieces cannot stop anywhere on it for their next 2 turns.", flavor: "Strategically vital. Nasally unbearable.", icon: "Tractor", fx: { motif: "blindfold" }, tier: 4 },
     instant((_inst, api) => {
       const rank = api.opp === "w" ? 4 : 3;
       barNow(api, Array.from({ length: 8 }, (_, f) => SQ(f, rank)), 2);
     }),
   ),
-  H3(
-    { id: "hx4_glass_ceiling", name: "Glass Ceiling", description: "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.", flavor: "You can see the crown from here. That is the cruelty.", icon: "PanelTop", fx: { motif: "anchor", pieces: ["p"] } },
+  hex(
+    { id: "hx4_glass_ceiling", name: "Glass Ceiling", description: "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.", flavor: "You can see the crown from here. That is the cruelty.", icon: "PanelTop", fx: { motif: "anchor", pieces: ["p"] }, tier: 4 },
     curse(5, (moves) => moves.filter((m) => !m.promotion)),
   ),
   H3(
