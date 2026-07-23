@@ -40,8 +40,20 @@ import {
 // deterministic, so both clients raise the same pawns on the same squares.
 function soulHarvestSweep(): Mech {
   const base = lineSweep("q", DIAG_DIRS, null);
+  const baseTargets = base.targets;
   return {
     ...base,
+    // Balance pass: the special move cannot capture. The queen still reaps every
+    // enemy piece she passes on the diagonal, but her own move must END on an
+    // empty square beyond them: enemy-occupied landing squares are dropped from
+    // the offered destinations.
+    targets: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
+      const t = baseTargets?.(inst, api, picks) ?? null;
+      if (t != null && t.kind === "square" && picks.length === 1) {
+        return { ...t, squares: t.squares.filter((sq) => !api.board.pieces[sq]) };
+      }
+      return t;
+    },
     effect: (inst: BuffInstance, api: BuffApi, picks: BuffPick[]) => {
       const from = picks[0]?.square;
       const to = picks[1]?.square;
@@ -213,7 +225,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       icon: "Wheat",
       name: "Soul Harvest",
       description:
-        "Your queen captures every enemy piece along one diagonal in a single move; for each piece reaped, a friendly pawn rises on an empty square in your half, plus one bonus pawn, once.",
+        "Your queen sweeps one diagonal, reaping every enemy piece she passes and landing on an empty square beyond them, never on a capture; for each piece reaped, a friendly pawn rises on an empty square in your half, plus one bonus pawn, once.",
       tier: 7,
       category: "attack",
       requires: ["q"],

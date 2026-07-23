@@ -777,12 +777,12 @@ const T6: Buff[] = [
     },
   ),
   H6(
-    { id: "hx4_hall_of_mirrors", name: "Hall of Mirrors", description: "For your opponent's next 4 turns, every piece must land on a square of the same color it started from. Knights, whose every leap changes color, cannot move at all. Their king is exempt.", flavor: "Step only where your reflection already stands.", icon: "Copy", fx: { motif: "anchor", pieces: "all" } },
-    curse(4, (moves) => moves.filter((m) => m.piece === "k" || sqShade(m.from) === sqShade(m.to))),
+    { id: "hx4_hall_of_mirrors", name: "Hall of Mirrors", description: "For your opponent's next 3 turns, every piece must land on a square of the same color it started from. Knights, whose every leap changes color, cannot move at all. Their king is exempt.", flavor: "Step only where your reflection already stands.", icon: "Copy", fx: { motif: "anchor", pieces: "all" } },
+    curse(3, (moves) => moves.filter((m) => m.piece === "k" || sqShade(m.from) === sqShade(m.to))),
   ),
   H6(
-    { id: "hx4_famine", name: "Famine", description: "For your opponent's next 3 turns, they cannot capture any of your pawns. The granary is warded.", flavor: "An army marches on its stomach, then stops.", icon: "Wheat", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves, api) => {
+    { id: "hx4_famine", name: "Famine", description: "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.", flavor: "An army marches on its stomach, then stops.", icon: "Wheat", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves, api) => {
       return moves.filter((m) => {
         const c = capSq(m);
         return c == null || api.board.pieces[c]?.type !== "p";
@@ -836,8 +836,8 @@ const T6: Buff[] = [
     }),
   ),
   H6(
-    { id: "hx4_dead_calm", name: "Dead Calm", description: "The wind dies: for your opponent's next 2 turns, their bishops, rooks and queen may slide at most 1 square.", flavor: "A fleet of sails and not a breath to fill them.", icon: "Sailboat", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
-    curse(2, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 1)),
+    { id: "hx4_dead_calm", name: "Dead Calm", description: "The wind dies: for your opponent's next 2 turns, their bishops, rooks and queen may slide at most 1 square. The first piece the calm would rein in may slide freely once, then it binds fully.", flavor: "A fleet of sails and not a breath to fill them.", icon: "Sailboat", fx: { motif: "anchor", pieces: ["b", "r", "q"] } },
+    escapeCurse(2, (moves) => moves.filter((m) => !["b", "r", "q"].includes(m.piece) || moveDist(m) <= 1)),
   ),
   H6(
     { id: "hx4_pillory", name: "Pillory", description: "Lock one enemy piece you target in the pillory: it is frozen for 2 of their turns and wears the dunce cap for 6. Kings cannot be locked up.", flavor: "Rotten fruit sold separately.", icon: "UserX", fx: { motif: "jail" } },
@@ -883,8 +883,8 @@ const T6: Buff[] = [
     curse(3, (moves) => moves.filter((m) => m.piece !== "q" || moveDist(m) <= 1)),
   ),
   H6(
-    { id: "hx4_checkers_law", name: "Checkers Law", description: "For your opponent's next 3 turns, if any capture is available to them, they must play a capture. The old rules apply.", flavor: "You touched the board. You take the piece.", icon: "Grid2x2", fx: { motif: "muzzle", pieces: "all" } },
-    curse(3, (moves) => {
+    { id: "hx4_checkers_law", name: "Checkers Law", description: "For your opponent's next 2 turns, if any capture is available to them, they must play a capture. The old rules apply.", flavor: "You touched the board. You take the piece.", icon: "Grid2x2", fx: { motif: "muzzle", pieces: "all" } },
+    curse(2, (moves) => {
       const caps = moves.filter((m) => m.captured);
       return caps.length > 0 ? caps : moves;
     }),

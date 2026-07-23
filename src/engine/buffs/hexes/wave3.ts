@@ -2244,8 +2244,9 @@ const T8: Buff[] = [
   // vs: Gathering Storm (staged filter) and Compounding Misery (scaling freeze).
   // This is a self-winding ENGINE: it counts their turns and periodically
   // discharges, freezing their strongest piece every third turn. Chained escalation.
-  H8(
+  hex(
     {
+      tier: 9,
       id: "hw3_curse_engine",
       name: "The Curse Engine",
       description:
@@ -2333,8 +2334,9 @@ const T8: Buff[] = [
   // vs: Tarnished Crown (freezes the promoted piece) and Stage Fright (bans
   // promotion). This DISTORTS the rule: for the duration, every pawn they queen
   // is forced down to a knight instead. Delay the promotion past the window.
-  H8(
+  hex(
     {
+      tier: 6,
       id: "hw3_inverted_crown",
       name: "The Inverted Crown",
       description:

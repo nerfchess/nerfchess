@@ -381,6 +381,117 @@ function fileScout(entry: (typeof FILE_SCOUTS)[number]): Buff {
       },
     );
   }
+  if (entry.id === "harborside_h") {
+    // Names a target (the h-file pawn), so eligibility widens one adjacent file.
+    // The h-file is an edge file, so it widens inward to include the g-file.
+    return opener(
+      entry,
+      "Your g-file or h-file pawn may step one square sideways, once. The destination must be empty.",
+      augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== 6 && FILE(sq) !== 7) continue;
+          const tos: Square[] = [];
+          if (FILE(sq) > 0) tos.push(sq - 1);
+          if (FILE(sq) < 7) tos.push(sq + 1);
+          out.push(...teleportMoves(api.board, sq, tos, inst.id));
+        }
+        return out;
+      }),
+    );
+  }
+  if (entry.id === "market_lane") {
+    // Reworked identity: the b-file pawn sidesteps inward to the c-file; on that
+    // pawn's next move this card re-injects both forward-diagonal captures, so a
+    // side another effect has closed off is reopened.
+    return opener(
+      entry,
+      "Once, your b-file pawn may sidestep one square inward to the c-file (empty destination, not a capture). On that pawn's next move this card grants both forward-diagonal captures, reopening a side another effect has closed.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+          inst.state.pawn = null;
+        },
+        augmentMoves: (moves, inst, api) => {
+          const out: Move[] = [];
+          if (((inst.state.charges as number) ?? 0) > 0) {
+            for (const sq of mySquares(api.board, api.me, "p")) {
+              if (FILE(sq) !== 1) continue;
+              out.push(...teleportMoves(api.board, sq, [sq + 1], inst.id));
+            }
+          }
+          const pawn = inst.state.pawn as number | null;
+          if (pawn != null) {
+            const dir = api.me === "w" ? 1 : -1;
+            const p = api.board.pieces[pawn];
+            if (p && p.color === api.me && p.type === "p") {
+              for (const df of [-1, 1]) {
+                const f = FILE(pawn) + df, r = RANK(pawn) + dir;
+                if (!inBoard(f, r)) continue;
+                const dest = SQ(f, r);
+                const victim = api.board.pieces[dest];
+                if (victim && victim.color === api.opp && pawnRankOk(dest)) {
+                  out.push({
+                    from: pawn,
+                    to: dest,
+                    piece: "p",
+                    color: api.me,
+                    captured: victim.type,
+                    capturedSquare: dest,
+                    via: inst.id,
+                  });
+                }
+              }
+            }
+          }
+          addNovel(moves, out);
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.color !== api.me) return;
+          const pawn = inst.state.pawn as number | null;
+          if (pawn != null) {
+            if (move.from === pawn) {
+              inst.state.pawn = null;
+              inst.spent = true;
+            }
+            return;
+          }
+          if (move.via === inst.id) {
+            inst.state.charges = 0;
+            inst.state.pawn = move.to;
+          }
+        },
+        status: (inst) =>
+          inst.state.pawn != null
+            ? "diagonal captures granted"
+            : ((inst.state.charges as number) ?? 0) > 0
+              ? "one sidestep ready"
+              : null,
+      },
+    );
+  }
+  if (entry.id === "parade_route") {
+    // Reworked identity: any pawn still on its starting rank may sidestep one
+    // square to an empty square. Taking it is your move for the turn, so no
+    // other pawn can make a special move that turn (one move per turn).
+    return opener(
+      entry,
+      "Once, any pawn still on its starting rank may step one square sideways to an empty square. Taking this sidestep is your move for the turn, so no other pawn makes a special move that turn.",
+      augment((_moves, inst, api) => {
+        const home = ownRank(api.me, 1);
+        const out: Move[] = [];
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (RANK(sq) !== home) continue;
+          const tos: Square[] = [];
+          if (FILE(sq) > 0) tos.push(sq - 1);
+          if (FILE(sq) < 7) tos.push(sq + 1);
+          out.push(...teleportMoves(api.board, sq, tos, inst.id));
+        }
+        return out;
+      }),
+    );
+  }
   return opener(
     entry,
     `Your ${fileName}-file pawn may step one square sideways, once. The destination must be empty.`,
