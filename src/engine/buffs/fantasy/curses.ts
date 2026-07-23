@@ -16,7 +16,48 @@ import {
   tickTurns,
   FILE,
   RANK,
+  type Move,
+  type BuffApi,
+  type Mech,
 } from "./shared";
+
+// Balance pass: a DELAYED curse. Identical to `curse` (a partial, never-
+// stranding timed opponent-move filter that runs for `turns` of the opponent's
+// turns) except that the opponent's very next move after the draft passes
+// unhindered: the filter arms only once that free move has been played, then
+// bites for the full duration. Preserves the duration while pushing activation
+// one opponent move later.
+function delayedCurse(
+  turns: number,
+  filter: (moves: Move[], api: BuffApi) => Move[],
+): Mech {
+  return {
+    kind: "passive",
+    init: (inst) => {
+      inst.state.turns = turns;
+      inst.state.armed = false;
+    },
+    filterOpponentMoves: (moves, inst, api) => {
+      if (!inst.state.armed || turnsLeft(inst) <= 0 || moves.length === 0) return moves;
+      const kept = filter(moves, api);
+      // Safety net: a curse can never strand the opponent with zero moves.
+      return kept.length > 0 ? kept : moves;
+    },
+    onMovePlayed: (inst, move, api) => {
+      if (move.color !== api.opp) return;
+      if (!inst.state.armed) {
+        // The opponent's next move slips free; the curse arms behind it.
+        inst.state.armed = true;
+        return;
+      }
+      tickTurns(inst, move, api.opp);
+    },
+    status: (inst) =>
+      inst.state.armed
+        ? `${turnsLeft(inst)} of their turns left`
+        : "the curse takes hold after their next move",
+  };
+}
 
 export const FANTASY_CURSES: Buff[] = [
   card(
@@ -81,13 +122,15 @@ export const FANTASY_CURSES: Buff[] = [
       icon: "Lock",
       name: "Shackle the Queen",
       description:
-        "Bind the enemy queen in cursed iron: your opponent cannot move their queen for their next 4 turns.",
+        "Bind the enemy queen in cursed iron: your opponent's next move slips free, then for the 4 of their turns after it they cannot move their queen.",
       tier: 4,
       category: "hex",
       flavor: "Even a crown answers to a good enough chain.",
       fx: { motif: "jail", pieces: ["q"] },
     },
-    curse(4, (moves) => moves.filter((m) => m.piece !== "q")),
+    // Balance pass: preserve the 4-turn bind, but delay activation until after
+    // the opponent's next move.
+    delayedCurse(4, (moves) => moves.filter((m) => m.piece !== "q")),
   ),
   card(
     {
