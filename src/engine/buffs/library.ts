@@ -4231,12 +4231,13 @@ const TIER7: Buff[] = [
     },
   ),
   def(
-    { id: "triple_amazon", requires: ["n"], name: "Triple Amazon", description: "All your knights become amazons for the game, and each may also pass through one friendly piece per move.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
-    permanentAugment((_m, inst, api) =>
-      mySquares(api.board, api.me, "n").flatMap((sq) => [
-        ...slideMoves(api.board, sq, ALL_DIRS, inst.id),
-        ...phasingSlideMoves(api.board, sq, ALL_DIRS, inst.id, 1),
-      ]),
+    { id: "triple_amazon", requires: ["n"], name: "Triple Amazon", description: "Up to three of your knights move as amazons for your next 2 turns.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    // Rebalance: capped at three knights for two owner turns, with the friendly
+    // pass-through and the permanence both removed.
+    timedAugment(2, (_m, inst, api) =>
+      mySquares(api.board, api.me, "n")
+        .slice(0, 3)
+        .flatMap((sq) => slideMoves(api.board, sq, ALL_DIRS, inst.id)),
     ),
   ),
   def(
