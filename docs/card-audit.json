@@ -6058,11 +6058,11 @@
    "name": "Relay Baton",
    "kind": "boon",
    "tier": 6,
-   "effect": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. Each later castle or promotion instead adds 8 seconds to your clock and grants 1 draft reroll.",
+   "effect": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, and then the baton is dropped.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "tempo|passive|onMove|one-shot|enemy|capture,castle,clock,draft,extra,king,move,n:1,n:8,pawn,promote,reroll,seconds,time",
+   "signature": "tempo|passive|onMove|one-shot|enemy|capture,castle,draft,extra,king,move,pawn,promote,reroll,time",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [

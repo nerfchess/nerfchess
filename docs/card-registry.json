@@ -28570,7 +28570,7 @@
       "mechanic": "passive",
       "implemented": true,
       "descriptionLength": 263,
-      "description": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. Each later castle or promotion instead adds 8 seconds to your clock and grants 1 draft reroll.",
+      "description": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, and then the baton is dropped.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "strike",
