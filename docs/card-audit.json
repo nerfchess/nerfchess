@@ -8612,24 +8612,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ihatemyex",
-   "name": "I Hate My Ex",
-   "kind": "buff",
-   "tier": 1,
-   "effect": "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "tempo|passive|onMove|2-turns|enemy|freeze,move,n:2,n:2,pawn",
-   "animation": "bespoke+passive",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
-  },
-  {
    "id": "little_leap",
    "name": "Little Leap",
    "kind": "buff",
@@ -25591,6 +25573,25 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "ihatemyex",
+   "name": "I Hate My Ex",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Bring the whole thing down. Every piece on the board is destroyed instantly, yours and theirs alike. Only the two kings are left standing in the wreckage.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "attack|instant|effect|unstated|enemy|destroy,king",
+   "animation": "bespoke+passive",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "test-card-impact.ts",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
   },
   {
    "id": "ilovewhimperingaudios",

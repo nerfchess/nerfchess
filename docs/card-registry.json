@@ -1915,28 +1915,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "ihatemyex",
-      "name": "I Hate My Ex",
-      "kind": "buff",
-      "category": "tempo",
-      "tier": 1,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 165,
-      "description": "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink"
-        ],
-        "sigil": "HeartCrack"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
-    },
-    {
       "id": "knock_knees",
       "name": "Knock Knees",
       "kind": "buff",
@@ -38587,6 +38565,28 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
+    },
+    {
+      "id": "ihatemyex",
+      "name": "I Hate My Ex",
+      "kind": "buff",
+      "category": "attack",
+      "tier": 8,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 154,
+      "description": "Bring the whole thing down. Every piece on the board is destroyed instantly, yours and theirs alike. Only the two kings are left standing in the wreckage.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink"
+        ],
+        "sigil": "HeartCrack"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
     },
     {
       "id": "ilovewhimperingaudios",

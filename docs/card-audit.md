@@ -461,7 +461,6 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | gm_loaded_dice | Loaded Dice | buff | 1 | activated/free | unstated | unstated | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | gm_raffle_ticket | Raffle Ticket | buff | 1 | passive | 3-turns | self | plugin+passive | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | half_step | Half Step | buff | 1 | passive | one-shot | board | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| ihatemyex | I Hate My Ex | buff | 1 | passive | 2-turns | enemy | bespoke+passive | src/engine/buffs/personal.ts | 1 | - | keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version |
 | little_leap | Little Leap | buff | 1 | passive | unstated | unstated | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | long_knight | Long Knight | buff | 1 | passive | one-shot | unstated | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | loyal_pawn | Loyal Pawn | buff | 1 | passive | unstated | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1379,6 +1378,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | grand_reset | Grand Reset | buff | 8 | instant | unstated | self | bespoke+canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | heavens_wrath | Heaven's Wrath | buff | 8 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/fantasy/divine.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | i_love_my_gf | I Love My GF | buff | 8 | activated/free | next-turn | enemy | bespoke | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| ihatemyex | I Hate My Ex | buff | 8 | instant | unstated | enemy | bespoke+passive | src/engine/buffs/personal.ts | 2 | - | keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version |
 | ilovewhimperingaudios | I Love Whimpering Audios | buff | 8 | activated/lingering | next-turn | enemy | plugin | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | immortal_king | Immortal King | buff | 8 | passive | 8-turns | enemy | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | mass_mind_control | Mass Mind Control | buff | 8 | activated/lingering | next-turn | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |

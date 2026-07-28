@@ -977,25 +977,6 @@
    "endingEffect": "none"
   },
   {
-   "id": "ihatemyex",
-   "name": "I Hate My Ex",
-   "tier": 1,
-   "kind": "buff",
-   "mechanic": "passive",
-   "status": "keep",
-   "animId": "core:coldsnap",
-   "sharedFlagship": false,
-   "mainObject": "coldsnap",
-   "entranceStyle": "core signature \"coldsnap\"",
-   "motionPath": "radial",
-   "particleType": "none/sparkle",
-   "boardReaction": "none",
-   "pieceReaction": "p",
-   "persistentEffect": "frozen",
-   "soundFamily": "massfreeze",
-   "endingEffect": "none"
-  },
-  {
    "id": "little_leap",
    "name": "Little Leap",
    "tier": 1,
@@ -33220,25 +33201,6 @@
    "endingEffect": "none"
   },
   {
-   "id": "i_love_cam",
-   "name": "I Love Cami",
-   "tier": 6,
-   "kind": "buff",
-   "mechanic": "activated",
-   "status": "keep",
-   "animId": "personalPlays:ILoveCamPlay",
-   "sharedFlagship": false,
-   "mainObject": "ILoveCamPlay",
-   "entranceStyle": "bespoke scene ILoveCamPlay",
-   "motionPath": "radial",
-   "particleType": "none/burst",
-   "boardReaction": "none",
-   "pieceReaction": "all",
-   "persistentEffect": "summon",
-   "soundFamily": "lightning",
-   "endingEffect": "none"
-  },
-  {
    "id": "i_love_newjeans",
    "name": "I Love NewJeans",
    "tier": 6,
@@ -39832,6 +39794,25 @@
    "endingEffect": "none"
   },
   {
+   "id": "i_love_cam",
+   "name": "I Love Cami",
+   "tier": 7,
+   "kind": "buff",
+   "mechanic": "activated",
+   "status": "keep",
+   "animId": "personalPlays:ILoveCamPlay",
+   "sharedFlagship": false,
+   "mainObject": "ILoveCamPlay",
+   "entranceStyle": "bespoke scene ILoveCamPlay",
+   "motionPath": "radial",
+   "particleType": "none/burst",
+   "boardReaction": "shake:true",
+   "pieceReaction": "all",
+   "persistentEffect": "summon",
+   "soundFamily": "lightning",
+   "endingEffect": "none"
+  },
+  {
    "id": "ilovechaewon",
    "name": "I Love Chaewon",
    "tier": 7,
@@ -43705,6 +43686,25 @@
    "pieceReaction": "all",
    "persistentEffect": "ward",
    "soundFamily": "aegis",
+   "endingEffect": "none"
+  },
+  {
+   "id": "ihatemyex",
+   "name": "I Hate My Ex",
+   "tier": 8,
+   "kind": "buff",
+   "mechanic": "instant",
+   "status": "keep",
+   "animId": "core:exsmash",
+   "sharedFlagship": false,
+   "mainObject": "exsmash",
+   "entranceStyle": "core signature \"exsmash\"",
+   "motionPath": "radial",
+   "particleType": "none/burst",
+   "boardReaction": "shake:true",
+   "pieceReaction": "all",
+   "persistentEffect": "rally",
+   "soundFamily": "rampage",
    "endingEffect": "none"
   },
   {

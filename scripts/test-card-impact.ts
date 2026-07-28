@@ -109,6 +109,39 @@ mustBite("ov_paperwork_avalanche", CAPTURE_LINE, "a capturing piece must be froz
 mustBite("hx4_tar_flood", PAWN_LINE, "moves onto their third rank must be restricted");
 mustBite("hx4_dead_calm", SORTIE_LINE, "long slider moves must be restricted");
 
+// --- I Hate My Ex: a mutual board wipe -------------------------------------
+// It clears BOTH armies on resolve. Three things have to hold: the kings
+// survive (removing both would leave the game with no king-capture condition
+// and no legal moves), and neither capture pool grows, or a revive card could
+// rebuild an entire army out of the wreckage.
+
+{
+  let g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+  enableDraftMode(g, 9, { mode: "buff" });
+  const before = g.board.pieces.filter(Boolean).length;
+  acquireBuff(g, "w", "ihatemyex", BUFF_BY_ID.ihatemyex.tier);
+  const after = g.board.pieces.filter(Boolean).length;
+  const kings = g.board.pieces.filter((p) => p && p.type === "k").length;
+  const pooled =
+    Object.values(g.captured.w).reduce((a, b) => a + b, 0) +
+    Object.values(g.captured.b).reduce((a, b) => a + b, 0);
+  check(
+    "ihatemyex clears the board down to the two kings",
+    before === 32 && after === 2 && kings === 2,
+    `${before} pieces -> ${after}, ${kings} kings`,
+  );
+  check(
+    "ihatemyex feeds nothing to the revive pools",
+    pooled === 0,
+    `capture pools total ${pooled}`,
+  );
+  check(
+    "ihatemyex leaves the game playable",
+    legalMoves(g).length > 0,
+    `${legalMoves(g).length} legal moves remain`,
+  );
+}
+
 // --- Control: the harness must be able to FAIL ----------------------------
 // A card whose mechanic cannot fire down this line should look identical to the
 // control, proving mustBite is measuring something real rather than always

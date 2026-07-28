@@ -1210,32 +1210,30 @@ const AFFECTION: Buff[] = [
       id: "ihatemyex",
       name: "I Hate My Ex",
       description:
-        "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
-      tier: 1,
-      category: "tempo",
+        "Bring the whole thing down. Every piece on the board is destroyed instantly, yours and theirs alike. Only the two kings are left standing in the wreckage.",
+      tier: 8,
+      category: "attack",
       icon: "HeartCrack",
-      flavor: "Blocked, deleted, and still living rent free in my head.",
+      flavor: "If I cannot have the position, nobody can.",
+      fx: { motif: "rally", pieces: "all" },
     },
     {
-      kind: "passive",
-      // Delayed payoff: the freezes only bite after your opponent's next move.
-      onMovePlayed: (inst, move, api) => {
-        if (inst.spent || move.color !== api.opp) return;
-        const ek = mySquares(api.board, api.opp, "k")[0];
-        const theirPawns = mySquares(api.board, api.opp, "p");
-        if (ek != null && theirPawns.length) {
-          const t = theirPawns
-            .slice()
-            .sort((a, b) => dist(a, ek) - dist(b, ek) || a - b)[0];
-          addEffect(api, { kind: "freeze", sq: t, owner: api.opp, turns: 2, skin: "glue" });
+      kind: "instant",
+      // A mutual annihilation, not an attack: it clears BOTH armies the moment
+      // it resolves. That makes it a comeback card by construction, since the
+      // player who was behind on material loses less by playing it.
+      effect: (_inst, api) => {
+        for (let sq = 0; sq < 64; sq++) {
+          const p = api.board.pieces[sq];
+          // The kings survive. Removing both would leave the game with no
+          // king-capture condition to resolve and no legal moves to make.
+          if (!p || p.type === "k") continue;
+          // `uncounted`: this is a whole-board rewrite (the Perfect Rewind /
+          // Genesis case), not a capture by either side. Counting the wreckage
+          // as captures would credit both players an entire army in the revive
+          // pools, so Resurrect and friends could rebuild from the rubble.
+          api.removePiece(sq, { uncounted: true });
         }
-        const mk = mySquares(api.board, api.me, "k")[0];
-        const myPawns = mySquares(api.board, api.me, "p");
-        if (mk != null && myPawns.length) {
-          const s = myPawns.slice().sort((a, b) => dist(a, mk) - dist(b, mk) || a - b)[0];
-          addEffect(api, { kind: "freeze", sq: s, owner: api.me, turns: 2, skin: "glue" });
-        }
-        inst.spent = true;
       },
     },
   ),

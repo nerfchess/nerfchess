@@ -1351,6 +1351,7 @@ export type SigVisual =
   | "rockfall"
   | "unmake"
   | "wreckingball"
+  | "exsmash"
   | "pinata"
   | "artillery"
   | "spearcharge"
@@ -2304,7 +2305,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   i_love_abs: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
   ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
   ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sistergrove", hasLead: true, sound: "aegis", source: "shield" },
-  ihatemyex: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "coldsnap", hasLead: false, sound: "massfreeze", source: "frozen" },
+  ihatemyex: { ordering: "radial", staggerMs: 0, victims: "all", visual: "exsmash", hasLead: true, sound: "rampage" },
   // Third batch: empower / rally / shield grants. Each of these cards now
   // declares fx.pieces (added alongside), so its empower/rally motif paints a
   // real zone the signature reads, exactly like double_amazon (empower) and
