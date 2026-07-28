@@ -416,3 +416,94 @@ draft-fairness, draft-sequence, draft-timeout, buff-purity, balance-fixes,
 desync, apex, snapshot, glicko, spectator-sync, tv-spectator, replay-spectate,
 archive-replay and lab all green. buildVersion sprint-overhaul-1. Visual and
 audio changes want a preview-deploy eyeball (the build env cannot render).
+
+---
+
+## 2026-07-28 19:40 EDT (sprint 2: rating bug, board render, rounded corners, I Hate My Ex)
+
+Continues PR #449.
+
+House bot ratings disagreeing between TV and the profile (reported: 2600 on TV,
+2300 on the profile):
+- Root cause: games simulated on the OCI arena carry a seat rating that is a
+  compile-time constant, houseSeedRating(persona), baked from the persona's name
+  and skill (arena-service/game.ts:74). The arena service has no database. That
+  constant rode through externalLiveGames and buildExternalMatch into
+  playersPayload unvalidated. refreshSeatRatings does exactly this
+  reconciliation, but only for matches the DO runs itself. The constant is
+  numerically the frozen legacy users.rating column that ratingSql.ts already
+  names as the root of the "ratings don't match between pages" reports.
+- The gap is unbounded: a /mod/house override writes the database and the arena
+  cannot see it; a roster revision reaching one deploy and not the other shifts
+  one side by the full uplift spread (300 to 400, matching the report); and arena
+  games are rated, so the real bucket drifts every game.
+- Both ingest points now resolve the seat against user_ratings for the mode being
+  played, via the houseLiveInfo cache that already holds that map. The lobby path
+  warms the cache so a fresh DO instance never serves one stale payload.
+- Same block: buildExternalMatch hardcoded rd:150, above PROVISIONAL_RD (110), so
+  every arena bot showed a provisional "?" beside a rating it had held for
+  hundreds of games (house accounts seed at RD 60). And the seat name was the
+  baked persona name, so a /mod/house rename never reached TV.
+- Decision extracted to src/lib/server/arenaSeat.ts so it is testable without a
+  Durable Object; fallback is per FIELD, since a roster entry can have a
+  canonical username but no rating row for the mode. New gate: test:arena-seat.
+
+Board render (the 64-square problem):
+- Board keys ~30 memos and all 64 memoized squares on the identity of the visual
+  prop and its fields; OnlineMatch built it as a fresh literal in JSX every
+  render, so every clock frame re-rendered the whole board. Last session's useMemo
+  attempt was a rules-of-hooks violation and was reverted.
+- The component split that seemed necessary is not: the early returns are at 2059
+  and 2187 but the last hook is at 1924, so a memo above them is unconditionally
+  reached and can guard on !game itself. Keying on game identity is safe for the
+  reason `moves` already relies on: setGame is called in one place and every call
+  site passes a fresh shallow copy.
+- Memoizing visual alone would have changed nothing; checkSquares and the bare []
+  literals behind legalMoves/opponentMoves/premoves feed the same squareEnv
+  dependency list and are stabilized too. checkSquares' memo also removes two full
+  gameInCheck move generations per render in draft games.
+
+Rounded corners:
+- Correction to an earlier claim of 1,230 violations: globals.css already clamps
+  every non-rounded-full class to 1px, so the ~190 rounded-sm/md/lg uses render
+  square today and were left alone.
+- The real violations are the two escape hatches: component stylesheets (the
+  lobby's primary CTA carried a 9px arch, the secondary buttons 6px, the draft
+  reveal ring 6px on a square card) and rounded-full on padded elements (the
+  AccountChip in the top nav, BuffDock buttons, tier badge, drag handle, toggle
+  track, four profile badges). All squared; true dots keep their circles.
+- New gate: test:rounded. Two passes, since the violations live where an AST walk
+  over TSX cannot see them. Writing it first found six pills missed by reading.
+
+I Hate My Ex: was a tier 1 card freezing one pawn each side. Now destroys every
+piece on the board, both armies, leaving only the two kings. Tier 1 to 8, passive
+to instant. Removal is `uncounted` (the whole-board-rewrite case) so the wreckage
+never feeds the revive pools; kings survive so the game stays resolvable. A
+comeback card by construction. New bespoke `exsmash` animation (a colossal fist
+flattens the board, oxblood and ash) rather than reusing the wrecking ball, which
+would have been two cards sharing one flagship.
+
+Mobile draft readability (from a phone screenshot): the scrim was a flat 20% dim,
+so on a phone the masthead, avatar and clocks read straight through the timer chip
+and the clock notice. Now 70% below the sm breakpoint, unchanged on desktop. The
+clock notice was a full sentence in wide-tracked uppercase sharing a flex row with
+the clock readouts, breaking across three lines; it now has its own row in
+sentence case. Dropped backdrop-filter from the timer chip (banned, and it sat
+over the animated ambient stage recompositing every frame).
+
+The three signature cards (I Love My GF, I Love Cami, Joseph Leung) pull with
+their own rose-gold radiance, warmer than the tier 9 gold and tier 10 cyan.
+Presentation only, outside the engine. I Love Cami tier 6 to 7.
+
+docs/marketing-plan.md added.
+
+Known outstanding (investigated, deliberately not half-done): the clock rebalance
+to 1-2 cards per tier. 110 cards touch the clock; 69 are clock-only and 41 carry
+it as a rider, and a sample of five showed five different clause shapes in the
+descriptions, so a regex sweep would mangle them. It needs per-card judgment.
+
+Verified: tsc clean, eslint clean, full battery green (san, card-impact,
+arena-seat, rules, nerfs, passive-registry, animations, emdash, rounded, sound,
+card-registry, card-audit, draft-*, buff-purity, balance-fixes, desync, apex,
+snapshot, glicko, spectator-sync, tv-spectator, replay-spectate, archive-replay,
+lab) plus all 26 Playwright e2e tests. buildVersion sprint-overhaul-1.
