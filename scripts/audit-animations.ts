@@ -156,7 +156,12 @@ function parsePlaysModule(fileBase: string): Map<string, PlayInfo> {
     //                S(Scene, {...})
     let m = chunk.match(/:\s*[A-Z]\(\s*(\w+),\s*\[([^\]]*)\],\s*(?:"([a-z0-9_]+)"|GLYPH\.(\w+))/);
     if (m) {
-      const flourish = chunk.match(/\}\s*,\s*"([a-z0-9_]+)"\s*\)\s*,?\s*$/m)?.[1];
+      // The flourish/signet is the argument right after the config object. It
+      // may be followed by one more positional flag (basicPlays' `bold` cut),
+      // so allow that tail rather than only matching a bare trailing string.
+      const flourish = chunk.match(
+        /\}\s*,\s*"([a-z0-9_]+)"\s*(?:,\s*(?:true|false)\s*)?\)\s*,?\s*$/m,
+      )?.[1];
       out.set(id, {
         ...base,
         template: m[1],
