@@ -507,3 +507,84 @@ arena-seat, rules, nerfs, passive-registry, animations, emdash, rounded, sound,
 card-registry, card-audit, draft-*, buff-purity, balance-fixes, desync, apex,
 snapshot, glicko, spectator-sync, tv-spectator, replay-spectate, archive-replay,
 lab) plus all 26 Playwright e2e tests. buildVersion sprint-overhaul-1.
+
+---
+
+## 2026-07-28 23:20 EDT (sprint 3: the misaligned draft box, clock tier 1, exploit, mobile leaderboard)
+
+Continues PR #449.
+
+The misaligned box players kept reporting: found by RENDERING it rather than
+reading CSS. Drove headless Chromium to the reporting phone's viewport (360x808)
+and dumped the geometry of every bordered element in the draft overlay. It was
+the countdown chip, and it was not internally misaligned at all: a separate
+217x66 bordered box at y=51, above a panel that started at y=127. Two bordered
+rectangles stacked with a gap, the upper one overlapping the masthead and
+belonging to nothing on screen. On a taller phone, where the column stops
+fitting and the overlay centers it, that box rides over the logo and player row.
+Deleted rather than nudged: the countdown now sits inline in the panel header
+beside the label it governs (26px dial plus the seconds, no chrome of its own).
+"Choose within" went with it; a dial counting down next to "Opening pick" does
+not need to announce itself. Verified by re-rendering: the draft column and the
+panel frame are now the same box, and no separately bordered timer element
+remains.
+
+That deletion took two strings the e2e suite asserts on, and only the smoke test
+was run locally, so CI caught it. "Your timer starts when the cards are ready" is
+real reassurance and moved into the panel body under the title, where a sentence
+fits; its test stands unchanged. The "Choose within" assertions were replaced
+with the decision timer's ROLE, which is what they should have used: a countdown
+is identified by role="timer" and its aria-label, not by wording a redesign can
+legitimately change.
+
+Draft polish:
+- The compact panel's Confirm button appeared on selection, and since every
+  button in that row is flex-1, inserting a third resized and re-wrapped Reroll
+  and Bank the instant you clicked a card, moving the row under the cursor
+  mid-click. Always rendered and merely disabled now, matching the full overlay.
+- The lock-in bar transitioned width at 10Hz for the whole 20 second window,
+  relayouting inside an overflow-hidden parent on every tick. Now scaleX.
+- The wall torches were gated on reduced motion only, so twelve elements running
+  ten infinite animations kept burning after useAmbientAutoCalm had measured the
+  device as too slow, and when the player chose Calm by hand. They follow the FX
+  dial now. Related: the panel's resize listener was keyed on dragPos, so
+  dragging re-registered it on every pointermove.
+- The most blocking surface in the product had no dialog semantics at all: a
+  keyboard user tabbed straight out of a forced decision into the board. Now a
+  labelled dialog with focus contained, pulled in on open (only when focus is
+  outside) and restored on close. Escape peeks at the board, matching the Hide
+  button, rather than closing: a draft cannot be dismissed.
+- The reduced-motion notice added last session could render over the draft
+  cards. It queues through the UI interrupt slot, but that only defers to holds
+  that already exist and its effect runs on mount, before the opening draft has
+  pushed one. It now waits before asking for a slot.
+
+Clock rebalance, tier 1: 13 cards down to 2. Kept Polite Cough and Pinch of Sand,
+where time IS the card. Eight were pure riders on cards already complete without
+them. Three had the clock as their actual payoff and got a board payoff instead:
+Loyal Pawn (the early promotion arrives protected for a turn), Quiet March (the
+retreating pawn cannot be captured next turn), Name Tag (whichever piece takes
+Gary walks away clean). augmentThenResolve now passes the resolving move to its
+callback, which is what lets the first two shield the square the piece landed on.
+Doing this one card at a time was the right call: two of eleven turned out to be
+the card's entire payoff rather than a rider, and a regex would have gutted them.
+
+Exploit sweep over resource-granting hooks: bn4_relay_baton granted a draft
+reroll and 8 seconds on EVERY castle or promotion after the first, uncapped and
+never spent. Promotions repeat, and with a revive or summon card indefinitely, so
+a tempo card was an unbounded draft-manipulation engine. Capped at two later
+handoffs. Other flagged candidates were false positives bounded by spendOnVia.
+
+Mobile leaderboard, rendered at 360x808 with a stubbed API (the dev database has
+no rated games, so the podium never mounts locally): every podium name was
+truncated to a stub on ~100px risers, the champion's games count wrapped while
+its neighbours did not so the columns misaligned, and the table's W/L/D column
+took 84px of a 336px row leaving names ~144px. Names now wrap instead of
+truncating, the count is nowrap, and W/L/D hides below sm where the full record
+is a tap away on the profile.
+
+Verified: tsc, eslint, full battery, and all 26 Playwright e2e tests green.
+
+Still outstanding: clock tiers 2 to 8 (99 cards), confusing-text simplification,
+weak-card buffs, cosmetic-only cards, the UI transition-token sweep, and
+AnimatePresence on the draft's unmount paths.
