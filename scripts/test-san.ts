@@ -1,4 +1,4 @@
-// SAN notation checks. Run with:
+// Board notation and repetition checks. Run with:
 //   npx -y tsx scripts/test-san.ts
 //
 // Standard algebraic notation has to identify a move UNIQUELY. Before this
@@ -14,11 +14,13 @@
 // (movesToSAN) that the move list, PGN export and clip captions run on.
 
 import {
+  countRepetitions,
   generateMoves,
   initialBoard,
   makeMove,
   moveToSAN,
   moveToUCI,
+  positionKey,
   movesToSAN,
   sanLabels,
 } from "../src/engine/board";
@@ -238,9 +240,61 @@ check(
   degraded.join(" "),
 );
 
+// --- 5. Repetition counting ------------------------------------------------
+// countRepetitions skips building position keys for positions before the last
+// irreversible move, on the grounds that a capture, pawn move, or drop changes
+// material or pawn structure permanently so nothing earlier can match. That is
+// a real speedup on the hot path (it runs inside playMove, and the worker
+// replays whole games move by move), but it is only safe if it is EXACTLY
+// equivalent to the naive full scan. Pinned differentially against the naive
+// implementation over repetition-heavy random play.
+
+function naiveCountRepetitions(board: BoardState): number {
+  const target = positionKey(board);
+  let b = initialBoard();
+  let count = positionKey(b) === target ? 1 : 0;
+  for (const m of board.history) {
+    b = makeMove(b, m);
+    if (positionKey(b) === target) count++;
+  }
+  return count;
+}
+
+{
+  let rseed = 987;
+  const rrand = () => ((rseed = (rseed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  let compared = 0;
+  let mismatches = 0;
+  let firstMismatch = "";
+  for (let game = 0; game < 40; game++) {
+    let b = initialBoard();
+    for (let ply = 0; ply < 140; ply++) {
+      const ms = generateMoves(b);
+      if (!ms.length) break;
+      // Heavily biased toward reversible moves, or repetitions never arise.
+      const quiet = ms.filter((m) => m.piece !== "p" && !m.captured);
+      const pool = quiet.length && rrand() < 0.93 ? quiet : ms;
+      b = makeMove(b, pool[Math.floor(rrand() * pool.length)]);
+      if (!b.pieces.some((p) => p && p.type === "k" && p.color === b.turn)) break;
+      const naive = naiveCountRepetitions(b);
+      const fast = countRepetitions(b);
+      compared++;
+      if (naive !== fast && !firstMismatch) {
+        mismatches++;
+        firstMismatch = `game ${game} ply ${ply}: naive ${naive}, fast ${fast}`;
+      }
+    }
+  }
+  check(
+    "repetition counting matches the naive scan",
+    mismatches === 0,
+    mismatches === 0 ? `${compared} positions compared` : firstMismatch,
+  );
+}
+
 console.log(
   failures === 0
-    ? "\nPASS: SAN notation OK."
-    : `\nFAIL: ${failures} SAN check(s) failed.`,
+    ? "\nPASS: notation and repetition OK."
+    : `\nFAIL: ${failures} check(s) failed.`,
 );
 process.exit(failures === 0 ? 0 : 1);

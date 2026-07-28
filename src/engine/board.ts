@@ -402,11 +402,32 @@ export function positionKey(board: BoardState): string {
 // one (material/pawn structure differ), so a plain full replay is correct.
 export function countRepetitions(board: BoardState): number {
   const target = positionKey(board);
+  const history = board.history;
+  // Only positions since the last irreversible move can match: a capture, a
+  // pawn move, or a drop changes material or pawn structure permanently, so
+  // nothing before it can ever equal the current position. Everything earlier
+  // still has to be REPLAYED (the board has to get here), but its key is never
+  // built - and building those 70-character keys, not the replay itself, is
+  // where this function spent its time. It runs inside playMove for every move
+  // once the halfmove clock passes 8, and the worker replays a whole game move
+  // by move on reconnect, spectate, and every bot move, so the saving lands
+  // hardest on the CPU-limited Durable Object.
+  let from = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const m = history[i];
+    if (m.piece === "p" || m.captured || m.drop) {
+      from = i + 1;
+      break;
+    }
+  }
   let b = initialBoard();
-  let count = positionKey(b) === target ? 1 : 0;
-  for (const m of board.history) {
-    b = makeMove(b, m);
-    if (positionKey(b) === target) count++;
+  // The starting position is only ever a candidate when nothing irreversible
+  // has happened yet.
+  let count = from === 0 && positionKey(b) === target ? 1 : 0;
+  for (let i = 0; i < history.length; i++) {
+    b = makeMove(b, history[i]);
+    // The board after history[i] is position i + 1.
+    if (i + 1 >= from && positionKey(b) === target) count++;
   }
   return count;
 }
