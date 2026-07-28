@@ -322,7 +322,7 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_backwards_hat",
       name: "Backwards Hat",
-      description: "One pawn may capture straight ahead on its next move, and you gain 5 seconds when it does.",
+      description: "One pawn may capture straight ahead on its next move.",
       tier: 1,
       category: "movement",
       icon: "GraduationCap",
@@ -343,7 +343,6 @@ export const OVERHAUL_T1: Buff[] = [
       }),
       onMovePlayed: (inst, move, api) => {
         if (move.via === inst.id && move.color === api.me) {
-          api.adjustClock({ addSelfSec: 5 });
         }
         spendOnVia(inst, move);
       },
@@ -560,7 +559,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_rain_check",
       name: "Rain Check",
       description:
-        "In 5 of your turns, the cloud pays out: gain 20 seconds on your clock, one draft reroll, and a look at the tier of your opponent's next draft. In untimed games only the reroll and the reveal arrive.",
+        "In 5 of your turns, the cloud pays out: one draft reroll, and a look at the tier of your opponent's next draft.",
       tier: 1,
       category: "tempo",
       icon: "CloudRain",
@@ -576,7 +575,6 @@ export const OVERHAUL_T1: Buff[] = [
         const t = ((inst.state.turns as number) ?? 0) - 1;
         inst.state.turns = t;
         if (t <= 0) {
-          api.adjustClock({ addSelfSec: 20 });
           // The clock payout is a no-op in an untimed game, so always land the
           // reroll and the tier reveal too.
           api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
@@ -649,7 +647,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_spare_button",
       name: "Spare Button",
       description:
-        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty, and you gain 5 seconds. One use.",
+        "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty. One use.",
       tier: 1,
       category: "pieces",
       icon: "CircleDot",
@@ -667,7 +665,6 @@ export const OVERHAUL_T1: Buff[] = [
           // Only my own pawns count (the capture square held my pawn).
           if (!api.board.pieces[home]) {
             api.place(home, "p", api.me);
-            api.adjustClock({ addSelfSec: 5 });
             inst.spent = true;
             return;
           }
@@ -725,7 +722,7 @@ export const OVERHAUL_T1: Buff[] = [
     {
       id: "ov_name_tag",
       name: "Name Tag",
-      description: "Stick a name tag on one enemy piece. It is Gary now. Capture Gary and gain 10 seconds.",
+      description: "Stick a name tag on one enemy piece. It is Gary now. Whichever of your pieces takes Gary cannot be captured during your opponent's next turn.",
       tier: 1,
       category: "info",
       icon: "Tag",
@@ -755,7 +752,7 @@ export const OVERHAUL_T1: Buff[] = [
         const sq = inst.state.sq as Square | undefined;
         if (sq == null) return;
         if (move.color === api.me && (move.capturedSquare === sq || move.to === sq) && move.captured) {
-          api.adjustClock({ addSelfSec: 10 });
+          addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 });
           inst.spent = true;
           return;
         }
@@ -771,7 +768,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_fresh_socks",
       name: "Fresh Socks",
       description:
-        "Your next move puts 13 seconds back on your clock, flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. In untimed games only the flag and the reroll apply. New socks, new you.",
+        "Your next move flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. New socks, new you.",
       tier: 1,
       category: "tempo",
       icon: "Sparkles",
@@ -781,7 +778,6 @@ export const OVERHAUL_T1: Buff[] = [
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.me) return;
-        api.adjustClock({ addSelfSec: 13 });
         // The clock gain is a no-op in an untimed game, so always land two
         // effects that need no clock: mark the last enemy mover (clears once
         // they reply) and hand back a draft reroll.

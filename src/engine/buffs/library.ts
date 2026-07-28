@@ -578,7 +578,7 @@ function colossusChecks(api: BuffApi, from: Square, to: Square, type: PieceType)
  * charge/spend shape of the shared `augment` helper. */
 function augmentThenResolve(
   gen: (moves: Move[], inst: BuffInstance, api: BuffApi) => Move[],
-  onResolve: (api: BuffApi) => void,
+  onResolve: (api: BuffApi, move: Move) => void,
 ): Mech {
   return {
     kind: "passive",
@@ -591,7 +591,7 @@ function augmentThenResolve(
     },
     onMovePlayed: (inst, move, api) => {
       if (move.via !== inst.id || !move.color) return;
-      onResolve(api);
+      onResolve(api, move);
       const charges = ((inst.state.charges as number) ?? 1) - 1;
       inst.state.charges = charges;
       if (charges <= 0) inst.spent = true;
@@ -690,10 +690,9 @@ const TIER1: Buff[] = [
     ),
   ),
   def(
-    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game, and gain 5 seconds.", tier: 1, category: "info", boon: true },
+    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => {
       api.mine.oppNerfRevealed = true;
-      api.adjustClock({ addSelfSec: 5 });
     }),
   ),
   def(
@@ -732,7 +731,7 @@ const TIER1: Buff[] = [
     instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
   ),
   def(
-    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. Gain 5 seconds when it promotes.", tier: 1, category: "pieces" },
+    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. The new piece cannot be captured during your opponent's next turn.", tier: 1, category: "pieces" },
     augmentThenResolve(
       (_m, inst, api) => {
         const out: Move[] = [];
@@ -747,11 +746,14 @@ const TIER1: Buff[] = [
         }
         return out;
       },
-      (api) => api.adjustClock({ addSelfSec: 5 }),
+      // The early promotion arrives protected: a piece that appears a rank
+      // short of the back rank is otherwise standing in the open.
+      (api, move) =>
+        addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 }),
     ),
   ),
   def(
-    { id: "quiet_march", requires: ["p"], name: "Quiet March", description: "One pawn can move backward one square, once. Gain 5 seconds when it resolves.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    { id: "quiet_march", requires: ["p"], name: "Quiet March", description: "One pawn can move backward one square, once. It cannot be captured during your opponent's next turn.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augmentThenResolve(
       (_m, inst, api) =>
         mySquares(api.board, api.me, "p").flatMap((sq) => {
@@ -760,7 +762,9 @@ const TIER1: Buff[] = [
             ? [pawnMove(api, sq, back, inst.id)]
             : [];
         }),
-      (api) => api.adjustClock({ addSelfSec: 5 }),
+      // Stepping back is a retreat, so it lands somewhere safe for a turn.
+      (api, move) =>
+        addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 }),
     ),
   ),
   def(
