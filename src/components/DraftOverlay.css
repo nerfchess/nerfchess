@@ -646,8 +646,12 @@ html[data-anim="off"] .bank-vault { opacity: 0; }
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 18px 50px -20px rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /* No backdrop-filter. It is banned outside the two board splash moments
+     (docs/design-system.md), and this chip sits directly over the animated
+     ambient stage, so the blurred region had to be recomposited on every one
+     of that stage's frames for the whole draft. The same reasoning already
+     removed blur from the scrim; the timer was missed. The 88% opaque
+     background below carries the contrast on its own. */
 }
 .draft-timer--urgent {
   border-color: rgb(var(--accent-nerf-rgb) / 0.55);
@@ -1907,4 +1911,21 @@ html[data-anim="off"] .dpv * {
   0% { transform: scale(0.35); opacity: 0.9; }
   70% { opacity: 0.25; }
   100% { transform: scale(1.05); opacity: 0; }
+}
+
+/* The owner's signature cards pull with their own radiance rather than the
+   ordinary tier glow (see src/lib/signatureCards.ts). Rose-gold and warmer
+   than the tier 9 gold or the tier 10 cyan, so it reads as its own thing and
+   is never mistaken for an apex pull. Presentation only: the card's tier,
+   pool and odds are untouched. Inherits the animations-off rule the other
+   .draft-mythic-aura variants already carry. */
+.draft-mythic-aura[data-tier="god"] {
+  background: radial-gradient(
+    circle,
+    rgb(255 214 224 / 0.55),
+    rgb(255 148 178 / 0.22) 45%,
+    rgb(214 168 255 / 0.12) 65%,
+    transparent 78%
+  );
+  animation-iteration-count: 5;
 }

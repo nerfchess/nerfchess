@@ -1198,7 +1198,6 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | griffon_rider | Griffon Rider | buff | 6 | activated | one-shot | self | bespoke+canvas | src/engine/buffs/fantasy/beasts.ts | 1 | duplicate-signature(warp_field) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | guardian_angel | Guardian Angel | buff | 6 | passive | unstated | enemy | bespoke+canvas+passive | src/engine/buffs/pt/passives.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | home_field | Home Field | buff | 6 | passive | unstated | self | bespoke+canvas+passive | src/engine/buffs/pt/passives.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| i_love_cam | I Love Cami | buff | 6 | activated/lingering | 3-turns | enemy | plugin | src/engine/buffs/personal.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | i_love_newjeans | I Love NewJeans | buff | 6 | passive | unstated | board | bespoke+passive | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ilovemakingout | I Love Making Out | buff | 6 | activated/lingering | unstated | self | plugin | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ironclad | Ironclad | buff | 6 | instant | 2-turns | self | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1311,6 +1310,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | grand_resurrection | Grand Resurrection | buff | 7 | instant | unstated | self | bespoke+canvas | src/engine/buffs/library.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | great_divide | Great Divide | buff | 7 | activated | 2-turns | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | horn_of_summoning | Horn of Summoning | buff | 7 | passive | permanent | self | bespoke+canvas+passive | src/engine/buffs/fantasy/artifacts.ts | 1 | - | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
+| i_love_cam | I Love Cami | buff | 7 | activated/lingering | 3-turns | enemy | plugin | src/engine/buffs/personal.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | ilovechaewon | I Love Chaewon | buff | 7 | activated | unstated | self | plugin | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ilovemysister | I Love My Sister | buff | 7 | activated/lingering | 2-turns | enemy | bespoke | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | judgment_day | Judgment Day | buff | 7 | activated | permanent | enemy | bespoke+canvas | src/engine/buffs/fantasy/divine.ts | 1 | - | keep (auto: no flags, harness-executed) |

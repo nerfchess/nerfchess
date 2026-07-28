@@ -22277,25 +22277,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "i_love_cam",
-   "name": "I Love Cami",
-   "kind": "buff",
-   "tier": 6,
-   "effect": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect+targets+aug+filter+onMove|3-turns|enemy|capture,knight,leap,n:2,n:3,place,queen,square",
-   "animation": "plugin",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "test-companions.cjs",
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "i_love_newjeans",
    "name": "I Love NewJeans",
    "kind": "buff",
@@ -24347,6 +24328,25 @@
    ],
    "flags": [],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
+   "id": "i_love_cam",
+   "name": "I Love Cami",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
+   "trigger": "activated/lingering",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect+targets+aug+filter+onMove|3-turns|enemy|capture,knight,leap,n:2,n:3,place,queen,square",
+   "animation": "plugin",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "test-companions.cjs",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "ilovechaewon",

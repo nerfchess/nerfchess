@@ -10,6 +10,7 @@ import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftRe
 import { resolveDraftTimeout } from "@/lib/draftTimeout";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { isGodlikeCard } from "@/lib/signatureCards";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
@@ -1423,11 +1424,16 @@ export function DraftOverlay({
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
         // eat the pick clicks. No backdrop blur: a full-screen blur repainted
-        // on every board animation frame chugged phones. The scrim is a light
-        // 20% dim: the board stays visible behind the draft, never hidden
-        // (the near-opaque panel itself carries the cards' readability).
+        // on every board animation frame chugged phones.
+        //
+        // The scrim is a light 20% dim on desktop so the board stays visible
+        // behind the draft. On PHONES it is much heavier, because there the
+        // draft column has nowhere to go: it overlaps the masthead and the
+        // player row, and at 20% the logo, avatar and clocks read straight
+        // through the timer chip and the clock notice, which is the single
+        // worst readability problem on the mobile draft.
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/20" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/70 sm:bg-black/20" +
           (hidden ? " invisible" : "")
         }
       >
@@ -1527,8 +1533,13 @@ export function DraftOverlay({
             <span className="font-mono tabular-nums">
               Opponent <span className="font-bold text-parchment-100">{fmtClock(clocks.theirs)}</span>
             </span>
-            <span className="smallcaps text-[11px] text-parchment-400">
-              Clocks are paused while you choose; after the countdown ends, drafting costs your clock
+            {/* Its own full-width line, and NOT smallcaps. This is a full
+                sentence: set in wide-tracked uppercase at 11px it wrapped to
+                three lines on a phone, sat across the masthead and the player
+                row, and was the hardest thing on the screen to read. Sentence
+                case on its own row costs nothing and reads at a glance. */}
+            <span className="w-full text-center text-[11px] leading-snug text-parchment-400">
+              Clocks are paused while you choose. Past the countdown, drafting runs on your clock.
             </span>
           </div>
         )}
@@ -1885,8 +1896,15 @@ export function DraftOverlay({
                     {/* Mythic presence: a tier 9/10 card radiates its own
                         breathing halo behind the face, so THE card of the
                         pull is unmistakable even inside a strong offer. */}
-                    {card.tier >= 9 && (
-                      <span aria-hidden className="draft-mythic-aura" data-tier={card.tier} />
+                    {(card.tier >= 9 || isGodlikeCard(card.id)) && (
+                      <span
+                        aria-hidden
+                        className="draft-mythic-aura"
+                        // The signature cards pull with their own radiance
+                        // regardless of tier (see lib/signatureCards.ts).
+                        // Presentation only: no tier, pool or odds change.
+                        data-tier={isGodlikeCard(card.id) ? "god" : card.tier}
+                      />
                     )}
                     {/* Rarity-scaled reveal: tier 6+ cards land with a
                         tier-colored ring blooming off the face right as the

@@ -982,7 +982,7 @@ const AFFECTION: Buff[] = [
       name: "I Love Cami",
       description:
         "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
-      tier: 6,
+      tier: 7,
       category: "pieces",
       icon: "Crosshair",
       flavor: "Cami said she had my back. Cami meant it.",

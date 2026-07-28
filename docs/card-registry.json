@@ -30675,22 +30675,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "i_love_cam",
-      "name": "I Love Cami",
-      "kind": "buff",
-      "category": "pieces",
-      "tier": 6,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 227,
-      "description": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "i_love_newjeans",
       "name": "I Love NewJeans",
       "kind": "buff",
@@ -35208,6 +35192,22 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "pieceClass"
+    },
+    {
+      "id": "i_love_cam",
+      "name": "I Love Cami",
+      "kind": "buff",
+      "category": "pieces",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 227,
+      "description": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "ilovechaewon",
