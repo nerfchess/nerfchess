@@ -949,14 +949,13 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_stolen_hours",
       name: "Stolen Hours",
       description:
-        "Steal 20 seconds from your opponent's clock and take one extra move this turn. You cannot capture the king on the bonus move.",
+        "Take one extra move this turn. You cannot capture the king on the bonus move: your opponent replies first.",
       tier: 3,
       category: "tempo",
       flavor: "Turn their spent minutes into one more of your moves.",
       fx: { motif: "rally", self: true },
     },
     instant((_inst, api) => {
-      api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 });
       api.bs.extraMoves[api.me] += 1;
     }),
   ),
@@ -1033,7 +1032,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_chrono_siphon",
       name: "Chrono Siphon",
       description:
-        "Steal up to 20 seconds from your opponent's clock and freeze one enemy piece for its next 2 turns.",
+        "Freeze one enemy piece for its next 3 turns.",
       tier: 2,
       category: "tempo",
       flavor: "Draw the time off a single piece, slowly, like heat.",
@@ -1050,9 +1049,8 @@ export const WILD_ARCANE: Buff[] = [
             },
       (_inst, api, picks) => {
         if (picks[0]?.square != null) {
-          addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns: 2 });
+          addEffect(api, { kind: "freeze", sq: picks[0].square, owner: api.opp, turns: 3 });
         }
-        api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 });
       },
     ),
   ),

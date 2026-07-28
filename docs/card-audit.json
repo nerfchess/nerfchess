@@ -10,15 +10,15 @@
    "nerf": 360
   },
   "flagged": {
-   "duplicateSignature": 273,
-   "nearDuplicate": 250,
-   "dominatedCandidates": 91,
+   "duplicateSignature": 277,
+   "nearDuplicate": 249,
+   "dominatedCandidates": 92,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2383
+  "reviewed": 2382
  },
  "rows": [
   {
@@ -1460,18 +1460,18 @@
    "name": "Egg Timer",
    "kind": "boon",
    "tier": 2,
-   "effect": "Add 20 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the reveal apply.",
+   "effect": "Gain 1 draft reroll, and learn the tier of your opponent's next draft offer.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:20,reroll,reveal,seconds,time",
+   "signature": "tempo|instant|effect|unstated|enemy|draft,n:1,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(bn4_pocket_metronome:0.90)"
+    "duplicate-signature(bn4_pocket_metronome)"
    ],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
@@ -2067,6 +2067,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "duplicate-signature(ov_private_gallery)",
     "near-duplicate(bn4_velvet_queue:0.88)"
    ],
    "action": "keep: T2 rung of the forced-tier ladder"
@@ -2181,7 +2182,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_prison_break)",
+    "duplicate-signature(bn4_prison_break,touch_grass)",
     "near-duplicate(long_leash:1.00)",
     "near-duplicate(nerf_breaker:1.00)",
     "near-duplicate(bn4_paid_leave:1.00)",
@@ -2212,18 +2213,20 @@
    "name": "Touch Grass",
    "kind": "boon",
    "tier": 2,
-   "effect": "You step outside for your own good: add 30 seconds to your clock, and your nerf is suspended for your next 2 turns.",
+   "effect": "You step outside for your own good: your nerf is suspended for your next 3 turns.",
    "trigger": "instant",
-   "duration": "2-turns",
+   "duration": "3-turns",
    "targets": "self",
-   "signature": "nerf|instant|effect|2-turns|self|clock,n:2,n:30,seconds",
+   "signature": "nerf|instant|effect|3-turns|self|n:3",
    "animation": "plugin",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "duplicate-signature(slack_chain,bn4_prison_break)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "wa_foresight",
@@ -2703,18 +2706,19 @@
    "name": "Pocket Metronome",
    "kind": "boon",
    "tier": 3,
-   "effect": "Add 25 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the tier reveal arrive.",
+   "effect": "Gain 1 draft reroll, and learn the tier of your opponent's next draft offer.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:25,reroll,reveal,seconds,time",
+   "signature": "tempo|instant|effect|unstated|enemy|draft,n:1,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(bn4_egg_timer:0.90)"
+    "duplicate-signature(bn4_egg_timer)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
@@ -4972,7 +4976,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(slack_chain)",
+    "duplicate-signature(slack_chain,touch_grass)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
@@ -12092,11 +12096,11 @@
    "name": "Lirili Larila",
    "kind": "buff",
    "tier": 2,
-   "effect": "The cactus-elephant trades your afternoon for its hourglass: steal 45 seconds from your opponent's clock, but you skip your own next turn.",
+   "effect": "The cactus-elephant trades your afternoon for its hourglass: your opponent skips their next turn, but so do you.",
    "trigger": "instant",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|next-turn|enemy|clock,n:45,seconds,skip,steal",
+   "signature": "tempo|instant|effect|next-turn|enemy|skip",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
@@ -14094,11 +14098,11 @@
    "name": "Chrono Siphon",
    "kind": "buff",
    "tier": 2,
-   "effect": "Steal up to 20 seconds from your opponent's clock and freeze one enemy piece for its next 2 turns.",
+   "effect": "Freeze one enemy piece for its next 3 turns.",
    "trigger": "activated",
-   "duration": "2-turns",
+   "duration": "3-turns",
    "targets": "enemy",
-   "signature": "tempo|activated|effect+targets|2-turns|enemy|clock,freeze,n:2,n:20,seconds,steal",
+   "signature": "tempo|activated|effect+targets|3-turns|enemy|freeze,n:3",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/arcane.ts",
    "tests": [
@@ -15224,11 +15228,11 @@
    "name": "Royal Wedding",
    "kind": "buff",
    "tier": 3,
-   "effect": "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds.",
+   "effect": "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them.",
    "trigger": "activated",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|activated|effect+targets|unstated|self|adjacent,king,n:2,n:20,pawn,place,queen,seconds,square",
+   "signature": "pieces|activated|effect+targets|unstated|self|adjacent,king,n:2,pawn,place,queen,square",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t5.ts",
    "tests": [
@@ -15991,11 +15995,11 @@
    "name": "Stolen Hours",
    "kind": "buff",
    "tier": 3,
-   "effect": "Steal 20 seconds from your opponent's clock and take one extra move this turn. You cannot capture the king on the bonus move.",
+   "effect": "Take one extra move this turn. You cannot capture the king on the bonus move: your opponent replies first.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|capture,clock,extra,king,move,n:20,seconds,steal",
+   "signature": "tempo|instant|effect|unstated|enemy|capture,extra,king,move",
    "animation": "canvas",
    "location": "src/engine/buffs/wild/arcane.ts",
    "tests": [
@@ -17436,11 +17440,11 @@
    "name": "Midas Gauntlet",
    "kind": "buff",
    "tier": 4,
-   "effect": "Your next 3 captures each gain you 10 seconds, and the capturing piece is gilded for the trophy cabinet.",
+   "effect": "Your next 3 captures each gild the capturing piece for the trophy cabinet: it cannot be taken during your opponent's next turn.",
    "trigger": "passive",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "tempo|passive|init+onMove|unstated|self|capture,n:10,n:3,seconds",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "tempo|passive|init+onMove|next-turn|enemy|capture,n:3",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t6.ts",
    "tests": [
@@ -17490,18 +17494,22 @@
    "name": "Private Gallery",
    "kind": "buff",
    "tier": 4,
-   "effect": "Your next draft offers 3 cards, and you pocket 10 seconds at the door.",
+   "effect": "Your next draft offers 3 cards.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "draft|instant|effect|unstated|self|draft,n:10,n:3,seconds",
+   "signature": "draft|instant|effect|unstated|self|draft,n:3",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t6.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "duplicate-signature(draft_insight)",
+    "near-duplicate(ov_tasting_flight:0.83)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "ov_rage_bait",
@@ -17591,7 +17599,8 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_sampler_platter:0.75)"
+    "near-duplicate(op_sampler_platter:0.75)",
+    "near-duplicate(ov_private_gallery:0.83)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -20092,11 +20101,11 @@
    "name": "Coliseum",
    "kind": "buff",
    "tier": 5,
-   "effect": "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and you gain 10 seconds per point of value difference.",
+   "effect": "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and if theirs was worth more you take an extra move at once. You cannot capture the king on the bonus move.",
    "trigger": "activated",
-   "duration": "unstated",
+   "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|king,move,n:10,remove,seconds",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|capture,extra,king,move,remove",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t7.ts",
    "tests": [
@@ -20200,11 +20209,11 @@
    "name": "Insider Trading",
    "kind": "buff",
    "tier": 5,
-   "effect": "See the cards of your opponent's next draft, and pocket 10 seconds for the tip.",
+   "effect": "See the cards of your opponent's next draft, and gain one draft reroll to act on the tip.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|draft,n:10,seconds,see",
+   "signature": "info|instant|effect|unstated|enemy|draft,reroll,see",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t7.ts",
    "tests": [
@@ -32586,7 +32595,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(grand_malediction)"
+    "duplicate-signature(grand_malediction,lost_weekend)"
    ],
    "action": "pending-review"
   },
@@ -32749,11 +32758,11 @@
    "name": "Lost Weekend",
    "kind": "hex",
    "tier": 5,
-   "effect": "Your opponent skips their next turn, and their clock loses 20 seconds.",
+   "effect": "Your opponent skips their next turn.",
    "trigger": "instant",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "hex|instant|effect|next-turn|enemy|clock,n:20,seconds,skip",
+   "signature": "hex|instant|effect|next-turn|enemy|skip",
    "animation": "canvas",
    "location": "src/engine/buffs/hexes/tier4.ts",
    "tests": [
@@ -32761,7 +32770,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(lost_fortnight)"
+    "duplicate-signature(grand_malediction,hx4_the_bell_tolls)"
    ],
    "action": "pending-review"
   },
@@ -34767,7 +34776,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(hx4_the_bell_tolls)",
+    "duplicate-signature(lost_weekend,hx4_the_bell_tolls)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
@@ -36730,22 +36739,19 @@
    "name": "Lost Fortnight",
    "kind": "hex",
    "tier": 8,
-   "effect": "Your opponent skips their next turn, and 20 seconds are struck off their clock.",
+   "effect": "Your opponent skips their next turn, and their next draft is skipped with it.",
    "trigger": "instant",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "hex|instant|effect|next-turn|enemy|clock,n:20,seconds,skip",
+   "signature": "hex|instant|effect|next-turn|enemy|draft,skip",
    "animation": "canvas",
    "location": "src/engine/buffs/hexes/tier7.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
-   "flags": [
-    "duplicate-signature(lost_weekend)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "medusa_stare",

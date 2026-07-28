@@ -600,7 +600,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_insider_trading",
       name: "Insider Trading",
       description:
-        "See the cards of your opponent's next draft, and pocket 10 seconds for the tip.",
+        "See the cards of your opponent's next draft, and gain one draft reroll to act on the tip.",
       tier: 5,
       category: "info",
       icon: "TrendingUp",
@@ -608,7 +608,6 @@ export const OVERHAUL_T7: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.seeOppCards = true;
-      api.adjustClock({ addSelfSec: 10 });
     }),
   ),
   // 165. Coliseum -----------------------------------------------------------------------------------------------------
@@ -617,7 +616,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_coliseum",
       name: "Coliseum",
       description:
-        "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and you gain 10 seconds per point of value difference.",
+        "Choose one of your pieces and an enemy piece of equal or greater value (kings excluded): both are removed, and if theirs was worth more you take an extra move at once. You cannot capture the king on the bonus move.",
       tier: 5,
       category: "attack",
       icon: "Swords",
@@ -660,7 +659,10 @@ export const OVERHAUL_T7: Buff[] = [
         if (!pb || pb.color !== api.opp || pb.type === "k" || VALUE[pb.type] < VALUE[pa.type]) return;
         api.removePiece(a);
         api.removePiece(b);
-        api.adjustClock({ addSelfSec: (VALUE[pb.type] - VALUE[pa.type]) * 10 });
+        // Winning the trade pays a tempo beat rather than the seconds this used
+        // to award: you gave up a piece to take a bigger one, so you get to act
+        // on the hole you just made.
+        if (VALUE[pb.type] > VALUE[pa.type]) api.bs.extraMoves[api.me] += 1;
         flashSquares(api, [a, b]);
       },
     ),

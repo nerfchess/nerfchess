@@ -219,7 +219,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_midas_gauntlet",
       name: "Midas Gauntlet",
       description:
-        "Your next 3 captures each gain you 10 seconds, and the capturing piece is gilded for the trophy cabinet.",
+        "Your next 3 captures each gild the capturing piece for the trophy cabinet: it cannot be taken during your opponent's next turn.",
       tier: 4,
       category: "tempo",
       icon: "HandCoins",
@@ -234,8 +234,11 @@ export const OVERHAUL_T6: Buff[] = [
         if (move.color !== api.me || !move.captured || move.captured === "k") return;
         const left = ((inst.state.charges as number) ?? 0) - 1;
         inst.state.charges = left;
-        api.adjustClock({ addSelfSec: 10 });
         pinCosmetic(api, move.to, api.me, "gilded", null);
+        // The gild is now REAL, not just a paint job. It was cosmetic only, so
+        // with the seconds payout removed this card would have done nothing at
+        // all: exactly the class of card that looks like it works and does not.
+        addEffect(api, { kind: "shield", owner: api.me, squares: [move.to], turns: 1 });
         if (left <= 0) inst.spent = true;
       },
       status: (inst) => `${(inst.state.charges as number) ?? 3} captures left to gild`,
@@ -941,7 +944,7 @@ export const OVERHAUL_T6: Buff[] = [
     {
       id: "ov_private_gallery",
       name: "Private Gallery",
-      description: "Your next draft offers 3 cards, and you pocket 10 seconds at the door.",
+      description: "Your next draft offers 3 cards.",
       tier: 4,
       category: "draft",
       icon: "Image",
@@ -949,7 +952,6 @@ export const OVERHAUL_T6: Buff[] = [
     },
     instant((_inst, api) => {
       api.mine.flags.prepThree = true;
-      api.adjustClock({ addSelfSec: 10 });
     }),
   ),
   // 148. Rolling Boulder ------------------------------------------------------------------------------------------------------------------

@@ -212,7 +212,7 @@ export const OVERHAUL_T5: Buff[] = [
       id: "ov_royal_wedding",
       name: "Royal Wedding",
       description:
-        "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds.",
+        "Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them.",
       tier: 3,
       category: "pieces",
       icon: "Church",
@@ -248,7 +248,6 @@ export const OVERHAUL_T5: Buff[] = [
             api.place(p.square, "p", api.me);
           }
         }
-        api.adjustClock({ addSelfSec: 20 });
       },
     ),
   ),

@@ -394,13 +394,12 @@ export const HEXES_T4: Buff[] = [
       id: "lost_weekend",
       name: "Lost Weekend",
       tier: 5,
-      description: "Your opponent skips their next turn, and their clock loses 20 seconds.",
+      description: "Your opponent skips their next turn.",
       flavor: "A whole day gone, and the headache eats into the next one.",
       fx: { motif: "slow", pieces: "all" },
     },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
-      api.adjustClock({ subOppSec: 20 });
     }),
   ),
 

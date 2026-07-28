@@ -329,14 +329,13 @@ export const FUNNY_META: Buff[] = [
       id: "touch_grass",
       name: "Touch Grass",
       description:
-        "You step outside for your own good: add 30 seconds to your clock, and your nerf is suspended for your next 2 turns.",
+        "You step outside for your own good: your nerf is suspended for your next 3 turns.",
       tier: 2,
       category: "nerf",
       flavor: "The sun. The big lamp in the sky. Go look at it.",
     },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 30 });
-      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 2 });
+      addEffect(api, { kind: "nerf_suspended", owner: api.me, turns: 3 });
     }),
   ),
   card(

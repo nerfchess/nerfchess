@@ -1578,10 +1578,9 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_egg_timer", name: "Egg Timer", tier: 2, category: "tempo", icon: "Timer",
-      description: "Add 20 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the reveal apply.",
+      description: "Gain 1 draft reroll, and learn the tier of your opponent's next draft offer.",
       flavor: "Soft-boiled decisions take three minutes. You get twenty seconds." },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 20 });
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       api.mine.flags.seeOppTier = true;
     }),
@@ -2304,10 +2303,9 @@ const BOON_WAVE4A: Buff[] = [
 
   card(
     { id: "bn4_pocket_metronome", name: "Pocket Metronome", tier: 3, category: "tempo", icon: "Music2",
-      description: "Add 25 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the tier reveal arrive.",
+      description: "Gain 1 draft reroll, and learn the tier of your opponent's next draft offer.",
       flavor: "Tick. Tock. Yours now." },
     instant((_inst, api) => {
-      api.adjustClock({ addSelfSec: 25 });
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       api.mine.flags.seeOppTier = true;
     }),

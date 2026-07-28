@@ -498,15 +498,17 @@ export const HEXES_T7: Buff[] = [
     {
       id: "lost_fortnight",
       name: "Lost Fortnight",
-      description: "Your opponent skips their next turn, and 20 seconds are struck off their clock.",
-      flavor: "Two weeks torn from the ledger: a move and time both gone at once.",
+      description: "Your opponent skips their next turn, and their next draft is skipped with it.",
+      flavor: "Two weeks torn from the ledger: a move and a card both gone at once.",
       tier: 8,
       // fx covers the turn skip; the clock half shows no board motif.
       fx: { motif: "slow", pieces: "all" },
     },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
-      api.adjustClock({ subOppSec: 20 });
+      // The tier 8 version takes the card as well as the turn (the stolen
+      // seconds this used to add were the clock payout, now removed).
+      api.theirs.flags.blockedDrafts = (api.theirs.flags.blockedDrafts ?? 0) + 1;
     }),
   ),
 
