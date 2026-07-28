@@ -90,6 +90,11 @@ jobs:
       - name: Card impact tests
         run: npm run test:card-impact
 
+      # Arena seat identity: a house bot's rating must come from the database on
+      # every surface, never from the arena's baked persona constant.
+      - name: Arena seat tests
+        run: npm run test:arena-seat
+
       # Rating math.
       - name: Glicko tests
         run: npm run test:glicko

@@ -74,12 +74,14 @@ import {
   HOUSE_GAMES_MAX,
   HOUSE_GAMES_DEFAULT,
   HOUSE_FILLER_THINK_MULTIPLIER,
+  HOUSE_SEED_RD,
   syncHouseRatings,
   resolveSkillProfile,
   parseSkillOverrides,
   chunkIds,
   type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
+import { resolveArenaSeat } from "./src/lib/server/arenaSeat";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import { triggersOwnNerfLoss } from "./src/engine/moveSafety";
 import type { BuffInstance, BuffMatchState, BuffPick, DraftMode } from "./src/engine/buff";
@@ -5654,6 +5656,43 @@ export class GameServer extends DurableObject<Env> {
     return this.houseRatingsCache?.identity.get(userId)?.username ?? housePersona(userId)?.name ?? "A player";
   }
 
+  // Canonical seat identity for an ARENA game, read from the house-ratings
+  // cache rather than the arena's payload.
+  //
+  // The arena service has no database. Its seat rating is a compile-time
+  // constant, houseSeedRating(persona), baked from the persona's name and skill
+  // (arena-service/game.ts). Shipping that number straight to TV is why a bot
+  // could read 2600 on TV and 2300 on its own profile: the profile reads
+  // user_ratings, and nothing ever reconciled the two. refreshSeatRatings does
+  // exactly this reconciliation for real DO matches but is never called for
+  // external ones. The constant is also numerically the frozen legacy
+  // users.rating column that ratingSql.ts already calls out as the root of the
+  // "ratings don't match between pages" reports.
+  //
+  // A moderator rating override, a roster revision that reached one deploy and
+  // not the other, or simply the account playing rated games all widen the gap
+  // without bound, so the arena number can never be trusted. The same applies
+  // to the NAME: the DO heals renames for its own seats, and this is the
+  // equivalent for external replicas.
+  //
+  // Synchronous read of the cached map (same pattern as the username lookup
+  // above) so the sync snapshot builders do not have to become async; the cache
+  // is refreshed by houseTick and warmed on the lobby path. Returns undefined
+  // per field when the cache has nothing, and callers keep the arena value as
+  // the fallback.
+  private arenaSeatIdentity(
+    userId: string,
+    mode: DraftMode | undefined,
+  ): { rating?: number; username?: string } {
+    const cache = this.houseRatingsCache;
+    if (!cache) return {};
+    const byMode = cache.byId.get(userId);
+    return {
+      rating: byMode?.[mode ?? "nerf"],
+      username: cache.identity.get(userId)?.username,
+    };
+  }
+
   // Insert a bell notification. A local mirror of social.ts's createNotification
   // so the DO never imports the next/server-based social module.
   private async houseNotify(
@@ -6046,14 +6085,23 @@ export class GameServer extends DurableObject<Env> {
   // existing spectator helper (gameFromMatch, draftStateFor, publicDraftActions,
   // playersPayload, currentClocks) works on it unchanged. Never persisted.
   private buildExternalMatch(snap: ArenaSnapshot): StoredMatch {
-    const seatUser = (s: ExternalSeat): SeatUser => ({
-      id: s.userId,
-      name: s.name,
-      rating: s.rating,
-      rd: 150,
-      vol: 0.06,
-      avatar: housePersona(s.userId)?.avatar ?? null,
-    });
+    const seatUser = (s: ExternalSeat): SeatUser => {
+      // Canonical rating and name from user_ratings, never the arena's baked
+      // constant (see resolveArenaSeat).
+      const resolved = resolveArenaSeat(s, this.arenaSeatIdentity(s.userId, snap.mode));
+      return {
+        id: s.userId,
+        name: resolved.name,
+        rating: resolved.rating,
+        // HOUSE_SEED_RD, not a made-up 150. House accounts seed settled and are
+        // never provisional anywhere else, but 150 is above PROVISIONAL_RD (110)
+        // so playersPayload flagged every arena bot provisional and TV drew a
+        // "?" beside a rating the bot has had for hundreds of games.
+        rd: HOUSE_SEED_RD,
+        vol: 0.06,
+        avatar: housePersona(s.userId)?.avatar ?? null,
+      };
+    };
     const now = Date.now();
     return {
       id: snap.id,
@@ -6468,11 +6516,19 @@ export class GameServer extends DurableObject<Env> {
     const games = [];
     for (const { meta, at } of this.externalGames.values()) {
       if (now - at > EXTERNAL_GAME_TTL_MS) continue;
-      const seat = (c: Color) => ({
-        name: meta.seats[c].name,
-        rating: Math.round(meta.seats[c].rating),
-        avatar: housePersona(meta.seats[c].userId)?.avatar ?? null,
-      });
+      const seat = (c: Color) => {
+        // Canonical rating and name from user_ratings, never the arena's baked
+        // constant (see resolveArenaSeat).
+        const resolved = resolveArenaSeat(
+          meta.seats[c],
+          this.arenaSeatIdentity(meta.seats[c].userId, meta.mode),
+        );
+        return {
+          name: resolved.name,
+          rating: Math.round(resolved.rating),
+          avatar: housePersona(meta.seats[c].userId)?.avatar ?? null,
+        };
+      };
       games.push({
         id: meta.id,
         // Self-describe arena origin in the shared snapshot so the lobby watch
@@ -7835,6 +7891,14 @@ export class GameServer extends DurableObject<Env> {
     }
     // Bot-vs-bot games simulated on the OCI arena (Tier 2 / M2) show alongside
     // real live games. Gated by ARENA_LOBBY_ENABLED; empty when off.
+    //
+    // Warm the house-ratings cache first: externalLiveGames reads it
+    // synchronously to replace the arena's baked seat rating with the real one
+    // (see arenaSeatIdentity). Without this the first payload from a fresh DO
+    // instance would fall back to the stale constant until houseTick next ran.
+    if (this.env.ARENA_LOBBY_ENABLED === "true") {
+      await this.houseLiveInfo(await this.db());
+    }
     for (const g of this.externalLiveGames(now)) liveGames.push(g);
     liveGames.sort((a, b) => b.watchers - a.watchers || b.moves - a.moves);
     challenges.sort((a, b) => b.createdAt - a.createdAt);
