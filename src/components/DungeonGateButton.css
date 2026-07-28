@@ -22,9 +22,12 @@
   overflow: hidden;
   isolation: isolate;
   cursor: pointer;
-  /* Gate-arch silhouette: softened lintel corners over a square stone base.
-     Reads as a raised, pressable slab instead of a flat decorative panel. */
-  border-radius: 9px 9px 3px 3px;
+  /* Square, like every other surface. The arch used to be softened into a
+     9px lintel, which made the product's single biggest button the roundest
+     thing on the page and broke the house rule everywhere it mattered most.
+     The gate silhouette is carried by the courses, braces and rune lintel,
+     not by the corner radius. */
+  border-radius: 1px;
   border: 1px solid rgb(20 16 12);
   color: #f2e4c2;
   background:
@@ -296,7 +299,8 @@
    (relative to the smaller label) so they stay legible, and the base edge is
    one course shorter — clearly a door beside the main gate, not the gate. */
 .dgn-gate--minor {
-  border-radius: 6px 6px 3px 3px;
+  /* Square, matching the main gate above. */
+  border-radius: 1px;
 }
 .dgn-gate--minor::before {
   background:

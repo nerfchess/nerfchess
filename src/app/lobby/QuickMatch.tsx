@@ -404,7 +404,7 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                   className="absolute inset-0 bg-black/60"
                 />
                 <div className="dgn-ctabar absolute inset-x-0 bottom-0 p-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
-                  <div aria-hidden className="mx-auto mb-3 h-1 w-9 rounded-full bg-[rgb(var(--energy-ember-rgb)/0.5)]" />
+                  <div aria-hidden className="mx-auto mb-3 h-1 w-9 rounded-[1px] bg-[rgb(var(--energy-ember-rgb)/0.5)]" />
                   <div className="mb-3 flex items-center justify-between">
                     <EngravedLabel as="h3" className="text-[13px]">Time control</EngravedLabel>
                     <button

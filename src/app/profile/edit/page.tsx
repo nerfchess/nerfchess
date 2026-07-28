@@ -561,7 +561,7 @@ function PrivacyToggle({
         disabled={loading || state === "saving"}
         onClick={onToggle}
         className={
-          "relative grid h-11 min-h-[44px] w-[72px] shrink-0 grid-cols-2 items-center rounded-full border px-1 transition disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf motion-reduce:transition-none " +
+          "relative grid h-11 min-h-[44px] w-[72px] shrink-0 grid-cols-2 items-center rounded-[1px] border px-1 transition disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf motion-reduce:transition-none " +
           (on
             ? "border-gold/40 bg-gold/15"
             : "border-white/10 bg-white/5")

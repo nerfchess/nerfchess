@@ -131,14 +131,14 @@ function MotionNotice() {
       <div className="mt-2 flex justify-end gap-2">
         <button
           type="button"
-          className="rounded-sm border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
+          className="rounded-[1px] border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
           onClick={() => settle("dismissed")}
         >
           Keep it calm
         </button>
         <button
           type="button"
-          className="rounded-sm border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
+          className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
           onClick={() => {
             saveSettings({ ...loadSettings(), followSystemMotion: false });
             settle("restored");
@@ -259,14 +259,14 @@ function LagWatch() {
       <div className="mt-2 flex justify-end gap-2">
         <button
           type="button"
-          className="rounded-sm border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
+          className="rounded-[1px] border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
           onClick={() => settle("dismissed")}
         >
           No thanks
         </button>
         <button
           type="button"
-          className="rounded-sm border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
+          className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
           onClick={() => {
             saveSettings({ ...loadSettings(), perfMode: true, animationSpeed: "fast" });
             // perfMode gates decorative page paint, and animationSpeed only
@@ -312,7 +312,7 @@ function FpsMeter() {
 
   return (
     <div
-      className="pointer-events-none fixed left-2 z-[90] rounded-sm border border-white/15 bg-ink-900/80 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-parchment-300 opacity-70"
+      className="pointer-events-none fixed left-2 z-[90] rounded-[1px] border border-white/15 bg-ink-900/80 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-parchment-300 opacity-70"
       style={{ bottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
     >
       {fps} fps

@@ -1178,7 +1178,9 @@ html[data-anim="off"] .draft-stage__stars {
   position: absolute;
   inset: 12%;
   z-index: 2;
-  border-radius: 6px;
+  /* Square: this ring sits directly on top of a square card face, and a
+     6px radius on it read as a misaligned outline rather than a frame. */
+  border-radius: 1px;
   border: 2px solid rgb(var(--tier-rgb, 216 181 110) / 0.9);
   pointer-events: none;
   opacity: 0;

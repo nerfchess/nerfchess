@@ -142,6 +142,12 @@ jobs:
       - name: Em dash guard
         run: npm run test:emdash
 
+      # Standing house rule: crisp 1px corners on rectangular surfaces. Catches
+      # the two things the global CSS rule cannot reach: component stylesheets
+      # setting their own border-radius, and rounded-full on padded elements.
+      - name: Rounded corner guard
+        run: npm run test:rounded
+
       # Draft RNG fairness, offer sequencing, and deadline handling.
       - name: Draft fairness
         run: npm run test:draft-fairness

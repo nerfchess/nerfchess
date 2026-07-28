@@ -733,7 +733,7 @@ function ProfileHeader({
               )}
             </h1>
             {user.role !== "user" && (
-              <span className="rounded-full border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
+              <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
                 {user.role === "admin" ? "Admin" : "Moderator"}
               </span>
             )}
@@ -1771,7 +1771,7 @@ function RatingEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           Rating editor
         </span>
         <span className="text-xs text-parchment-400">
@@ -1970,7 +1970,7 @@ function HouseBotEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-full border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">

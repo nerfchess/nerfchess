@@ -3166,7 +3166,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                       {myNerf.name}
                     </span>
                     <span
-                      className={`ml-auto shrink-0 rounded-full border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                      className={`ml-auto shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
                       title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
                     >
                       {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
