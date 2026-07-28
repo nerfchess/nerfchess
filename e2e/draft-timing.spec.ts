@@ -54,8 +54,10 @@ test.describe("draft decision timing (full motion)", () => {
     // The opening pick arrives as a sealed chest: the preparation label is
     // up and there is NO decision countdown anywhere on the page.
     await expect(page.getByText("Opening your draft")).toBeVisible({ timeout: 60_000 });
+    // The countdown is identified by its role, not by wording: the "Choose
+    // within" label was dropped when the timer moved inline into the panel
+    // header, and the role assertion was always the stronger check anyway.
     await expect(decisionTimer(page)).toHaveCount(0);
-    await expect(page.getByText("Choose within")).toHaveCount(0);
     await expect(
       page.getByText("Your timer starts when the cards are ready"),
     ).toBeVisible();
@@ -67,7 +69,10 @@ test.describe("draft decision timing (full motion)", () => {
     // intact: at least 18 of the 20 seconds must still be on it when it
     // first shows (dealing consumed none of the decision time).
     await expect(decisionTimer(page)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Choose within")).toBeVisible();
+    // The reassurance line goes away with the preparation phase.
+    await expect(
+      page.getByText("Your timer starts when the cards are ready"),
+    ).toHaveCount(0);
     const secs = parseInt(await decisionTimer(page).locator(".font-mono").innerText(), 10);
     expect(secs).toBeGreaterThanOrEqual(18);
   });

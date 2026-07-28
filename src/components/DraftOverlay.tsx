@@ -1630,6 +1630,15 @@ export function DraftOverlay({
             ? "Choose a hex or a boon"
             : `Choose a ${noun}`}
         </h2>
+        {/* Reassurance while the chest and the deal play: the decision clock has
+            not started. It used to be the second line of the timer chip, which
+            no longer exists (the countdown moved inline into the header), so it
+            lives here in the panel body where there is room for a sentence. */}
+        {deadline == null && (
+          <p className="mt-1 text-[12px] leading-snug text-parchment-400">
+            Your timer starts when the cards are ready.
+          </p>
+        )}
         {(takeBoth || bankedBonus) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {takeBoth && (
