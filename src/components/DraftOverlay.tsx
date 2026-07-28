@@ -193,12 +193,12 @@ function DraftTimerWindow({
     <div role="timer" aria-label="Draft decision timer" className="pointer-events-none shrink-0">
       <div
         className={
-          "draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " +
+          "flex items-center gap-2 " +
           (urgent ? "draft-timer--urgent " : "") +
           (announce ? "draft-timer--announce" : "")
         }
       >
-        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
+        <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
           {/* Outer hairline: a second, decorative gold ring framing the dial.
               Literal mirrors --accent-gold (SVG stroke attrs can't read a CSS var). */}
           <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(212,160,23,0.22)" strokeWidth="1" />
@@ -233,17 +233,14 @@ function DraftTimerWindow({
             style={{ transition: "stroke-dashoffset 100ms linear, stroke 300ms ease" }}
           />
         </svg>
-        <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">Choose within</div>
-          <div
-            className={
-              "mt-1 font-mono text-2xl font-bold tabular-nums " +
-              (urgent ? "text-oxblood-glow" : "text-parchment-50")
-            }
-          >
-            {seconds}
-            <span className="ml-0.5 text-sm font-semibold text-parchment-400">s</span>
-          </div>
+        <div
+          className={
+            "font-mono text-lg font-bold leading-none tabular-nums " +
+            (urgent ? "text-oxblood-glow" : "text-parchment-50")
+          }
+        >
+          {seconds}
+          <span className="ml-0.5 text-xs font-semibold text-parchment-400">s</span>
         </div>
       </div>
     </div>
@@ -256,14 +253,14 @@ function DraftTimerWindow({
  * that their time has not started yet. */
 function DraftPrepChip({ label }: { label: string }) {
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none shrink-0">
-      <div className="draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2">
+    <div role="status" aria-live="polite" className="pointer-events-none min-w-0 shrink">
+      <div className="flex items-center gap-2">
         <span aria-hidden className="draft-prep-dot" />
-        <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">{label}</div>
-          <div className="mt-1 text-[12px] font-semibold text-parchment-200">
-            Your timer starts when the cards are ready
-          </div>
+        <div className="min-w-0 leading-none">
+          {/* Inline in the panel header now, so it is one line: the old two-line
+              chip with its own border was the box that collided with the site
+              masthead on a phone. */}
+          <div className="truncate text-[12px] font-semibold text-parchment-200">{label}</div>
         </div>
       </div>
     </div>
@@ -1506,21 +1503,11 @@ export function DraftOverlay({
           (recordingMode ? " draft-col--rec" : "")
         }
       >
-        {deadline != null ? (
-          <DraftTimerWindow deadline={deadline} onExpire={handleExpire} announce={timerAnnounce} />
-        ) : (
-          /* Preparation phases show WHAT is happening instead of a countdown:
-             the decision timer only appears once the cards are readable. */
-          <DraftPrepChip
-            label={
-              packStage !== "open"
-                ? "Opening your draft"
-                : !dealt
-                ? "Dealing the cards"
-                : "Preparing your draft"
-            }
-          />
-        )}
+        {/* The countdown used to live HERE, in a bordered chip floating above
+            the panel. On a phone that box overlapped the masthead and read as a
+            stray rectangle pasted over the site chrome, belonging to nothing:
+            two separate bordered boxes stacked with a gap between them. It now
+            sits inline in the panel header, next to the label it governs. */}
         {/* Both game clocks stay visible while drafting, with the clock rule
             stated plainly: choosing is paused time; overrunning the countdown
             puts further deliberation on the player's own clock. */}
@@ -1586,7 +1573,31 @@ export function DraftOverlay({
           <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{draftLabel}</div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="smallcaps dgn-label truncate text-[12px] text-parchment-400">
+              {draftLabel}
+            </span>
+            {/* The decision countdown, inline with the label it belongs to. */}
+            {deadline != null ? (
+              <DraftTimerWindow
+                deadline={deadline}
+                onExpire={handleExpire}
+                announce={timerAnnounce}
+              />
+            ) : (
+              /* Before the window opens, say WHAT is happening instead of
+                 counting: the player can see their time has not started. */
+              <DraftPrepChip
+                label={
+                  packStage !== "open"
+                    ? "Opening your draft"
+                    : !dealt
+                    ? "Dealing the cards"
+                    : "Preparing your draft"
+                }
+              />
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div

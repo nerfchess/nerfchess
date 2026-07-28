@@ -96,11 +96,21 @@ function MotionNotice() {
     const s = loadSettings();
     if (!s.followSystemMotion || s.reducedMotion) return;
     if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const cancel = requestUiSlot(UI_PRIORITY.performance, (release) => {
-      releaseRef.current = release;
-      setShow(true);
-    });
+    // Deliberately delayed before it even asks for a slot. The interrupt queue
+    // only defers to holds that already EXIST, and this effect runs on mount,
+    // which on the game route is before the opening draft has pushed its hold.
+    // Rendering it there put the notice straight over the cards. A few seconds
+    // costs nothing for a once-per-device message and guarantees any draft on
+    // the first screen has claimed its hold first.
+    let cancel: (() => void) | null = null;
+    const timer = window.setTimeout(() => {
+      cancel = requestUiSlot(UI_PRIORITY.performance, (release) => {
+        releaseRef.current = release;
+        setShow(true);
+      });
+    }, 6000);
     return () => {
+      window.clearTimeout(timer);
       cancel?.();
       releaseRef.current?.();
       releaseRef.current = null;
