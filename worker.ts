@@ -164,7 +164,11 @@ type Result = NerfGame["result"];
 //     replayed remotely (replay.ts). A v9 engine mis-replays the new opcodes
 //     (its action fall-through treats them as `use`), so the bump is
 //     mandatory even though the wire shape is backward-parseable.
-const REPLAY_VERSION = 10;
+//  11 - the draft tier curve was extended past round 5 (TIER_CURVE now runs
+//     to the tier-8 cap) and the top-tier slip gate now eases off in later
+//     rounds. Both feed rollSharedTiers, so a v10 match replays into a
+//     different stream of offers from round 5 on.
+const REPLAY_VERSION = 11;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -751,7 +755,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "lobby-diagnostics-1";
+const buildVersion = "sprint-overhaul-1";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so

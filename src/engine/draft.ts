@@ -11,10 +11,13 @@ import { BoardState, Color, PieceType } from "./types";
 // Design decisions (see docs/draft-system.md):
 // - Buff cadence: a draft every 5 of your own moves.
 // - Natural tier curve: draft round k rolls one shared tier pair for BOTH
-//   players. The base follows TIER_CURVE (1, 2, 3, 5, 7; later rounds stay
-//   at 7), a single ±1 jitter applies to the whole round, and every level
-//   above 6 has a 45% chance to be knocked back down one, per card, so the
-//   top tiers stay rare blowout moments rather than the default endgame.
+//   players. The base follows TIER_CURVE (1, 2, 3, 5, 7, 7, 7, 8; later
+//   rounds stay at 8), a single ±1 jitter applies to the whole round, and
+//   every level above 6 may be knocked back down one per card, at a rate
+//   that eases off in later rounds (45%, then 34% from round 6, then 26%
+//   from round 8). The early game is unchanged and the top tiers still take
+//   real time to arrive, but a long game now keeps escalating instead of
+//   repeating one frozen distribution from round 5 to the end.
 // - Banking: skipping a draft lifts your next offer exactly one tier above
 //   the shared roll for that round. It does not stack (cap +1).
 // ---------------------------------------------------------------------------
@@ -214,13 +217,30 @@ function ownedPieceTypes(board: BoardState, color: Color): Set<PieceType> {
 }
 
 // Base tier per draft round (1-based); later rounds stay at the cap.
-const TIER_CURVE = [1, 2, 3, 5, 7];
+//
+// The curve used to be [1, 2, 3, 5, 7], which meant every round from the fifth
+// on rolled from one frozen distribution (measured: T6 50%, T7 40%, T8 10%).
+// A typical game runs about eleven drafts per player, so six or seven of them
+// were statistically identical and the back half of the draft stopped
+// escalating: round 10 felt exactly like round 5. The curve now keeps climbing
+// to the tier-8 cap. Rounds 1 to 5 are unchanged, so nothing about the early
+// game moves; only the late rounds get stronger.
+const TIER_CURVE = [1, 2, 3, 5, 7, 7, 7, 8];
+
+// Chance that a rolled level above 6 slips back one, by round. The flat 45%
+// was what kept tier 8 rare no matter how long a game ran; letting it decay is
+// what actually makes a long game feel like it is building to something.
+function slipChance(round: number): number {
+  if (round >= 8) return 0.26;
+  if (round >= 6) return 0.34;
+  return 0.45;
+}
 
 /** Roll the shared pair of card tiers for the next draft round. Both
  * players' offers that round use exactly this pair: the base comes from
  * TIER_CURVE, a single ±1 jitter is rolled once for the whole round, and
- * each card then runs the rare top-tier slip gate (every level above 6 has
- * a 45% chance to slip back one). */
+ * each card then runs the top-tier slip gate (a level above 6 may slip back
+ * one, less often the later the round). */
 export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
   const rng = drawRng(bs);
   const round = Math.max(bs.players.w.draftsTaken, bs.players.b.draftsTaken) + 1;
@@ -228,9 +248,10 @@ export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
   const r = rng.next();
   if (r < 0.18) t += 1;
   else if (r > 0.82) t -= 1;
+  const slip = slipChance(round);
   const gate = (): Tier => {
     let g = t;
-    while (g > 6 && rng.next() < 0.45) g -= 1;
+    while (g > 6 && rng.next() < slip) g -= 1;
     return Math.max(1, Math.min(8, g)) as Tier;
   };
   const tiers: [Tier, Tier] = [gate(), gate()];

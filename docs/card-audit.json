@@ -22795,6 +22795,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t6.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -26715,6 +26716,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26753,6 +26755,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26772,6 +26775,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26810,6 +26814,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -28186,6 +28191,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -33679,6 +33685,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -34186,6 +34193,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],

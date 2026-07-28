@@ -2126,12 +2126,25 @@ export function Board({
     fxCalmClockRef.current = fxCalmClock;
   });
   // Warm the code-split signature-visuals chunk (SignatureOverlay's burst art
-  // + the merged plugin registry) the moment the board mounts, so it is loaded
-  // long before any card can fire mid-game. See prefetchSignatureVisuals in
-  // effects/BoardEffects.tsx.
+  // + the merged plugin registry) so it is loaded long before any card can fire
+  // mid-game. See prefetchSignatureVisuals in effects/BoardEffects.tsx.
+  //
+  // Only for boards where a card CAN fire. It is a ~40k-line chunk, and it was
+  // being pulled on every board: plain bot games with no draft, and the
+  // analysis board, neither of which can ever play a signature. Deferred to
+  // idle either way so it never races the critical path right after mount.
+  const canPlayCards = buffs != null;
   useEffect(() => {
-    prefetchSignatureVisuals();
-  }, []);
+    if (!canPlayCards) return;
+    const idle = (
+      window as Window & { requestIdleCallback?: (cb: () => void) => number }
+    ).requestIdleCallback;
+    if (!idle) {
+      const t = window.setTimeout(prefetchSignatureVisuals, 0);
+      return () => window.clearTimeout(t);
+    }
+    idle(prefetchSignatureVisuals);
+  }, [canPlayCards]);
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);

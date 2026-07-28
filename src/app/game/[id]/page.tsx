@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
@@ -13,7 +14,16 @@ import { ClockPill } from "@/components/ClockPill";
 import { ModeBadge } from "@/components/ModeBadge";
 import { ProvisionalMark } from "@/components/ratings/ProvisionalMark";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
-import { GameOver, type TimelineCardEvent } from "@/components/GameOver";
+// Code-split, matching OnlineMatch: the end screen is never part of first
+// paint. Importing it statically here defeated that split entirely, because
+// this page is the only place OnlineMatch is mounted, so GameOver (and the card
+// library it pulls) landed in the eager chunk anyway. The type import stays
+// static: types are erased at build time and cost nothing.
+import type { TimelineCardEvent } from "@/components/GameOver";
+
+const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
+  ssr: false,
+});
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
 import { CompactSiteHeader } from "@/components/SiteHeader";

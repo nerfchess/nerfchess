@@ -1226,7 +1226,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | ov_locust_swarm | Locust Swarm | buff | 6 | activated | unstated | enemy | generated | src/engine/buffs/overhaul/t5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_meteor_golf | Meteor Golf | buff | 6 | activated/lingering | next-turn | enemy | generated | src/engine/buffs/overhaul/t6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_nerfchess_the_musical | NerfChess: The Musical | buff | 6 | activated | one-shot | self | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| ov_paperwork_avalanche | Paperwork Avalanche | buff | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/overhaul/t6.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| ov_paperwork_avalanche | Paperwork Avalanche | buff | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/overhaul/t6.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | ov_puppeteers_gala | Puppeteer's Gala | buff | 6 | activated | unstated | enemy | generated | src/engine/buffs/overhaul/t5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_regency_council | Regency Council | buff | 6 | passive | 4-turns | self | passive | src/engine/buffs/overhaul/t6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_season_pass | Season Pass | buff | 6 | instant | unstated | unstated | generated | src/engine/buffs/overhaul/t6.ts | 1 | - | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
@@ -1438,12 +1438,12 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_curfew_horn | Curfew Horn | hex | 1 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(scorched_earth) | pending-review |
 | hx4_dunce_detail | Dunce Detail | hex | 1 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_dusty_boots | Dusty Boots | hex | 1 | instant | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_early_frost | Early Frost | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_early_frost | Early Frost | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hx4_heavy_pockets | Heavy Pockets | hex | 1 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_hiccups | Hiccups | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_hopscotch | Hopscotch | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_hiccups | Hiccups | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 3 | - | keep (auto: no flags, harness-executed) |
+| hx4_hopscotch | Hopscotch | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hx4_loose_horseshoe | Loose Horseshoe | hex | 1 | activated/lingering | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_matins_bell | Matins Bell | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_matins_bell | Matins Bell | hex | 1 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hx4_mild_sting | Mild Sting | hex | 1 | passive | 1-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_mismatched_livery | Mismatched Livery | hex | 1 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_no_mans_reach | No Man's Reach | hex | 1 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1512,7 +1512,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_slippery_scepter | Slippery Scepter | hex | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(stiff_joints,hx4_homesick_queen,hx4_tilted_crown,queens_handicap) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_slow_clap | Slow Clap | hex | 2 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_sticky_floorboards | Sticky Floorboards | hex | 2 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_tea_break | Tea Break | hex | 2 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_tea_break | Tea Break | hex | 2 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hx4_tilted_crown | Tilted Crown | hex | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(stiff_joints,hx4_homesick_queen,hx4_slippery_scepter,queens_handicap) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_two_step | Two Step | hex | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_command_paralysis) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_vegetarian_vows | Vegetarian Vows | hex | 2 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1794,7 +1794,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_brittle_arsenal | Brittle Arsenal | hex | 6 | instant | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_chain_gang | Chain Gang | hex | 6 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_checkers_law | Checkers Law | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hx4_soggy_invaders,hx4_lantern_out,daniel_caesar) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
-| hx4_dead_calm | Dead Calm | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_dead_calm | Dead Calm | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hx4_debt_collector | Debt Collector | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_dockmasters_fee | Dockmaster's Fee | hex | 6 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_famine | Famine | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
@@ -1820,7 +1820,7 @@ Flags: 273 duplicate-signature, 248 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_silken_net | Silken Net | hex | 6 | activated | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_siren_song | Siren Song | hex | 6 | activated/lingering | 2-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(allergies) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_sleepwalkers | Sleepwalkers | hex | 6 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(withered_hands,hx4_waste_not) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
-| hx4_tar_flood | Tar Flood | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
+| hx4_tar_flood | Tar Flood | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 3 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_thunderhead | Thunderhead | hex | 6 | passive | 1-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_walnut_crown | The Walnut Crown | hex | 6 | instant | 2-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_walnut_pinch | Walnut Pinch | hex | 6 | instant | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
