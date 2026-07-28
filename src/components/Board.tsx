@@ -99,6 +99,16 @@ function resolveSignature(id: string): SignatureConfig | GenConfig | undefined {
 }
 const isGenConfig = (cfg: SignatureConfig | GenConfig): cfg is GenConfig =>
   (cfg.visual as { gen?: boolean }).gen === true;
+/** Generated-signature family for a card, or undefined when its art is bespoke.
+ *  resolveCardVfx needs this to pick a fiction-matched canvas palette for the
+ *  ~1000 cards on the generated pipeline; without it they all fall back to the
+ *  same pale-blue DEFAULT_VFX burst, which is what the quiet paths were doing. */
+function genFamilyOf(id: string): string | undefined {
+  const cfg = resolveSignature(id);
+  return cfg && isGenConfig(cfg)
+    ? (cfg.visual as { family?: string }).family
+    : undefined;
+}
 // Dev-only: prove the generated assignments stay collision-free next to the
 // bespoke table.
 if (process.env.NODE_ENV !== "production") {
@@ -1858,7 +1868,14 @@ const BoardSquare = React.memo(function BoardSquare({
                     return (
                       <span
                         key={`zsig-${zoneSig.key}`}
-                        className="absolute inset-0 z-30 block"
+                        // fx-one-shot, same as the two sibling paths above. It
+                        // carries the 3.4s hard fade (art that misses its own
+                        // self-fade would otherwise sit on the square until the
+                        // next zone play replaced it) AND the animations-off
+                        // gate, without which a scene whose class is not in the
+                        // hand-enumerated off-list stays on screen forever for
+                        // reduced-motion players.
+                        className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         style={zShift}
                       >
                         <SignatureOverlay
@@ -2414,7 +2431,7 @@ export function Board({
       const tier = def.tier;
       floorTimer = window.setTimeout(() => {
         if (vfxStagedKeyRef.current === key) return; // a real play landed meanwhile
-        const spec = resolveCardVfx(id, tier);
+        const spec = resolveCardVfx(id, tier, genFamilyOf(id));
         if (!spec) return;
         const vfx = FX_LEVELS[fxLevelRef.current].vfx;
         if (vfx <= 0 || motionOff()) return;
@@ -3210,7 +3227,9 @@ export function Board({
       // commit.
       if (marks.size > 0) {
         const def = BUFF_BY_ID[signatureCard.id];
-        const spec = def ? resolveCardVfx(signatureCard.id, def.tier) : null;
+        const spec = def
+          ? resolveCardVfx(signatureCard.id, def.tier, genFamilyOf(signatureCard.id))
+          : null;
         if (spec && def) {
           const ordered = [...marks.entries()].sort((a, b) => a[1].order - b[1].order);
           const leadSq = ordered.find(([, m]) => m.role === "lead")?.[0] ?? ordered[0][0];

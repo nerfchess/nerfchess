@@ -1450,7 +1450,13 @@ html[data-anim="off"] .fx-board-shake {
   0%, 82% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fx-one-shot { animation: fx-one-shot calc(3.4s * var(--fx-dur, 1)) linear both; }
+/* The ceiling must never be SHORTER than the art it guards. Roughly a third of
+   the one-shot animation declarations in this codebase do not multiply by
+   --fx-dur, so at the minimum setting (0.5) a plain `* var(--fx-dur)` faded the
+   slot at 1.39s over art still running its natural 2.8s: apex plays visibly cut
+   in half. max(1, ...) keeps the full hold at or below 1x and still stretches
+   with the art above it. */
+.fx-one-shot { animation: fx-one-shot calc(3.4s * max(1, var(--fx-dur, 1))) linear both; }
 html[data-anim="off"] .fx-one-shot {
   animation: none !important;
   opacity: 0 !important;

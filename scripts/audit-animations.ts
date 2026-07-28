@@ -236,6 +236,14 @@ function parseCoreSignatures(): Map<string, CoreInfo> {
 // Assemble the registry.
 // ---------------------------------------------------------------------------
 
+// Declared before the assembly loop below, which calls fail() for F4. `problems`
+// is a const, so leaving it after that loop put it in the temporal dead zone and
+// a real F4 violation threw a ReferenceError instead of reporting itself.
+const problems: string[] = [];
+function fail(msg: string) {
+  problems.push(msg);
+}
+
 const core = parseCoreSignatures();
 const modules = pluginModules();
 const plays = new Map<string, PlayInfo>();
@@ -245,11 +253,6 @@ for (const mod of modules) {
   const rawKeys = new Set(entryChunks(objectBlock(read(`${mod}.tsx`), "PLAYS", mod)).keys());
   for (const k of rawKeys) if (!table.has(k)) fail(`F4: ${mod}.tsx PLAYS key "${k}" failed to parse`);
   for (const [id, info] of table) if (!plays.has(id)) plays.set(id, info); // first module wins (merge precedence)
-}
-
-const problems: string[] = [];
-function fail(msg: string) {
-  problems.push(msg);
 }
 
 const entries: RegistryEntry[] = [];

@@ -11,6 +11,7 @@ import {
   SETTINGS_CHANGED_EVENT,
 } from "@/lib/settings";
 import { configureSoundPrefs, preloadSounds, setUiSounds, setVolume } from "@/lib/sounds";
+import { fxLevel, setFxLevel } from "@/lib/fxToggle";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
 
 export function SettingsBootstrap() {
@@ -63,7 +64,90 @@ export function SettingsBootstrap() {
           production. The Settings > Advanced toggle still gates it in dev. */}
       {fps && process.env.NODE_ENV === "development" && <FpsMeter />}
       <LagWatch />
+      <MotionNotice />
     </>
+  );
+}
+
+const MOTION_NOTICE_KEY = "dc:motion-notice"; // "restored" | "dismissed"
+
+/** Tells a player WHY their card animations are missing.
+ *
+ *  "Follow system motion" defaults on, and applyUiPrefs folds the OS
+ *  reduced-motion flag straight into html[data-anim="off"], which every effect
+ *  layer treats as a hard kill switch. That is correct behaviour and it is what
+ *  the OS asked for, but it is also indistinguishable from the game being
+ *  broken: phones enable reduced motion for battery saving and accessibility
+ *  defaults, so players end up on a build where no card ever animates and
+ *  nothing explains it.
+ *
+ *  Shown once per device, and only when the OS is the reason: a player who
+ *  turned on Reduced motion themselves knows exactly why it is quiet and is
+ *  never interrupted. Goes through the same UI interrupt queue as LagWatch, so
+ *  it can never cover a draft. */
+function MotionNotice() {
+  const [show, setShow] = useState(false);
+  const releaseRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(MOTION_NOTICE_KEY)) return;
+    } catch {}
+    const s = loadSettings();
+    if (!s.followSystemMotion || s.reducedMotion) return;
+    if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const cancel = requestUiSlot(UI_PRIORITY.performance, (release) => {
+      releaseRef.current = release;
+      setShow(true);
+    });
+    return () => {
+      cancel?.();
+      releaseRef.current?.();
+      releaseRef.current = null;
+    };
+  }, []);
+
+  if (!show) return null;
+  const settle = (key: "restored" | "dismissed") => {
+    try {
+      window.localStorage.setItem(MOTION_NOTICE_KEY, key);
+    } catch {}
+    setShow(false);
+    releaseRef.current?.();
+    releaseRef.current = null;
+  };
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed bottom-3 left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+    >
+      <div className="font-display text-sm font-bold text-parchment-100">Card effects are off</div>
+      <p className="mt-1 text-xs leading-snug text-parchment-300">
+        Your device asks apps to reduce motion, so NerfChess is standing its card animations
+        down. That is why plays look quiet. You can show them anyway without changing anything
+        on your device.
+      </p>
+      <div className="mt-2 flex justify-end gap-2">
+        <button
+          type="button"
+          className="rounded-sm border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
+          onClick={() => settle("dismissed")}
+        >
+          Keep it calm
+        </button>
+        <button
+          type="button"
+          className="rounded-sm border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
+          onClick={() => {
+            saveSettings({ ...loadSettings(), followSystemMotion: false });
+            settle("restored");
+          }}
+        >
+          Show effects
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -169,8 +253,8 @@ function LagWatch() {
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
         This device looks like it&apos;s struggling to keep up. Smooth it out turns on
-        performance mode (trims the heaviest effects) and sets move animations to fast. You can
-        change both anytime in Settings.
+        performance mode, sets move animations to fast, and eases the effects dial down to
+        Calm. Nothing is hidden, and you can change all three anytime in Settings.
       </p>
       <div className="mt-2 flex justify-end gap-2">
         <button
@@ -185,6 +269,14 @@ function LagWatch() {
           className="rounded-sm border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
           onClick={() => {
             saveSettings({ ...loadSettings(), perfMode: true, animationSpeed: "fast" });
+            // perfMode gates decorative page paint, and animationSpeed only
+            // clamps transition durations. Neither touches the card-effect
+            // load, which is what actually costs frames during a play, so the
+            // old remedy changed almost nothing on a struggling device. The FX
+            // dial is the real particle budget: pull it down to Calm, and only
+            // downward so a player who deliberately chose Epic is not reset
+            // past where they already were.
+            if (fxLevel() > 1) setFxLevel(1);
             settle("applied");
           }}
         >
