@@ -143,9 +143,16 @@ export function LockInCountdown({
   return (
     <div className={"flex items-center gap-2 " + className} role="timer" aria-label="Lock-in timer">
       <div className="h-1 flex-1 overflow-hidden rounded-[1px] bg-white/10">
+        {/* scaleX, not width. The countdown ticks ten times a second for the
+            whole 20 second window, and a width transition relayouts the bar
+            (inside an overflow-hidden parent) on every one of those ticks. A
+            transform runs on the compositor instead. */}
         <div
-          className={"h-full transition-[width] duration-100 " + (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")}
-          style={{ width: `${fraction * 100}%` }}
+          className={
+            "h-full w-full origin-left transition-transform duration-100 " +
+            (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")
+          }
+          style={{ transform: `scaleX(${fraction})` }}
         />
       </div>
       <span
@@ -650,9 +657,14 @@ export function DraftOverlay({
   }, [minimized]);
 
   // Keep the panel on screen if the viewport shrinks (rotate, keyboard open).
+  //
+  // Deliberately NOT keyed on dragPos. It used to be, and since dragging sets
+  // dragPos on every pointermove, this listener was torn down and re-registered
+  // on every single move event. The handler reads the live value through
+  // dragPosRef instead, so it can register once.
   useEffect(() => {
-    if (!dragPos) return;
     const onResize = () => {
+      if (!dragPosRef.current) return;
       const rect = panelRef.current?.getBoundingClientRect();
       setDragPos((prev) =>
         prev ? clampPanelPos(prev.x, prev.y, rect?.width ?? 304, rect?.height ?? 220) : prev,
@@ -660,7 +672,55 @@ export function DraftOverlay({
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [dragPos]);
+  }, []);
+
+  // Focus containment for the draft dialog. The overlay is a forced decision,
+  // so focus must not be able to leave it while it is up: Tab cycles inside,
+  // and focus is pulled in on open and restored on close. Escape peeks at the
+  // board (the Hide affordance) rather than closing, because there is nothing
+  // to close to.
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (hidden) return;
+    const root = overlayRef.current;
+    if (!root) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+    // Pull focus in, but only if it is currently outside: never steal it from a
+    // control the player already reached inside the panel.
+    if (!root.contains(document.activeElement)) focusables()[0]?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setHidden(true);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !root.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !root.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [hidden]);
 
   const onGripPointerDown = (e: ReactPointerEvent) => {
     const rect = panelRef.current?.getBoundingClientRect();
@@ -1326,17 +1386,24 @@ export function DraftOverlay({
           </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {selected != null && !settled && (
-              <button
-                onClick={() => {
-                  setChosen(selected);
-                  commit(selected);
-                }}
-                className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
-              >
-                Confirm {BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}
-              </button>
-            )}
+            {/* ALWAYS rendered, merely disabled until a card is selected. It
+                used to appear on selection, and since every button in this row
+                is flex-1, inserting a third one resized and re-wrapped Reroll
+                and Bank the instant you clicked a card: the row moved under the
+                cursor mid-click. The full overlay already does it this way. */}
+            <button
+              disabled={selected == null || settled}
+              onClick={() => {
+                if (selected == null || settled) return;
+                setChosen(selected);
+                commit(selected);
+              }}
+              className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide disabled:opacity-40"
+            >
+              {selected != null
+                ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
+                : "Pick a card"}
+            </button>
             {canReroll && (
               <button
                 onClick={handleReroll}
@@ -1417,6 +1484,15 @@ export function DraftOverlay({
         </div>
       )}
       <div
+        ref={overlayRef}
+        // The most blocking surface in the product had no dialog semantics at
+        // all: no role, no aria-modal, no focus management. A keyboard user
+        // tabbed straight out of a forced decision into the board underneath.
+        // Note there is deliberately no Escape-to-close: a draft cannot be
+        // dismissed, so Escape maps to the same peek the Hide button gives.
+        role="dialog"
+        aria-modal={hidden ? undefined : true}
+        aria-label={`${draftLabel}: choose a card`}
         aria-hidden={hidden || undefined}
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
@@ -1534,7 +1610,12 @@ export function DraftOverlay({
             corners. They must sit OUTSIDE the frame, whose corner-cut
             clip-path would behead anything poking past its bounds. */}
         <div className="relative min-w-0 w-full">
-          {!reduceMotion && (
+          {/* fxCalm as well as reduceMotion. Each torch is six elements running
+              five infinite animations, and they were gated on reduced motion
+              ONLY, so they kept burning after useAmbientAutoCalm had measured
+              the device as too slow to afford the ambience, and when the player
+              chose Calm by hand. That was a hole in the ambient perf pass. */}
+          {!reduceMotion && !fxCalm && (
             <>
               <span aria-hidden className="dgn-torch dgn-torch--l">
                 <i className="dgn-torch__halo" />
