@@ -230,6 +230,16 @@ function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: n
   );
 }
 
+// Shared empty arrays for the Board's list props.
+//
+// A fresh `[]` in JSX is a new identity every render, and these feed Board's
+// squareEnv dependency list, so an inline literal keeps all 64 memoized squares
+// re-rendering however well the rest of the props are memoized. Module-level
+// constants cost nothing and are never mutated (Board only reads them).
+const EMPTY_SQUARES: Square[] = [];
+const EMPTY_MOVES: Move[] = [];
+const EMPTY_PREMOVES: QueuedPremove[] = [];
+
 // The in-game view for any server-authoritative online game (friend games and
 // rated matchmade games). The parent owns the connection and lobby flow; this
 // component takes over once the server has sent `start`.
@@ -1936,6 +1946,104 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     return () => window.clearInterval(id);
   }, [opponentGone, claimReady, opponentGoneAt, game?.result]);
 
+  // Everything the Board needs, derived once per position.
+  //
+  // This sits ABOVE the early returns below because it has to: the derivations
+  // it replaces live after `if (!game) return null`, so a hook there would be
+  // conditional. Up here it is unconditionally reached and guards on `!game`
+  // itself.
+  //
+  // Why it matters: Board keys around thirty internal memos and all 64 memoized
+  // squares on the identity of `visual` and its fields. Building that object
+  // inline in JSX handed them a brand new object, with brand new nested arrays,
+  // on EVERY render, so every clock frame (twice a second), every toast and
+  // every drawer toggle re-rendered the whole board and rebuilt every overlay
+  // memo. Board's memo machinery was doing nothing.
+  //
+  // Keying on `game` identity is safe for the reason the codebase already
+  // relies on: setGame is called in exactly one place (applyGame) and every
+  // call site passes a fresh shallow copy. `moves` above has depended on that
+  // same contract all along. These derivations are pure reads with no clock or
+  // randomness, so nothing can go stale that `game` identity misses.
+  const derived = useMemo(() => {
+    if (!game) return null;
+    const dMyNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
+    const dMyState = myColor === "w" ? game.white.state : game.black.state;
+    const dMyCtx = makeContext(game, myColor);
+    const dVisual = dMyNerf.visual?.(dMyState, dMyCtx);
+    const dZone = isDraft && game.buffs ? draftZones(game, myColor) : null;
+    // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+    // fences, pending-skip stuns): shared derivation, same as the bot game.
+    const dFxZone = dZone ? computeFxVisual(game) : null;
+    const dHint = currentHint(game, myColor);
+    const dForced = dHint?.squares ?? EMPTY_SQUARES;
+    const dBoardVisual = {
+      ...(dVisual ?? {}),
+      highlightSquares: dForced,
+      ...(dZone
+        ? {
+            bannedSquares: [...(dVisual?.bannedSquares ?? []), ...dZone.barred],
+            frozenSquares: dZone.frozen,
+            frozenSkins: dZone.frozenSkin,
+            effectTurns: dZone.turns,
+            shieldedSquares: dZone.shielded,
+            wardSquares: dZone.ward,
+            strikeSquares: dZone.strike,
+            walnutSquares: dZone.walnut,
+            bananaSquares: dZone.banana,
+            trapSquares: dZone.traps,
+            doomSquares: dZone.doom,
+            // Previously missing online: king-only / no-pawn-advance shackles
+            // now paint here too.
+            lockedSquares: dZone.locked,
+            barredSquares: dZone.barred,
+            ...(dFxZone
+              ? {
+                  kingSafeSquares: dFxZone.kingSafeSquares,
+                  pawnClampSquares: dFxZone.pawnClampSquares,
+                  stunSquares: dFxZone.stunSquares,
+                  motifSquares: dFxZone.motifs,
+                }
+              : {}),
+          }
+        : {}),
+    };
+    return {
+      myNerf: dMyNerf,
+      myState: dMyState,
+      myCtx: dMyCtx,
+      visual: dVisual,
+      zone: dZone,
+      fxZone: dFxZone,
+      hint: dHint,
+      forcedSquares: dForced,
+      boardVisual: dBoardVisual,
+    };
+  }, [game, myColor, isDraft]);
+
+  // The check highlight, memoized for the same reason as `derived`: it was a
+  // fresh array every render and sits directly in Board's squareEnv dependency
+  // list, so on its own it would have kept all 64 squares re-rendering however
+  // well the visual object was memoized. It also runs gameInCheck for BOTH
+  // colors, and in a draft game each of those is a full move generation.
+  //
+  // BOTH kings are tested every ply: a king may legally stand in check in this
+  // variant, so a checked king stays red on the opponent's turn too. Buff-aware
+  // on the live position (amazon-style empowered attacks count), plain test
+  // while reviewing history.
+  const checkSquares = useMemo(() => {
+    if (!game || !uiSettings.checkHighlight) return EMPTY_SQUARES;
+    const checked = reviewBoard ?? game.board;
+    const out: Square[] = [];
+    for (const color of ["w", "b"] as const) {
+      const attacked = reviewBoard ? isInCheck(checked, color) : gameInCheck(game, color);
+      if (!attacked) continue;
+      const k = findKing(checked, color);
+      if (k != null) out.push(k);
+    }
+    return out.length ? out : EMPTY_SQUARES;
+  }, [game, uiSettings.checkHighlight, reviewBoard]);
+
   const onClaimWin = () => {
     if (!game || game.result) return;
     setError(null);
@@ -2186,10 +2294,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   if (!game) return null;
   const ratingStakes = start.rated && !game.result ? start.preview?.[myColor] ?? null : null;
-  const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
-  const myState = myColor === "w" ? game.white.state : game.black.state;
-  const myCtx = makeContext(game, myColor);
-  const visual = myNerf.visual?.(myState, myCtx);
+  // Derived once per position by the `derived` memo above.
+  const { myNerf, myState, myCtx, visual, zone, fxZone, hint, forcedSquares, boardVisual } =
+    derived!;
   // Draft ruleset: pending offer (blocks my board), held-buff dock, and the
   // public zone-effect painting shared with the bot game.
   const bsMine = isDraft ? game.buffs?.players[myColor] : undefined;
@@ -2270,10 +2377,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setDropType(null);
     buffTargeting.start(index);
   };
-  const zone = isDraft && game.buffs ? draftZones(game, myColor) : null;
   // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
   // fences, pending-skip stuns): shared derivation, same as the bot game.
-  const fxZone = zone ? computeFxVisual(game) : null;
   // Clock displays follow chargedColor (defined with the draft-hold state
   // above): nobody ticks during the free lock-in window, and past it the
   // straggling drafter's pill ticks — never the waiting player's.
@@ -2349,16 +2454,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // so a checked king stays red on the opponent's turn too). Buff-aware test
   // on the live position (amazon-style empowered attacks count); plain test
   // while reviewing history.
-  const checkSquares: Square[] = [];
-  if (uiSettings.checkHighlight) {
-    for (const color of ["w", "b"] as const) {
-      const attacked = reviewBoard ? isInCheck(checkedBoard, color) : gameInCheck(game, color);
-      if (attacked) {
-        const k = findKing(checkedBoard, color);
-        if (k != null) checkSquares.push(k);
-      }
-    }
-  }
+  // checkSquares is memoized above, beside the other per-position derivations.
   // A new constraint landing on me (turn skip, halted pawns, frozen piece...)
   // gets one big board-wide splash (BoardSplashHost below); the dock's
   // "Against you" section keeps the permanent record.
@@ -2366,8 +2462,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   const lastMoveForDisplay = isReviewingHistory
     ? game.board.history[currentHistoryPly - 1] ?? null
     : confirmMovePending ?? pendingLocalMove?.move ?? lastMove;
-  const hint = currentHint(game, myColor);
-  const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
@@ -2916,12 +3010,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   fxBoard={game.board}
                   legalMoves={
                     isReviewingHistory || buffTargeting.targeting
-                      ? []
+                      ? EMPTY_MOVES
                       : premoveMode
                       ? premoveOptions
                       : game.board.turn === myColor
                       ? moves
-                      : []
+                      : EMPTY_MOVES
                   }
                   orientation={orientation}
                   onMove={handleLocalMove}
@@ -2929,7 +3023,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   // Click an enemy piece to preview where it could move
                   // (suspended during history review and buff targeting).
                   opponentMoves={
-                    isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
+                    isReviewingHistory || buffTargeting.targeting ? EMPTY_MOVES : oppPreviewMoves
                   }
                   // Public buff state, so the board can paint BOTH sides'
                   // persistent buff markers (bound-buff sigils, and the live
@@ -2938,41 +3032,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   // still-secret can surface here; history review passes null so
                   // no live marker bleeds onto a past position.
                   buffs={isReviewingHistory ? null : game.buffs}
-                  visual={
-                    isReviewingHistory
-                      ? undefined
-                      : {
-                          ...(visual ?? {}),
-                          highlightSquares: forcedSquares,
-                          ...(zone
-                            ? {
-                                bannedSquares: [...(visual?.bannedSquares ?? []), ...zone.barred],
-                                frozenSquares: zone.frozen,
-                                frozenSkins: zone.frozenSkin,
-                                effectTurns: zone.turns,
-                                shieldedSquares: zone.shielded,
-                                wardSquares: zone.ward,
-                                strikeSquares: zone.strike,
-                                walnutSquares: zone.walnut,
-                                bananaSquares: zone.banana,
-                                trapSquares: zone.traps,
-                                doomSquares: zone.doom,
-                                // Previously missing online: king-only /
-                                // no-pawn-advance shackles now paint here too.
-                                lockedSquares: zone.locked,
-                                barredSquares: zone.barred,
-                                ...(fxZone
-                                  ? {
-                                      kingSafeSquares: fxZone.kingSafeSquares,
-                                      pawnClampSquares: fxZone.pawnClampSquares,
-                                      stunSquares: fxZone.stunSquares,
-                                      motifSquares: fxZone.motifs,
-                                    }
-                                  : {}),
-                              }
-                            : {}),
-                        }
-                  }
+                  visual={isReviewingHistory ? undefined : boardVisual}
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
@@ -2989,7 +3049,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     (!uiSettings.premovesEnabled && (awaitingPremoveAck || !!pendingLocalMove))
                   }
                   premoveMode={!isReviewingHistory && premoveMode}
-                  premoves={isReviewingHistory ? [] : validPremoves}
+                  premoves={isReviewingHistory ? EMPTY_PREMOVES : validPremoves}
                   onCancelPremove={clearPremoves}
                   moveRisks={isReviewingHistory || premoveMode ? undefined : moveRisks}
                   autoQueen={uiSettings.autoQueen}
