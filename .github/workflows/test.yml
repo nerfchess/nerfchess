@@ -79,3 +79,72 @@ jobs:
       # leaks and versions are compatible (one-shot, logs ids + hashes only).
       - name: TV snapshot validator (self-test)
         run: node scripts/validate-tv-snapshots.cjs --selftest
+
+      # Notation: no two legal moves in a position may share a SAN, or the move
+      # list lies and exported PGNs cannot be replayed by any reader.
+      - name: SAN notation tests
+        run: npm run test:san
+
+      # Rating math.
+      - name: Glicko tests
+        run: npm run test:glicko
+
+  # Content and registry gates. These are pure library checks (no server:build,
+  # no engine replay), so they run as their own job in parallel with the engine
+  # suite rather than lengthening it. Every one of these already passed locally
+  # but none of them gated a PR before.
+  content:
+    name: Content & registry gates
+    runs-on: [self-hosted, linux, tokyo]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Every tier 1-8 card has a flagship animation, no two share an identical
+      # dressing, and the shared-flagship count never grows (ratchet against
+      # scripts/anim-baseline.json).
+      - name: Animation registry
+        run: npm run test:animations
+
+      # Every passive composition carries a sound cue and every cue family has a
+      # wired voice.
+      - name: Sound coverage
+        run: npm run test:sound
+
+      # Derived registries must match the engine tables they are generated from.
+      - name: Card registry
+        run: npm run test:card-registry
+
+      - name: Card audit
+        run: npm run test:card-audit
+
+      # Standing house rule: no em dashes in user-visible text.
+      - name: Em dash guard
+        run: npm run test:emdash
+
+      # Draft RNG fairness, offer sequencing, and deadline handling.
+      - name: Draft fairness
+        run: npm run test:draft-fairness
+
+      - name: Draft sequence
+        run: npm run test:draft-sequence
+
+      - name: Draft timeout
+        run: npm run test:draft-timeout
+
+      # Buff mode must never reference Nerfs in user-visible text.
+      - name: Buff-mode purity
+        run: npm run test:buff-purity
+
+      - name: Balance fixes
+        run: npm run test:balance-fixes

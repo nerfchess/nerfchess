@@ -3,7 +3,7 @@
 // carries a Variant tag plus the rule cards and termination reason as custom
 // tags, while the movetext itself stays standard SAN readable by any viewer.
 
-import { moveToSAN } from "@/engine/board";
+import { movesToSAN } from "@/engine/board";
 import type { GameResult } from "@/engine/game";
 import type { Move } from "@/engine/types";
 
@@ -48,16 +48,19 @@ export function gameToPGN({ moves, result, white, black, whiteNerf, blackNerf, s
   if (blackNerf) tags.push(tag("BlackNerf", blackNerf));
   if (result?.reason) tags.push(tag("Termination", result.reason));
 
+  // Disambiguated by replaying the line, so "Nbd2"/"Nfd2" come out distinct and
+  // the movetext is replayable by any PGN reader.
+  const sans = movesToSAN(moves);
   const parts: string[] = [];
   let moveNo = 1;
   for (let i = 0; i < moves.length; i++) {
     const m = moves[i];
     if (m.color === "w") {
-      parts.push(`${moveNo}. ${moveToSAN(m)}`);
+      parts.push(`${moveNo}. ${sans[i]}`);
     } else {
       // A game (or a continuation after a skipped ply) can open with Black.
       const needsNumber = i === 0 || moves[i - 1].color === "b";
-      parts.push(needsNumber ? `${moveNo}... ${moveToSAN(m)}` : moveToSAN(m));
+      parts.push(needsNumber ? `${moveNo}... ${sans[i]}` : sans[i]);
       moveNo++;
     }
   }

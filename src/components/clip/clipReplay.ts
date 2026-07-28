@@ -10,7 +10,7 @@
 // hint), a ply whose move cannot be mechanically replayed still animates: the
 // diff shows up as slides, spawns, and removals.
 
-import { moveToSAN } from "@/engine/board";
+import { sanLabels } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import type { BoardState, Move, Piece, Square } from "@/engine/types";
@@ -93,34 +93,6 @@ function piecesAtPly(
   const replayed = boardAtPly(moves, ply);
   if (replayed.history.length !== ply) return null;
   return clonePieces(replayed.pieces);
-}
-
-/** "12. Qxf7" / "12… Qxf7" labels for every ply, using the same numbering rule
- *  as the move list (a black move closes a row; consecutive same-color moves
- *  each get their own row — extra-move buffs make that possible). */
-function moveLabels(moves: Move[]): (string | null)[] {
-  const labels: (string | null)[] = [];
-  let num = 1;
-  let openWhite = false;
-  for (const m of moves) {
-    let san: string;
-    try {
-      san = moveToSAN(m);
-    } catch {
-      labels.push(null);
-      continue;
-    }
-    if (m.color === "w") {
-      if (openWhite) num += 1;
-      labels.push(`${num}. ${san}`);
-      openWhite = true;
-    } else {
-      labels.push(`${num}… ${san}`);
-      num += 1;
-      openWhite = false;
-    }
-  }
-  return labels;
 }
 
 /** Diff two boards into an animatable segment. The move is only a hint used
@@ -229,7 +201,7 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
   }
   if (boards.length < 2) return null;
 
-  const labels = moveLabels(moves);
+  const labels = sanLabels(moves);
   const sigNameAt = (afterPly: number, move: Move | null): string | null => {
     const fired = signatureIds?.get(afterPly);
     const id = fired ?? move?.via ?? null;

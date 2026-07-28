@@ -1,9 +1,9 @@
 "use client";
 
-import { moveToSAN } from "@/engine/board";
+import { sanLabels } from "@/engine/board";
 import { Move } from "@/engine/types";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { MoveList } from "./MoveList";
 
 /**
@@ -56,10 +56,11 @@ export function MobileMoveDrawer({
     };
   }, [open]);
   const unreadChat = open ? 0 : Math.max(0, chatCount - seenChat);
-  const lastMove = moves[moves.length - 1] ?? null;
-  const lastLabel = lastMove
-    ? `${Math.ceil(moves.length / 2)}${moves.length % 2 === 1 ? "." : "…"} ${moveToSAN(lastMove)}`
-    : "No moves yet";
+  // Numbering comes from the shared labeller rather than the ply index: an
+  // extra-move card lets one side move twice in a row, which shifts every later
+  // number off if you just halve the ply count.
+  const labels = useMemo(() => sanLabels(moves), [moves]);
+  const lastLabel = labels.length ? labels[labels.length - 1] : "No moves yet";
 
   return (
     <div className="sm:hidden">
