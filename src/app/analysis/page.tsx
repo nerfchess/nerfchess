@@ -186,7 +186,7 @@ function AnalysisInner() {
   };
 
   const downloadPgn = () => {
-    const pgn = gameToPGN({ moves, result: null });
+    const pgn = gameToPGN({ moves, result: null, startBoard });
     const blob = new Blob([pgn], { type: "application/x-chess-pgn" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -345,10 +345,14 @@ export function makeMove(board: BoardState, move: Move): BoardState {
     if (move.from === SQ(7, 7)) nb.castling.bk = false;
   }
   if (move.captured === "r") {
-    if (move.capturedSquare === SQ(0, 0)) nb.castling.wq = false;
-    if (move.capturedSquare === SQ(7, 0)) nb.castling.wk = false;
-    if (move.capturedSquare === SQ(0, 7)) nb.castling.bq = false;
-    if (move.capturedSquare === SQ(7, 7)) nb.castling.bk = false;
+    // Fall back to the destination square. Move generation always sets
+    // capturedSquare, but a card can synthesise a capture without it, and a
+    // rook taken on its home square must lose the castling right either way.
+    const rookSq = move.capturedSquare ?? move.to;
+    if (rookSq === SQ(0, 0)) nb.castling.wq = false;
+    if (rookSq === SQ(7, 0)) nb.castling.wk = false;
+    if (rookSq === SQ(0, 7)) nb.castling.bq = false;
+    if (rookSq === SQ(7, 7)) nb.castling.bk = false;
   }
 
   // En passant target

@@ -4,8 +4,9 @@
 // tags, while the movetext itself stays standard SAN readable by any viewer.
 
 import { movesToSAN } from "@/engine/board";
+import { START_FEN, boardToFen } from "@/lib/fen";
 import type { GameResult } from "@/engine/game";
-import type { Move } from "@/engine/types";
+import type { BoardState, Move } from "@/engine/types";
 
 export function pgnResult(result: GameResult | null): "1-0" | "0-1" | "1/2-1/2" | "*" {
   if (!result || !result.winner) return "*";
@@ -31,9 +32,22 @@ export interface PgnOptions {
   whiteNerf?: string | null;
   blackNerf?: string | null;
   startedAt?: number;
+  /** Position the moves start from, when it is not the standard opening (the
+   *  analysis board can be set up from an arbitrary FEN). Without it the
+   *  export claims a normal game and replays into a different position. */
+  startBoard?: BoardState;
 }
 
-export function gameToPGN({ moves, result, white, black, whiteNerf, blackNerf, startedAt }: PgnOptions): string {
+export function gameToPGN({
+  moves,
+  result,
+  white,
+  black,
+  whiteNerf,
+  blackNerf,
+  startedAt,
+  startBoard,
+}: PgnOptions): string {
   const resultToken = pgnResult(result);
   const tags = [
     tag("Event", "Nerf Chess"),
@@ -47,12 +61,21 @@ export function gameToPGN({ moves, result, white, black, whiteNerf, blackNerf, s
   if (whiteNerf) tags.push(tag("WhiteNerf", whiteNerf));
   if (blackNerf) tags.push(tag("BlackNerf", blackNerf));
   if (result?.reason) tags.push(tag("Termination", result.reason));
+  // A non-standard start needs SetUp + FEN, or a reader replays the movetext
+  // from the normal opening and lands somewhere else entirely.
+  const startFen = startBoard ? boardToFen(startBoard) : null;
+  if (startFen && startFen !== START_FEN) {
+    tags.push(tag("SetUp", "1"));
+    tags.push(tag("FEN", startFen));
+  }
 
   // Disambiguated by replaying the line, so "Nbd2"/"Nfd2" come out distinct and
   // the movetext is replayable by any PGN reader.
-  const sans = movesToSAN(moves);
+  const sans = movesToSAN(moves, startBoard);
   const parts: string[] = [];
-  let moveNo = 1;
+  // Numbering continues from the starting position, so a PGN written from a
+  // mid-game FEN does not restart at 1.
+  let moveNo = startBoard?.fullmove ?? 1;
   for (let i = 0; i < moves.length; i++) {
     const m = moves[i];
     if (m.color === "w") {
