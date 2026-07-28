@@ -85,6 +85,11 @@ jobs:
       - name: SAN notation tests
         run: npm run test:san
 
+      # Cards must measurably change the game, not merely avoid throwing. The
+      # lab gate only catches crashes; this catches silence.
+      - name: Card impact tests
+        run: npm run test:card-impact
+
       # Rating math.
       - name: Glicko tests
         run: npm run test:glicko

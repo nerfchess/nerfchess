@@ -197,7 +197,11 @@ export function escapeCurse(
         Array.isArray(inst.state.escapeTos) &&
         (inst.state.escapeTos as Square[]).includes(move.to)
       ) {
+        // Spending the reprieve does not burn a turn of the duration: the curse
+        // promises to bind fully AFTERWARDS, so the escape move must not eat
+        // one of the turns it is supposed to bind for.
         inst.state.escaped = true;
+        return;
       }
       tickTurns(inst, move, api.opp);
     },
