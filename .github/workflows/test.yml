@@ -148,6 +148,11 @@ jobs:
       - name: Rounded corner guard
         run: npm run test:rounded
 
+      # A card that advertises seconds it does not grant (or quietly grants
+      # seconds it does not advertise) is lying to the player.
+      - name: Clock claim guard
+        run: npm run test:clock-claims
+
       # Draft RNG fairness, offer sequencing, and deadline handling.
       - name: Draft fairness
         run: npm run test:draft-fairness

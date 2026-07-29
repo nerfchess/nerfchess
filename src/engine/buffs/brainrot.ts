@@ -393,7 +393,7 @@ export const BRAINROT: Buff[] = [
       icon: "Clock",
       name: "Lirili Larila",
       description:
-        "The cactus-elephant trades your afternoon for its hourglass: steal 45 seconds from your opponent's clock, but you skip your own next turn.",
+        "The cactus-elephant trades your afternoon for its hourglass: your opponent skips their next turn, but so do you.",
       tier: 2,
       category: "tempo",
       flavor: "Is it later already? For you it is.",
@@ -403,7 +403,9 @@ export const BRAINROT: Buff[] = [
     // clamps it above the floor).
     instant((_inst, api) => {
       api.bs.skips[api.me] += 1;
-      api.adjustClock({ stealFlatSec: 45, stealCapSec: 45 });
+      // Trade, not sacrifice: with the time steal gone this would have been all
+      // cost and no card.
+      api.bs.skips[api.opp] += 1;
     }),
   ),
 
