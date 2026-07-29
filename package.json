@@ -62,7 +62,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.18",
     "tailwindcss": "^3.4.15",
     "typescript": "^5",
     "wrangler": "^4.110.0"
