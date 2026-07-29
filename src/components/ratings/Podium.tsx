@@ -365,7 +365,13 @@ export function Podium({
               </div>
               <span
                 className={
-                  "mt-2 max-w-full truncate text-[13px] font-medium sm:text-base " +
+                  // Wraps rather than truncates, and breaks inside a long
+                  // handle if it has to. At phone width the three risers are
+                  // ~100px wide, so a single truncated line cut every name in
+                  // the roster down to a stub: the whole point of a podium is
+                  // knowing WHO is on it. Two tighter lines fit comfortably.
+                  "mt-2 line-clamp-2 max-w-full break-words text-center text-[12px] " +
+                  "font-medium leading-tight tracking-tight sm:text-base sm:tracking-normal " +
                   (mine
                     ? "text-gold-leaf"
                     : champion
@@ -401,7 +407,7 @@ export function Podium({
                   </span>
                 )}
               </span>
-              <span className="smallcaps text-[11px] text-parchment-400">
+              <span className="smallcaps whitespace-nowrap text-[11px] text-parchment-400">
                 {row.games} {row.games === 1 ? "game" : "games"}
               </span>
               {/* The ceremony bouquet laid at the front edge of the riser,

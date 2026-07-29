@@ -15,7 +15,7 @@ import {
 import { Board } from "@/components/Board";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BoardAnalysis, analyzeBoard } from "@/engine/ai";
-import { generateMoves, makeMove, moveToSAN, moveToUCI } from "@/engine/board";
+import { generateMoves, makeMove, moveToSAN, movesToSAN, moveToUCI } from "@/engine/board";
 import { initialBoard } from "@/engine/board";
 import { BoardState, Color, Move } from "@/engine/types";
 import { START_FEN, boardToFen, fenToBoard } from "@/lib/fen";
@@ -97,9 +97,19 @@ function AnalysisInner() {
   const lastMove = viewPly > 0 ? moves[viewPly - 1] : null;
 
   // SANs for the move list, computed once per line change.
-  const sans = useMemo(() => {
-    return moves.map((m) => moveToSAN(m));
-  }, [moves]);
+  const sans = useMemo(() => movesToSAN(moves, startBoard), [moves, startBoard]);
+
+  // Move numbers run off the starting position's counter, not the ply index: a
+  // FEN with black to move opens on a black half-move, so index parity would
+  // number every move in the line wrong.
+  const moveNums = useMemo(() => {
+    let num = startBoard.fullmove;
+    return moves.map((m) => {
+      const at = num;
+      if (m.color === "b") num++;
+      return at;
+    });
+  }, [moves, startBoard]);
 
   const onMove = useCallback(
     (m: Move) => {
@@ -147,7 +157,7 @@ function AnalysisInner() {
   }, [moves.length]);
 
   const cpWhite = analysis ? analysis.scoreCp * (board.turn === "w" ? 1 : -1) : 0;
-  const bestSan = analysis?.move ? moveToSAN(analysis.move) : null;
+  const bestSan = analysis?.move ? moveToSAN(analysis.move, board) : null;
 
   const orientation: Color = flipped ? "b" : "w";
   const fen = boardToFen(board);
@@ -176,7 +186,7 @@ function AnalysisInner() {
   };
 
   const downloadPgn = () => {
-    const pgn = gameToPGN({ moves, result: null });
+    const pgn = gameToPGN({ moves, result: null, startBoard });
     const blob = new Blob([pgn], { type: "application/x-chess-pgn" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -292,9 +302,10 @@ function AnalysisInner() {
                   const isWhiteMove = moves[i].color === "w";
                   return (
                     <span key={i}>
-                      {isWhiteMove && (
+                      {(isWhiteMove || i === 0) && (
                         <span className="mr-1 text-parchment-500">
-                          {Math.floor(i / 2) + startBoard.fullmove}.
+                          {moveNums[i]}
+                          {isWhiteMove ? "." : "..."}
                         </span>
                       )}
                       <button

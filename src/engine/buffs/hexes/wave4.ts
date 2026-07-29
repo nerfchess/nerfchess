@@ -59,28 +59,68 @@ const H2 = tierHexes(2);
 const H3 = tierHexes(3);
 const H4 = tierHexes(4);
 
-// A curse that grants the first affected piece one escape: while the escape is
-// unused the restriction is off, so the first otherwise-forbidden move they play
-// slips through; from then on `pred` (a per-move KEEP test) is enforced for the
-// rest of the duration. The timer still ticks every one of their turns, so the
-// duration is preserved. `pred` must read only move fields (no board lookups)
-// since it is re-checked in onMovePlayed, after the move is applied.
+// A curse that grants the first affected piece one escape, then binds fully:
+// `pred` (a per-move KEEP test) is enforced from the moment the curse lands,
+// except that the lowest-square piece with a forbidden move keeps those moves
+// available exactly once. Taking one spends the reprieve.
+//
+// Three things here are load-bearing, and getting any of them wrong silently
+// voids the card (all three were wrong, and all five turns:1 users did nothing
+// at all):
+//   1. The restriction is live while the escape is UNSPENT. Offering every move
+//      instead means the curse does nothing until the opponent happens to try a
+//      forbidden move.
+//   2. Spending the escape does not tick the duration. At turns:1 that expired
+//      the curse on the very move it was supposed to start binding.
+//   3. The duration only runs once the curse has actually bitten. Otherwise a
+//      restriction that cannot apply on the opponent's immediate next turn
+//      (Hiccups needs a piece past their half; Matins Bell needs a queenside
+//      capture) burns its whole duration waiting and never applies.
+// PATIENCE bounds (3): an unfired curse fades rather than lurking forever.
+const ESCAPE_PATIENCE = 3;
+
 function escapeCurse(turns: number, pred: (m: Move, api: BuffApi) => boolean): Mech {
   return {
     kind: "passive",
     init: (inst) => {
       inst.state.turns = turns;
       inst.state.escaped = false;
+      inst.state.patience = turns + ESCAPE_PATIENCE;
     },
     filterOpponentMoves: (moves, inst, api) => {
       if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
-      if (!inst.state.escaped) return moves;
       const kept = moves.filter((m) => pred(m, api));
-      return kept.length > 0 ? kept : moves;
+      // Never leave them with nothing: a curse must not stalemate its victim.
+      if (kept.length === 0) return moves;
+      if (inst.state.escaped) return kept;
+      const blocked = moves.filter((m) => !pred(m, api));
+      if (blocked.length === 0) return kept;
+      let escapeFrom = blocked[0].from;
+      for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+      const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+      inst.state.escapeFrom = escapeFrom;
+      inst.state.escapeTos = escapeMoves.map((m) => m.to);
+      return [...kept, ...escapeMoves];
     },
     onMovePlayed: (inst, move, api) => {
-      if (move.color === api.opp && turnsLeft(inst) > 0 && !inst.state.escaped && !pred(move, api)) {
+      if (move.color !== api.opp) return;
+      if (
+        turnsLeft(inst) > 0 &&
+        !inst.state.escaped &&
+        inst.state.escapeFrom != null &&
+        move.from === inst.state.escapeFrom &&
+        Array.isArray(inst.state.escapeTos) &&
+        (inst.state.escapeTos as Square[]).includes(move.to)
+      ) {
         inst.state.escaped = true;
+        return;
+      }
+      if (!inst.state.escaped) {
+        // Still waiting for the curse to bite: spend patience, not duration.
+        const left = ((inst.state.patience as number) ?? turns + ESCAPE_PATIENCE) - 1;
+        inst.state.patience = left;
+        if (left <= 0) inst.spent = true;
+        return;
       }
       tickTurns(inst, move, api.opp);
     },
@@ -117,17 +157,18 @@ function delayedCurse(turns: number, filter: (moves: Move[], api: BuffApi) => Mo
 }
 
 // Escape variant of curse() for filters that must read the (pre-move) board or
-// history: while the escape is unused the whole restriction is off, and the
-// first move the filter WOULD have blocked slips through, flipping the escape.
-// From then on `filter` is enforced for the rest of the duration. Detection is
-// done in filterOpponentMoves (board still in its pre-move state) so filters
-// that inspect captured pieces or the opponent's own move history stay correct.
+// history. Same contract as escapeCurse above, and the same two rules: the
+// filter is live from the moment the curse lands, and only the first affected
+// piece's forbidden moves stay open (once). Detection happens in
+// filterOpponentMoves, with the board still in its pre-move state, so filters
+// that inspect captured pieces or the opponent's move history stay correct.
 function escapeCurseBoard(turns: number, filter: (moves: Move[], api: BuffApi) => Move[]): Mech {
   return {
     kind: "passive",
     init: (inst) => {
       inst.state.turns = turns;
       inst.state.escaped = false;
+      inst.state.patience = turns + ESCAPE_PATIENCE;
     },
     filterOpponentMoves: (moves, inst, api) => {
       if (turnsLeft(inst) <= 0 || moves.length === 0) return moves;
@@ -135,15 +176,34 @@ function escapeCurseBoard(turns: number, filter: (moves: Move[], api: BuffApi) =
       if (kept.length === 0) return moves;
       if (inst.state.escaped) return kept;
       const keptSet = new Set(kept);
-      inst.state.blocked = moves.filter((m) => !keptSet.has(m)).map((m) => [m.from, m.to]);
-      return moves;
+      const blocked = moves.filter((m) => !keptSet.has(m));
+      if (blocked.length === 0) return kept;
+      let escapeFrom = blocked[0].from;
+      for (const m of blocked) if (m.from < escapeFrom) escapeFrom = m.from;
+      const escapeMoves = blocked.filter((m) => m.from === escapeFrom);
+      inst.state.escapeFrom = escapeFrom;
+      inst.state.escapeTos = escapeMoves.map((m) => m.to);
+      return [...kept, ...escapeMoves];
     },
     onMovePlayed: (inst, move, api) => {
-      if (move.color === api.opp && turnsLeft(inst) > 0 && !inst.state.escaped) {
-        const blocked = inst.state.blocked as [Square, Square][] | undefined;
-        if (blocked && blocked.some(([f, t]) => f === move.from && t === move.to)) {
-          inst.state.escaped = true;
-        }
+      if (move.color !== api.opp) return;
+      if (
+        turnsLeft(inst) > 0 &&
+        !inst.state.escaped &&
+        inst.state.escapeFrom != null &&
+        move.from === inst.state.escapeFrom &&
+        Array.isArray(inst.state.escapeTos) &&
+        (inst.state.escapeTos as Square[]).includes(move.to)
+      ) {
+        inst.state.escaped = true;
+        return;
+      }
+      if (!inst.state.escaped) {
+        // Still waiting for the curse to bite: spend patience, not duration.
+        const left = ((inst.state.patience as number) ?? turns + ESCAPE_PATIENCE) - 1;
+        inst.state.patience = left;
+        if (left <= 0) inst.spent = true;
+        return;
       }
       tickTurns(inst, move, api.opp);
     },
@@ -392,7 +452,7 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_hiccups", name: "Hiccups", description: "On your opponent's next turn, they may only move pieces standing in their own half of the board. The first piece from your half slips through as one escape, then the restriction holds.", flavor: "Hic. Sorry. Hic. As you were.", icon: "MessageCircleWarning", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_hiccups", name: "Hiccups", description: "The first piece your opponent tries to move out of their own half slips through as one escape. After that, for their next turn, they may only move pieces standing in their own half. The hiccups pass if nothing ever crosses.", flavor: "Hic. Sorry. Hic. As you were.", icon: "MessageCircleWarning", fx: { motif: "slow", pieces: "all" } },
     escapeCurse(1, (m, api) => relRank(api.opp, m.from) <= 4),
   ),
   H1(
@@ -568,7 +628,7 @@ const T1: Buff[] = [
     curse(1, (moves) => moves.filter((m) => m.piece !== "b" || FILE(m.to) < FILE(m.from))),
   ),
   H1(
-    { id: "hx4_matins_bell", name: "Matins Bell", description: "On your opponent's next turn, their pieces standing on the queenside files (a to d) may not capture: they are at morning prayers. The first such capture slips through as one escape, then the restriction holds.", flavor: "Violence resumes after the second hymn.", icon: "Church", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_matins_bell", name: "Matins Bell", description: "The first capture your opponent tries from the queenside files (a to d) slips through as one escape. After that, for their next turn, no piece standing on those files may capture: they are at morning prayers. The bell falls silent if nobody swings.", flavor: "Violence resumes after the second hymn.", icon: "Church", fx: { motif: "muzzle", pieces: "all" } },
     escapeCurse(1, (m) => !m.captured || FILE(m.from) > 3),
   ),
   H1(
@@ -619,7 +679,7 @@ const T1: Buff[] = [
     curse(1, (moves) => moves.filter((m) => m.piece !== "r" || !m.captured)),
   ),
   H1(
-    { id: "hx4_hopscotch", name: "Hopscotch", description: "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move. The first such pawn slips through as one escape, then the restriction holds.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
+    { id: "hx4_hopscotch", name: "Hopscotch", description: "The first light-square pawn your opponent tries to move slips through as one escape. After that, for their next turn, none of their light-square pawns may move: they are busy playing hopscotch. The game breaks up if no pawn joins in.", flavor: "Rules are rules. She threw the stone.", icon: "Grid2x2", fx: { motif: "slow", pieces: ["p"] } },
     escapeCurse(1, (m) => m.piece !== "p" || sqShade(m.from) !== 1),
   ),
   hex(
@@ -667,7 +727,7 @@ const T1: Buff[] = [
     },
   ),
   H1(
-    { id: "hx4_early_frost", name: "Early Frost", description: "Your opponent's pawns cannot advance on their next turn. Diagonal captures still work. The first pawn to try advancing slips through as one escape, then the restriction holds.", flavor: "The furrows froze overnight.", icon: "Leaf", fx: { motif: "anchor", pieces: ["p"] } },
+    { id: "hx4_early_frost", name: "Early Frost", description: "The first pawn your opponent tries to advance slips through as one escape. After that, for their next turn, none of their pawns may advance. Diagonal captures still work throughout, and the frost lifts if no pawn ever pushes.", flavor: "The furrows froze overnight.", icon: "Leaf", fx: { motif: "anchor", pieces: ["p"] } },
     escapeCurse(1, (m) => m.piece !== "p" || FILE(m.from) !== FILE(m.to)),
   ),
 ];
@@ -914,7 +974,7 @@ const T2: Buff[] = [
     },
   ),
   H2(
-    { id: "hx4_tea_break", name: "Tea Break", description: "On your opponent's next turn, only pieces within 2 squares of their king may move. The first piece from farther out slips through as one escape, then the restriction holds. Everyone else is at tea.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_tea_break", name: "Tea Break", description: "The first piece your opponent tries to move from more than 2 squares off their king slips through as one escape. After that, for their next turn, only pieces within 2 squares of their king may move. Everyone else is at tea, and the pot goes cold if nobody strays.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
     escapeCurseBoard(1, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;

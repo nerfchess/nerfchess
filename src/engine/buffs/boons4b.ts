@@ -1679,7 +1679,7 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_relay_baton", name: "Relay Baton", tier: 6, category: "tempo", icon: "Zap",
-      description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. Each later castle or promotion instead adds 8 seconds to your clock and grants 1 draft reroll.",
+      description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, and then the baton is dropped.",
       flavor: "Pass the baton. Keep running anyway." },
     {
       kind: "passive",
@@ -1689,17 +1689,26 @@ export const BOON_WAVE4B: Buff[] = [
         if (!inst.state.first) {
           // First handoff: the full extra move.
           inst.state.first = true;
+          inst.state.handoffs = 0;
           api.bs.extraMoves[api.me] += 1;
           return;
         }
-        // Later handoffs pay a smaller reward. The engine cannot tell a timed
-        // game from an untimed one, so grant both: the seconds (a no-op in
-        // untimed play) and a reroll (the untimed substitute, useful in both).
-        api.adjustClock({ addSelfSec: 8 });
+        // Later handoffs pay a reroll, and there are only two of them.
+        //
+        // This used to be uncapped: every castle or promotion after the first
+        // granted another reroll (and 8 more seconds) forever. Promotions are
+        // repeatable, and with a revive or summon card indefinitely so, which
+        // made this an unbounded draft-manipulation engine rather than a tempo
+        // card. The clock payout is gone with it.
+        const used = ((inst.state.handoffs as number) ?? 0) + 1;
+        inst.state.handoffs = used;
         api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+        if (used >= 2) inst.spent = true;
       },
       status: (inst) =>
-        inst.state.first ? "later handoffs pay time and a reroll" : "waiting on the handoff",
+        inst.state.first
+          ? `${Math.max(0, 2 - ((inst.state.handoffs as number) ?? 0))} handoffs left`
+          : "waiting on the handoff",
     },
   ),
   card(

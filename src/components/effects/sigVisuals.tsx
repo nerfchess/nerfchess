@@ -3165,6 +3165,65 @@ const ROCK_DROPS = [
 ];
 
 /** Landslide: boulders crash down and burst into rubble with a dust cloud. */
+/** I Hate My Ex (exsmash): a colossal fist comes down and flattens the board.
+ *  Bespoke rather than pointed at the wrecking ball, because this card is a
+ *  MUTUAL wipe and the scene has to read as "everything goes", not as a swing
+ *  aimed at one side: the fist lands dead centre, the ring goes out in every
+ *  direction, and a torn heart falls out of the wreckage. Oxblood and ash, so
+ *  it never reads as one of the gold apex pulls. */
+function ExSmashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <GodEvent
+        wash="rgba(122,28,32,0.34)"
+        rays="rgba(214,96,88,0.55)"
+        boom="rgba(236,222,210,0.9)"
+        flare="rgba(224,92,64,0.75)"
+        sparkFill="#c9c2b6"
+        sparkStroke="#3a2420"
+        motion="descend"
+        delayMs={delayMs}
+        figure={
+          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
+            {/* the forearm, driving down */}
+            <path
+              d="M17 0 H27 L28 16 H16 Z"
+              fill="rgba(150,44,44,0.9)"
+              stroke="#3a2420"
+              strokeWidth="1.1"
+              strokeLinejoin="round"
+            />
+            {/* the clenched fist */}
+            <path
+              d="M12 15 H32 C35 15 37 18 37 22 V29 C37 34 33 37 28 37 H16 C11 37 7 34 7 29 V22 C7 18 9 15 12 15 Z"
+              fill="rgba(184,58,50,0.95)"
+              stroke="#3a2420"
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+            />
+            {/* knuckle seams */}
+            <path
+              d="M14 23 V31 M21 22 V32 M28 23 V31"
+              stroke="rgba(58,36,32,0.7)"
+              strokeWidth="1"
+              strokeLinecap="round"
+            />
+            {/* the torn heart, thrown loose by the impact */}
+            <path
+              d="M22 40 L18.5 36.5 C17 35 17.5 32.5 19.5 32.5 C20.7 32.5 21.6 33.3 22 34 C22.4 33.3 23.3 32.5 24.5 32.5 C26.5 32.5 27 35 25.5 36.5 Z"
+              fill="rgba(232,196,190,0.9)"
+              stroke="#3a2420"
+              strokeWidth="0.8"
+            />
+            <path d="M22 33.6 L20.8 40" stroke="#3a2420" strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
+  }
+  return <DetonateBurst lead={lead} delayMs={delayMs} />;
+}
+
 function RockfallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // God-tier pass — THE MOUNTAIN WAKES: dust-light heaves up out of the board
   // and a colossal mountain titan shoulders over the crop, hurling boulders
@@ -12670,6 +12729,8 @@ export default function SignatureVisual({
       return <UnmakeBurst lead={lead} delayMs={delayMs} />;
     case "wreckingball":
       return <WreckingBallBurst lead={lead} delayMs={delayMs} />;
+    case "exsmash":
+      return <ExSmashBurst lead={lead} delayMs={delayMs} />;
     case "pinata":
       return <PinataBurst lead={lead} delayMs={delayMs} />;
     case "artillery":

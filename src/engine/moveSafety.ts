@@ -1,5 +1,5 @@
-import { isInCheck, makeMove } from "./board";
-import { makeContext, NerfGame } from "./game";
+import { makeMove } from "./board";
+import { buffAugmentedAttacks, gameInCheck, makeContext, NerfGame } from "./game";
 import { Move } from "./types";
 
 export type MoveRisk = "check" | "nerf" | null;
@@ -23,7 +23,14 @@ export function triggersOwnNerfLoss(game: NerfGame, move: Move): boolean {
 export function evaluateMoveRisk(game: NerfGame, move: Move): MoveRisk {
   const me = game.board.turn;
   const nextBoard = makeMove(game.board, move);
-  if (isInCheck(nextBoard, me)) return "check";
+  // gameInCheck, not the bare isInCheck: buffs can grant the opponent extra
+  // movement (a rook that also steps diagonally, a camel knight, an amazon),
+  // and those squares only appear in the attack set when the check test is
+  // given game context. The board's own check indicator already uses the
+  // buff-aware test, so the bare one here meant a king attacked ONLY through a
+  // buff-granted move lit up as in check but drew no warning on the move that
+  // hung it.
+  if (gameInCheck({ ...game, board: nextBoard }, me)) return "check";
   if (triggersOwnNerfLoss(game, move)) return "nerf";
   return null;
 }

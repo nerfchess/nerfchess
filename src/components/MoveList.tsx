@@ -1,9 +1,9 @@
 "use client";
 
-import { moveToSAN } from "@/engine/board";
-import { Move } from "@/engine/types";
+import { movesToSAN } from "@/engine/board";
+import { BoardState, Move } from "@/engine/types";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { type MutableRefObject, type ReactNode, useCallback, useEffect, useRef } from "react";
+import { type MutableRefObject, type ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 
 export function MoveList({
   moves,
@@ -13,6 +13,7 @@ export function MoveList({
   compact = false,
   showHeader = true,
   footer,
+  startBoard,
 }: {
   moves: Move[];
   currentPly?: number;
@@ -26,7 +27,14 @@ export function MoveList({
   compact?: boolean;
   showHeader?: boolean;
   footer?: ReactNode;
+  /** Position the move list starts from, when it isn't the standard opening
+   *  (the analysis board can be set up from an arbitrary FEN). Only used to
+   *  disambiguate the notation. */
+  startBoard?: BoardState;
 }) {
+  // Notation is disambiguated by replaying the line ("Nbd2" vs "Nfd2"), which
+  // costs one replay per list change rather than one per render.
+  const sans = useMemo(() => movesToSAN(moves, startBoard), [moves, startBoard]);
   // Build rows by ACTUAL move color, not index parity. This variant lets a
   // player move twice in a row (extra-move buffs like Onslaught), so pairing
   // moves[i]/moves[i+1] as white/black shifts every later move into the wrong
@@ -40,7 +48,7 @@ export function MoveList({
     let num = 1;
     let cur: { num: number; w: Cell; b: Cell } = { num, w: null, b: null };
     for (let i = 0; i < moves.length; i++) {
-      const cell: Cell = { san: moveToSAN(moves[i]), ply: i + 1 };
+      const cell: Cell = { san: sans[i], ply: i + 1 };
       if (moves[i].color === "w") {
         if (cur.w) {
           rows.push(cur);

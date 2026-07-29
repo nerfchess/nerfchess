@@ -284,3 +284,307 @@ Owner follow-ups on PR #445 (same branch). OPEN.
 - Animations: summon/morph/convert/promote signature cards fell back to a generic poof (or nothing) because the board suppressed their bespoke board-wide lead unconditionally; the suppress now applies only when a removal lead was actually staged. Oversize concern audited in both the DOM play layer and canvas VFX layer: already correct (one-cell parents, square-relative sizing).
 - Draft picker selection ring: on hover-capable devices the gold ring sat 3px below the lifted card; the ring now lifts in lockstep (and the minimized panel's ring rides the card itself via glow).
 - Draft lag: profiling showed the buff-draft ambient dungeon stage (23 composited layers) was the sole in-game jank source on weak GPUs (~14fps during drafts, 60fps everywhere else). Starfields now paint once, the ambient set follows the FX intensity dial, and sustained sub-30fps auto-downgrades the ambience for the session. Verified with CDP tracing before/after; full battery green.
+
+---
+
+## 2026-07-28 14:11 EDT (sprint overhaul: dead cards, notation, animation reliability, draft escalation, CI)
+
+Broad quality pass. Every item below was verified against a harness or a
+before/after measurement. PR #449. OPEN.
+
+Cards that shipped doing nothing:
+- The escape-curse helpers turned the restriction OFF while the escape was
+  unspent and ticked the duration down anyway, so at turns:1 the opponent's
+  first move burned the whole duration and the curse expired before it could
+  apply. Six cards were live in the draft pool with zero effect, verified
+  against a no-card control: hx4_early_frost (promises "your opponent's pawns
+  cannot advance"; Black pushed a pawn twice unimpeded), hx4_hopscotch,
+  hx4_hiccups, hx4_matins_bell, hx4_tea_break, and ov_paperwork_avalanche
+  (reactive freeze at turns:1 during the opponent's own move, pruned by the
+  shared post-move tick before it held anything: the same class fixed for five
+  cards on 2026-07-20 and reintroduced by the later wave).
+- Machinery fixed three ways: the restriction is live from the moment the curse
+  lands (only the first affected piece keeps its forbidden moves, once);
+  spending the escape no longer ticks the duration; and the duration only runs
+  once the curse has actually bitten, bounded by a patience window so an
+  unfired curse fades instead of lurking. The five descriptions promised
+  behavior that was unachievable as written and were rewritten.
+- New gate: scripts/test-card-impact.ts (npm run test:card-impact). Plays a
+  scripted provocation line with and without the card and fails if the runs are
+  identical. test:lab only ever asked whether a card threw, which is why all six
+  passed every harness for weeks. Carries a self-check so divergence cannot be
+  vacuous.
+
+Notation:
+- moveToSAN emitted no PGN disambiguator, so two knights that both reached d2
+  both rendered "Nd2". The move list was ambiguous and every PGN from the
+  Download PGN button was unreplayable by any reader. Added file/rank/full-square
+  disambiguation per the spec, computed by replaying the line, with a divergence
+  check so a board-rewriting card degrades to the bare form rather than printing
+  a wrong origin hint. New shared helpers movesToSAN and sanLabels; the mobile
+  drawer and clip captions now share the numbering rule instead of halving the
+  ply count (which extra-move cards break).
+- Analysis board numbered moves by ply parity, so any FEN with black to move
+  numbered the whole line wrong and never showed the leading "N...".
+- gameToPGN emitted no SetUp/FEN tags, so a PGN exported from a custom position
+  replayed from the standard opening; numbering also restarted at 1.
+- New gate: scripts/test-san.ts (npm run test:san), asserting no two legal moves
+  in a position share a SAN, over positions forcing each disambiguation form
+  plus a 5684-position random sweep.
+
+Chess correctness:
+- evaluateMoveRisk used the bare isInCheck while the board's check indicator
+  uses the buff-aware gameInCheck, so a king attacked only through a
+  buff-granted move lit up as in check but drew no warning on the move that
+  hung it.
+- makeMove cleared castling rights off move.capturedSquare alone; a
+  card-synthesised capture without it left the right standing.
+
+Animations:
+- New MotionNotice: followSystemMotion defaults on and folds the OS
+  reduced-motion flag into html[data-anim=off], a hard kill switch. Phones
+  enable reduced motion for battery saving and accessibility defaults, so a
+  large share of players saw no card animations at all with nothing explaining
+  it. Shown once, only when the OS is the reason, queued through the same UI
+  interrupt slot as LagWatch so it cannot cover a draft.
+- .fx-one-shot scaled its 3.4s safety fade by --fx-dur, but roughly a third of
+  the one-shot declarations never scale, so at the minimum setting the slot
+  faded at 1.39s over art still running 2.8s: apex plays visibly cut in half.
+  Clamped with max(1, ...).
+- The zone-signature path (freeze, walnut, shield, kingSafe, stun, empower,
+  rally, summon) mounted without fx-one-shot, so it had neither the hard fade
+  nor the animations-off gate.
+- resolveCardVfx was called without the generated family on the floor-fallback
+  and zone paths, so roughly a thousand generated-signature cards got the same
+  pale-blue burst. The floor fallback is exactly the path a quiet card takes.
+- LagWatch's "Smooth it out" promised to trim the heaviest effects but only set
+  perfMode and animationSpeed, neither of which touches card-effect load. It now
+  also eases the FX dial to Calm, downward only.
+- Per-card structural signets in basicPlays: 381 cards played a geometrically
+  identical scene (35 on HoofSpring, 27 on GlintArc, 25 on SigilRing). Each now
+  carries a constellation varying by arrangement (orbit, arc, column, corners,
+  spiral, cross) and count, 36 distinct geometries, assigned so no two cards
+  sharing a template share one. Shared flagships 381 to 86, tier>=5 63 to 42,
+  baseline ratcheted. The remaining 86 are core SIGNATURES sharing a named
+  visual, which needs per-card variation inside SignatureOverlay; left for a
+  follow-up rather than papered over.
+- audit-animations could not report an F4 violation (fail() ran before the const
+  it appends to was initialized), and its flourish parser could not see a signet
+  followed by another argument.
+
+Draft:
+- TIER_CURVE was [1,2,3,5,7] with later rounds pinned at the cap and a flat 45%
+  slip gate, so every round from the fifth on rolled from one frozen
+  distribution (20k seeds: T6 51%, T7 40%, T8 10%). A game runs about eleven
+  drafts per player, so six or seven were statistically identical. The curve now
+  runs to the tier-8 cap and the slip gate eases off late (45%, 34% from round
+  6, 26% from round 8). Rounds 1 to 5 are byte-identical; round 8 onward lands
+  tier 8 about 64% of the time. REPLAY_VERSION 10 to 11 accordingly.
+
+Performance:
+- countRepetitions built a position key for every position in the game. Only
+  positions since the last irreversible move can match, so the earlier keys are
+  skipped: 0.43ms to 0.17ms on a 150-ply board. Matters most in bulk replay,
+  which the Durable Object does on reconnect, spectate, and every bot move.
+  Pinned differentially against the naive scan in test:san.
+- cardIcon.ts statically imported ALL_BUFFS and ALL_NERFS for a dev-only
+  warning, pulling the whole engine card library and its transitive buff tree
+  into every chunk touching the file, including /codex. Now a dynamic import the
+  production build drops.
+- Board prefetched the ~40k-line signature chunk on every mount, including plain
+  bot games and the analysis board where no card can fire. Gated on the board
+  having a draft state and deferred to idle.
+- /game/[id] imported GameOver statically, defeating the dynamic() split in
+  OnlineMatch, which is the only place OnlineMatch mounts.
+
+CI:
+- Half the suite passed locally but never gated a PR. New parallel content job
+  runs test:animations, test:sound, test:card-registry, test:card-audit,
+  test:emdash, the three draft checks, test:buff-purity and test:balance-fixes;
+  glicko, san and card-impact join the engine job. Dropped a stale tracked
+  build artifact (dist-server/src/engine/moveSafety.js).
+
+Recorded, not done: OnlineMatch builds the Board's visual prop as a fresh object
+literal every render, defeating around thirty downstream memos and re-rendering
+all 64 squares on every clock frame. A useMemo there is a rules-of-hooks
+violation because the component early-returns above that point, so it needs a
+component split. Highest-value remaining client perf win.
+
+Verified: tsc clean, eslint clean, and rules, nerfs, san, card-impact,
+passive-registry, animations, emdash, sound, card-registry, card-audit,
+draft-fairness, draft-sequence, draft-timeout, buff-purity, balance-fixes,
+desync, apex, snapshot, glicko, spectator-sync, tv-spectator, replay-spectate,
+archive-replay and lab all green. buildVersion sprint-overhaul-1. Visual and
+audio changes want a preview-deploy eyeball (the build env cannot render).
+
+---
+
+## 2026-07-28 19:40 EDT (sprint 2: rating bug, board render, rounded corners, I Hate My Ex)
+
+Continues PR #449.
+
+House bot ratings disagreeing between TV and the profile (reported: 2600 on TV,
+2300 on the profile):
+- Root cause: games simulated on the OCI arena carry a seat rating that is a
+  compile-time constant, houseSeedRating(persona), baked from the persona's name
+  and skill (arena-service/game.ts:74). The arena service has no database. That
+  constant rode through externalLiveGames and buildExternalMatch into
+  playersPayload unvalidated. refreshSeatRatings does exactly this
+  reconciliation, but only for matches the DO runs itself. The constant is
+  numerically the frozen legacy users.rating column that ratingSql.ts already
+  names as the root of the "ratings don't match between pages" reports.
+- The gap is unbounded: a /mod/house override writes the database and the arena
+  cannot see it; a roster revision reaching one deploy and not the other shifts
+  one side by the full uplift spread (300 to 400, matching the report); and arena
+  games are rated, so the real bucket drifts every game.
+- Both ingest points now resolve the seat against user_ratings for the mode being
+  played, via the houseLiveInfo cache that already holds that map. The lobby path
+  warms the cache so a fresh DO instance never serves one stale payload.
+- Same block: buildExternalMatch hardcoded rd:150, above PROVISIONAL_RD (110), so
+  every arena bot showed a provisional "?" beside a rating it had held for
+  hundreds of games (house accounts seed at RD 60). And the seat name was the
+  baked persona name, so a /mod/house rename never reached TV.
+- Decision extracted to src/lib/server/arenaSeat.ts so it is testable without a
+  Durable Object; fallback is per FIELD, since a roster entry can have a
+  canonical username but no rating row for the mode. New gate: test:arena-seat.
+
+Board render (the 64-square problem):
+- Board keys ~30 memos and all 64 memoized squares on the identity of the visual
+  prop and its fields; OnlineMatch built it as a fresh literal in JSX every
+  render, so every clock frame re-rendered the whole board. Last session's useMemo
+  attempt was a rules-of-hooks violation and was reverted.
+- The component split that seemed necessary is not: the early returns are at 2059
+  and 2187 but the last hook is at 1924, so a memo above them is unconditionally
+  reached and can guard on !game itself. Keying on game identity is safe for the
+  reason `moves` already relies on: setGame is called in one place and every call
+  site passes a fresh shallow copy.
+- Memoizing visual alone would have changed nothing; checkSquares and the bare []
+  literals behind legalMoves/opponentMoves/premoves feed the same squareEnv
+  dependency list and are stabilized too. checkSquares' memo also removes two full
+  gameInCheck move generations per render in draft games.
+
+Rounded corners:
+- Correction to an earlier claim of 1,230 violations: globals.css already clamps
+  every non-rounded-full class to 1px, so the ~190 rounded-sm/md/lg uses render
+  square today and were left alone.
+- The real violations are the two escape hatches: component stylesheets (the
+  lobby's primary CTA carried a 9px arch, the secondary buttons 6px, the draft
+  reveal ring 6px on a square card) and rounded-full on padded elements (the
+  AccountChip in the top nav, BuffDock buttons, tier badge, drag handle, toggle
+  track, four profile badges). All squared; true dots keep their circles.
+- New gate: test:rounded. Two passes, since the violations live where an AST walk
+  over TSX cannot see them. Writing it first found six pills missed by reading.
+
+I Hate My Ex: was a tier 1 card freezing one pawn each side. Now destroys every
+piece on the board, both armies, leaving only the two kings. Tier 1 to 8, passive
+to instant. Removal is `uncounted` (the whole-board-rewrite case) so the wreckage
+never feeds the revive pools; kings survive so the game stays resolvable. A
+comeback card by construction. New bespoke `exsmash` animation (a colossal fist
+flattens the board, oxblood and ash) rather than reusing the wrecking ball, which
+would have been two cards sharing one flagship.
+
+Mobile draft readability (from a phone screenshot): the scrim was a flat 20% dim,
+so on a phone the masthead, avatar and clocks read straight through the timer chip
+and the clock notice. Now 70% below the sm breakpoint, unchanged on desktop. The
+clock notice was a full sentence in wide-tracked uppercase sharing a flex row with
+the clock readouts, breaking across three lines; it now has its own row in
+sentence case. Dropped backdrop-filter from the timer chip (banned, and it sat
+over the animated ambient stage recompositing every frame).
+
+The three signature cards (I Love My GF, I Love Cami, Joseph Leung) pull with
+their own rose-gold radiance, warmer than the tier 9 gold and tier 10 cyan.
+Presentation only, outside the engine. I Love Cami tier 6 to 7.
+
+docs/marketing-plan.md added.
+
+Known outstanding (investigated, deliberately not half-done): the clock rebalance
+to 1-2 cards per tier. 110 cards touch the clock; 69 are clock-only and 41 carry
+it as a rider, and a sample of five showed five different clause shapes in the
+descriptions, so a regex sweep would mangle them. It needs per-card judgment.
+
+Verified: tsc clean, eslint clean, full battery green (san, card-impact,
+arena-seat, rules, nerfs, passive-registry, animations, emdash, rounded, sound,
+card-registry, card-audit, draft-*, buff-purity, balance-fixes, desync, apex,
+snapshot, glicko, spectator-sync, tv-spectator, replay-spectate, archive-replay,
+lab) plus all 26 Playwright e2e tests. buildVersion sprint-overhaul-1.
+
+---
+
+## 2026-07-28 23:20 EDT (sprint 3: the misaligned draft box, clock tier 1, exploit, mobile leaderboard)
+
+Continues PR #449.
+
+The misaligned box players kept reporting: found by RENDERING it rather than
+reading CSS. Drove headless Chromium to the reporting phone's viewport (360x808)
+and dumped the geometry of every bordered element in the draft overlay. It was
+the countdown chip, and it was not internally misaligned at all: a separate
+217x66 bordered box at y=51, above a panel that started at y=127. Two bordered
+rectangles stacked with a gap, the upper one overlapping the masthead and
+belonging to nothing on screen. On a taller phone, where the column stops
+fitting and the overlay centers it, that box rides over the logo and player row.
+Deleted rather than nudged: the countdown now sits inline in the panel header
+beside the label it governs (26px dial plus the seconds, no chrome of its own).
+"Choose within" went with it; a dial counting down next to "Opening pick" does
+not need to announce itself. Verified by re-rendering: the draft column and the
+panel frame are now the same box, and no separately bordered timer element
+remains.
+
+That deletion took two strings the e2e suite asserts on, and only the smoke test
+was run locally, so CI caught it. "Your timer starts when the cards are ready" is
+real reassurance and moved into the panel body under the title, where a sentence
+fits; its test stands unchanged. The "Choose within" assertions were replaced
+with the decision timer's ROLE, which is what they should have used: a countdown
+is identified by role="timer" and its aria-label, not by wording a redesign can
+legitimately change.
+
+Draft polish:
+- The compact panel's Confirm button appeared on selection, and since every
+  button in that row is flex-1, inserting a third resized and re-wrapped Reroll
+  and Bank the instant you clicked a card, moving the row under the cursor
+  mid-click. Always rendered and merely disabled now, matching the full overlay.
+- The lock-in bar transitioned width at 10Hz for the whole 20 second window,
+  relayouting inside an overflow-hidden parent on every tick. Now scaleX.
+- The wall torches were gated on reduced motion only, so twelve elements running
+  ten infinite animations kept burning after useAmbientAutoCalm had measured the
+  device as too slow, and when the player chose Calm by hand. They follow the FX
+  dial now. Related: the panel's resize listener was keyed on dragPos, so
+  dragging re-registered it on every pointermove.
+- The most blocking surface in the product had no dialog semantics at all: a
+  keyboard user tabbed straight out of a forced decision into the board. Now a
+  labelled dialog with focus contained, pulled in on open (only when focus is
+  outside) and restored on close. Escape peeks at the board, matching the Hide
+  button, rather than closing: a draft cannot be dismissed.
+- The reduced-motion notice added last session could render over the draft
+  cards. It queues through the UI interrupt slot, but that only defers to holds
+  that already exist and its effect runs on mount, before the opening draft has
+  pushed one. It now waits before asking for a slot.
+
+Clock rebalance, tier 1: 13 cards down to 2. Kept Polite Cough and Pinch of Sand,
+where time IS the card. Eight were pure riders on cards already complete without
+them. Three had the clock as their actual payoff and got a board payoff instead:
+Loyal Pawn (the early promotion arrives protected for a turn), Quiet March (the
+retreating pawn cannot be captured next turn), Name Tag (whichever piece takes
+Gary walks away clean). augmentThenResolve now passes the resolving move to its
+callback, which is what lets the first two shield the square the piece landed on.
+Doing this one card at a time was the right call: two of eleven turned out to be
+the card's entire payoff rather than a rider, and a regex would have gutted them.
+
+Exploit sweep over resource-granting hooks: bn4_relay_baton granted a draft
+reroll and 8 seconds on EVERY castle or promotion after the first, uncapped and
+never spent. Promotions repeat, and with a revive or summon card indefinitely, so
+a tempo card was an unbounded draft-manipulation engine. Capped at two later
+handoffs. Other flagged candidates were false positives bounded by spendOnVia.
+
+Mobile leaderboard, rendered at 360x808 with a stubbed API (the dev database has
+no rated games, so the podium never mounts locally): every podium name was
+truncated to a stub on ~100px risers, the champion's games count wrapped while
+its neighbours did not so the columns misaligned, and the table's W/L/D column
+took 84px of a 336px row leaving names ~144px. Names now wrap instead of
+truncating, the count is nowrap, and W/L/D hides below sm where the full record
+is a tap away on the profile.
+
+Verified: tsc, eslint, full battery, and all 26 Playwright e2e tests green.
+
+Still outstanding: clock tiers 2 to 8 (99 cards), confusing-text simplification,
+weak-card buffs, cosmetic-only cards, the UI transition-token sweep, and
+AnimatePresence on the draft's unmount paths.

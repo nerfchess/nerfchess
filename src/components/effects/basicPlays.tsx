@@ -102,6 +102,146 @@ function Stage({ children }: { children: ReactNode }) {
    a ring pulse for settlers/stampers, a shard scatter for droppers/risers, a
    shine sweep for unfurlers/flickers. Neutral warm-white so it reads on every
    palette; still NO shockwave and NO wash (basic-band rules hold). */
+/* --- Per-card structural signet ------------------------------------------
+   The templates below are shared by design (twenty scenes across hundreds of
+   cards), and palette + face icon already make each card's dressing unique.
+   What they did NOT differ in was STRUCTURE: 381 cards played a geometrically
+   identical scene, which is what makes a draft feel repetitive even when every
+   card technically has its own art.
+
+   A signet is a small constellation of marks layered over the lead, and it is
+   the structural axis: how many marks, in what arrangement, moving which way.
+   Two cards on the same template with different signets no longer trace the
+   same shapes. Named `<pattern><count>` (orbit5, arc3, column6...), assigned
+   per card in the PLAYS table below so every card in a template group differs.
+   Transform/opacity only, and it rides the same bsp- animations-off guard. */
+type SignetPattern = "orbit" | "arc" | "column" | "corners" | "spiral" | "cross";
+
+/** Marks laid out for one signet: position (percent of the emblem box), the
+ *  animation class, and a per-mark delay so the constellation resolves in
+ *  sequence rather than all at once. */
+function signetMarks(
+  pattern: SignetPattern,
+  count: number,
+): { left: string; top: string; cls: string; delay: number; rot: number }[] {
+  const out: { left: string; top: string; cls: string; delay: number; rot: number }[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    const step = i * 42;
+    switch (pattern) {
+      case "orbit": {
+        const a = t * Math.PI * 2;
+        out.push({
+          left: `${50 + Math.cos(a) * 34}%`,
+          top: `${50 + Math.sin(a) * 34}%`,
+          cls: "bsp-fl-orbit",
+          delay: step,
+          rot: (a * 180) / Math.PI,
+        });
+        break;
+      }
+      case "arc": {
+        const a = Math.PI + t * Math.PI; // a fan across the top
+        out.push({
+          left: `${50 + Math.cos(a) * 38}%`,
+          top: `${44 + Math.sin(a) * 26}%`,
+          cls: "bsp-fl-arc",
+          delay: step,
+          rot: (a * 180) / Math.PI + 90,
+        });
+        break;
+      }
+      case "column":
+        out.push({
+          left: `${50 + (i % 2 === 0 ? -9 : 9)}%`,
+          top: `${78 - t * 62}%`,
+          cls: "bsp-fl-column",
+          delay: step,
+          rot: 0,
+        });
+        break;
+      case "corners": {
+        const a = Math.PI / 4 + t * Math.PI * 2;
+        out.push({
+          left: `${50 + Math.cos(a) * 40}%`,
+          top: `${50 + Math.sin(a) * 40}%`,
+          cls: "bsp-fl-corners",
+          delay: step,
+          rot: (a * 180) / Math.PI,
+        });
+        break;
+      }
+      case "spiral": {
+        const a = t * Math.PI * 3;
+        const r = 14 + t * 26;
+        out.push({
+          left: `${50 + Math.cos(a) * r}%`,
+          top: `${50 + Math.sin(a) * r}%`,
+          cls: "bsp-fl-spiral",
+          delay: step,
+          rot: (a * 180) / Math.PI,
+        });
+        break;
+      }
+      case "cross": {
+        const arm = i % 4;
+        const reach = 26 + Math.floor(i / 4) * 16;
+        out.push({
+          left: `${50 + (arm === 0 ? reach : arm === 2 ? -reach : 0)}%`,
+          top: `${50 + (arm === 1 ? reach : arm === 3 ? -reach : 0)}%`,
+          cls: "bsp-fl-cross",
+          delay: step,
+          rot: arm * 90,
+        });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+/** Parse a signet name ("orbit5") into its pattern and count. */
+function parseSignet(name: string): { pattern: SignetPattern; count: number } | null {
+  const m = /^(orbit|arc|column|corners|spiral|cross)([3-8])$/.exec(name);
+  return m ? { pattern: m[1] as SignetPattern, count: Number(m[2]) } : null;
+}
+
+function Signet({
+  name,
+  palette,
+  delayMs,
+}: {
+  name: string;
+  palette: Palette;
+  delayMs: number;
+}) {
+  const spec = parseSignet(name);
+  if (!spec) return null;
+  const marks = signetMarks(spec.pattern, spec.count);
+  return (
+    <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+      {marks.map((mk, i) => (
+        <span
+          key={i}
+          className={`${mk.cls} absolute block`}
+          style={{
+            left: mk.left,
+            top: mk.top,
+            width: "9%",
+            height: "9%",
+            marginLeft: "-4.5%",
+            marginTop: "-4.5%",
+            borderRadius: spec.pattern === "corners" || spec.pattern === "cross" ? "0" : "50%",
+            background: i % 2 === 0 ? palette[1] : palette[0],
+            transform: `rotate(${mk.rot}deg)`,
+            animationDelay: `${delayMs + mk.delay}ms`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 type FlourishKind = "pulse" | "shards" | "sweep";
 const FLOURISH_BY_CLS: Record<string, FlourishKind> = {
   "bsp-settle": "pulse",
@@ -1614,11 +1754,16 @@ const FX_BY_TEMPLATE = new Map<ComponentType<TemplateProps>, FxKind>([
  * Leads open on the shared TellCue for TELL_MS, then the template's whole
  * choreography (strike + settle) plays shifted after it — three beats total.
  * Per-square TargetHits stay immediate (zone squares are followers). */
+/** `signet` is the per-card STRUCTURAL variation (see Signet above): cards
+ *  sharing a template used to trace geometrically identical scenes, and this is
+ *  what separates them. It sits before `bold` in the argument list because the
+ *  animation registry reads it straight out of this source file. */
 function B(
   Template: ComponentType<TemplateProps>,
   palette: Palette,
   id: string,
   config: SigPlugin["config"],
+  signet?: string,
   bold = false,
 ): SigPlugin {
   const def = BUFF_BY_ID[id];
@@ -1634,6 +1779,12 @@ function B(
             <TellCue kind={fx} palette={palette} delayMs={delayMs} />
           </Stage>
           <Template palette={palette} Icon={Icon} bold={bold} lead={lead} delayMs={delayMs + TELL_MS} />
+          {/* Sibling of the emblem, NOT inside Stage: the stage canvas spans
+              ~14 squares, so signet radii expressed there would throw the marks
+              several squares off the board. Here the percentages are the cast
+              square's own box, which is where a constellation around the emblem
+              belongs. */}
+          {signet && <Signet name={signet} palette={palette} delayMs={delayMs + TELL_MS} />}
         </>
       );
     },
@@ -1644,641 +1795,641 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- SigilRing --------------------------------------------------------- */
   // Cornerstone (t1 protection)
-  cornerstone: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "cornerstone", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "aegis" }),
+  cornerstone: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "cornerstone", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "aegis" }, "column3"),
   // Firm Footing (t1 protection)
-  firm_footing: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "firm_footing", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  firm_footing: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "firm_footing", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "cross3"),
   // Guarded King (t1 protection)
-  guarded_king: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "guarded_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis" }),
+  guarded_king: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "guarded_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis" }, "column4"),
   // Holy Hell (t1 protection)
-  holy_hell: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "holy_hell", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }),
+  holy_hell: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "holy_hell", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }, "spiral4"),
   // Loose Pawn (t1 protection)
-  loose_pawn: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "loose_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }),
+  loose_pawn: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "loose_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }, "arc5"),
   // Pawn Shield (t1 protection)
-  pawn_shield: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "pawn_shield", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  pawn_shield: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "pawn_shield", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "column5"),
   // Steady Hand (t1 protection)
-  steady_hand: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "steady_hand", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis" }),
+  steady_hand: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "steady_hand", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis" }, "corners6"),
   // Bulwark (t2 protection)
-  bulwark: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "bulwark", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  bulwark: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "bulwark", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "orbit3"),
   // Fork Guard (t2 protection)
-  fork_guard: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "fork_guard", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "aegis" }),
+  fork_guard: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "fork_guard", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "aegis" }, "orbit4"),
   // Reinforce (t2 protection)
-  reinforce: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "reinforce", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  reinforce: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "reinforce", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "spiral5"),
   // Screen (t2 protection)
-  screen: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "screen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }),
+  screen: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "screen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, "cross5"),
   // Shielded Advance (t2 protection)
-  shielded_advance: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "shielded_advance", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }),
+  shielded_advance: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "shielded_advance", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis" }, "orbit6"),
   // Sidestep King (t2 protection)
-  sidestep_king: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "sidestep_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }),
+  sidestep_king: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "sidestep_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, "column6"),
   // Chain Mail (t3 protection)
-  chain_mail: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "chain_mail", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  chain_mail: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "chain_mail", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "arc3"),
   // Deflect (t3 protection)
-  deflect: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "deflect", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  deflect: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "deflect", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "corners3"),
   // Fortress (t3 protection)
-  fortress: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "fortress", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  fortress: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "fortress", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "arc4"),
   // Iron Bishop (t3 protection)
-  iron_bishop: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "iron_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }),
+  iron_bishop: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "iron_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, "cross4"),
   // Phalanx (t3 protection)
-  phalanx: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "phalanx", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  phalanx: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "phalanx", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "corners5"),
   // Sigil Ward (t3 protection)
-  wa_sigil_ward: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "wa_sigil_ward", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }),
+  wa_sigil_ward: B(SigilRing, ["#5fc9b0","#e3d0ff","#1c3a40"], "wa_sigil_ward", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "spiral6"),
   // Duelist (t4 protection)
-  duelist: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "duelist", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, true),
+  duelist: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "duelist", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, "spiral3", true),
   // Hold the Bridge (t4 protection)
-  hold_the_bridge: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "hold_the_bridge", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, true),
+  hold_the_bridge: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "hold_the_bridge", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, "corners4", true),
   // Iron Wall (t4 protection)
-  iron_wall: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "iron_wall", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
+  iron_wall: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "iron_wall", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "orbit5", true),
   // Shieldmaiden (t4 protection)
-  shieldmaiden: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "shieldmaiden", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
+  shieldmaiden: B(SigilRing, ["#7fd8a8","#fff2c9","#1c4a2c"], "shieldmaiden", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "arc6", true),
   // Warding Circle (t4 protection)
-  warding_circle: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "warding_circle", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, true),
+  warding_circle: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "warding_circle", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe" }, "cross6", true),
   // Watermelon Rind (t4 protection)
-  watermelon_rind: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "watermelon_rind", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, true),
+  watermelon_rind: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "watermelon_rind", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield" }, "orbit7", true),
   // High Ground (TIER 7 protection — bespoke full-board takeover, not a template)
   ww_high_ground: { config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis" }, Render: HighGroundTakeover },
 
   /* --- RuneStamp --------------------------------------------------------- */
   // Butterfingers (t1 hex)
-  butterfingers: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "butterfingers", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades" }),
+  butterfingers: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "butterfingers", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades" }, "column3"),
   // Cold Feet (t1 hex)
-  cold_feet: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "cold_feet", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }),
+  cold_feet: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "cold_feet", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }, "corners3"),
   // Crossed Wires (t1 hex)
-  crossed_wires: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "crossed_wires", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }),
+  crossed_wires: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "crossed_wires", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }, "spiral3"),
   // Foggy Glasses (t1 hex)
-  foggy_glasses: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "foggy_glasses", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades" }),
+  foggy_glasses: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "foggy_glasses", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades" }, "cross3"),
   // Royal Restraint (t1 hex)
-  royal_restraint: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "royal_restraint", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades" }),
+  royal_restraint: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "royal_restraint", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades" }, "column4"),
   // Stage Fright (t1 hex)
-  stage_fright: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "stage_fright", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", source: "slow" }),
+  stage_fright: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "stage_fright", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", source: "slow" }, "orbit5"),
   // Blunted Lance (t2 hex)
-  blunted_lance: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "blunted_lance", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }),
+  blunted_lance: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "blunted_lance", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }, "arc3"),
   // Lame Horses (t2 hex)
-  lame_horses: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "lame_horses", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }),
+  lame_horses: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "lame_horses", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades" }, "arc4"),
   // Rusted Hinges (t2 hex)
-  rusted_hinges: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "rusted_hinges", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "shades" }),
+  rusted_hinges: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "rusted_hinges", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "shades" }, "corners4"),
   // Safe Passage (t2 hex)
-  safe_passage: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "safe_passage", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }),
+  safe_passage: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "safe_passage", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }, "spiral4"),
   // Timid King (t2 hex)
-  timid_king: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "timid_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades" }),
+  timid_king: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "timid_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades" }, "arc5"),
   // Sown Salt (t3 hex)
-  sown_salt: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "sown_salt", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }),
+  sown_salt: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "sown_salt", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades" }, "cross4"),
   // Backseat Driver (t3 hex)
-  wc_backseat_driver: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "wc_backseat_driver", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", source: "slow" }),
+  wc_backseat_driver: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "wc_backseat_driver", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", source: "slow" }, "column5"),
   // Atomic Captures (Small) (t4 attack)
-  atomic_captures_small: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "atomic_captures_small", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  atomic_captures_small: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "atomic_captures_small", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "orbit3", true),
   // Hex Doll (t4 hex)
-  hex_doll: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "hex_doll", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  hex_doll: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "hex_doll", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "orbit4", true),
   // Butterfingers (t4 hex)
-  wc_butterfingers: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "wc_butterfingers", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades" }, true),
+  wc_butterfingers: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "wc_butterfingers", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades" }, "corners5", true),
   // Backdraft (t4 attack)
-  we_backdraft: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "we_backdraft", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  we_backdraft: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "we_backdraft", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "spiral5", true),
 
   /* --- ChainLash --------------------------------------------------------- */
   // Cold Open (t1 hex)
-  cold_open: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "cold_open", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }),
+  cold_open: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "cold_open", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }, "orbit4"),
   // Heavy Boots (t1 hex)
-  heavy_boots: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "heavy_boots", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }),
+  heavy_boots: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "heavy_boots", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, "column4"),
   // Knock Knees (t1 hex)
-  knock_knees: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "knock_knees", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }),
+  knock_knees: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "knock_knees", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }, "spiral4"),
   // Molasses (t1 hex)
-  molasses: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "molasses", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }),
+  molasses: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "molasses", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }, "column5"),
   // Slippery Grip (t1 hex)
-  slippery_grip: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "slippery_grip", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }),
+  slippery_grip: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "slippery_grip", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }, "orbit6"),
   // Stiff Joints (t1 hex)
-  stiff_joints: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "stiff_joints", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }),
+  stiff_joints: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "stiff_joints", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }, "column6"),
   // Anchor (t2 protection)
-  anchor: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "anchor", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "wall" }),
+  anchor: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "anchor", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "wall" }, "arc3"),
   // Butter Bishops (t2 hex)
-  butter_bishops: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "butter_bishops", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }),
+  butter_bishops: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "butter_bishops", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }, "cross3"),
   // Leaden Queen (t2 hex)
-  leaden_queen: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "leaden_queen", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }),
+  leaden_queen: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "leaden_queen", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }, "orbit5"),
   // Seized Axles (t2 hex)
-  seized_axles: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "seized_axles", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }),
+  seized_axles: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "seized_axles", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }, "spiral5"),
   // Short Leash (t2 hex)
-  short_leash: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "short_leash", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }),
+  short_leash: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "short_leash", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }, "cross5"),
   // Trench Line (t2 hex)
-  trench_line: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "trench_line", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }),
+  trench_line: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "trench_line", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, "corners6"),
   // Anchored Rooks (t3 hex)
-  anchored_rooks: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "anchored_rooks", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }),
+  anchored_rooks: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "anchored_rooks", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall" }, "column3"),
   // Blinkered Bishops (t3 hex)
-  blinkered_bishops: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "blinkered_bishops", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }),
+  blinkered_bishops: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "blinkered_bishops", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall" }, "corners3"),
   // Leaden Crown (t3 hex)
-  leaden_crown: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "leaden_crown", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }),
+  leaden_crown: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "leaden_crown", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall" }, "cross4"),
   // Magnet (t3 item)
-  magnet: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "magnet", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  magnet: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "magnet", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "arc5"),
   // Pawn Nerf (t3 hex)
-  pawn_nerf: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "pawn_nerf", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }),
+  pawn_nerf: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "pawn_nerf", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, "corners5"),
   // Pin Breaker (t3 movement)
   // Spooked Steeds (t3 hex)
-  spooked_steeds: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "spooked_steeds", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }),
+  spooked_steeds: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "spooked_steeds", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }, "arc6"),
   // Static Field (t3 protection)
-  we_static_field: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "we_static_field", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }),
+  we_static_field: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "we_static_field", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall" }, "cross6"),
   // Abandoned Post (t4 hex)
-  abandoned_post: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "abandoned_post", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, true),
+  abandoned_post: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "abandoned_post", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "orbit3", true),
   // Blockade (t4 tempo)
-  blockade: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "blockade", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, true),
+  blockade: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "blockade", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, "spiral3", true),
   // Frozen Furrows (t4 hex)
-  frozen_furrows: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "frozen_furrows", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, true),
+  frozen_furrows: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "frozen_furrows", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall" }, "arc4", true),
   // Heavy Shackles (t4 hex)
-  heavy_shackles: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "heavy_shackles", { ordering: "radial", staggerMs: 0, victims: ["q","r"], hasLead: true, sound: "wall" }, true),
+  heavy_shackles: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "heavy_shackles", { ordering: "radial", staggerMs: 0, victims: ["q","r"], hasLead: true, sound: "wall" }, "corners4", true),
   // Quicksand Patch (t4 tempo)
-  wc_quicksand_patch: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "wc_quicksand_patch", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "walnut" }, true),
+  wc_quicksand_patch: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "wc_quicksand_patch", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "walnut" }, "spiral6", true),
 
   /* --- ColdSnap ---------------------------------------------------------- */
   // Cold Snap (t1 hex)
-  cold_snap: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "cold_snap", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  cold_snap: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "cold_snap", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "arc3"),
   // Hard Reset (t2 hex)
-  hard_reset: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "hard_reset", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  hard_reset: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "hard_reset", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "orbit4"),
   // Pinned Down (t2 hex)
-  pinned_down: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "pinned_down", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  pinned_down: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "pinned_down", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "column4"),
   // Frost Nip (t2 tempo)
-  we_frost_nip: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "we_frost_nip", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  we_frost_nip: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "we_frost_nip", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "cross5"),
   // Frost (t3 tempo)
-  frost: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "frost", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  frost: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "frost", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "corners3"),
   // Frostbite (t3 hex)
-  frostbite: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "frostbite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  frostbite: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "frostbite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "spiral3"),
   // Snap Freeze (t3 tempo)
-  snap_freeze: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "snap_freeze", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  snap_freeze: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "snap_freeze", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "corners4"),
   // Twist the Knife (t3 hex)
-  twist_the_knife: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "twist_the_knife", { ordering: "sweep", staggerMs: 60, victims: ["p","n","b","r","q"], hasLead: true, sound: "clockice", source: "slow" }),
+  twist_the_knife: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "twist_the_knife", { ordering: "sweep", staggerMs: 60, victims: ["p","n","b","r","q"], hasLead: true, sound: "clockice", source: "slow" }, "spiral4"),
   // Stasis Field (t3 tempo)
-  wa_stasis_field: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "wa_stasis_field", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  wa_stasis_field: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "wa_stasis_field", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "orbit5"),
   // Wall (t3 tempo)
-  wall: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "wall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  wall: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "wall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "arc5"),
   // Clumsy Dash (t3 tempo)
-  wc_clumsy_dash: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "wc_clumsy_dash", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }),
+  wc_clumsy_dash: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "wc_clumsy_dash", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "column5"),
   // Slip on Ice (t3 tempo)
-  wc_slip_on_ice: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "wc_slip_on_ice", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen" }),
+  wc_slip_on_ice: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "wc_slip_on_ice", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen" }, "corners5"),
   // Stage Fright (t3 hex)
-  wc_stage_fright: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "wc_stage_fright", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice" }),
+  wc_stage_fright: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "wc_stage_fright", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice" }, "spiral5"),
   // Cascade Freeze (t4 tempo)
-  cascade_freeze: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "cascade_freeze", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice" }, true),
+  cascade_freeze: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "cascade_freeze", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice" }, "orbit3", true),
   // Cryostasis (t4 hex)
-  cryostasis: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "cryostasis", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, true),
+  cryostasis: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "cryostasis", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "column3", true),
   // Hard Frost (t4 hex)
-  hard_frost: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "hard_frost", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, true),
+  hard_frost: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "hard_frost", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "cross3", true),
   // Immobilizer (t4 tempo)
-  immobilizer: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "immobilizer", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, true),
+  immobilizer: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "immobilizer", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen" }, "arc4", true),
   // Bind the Queen (t4 protection)
-  wa_bind_the_queen: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "wa_bind_the_queen", { ordering: "sweep", staggerMs: 60, victims: ["q"], hasLead: true, sound: "clockice", source: "frozen" }, true),
+  wa_bind_the_queen: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "wa_bind_the_queen", { ordering: "sweep", staggerMs: 60, victims: ["q"], hasLead: true, sound: "clockice", source: "frozen" }, "cross4", true),
   // Counter Charge (t4 tempo)
-  ww_counter_charge: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "ww_counter_charge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice" }, true),
+  ww_counter_charge: B(ColdSnap, ["#6fc3e8","#ffffff","#1d4560"], "ww_counter_charge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice" }, "orbit6", true),
 
   /* --- StoneShell -------------------------------------------------------- */
   // Gargoyles (t2 hex)
-  gargoyles: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "gargoyles", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }),
+  gargoyles: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "gargoyles", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, "orbit3"),
   // Stone Hooves (t2 hex)
-  stone_hooves: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "stone_hooves", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }),
+  stone_hooves: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "stone_hooves", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, "column4"),
   // Gorgon's Glance (t3 hex)
-  gorgons_glance: B(StoneShell, ["#8a8478","#e8dcc0","#3c362c"], "gorgons_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }),
+  gorgons_glance: B(StoneShell, ["#8a8478","#e8dcc0","#3c362c"], "gorgons_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, "arc3"),
   // Hobbled Cavalry (t3 hex)
-  hobbled_cavalry: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "hobbled_cavalry", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut" }),
+  hobbled_cavalry: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "hobbled_cavalry", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, "corners3"),
   // Petrified Towers (t3 hex)
-  petrified_towers: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "petrified_towers", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }),
+  petrified_towers: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "petrified_towers", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, "cross3"),
   // Granite Towers (t4 hex)
-  granite_towers: B(StoneShell, ["#9a8f8a","#c9b89a","#3a322c"], "granite_towers", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, true),
+  granite_towers: B(StoneShell, ["#9a8f8a","#c9b89a","#3a322c"], "granite_towers", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, "column3", true),
   // Ironbound Rook (t4 hex)
-  ironbound_rook: B(StoneShell, ["#b0a68f","#e3ddd0","#4a4336"], "ironbound_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, true),
+  ironbound_rook: B(StoneShell, ["#b0a68f","#e3ddd0","#4a4336"], "ironbound_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut" }, "spiral3", true),
   // Statue Stable (t4 hex)
-  statue_stable: B(StoneShell, ["#8a8478","#e8dcc0","#3c362c"], "statue_stable", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, true),
+  statue_stable: B(StoneShell, ["#8a8478","#e8dcc0","#3c362c"], "statue_stable", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, "orbit4", true),
   // Stone Clergy (t4 hex)
-  stone_clergy: B(StoneShell, ["#9a8f8a","#c9b89a","#3a322c"], "stone_clergy", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, true),
+  stone_clergy: B(StoneShell, ["#9a8f8a","#c9b89a","#3a322c"], "stone_clergy", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut" }, "arc4", true),
 
   /* --- GlintArc ---------------------------------------------------------- */
   // Ferz King (t1 movement)
-  ferz_king: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "ferz_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }),
+  ferz_king: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "ferz_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }, "arc3"),
   // Half Step (t1 movement)
-  half_step: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "half_step", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  half_step: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "half_step", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "spiral3"),
   // Loyal Pawn (t1 pieces)
-  loyal_pawn: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "loyal_pawn", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  loyal_pawn: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "loyal_pawn", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "orbit4"),
   // Quiet March (t1 movement)
-  quiet_march: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "quiet_march", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  quiet_march: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "quiet_march", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "cross4"),
   // Rook Slide (t1 movement)
-  rook_slide: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "rook_slide", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  rook_slide: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "rook_slide", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "column5"),
   // Sentinel Pawn (t1 attack)
-  sentinel_pawn: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "sentinel_pawn", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  sentinel_pawn: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "sentinel_pawn", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "spiral5"),
   // Sidestep (t1 protection)
-  sidestep: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "sidestep", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "shield" }),
+  sidestep: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "sidestep", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "shield" }, "cross5"),
   // Tempo Shuffle (t1 movement)
-  tempo_shuffle: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "tempo_shuffle", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  tempo_shuffle: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "tempo_shuffle", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "orbit6"),
   // Ghost Pawn (t2 movement)
-  ghost_pawn: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "ghost_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  ghost_pawn: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "ghost_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "column3"),
   // Pawn Push (t2 movement)
-  pawn_push: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "pawn_push", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  pawn_push: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "pawn_push", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "arc4"),
   // Phase Rook (t2 movement)
-  phase_rook: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "phase_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  phase_rook: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "phase_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "column4"),
   // Reposition (t2 movement)
-  reposition: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "reposition", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "empower" }),
+  reposition: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "reposition", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "empower" }, "arc5"),
   // Wazir Rook (t2 movement)
-  wazir_rook: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "wazir_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  wazir_rook: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "wazir_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "spiral6"),
   // Thunder Step (t2 movement)
-  we_thunder_step: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "we_thunder_step", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  we_thunder_step: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "we_thunder_step", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "arc7"),
   // Grasshopper (t3 movement)
-  grasshopper: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "grasshopper", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "coronation", source: "empower" }),
+  grasshopper: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "grasshopper", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "coronation", source: "empower" }, "corners3"),
   // Promote Now (t3 pieces)
-  promote_now: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "promote_now", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  promote_now: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "promote_now", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "corners4"),
   // Queen's Echo (t3 movement)
-  queens_echo: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "queens_echo", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  queens_echo: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "queens_echo", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "spiral4"),
   // Rank Runner (t3 movement)
-  rank_runner: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "rank_runner", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }),
+  rank_runner: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "rank_runner", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" }, "orbit5"),
   // Vanguard (t3 pieces)
-  vanguard: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "vanguard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  vanguard: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "vanguard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "arc6"),
   // Transmute (t3 pieces)
-  wa_transmute: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "wa_transmute", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  wa_transmute: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "wa_transmute", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "corners6"),
   // Ball Lightning (t3 attack)
-  we_ball_lightning: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "we_ball_lightning", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }),
+  we_ball_lightning: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "we_ball_lightning", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "cross6"),
   // River Flow (t3 movement)
-  we_riverflow: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "we_riverflow", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  we_riverflow: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "we_riverflow", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "orbit7"),
   // Phalanx Advance (t3 movement)
-  ww_phalanx_advance: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "ww_phalanx_advance", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }),
+  ww_phalanx_advance: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "ww_phalanx_advance", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "column7"),
   // Changeling (t4 pieces)
-  changeling: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "changeling", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, true),
+  changeling: B(GlintArc, ["#6fe3ff","#ffffff","#1c3a4a"], "changeling", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" }, "orbit3", true),
   // Kingslide (t4 movement)
-  kingslide: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "kingslide", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }, true),
+  kingslide: B(GlintArc, ["#6fd8e8","#f2fcff","#173842"], "kingslide", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }, "cross3", true),
   // Royal Decree (t4 movement)
-  royal_decree: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "royal_decree", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }, true),
+  royal_decree: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "royal_decree", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "empower" }, "corners5", true),
   // Arcane Conduit (t4 movement)
-  wa_arcane_conduit: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "wa_arcane_conduit", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, true),
+  wa_arcane_conduit: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "wa_arcane_conduit", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", source: "empower" }, "column6", true),
 
   /* --- HoofSpring -------------------------------------------------------- */
   // Bishop Polish (t1 movement)
-  bishop_polish: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "bishop_polish", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  bishop_polish: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "bishop_polish", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "arc3"),
   // Diagonal Step (t1 movement)
-  diagonal_step: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "diagonal_step", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", source: "empower" }),
+  diagonal_step: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "diagonal_step", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", source: "empower" }, "cross3"),
   // Little Leap (t1 movement)
-  little_leap: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "little_leap", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }),
+  little_leap: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "little_leap", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }, "cross4"),
   // Nudge (t1 attack)
-  nudge: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "nudge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  nudge: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "nudge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column5"),
   // Camel Knight (t2 movement)
-  camel_knight: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "camel_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  camel_knight: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "camel_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "corners3"),
   // Long Knight (t2 movement)
-  long_knight: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "long_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  long_knight: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "long_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "orbit5"),
   // Mind Nudge (t2 attack)
-  mind_nudge: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "mind_nudge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  mind_nudge: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "mind_nudge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "arc5"),
   // Rally (t2 movement)
-  rally: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "rally", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  rally: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "rally", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "cross5"),
   // Spring Pawn (t2 movement)
-  spring_pawn: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "spring_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }),
+  spring_pawn: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "spring_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }, "column6"),
   // Teleport Knight (t2 movement)
-  teleport_knight: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "teleport_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  teleport_knight: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "teleport_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "corners6"),
   // Vault (t2 movement)
-  vault: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "vault", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }),
+  vault: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "vault", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }, "arc7"),
   // Wazir Bishop (t2 movement)
-  wazir_bishop: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "wazir_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  wazir_bishop: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "wazir_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "spiral7"),
   // Kangaroo Hop (t2 movement)
-  wc_kangaroo_hop: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "wc_kangaroo_hop", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  wc_kangaroo_hop: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "wc_kangaroo_hop", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "cross7"),
   // Updraft (t2 movement)
-  we_updraft: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "we_updraft", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  we_updraft: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "we_updraft", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "orbit8"),
   // Bishop to Archbishop (t3 movement)
-  bishop_archbishop: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "bishop_archbishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  bishop_archbishop: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "bishop_archbishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "orbit3"),
   // Board Quake (t3 attack)
-  board_quake: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "board_quake", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  board_quake: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "board_quake", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column3"),
   // Cannon (t3 movement)
-  cannon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "cannon", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }),
+  cannon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "cannon", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }, "spiral3"),
   // Dragon Pawn (t3 movement)
-  dragon_pawn: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "dragon_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }),
+  dragon_pawn: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "dragon_pawn", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }, "orbit4"),
   // Hunter Knight (t3 attack)
-  hunter_knight: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "hunter_knight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  hunter_knight: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "hunter_knight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "corners4"),
   // Knight to Nightrook (t3 movement)
-  knight_nightrook: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "knight_nightrook", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  knight_nightrook: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "knight_nightrook", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "spiral4"),
   // Overclock (t3 movement)
-  overclock: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "overclock", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }),
+  overclock: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "overclock", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "corners5"),
   // Rook to Chancellor (t3 movement)
-  rook_chancellor: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "rook_chancellor", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }),
+  rook_chancellor: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "rook_chancellor", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", source: "empower" }, "orbit6"),
   // Sliding King (t3 movement)
-  sliding_king: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "sliding_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", source: "empower" }),
+  sliding_king: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "sliding_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", source: "empower" }, "arc6"),
   // Tidal Push (t3 attack)
-  tidal_push: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "tidal_push", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  tidal_push: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "tidal_push", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "spiral6"),
   // Trampoline (t3 item)
-  trampoline: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "trampoline", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  trampoline: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "trampoline", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "cross6"),
   // Ghostwalk (t3 movement)
-  wa_ghostwalk_bishop: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "wa_ghostwalk_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  wa_ghostwalk_bishop: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "wa_ghostwalk_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "corners7"),
   // Flank March (t3 movement)
-  ww_flank_march: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "ww_flank_march", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  ww_flank_march: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "ww_flank_march", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "arc8"),
   // Forced Retreat (t3 tempo)
-  ww_forced_retreat: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "ww_forced_retreat", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  ww_forced_retreat: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "ww_forced_retreat", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column8"),
   // Pontoon Bridge (t3 movement)
-  ww_pontoon_bridge: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "ww_pontoon_bridge", { ordering: "radial", staggerMs: 0, victims: ["r","b","q"], hasLead: true, sound: "blitz", source: "empower" }),
+  ww_pontoon_bridge: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "ww_pontoon_bridge", { ordering: "radial", staggerMs: 0, victims: ["r","b","q"], hasLead: true, sound: "blitz", source: "empower" }, "corners8"),
   // War Wagon (t3 movement)
-  ww_war_wagon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "ww_war_wagon", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }),
+  ww_war_wagon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "ww_war_wagon", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", source: "empower" }, "spiral8"),
   // Firecracker (t4 item)
-  firecracker: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "firecracker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  firecracker: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "firecracker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "arc4", true),
   // Giant Slayer (t4 attack)
-  giant_slayer: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "giant_slayer", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }, true),
+  giant_slayer: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "giant_slayer", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", source: "empower" }, "column4", true),
   // Overrun (t4 attack)
-  overrun: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "overrun", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  overrun: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "overrun", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "spiral5", true),
   // Twin Knights (t4 movement)
-  twin_knights: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "twin_knights", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, true),
+  twin_knights: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "twin_knights", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "orbit7", true),
   // Camel Rider (t4 movement)
-  wa_camel_rider: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "wa_camel_rider", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, true),
+  wa_camel_rider: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "wa_camel_rider", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", source: "empower" }, "column7", true),
 
   /* --- PennantRaise ------------------------------------------------------ */
   // Steady March (t1 movement)
-  steady_march: B(PennantRaise, ["#a83a4a","#ffd76a","#2e1218"], "steady_march", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }),
+  steady_march: B(PennantRaise, ["#a83a4a","#ffd76a","#2e1218"], "steady_march", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, "column4"),
   // Counterstep (t2 tempo)
-  counterstep: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "counterstep", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "rally" }),
+  counterstep: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "counterstep", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "rally" }, "column3"),
   // Double Step Army (t2 movement)
-  double_step_army: B(PennantRaise, ["#a83a4a","#ffd76a","#2e1218"], "double_step_army", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }),
+  double_step_army: B(PennantRaise, ["#a83a4a","#ffd76a","#2e1218"], "double_step_army", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "corners3"),
   // Pawn Storm (t2 movement)
-  pawn_storm: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "pawn_storm", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }),
+  pawn_storm: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "pawn_storm", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, "cross3"),
   // Pikemen (t2 movement)
-  ww_pikemen: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "ww_pikemen", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }),
+  ww_pikemen: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "ww_pikemen", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "orbit5"),
   // Berolina Pawns (t3 movement)
-  berolina_pawns: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "berolina_pawns", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }),
+  berolina_pawns: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "berolina_pawns", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "arc3"),
   // Momentum (t3 tempo)
-  momentum: B(PennantRaise, ["#c05a2a","#f7e3b0","#361a0c"], "momentum", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "rally" }),
+  momentum: B(PennantRaise, ["#c05a2a","#f7e3b0","#361a0c"], "momentum", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "rally" }, "spiral3"),
   // Split March (t3 movement)
-  split_march: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "split_march", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }),
+  split_march: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "split_march", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, "arc4"),
   // Moonwalk (t3 movement)
-  wc_moonwalk: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "wc_moonwalk", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }),
+  wc_moonwalk: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "wc_moonwalk", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "spiral4"),
   // Army Reversal (t4 movement)
-  army_reversal: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "army_reversal", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, true),
+  army_reversal: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "army_reversal", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "orbit3", true),
   // Solstice (t4 tempo)
-  solstice: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "solstice", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, true),
+  solstice: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "solstice", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, "orbit4", true),
   // Chaos Reigns (t4 tempo)
-  wc_chaos_reigns: B(PennantRaise, ["#c05a2a","#f7e3b0","#361a0c"], "wc_chaos_reigns", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, true),
+  wc_chaos_reigns: B(PennantRaise, ["#c05a2a","#f7e3b0","#361a0c"], "wc_chaos_reigns", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain" }, "corners4", true),
   // Field Fortification (t4 movement)
-  ww_field_fortification: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "ww_field_fortification", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, true),
+  ww_field_fortification: B(PennantRaise, ["#b5533a","#fff2c9","#33170f"], "ww_field_fortification", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", source: "empower" }, "cross4", true),
 
   /* --- ScrollSnap -------------------------------------------------------- */
   // Cut Purse (t2 hex)
-  cut_purse: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "cut_purse", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  cut_purse: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "cut_purse", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "column3"),
   // Sealed Orders (t2 hex)
-  sealed_orders: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "sealed_orders", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  sealed_orders: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "sealed_orders", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "arc4"),
   // Royal Duty (t3 hex)
-  royal_duty: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "royal_duty", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "snooze" }),
+  royal_duty: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "royal_duty", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "snooze" }, "orbit4"),
   // Suppress Magic (t3 draft)
-  wa_suppress_magic: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "wa_suppress_magic", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  wa_suppress_magic: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "wa_suppress_magic", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "cross4"),
   // Red Tape (t3 tempo)
-  wc_red_tape: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "wc_red_tape", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", source: "slow" }),
+  wc_red_tape: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "wc_red_tape", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", source: "slow" }, "orbit5"),
   // Burned Dispatches (t4 hex)
-  burned_dispatches: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "burned_dispatches", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  burned_dispatches: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "burned_dispatches", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "orbit3", true),
   // Chain Nullify (t4 draft)
-  chain_nullify: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "chain_nullify", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  chain_nullify: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "chain_nullify", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "arc3", true),
   // Dead Letter (t4 hex)
-  dead_letter: B(ScrollSnap, ["#e8dcc0","#8f2bbf","#241a3a"], "dead_letter", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  dead_letter: B(ScrollSnap, ["#e8dcc0","#8f2bbf","#241a3a"], "dead_letter", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "corners3", true),
   // Mirror (t4 draft)
-  mirror: B(ScrollSnap, ["#f0e2c4","#4a7a5f","#2c2416"], "mirror", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  mirror: B(ScrollSnap, ["#f0e2c4","#4a7a5f","#2c2416"], "mirror", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "spiral3", true),
   // Patch Notes (t4 hex)
-  patch_notes: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "patch_notes", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  patch_notes: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "patch_notes", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "cross3", true),
   // Suppress (t4 draft)
-  suppress: B(ScrollSnap, ["#e8dcc0","#8f2bbf","#241a3a"], "suppress", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  suppress: B(ScrollSnap, ["#e8dcc0","#8f2bbf","#241a3a"], "suppress", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "column4", true),
   // Disrupt Ritual (t4 draft)
-  wa_disrupt_ritual: B(ScrollSnap, ["#f0e2c4","#4a7a5f","#2c2416"], "wa_disrupt_ritual", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  wa_disrupt_ritual: B(ScrollSnap, ["#f0e2c4","#4a7a5f","#2c2416"], "wa_disrupt_ritual", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "corners4", true),
   // Jinx (t4 draft)
-  wa_jinx: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "wa_jinx", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  wa_jinx: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "wa_jinx", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "spiral4", true),
 
   /* --- CardFlick --------------------------------------------------------- */
   // Prep (t1 draft)
-  prep: B(CardFlick, ["#c9a0ff","#ffe9b0","#301c50"], "prep", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
+  prep: B(CardFlick, ["#c9a0ff","#ffe9b0","#301c50"], "prep", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "column3"),
   // Trade Up (t2 pieces)
-  trade_up: B(CardFlick, ["#9b6bd1","#f2e0ff","#1e1038"], "trade_up", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
+  trade_up: B(CardFlick, ["#9b6bd1","#f2e0ff","#1e1038"], "trade_up", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "spiral3"),
   // Buff Thief (Minor) (t4 draft)
-  buff_thief_minor: B(CardFlick, ["#b98cff","#ffd76a","#2a1a4a"], "buff_thief_minor", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  buff_thief_minor: B(CardFlick, ["#b98cff","#ffd76a","#2a1a4a"], "buff_thief_minor", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "orbit3", true),
   // Hero's Journey (t4 draft)
-  heros_journey: B(CardFlick, ["#8f6bff","#fff2c9","#22123e"], "heros_journey", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  heros_journey: B(CardFlick, ["#8f6bff","#fff2c9","#22123e"], "heros_journey", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "arc3", true),
   // Recast (t4 draft)
-  recast: B(CardFlick, ["#a880e8","#ffd23f","#261644"], "recast", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  recast: B(CardFlick, ["#a880e8","#ffd23f","#261644"], "recast", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "corners3", true),
   // Disjunction (t4 draft)
-  wa_disjunction: B(CardFlick, ["#b98cff","#ffd76a","#2a1a4a"], "wa_disjunction", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  wa_disjunction: B(CardFlick, ["#b98cff","#ffd76a","#2a1a4a"], "wa_disjunction", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "cross3", true),
 
   /* --- EyeBlink ---------------------------------------------------------- */
   // Extra Glance (t1 info)
-  extra_glance: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "extra_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  extra_glance: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "extra_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "arc3"),
   // Peek (t1 info)
-  peek: B(EyeBlink, ["#7b8fd1","#f0f4ff","#232e52"], "peek", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  peek: B(EyeBlink, ["#7b8fd1","#f0f4ff","#232e52"], "peek", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "spiral3"),
   // Quick Glance (t1 info)
-  quick_glance: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "quick_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  quick_glance: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "quick_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "cross3"),
   // Scout (t1 info)
-  scout: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "scout", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  scout: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "scout", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "orbit4"),
   // Watchtower (t1 info)
-  watchtower: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "watchtower", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  watchtower: B(EyeBlink, ["#5a6b8f","#cdd6ff","#161e33"], "watchtower", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "cross4"),
   // Draft Insight (t2 info)
-  draft_insight: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "draft_insight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  draft_insight: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "draft_insight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "orbit3"),
   // Oracle's Eye (t2 info)
-  oracles_eye: B(EyeBlink, ["#4a7a9f","#d0e8f7","#152636"], "oracles_eye", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  oracles_eye: B(EyeBlink, ["#4a7a9f","#d0e8f7","#152636"], "oracles_eye", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "corners3"),
   // Third Eye (t2 info)
-  third_eye: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "third_eye", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  third_eye: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "third_eye", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "arc4"),
   // North Star (t3 info)
-  north_star: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "north_star", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  north_star: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "north_star", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "column3"),
   // Foresight (t3 info)
-  wa_foresight: B(EyeBlink, ["#4a7a9f","#d0e8f7","#152636"], "wa_foresight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }),
+  wa_foresight: B(EyeBlink, ["#4a7a9f","#d0e8f7","#152636"], "wa_foresight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "column4"),
   // Mind Read (t4 info)
-  wa_mind_read: B(EyeBlink, ["#7b8fd1","#f0f4ff","#232e52"], "wa_mind_read", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  wa_mind_read: B(EyeBlink, ["#7b8fd1","#f0f4ff","#232e52"], "wa_mind_read", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "corners4", true),
   // Omniscience (t4 info)
-  wa_omniscience: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "wa_omniscience", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, true),
+  wa_omniscience: B(EyeBlink, ["#4fa3d1","#dfe8ff","#1c2c44"], "wa_omniscience", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" }, "spiral4", true),
 
   /* --- KeyTurn ----------------------------------------------------------- */
   // Castle Early (t1 movement)
-  castle_early: B(KeyTurn, ["#a88a3a","#ffe9b0","#2c2416"], "castle_early", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
+  castle_early: B(KeyTurn, ["#a88a3a","#ffe9b0","#2c2416"], "castle_early", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "column3"),
   // Drawbridge (t1 hex)
-  drawbridge: B(KeyTurn, ["#d1a85a","#fff2c9","#3d3220"], "drawbridge", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "slow" }),
+  drawbridge: B(KeyTurn, ["#d1a85a","#fff2c9","#3d3220"], "drawbridge", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "slow" }, "corners3"),
   // Toll Gate (t1 hex)
-  toll_gate: B(KeyTurn, ["#bfa050","#efe0b8","#36301e"], "toll_gate", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockcage" }),
+  toll_gate: B(KeyTurn, ["#bfa050","#efe0b8","#36301e"], "toll_gate", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockcage" }, "corners4"),
   // Long Castle Anywhere (t2 movement)
-  long_castle_anywhere: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "long_castle_anywhere", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "empower" }),
+  long_castle_anywhere: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "long_castle_anywhere", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "empower" }, "cross3"),
   // No Man's Land (t2 hex)
-  no_mans_land: B(KeyTurn, ["#b5924a","#f7e3b0","#332a1c"], "no_mans_land", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
+  no_mans_land: B(KeyTurn, ["#b5924a","#f7e3b0","#332a1c"], "no_mans_land", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "orbit4"),
   // Shy Pieces (t2 hex)
-  wc_shy_pieces: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "wc_shy_pieces", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
+  wc_shy_pieces: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "wc_shy_pieces", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "spiral4"),
   // Board Lock (t3 tempo)
-  board_lock: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "board_lock", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "slow" }),
+  board_lock: B(KeyTurn, ["#c9a84c","#ffd76a","#3a3026"], "board_lock", { ordering: "sweep", staggerMs: 60, victims: ["k","r"], hasLead: true, sound: "clockcage", source: "slow" }, "orbit3"),
   // Bunker (t3 protection)
-  bunker: B(KeyTurn, ["#b5924a","#f7e3b0","#332a1c"], "bunker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
+  bunker: B(KeyTurn, ["#b5924a","#f7e3b0","#332a1c"], "bunker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "arc3"),
   // No Trespass (t3 hex)
-  no_trespass: B(KeyTurn, ["#a88a3a","#ffe9b0","#2c2416"], "no_trespass", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }),
+  no_trespass: B(KeyTurn, ["#a88a3a","#ffe9b0","#2c2416"], "no_trespass", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "arc4"),
   // Flypaper File (t4 hex)
-  flypaper_file: B(KeyTurn, ["#bfa050","#efe0b8","#36301e"], "flypaper_file", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, true),
+  flypaper_file: B(KeyTurn, ["#bfa050","#efe0b8","#36301e"], "flypaper_file", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "spiral3", true),
   // Sealed Gate (t4 hex)
-  sealed_gate: B(KeyTurn, ["#d1a85a","#fff2c9","#3d3220"], "sealed_gate", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, true),
+  sealed_gate: B(KeyTurn, ["#d1a85a","#fff2c9","#3d3220"], "sealed_gate", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "column4", true),
 
   /* --- LanternLift ------------------------------------------------------- */
   // Second Wind (t1 pieces)
-  second_wind: B(LanternLift, ["#98dcb8","#ffedd0","#264a34"], "second_wind", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  second_wind: B(LanternLift, ["#98dcb8","#ffedd0","#264a34"], "second_wind", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "spiral3"),
   // Minor Recall (t2 pieces)
-  minor_recall: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "minor_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  minor_recall: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "minor_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "orbit3"),
   // Regrow (t2 pieces)
-  we_regrow: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "we_regrow", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  we_regrow: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "we_regrow", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "arc4"),
   // Field Hospital (t2 pieces)
-  ww_field_hospital: B(LanternLift, ["#98dcb8","#ffedd0","#264a34"], "ww_field_hospital", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  ww_field_hospital: B(LanternLift, ["#98dcb8","#ffedd0","#264a34"], "ww_field_hospital", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "corners4"),
   // Reclaim the Fallen (t2 pieces)
-  ww_reclaim_the_fallen: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "ww_reclaim_the_fallen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  ww_reclaim_the_fallen: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "ww_reclaim_the_fallen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "cross4"),
   // Seance (t3 pieces)
-  seance: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "seance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  seance: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "seance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "corners3"),
   // Second Wind Major (t3 pieces)
-  second_wind_major: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "second_wind_major", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  second_wind_major: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "second_wind_major", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "cross3"),
   // Will-o'-Wisp (t3 tempo)
-  will_o_wisp: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "will_o_wisp", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "frozen" }),
+  will_o_wisp: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "will_o_wisp", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "frozen" }, "column4"),
   // Last Reserves (t3 pieces)
-  ww_last_reserves: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "ww_last_reserves", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }),
+  ww_last_reserves: B(LanternLift, ["#7fd8a8","#fff2c9","#1c3a2a"], "ww_last_reserves", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "spiral4"),
   // Resurrect (t4 pieces)
-  resurrect: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "resurrect", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, true),
+  resurrect: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "resurrect", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "arc3", true),
   // Resurrect Major (t4 pieces)
-  resurrect_major: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "resurrect_major", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, true),
+  resurrect_major: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "resurrect_major", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "column3", true),
   // Lost and Found (t4 pieces)
-  wc_lost_and_found: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "wc_lost_and_found", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, true),
+  wc_lost_and_found: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "wc_lost_and_found", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "orbit4", true),
   // Recommission (t4 pieces)
-  ww_recommission: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "ww_recommission", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, true),
+  ww_recommission: B(LanternLift, ["#8fd1b0","#ffe9c9","#22422e"], "ww_recommission", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon" }, "orbit5", true),
 
   /* --- SatchelDrop ------------------------------------------------------- */
   // Walnut Shell (t1 item)
-  walnut_shell: B(SatchelDrop, ["#b0824a","#ffe9b0","#3e2f1c"], "walnut_shell", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  walnut_shell: B(SatchelDrop, ["#b0824a","#ffe9b0","#3e2f1c"], "walnut_shell", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "corners4"),
   // Apple (t2 item)
-  apple: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "apple", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield" }),
+  apple: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "apple", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield" }, "orbit3"),
   // Banana Peel (t2 item)
-  banana_peel: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "banana_peel", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  banana_peel: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "banana_peel", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "arc3"),
   // Coconut Bonk (t2 item)
-  coconut_bonk: B(SatchelDrop, ["#8a6a3a","#ff9dd6","#2e2214"], "coconut_bonk", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "frozen" }),
+  coconut_bonk: B(SatchelDrop, ["#8a6a3a","#ff9dd6","#2e2214"], "coconut_bonk", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "frozen" }, "corners3"),
   // King's Guard (t2 pieces)
-  kings_guard: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "kings_guard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  kings_guard: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "kings_guard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "orbit4"),
   // Bodyguard (t3 pieces)
-  bodyguard: B(SatchelDrop, ["#96703f","#ff9d3d","#362818"], "bodyguard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  bodyguard: B(SatchelDrop, ["#96703f","#ff9d3d","#362818"], "bodyguard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "column3"),
   // Split Bishop (t3 pieces)
-  split_bishop: B(SatchelDrop, ["#96703f","#ff9d3d","#362818"], "split_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  split_bishop: B(SatchelDrop, ["#96703f","#ff9d3d","#362818"], "split_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "arc4"),
   // Sapper Team (t3 pieces)
-  ww_sapper_team: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "ww_sapper_team", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }),
+  ww_sapper_team: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "ww_sapper_team", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "spiral4"),
   // Coffee (t4 item)
-  coffee: B(SatchelDrop, ["#b0824a","#ffe9b0","#3e2f1c"], "coffee", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, true),
+  coffee: B(SatchelDrop, ["#b0824a","#ffe9b0","#3e2f1c"], "coffee", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "spiral3", true),
   // Comet Shard (t4 pieces)
-  comet_shard: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "comet_shard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, true),
+  comet_shard: B(SatchelDrop, ["#8a6a3a","#ffd23f","#33261a"], "comet_shard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "cross3", true),
   // Conjured Bishop (t4 pieces)
-  wa_conjure_bishop: B(SatchelDrop, ["#8a6a3a","#ff9dd6","#2e2214"], "wa_conjure_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, true),
+  wa_conjure_bishop: B(SatchelDrop, ["#8a6a3a","#ff9dd6","#2e2214"], "wa_conjure_bishop", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "column4", true),
   // Shieldbearers (t4 pieces)
-  ww_shieldbearers: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "ww_shieldbearers", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, true),
+  ww_shieldbearers: B(SatchelDrop, ["#a87a4a","#a8e07f","#3a2c1c"], "ww_shieldbearers", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" }, "cross4", true),
 
   /* --- CogTick ----------------------------------------------------------- */
   // Free Retreat (t1 tempo)
   // Rewind One (t3 tempo)
   // Wasted Hour (t3 hex)
-  wasted_hour: B(CogTick, ["#bf9c50","#9fdcf0","#362c1c"], "wasted_hour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun" }),
+  wasted_hour: B(CogTick, ["#bf9c50","#9fdcf0","#362c1c"], "wasted_hour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun" }, "column3"),
   // Lost Weekend (t4 hex)
-  lost_weekend: B(CogTick, ["#b5924a","#8fe8ff","#302818"], "lost_weekend", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", source: "slow" }, true),
+  lost_weekend: B(CogTick, ["#b5924a","#8fe8ff","#302818"], "lost_weekend", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", source: "slow" }, "orbit3", true),
   // Borrowed Minute (t4 tempo)
-  wa_borrowed_minute: B(CogTick, ["#d1aa5a","#7fd8e8","#3c3120"], "wa_borrowed_minute", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, true),
+  wa_borrowed_minute: B(CogTick, ["#d1aa5a","#7fd8e8","#3c3120"], "wa_borrowed_minute", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage" }, "arc3", true),
 
   /* --- BellToll ---------------------------------------------------------- */
   // Deep Breath (t1 nerf)
-  deep_breath: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "deep_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  deep_breath: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "deep_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "corners3"),
   // Reprieve (t1 nerf)
-  reprieve: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "reprieve", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  reprieve: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "reprieve", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "column4"),
   // Small Mercies (t1 nerf)
-  small_mercies: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "small_mercies", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  small_mercies: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "small_mercies", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "cross4"),
   // Defiance (t2 nerf)
-  defiance: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "defiance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  defiance: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "defiance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "spiral3"),
   // Held Breath (t2 nerf)
-  held_breath: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "held_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  held_breath: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "held_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "orbit4"),
   // Hunter's Relief (t2 nerf)
-  hunters_relief: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "hunters_relief", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  hunters_relief: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "hunters_relief", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "arc4"),
   // Loosen the Leash (t2 nerf)
   // Slack in the Chain (t2 nerf)
-  slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "spiral4"),
   // Break the Nerf (t3 nerf)
-  break_the_nerf: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "break_the_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  break_the_nerf: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "break_the_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "arc3"),
   // Grace Period (t3 nerf)
-  grace_period: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "grace_period", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  grace_period: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "grace_period", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "cross3"),
   // Half Measure (t3 nerf)
   // Piece Parole (t3 nerf)
   // Timely Lull (t3 nerf)
-  timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "orbit5"),
   // Underdog's Grit (t3 nerf)
-  underdogs_grit: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "underdogs_grit", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }),
+  underdogs_grit: B(BellToll, ["#ffcf4d","#ffffff","#7a5c2e"], "underdogs_grit", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "arc5"),
   // Adrenaline (t4 nerf)
-  adrenaline: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "adrenaline", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, true),
+  adrenaline: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "adrenaline", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "orbit3", true),
   // Counter-Nerf (t4 nerf)
-  counter_nerf: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "counter_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, true),
+  counter_nerf: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "counter_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "column3", true),
   // Respite (t4 nerf)
-  respite: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "respite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, true),
+  respite: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "respite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" }, "corners4", true),
 
   /* --- LeafSpin ---------------------------------------------------------- */
   // Durian (t3 hex)
-  durian: B(LeafSpin, ["#3f8f3f","#a8e07f","#1c4a1c"], "durian", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }),
+  durian: B(LeafSpin, ["#3f8f3f","#a8e07f","#1c4a1c"], "durian", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }, "orbit3"),
   // Pixie Dust (t3 movement)
-  pixie_dust: B(LeafSpin, ["#4a8f5f","#ffd76a","#173a24"], "pixie_dust", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "empower" }),
+  pixie_dust: B(LeafSpin, ["#4a8f5f","#ffd76a","#173a24"], "pixie_dust", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "empower" }, "column3"),
   // Seelie Blessing (t3 protection)
-  seelie_blessing: B(LeafSpin, ["#559f55","#c0e57f","#1a3d1a"], "seelie_blessing", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "shield" }),
+  seelie_blessing: B(LeafSpin, ["#559f55","#c0e57f","#1a3d1a"], "seelie_blessing", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "shield" }, "spiral3"),
   // Bramble Wall (t3 protection)
-  we_bramble_wall: B(LeafSpin, ["#5faf5f","#ff9dd6","#1c4a2c"], "we_bramble_wall", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "frozen" }),
+  we_bramble_wall: B(LeafSpin, ["#5faf5f","#ff9dd6","#1c4a2c"], "we_bramble_wall", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "frozen" }, "orbit4"),
   // Creeping Roots (t3 protection)
-  we_creeping_roots: B(LeafSpin, ["#4a8f5f","#ffd76a","#173a24"], "we_creeping_roots", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrifiedforest" }),
+  we_creeping_roots: B(LeafSpin, ["#4a8f5f","#ffd76a","#173a24"], "we_creeping_roots", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrifiedforest" }, "arc4"),
   // Seedlings (t3 pieces)
-  we_seedlings: B(LeafSpin, ["#6fae4a","#e8fff7","#243f14"], "we_seedlings", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }),
+  we_seedlings: B(LeafSpin, ["#6fae4a","#e8fff7","#243f14"], "we_seedlings", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }, "column4"),
   // Faerie Ring (t4 hex)
-  faerie_ring: B(LeafSpin, ["#5faf5f","#ff9dd6","#1c4a2c"], "faerie_ring", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }, true),
+  faerie_ring: B(LeafSpin, ["#5faf5f","#ff9dd6","#1c4a2c"], "faerie_ring", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest" }, "arc3", true),
   // Puck's Mischief (t4 hex)
-  pucks_mischief: B(LeafSpin, ["#6fae4a","#e8fff7","#243f14"], "pucks_mischief", { ordering: "sweep", staggerMs: 60, victims: ["q","r"], hasLead: true, sound: "petrifiedforest", source: "slow" }, true),
+  pucks_mischief: B(LeafSpin, ["#6fae4a","#e8fff7","#243f14"], "pucks_mischief", { ordering: "sweep", staggerMs: 60, victims: ["q","r"], hasLead: true, sound: "petrifiedforest", source: "slow" }, "corners3", true),
   // Ancient Grove (t4 pieces)
-  we_ancient_grove: B(LeafSpin, ["#3f8f3f","#a8e07f","#1c4a1c"], "we_ancient_grove", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon" }, true),
+  we_ancient_grove: B(LeafSpin, ["#3f8f3f","#a8e07f","#1c4a1c"], "we_ancient_grove", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon" }, "cross3", true),
 
   /* --- PrismFlash -------------------------------------------------------- */
   // Escape Hatch (t1 movement)
-  escape_hatch: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "escape_hatch", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  escape_hatch: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "escape_hatch", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "arc3"),
   // Piece Swap (t2 movement)
-  piece_swap: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "piece_swap", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  piece_swap: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "piece_swap", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "cross3"),
   // Recall (t2 movement)
-  recall: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  recall: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "orbit4"),
   // Regroup the Lines (t2 movement)
-  ww_regroup_lines: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "ww_regroup_lines", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  ww_regroup_lines: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "ww_regroup_lines", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "orbit6"),
   // Guard Rotation (t3 movement)
-  guard_rotation: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "guard_rotation", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  guard_rotation: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "guard_rotation", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "corners3"),
   // Blink (t3 movement)
-  wa_blink: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "wa_blink", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  wa_blink: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "wa_blink", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "corners4"),
   // Warp Home (t3 movement)
-  warp_home: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "warp_home", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  warp_home: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "warp_home", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "orbit5"),
   // Warp Step (t3 movement)
-  warp_step: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "warp_step", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }),
+  warp_step: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "warp_step", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "corners5"),
   // Blink Army (t4 movement)
-  blink_army: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "blink_army", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  blink_army: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "blink_army", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "orbit3", true),
   // Grand Recall (t4 movement)
-  grand_recall: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "grand_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  grand_recall: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "grand_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column3", true),
   // Mass Recall (t4 movement)
-  mass_recall: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "mass_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  mass_recall: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "mass_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "spiral3", true),
   // Regroup (t4 movement)
-  regroup: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "regroup", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  regroup: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "regroup", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "arc4", true),
   // Total Recall (t4 movement)
-  total_recall: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "total_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  total_recall: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "total_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column4", true),
   // Fold Space (t4 movement)
-  wa_swap_flanks: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "wa_swap_flanks", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  wa_swap_flanks: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "wa_swap_flanks", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "spiral4", true),
   // Warp Field (t4 movement)
-  warp_field: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "warp_field", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  warp_field: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "warp_field", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "cross4", true),
   // Warp Reign (t4 protection)
-  warp_reign: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "warp_reign", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "shield" }, true),
+  warp_reign: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "warp_reign", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "shield" }, "arc5", true),
   // Warp Rook (t4 movement)
-  warp_rook: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "warp_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  warp_rook: B(PrismFlash, ["#a88cff","#8fe8ff","#281a48"], "warp_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "column5", true),
   // Riptide (t4 movement)
-  we_riptide: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "we_riptide", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  we_riptide: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "we_riptide", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "spiral5", true),
   // Undertow (t4 movement)
-  we_undertow: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "we_undertow", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, true),
+  we_undertow: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "we_undertow", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" }, "cross5", true),
 
   /* --- BannerMuster ------------------------------------------------------ */
   // Decoy (t2 protection)
   // Regenerate (t3 pieces)
-  regenerate: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "regenerate", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
+  regenerate: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "regenerate", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "column3"),
   // Summon Knight (t3 pieces)
-  summon_knight: B(BannerMuster, ["#d1583a","#dfe5ee","#3a1a10"], "summon_knight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
+  summon_knight: B(BannerMuster, ["#d1583a","#dfe5ee","#3a1a10"], "summon_knight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "corners3"),
   // Conjured Scout (t3 pieces)
-  wa_conjure_scout: B(BannerMuster, ["#c94a3a","#d8dee9","#331410"], "wa_conjure_scout", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
+  wa_conjure_scout: B(BannerMuster, ["#c94a3a","#d8dee9","#331410"], "wa_conjure_scout", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "spiral3"),
   // Outriders (t3 pieces)
-  ww_outriders: B(BannerMuster, ["#bf5a3a","#cdd6e0","#361812"], "ww_outriders", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }),
+  ww_outriders: B(BannerMuster, ["#bf5a3a","#cdd6e0","#361812"], "ww_outriders", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "orbit4"),
   // Mass Resurrect (t4 pieces)
-  mass_resurrect: B(BannerMuster, ["#a83a2a","#e3e9f2","#2c100c"], "mass_resurrect", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }, true),
+  mass_resurrect: B(BannerMuster, ["#a83a2a","#e3e9f2","#2c100c"], "mass_resurrect", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "orbit3", true),
   // Phantom Rook (t4 pieces)
-  phantom_rook: B(BannerMuster, ["#bf5a3a","#cdd6e0","#361812"], "phantom_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, true),
+  phantom_rook: B(BannerMuster, ["#bf5a3a","#cdd6e0","#361812"], "phantom_rook", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "arc3", true),
   // Forward Observer (t4 pieces)
-  ww_forward_observer: B(BannerMuster, ["#a83a2a","#e3e9f2","#2c100c"], "ww_forward_observer", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, true),
+  ww_forward_observer: B(BannerMuster, ["#a83a2a","#e3e9f2","#2c100c"], "ww_forward_observer", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "cross3", true),
   // Reserve Cavalry (t4 pieces)
-  ww_reserve_cavalry: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "ww_reserve_cavalry", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, true),
+  ww_reserve_cavalry: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "ww_reserve_cavalry", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", source: "summon" }, "arc4", true),
 
   /* --- InkSplash --------------------------------------------------------- */
   // Shadow Step (t2 movement)
   // Glamour (t3 pieces)
-  glamour: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "glamour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
+  glamour: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "glamour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "orbit3"),
   // Piece Steal (t3 pieces)
-  piece_steal: B(InkSplash, ["#6f5fd1","#f0e8ff","#100f1e"], "piece_steal", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }),
+  piece_steal: B(InkSplash, ["#6f5fd1","#f0e8ff","#100f1e"], "piece_steal", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "arc3"),
   // Dominate (t4 pieces)
-  wa_dominate_minor: B(InkSplash, ["#5b4a9f","#e8ddff","#0e0c1c"], "wa_dominate_minor", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  wa_dominate_minor: B(InkSplash, ["#5b4a9f","#e8ddff","#0e0c1c"], "wa_dominate_minor", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "column3", true),
   // Body Double (t4 pieces)
-  wc_body_double: B(InkSplash, ["#8a70e0","#efe6ff","#181430"], "wc_body_double", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  wc_body_double: B(InkSplash, ["#8a70e0","#efe6ff","#181430"], "wc_body_double", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "corners3", true),
   // Defectors (t4 pieces)
-  ww_defectors: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "ww_defectors", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  ww_defectors: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "ww_defectors", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "spiral3", true),
   // Mass Defection (t4 pieces)
-  ww_mass_defection: B(InkSplash, ["#6f5fd1","#f0e8ff","#100f1e"], "ww_mass_defection", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, true),
+  ww_mass_defection: B(InkSplash, ["#6f5fd1","#f0e8ff","#100f1e"], "ww_mass_defection", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" }, "cross3", true),
 };

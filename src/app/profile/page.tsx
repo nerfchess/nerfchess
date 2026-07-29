@@ -140,7 +140,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
               {account ? account.username : "You"}
             </h1>
             <span
-              className="rounded-full px-2 py-0.5 text-[12px] font-medium leading-none text-parchment-400"
+              className="rounded-[1px] px-2 py-0.5 text-[12px] font-medium leading-none text-parchment-400"
               style={{ border: "1px solid var(--edge-strong)" }}
             >
               Guest

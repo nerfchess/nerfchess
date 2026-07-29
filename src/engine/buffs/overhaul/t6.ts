@@ -1105,7 +1105,11 @@ export const OVERHAUL_T6: Buff[] = [
       },
       onMovePlayed: (inst, move, api) => {
         if (move.color === api.opp && turnsLeft(inst) > 0 && move.captured && move.piece !== "k") {
-          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 1, skin: "glue" });
+          // turns:2, not 1. This freeze is added DURING the opponent's own move,
+          // and the shared post-move tick decrements an opp-owned effect on that
+          // same move, so turns:1 reached 0 and was pruned before it ever held a
+          // piece. Same convention as the five reactive freezes fixed earlier.
+          addEffect(api, { kind: "freeze", sq: move.to, owner: api.opp, turns: 2, skin: "glue" });
         }
         tickTurns(inst, move, api.opp);
       },

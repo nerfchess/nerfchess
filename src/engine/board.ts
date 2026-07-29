@@ -345,10 +345,14 @@ export function makeMove(board: BoardState, move: Move): BoardState {
     if (move.from === SQ(7, 7)) nb.castling.bk = false;
   }
   if (move.captured === "r") {
-    if (move.capturedSquare === SQ(0, 0)) nb.castling.wq = false;
-    if (move.capturedSquare === SQ(7, 0)) nb.castling.wk = false;
-    if (move.capturedSquare === SQ(0, 7)) nb.castling.bq = false;
-    if (move.capturedSquare === SQ(7, 7)) nb.castling.bk = false;
+    // Fall back to the destination square. Move generation always sets
+    // capturedSquare, but a card can synthesise a capture without it, and a
+    // rook taken on its home square must lose the castling right either way.
+    const rookSq = move.capturedSquare ?? move.to;
+    if (rookSq === SQ(0, 0)) nb.castling.wq = false;
+    if (rookSq === SQ(7, 0)) nb.castling.wk = false;
+    if (rookSq === SQ(0, 7)) nb.castling.bq = false;
+    if (rookSq === SQ(7, 7)) nb.castling.bk = false;
   }
 
   // En passant target
@@ -398,11 +402,32 @@ export function positionKey(board: BoardState): string {
 // one (material/pawn structure differ), so a plain full replay is correct.
 export function countRepetitions(board: BoardState): number {
   const target = positionKey(board);
+  const history = board.history;
+  // Only positions since the last irreversible move can match: a capture, a
+  // pawn move, or a drop changes material or pawn structure permanently, so
+  // nothing before it can ever equal the current position. Everything earlier
+  // still has to be REPLAYED (the board has to get here), but its key is never
+  // built - and building those 70-character keys, not the replay itself, is
+  // where this function spent its time. It runs inside playMove for every move
+  // once the halfmove clock passes 8, and the worker replays a whole game move
+  // by move on reconnect, spectate, and every bot move, so the saving lands
+  // hardest on the CPU-limited Durable Object.
+  let from = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const m = history[i];
+    if (m.piece === "p" || m.captured || m.drop) {
+      from = i + 1;
+      break;
+    }
+  }
   let b = initialBoard();
-  let count = positionKey(b) === target ? 1 : 0;
-  for (const m of board.history) {
-    b = makeMove(b, m);
-    if (positionKey(b) === target) count++;
+  // The starting position is only ever a candidate when nothing irreversible
+  // has happened yet.
+  let count = from === 0 && positionKey(b) === target ? 1 : 0;
+  for (let i = 0; i < history.length; i++) {
+    b = makeMove(b, history[i]);
+    // The board after history[i] is position i + 1.
+    if (i + 1 >= from && positionKey(b) === target) count++;
   }
   return count;
 }
@@ -473,14 +498,55 @@ export function moveFromUCI(board: BoardState, uci: string): Move | null {
   return move;
 }
 
-export function moveToSAN(m: Move): string {
+/**
+ * The PGN disambiguator for a piece move: the shortest origin hint that tells
+ * this move apart from every other same-type, same-color move to the same
+ * square ("" when the move is already unique, else a file, a rank, or the full
+ * origin square). `board` is the position BEFORE the move.
+ */
+function sanDisambiguator(board: BoardState, m: Move): string {
+  const files = "abcdefgh";
+  // Pawns never take a piece-move disambiguator (a pawn capture already
+  // carries its origin file), and castling is written O-O / O-O-O.
+  if (m.piece === "p" || m.castle || m.drop) return "";
+  const rivals: Square[] = [];
+  for (const cand of generateMoves(board)) {
+    if (cand.to !== m.to) continue;
+    if (cand.from === m.from) continue;
+    if (cand.piece !== m.piece || cand.color !== m.color) continue;
+    if (cand.castle) continue;
+    rivals.push(cand.from);
+  }
+  if (rivals.length === 0) return "";
+  const f = FILE(m.from), r = RANK(m.from);
+  if (!rivals.some((sq) => FILE(sq) === f)) return files[f];
+  if (!rivals.some((sq) => RANK(sq) === r)) return String(r + 1);
+  return files[f] + (r + 1);
+}
+
+/**
+ * Standard algebraic notation for one move.
+ *
+ * `board` is the position BEFORE the move. Passing it lets the notation carry
+ * the origin hint a bare Move cannot know about: two knights that both reach
+ * d2 are "Nbd2" and "Nfd2", not two indistinguishable "Nd2"s. Without it the
+ * notation degrades to the undisambiguated form, which reads fine for a single
+ * move but is not something a PGN reader can replay. Prefer `movesToSAN` for a
+ * whole move list; it does the replay for you.
+ *
+ * The hint is computed from STANDARD move generation, so a buff that augments
+ * or restricts movement can make it very slightly too lax or too eager. The
+ * result is still a unique readable reference, and ordinary chess — including
+ * every PGN this exports for an unbuffed game — is exactly right.
+ */
+export function moveToSAN(m: Move, board?: BoardState): string {
   const files = "abcdefgh";
   const dest = files[FILE(m.to)] + (RANK(m.to) + 1);
   if (m.drop) return m.drop.toUpperCase() + "@" + dest;
   if (m.castle === "k") return "O-O";
   if (m.castle === "q") return "O-O-O";
   let s = "";
-  if (m.piece !== "p") s += m.piece.toUpperCase();
+  if (m.piece !== "p") s += m.piece.toUpperCase() + (board ? sanDisambiguator(board, m) : "");
   if (m.captured) {
     if (m.piece === "p") s += files[FILE(m.from)];
     s += "x";
@@ -488,4 +554,66 @@ export function moveToSAN(m: Move): string {
   s += dest;
   if (m.promotion) s += "=" + m.promotion.toUpperCase();
   return s;
+}
+
+/**
+ * SAN for a whole move list, disambiguated by replaying the moves.
+ *
+ * This variant lets cards rewrite the board outside move history (summons,
+ * removals, teleports, pocket drops), and a plain replay cannot reproduce
+ * those. Rather than print a confidently wrong origin hint, the replay is
+ * checked each ply against the move it is about to apply; the first mismatch
+ * gives up on disambiguation for the rest of the list and the remaining moves
+ * fall back to the bare form. Standard games — and the openings of the rest —
+ * get correct, round-trippable notation.
+ */
+/**
+ * Numbered SAN labels, one per ply: "12. Qxf7", "12… Qxf7".
+ *
+ * Move numbers cannot be derived from the ply index in this variant, because
+ * extra-move cards let one side move twice in a row. The rule (shared with the
+ * move list's row layout) is that a black move closes the current number and a
+ * second white move in a row opens a new one.
+ */
+export function sanLabels(moves: Move[], start?: BoardState): string[] {
+  const sans = movesToSAN(moves, start);
+  const labels: string[] = [];
+  let num = 1;
+  let openWhite = false;
+  for (let i = 0; i < moves.length; i++) {
+    if (moves[i].color === "w") {
+      if (openWhite) num += 1;
+      labels.push(`${num}. ${sans[i]}`);
+      openWhite = true;
+    } else {
+      labels.push(`${num}… ${sans[i]}`);
+      num += 1;
+      openWhite = false;
+    }
+  }
+  return labels;
+}
+
+export function movesToSAN(moves: Move[], start?: BoardState): string[] {
+  let board: BoardState | null = start ? cloneBoard(start) : initialBoard();
+  const out: string[] = [];
+  for (const m of moves) {
+    if (board) {
+      const at = board.pieces[m.from];
+      // A drop has no origin piece, and any mismatch means a card moved the
+      // board out from under the replay. Either way the position is no longer
+      // trustworthy, so stop disambiguating from here on.
+      const replayable =
+        !m.drop && !!at && at.color === m.color && (at.type === m.piece || !!m.promotion);
+      if (!replayable) board = null;
+    }
+    out.push(board ? moveToSAN(m, board) : moveToSAN(m));
+    if (board) {
+      const next = makeMove(board, m);
+      // makeMove returns the SAME object when it refuses a move (empty origin
+      // or a self-capture); that means the replay has diverged, not advanced.
+      board = next === board ? null : next;
+    }
+  }
+  return out;
 }

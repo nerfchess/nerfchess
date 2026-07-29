@@ -11,14 +11,14 @@
   },
   "flagged": {
    "duplicateSignature": 273,
-   "nearDuplicate": 248,
+   "nearDuplicate": 250,
    "dominatedCandidates": 91,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2384
+  "reviewed": 2383
  },
  "rows": [
   {
@@ -678,18 +678,20 @@
    "name": "Grace Note",
    "kind": "boon",
    "tier": 1,
-   "effect": "Free action: suspend your nerf for your next turn, gain 10 seconds on your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer, used at the moment you choose. In untimed games the clock gain does nothing.",
+   "effect": "Free action: suspend your nerf for your next turn, gain 1 draft reroll, and learn the tier of your opponent's next draft offer, used at the moment you choose.",
    "trigger": "activated/free",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "nerf|activated|effect|next-turn|enemy|clock,draft,n:1,n:10,reroll,seconds,time",
+   "signature": "nerf|activated|effect|next-turn|enemy|draft,n:1,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "near-duplicate(bn4_measured_breath:0.81)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "bn4_hairline_crack",
@@ -1011,11 +1013,11 @@
    "name": "Understudy",
    "kind": "boon",
    "tier": 1,
-   "effect": "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn, and you gain 5 seconds on your clock. In untimed games the clock gain does nothing.",
+   "effect": "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn.",
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|passive|onMove|unstated|self|capture,clock,n:5,pawn,seconds,time",
+   "signature": "pieces|passive|onMove|unstated|self|capture,pawn,time",
    "animation": "passive",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -1083,11 +1085,11 @@
    "name": "First Blood",
    "kind": "boon",
    "tier": 1,
-   "effect": "The first capture you make in the game steals 15 seconds from your opponent's clock and adds them to yours, grants you one draft reroll, and reveals the tier of your opponent's next draft offer. In untimed games no time is taken, but the reroll and the reveal still come.",
+   "effect": "The first capture you make in the game grants you one draft reroll, and reveals the tier of your opponent's next draft offer.",
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|passive|onMove|unstated|enemy|capture,clock,draft,n:15,reroll,reveal,seconds,steal,time",
+   "signature": "tempo|passive|onMove|unstated|enemy|capture,draft,reroll,reveal",
    "animation": "passive",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -1157,11 +1159,11 @@
    "name": "Extra Glance",
    "kind": "boon",
    "tier": 1,
-   "effect": "See your opponent's nerf for the rest of the game, and gain 5 seconds.",
+   "effect": "See your opponent's nerf for the rest of the game.",
    "trigger": "instant",
    "duration": "permanent",
    "targets": "enemy",
-   "signature": "info|instant|effect|permanent|enemy|n:5,seconds,see",
+   "signature": "info|instant|effect|permanent|enemy|see",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -1588,7 +1590,9 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
+   "flags": [
+    "near-duplicate(bn4_grace_note:0.81)"
+   ],
    "action": "keep: 2 free turns plus reroll; Held Breath now runs 3 turns"
   },
   {
@@ -6054,11 +6058,11 @@
    "name": "Relay Baton",
    "kind": "boon",
    "tier": 6,
-   "effect": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. Each later castle or promotion instead adds 8 seconds to your clock and grants 1 draft reroll.",
+   "effect": "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, and then the baton is dropped.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "tempo|passive|onMove|one-shot|enemy|capture,castle,clock,draft,extra,king,move,n:1,n:8,pawn,promote,reroll,seconds,time",
+   "signature": "tempo|passive|onMove|one-shot|enemy|capture,castle,draft,extra,king,move,pawn,promote,reroll,time",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -8612,24 +8616,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ihatemyex",
-   "name": "I Hate My Ex",
-   "kind": "buff",
-   "tier": 1,
-   "effect": "After your opponent's next move, freeze one enemy pawn for 2 turns, but you get so worked up you freeze your own nearest pawn for 2 turns too. Mostly self-inflicted.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "tempo|passive|onMove|2-turns|enemy|freeze,move,n:2,n:2,pawn",
-   "animation": "bespoke+passive",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
-  },
-  {
    "id": "little_leap",
    "name": "Little Leap",
    "kind": "buff",
@@ -8670,11 +8656,11 @@
    "name": "Loyal Pawn",
    "kind": "buff",
    "tier": 1,
-   "effect": "One pawn promotes on your 7th rank instead of your 8th. Gain 5 seconds when it promotes.",
+   "effect": "One pawn promotes on your 7th rank instead of your 8th. The new piece cannot be captured during your opponent's next turn.",
    "trigger": "passive",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "pieces|passive|init+aug+onMove|unstated|self|n:5,pawn,promote,rank,seconds",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "pieces|passive|init+aug+onMove|next-turn|enemy|capture,pawn,promote,rank",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -11110,11 +11096,11 @@
    "name": "Backwards Hat",
    "kind": "buff",
    "tier": 1,
-   "effect": "One pawn may capture straight ahead on its next move, and you gain 5 seconds when it does.",
+   "effect": "One pawn may capture straight ahead on its next move.",
    "trigger": "passive",
    "duration": "next-turn",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|next-turn|self|capture,move,n:5,pawn,seconds",
+   "targets": "unstated",
+   "signature": "movement|passive|init+aug+onMove|next-turn|unstated|capture,move,pawn",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11148,11 +11134,11 @@
    "name": "Fresh Socks",
    "kind": "buff",
    "tier": 1,
-   "effect": "Your next move puts 13 seconds back on your clock, flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. In untimed games only the flag and the reroll apply. New socks, new you.",
+   "effect": "Your next move flags the enemy piece that moved last until your opponent replies, and gives you one draft reroll. New socks, new you.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "tempo|passive|onMove|next-turn|enemy|clock,draft,move,n:13,reroll,seconds,time",
+   "signature": "tempo|passive|onMove|next-turn|enemy|draft,move,reroll",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11238,11 +11224,11 @@
    "name": "Name Tag",
    "kind": "buff",
    "tier": 1,
-   "effect": "Stick a name tag on one enemy piece. It is Gary now. Capture Gary and gain 10 seconds.",
+   "effect": "Stick a name tag on one enemy piece. It is Gary now. Whichever of your pieces takes Gary cannot be captured during your opponent's next turn.",
    "trigger": "activated/free/lingering",
-   "duration": "one-shot",
+   "duration": "next-turn",
    "targets": "enemy",
-   "signature": "info|activated|effect+targets+onMove|one-shot|enemy|capture,n:10,seconds",
+   "signature": "info|activated|effect+targets+onMove|next-turn|enemy|capture",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11328,11 +11314,11 @@
    "name": "Rain Check",
    "kind": "buff",
    "tier": 1,
-   "effect": "In 5 of your turns, the cloud pays out: gain 20 seconds on your clock, one draft reroll, and a look at the tier of your opponent's next draft. In untimed games only the reroll and the reveal arrive.",
+   "effect": "In 5 of your turns, the cloud pays out: one draft reroll, and a look at the tier of your opponent's next draft.",
    "trigger": "passive",
    "duration": "5-turns",
    "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|5-turns|enemy|clock,draft,n:20,n:5,reroll,reveal,seconds,time",
+   "signature": "tempo|passive|init+onMove|5-turns|enemy|draft,n:5,reroll",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11346,11 +11332,11 @@
    "name": "Spare Button",
    "kind": "buff",
    "tier": 1,
-   "effect": "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty, and you gain 5 seconds. One use.",
+   "effect": "For your next 3 turns, if you lose a pawn, a fresh one is stitched onto its file's home square if that square is empty. One use.",
    "trigger": "passive",
    "duration": "3-turns",
    "targets": "self",
-   "signature": "pieces|passive|init+onMove|3-turns|self|file,n:3,n:5,pawn,seconds,square",
+   "signature": "pieces|passive|init+onMove|3-turns|self|file,n:3,pawn,square",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11490,11 +11476,11 @@
    "name": "Quiet March",
    "kind": "buff",
    "tier": 1,
-   "effect": "One pawn can move backward one square, once. Gain 5 seconds when it resolves.",
+   "effect": "One pawn can move backward one square, once. It cannot be captured during your opponent's next turn.",
    "trigger": "passive",
-   "duration": "one-shot",
-   "targets": "unstated",
-   "signature": "movement|passive|init+aug+onMove|one-shot|unstated|move,n:5,pawn,seconds,square",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "movement|passive|init+aug+onMove|next-turn|enemy|capture,move,pawn,square",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -22277,25 +22263,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "i_love_cam",
-   "name": "I Love Cami",
-   "kind": "buff",
-   "tier": 6,
-   "effect": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect+targets+aug+filter+onMove|3-turns|enemy|capture,knight,leap,n:2,n:3,place,queen,square",
-   "animation": "plugin",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "test-companions.cjs",
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "i_love_newjeans",
    "name": "I Love NewJeans",
    "kind": "buff",
@@ -22795,6 +22762,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t6.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -24348,6 +24316,25 @@
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
   {
+   "id": "i_love_cam",
+   "name": "I Love Cami",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Place Cami on an empty square in your half: a queen who also leaps like a knight. Devotion: allies standing beside her cannot be captured for your opponent's next 3 turns. If she is ever taken, her captor is frozen for 2 turns.",
+   "trigger": "activated/lingering",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect+targets+aug+filter+onMove|3-turns|enemy|capture,knight,leap,n:2,n:3,place,queen,square",
+   "animation": "plugin",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "test-companions.cjs",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "ilovechaewon",
    "name": "I Love Chaewon",
    "kind": "buff",
@@ -25592,6 +25579,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "ihatemyex",
+   "name": "I Hate My Ex",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Bring the whole thing down. Every piece on the board is destroyed instantly, yours and theirs alike. Only the two kings are left standing in the wreckage.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "attack|instant|effect|unstated|enemy|destroy,king",
+   "animation": "bespoke",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "test-card-impact.ts",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
+  },
+  {
    "id": "ilovewhimperingaudios",
    "name": "I Love Whimpering Audios",
    "kind": "buff",
@@ -26707,14 +26713,15 @@
    "name": "Early Frost",
    "kind": "hex",
    "tier": 1,
-   "effect": "Your opponent's pawns cannot advance on their next turn. Diagonal captures still work. The first pawn to try advancing slips through as one escape, then the restriction holds.",
+   "effect": "The first pawn your opponent tries to advance slips through as one escape. After that, for their next turn, none of their pawns may advance. Diagonal captures still work throughout, and the frost lifts if no pawn ever pushes.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|advance,capture,pawn",
+   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|advance,capture,pawn,push",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26745,7 +26752,7 @@
    "name": "Hiccups",
    "kind": "hex",
    "tier": 1,
-   "effect": "On your opponent's next turn, they may only move pieces standing in their own half of the board. The first piece from your half slips through as one escape, then the restriction holds.",
+   "effect": "The first piece your opponent tries to move out of their own half slips through as one escape. After that, for their next turn, they may only move pieces standing in their own half. The hiccups pass if nothing ever crosses.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -26753,6 +26760,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26764,7 +26772,7 @@
    "name": "Hopscotch",
    "kind": "hex",
    "tier": 1,
-   "effect": "On your opponent's next turn, their pawns standing on light squares are busy playing hopscotch and cannot move. The first such pawn slips through as one escape, then the restriction holds.",
+   "effect": "The first light-square pawn your opponent tries to move slips through as one escape. After that, for their next turn, none of their light-square pawns may move: they are busy playing hopscotch. The game breaks up if no pawn joins in.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -26772,6 +26780,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -26802,7 +26811,7 @@
    "name": "Matins Bell",
    "kind": "hex",
    "tier": 1,
-   "effect": "On your opponent's next turn, their pieces standing on the queenside files (a to d) may not capture: they are at morning prayers. The first such capture slips through as one escape, then the restriction holds.",
+   "effect": "The first capture your opponent tries from the queenside files (a to d) slips through as one escape. After that, for their next turn, no piece standing on those files may capture: they are at morning prayers. The bell falls silent if nobody swings.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -26810,6 +26819,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -28178,14 +28188,15 @@
    "name": "Tea Break",
    "kind": "hex",
    "tier": 2,
-   "effect": "On your opponent's next turn, only pieces within 2 squares of their king may move. The first piece from farther out slips through as one escape, then the restriction holds. Everyone else is at tea.",
+   "effect": "The first piece your opponent tries to move from more than 2 squares off their king slips through as one escape. After that, for their next turn, only pieces within 2 squares of their king may move. Everyone else is at tea, and the pot goes cold if nobody strays.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|king,move,n:2,square",
+   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|king,move,n:2,n:2,square",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -33679,6 +33690,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -34186,6 +34198,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
+    "test-card-impact.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],

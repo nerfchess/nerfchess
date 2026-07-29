@@ -179,8 +179,6 @@ import {
   Zap,
 } from "lucide-react";
 import type { BuffCategory } from "@/engine/buff";
-import { ALL_BUFFS } from "@/engine/buffs/library";
-import { ALL_NERFS } from "@/engine/nerfs/library";
 import { CARD_ICON_NAMES, GEN_ICON_COMPONENTS } from "./cardIconMap.gen";
 
 /** Canonicalize an icon name to its PascalCase key in the shipped registry.
@@ -283,19 +281,33 @@ function hashId(id: string): number {
 // (see header) — warn loudly; the affected cards fall back below. The library
 // id set also lets cardFaceIcon distinguish "stale generated map" (loud)
 // from "unknown id off the wire" (quiet ring fallback, as always).
+// Loaded through a DYNAMIC import inside the dev guard, not a static one. A
+// static import put the whole engine card library (and its transitive tree of
+// buff modules, several megabytes of source) into every chunk that touches this
+// file - including /codex, which only ever wanted an icon - purely to power a
+// warning that never runs in production. The dynamic form lets the production
+// build drop it entirely.
+//
+// Populated asynchronously, so the set is briefly empty on first paint in dev.
+// That only softens a dev-only warning distinction below; nothing user-facing
+// depends on it.
 const DEV_LIBRARY_IDS: Set<string> | null =
-  process.env.NODE_ENV !== "production"
-    ? new Set([...ALL_NERFS, ...ALL_BUFFS].map((c) => c.id))
-    : null;
+  process.env.NODE_ENV !== "production" ? new Set<string>() : null;
 if (DEV_LIBRARY_IDS) {
-  const missing = [...DEV_LIBRARY_IDS].filter((id) => !Object.hasOwn(CARD_ICON_NAMES, id));
-  if (missing.length > 0) {
-    console.warn(
-      `[cardIcon] generated icon map is STALE: ${missing.length} library card(s) missing ` +
-        `(${missing.slice(0, 5).join(", ")}${missing.length > 5 ? ", ..." : ""}). ` +
-        "They fall back to their own `icon`/category ring until you run: npm run gen:icons",
-    );
-  }
+  void Promise.all([
+    import("@/engine/nerfs/library"),
+    import("@/engine/buffs/library"),
+  ]).then(([nerfs, buffs]) => {
+    for (const c of [...nerfs.ALL_NERFS, ...buffs.ALL_BUFFS]) DEV_LIBRARY_IDS.add(c.id);
+    const missing = [...DEV_LIBRARY_IDS].filter((id) => !Object.hasOwn(CARD_ICON_NAMES, id));
+    if (missing.length > 0) {
+      console.warn(
+        `[cardIcon] generated icon map is STALE: ${missing.length} library card(s) missing ` +
+          `(${missing.slice(0, 5).join(", ")}${missing.length > 5 ? ", ..." : ""}). ` +
+          "They fall back to their own `icon`/category ring until you run: npm run gen:icons",
+      );
+    }
+  });
 }
 
 /** The face icon for a card. For every card in the shipped libraries this is

@@ -10,6 +10,7 @@ import { hasRevealPlayed, markRevealPlayed, offerRevealKey } from "@/lib/draftRe
 import { resolveDraftTimeout } from "@/lib/draftTimeout";
 import { haptic } from "@/lib/haptics";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { isGodlikeCard } from "@/lib/signatureCards";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
@@ -142,9 +143,16 @@ export function LockInCountdown({
   return (
     <div className={"flex items-center gap-2 " + className} role="timer" aria-label="Lock-in timer">
       <div className="h-1 flex-1 overflow-hidden rounded-[1px] bg-white/10">
+        {/* scaleX, not width. The countdown ticks ten times a second for the
+            whole 20 second window, and a width transition relayouts the bar
+            (inside an overflow-hidden parent) on every one of those ticks. A
+            transform runs on the compositor instead. */}
         <div
-          className={"h-full transition-[width] duration-100 " + (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")}
-          style={{ width: `${fraction * 100}%` }}
+          className={
+            "h-full w-full origin-left transition-transform duration-100 " +
+            (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")
+          }
+          style={{ transform: `scaleX(${fraction})` }}
         />
       </div>
       <span
@@ -192,12 +200,12 @@ function DraftTimerWindow({
     <div role="timer" aria-label="Draft decision timer" className="pointer-events-none shrink-0">
       <div
         className={
-          "draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2 " +
+          "flex items-center gap-2 " +
           (urgent ? "draft-timer--urgent " : "") +
           (announce ? "draft-timer--announce" : "")
         }
       >
-        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
+        <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden className="-rotate-90">
           {/* Outer hairline: a second, decorative gold ring framing the dial.
               Literal mirrors --accent-gold (SVG stroke attrs can't read a CSS var). */}
           <circle cx="20" cy="20" r="18.5" fill="none" stroke="rgba(212,160,23,0.22)" strokeWidth="1" />
@@ -232,17 +240,14 @@ function DraftTimerWindow({
             style={{ transition: "stroke-dashoffset 100ms linear, stroke 300ms ease" }}
           />
         </svg>
-        <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">Choose within</div>
-          <div
-            className={
-              "mt-1 font-mono text-2xl font-bold tabular-nums " +
-              (urgent ? "text-oxblood-glow" : "text-parchment-50")
-            }
-          >
-            {seconds}
-            <span className="ml-0.5 text-sm font-semibold text-parchment-400">s</span>
-          </div>
+        <div
+          className={
+            "font-mono text-lg font-bold leading-none tabular-nums " +
+            (urgent ? "text-oxblood-glow" : "text-parchment-50")
+          }
+        >
+          {seconds}
+          <span className="ml-0.5 text-xs font-semibold text-parchment-400">s</span>
         </div>
       </div>
     </div>
@@ -255,14 +260,14 @@ function DraftTimerWindow({
  * that their time has not started yet. */
 function DraftPrepChip({ label }: { label: string }) {
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none shrink-0">
-      <div className="draft-timer draft-timer--lux flex items-center gap-3 px-4 py-2">
+    <div role="status" aria-live="polite" className="pointer-events-none min-w-0 shrink">
+      <div className="flex items-center gap-2">
         <span aria-hidden className="draft-prep-dot" />
-        <div className="leading-none">
-          <div className="smallcaps text-[12px] text-parchment-400">{label}</div>
-          <div className="mt-1 text-[12px] font-semibold text-parchment-200">
-            Your timer starts when the cards are ready
-          </div>
+        <div className="min-w-0 leading-none">
+          {/* Inline in the panel header now, so it is one line: the old two-line
+              chip with its own border was the box that collided with the site
+              masthead on a phone. */}
+          <div className="truncate text-[12px] font-semibold text-parchment-200">{label}</div>
         </div>
       </div>
     </div>
@@ -652,9 +657,14 @@ export function DraftOverlay({
   }, [minimized]);
 
   // Keep the panel on screen if the viewport shrinks (rotate, keyboard open).
+  //
+  // Deliberately NOT keyed on dragPos. It used to be, and since dragging sets
+  // dragPos on every pointermove, this listener was torn down and re-registered
+  // on every single move event. The handler reads the live value through
+  // dragPosRef instead, so it can register once.
   useEffect(() => {
-    if (!dragPos) return;
     const onResize = () => {
+      if (!dragPosRef.current) return;
       const rect = panelRef.current?.getBoundingClientRect();
       setDragPos((prev) =>
         prev ? clampPanelPos(prev.x, prev.y, rect?.width ?? 304, rect?.height ?? 220) : prev,
@@ -662,7 +672,55 @@ export function DraftOverlay({
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [dragPos]);
+  }, []);
+
+  // Focus containment for the draft dialog. The overlay is a forced decision,
+  // so focus must not be able to leave it while it is up: Tab cycles inside,
+  // and focus is pulled in on open and restored on close. Escape peeks at the
+  // board (the Hide affordance) rather than closing, because there is nothing
+  // to close to.
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (hidden) return;
+    const root = overlayRef.current;
+    if (!root) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+    // Pull focus in, but only if it is currently outside: never steal it from a
+    // control the player already reached inside the panel.
+    if (!root.contains(document.activeElement)) focusables()[0]?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setHidden(true);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !root.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !root.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [hidden]);
 
   const onGripPointerDown = (e: ReactPointerEvent) => {
     const rect = panelRef.current?.getBoundingClientRect();
@@ -1328,17 +1386,24 @@ export function DraftOverlay({
           </div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {selected != null && !settled && (
-              <button
-                onClick={() => {
-                  setChosen(selected);
-                  commit(selected);
-                }}
-                className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide"
-              >
-                Confirm {BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}
-              </button>
-            )}
+            {/* ALWAYS rendered, merely disabled until a card is selected. It
+                used to appear on selection, and since every button in this row
+                is flex-1, inserting a third one resized and re-wrapped Reroll
+                and Bank the instant you clicked a card: the row moved under the
+                cursor mid-click. The full overlay already does it this way. */}
+            <button
+              disabled={selected == null || settled}
+              onClick={() => {
+                if (selected == null || settled) return;
+                setChosen(selected);
+                commit(selected);
+              }}
+              className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide disabled:opacity-40"
+            >
+              {selected != null
+                ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
+                : "Pick a card"}
+            </button>
             {canReroll && (
               <button
                 onClick={handleReroll}
@@ -1419,15 +1484,29 @@ export function DraftOverlay({
         </div>
       )}
       <div
+        ref={overlayRef}
+        // The most blocking surface in the product had no dialog semantics at
+        // all: no role, no aria-modal, no focus management. A keyboard user
+        // tabbed straight out of a forced decision into the board underneath.
+        // Note there is deliberately no Escape-to-close: a draft cannot be
+        // dismissed, so Escape maps to the same peek the Hide button gives.
+        role="dialog"
+        aria-modal={hidden ? undefined : true}
+        aria-label={`${draftLabel}: choose a card`}
         aria-hidden={hidden || undefined}
         // z-[55]: strictly above every z-50 sibling (end screens, side modals,
         // stray toasts) so nothing can ever sit invisibly over the cards and
         // eat the pick clicks. No backdrop blur: a full-screen blur repainted
-        // on every board animation frame chugged phones. The scrim is a light
-        // 20% dim: the board stays visible behind the draft, never hidden
-        // (the near-opaque panel itself carries the cards' readability).
+        // on every board animation frame chugged phones.
+        //
+        // The scrim is a light 20% dim on desktop so the board stays visible
+        // behind the draft. On PHONES it is much heavier, because there the
+        // draft column has nowhere to go: it overlaps the masthead and the
+        // player row, and at 20% the logo, avatar and clocks read straight
+        // through the timer chip and the clock notice, which is the single
+        // worst readability problem on the mobile draft.
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/20" +
+          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/70 sm:bg-black/20" +
           (hidden ? " invisible" : "")
         }
       >
@@ -1500,21 +1579,11 @@ export function DraftOverlay({
           (recordingMode ? " draft-col--rec" : "")
         }
       >
-        {deadline != null ? (
-          <DraftTimerWindow deadline={deadline} onExpire={handleExpire} announce={timerAnnounce} />
-        ) : (
-          /* Preparation phases show WHAT is happening instead of a countdown:
-             the decision timer only appears once the cards are readable. */
-          <DraftPrepChip
-            label={
-              packStage !== "open"
-                ? "Opening your draft"
-                : !dealt
-                ? "Dealing the cards"
-                : "Preparing your draft"
-            }
-          />
-        )}
+        {/* The countdown used to live HERE, in a bordered chip floating above
+            the panel. On a phone that box overlapped the masthead and read as a
+            stray rectangle pasted over the site chrome, belonging to nothing:
+            two separate bordered boxes stacked with a gap between them. It now
+            sits inline in the panel header, next to the label it governs. */}
         {/* Both game clocks stay visible while drafting, with the clock rule
             stated plainly: choosing is paused time; overrunning the countdown
             puts further deliberation on the player's own clock. */}
@@ -1527,8 +1596,13 @@ export function DraftOverlay({
             <span className="font-mono tabular-nums">
               Opponent <span className="font-bold text-parchment-100">{fmtClock(clocks.theirs)}</span>
             </span>
-            <span className="smallcaps text-[11px] text-parchment-400">
-              Clocks are paused while you choose; after the countdown ends, drafting costs your clock
+            {/* Its own full-width line, and NOT smallcaps. This is a full
+                sentence: set in wide-tracked uppercase at 11px it wrapped to
+                three lines on a phone, sat across the masthead and the player
+                row, and was the hardest thing on the screen to read. Sentence
+                case on its own row costs nothing and reads at a glance. */}
+            <span className="w-full text-center text-[11px] leading-snug text-parchment-400">
+              Clocks are paused while you choose. Past the countdown, drafting runs on your clock.
             </span>
           </div>
         )}
@@ -1536,7 +1610,12 @@ export function DraftOverlay({
             corners. They must sit OUTSIDE the frame, whose corner-cut
             clip-path would behead anything poking past its bounds. */}
         <div className="relative min-w-0 w-full">
-          {!reduceMotion && (
+          {/* fxCalm as well as reduceMotion. Each torch is six elements running
+              five infinite animations, and they were gated on reduced motion
+              ONLY, so they kept burning after useAmbientAutoCalm had measured
+              the device as too slow to afford the ambience, and when the player
+              chose Calm by hand. That was a hole in the ambient perf pass. */}
+          {!reduceMotion && !fxCalm && (
             <>
               <span aria-hidden className="dgn-torch dgn-torch--l">
                 <i className="dgn-torch__halo" />
@@ -1575,7 +1654,31 @@ export function DraftOverlay({
           <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="smallcaps dgn-label text-[12px] text-parchment-400">{draftLabel}</div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="smallcaps dgn-label truncate text-[12px] text-parchment-400">
+              {draftLabel}
+            </span>
+            {/* The decision countdown, inline with the label it belongs to. */}
+            {deadline != null ? (
+              <DraftTimerWindow
+                deadline={deadline}
+                onExpire={handleExpire}
+                announce={timerAnnounce}
+              />
+            ) : (
+              /* Before the window opens, say WHAT is happening instead of
+                 counting: the player can see their time has not started. */
+              <DraftPrepChip
+                label={
+                  packStage !== "open"
+                    ? "Opening your draft"
+                    : !dealt
+                    ? "Dealing the cards"
+                    : "Preparing your draft"
+                }
+              />
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {oppLockedIn && (
               <div
@@ -1608,6 +1711,15 @@ export function DraftOverlay({
             ? "Choose a hex or a boon"
             : `Choose a ${noun}`}
         </h2>
+        {/* Reassurance while the chest and the deal play: the decision clock has
+            not started. It used to be the second line of the timer chip, which
+            no longer exists (the countdown moved inline into the header), so it
+            lives here in the panel body where there is room for a sentence. */}
+        {deadline == null && (
+          <p className="mt-1 text-[12px] leading-snug text-parchment-400">
+            Your timer starts when the cards are ready.
+          </p>
+        )}
         {(takeBoth || bankedBonus) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {takeBoth && (
@@ -1885,8 +1997,15 @@ export function DraftOverlay({
                     {/* Mythic presence: a tier 9/10 card radiates its own
                         breathing halo behind the face, so THE card of the
                         pull is unmistakable even inside a strong offer. */}
-                    {card.tier >= 9 && (
-                      <span aria-hidden className="draft-mythic-aura" data-tier={card.tier} />
+                    {(card.tier >= 9 || isGodlikeCard(card.id)) && (
+                      <span
+                        aria-hidden
+                        className="draft-mythic-aura"
+                        // The signature cards pull with their own radiance
+                        // regardless of tier (see lib/signatureCards.ts).
+                        // Presentation only: no tier, pool or odds change.
+                        data-tier={isGodlikeCard(card.id) ? "god" : card.tier}
+                      />
                     )}
                     {/* Rarity-scaled reveal: tier 6+ cards land with a
                         tier-colored ring blooming off the face right as the

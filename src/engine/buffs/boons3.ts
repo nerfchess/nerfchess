@@ -152,7 +152,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_first_blood",
       name: "First Blood",
       description:
-        "The first capture you make in the game steals 15 seconds from your opponent's clock and adds them to yours, grants you one draft reroll, and reveals the tier of your opponent's next draft offer. In untimed games no time is taken, but the reroll and the reveal still come.",
+        "The first capture you make in the game grants you one draft reroll, and reveals the tier of your opponent's next draft offer.",
       tier: 1,
       category: "tempo",
       icon: "Droplet",
@@ -163,7 +163,6 @@ export const BOON_WAVE3: Buff[] = [
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
         if (!move.captured || move.captured === "k") return;
-        api.adjustClock({ stealFlatSec: 15, stealCapSec: 15 });
         api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
         api.mine.flags.seeOppTier = true;
         inst.spent = true;

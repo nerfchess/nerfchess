@@ -483,10 +483,9 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_grace_note", name: "Grace Note", tier: 1, category: "nerf", icon: "Feather",
-      description: "Free action: suspend your nerf for your next turn, gain 10 seconds on your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer, used at the moment you choose. In untimed games the clock gain does nothing.",
+      description: "Free action: suspend your nerf for your next turn, gain 1 draft reroll, and learn the tier of your opponent's next draft offer, used at the moment you choose.",
       flavor: "A tiny ornament, played exactly on time." },
     suspendFree(1, (api) => {
-      api.adjustClock({ addSelfSec: 10 });
       api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       api.mine.flags.seeOppTier = true;
     }),
@@ -705,14 +704,13 @@ const BOON_WAVE4A: Buff[] = [
   ),
   card(
     { id: "bn4_understudy", name: "Understudy", tier: 1, category: "pieces", icon: "Drama",
-      description: "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn, and you gain 5 seconds on your clock. In untimed games the clock gain does nothing.",
+      description: "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn.",
       flavor: "Someone always knows the lines.", requires: ["p"] },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.opp || move.captured !== "p") return;
         grantInventory(api, "p", 1);
-        api.adjustClock({ addSelfSec: 5 });
         inst.spent = true;
       },
       status: () => "waiting in the wings",

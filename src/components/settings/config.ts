@@ -328,7 +328,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Honor the OS reduced-motion preference automatically",
+        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -377,7 +377,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Honor the OS reduced-motion preference automatically",
+        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
