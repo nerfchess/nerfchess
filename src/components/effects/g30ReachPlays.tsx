@@ -454,8 +454,14 @@ function SandFountain({ role, delayMs }: SceneProps) {
       frame={
         <BoardFrame>
           <span className="g30-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(217,176,113,0.24), transparent 72%)" })} />
-          {/* the quarter itself: half the board's width, half its height */}
-          <span className="g30-quarter absolute block" style={st({ ...d(delayMs, 150), left: "0%", top: "50%", width: "50%", height: "50%", background: "repeating-linear-gradient(45deg, rgba(217,176,113,0.45) 0 6px, rgba(58,42,23,0.35) 6px 12px)" })} />
+          {/* the quarter itself: half the board's width, half its height, on
+              the CASTER's half of the board rather than a fixed screen edge */}
+          <span
+            className="absolute block"
+            style={st({ left: "0%", top: "50%", width: "50%", height: "50%", transform: "translateY(calc((var(--fx-side, 1) - 1) * 50%))" })}
+          >
+            <span className="g30-quarter absolute inset-0 block" style={st({ ...d(delayMs, 150), background: "repeating-linear-gradient(45deg, rgba(217,176,113,0.45) 0 6px, rgba(58,42,23,0.35) 6px 12px)" })} />
+          </span>
         </BoardFrame>
       }
     >
@@ -1058,8 +1064,14 @@ function MatinsBell({ role, delayMs }: SceneProps) {
       frame={
         <BoardFrame>
           <span className="g30-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(195,178,138,0.24), transparent 72%)" })} />
-          {/* the queenside files, a to d: half the board's width, full height */}
-          <span className="g30-fileband absolute block" style={st({ ...d(delayMs, 150), left: "0%", top: "0%", width: "50%", height: "100%", background: "linear-gradient(90deg, rgba(195,178,138,0.4), transparent)" })} />
+          {/* the queenside files, a to d: half the board's width, full height,
+              flipped with the caster so it is never "the left of the screen" */}
+          <span
+            className="absolute block"
+            style={st({ left: "0%", top: "0%", width: "50%", height: "100%", transform: "translateX(calc((1 - var(--fx-side, 1)) * 50%))" })}
+          >
+            <span className="g30-fileband absolute inset-0 block" style={st({ ...d(delayMs, 150), background: "linear-gradient(90deg, rgba(195,178,138,0.4), transparent)" })} />
+          </span>
         </BoardFrame>
       }
     >
