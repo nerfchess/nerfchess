@@ -126,6 +126,13 @@ jobs:
       - name: Animation registry
         run: npm run test:animations
 
+      # Every scene meets the design brief's floor: three beats, the tier's
+      # layer count, warm whites, a layer driven by the directional geometry
+      # vars, and a declared anchor. Ratcheted against
+      # scripts/scene-complexity-baseline.json so the count can only shrink.
+      - name: Scene complexity
+        run: npm run test:scene-complexity
+
       # Every passive composition carries a sound cue and every cue family has a
       # wired voice.
       - name: Sound coverage

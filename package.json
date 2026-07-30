@@ -25,6 +25,7 @@
     "test:clock-pause": "npx -y tsx scripts/test-clock-pause.ts",
     "test:passive-registry": "npx -y tsx scripts/test-passive-registry.ts",
     "test:animations": "npx -y tsx scripts/audit-animations.ts",
+    "test:scene-complexity": "npx -y tsx scripts/audit-scene-complexity.ts",
     "test:emdash": "npx -y tsx scripts/check-emdash.ts",
     "test:rounded": "npx -y tsx scripts/check-rounded.ts",
     "test:sound": "node scripts/check-sound-coverage.cjs",

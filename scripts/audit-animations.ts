@@ -408,8 +408,25 @@ for (const [dress, ids] of exact) {
 // F3 ratchet: shared flagships at tier >= 5 may only shrink.
 const sharedHigh = entries.filter((e) => e.sharedFlagship && e.tier >= 5);
 const sharedAll = entries.filter((e) => e.sharedFlagship);
-let baseline = { sharedFlagshipTier5plus: Infinity as number, sharedFlagshipTotal: Infinity as number };
-if (fs.existsSync(BASELINE)) baseline = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
+
+// F5: cards with no hand-made art at all.
+//
+// F1-F3 cannot see these. A generated signature's animId encodes family +
+// variant + both hues + rotation + glyph + finisher, so every generated card
+// looks UNIQUE to the duplicate detector and lands in the "keep" bucket — which
+// is how a registry can report 2,330 cards keeping their flagship while a
+// thousand of them are one of 37 stock choreographies in a different colour.
+// Uniqueness was never the question for these; having art of their own was.
+//
+// Ratcheted to zero across the bespoke-coverage waves.
+const genFallback = entries.filter((e) => e.animId.startsWith("gen:"));
+
+let baseline = {
+  sharedFlagshipTier5plus: Infinity as number,
+  sharedFlagshipTotal: Infinity as number,
+  genFallbackCount: Infinity as number,
+};
+if (fs.existsSync(BASELINE)) baseline = { ...baseline, ...JSON.parse(fs.readFileSync(BASELINE, "utf8")) };
 if (!WRITE) {
   if (sharedHigh.length > baseline.sharedFlagshipTier5plus)
     fail(
@@ -418,6 +435,11 @@ if (!WRITE) {
     );
   if (sharedAll.length > baseline.sharedFlagshipTotal)
     fail(`F3: total shared flagships grew: ${sharedAll.length} > baseline ${baseline.sharedFlagshipTotal}.`);
+  if (genFallback.length > baseline.genFallbackCount)
+    fail(
+      `F5: cards with no hand-made art grew: ${genFallback.length} > baseline ${baseline.genFallbackCount}. ` +
+        `Every new card needs a scene in a plugin module (see scripts/audit-bespoke-coverage.cjs for the list).`,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -445,6 +467,10 @@ console.log(
 console.log(
   `shared flagships: ${sharedAll.length} total, ${sharedHigh.length} at tier>=5 across ${dupGroups.length} groups`,
 );
+console.log(
+  `no hand-made art: ${genFallback.length} cards still on the generated fallback ` +
+    `(baseline ${baseline.genFallbackCount}); list them with node scripts/audit-bespoke-coverage.cjs`,
+);
 for (const [animId, g] of dupGroups.slice(0, 12)) {
   console.log(`  ${String(g.length).padStart(3)}x ${animId}  e.g. ${g.slice(0, 4).map((e) => e.id).join(", ")}`);
 }
@@ -458,15 +484,31 @@ if (WRITE) {
       1,
     ) + "\n",
   );
-  fs.writeFileSync(
-    BASELINE,
-    JSON.stringify(
-      { sharedFlagshipTier5plus: sharedHigh.length, sharedFlagshipTotal: sharedAll.length },
-      null,
-      2,
-    ) + "\n",
+  // The ratchets are shrink-only, and --write used to re-baseline every
+  // counter unconditionally. With many authoring agents in flight that would
+  // silently launder a regression on one counter behind an improvement on
+  // another, so a raise now has to be asked for explicitly.
+  const next = {
+    sharedFlagshipTier5plus: sharedHigh.length,
+    sharedFlagshipTotal: sharedAll.length,
+    genFallbackCount: genFallback.length,
+  };
+  const raised = (Object.keys(next) as (keyof typeof next)[]).filter(
+    (k) => next[k] > (baseline[k] ?? Infinity),
   );
-  console.log(`wrote ${path.relative(ROOT, OUT_JSON)} and re-baselined the ratchet.`);
+  if (raised.length && !process.argv.includes("--allow-raise")) {
+    console.error(
+      `\nREFUSING to re-baseline upward: ${raised
+        .map((k) => `${k} ${baseline[k]} -> ${next[k]}`)
+        .join(", ")}.\nThe ratchets are shrink-only. Pass --allow-raise if the increase is deliberate.`,
+    );
+    process.exit(1);
+  }
+  fs.writeFileSync(BASELINE, JSON.stringify(next, null, 2) + "\n");
+  console.log(
+    `wrote ${path.relative(ROOT, OUT_JSON)} and re-baselined the ratchet ` +
+      `(shared ${sharedAll.length}/${sharedHigh.length} at t5+, no-art ${genFallback.length}).`,
+  );
 }
 
 if (problems.length) {
