@@ -317,12 +317,14 @@ function BottledCourageScene({ role, delayMs }: SceneProps) {
           w={2.6}
           h={2.6}
           cls="g31-bc-spray"
-          style={dv(delayMs + 300 + i * 70, {
-            "--g31-mx": `${[-190, 30, 200][i]}%`,
-            "--g31-my": `${[-230, -300, -210][i]}%`,
+          style={{
             background: C_BC.glow,
             borderRadius: "50%",
-          } as unknown as Record<string, string>)}
+            ...dv(delayMs + 300 + i * 70, {
+              "--g31-mx": `${[-190, 30, 200][i]}%`,
+              "--g31-my": `${[-230, -300, -210][i]}%`,
+            }),
+          }}
         />
       ))}
       <P
@@ -1080,12 +1082,14 @@ function HorseshoeNailScene({ role, delayMs }: SceneProps) {
           w={3.2}
           h={3.2}
           cls="g31-hn-spark"
-          style={dv(delayMs + 470 + i * 60, {
-            "--g31-mx": `${[-260, 40, 250][i]}%`,
-            "--g31-my": `${[-190, -280, -170][i]}%`,
+          style={{
             background: C_HN.glow,
             borderRadius: "50%",
-          } as unknown as Record<string, string>)}
+            ...dv(delayMs + 470 + i * 60, {
+              "--g31-mx": `${[-260, 40, 250][i]}%`,
+              "--g31-my": `${[-190, -280, -170][i]}%`,
+            }),
+          }}
         />
       ))}
       <P x={50} y={51} w={22} h={22} cls="g31-hn-toll" style={{ border: `2px solid ${C_HN.glow}`, borderRadius: "50%", ...d(delayMs + 520) }} />
@@ -1272,9 +1276,14 @@ function StarboardChartScene({ role, delayMs }: SceneProps) {
         <Drift color={C_SC.glow} delayMs={delayMs + 700} n={3} />
       </Wide>
       <Aim>
-        <span className="g31-sc-unroll absolute inset-0 block" style={d(delayMs + 160)}>
-          <P x={50} y={50} w={40} h={16} style={{ background: C_SC.glow, border: `2px solid ${C_SC.deep}` }} />
-        </span>
+        <P
+          x={70}
+          y={50}
+          w={40}
+          h={16}
+          cls="g31-sc-unroll"
+          style={{ background: C_SC.glow, border: `2px solid ${C_SC.deep}`, ...d(delayMs + 160) }}
+        />
         <P x={48} y={46} w={10} h={13} cls="g31-sc-walk" style={d(delayMs + 380)}>
           <svg viewBox="0 0 60 80" className="block h-full w-full">
             <path d="M30 6L12 74M30 6l18 68" fill="none" stroke={C_SC.deep} strokeWidth="8" strokeLinecap="round" />
