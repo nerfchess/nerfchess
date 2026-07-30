@@ -424,6 +424,16 @@ function main(): void {
     `[scene-complexity] measured ${measured} scenes (${unmeasurable} not measurable from source), ` +
       `${below} below the floor; baseline ${baseline.belowComplexityFloor}`,
   );
+  // Say what this gate does NOT cover, so the number above is not read as
+  // whole-library coverage. It walks the plugin modules only: core SIGNATURES
+  // art lives in the sigVisuals switch (a different shape entirely), passive
+  // nerf compositions are policed by test:passive-registry, and a card still on
+  // the generated fallback has no authored scene to measure - that one is F5's
+  // job in test:animations.
+  console.log(
+    "[scene-complexity] plugin modules only; core SIGNATURES art, passive " +
+      "compositions and generated-fallback cards are out of scope here",
+  );
 
   if (WRITE) {
     if (below > baseline.belowComplexityFloor && !process.argv.includes("--allow-raise")) {
