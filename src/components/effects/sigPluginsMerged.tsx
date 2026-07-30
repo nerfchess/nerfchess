@@ -68,9 +68,13 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   g25CourtPlays: () => import("./g25CourtPlays"),
   g26ShieldPlays: () => import("./g26ShieldPlays"),
   g27ThornPlays: () => import("./g27ThornPlays"),
+  g28MasonPlays: () => import("./g28MasonPlays"),
   g29RallyPlays: () => import("./g29RallyPlays"),
   g30ReachPlays: () => import("./g30ReachPlays"),
   g31ChancePlays: () => import("./g31ChancePlays"),
+  g32FairnessPlays: () => import("./g32FairnessPlays"),
+  g33DiagonalPlays: () => import("./g33DiagonalPlays"),
+  g34ExchangePlays: () => import("./g34ExchangePlays"),
 };
 // </plugin-modules:generated>
 
