@@ -94,7 +94,8 @@ const ROOK = "M5 4h3v2.3h2.5V4h3v2.3H16V4h3v5.1l-1.7 1.4v6.9L19 20H5l1.7-2.6v-6.
    seal thunks on, and graphite dust drifts off the sheet.
    Palette: #e8c56a / #fff4d6 / #3a2a10.
    ========================================================================== */
-function PatentDraft({ role, delayMs }: SceneProps) {
+function PatentDraft(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -152,8 +153,12 @@ function PatentDraft({ role, delayMs }: SceneProps) {
           <path d="M2 22L20 4" stroke="#e8c56a" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="3 2.4" />
           <path d="M20 4l-5.4 0.8 1.6 4.6z" fill="#fff4d6" />
         </svg>
-        {/* the wax seal thunks onto the foot of the sheet */}
-        <svg viewBox="0 0 24 24" className="g20-drop absolute block" style={st({ ...d(delayMs, 520), ...box(2.6, 2.6, 0.6, 1.5) })}>
+        {/* the wax seal thunks onto the far end of the sheet, where the line ends */}
+        <svg
+          viewBox="0 0 24 24"
+          className="g20-drop absolute block"
+          style={st({ ...d(delayMs, 520), left: "calc(50% + var(--fx-len, 3) * 7.142857% - 9.29%)", top: `${50 - 0.1 * CELL}%`, width: cells(2.6), height: cells(2.6) })}
+        >
           <circle cx="12" cy="12" r="9" fill="#e8c56a" stroke="#3a2a10" strokeWidth="1.6" />
           <path d={ROOK} fill="#3a2a10" transform="translate(4.8 4.8) scale(0.6)" />
         </svg>
@@ -174,7 +179,8 @@ function PatentDraft({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const FAITH_STONES = [0, 1, 2, 3, 4, 5];
 
-function FaithCourse({ role, delayMs }: SceneProps) {
+function FaithCourse(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -253,7 +259,8 @@ function FaithCourse({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const DRUMS = [0, 1, 2];
 
-function DeadDrums({ role, delayMs }: SceneProps) {
+function DeadDrums(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -329,7 +336,8 @@ function DeadDrums({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const STAKES = [0, 1, 2, 3, 4];
 
-function Circumvallation({ role, delayMs }: SceneProps) {
+function Circumvallation(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -396,7 +404,8 @@ function Circumvallation({ role, delayMs }: SceneProps) {
    layer lives inside <BoardFrame>.
    Palette: #6fd0a8 / #e8fff2 / #0e2a22.
    ========================================================================== */
-function BoomChain({ role, delayMs }: SceneProps) {
+function BoomChain(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -465,7 +474,8 @@ function BoomChain({ role, delayMs }: SceneProps) {
    spreads over the shell, and ash lifts off it.
    Palette: #d2703a / #ffe2b8 / #2c1408.
    ========================================================================== */
-function ClayKiln({ role, delayMs }: SceneProps) {
+function ClayKiln(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -519,8 +529,11 @@ function ClayKiln({ role, delayMs }: SceneProps) {
         />
       </svg>
       <span className="g20-glint absolute block" style={st({ ...d(delayMs, 620), ...box(1.3, 1.3, 0.9, -1.2), borderRadius: "50%", background: "#ffe2b8" })} />
-      {/* settle: kiln ash lifting away from the caster */}
-      <span className="g20-dust absolute block" style={st({ ...d(delayMs, 700), ...box(4.4, 2.4, 0, -1), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,226,184,0.5), transparent 72%)" })} />
+      {/* settle: kiln ash lifting away from the caster's own side */}
+      <span
+        className="g20-dust absolute block"
+        style={st({ ...d(delayMs, 700), left: `${50 - 2.2 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * -15.7%)", width: cells(4.4), height: cells(2.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,226,184,0.5), transparent 72%)" })}
+      />
     </BoardWideStage>
   );
 }
@@ -533,7 +546,8 @@ function ClayKiln({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const BAYS = [0, 1, 2, 3, 4, 5, 6, 7];
 
-function CurtainWall({ role, delayMs }: SceneProps) {
+function CurtainWall(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -603,7 +617,8 @@ function CurtainWall({ role, delayMs }: SceneProps) {
    water comes in behind it.
    Palette: #5ba7c9 / #dff4ff / #0f2733.
    ========================================================================== */
-function RingDitch({ role, delayMs }: SceneProps) {
+function RingDitch(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -682,7 +697,8 @@ function RingDitch({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const COINS = [0, 1, 2, 3];
 
-function DowryChest({ role, delayMs }: SceneProps) {
+function DowryChest(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -713,8 +729,11 @@ function DowryChest({ role, delayMs }: SceneProps) {
       <BoardFrame>
         <span className="g20-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(224,180,92,0.28), transparent 68%)" })} />
       </BoardFrame>
-      {/* tell: the bearers' shadow arrives before the chest does */}
-      <span className="g20-tell absolute block" style={st({ ...d(delayMs, 120), ...box(5, 0.9, 0, 1.8), borderRadius: "999px", background: "#2e2210" })} />
+      {/* tell: the bearers' shadow arrives from the caster's own home rank */}
+      <span
+        className="g20-tell absolute block"
+        style={st({ ...d(delayMs, 120), left: `${50 - 2.5 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * 12.9%)", width: cells(5), height: cells(0.9), borderRadius: "999px", background: "#2e2210" })}
+      />
       {/* strike: the chest is carried in on its poles */}
       <span
         className="g20-pole absolute block"
@@ -759,7 +778,8 @@ function DowryChest({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const PLACES = [0, 1, 2, 3];
 
-function DustBanquet({ role, delayMs }: SceneProps) {
+function DustBanquet(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -836,7 +856,8 @@ function DustBanquet({ role, delayMs }: SceneProps) {
    so the king can go sideways or back and never on.
    Palette: #eadfc6 / #fff6e2 / #38301f.
    ========================================================================== */
-function IvoryTower({ role, delayMs }: SceneProps) {
+function IvoryTower(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -905,7 +926,8 @@ const PITS: Array<[number, number]> = [
   [2, 1.3],
 ];
 
-function SapperPits({ role, delayMs }: SceneProps) {
+function SapperPits(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -986,7 +1008,8 @@ function SapperPits({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const FLAKES = [0, 1, 2, 3];
 
-function RustHinge({ role, delayMs }: SceneProps) {
+function RustHinge(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1038,7 +1061,10 @@ function RustHinge({ role, delayMs }: SceneProps) {
           style={st({ ...d(delayMs, 580 + i * 60), ...box(0.44, 0.3, [-1.4, -0.2, 1, 2][i], 0.9), borderRadius: "1px", background: i % 2 ? "#b06a35" : "#ffd9a8" })}
         />
       ))}
-      <span className="g20-dust absolute block" style={st({ ...d(delayMs, 700), ...box(4.6, 2, 0.2, 1.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,217,168,0.35), transparent 74%)" })} />
+      <span
+        className="g20-dust absolute block"
+        style={st({ ...d(delayMs, 700), left: `${50 - 2.1 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * 5% + 3%)", width: cells(4.6), height: cells(2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,217,168,0.35), transparent 74%)" })}
+      />
     </BoardWideStage>
   );
 }
@@ -1050,7 +1076,8 @@ function RustHinge({ role, delayMs }: SceneProps) {
    left cut into the ground behind it.
    Palette: #9a7248 / #ffe8c0 / #201509.
    ========================================================================== */
-function RamCarriage({ role, delayMs }: SceneProps) {
+function RamCarriage(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1102,7 +1129,11 @@ function RamCarriage({ role, delayMs }: SceneProps) {
         {/* a pair of ruts cut the whole way down the line */}
         <span className="g20-rut absolute block" style={st({ ...d(delayMs, 380), ...lane(0.18, 0.95), background: "#201509" })} />
         <span className="g20-rut absolute block" style={st({ ...d(delayMs, 420), ...lane(0.18, 1.35), background: "#201509" })} />
-        <span className="g20-shudder absolute block" style={st({ ...d(delayMs, 540), ...box(1.8, 2.6, 0, 0), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,232,192,0.5), transparent 70%)" })} />
+        {/* the gate takes it, at the real far end of the run */}
+        <span
+          className="g20-shudder absolute block"
+          style={st({ ...d(delayMs, 540), left: "calc(50% + var(--fx-len, 3) * 7.142857% - 6.43%)", top: `${50 - 1.3 * CELL}%`, width: cells(1.8), height: cells(2.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,232,192,0.5), transparent 70%)" })}
+        />
         {/* settle: the dust the wheels raise, drifting off the caster's line */}
         <span className="g20-dust absolute block" style={st({ ...d(delayMs, 640), ...lane(3, 0.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(154,114,72,0.45), transparent 74%)" })} />
       </AimStage>
@@ -1115,7 +1146,8 @@ function RamCarriage({ role, delayMs }: SceneProps) {
    charms drop onto it and settle, and the clasp catches with a glint.
    Palette: #e2a6b8 / #fff2e0 / #2c1a22.
    ========================================================================== */
-function CharmClasp({ role, delayMs }: SceneProps) {
+function CharmClasp(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1174,7 +1206,8 @@ function CharmClasp({ role, delayMs }: SceneProps) {
    line is solid.
    Palette: #a8a06a / #f6efd0 / #22200f.
    ========================================================================== */
-function GabionLine({ role, delayMs }: SceneProps) {
+function GabionLine(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1250,7 +1283,8 @@ function GabionLine({ role, delayMs }: SceneProps) {
    whole span.
    Palette: #c9a06a / #ffeccb / #241a0d.
    ========================================================================== */
-function Drawbridge({ role, delayMs }: SceneProps) {
+function Drawbridge(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1319,7 +1353,8 @@ function Drawbridge({ role, delayMs }: SceneProps) {
    cut and both towers turn their backs.
    Palette: #d1605a / #ffe3cf / #2a1210.
    ========================================================================== */
-function SurveyorLine({ role, delayMs }: SceneProps) {
+function SurveyorLine(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1386,7 +1421,8 @@ function SurveyorLine({ role, delayMs }: SceneProps) {
    one damp sputter, wet smoke, and no shot at all.
    Palette: #6f8f7a / #e6f2e2 / #14201a.
    ========================================================================== */
-function WetFuse({ role, delayMs }: SceneProps) {
+function WetFuse(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1450,7 +1486,8 @@ function WetFuse({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const RUNGS = [0, 1, 2, 3, 4, 5];
 
-function ScalingLadder({ role, delayMs }: SceneProps) {
+function ScalingLadder(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1530,7 +1567,8 @@ function ScalingLadder({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const BOARDS = [0, 1, 2, 3, 4, 5];
 
-function PlankCauseway({ role, delayMs }: SceneProps) {
+function PlankCauseway(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1597,7 +1635,8 @@ function PlankCauseway({ role, delayMs }: SceneProps) {
    it, and the lantern's beam sweeps out over the ground below.
    Palette: #ffc978 / #fff3d4 / #2a1e0c.
    ========================================================================== */
-function LanternWatch({ role, delayMs }: SceneProps) {
+function LanternWatch(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1664,7 +1703,8 @@ function LanternWatch({ role, delayMs }: SceneProps) {
    top, the rook settles into it, and folds a wing over the whole nest.
    Palette: #a9713f / #ffe9c4 / #241407.
    ========================================================================== */
-function TwigNest({ role, delayMs }: SceneProps) {
+function TwigNest(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>
@@ -1728,7 +1768,8 @@ function TwigNest({ role, delayMs }: SceneProps) {
    ========================================================================== */
 const NOTCHES = [0, 1, 2, 3];
 
-function BentBolt({ role, delayMs }: SceneProps) {
+function BentBolt(props: SceneProps) {
+  const { role, delayMs } = props;
   if (role === "entrance") {
     return (
       <span className={ROOT}>

@@ -309,7 +309,7 @@ function MenagerieGatesScene({ role, delayMs }: SceneProps) {
   return (
     <Wide>
       <Field tint="rgba(200,160,90,0.28)" delayMs={delayMs} />
-      <P x={50} y={53} w={26} h={3.4} cls="g05-tell" style={{ background: C_MG.deep, ...d(delayMs) }} />
+      <P x={50} y={53} w={26} h={3.4} cls="g05-tell" style={{ background: C_MG.deep, ...d(delayMs, 80) }} />
       <P x={43} y={54} w={12} h={20} cls="g05-mg-gateL" style={d(delayMs, 190)}>
         <svg viewBox="0 0 60 100" className="block h-full w-full">
           <rect x="4" y="4" width="52" height="92" fill={C_MG.deep} stroke={C_MG.core} strokeWidth="6" />
@@ -381,7 +381,7 @@ function FamineYearScene({ role, delayMs }: SceneProps) {
     <Wide>
       <Field tint="rgba(154,160,106,0.26)" delayMs={delayMs} />
       <Furrow color="rgba(38,42,20,0.55)" delayMs={delayMs + 60} y={62} h={5} />
-      <P x={50} y={64} w={30} h={3.4} cls="g05-tell" style={{ background: C_FY.deep, borderRadius: "50%", ...d(delayMs) }} />
+      <P x={50} y={64} w={30} h={3.4} cls="g05-tell" style={{ background: C_FY.deep, borderRadius: "50%", ...d(delayMs, 90) }} />
       {[0, 1, 2, 3, 4].map((i) => (
         <P key={i} x={38 + i * 6} y={54} w={5} h={18} cls="g05-fy-stalk" style={d(delayMs, 180 + i * 90)}>
           <svg viewBox="0 0 30 100" className="block h-full w-full">
@@ -520,7 +520,7 @@ function RaptureOfPawnsScene({ role, delayMs }: SceneProps) {
           w={8}
           h={2.6}
           cls="g05-tell"
-          style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, i * 60) }}
+          style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, 60) }}
         />
       ))}
       {[0, 1, 2].map((i) => (
@@ -659,6 +659,7 @@ function DrawbridgeCrewScene({ role, delayMs }: SceneProps) {
     <Wide>
       <Field tint="rgba(185,138,82,0.26)" delayMs={delayMs} />
       <Furrow color="rgba(44,28,14,0.5)" delayMs={delayMs + 60} y={64} h={5} />
+      <P x={50} y={66} w={30} h={3} cls="g05-tell" style={{ background: C_DC.deep, borderRadius: "50%", ...d(delayMs, 90) }} />
       {[0, 1, 2, 3, 4].map((i) => (
         <P key={i} x={38 + i * 6} y={60} w={3} h={8} cls="g05-dc-heads" style={{ background: C_DC.core, ...d(delayMs, i * 70) }} />
       ))}
@@ -1118,7 +1119,7 @@ function VolcanicVentScene({ role, delayMs }: SceneProps) {
   return (
     <Wide>
       <Field tint="rgba(239,122,58,0.3)" delayMs={delayMs} />
-      <P x={50} y={58} w={30} h={2} cls="g05-vv-crack" style={{ background: C_VV.core, ...d(delayMs) }} />
+      <P x={50} y={58} w={30} h={2} cls="g05-vv-crack" style={{ background: C_VV.core, ...d(delayMs, 90) }} />
       <P x={50} y={55} w={18} h={13} cls="g05-vv-cone" style={d(delayMs, 200)}>
         <svg viewBox="0 0 100 70" className="block h-full w-full">
           <path d="M6 66l32-56h24l32 56z" fill={C_VV.deep} stroke={C_VV.core} strokeWidth="6" strokeLinejoin="round" />
@@ -1267,7 +1268,7 @@ function LettersHomeScene({ role, delayMs }: SceneProps) {
   return (
     <Wide>
       <Field tint="rgba(211,112,127,0.26)" delayMs={delayMs} />
-      <P x={50} y={60} w={22} h={13} cls="g05-tell" style={d(delayMs)}>
+      <P x={50} y={60} w={22} h={13} cls="g05-tell" style={d(delayMs, 90)}>
         <svg viewBox="0 0 120 70" className="block h-full w-full">
           <rect x="8" y="20" width="104" height="44" fill={C_LH.deep} stroke={C_LH.core} strokeWidth="6" />
           <path d="M8 20q52-22 104 0" fill="none" stroke={C_LH.core} strokeWidth="6" />
@@ -1423,7 +1424,7 @@ function StrayCatScene({ role, delayMs }: SceneProps) {
     <Wide>
       <Field tint="rgba(228,184,146,0.24)" delayMs={delayMs} />
       <Furrow color="rgba(42,32,24,0.45)" delayMs={delayMs + 60} y={62} h={5} />
-      <P x={38} y={58} w={6} h={3} cls="g05-tell" style={{ background: C_CT.glow, borderRadius: "50%", ...d(delayMs) }} />
+      <P x={38} y={58} w={6} h={3} cls="g05-tell" style={{ background: C_CT.glow, borderRadius: "50%", ...d(delayMs, 90) }} />
       <P x={50} y={57} w={20} h={12} cls="g05-ct-walk" style={{ ...home, ...d(delayMs, 220) }}>
         <svg viewBox="0 0 110 66" className="block h-full w-full">
           <path d="M14 56q2-22 20-24l-6-16 12 9h10l12-9-6 16q20 3 20 24z" fill={C_CT.core} stroke={C_CT.deep} strokeWidth="5" strokeLinejoin="round" />

@@ -310,7 +310,7 @@ function CrownJubileeScene({ role, delayMs }: SceneProps) {
           <path d="M8 32q10-14 24-16" fill="none" stroke={C_CJ.deep} strokeWidth="3.2" {...SJ} />
           <circle cx="30" cy="16" r="4.4" fill={C_CJ.core} />
         </g>
-        <g className="g01-cj-ember" style={dm(delayMs, 210)}>
+        <g className="g01-flash" style={dm(delayMs, 210)}>
           <circle cx="30" cy="16" r="7" fill="none" stroke={C_CJ.glow} strokeWidth="1.8" />
         </g>
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
@@ -703,12 +703,12 @@ function MaskedBallScene({ role, delayMs }: SceneProps) {
           <path d="M50 4l40 26v66H10V30z" fill={C_MB.deep} stroke={C_MB.core} strokeWidth="6" {...SJ} />
         </svg>
       </P>
-      <P x={44} y={52} w={9} h={16} cls="g01-mb-door" style={sv(dm(delayMs, 170), { "--g01-a": "-84deg" })}>
+      <P x={44} y={52} w={9} h={16} cls="g01-mb-door" style={sv(dm(delayMs, 170), { "--g01-a": "-84deg", "--g01-mx": "-52%" })}>
         <svg viewBox="0 0 40 80" className="block h-full w-full">
           <rect x="2" y="2" width="36" height="76" fill={C_MB.core} stroke={C_MB.deep} strokeWidth="4" />
         </svg>
       </P>
-      <P x={56} y={52} w={9} h={16} cls="g01-mb-door" style={sv(dm(delayMs, 170), { "--g01-a": "84deg" })}>
+      <P x={56} y={52} w={9} h={16} cls="g01-mb-door" style={sv(dm(delayMs, 170), { "--g01-a": "84deg", "--g01-mx": "52%" })}>
         <svg viewBox="0 0 40 80" className="block h-full w-full">
           <rect x="2" y="2" width="36" height="76" fill={C_MB.core} stroke={C_MB.deep} strokeWidth="4" />
         </svg>
@@ -2005,3 +2005,616 @@ function GrandBargainScene({ role, delayMs }: SceneProps) {
     </Wide>
   );
 }
+
+/* =============================================================================
+   26. Half-Moon Charter (t7) — THE PHASE SHUTTER. Tell: the silvered disc
+   behind the aperture starts to creep. Strike: the shutter swings and takes
+   exactly half the moon away; light, dark, light, dark, on alternate turns.
+   Settle: the terminator line holds dead centre and the charter's two skipped
+   drafts drop out as dark coins.
+   ========================================================================== */
+
+const C_HM = { core: "#b9c9e8", glow: "#f6f2e0", deep: "#141a2e" };
+
+function HalfMoonCharterScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="11" fill={C_HM.glow} stroke={C_HM.deep} strokeWidth="2" />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <path d="M20 9a11 11 0 0 1 0 22z" fill={C_HM.deep} />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="21" r="12" fill={C_HM.glow} stroke={C_HM.core} strokeWidth="2.2" />
+        </g>
+        <g className="g01-hm-shutter" style={dm(delayMs, 220)}>
+          <path d="M20 9a12 12 0 0 1 0 24z" fill={C_HM.deep} />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <circle cx="20" cy="21" r="16" fill="none" stroke={C_HM.core} strokeWidth="1.5" strokeDasharray="4 4" />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(185,201,232,0.28)" delayMs={delayMs} />
+      <Rim color="rgba(185,201,232,0.4)" delayMs={delayMs + 60} />
+      <P x={50} y={52} w={22} h={22} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="42" fill={C_HM.glow} stroke={C_HM.core} strokeWidth="5" /></svg>
+      </P>
+      <P x={50} y={52} w={22} h={22} cls="g01-hm-shutter" style={dm(delayMs, 190)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full"><path d="M50 8a42 42 0 0 1 0 84z" fill={C_HM.deep} /></svg>
+      </P>
+      <P x={50} y={52} w={1.8} h={22} cls="g01-hm-phase" style={{ background: C_HM.core, ...dm(delayMs, 360) }} />
+      {[0, 1].map((i) => (
+        <P key={i} x={42 + i * 16} y={68} w={6} h={6} cls="g01-fling" style={sv(dm(delayMs, 520 + i * 110), { "--g01-mx": i === 0 ? "-130%" : "140%", "--g01-my": "220%", "--g01-mr": "160deg", background: C_HM.deep, borderRadius: "50%" })} />
+      ))}
+      <P x={50} y={40} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_HM.glow, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   27. The Hundred Days (t7) — THE TEAR-OFF CALENDAR. Tell: a thumb catches the
+   corner of the top leaf. Strike: eleven days are ripped off in one motion and
+   go up in a paper flurry. Settle: the block stands thinner, the exposed date
+   glows, and the last leaves flutter down past the board.
+   ========================================================================== */
+
+const C_HD = { core: "#e58f7a", glow: "#fff1e2", deep: "#331612" };
+const HD_LEAVES = [
+  { mx: "-230%", my: "-300%", mr: "-52deg" },
+  { mx: "-40%", my: "-370%", mr: "18deg" },
+  { mx: "180%", my: "-320%", mr: "64deg" },
+  { mx: "300%", my: "-190%", mr: "120deg" },
+];
+
+function HundredDaysScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <rect x="9" y="10" width="22" height="22" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="2" />
+          <rect x="9" y="10" width="22" height="6" fill={C_HD.core} />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <path d="M9 22h22" stroke={C_HD.deep} strokeWidth="2.4" strokeDasharray="3 3" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <rect x="8" y="12" width="24" height="22" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="2.2" />
+          <rect x="8" y="12" width="24" height="7" fill={C_HD.core} />
+        </g>
+        <g className="g01-hd-leaf" style={dm(delayMs, 220)}>
+          <rect x="11" y="4" width="18" height="10" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="1.8" />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M14 26h12" stroke={C_HD.core} strokeWidth="2.6" {...SJ} />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(229,143,122,0.28)" delayMs={delayMs} />
+      <P x={50} y={58} w={19} h={19} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <rect x="8" y="10" width="84" height="82" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="6" />
+          <rect x="8" y="10" width="84" height="22" fill={C_HD.core} />
+          <path d="M30 4v12M70 4v12" stroke={C_HD.deep} strokeWidth="6" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={50} w={19} h={7} cls="g01-hd-tear" style={dm(delayMs, 170)}>
+        <svg viewBox="0 0 100 36" className="block h-full w-full" preserveAspectRatio="none">
+          <path d="M2 30l10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 8-6V2H2z" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="4" {...SJ} />
+        </svg>
+      </P>
+      {HD_LEAVES.map((m, i) => (
+        <P key={i} x={50} y={50} w={6} h={7} cls="g01-hd-leaf" style={sv(dm(delayMs, 320 + i * 90), { "--g01-mx": m.mx, "--g01-my": m.my, "--g01-mr": m.mr })}>
+          <svg viewBox="0 0 30 36" className="block h-full w-full"><rect x="2" y="2" width="26" height="32" fill={C_HD.glow} stroke={C_HD.deep} strokeWidth="3" /></svg>
+        </P>
+      ))}
+      <P x={50} y={62} w={11} h={8} cls="g01-flash" style={dm(delayMs, 620)}>
+        <svg viewBox="0 0 60 40" className="block h-full w-full"><path d="M14 34V8l-8 6M34 8h12l-12 26h12" fill="none" stroke={C_HD.core} strokeWidth="5" {...SJ} /></svg>
+      </P>
+      <P x={50} y={42} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_HD.glow, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   28. Jubilee (t7) — THE DIAL LETS GO. Tell: the numerals rattle in their
+   settings. Strike: all twelve drop off the face like coins and the bare dial
+   spins free with nothing left to point at. Settle: the numerals bounce once
+   on the board and lie still, and the empty face keeps turning slowly.
+   ========================================================================== */
+
+const C_JB = { core: "#f0c96a", glow: "#fff6dd", deep: "#3a2a08" };
+const JB_NUMS = [
+  { x: 50, y: 40, mx: "-40%", my: "420%" },
+  { x: 60, y: 46, mx: "120%", my: "380%" },
+  { x: 60, y: 58, mx: "160%", my: "300%" },
+  { x: 40, y: 46, mx: "-150%", my: "390%" },
+  { x: 40, y: 58, mx: "-180%", my: "310%" },
+];
+
+function JubileeScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="12" fill="none" stroke={C_JB.core} strokeWidth="2.6" />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <circle cx="20" cy="9" r="2.4" fill={C_JB.glow} />
+          <circle cx="30" cy="24" r="2.4" fill={C_JB.glow} />
+          <circle cx="11" cy="24" r="2.4" fill={C_JB.glow} />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="21" r="13" fill={C_JB.deep} stroke={C_JB.core} strokeWidth="2.4" />
+        </g>
+        <g className="g01-jb-numeral" style={sv(dm(delayMs, 220), { "--g01-my": "260%" })}>
+          <circle cx="20" cy="10" r="2.8" fill={C_JB.glow} />
+          <circle cx="31" cy="26" r="2.8" fill={C_JB.glow} />
+          <circle cx="9" cy="26" r="2.8" fill={C_JB.glow} />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <circle cx="20" cy="21" r="17" fill="none" stroke={C_JB.core} strokeWidth="1.5" />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(240,201,106,0.3)" delayMs={delayMs} />
+      <P x={50} y={50} w={24} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <circle cx="50" cy="50" r="44" fill={C_JB.deep} stroke={C_JB.core} strokeWidth="6" />
+          <path d="M50 44V22" stroke={C_JB.glow} strokeWidth="5" {...SJ} />
+        </svg>
+      </P>
+      {JB_NUMS.map((m, i) => (
+        <P key={i} x={m.x} y={m.y} w={4} h={4} cls="g01-jb-numeral" style={sv(dm(delayMs, 190 + i * 70), { "--g01-mx": m.mx, "--g01-my": m.my, background: C_JB.glow, borderRadius: "50%" })} />
+      ))}
+      <P x={50} y={50} w={20} h={20} cls="g01-jb-spin" style={dm(delayMs, 470)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <circle cx="50" cy="50" r="38" fill="none" stroke={C_JB.glow} strokeWidth="5" />
+          <path d="M50 50V20M50 50l16 12" fill="none" stroke={C_JB.core} strokeWidth="5" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={64} w={28} h={2} cls="g01-lean" style={sv({ background: C_JB.core, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -190%)" })} />
+      <Drift color={C_JB.glow} delayMs={delayMs + 740} n={4} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   29. Keys to the City (t7) — THE VAULT TIME LOCK. Tell: the outer ring
+   creeps a degree and stops. Strike: the key is turned and both dial rings
+   roll to their marks; four bolts withdraw at once. Settle: the door stands
+   open on its own schedule, boundaries and all.
+   ========================================================================== */
+
+const C_KC = { core: "#84c9c4", glow: "#eefdf9", deep: "#0f2b2c" };
+const KC_BOLTS = [
+  { x: 50, y: 36, mx: "0%", my: "-150%" },
+  { x: 64, y: 52, mx: "150%", my: "0%" },
+  { x: 50, y: 68, mx: "0%", my: "150%" },
+  { x: 36, y: 52, mx: "-150%", my: "0%" },
+];
+
+function KeysToTheCityScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="12" fill={C_KC.deep} stroke={C_KC.core} strokeWidth="2.4" />
+          <circle cx="20" cy="20" r="5" fill="none" stroke={C_KC.glow} strokeWidth="2.2" />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <path d="M20 4v5M36 20h-5M20 36v-5M4 20h5" stroke={C_KC.glow} strokeWidth="3" {...SJ} />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="21" r="13" fill={C_KC.deep} stroke={C_KC.core} strokeWidth="2.4" />
+        </g>
+        <g className="g01-kc-ring" style={dm(delayMs, 220)}>
+          <circle cx="20" cy="21" r="8" fill="none" stroke={C_KC.glow} strokeWidth="2.6" strokeDasharray="4 4" />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M20 21h11" stroke={C_KC.core} strokeWidth="2.6" {...SJ} />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(132,201,196,0.28)" delayMs={delayMs} />
+      <P x={50} y={52} w={24} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="44" fill={C_KC.deep} stroke={C_KC.core} strokeWidth="6" /></svg>
+      </P>
+      <P x={50} y={52} w={19} h={19} cls="g01-kc-ring" style={sv(dm(delayMs, 170), { "--g01-a": "150deg" })}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="42" fill="none" stroke={C_KC.core} strokeWidth="7" strokeDasharray="12 10" /></svg>
+      </P>
+      <P x={50} y={52} w={12} h={12} cls="g01-kc-inner" style={sv(dm(delayMs, 300), { "--g01-a": "-210deg" })}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="40" fill="none" stroke={C_KC.glow} strokeWidth="9" strokeDasharray="9 12" /></svg>
+      </P>
+      {KC_BOLTS.map((b, i) => (
+        <P key={i} x={b.x} y={b.y} w={4} h={4} cls="g01-fling" style={sv(dm(delayMs, 460 + i * 70), { "--g01-mx": b.mx, "--g01-my": b.my, "--g01-mr": "0deg", background: C_KC.glow })} />
+      ))}
+      <P x={50} y={52} w={26} h={1.6} cls="g01-lean" style={sv({ background: C_KC.core, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -230%)" })} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   30. Moonlit Reprieve (t7) — THE TIDE DIAL. Tell: the water at the dial's
+   foot draws back and holds. Strike: the tide climbs the face two marks, the
+   little boat lifts with it, and the moon pointer rides the rim. Settle: the
+   water falls two marks again, and the mark it leaves stays wet.
+   ========================================================================== */
+
+const C_MR = { core: "#8fb6e0", glow: "#eef6ff", deep: "#101c33" };
+
+function MoonlitReprieveScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="12" fill={C_MR.deep} stroke={C_MR.core} strokeWidth="2.4" />
+          <path d="M9 24q11 7 22 0v6q-11 7-22 0z" fill={C_MR.core} />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <path d="M26 12a6 6 0 1 0 0 8 5 5 0 0 1 0-8z" fill={C_MR.glow} />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="21" r="13" fill={C_MR.deep} stroke={C_MR.core} strokeWidth="2.4" />
+        </g>
+        <g className="g01-mr-tide" style={dm(delayMs, 220)}>
+          <path d="M8 24q12 8 24 0v8q-12 8-24 0z" fill={C_MR.core} />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M27 11a6 6 0 1 0 0 9 5 5 0 0 1 0-9z" fill={C_MR.glow} />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(143,182,224,0.28)" delayMs={delayMs} />
+      <P x={50} y={52} w={24} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <circle cx="50" cy="50" r="44" fill={C_MR.deep} stroke={C_MR.core} strokeWidth="6" />
+          <path d="M50 8v8M92 50h-8M50 92v-8M8 50h8" stroke={C_MR.core} strokeWidth="5" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={62} w={22} h={13} cls="g01-mr-tide" style={dm(delayMs, 180)}>
+        <svg viewBox="0 0 110 64" className="block h-full w-full" preserveAspectRatio="none">
+          <path d="M0 16q14 12 28 0t28 0 28 0 28 0v48H0z" fill={C_MR.core} opacity="0.9" />
+        </svg>
+      </P>
+      <P x={50} y={54} w={9} h={7} cls="g01-mr-boat" style={dm(delayMs, 320)}>
+        <svg viewBox="0 0 50 36" className="block h-full w-full">
+          <path d="M4 22h42l-8 12H12z" fill={C_MR.glow} stroke={C_MR.deep} strokeWidth="3" {...SJ} />
+          <path d="M25 22V2l14 14z" fill={C_MR.glow} stroke={C_MR.deep} strokeWidth="3" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={52} w={26} h={26} cls="g01-mr-moon" style={dm(delayMs, 460)}>
+        <span className="absolute block" style={{ left: "84%", top: "42%", width: "12%", height: "12%", borderRadius: "50%", background: C_MR.glow }} />
+      </P>
+      <P x={50} y={40} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_MR.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -230%)" })} />
+      <Drift color={C_MR.glow} delayMs={delayMs + 720} n={4} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   31. Patron's Favor (t7) — THE APPOINTMENT MADE. Tell: the diary's pages
+   riffle and stop at an hour somebody else has chosen. Strike: a ribbon is
+   laid into the gutter and a wax seal is thumped onto the chosen slot. Settle:
+   the following page is struck through, paid for, and the seal cools.
+   ========================================================================== */
+
+const C_PF = { core: "#e0788f", glow: "#fff0e8", deep: "#320f1d" };
+
+function PatronsFavorScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <rect x="8" y="9" width="24" height="22" fill={C_PF.glow} stroke={C_PF.deep} strokeWidth="2" />
+          <path d="M20 9v22" stroke={C_PF.deep} strokeWidth="1.8" />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <circle cx="26" cy="24" r="4.4" fill={C_PF.core} stroke={C_PF.deep} strokeWidth="1.6" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <rect x="7" y="10" width="26" height="22" fill={C_PF.glow} stroke={C_PF.deep} strokeWidth="2.2" />
+          <path d="M20 10v22" stroke={C_PF.deep} strokeWidth="2" />
+        </g>
+        <g className="g01-pf-ribbon" style={dm(delayMs, 220)}>
+          <path d="M18 4h4v16l-2-3-2 3z" fill={C_PF.core} stroke={C_PF.deep} strokeWidth="1.6" {...SJ} />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <circle cx="27" cy="26" r="5" fill="none" stroke={C_PF.core} strokeWidth="2" />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(224,120,143,0.28)" delayMs={delayMs} />
+      <P x={50} y={56} w={28} h={18} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 140 90" className="block h-full w-full">
+          <path d="M6 12q32-8 62 0 30-8 66 0v70q-36-8-66 0-30-8-62 0z" fill={C_PF.glow} stroke={C_PF.deep} strokeWidth="6" {...SJ} />
+          <path d="M68 12v70" stroke={C_PF.deep} strokeWidth="5" />
+        </svg>
+      </P>
+      <P x={62} y={56} w={13} h={16} cls="g01-pf-page" style={sv(dm(delayMs, 170), { "--g01-a": "-58deg" })}>
+        <svg viewBox="0 0 70 80" className="block h-full w-full"><path d="M2 4q34-6 66 2v70q-32-8-66-2z" fill={C_PF.glow} stroke={C_PF.deep} strokeWidth="5" {...SJ} /></svg>
+      </P>
+      <P x={50} y={58} w={4} h={22} cls="g01-pf-ribbon" style={dm(delayMs, 330)}>
+        <svg viewBox="0 0 22 110" className="block h-full w-full"><path d="M3 2h16v96l-8-11-8 11z" fill={C_PF.core} stroke={C_PF.deep} strokeWidth="4" {...SJ} /></svg>
+      </P>
+      <P x={60} y={60} w={9} h={9} cls="g01-pf-seal" style={dm(delayMs, 470)}>
+        <svg viewBox="0 0 50 50" className="block h-full w-full">
+          <circle cx="25" cy="25" r="20" fill={C_PF.core} stroke={C_PF.deep} strokeWidth="4" />
+          <path d="M15 20l10 10 10-10" fill="none" stroke={C_PF.glow} strokeWidth="4" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_PF.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })} />
+      <Drift color={C_PF.glow} delayMs={delayMs + 720} n={4} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   32. Second Spring (t7) — THE FROZEN DIAL THAWS. Tell: a hairline crack runs
+   across the ice sheeting the clock face. Strike: the ice sheet breaks, the
+   icicles hanging off the hands snap away, and green shoots push up through
+   the numerals. Settle: meltwater beads run off the rim toward the home rank.
+   ========================================================================== */
+
+const C_SS = { core: "#8fdba8", glow: "#eefbf0", deep: "#123024" };
+const SS_SHOOTS = [
+  { x: 42, y: 58, mr: "-16deg" },
+  { x: 50, y: 56, mr: "2deg" },
+  { x: 58, y: 58, mr: "17deg" },
+];
+
+function SecondSpringScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g01-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="12" fill={C_SS.deep} stroke={C_SS.core} strokeWidth="2.4" />
+          <path d="M12 12l16 16M28 12L12 28" stroke={C_SS.glow} strokeWidth="1.8" />
+        </g>
+        <g className="g01-hit2" style={dm(delayMs, 200)}>
+          <path d="M20 32V20q6 0 6 6t-6 6z" fill={C_SS.core} />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g01-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="13" fill={C_SS.deep} stroke={C_SS.core} strokeWidth="2.4" />
+        </g>
+        <g className="g01-ss-crack" style={dm(delayMs, 220)}>
+          <path d="M8 14l7 5-4 6 9 3" fill="none" stroke={C_SS.glow} strokeWidth="2.2" {...SJ} />
+        </g>
+        <g className="g01-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M20 34V22q7 1 6 7t-6 5z" fill={C_SS.core} />
+        </g>
+      </Sq>
+    );
+  return (
+    <Wide>
+      <Wash tint="rgba(143,219,168,0.28)" delayMs={delayMs} />
+      <Rim color="rgba(143,219,168,0.4)" delayMs={delayMs + 60} />
+      <P x={50} y={52} w={24} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <circle cx="50" cy="50" r="44" fill={C_SS.deep} stroke={C_SS.core} strokeWidth="6" />
+          <path d="M50 50V24M50 50l17 11" fill="none" stroke={C_SS.glow} strokeWidth="5" {...SJ} />
+        </svg>
+      </P>
+      <P x={50} y={52} w={24} h={24} cls="g01-ss-crack" style={dm(delayMs, 170)}>
+        <svg viewBox="0 0 100 100" className="block h-full w-full">
+          <path d="M10 40l22 10-10 16 26 8M62 14l-8 22 22 8-10 18" fill="none" stroke={C_SS.glow} strokeWidth="4" {...SJ} />
+        </svg>
+      </P>
+      {[0, 1, 2].map((i) => (
+        <P key={i} x={40 + i * 10} y={66} w={3} h={7} cls="g01-fling" style={sv(dm(delayMs, 330 + i * 80), { "--g01-mx": `${(i - 1) * 120}%`, "--g01-my": "230%", "--g01-mr": "40deg", background: C_SS.glow })} />
+      ))}
+      {SS_SHOOTS.map((s, i) => (
+        <P key={i} x={s.x} y={s.y} w={6} h={12} cls="g01-ss-shoot" style={sv(dm(delayMs, 470 + i * 90), { "--g01-mr": s.mr })}>
+          <svg viewBox="0 0 30 60" className="block h-full w-full">
+            <path d="M15 58V16" stroke={C_SS.core} strokeWidth="5" {...SJ} />
+            <path d="M15 30q-12-4-12-16 12 0 12 16zM15 22q12-4 12-14-12 0-12 14z" fill={C_SS.core} />
+          </svg>
+        </P>
+      ))}
+      <P x={50} y={68} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_SS.glow, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -180%)" })} />
+    </Wide>
+  );
+}
+
+/* =============================================================================
+   Registry. Every `sound` is an existing SigSoundKey, every `source` an
+   existing SigZone that the card's own rule really creates, and every card
+   declares its anchor.
+   ========================================================================== */
+
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
+  return { config, Render };
+}
+
+export const PLAYS: Record<string, SigPlugin> = {
+  // --- held mechanisms: something is physically stopped ---
+  bn4_council_of_peace: S(CouncilOfPeaceScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockcage", source: "shield", anchor: "cast",
+  }),
+  bn4_great_armistice: S(GreatArmisticeScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "snooze", source: "shield", anchor: "cast",
+  }),
+  bn4_hundred_year_lease: S(HundredYearLeaseScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+  bn4_royal_we: S(RoyalWeScene, {
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
+    sound: "snooze", source: "kingSafe", anchor: "cast",
+  }),
+  hx4_royal_lockdown: S(RoyalLockdownScene, {
+    ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "cast",
+  }),
+  hx4_tithe_of_silence: S(TitheOfSilenceScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+
+  // --- mechanisms let go: something free-runs ---
+  bn4_liberators_march: S(LiberatorsMarchScene, {
+    ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "aim",
+  }),
+  bn4_escape_artist: S(EscapeArtistScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+  bn4_jubilee: S(JubileeScene, {
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true,
+    sound: "snooze", anchor: "cast",
+  }),
+  bn4_keys_to_the_city: S(KeysToTheCityScene, {
+    ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "cast",
+  }),
+
+  // --- mechanisms wound, bought or ratcheted forward ---
+  bn4_royal_privilege: S(RoyalPrivilegeScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+  bn4_midas_charter: S(MidasCharterScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+  bn4_year_of_jubilee: S(YearOfJubileeScene, {
+    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
+    sound: "snooze", anchor: "cast",
+  }),
+  bn4_hundred_days: S(HundredDaysScene, {
+    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+  bn4_debtors_holiday: S(DebtorsHolidayScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+  bn4_crown_jubilee: S(CrownJubileeScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "cast",
+  }),
+
+  // --- mechanisms that measure two sides against each other ---
+  bn4_meek_inherit: S(MeekInheritScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "snooze", anchor: "cast",
+  }),
+  bn4_unequal_treaty: S(UnequalTreatyScene, {
+    ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "cast",
+  }),
+  bn4_grand_bargain: S(GrandBargainScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "cast",
+  }),
+  bn4_patrons_favor: S(PatronsFavorScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "snooze", anchor: "cast",
+  }),
+
+  // --- mechanisms tied to a body on the board ---
+  bn4_queens_aegis: S(QueensAegisScene, {
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+  bn4_masked_ball: S(MaskedBallScene, {
+    ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true,
+    sound: "snooze", source: "shield", anchor: "cast",
+  }),
+  bn4_flag_on_their_wall: S(FlagOnTheirWallScene, {
+    ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "aim",
+  }),
+  bn4_siege_mentality: S(SiegeMentalityScene, {
+    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "cast",
+  }),
+  bn4_champions_rest: S(ChampionsRestScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "snooze", anchor: "cast",
+  }),
+
+  // --- mechanisms on a cycle: phases, tides, seasons, dawns ---
+  bn4_half_moon_charter: S(HalfMoonCharterScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+  bn4_moonlit_reprieve: S(MoonlitReprieveScene, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+  bn4_pact_of_the_dawn: S(PactOfTheDawnScene, {
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
+    sound: "snooze", source: "frozen", anchor: "cast",
+  }),
+  bn4_second_spring: S(SecondSpringScene, {
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
+    sound: "clockice", anchor: "cast",
+  }),
+
+  // --- mechanisms turned against the opponent ---
+  hx4_debt_of_crowns: S(DebtOfCrownsScene, {
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "aim",
+  }),
+  hx4_last_toll: S(LastTollScene, {
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockcage", anchor: "aim",
+  }),
+  ov_time_heist: S(TimeHeistScene, {
+    ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "blitz", anchor: "aim",
+  }),
+};

@@ -223,6 +223,11 @@ export const PLUGIN_IDS: readonly string[] = [
   "hw3_inverted_crown",
   // creatorPlays.tsx (5)
   "cr_stalling_bishop", "cr_oh_no_my_queen", "cr_family_game_night", "cr_speedrun_protocol", "cr_chat_picks",
+  // g20RampartPlays.tsx (24)
+  "bn4_dukes_patent", "bn4_wall_of_faith", "hx4_dead_march", "hx4_the_long_siege", "ov_world_serpent", "bn4_clay_colossus",
+  "bn4_palace_walls", "bn4_castle_ditch", "bn4_dowry", "hx4_banquet_of_dust", "hx4_ivory_tower", "hx4_moat_diggers",
+  "hx4_rusted_battlements", "hx4_wagon_ruts", "bn4_charm_bracelet", "bn4_pawn_bulwark", "bn4_town_walls", "hx4_feuding_towers",
+  "hx4_wet_powder", "ov_siege_ladder", "bn4_causeway", "bn4_rampart_watch", "bn4_rook_nest", "hx4_crooked_arrow",
   // g26ShieldPlays.tsx (32)
   "bn4_age_of_peace", "bn4_guardian_of_the_line", "bn4_saints_procession", "bn4_warding_circle", "ov_plot_armor", "bn4_ancestral_shield",
   "bn4_shieldmaidens", "bn4_bodyguard_detail", "bn4_color_guard", "bn4_old_guard", "bn4_confetti_cannon", "bn4_quilted_armor",
