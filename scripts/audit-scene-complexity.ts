@@ -498,6 +498,20 @@ function main(): void {
     console.log(`(${findings.filter((x) => x.module.includes(filter)).length} failing in ${filter})`);
   }
 
+  if (process.argv.includes("--by-module")) {
+    const per = new Map<string, { n: number; t5: number }>();
+    for (const f of findings) {
+      const e = per.get(f.module) ?? { n: 0, t5: 0 };
+      e.n++;
+      if (f.tier >= 5) e.t5++;
+      per.set(f.module, e);
+    }
+    console.log("failures by module (total / tier5+):");
+    for (const [m, e] of [...per.entries()].sort((a, b) => b[1].n - a[1].n)) {
+      console.log(`  ${String(e.n).padStart(4)} / ${String(e.t5).padStart(4)}  ${m}`);
+    }
+  }
+
   if (REPORT) {
     const hist = new Map<string, number>();
     for (const f of findings) {
