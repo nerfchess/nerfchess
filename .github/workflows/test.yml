@@ -151,6 +151,12 @@ jobs:
       - name: Card categories
         run: npm run test:card-categories
 
+      # Two cards that are not byte-identical but are still the same card twice
+      # are what the animation gates cannot see. Shrink-only ratchet on the
+      # count of rule-text near-duplicates within a category, tier and family.
+      - name: Card similarity
+        run: npm run test:card-similarity
+
       # Standing house rule: no em dashes in user-visible text.
       - name: Em dash guard
         run: npm run test:emdash
