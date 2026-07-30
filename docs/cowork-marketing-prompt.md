@@ -100,6 +100,38 @@ asking you a follow-up.
    would resolve each. Be explicit: I would rather have a short list of solid
    claims and a long list of unknowns than the reverse.
 
+6. THE EMAIL. Turn deliverables 1-5 into ONE email that stands on its own, then
+   send it (see DELIVERY). It goes to two people who are going to execute it, not
+   evaluate it, so write it as marching orders:
+   - Subject line: the single most surprising finding, not "NerfChess marketing
+     research".
+   - First 40 words say what to do on Monday. No preamble, no "as requested".
+   - Then: the three hooks to actually shoot, with their literal first lines.
+   - Then: the five accounts to message this week, with the message text for each
+     ready to copy, and a link to each account.
+   - Then: who does what. Two recipients, so split the work explicitly by name and
+     say which of the two owns each item. If you have no basis to split it,
+     propose a split and say it is a proposal.
+   - Then: the three days from the calendar that are the real tests, with the
+     number that decides pass or fail.
+   - Last: the unknowns, as questions they can answer from what they already know,
+     shortest list possible.
+   - Plain text, no attachments, links inline. Under 600 words in the body; put
+     the full research underneath a "--- FULL RESEARCH BELOW ---" divider so the
+     detail is there without anyone having to scroll to find the instructions.
+
+DELIVERY. Send deliverable 6 as a single email, both addresses on the To line so
+they can see each other and reply-all works:
+
+  josephislockedin@gmail.com
+  ruylopezsolos@gmail.com
+
+Use whatever email connector you have. If you cannot send mail, do not silently
+skip it: say so plainly at the top of your answer, then print the email in full
+with the To line, subject and body so it can be pasted and sent by hand. Either
+way, show me the exact subject line and body you sent or drafted. Do not send
+anything to any other address.
+
 RULES.
 - Every factual claim about a platform, a creator, or a community gets a link.
   No link, do not make the claim — put it in the unknowns instead.
@@ -125,6 +157,11 @@ Two follow-ups worth having ready, because the first pass usually needs them:
 > attachments, with a link that opens straight into a game.
 
 ## Where to file the output
+
+The email (deliverable 6) is the delivery, and it goes to
+josephislockedin@gmail.com and ruylopezsolos@gmail.com. The filing below is for
+the research that sits under the divider — do it after the email is sent, not
+instead of it.
 
 - Hooks and calendar → alongside `docs/marketing-plan.md`.
 - Named accounts → merge into `docs/creator-outreach-research-2026-07.md`.
