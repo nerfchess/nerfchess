@@ -4,6 +4,16 @@ export default {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      // `min-h-screen` / `h-screen` resolve to the DYNAMIC viewport, not the
+      // large one Tailwind 3.4 ships. On iOS Safari `100vh` is the large
+      // viewport, so with the URL bar showing every `min-h-screen` page was
+      // ~90-115px taller than the screen: short pages rubber-banded with
+      // nothing to scroll to, and the `min-h-screen flex items-center` screens
+      // (error, friend invite, connecting) sat half a URL-bar off centre. The
+      // game surfaces already used dvh explicitly; this brings the other ~43
+      // call sites in line without touching them one by one.
+      minHeight: { screen: "100dvh" },
+      height: { screen: "100dvh" },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],

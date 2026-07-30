@@ -2165,20 +2165,38 @@ export function Board({
     if (fxHiddenPref) return;
     for (const p of plays) vfxPlay(p);
   });
+  // Run the board thump, then TAKE THE CLASS BACK OFF when it ends.
+  //
+  // `.fx-board-shake` is declared with `animation-fill-mode: both`, so leaving
+  // it on pinned the 100% keyframe's `transform: translate(0,0) rotate(0deg)`
+  // on the crop indefinitely after the first marquee cast — a non-`none`
+  // transform, which keeps a composited layer alive and makes the crop a
+  // containing block for the rest of the session. It was only ever removed as
+  // the restart-reflow trick at the START of the NEXT shake, and effects.css
+  // documents the opposite ("removed after it runs").
+  const runBoardShake = useCallback((big: boolean) => {
+    const el = cropRef.current;
+    if (!el || motionOff()) return;
+    el.classList.remove("fx-board-shake", "fx-board-shake--big");
+    // Force a reflow so removing and re-adding the class restarts the
+    // animation even when two casts land back to back.
+    void el.offsetWidth;
+    el.classList.add("fx-board-shake");
+    if (big) el.classList.add("fx-board-shake--big");
+    const clear = () => {
+      el.classList.remove("fx-board-shake", "fx-board-shake--big");
+      el.removeEventListener("animationend", clear);
+    };
+    el.addEventListener("animationend", clear);
+  }, []);
+
   // The VFX layer's shake request rides the existing marquee board thump.
   const vfxShake = useCallback(() => {
     if (fxCalmClockRef.current) return; // time scramble: never shake
     const shake = FX_LEVELS[fxLevelRef.current].shake;
     if (shake === "none") return; // Calm and Off never thump the board
-    const el = cropRef.current;
-    if (el && !motionOff()) {
-      el.classList.remove("fx-board-shake", "fx-board-shake--big");
-      void el.offsetWidth;
-      el.classList.add("fx-board-shake");
-      if (shake === "big") el.classList.add("fx-board-shake--big");
-    }
-     
-  }, []);
+    runBoardShake(shake === "big");
+  }, [runBoardShake]);
   // Square whose effect-explanation popover is currently open (hover, focus,
   // or tap). One at a time; the Board owns open/close, EffectPopover just
   // renders the card. Null = nothing open.
@@ -2336,6 +2354,16 @@ export function Board({
   // wins the mount (two reveals in the same commit are vanishingly rare and
   // the banner would fully overlap anyway).
   const nerfRevealSeenRef = useRef<Set<string>>(new Set());
+  // ...and cleared when a NEW GAME starts. <Board> carries no `key` on the
+  // local page, so `setGame(newGame(...))` reuses this instance and the set
+  // survived. Players normally re-pick the same nerf, so the reveal splash
+  // fired exactly once per page load and was silently suppressed in every
+  // later game of the session. A board sitting at ply 0 is a fresh one
+  // (mirrors the same guard in PassiveLayer).
+  const revealPly = (fxBoard ?? board).history.length;
+  useEffect(() => {
+    if (revealPly === 0) nerfRevealSeenRef.current.clear();
+  }, [revealPly]);
   const nerfRevealKeyRef = useRef(0);
   const [nerfReveal, setNerfReveal] = useState<{
     key: number;
@@ -2420,15 +2448,7 @@ export function Board({
       playCastVoice(def.category, takeover);
     }
     if (takeover && !fxCalmClockRef.current && FX_LEVELS[fxLevelRef.current].shake !== "none") {
-      const el = cropRef.current;
-      if (el && !motionOff()) {
-        el.classList.remove("fx-board-shake", "fx-board-shake--big");
-        // Force a reflow so removing and re-adding the class restarts the
-        // animation even when two marquee casts land back to back.
-        void el.offsetWidth;
-        el.classList.add("fx-board-shake");
-        if (FX_LEVELS[fxLevelRef.current].shake === "big") el.classList.add("fx-board-shake--big");
-      }
+      runBoardShake(FX_LEVELS[fxLevelRef.current].shake === "big");
     }
     // UNIVERSAL FLOOR: every played card should throw at least one burst of
     // board particles, not just the cast card. The removal and zone diff paths
@@ -2475,6 +2495,10 @@ export function Board({
     return () => {
       if (floorTimer !== undefined) window.clearTimeout(floorTimer);
     };
+    // runBoardShake is a stable useCallback with no deps; listing it here would
+    // not change when this runs, and this effect is deliberately keyed on the
+    // cast alone (see the signatureCard-only rationale above).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signatureCard]);
 
   // Diff against the previous position during render (reference equality
@@ -4206,10 +4230,15 @@ export function Board({
         <VfxLayer onShake={vfxShake} />
         <div
           data-board-grid
-          // touch-action: none is what makes drag work on mobile — without it
-          // the browser claims the touch for scrolling and fires pointercancel
-          // mid-drag. Tap-to-move keeps working either way.
-          className="grid grid-cols-8 grid-rows-8 w-full h-full select-none [touch-action:none]"
+          // touch-action must block the browser's own PAN gestures — without
+          // that it claims the touch for scrolling and fires pointercancel
+          // mid-drag — but `none` also killed pinch-zoom, and the board is
+          // nearly the whole viewport on a phone. layout.tsx deliberately
+          // leaves user zoom enabled for accessibility, so that was the one
+          // screen where the affordance did not exist. `pinch-zoom` keeps the
+          // drag path identical while restoring two-finger zoom; tap-to-move
+          // works either way.
+          className="grid grid-cols-8 grid-rows-8 w-full h-full select-none [touch-action:pinch-zoom]"
           onContextMenu={(e) => e.preventDefault()}
         >
           {/* Per-square render reads the staged animation refs (fx, zone

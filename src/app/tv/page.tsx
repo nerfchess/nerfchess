@@ -603,7 +603,7 @@ function TvView() {
       {/* Fullscreen overlay: the board scaled to the viewport. Escape or the
           button exits. A CSS fixed overlay (no backdrop-blur, per the system). */}
       {fullscreen && hasBoard && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink-900/95 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-ink-900/95 p-4">
           <button
             type="button"
             onClick={() => setFullscreen(false)}
@@ -612,7 +612,12 @@ function TvView() {
           >
             <X size={20} aria-hidden />
           </button>
-          <div className="flex w-full max-w-[min(92vw,82vh)] flex-col gap-1">
+          {/* dvh so the board is capped against the SMALL viewport, the same box
+              the `fixed inset-0` parent occupies. With vh (the large viewport)
+              the board plus both seat rows overflowed a portrait phone showing
+              its URL bar, and the parent is a `grid place-items-center` with no
+              overflow, so the bottom seat row was simply clipped away. */}
+          <div className="flex w-full max-w-[min(92vw,82dvh)] flex-col gap-1">
             {seatRow("b")}
             <div className="w-full">
               <HeroBoard board={board} lastMove={lastMove} />

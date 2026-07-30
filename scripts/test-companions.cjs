@@ -16,7 +16,8 @@
 //     fallback (an opponent whose ONLY move is such a capture keeps it);
 //   - Vengeance: capturing Cami spends the card and freezes the capturer for
 //     2 of their turns;
-//   - Minji (activated): shields every ally beside the king for 5 turns;
+//   - Minji (activated): guards every ally within two squares of the king for
+//     5 opponent turns, as a card-owned move filter;
 //   - Hyein (passive): pawns stride to the 1st/2nd empty square ahead,
 //     springing over blockers;
 //   - Haerin (activated): pounce snatches an enemy a knight's leap away and
@@ -29,7 +30,9 @@
 //   - the whole kit is deterministic (two identical games agree on the legal
 //     move list - desync safety smoke check).
 //
-// Loading pattern mirrors scripts/test-expansion.cjs. Not wired into CI.
+// Loading pattern mirrors scripts/test-expansion.cjs. Wired into CI as
+// `npm run test:companions` — it previously sat unreferenced and silently
+// rotted to a red state when Minji's guard was reworked.
 
 const path = require("path");
 function load(mod) {
@@ -213,23 +216,26 @@ function deploy(game, id, at) {
 
 // --- 4. The five NewJeans cards (reverted, simple + strong) -------------------
 
-// Minji (activated): every ally beside the king is shielded for 5 turns.
+// Minji (activated): the leader's guard. Post-rework (balanceWave1.ts,
+// "buff:minji") it reaches every ally within TWO squares of the king, runs 5
+// opponent turns, and ends early once two protected pieces have captured. It
+// is a card-owned move filter, not a board `shield` effect — that is what lets
+// the card end the guard itself on the second capture.
 {
   const game = fresh(21);
   acquireBuff(game, "w", "minji", 5);
   ok(act(game, "w", "minji", []), "Minji refused to fire");
-  const shield = game.buffs.effects.find(
-    (e) => e.kind === "shield" && e.owner === "w" && Array.isArray(e.squares),
-  );
-  ok(!!shield, "Minji raised no shield");
-  for (const s of ["d1", "f1", "d2", "e2", "f2"]) {
-    ok(shield && shield.squares.includes(sq(s)), `Minji's guard misses the king-adjacent ally on ${s}`);
+  const guard = inst(game, "w", "minji");
+  const squares = guard?.state?.squares;
+  ok(Array.isArray(squares) && squares.length > 0, "Minji raised no guard");
+  // Adjacent allies, and the second ring out (the neighbors24 reach).
+  for (const s of ["d1", "f1", "d2", "e2", "f2", "c1", "g1", "c2", "g2"]) {
+    ok(squares && squares.includes(sq(s)), `Minji's guard misses the ally on ${s}`);
   }
-  ok(shield && !shield.squares.includes(sq("e1")), "Minji's guard covers the king itself");
-  // The record reads 6: activateBuff adds +1 to self-protection timers from a
-  // turn-consuming activation so "5 turns" means 5 turns AFTER this turn.
-  ok(shield && shield.turns === 6, `Minji's guard should record 5+1 turns, records ${shield?.turns}`);
-  // A rook staring straight down the e-file cannot take the shielded e2 pawn.
+  ok(squares && !squares.includes(sq("e1")), "Minji's guard covers the king itself");
+  ok(guard?.state?.turns === 5, `Minji's guard should record 5 opponent turns, records ${guard?.state?.turns}`);
+  ok(guard?.state?.caps === 0, "Minji's guard should start with no protected captures counted");
+  // A rook staring straight down the e-file cannot take the guarded e2 pawn.
   clear(game, "e7");
   put(game, "e5", "r", "b");
   game.board.turn = "b";
@@ -237,6 +243,9 @@ function deploy(game, id, at) {
     !legalMoves(game).some((m) => m.to === sq("e2") && m.captured),
     "a Linked Arms ally was still capturable",
   );
+  // Never-strand: if taking a guarded piece is the opponent's ONLY move, the
+  // filter must hand it back rather than leave them with zero legal moves.
+  ok(legalMoves(game).length > 0, "Minji's guard stranded the opponent");
 }
 
 // Hyein (passive): pawns stride to the 1st/2nd empty square ahead, springing

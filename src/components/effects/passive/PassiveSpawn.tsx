@@ -44,11 +44,20 @@ export function PassiveSpawn({
   const id = activationId(cardId, color, activationPly);
 
   // Decide once, at mount, whether this activation still needs to play.
-  const [play] = React.useState<boolean>(() => {
-    if (hasPlayedActivation(id)) return false;
-    markActivationPlayed(id);
-    return true;
-  });
+  //
+  // The initializer only READS; the global set is marked from an effect. A
+  // `useState` initializer must be pure, and this one used to mutate module
+  // state — exactly what `reactStrictMode: true` exists to surface. On
+  // StrictMode's simulated unmount/remount the second pass saw the id already
+  // marked, returned false, and the effect below then never scheduled
+  // `onDone`, so SpawnRunner's queue head never cleared and every later spawn
+  // piled up behind it forever. useState still latches the decision for this
+  // instance's whole life; the fire-immediately branch below makes the queue
+  // robust even when `play` is false for any other reason.
+  const [play] = React.useState<boolean>(() => !hasPlayedActivation(id));
+  React.useEffect(() => {
+    if (play) markActivationPlayed(id);
+  }, [play, id]);
 
   const onDoneRef = React.useRef(onDone);
   React.useEffect(() => {
@@ -71,7 +80,15 @@ export function PassiveSpawn({
   }, [play, visual, cardId]);
 
   React.useEffect(() => {
-    if (!play || !visual) return;
+    if (!visual) return;
+    // Nothing to animate (no visual, or this activation already played): report
+    // done IMMEDIATELY rather than returning silently. SpawnRunner advances its
+    // queue only on this callback, so a spawn that renders nothing and reports
+    // nothing wedges the head forever and every later spawn queues behind it.
+    if (!play) {
+      onDoneRef.current?.();
+      return;
+    }
     const ms = isReduced ? Math.min(160, duration) : duration;
     const t = window.setTimeout(() => onDoneRef.current?.(), ms);
     return () => window.clearTimeout(t);

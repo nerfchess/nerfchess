@@ -12,11 +12,14 @@
 //   - the wrapped ray respects blockers (friendly stops it, enemy is
 //     capturable and stops it);
 //   - a wrap move never captures a king;
-//   - the permit expires after 4 of the owner's turns;
+//   - the permit expires after the number of owner turns its card text
+//     promises (read from the description, not hardcoded);
 //   - the generator is deterministic (two identical games produce identical
 //     move lists — desync safety smoke check).
 //
-// Loading pattern mirrors scripts/test-apex.cjs. Not wired into CI.
+// Loading pattern mirrors scripts/test-apex.cjs. Wired into CI as
+// `npm run test:expansion` — it previously sat unreferenced and silently
+// rotted to a red state when the permit was rebalanced 4 -> 3 turns.
 
 const path = require("path");
 function load(mod) {
@@ -32,6 +35,7 @@ const {
   playMove,
 } = load("game.js");
 const { moveToUCI } = load("board.js");
+const { BUFF_BY_ID } = load("buffs/library.js");
 
 let failures = 0;
 function fail(msg) {
@@ -70,7 +74,16 @@ const wrapsFrom = (game, from) =>
   acquireBuff(game, "w", "expansion_permit", 5);
   const inst = game.buffs.players.w.buffs.find((b) => b.id === "expansion_permit");
   ok(!!inst, "card did not seat in the hand");
-  ok(inst && inst.state.turns === 4, "permit did not start at 4 turns");
+  // The duration is a balance number (PERMIT_TURNS in funny/expansion.ts), so
+  // read the promise off the card's own text rather than hardcoding it — that
+  // keeps a rebalance from rotting this test AND catches the card text and the
+  // implementation drifting apart, which is its own bug class.
+  const promised = Number(/next (\d+) turns/.exec(BUFF_BY_ID.expansion_permit.description)?.[1]);
+  ok(Number.isFinite(promised), "expansion_permit description no longer states a turn count");
+  ok(
+    inst && inst.state.turns === promised,
+    `permit started at ${inst?.state.turns} turns but the card promises ${promised}`,
+  );
 
   // Normal leftward movement is blocked by the friendly knight on g4, so the
   // rook can only reach a4..f4 by sliding off the h-edge and re-entering.
@@ -97,7 +110,10 @@ const wrapsFrom = (game, from) =>
   playMove(game, toA4);
   const landed = game.board.pieces[sq("a4")];
   ok(landed && landed.type === "r" && landed.color === "w", "wrap move did not relocate the rook to a4");
-  ok(inst.state.turns === 3, "permit did not tick after the owner's move");
+  ok(
+    inst.state.turns === promised - 1,
+    `permit did not tick after the owner's move (${inst.state.turns}, want ${promised - 1})`,
+  );
 }
 
 // --- 2. Open rank: the wrap duplicates normal moves and dedupes to nothing ----
@@ -159,7 +175,7 @@ const wrapsFrom = (game, from) =>
   ok(wraps5.length === 0, "wrap ignored a blocker between the slider and the board edge");
 }
 
-// --- 4. The permit expires after 4 of the owner's turns ----------------------
+// --- 4. The permit expires after its promised number of owner turns ----------
 {
   const game = setupGame(48, true);
   acquireBuff(game, "w", "expansion_permit", 5);
@@ -169,7 +185,7 @@ const wrapsFrom = (game, from) =>
     const quiet = moves.find((m) => !m.captured && !m.via) ?? moves[0];
     playMove(game, quiet);
   }
-  ok(inst.spent === true, "permit not spent after 4 owner turns");
+  ok(inst.spent === true, "permit not spent after its promised owner turns");
   ok(
     legalMoves(game).every((m) => m.via !== "expansion_permit"),
     "wrap moves still offered after expiry",
@@ -191,5 +207,5 @@ if (failures > 0) {
   process.exit(1);
 }
 console.log(
-  "OK: Expansion Permit verified (h->a wrap re-entry, open-rank dedupe, blockers, no king capture, 4-turn expiry, deterministic)",
+  "OK: Expansion Permit verified (h->a wrap re-entry, open-rank dedupe, blockers, no king capture, expiry matches the card text, deterministic)",
 );

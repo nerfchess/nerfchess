@@ -36,6 +36,7 @@ export interface PausableMatch {
   /** A draft's lock-in window, which pauses the clock for its own reasons. */
   dtDeadline?: number | null;
   pauseUntil?: number | null;
+  pausedSince?: number | null;
   pausedTotalMs?: Partial<Record<Color, number>>;
 }
 
@@ -47,16 +48,36 @@ export function pauseGrantMs(match: PausableMatch, color: Color): number {
 }
 
 /** Bill an ended pause against the seat's budget and clear the deadline.
- * Never bills past the grant, so a late alarm cannot overcharge. */
+ * Never bills past the grant, so a late alarm cannot overcharge.
+ *
+ * The elapsed pause is measured from `pausedSince`, stamped when the pause was
+ * granted, NOT from `disconnectedAt`. That distinction is the whole point: the
+ * reconnect path calls `attachSession` first, which deletes `disconnectedAt`
+ * for the returning seat, so billing off that field always measured zero and
+ * `pausedTotalMs` never grew — a player could disconnect/reconnect on their own
+ * turn indefinitely and be granted a fresh PAUSE_MAX_MS every time, with
+ * PAUSE_BUDGET_MS never reached. `disconnectedAt` stays as the fallback so
+ * matches persisted before `pausedSince` existed still bill something sane.
+ */
 export function chargePauseBudget(match: PausableMatch, color: Color, now: number): void {
   if (match.pauseUntil == null) return;
-  const since = match.disconnectedAt[color];
+  const since = match.pausedSince ?? match.disconnectedAt[color];
   const paused = since != null ? Math.min(now, match.pauseUntil) - since : 0;
   match.pausedTotalMs = {
     ...match.pausedTotalMs,
     [color]: (match.pausedTotalMs?.[color] ?? 0) + Math.max(0, paused),
   };
   match.pauseUntil = null;
+  match.pausedSince = null;
+}
+
+/** Drop a disconnect-pause without billing it, for paths that resume the clock
+ * for an unrelated reason (a draft action settling, a takeback). Leaving
+ * `pauseUntil` set behind a running clock strands a deadline the alarm later
+ * sweeps as stale, which bills nothing and silently ends the protection. */
+export function clearPause(match: PausableMatch): void {
+  match.pauseUntil = null;
+  match.pausedSince = null;
 }
 
 /** The human seat currently away in a house game, if any. */
@@ -77,7 +98,7 @@ export function awaySeat(match: PausableMatch): Color | undefined {
 export function releaseExpiredPause(match: PausableMatch, now: number): boolean {
   if (match.pauseUntil == null || now < match.pauseUntil) return false;
   if (match.result || !match.startedAt || match.runningSince !== null) {
-    match.pauseUntil = null;
+    clearPause(match);
     return false;
   }
   // A draft's lock-in window outranks this: it holds the clock for a reason of
@@ -85,7 +106,7 @@ export function releaseExpiredPause(match: PausableMatch, now: number): boolean 
   if (match.dtDeadline != null && now < match.dtDeadline) return false;
   const away = awaySeat(match);
   if (away) chargePauseBudget(match, away, now);
-  else match.pauseUntil = null;
+  else clearPause(match);
   match.runningSince = now;
   return true;
 }

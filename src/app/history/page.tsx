@@ -14,6 +14,7 @@ import {
 } from "@/lib/gameHistory";
 
 import { TIER_LABEL } from "@/lib/tiers";
+import { useModalChrome } from "@/lib/useModalChrome";
 
 type Filter = "all" | GameOutcome;
 
@@ -210,25 +211,21 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
 function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => void }) {
   const style = OUTCOME_STYLE[game.outcome];
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  // Escape (which this modal already had) plus the body scroll lock and
+  // ghost-click guard it did not.
+  const chrome = useModalChrome(true, onClose);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Game summary"
-      className="fixed inset-0 z-50 grid place-items-center bg-[#0a111e]/80 px-4 py-6"
-      onMouseDown={onClose}
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[#0a111e]/80 px-4 py-6"
+      onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
         className="plate gilt w-[min(92vw,26rem)] p-6 sm:p-7"
-        onMouseDown={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
           <div>

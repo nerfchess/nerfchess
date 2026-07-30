@@ -25,7 +25,7 @@ import type { Color } from "@/engine/types";
 import type { BoardMetrics } from "./contract";
 import { toSide, type PassiveAuraEntry } from "./derive";
 import { getPassiveVisual } from "./registry";
-import { activationId, hasPlayedActivation } from "./runtime";
+import { activationId, hasPlayedActivation, resetPassiveActivations } from "./runtime";
 import { PassiveAura } from "./PassiveAura";
 import { PassiveSpawn } from "./PassiveSpawn";
 import { PassivePulse } from "./PassivePulse";
@@ -105,6 +105,24 @@ export function PassiveLayer({
 }: PassiveLayerProps): React.ReactElement | null {
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const [metrics, setMetrics] = React.useState<BoardMetrics | null>(null);
+
+  // A NEW GAME clears the spawn-intro dedupe.
+  //
+  // The dedupe set is module-scoped and its keys are highly reusable — an id is
+  // `cardId:color:b<slotIndex>` for buffs and `cardId:color:reveal` for nerf
+  // reveals — while <Board> carries no `key`, so `setGame(newGame(...))` reuses
+  // the same instance and the set survived. Play a card from hand slot 0, start
+  // a rematch, play the same card from slot 0: its entire spawn choreography
+  // AND its sound cue were silently skipped, for the rest of the tab session.
+  // Same for every nerf reveal.
+  //
+  // hookPlyKey is the board's history length, so a board sitting at ply 0 is a
+  // fresh one. (A takeback all the way to the start also qualifies, which is
+  // the right call: that board is new again too.) Effect, not a render-time
+  // mutation — clearing shared state during render is not pure.
+  React.useEffect(() => {
+    if (hookPlyKey === 0) resetPassiveActivations();
+  }, [hookPlyKey]);
 
   // Measure the layer's own box; it fills the crop, so origin is (0,0) and
   // squarePx is width/8. A ResizeObserver keeps it correct across board resize.

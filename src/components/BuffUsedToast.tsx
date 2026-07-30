@@ -22,7 +22,7 @@ export function BuffUsedToast({
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed right-3 top-16 z-40 w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      className="pointer-events-none fixed right-3 top-[var(--opp-plays-top,4rem)] z-[39] w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="smallcaps text-[10px] text-parchment-400">{label}</span>

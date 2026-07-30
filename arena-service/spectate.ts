@@ -221,14 +221,26 @@ export class SpectatorHub implements ArenaSink {
   /** Send a frame to every bootstrapped watcher of a game; un-bootstrapped
    *  watchers (joined during the nerf draft) get their wstart first — which
    *  already contains this event's outcome, so the incremental frame is
-   *  skipped for them (the client's ply/state guards would drop it anyway). */
-  private fanOut(id: string, frames: Array<{ t: string; d?: unknown }>): void {
+   *  skipped for them (the client's ply/state guards would drop it anyway).
+   *
+   *  `terminal` marks a frame nobody may miss (the end frame). A watcher that
+   *  still cannot be bootstrapped — no game in the map, or it never started —
+   *  is sent it anyway rather than skipped: endForWatchers clears `watching`
+   *  immediately afterwards, so a skipped terminal frame can never be
+   *  redelivered and the client sits on `wpending` until its 20s hard
+   *  deadline. */
+  private fanOut(id: string, frames: Array<{ t: string; d?: unknown }>, terminal = false): void {
     const game = this.arena.game(id);
     for (const ws of this.sockets) {
       if (ws.watching !== id || ws.readyState !== WebSocket.OPEN) continue;
       if (!ws.bootstrapped) {
-        if (game && game.started()) this.bootstrap(ws, game);
-        continue;
+        if (game && game.started()) {
+          // The bootstrap wstart already carries the result for a finished
+          // game, so a terminal frame would be redundant here.
+          this.bootstrap(ws, game);
+          continue;
+        }
+        if (!terminal) continue;
       }
       for (const frame of frames) send(ws, frame.t, frame.d);
     }
@@ -285,18 +297,22 @@ export class SpectatorHub implements ArenaSink {
     const game = this.arena.game(record.id);
     const clocks = game?.liveClocks() ?? { w: 0, b: 0 };
     const draftBuffs = game?.heldBuffsPublic();
-    this.fanOut(record.id, [
-      {
-        t: "end",
-        d: {
-          result: record.result,
-          wc: clocks.w,
-          bc: clocks.b,
-          nerfs: { w: record.setup.whiteNerfId, b: record.setup.blackNerfId },
-          ...(draftBuffs ? { draftBuffs } : {}),
+    this.fanOut(
+      record.id,
+      [
+        {
+          t: "end",
+          d: {
+            result: record.result,
+            wc: clocks.w,
+            bc: clocks.b,
+            nerfs: { w: record.setup.whiteNerfId, b: record.setup.blackNerfId },
+            ...(draftBuffs ? { draftBuffs } : {}),
+          },
         },
-      },
-    ]);
+      ],
+      true, // terminal: every watcher must get this, bootstrapped or not
+    );
     // The game is gone; watchers got their end frame. Clear watch state so a
     // lingering socket doesn't hold a dead id.
     for (const ws of this.sockets) {

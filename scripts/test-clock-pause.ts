@@ -41,15 +41,27 @@ function houseGame(over: Partial<PausableMatch> = {}): PausableMatch {
   };
 }
 
-/** Pause the game as detachSession does, at `at`. */
+/** Pause the game as detachSession does, at `at`. Mirrors the worker exactly,
+ * including the `pausedSince` stamp billing measures from. */
 function pause(match: PausableMatch, at: number): number {
   const grant = pauseGrantMs(match, "w");
   match.disconnectedAt.w = at;
   if (grant > 0) {
     match.runningSince = null;
     match.pauseUntil = at + grant;
+    match.pausedSince = at;
   }
   return grant;
+}
+
+/** Reconnect as the worker really does it: attachSession first (which DELETES
+ * disconnectedAt for the returning seat), then chargePauseBudget. Billing must
+ * survive that order — it did not, which is the exploit case 8 locks out. */
+function reconnect(match: PausableMatch, color: "w" | "b", at: number): void {
+  delete match.disconnectedAt[color]; // attachSession
+  delete (match as { opponentGoneNotified?: Record<string, boolean> }).opponentGoneNotified?.[color];
+  chargePauseBudget(match, color, at);
+  match.runningSince = at;
 }
 
 console.log("clock pause rules");
@@ -154,6 +166,64 @@ console.log("clock pause rules");
   releaseExpiredPause(m, m.pauseUntil);
   check(m.pausedTotalMs?.w === PAUSE_MAX_MS, "the human seat is billed");
   check(!m.pausedTotalMs?.b, "the bot seat is never billed");
+}
+
+// 8. THE RECONNECT EXPLOIT. Cases 1-3 all bill through paths that leave
+//    `disconnectedAt` in place, so they passed even while the real reconnect
+//    path billed nothing: attachSession deletes disconnectedAt for the
+//    returning seat BEFORE chargePauseBudget reads it, so `paused` computed as
+//    0, pausedTotalMs never grew, and PAUSE_BUDGET_MS was unreachable — a
+//    player could disconnect/reconnect on their own turn forever and be handed
+//    a fresh PAUSE_MAX_MS every time.
+{
+  const m = houseGame();
+  pause(m, 10_000);
+  reconnect(m, "w", 10_000 + 30_000); // away 30s, back through the real path
+  check(m.pausedTotalMs?.w === 30_000, `a 30s absence bills 30s through the reconnect path (got ${m.pausedTotalMs?.w})`);
+  check(m.pauseUntil === null, "the reconnect clears the pause deadline");
+  check(m.pausedSince == null, "and clears the pause start stamp");
+}
+{
+  // The exploit end to end: repeated disconnect/reconnect cycles must exhaust
+  // the per-game budget rather than renew it.
+  const m = houseGame();
+  let t = 10_000;
+  const grants: number[] = [];
+  for (let i = 0; i < 8; i++) {
+    const grant = pause(m, t);
+    grants.push(grant);
+    if (grant === 0) break;
+    t += grant; // stay away for the whole grant
+    reconnect(m, "w", t);
+    t += 1;
+  }
+  check(
+    grants[grants.length - 1] === 0,
+    "chained disconnect/reconnect cycles exhaust the budget instead of renewing it",
+  );
+  check(
+    (m.pausedTotalMs?.w ?? 0) >= PAUSE_BUDGET_MS,
+    `the full budget is billed across cycles (got ${m.pausedTotalMs?.w})`,
+  );
+  check(
+    grants.reduce((a, b) => a + b, 0) === PAUSE_BUDGET_MS,
+    "total granted pause never exceeds PAUSE_BUDGET_MS",
+  );
+}
+
+// 9. A path that resumes the clock for an unrelated reason (a draft action
+//    settling) must bill the pause rather than strand the deadline: a stranded
+//    pauseUntil is later swept as stale, which bills nothing and silently ends
+//    the protection early.
+{
+  const m = houseGame();
+  pause(m, 10_000);
+  // settleDraftAction-style resume, 20s in, with the player still away.
+  const at = 30_000;
+  chargePauseBudget(m, "w", at);
+  m.runningSince = at;
+  check(m.pausedTotalMs?.w === 20_000, `the interrupted pause bills its 20s (got ${m.pausedTotalMs?.w})`);
+  check(m.pauseUntil === null, "and leaves no stranded deadline behind");
 }
 
 if (failures) {

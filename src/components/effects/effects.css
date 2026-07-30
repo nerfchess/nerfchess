@@ -1638,8 +1638,11 @@ html[data-anim="off"] .fx-one-shot {
 
 /* --- Board shake: the whole crop jolts for a marquee cast --------------------
    Transform-only, small amplitude, quick decay: reads as a thump, not motion
-   sickness. Applied to the board crop by Board.tsx and removed after it runs;
-   disabled outright when animations are off in Settings above. */
+   sickness. Applied to the board crop by Board.tsx (runBoardShake), which now
+   really does remove it on `animationend` — the fill mode below is `both`, so
+   leaving it on pinned an identity transform (and with it a composited layer
+   and a containing block) on the crop for the rest of the session. Disabled
+   outright when animations are off in Settings above. */
 @keyframes fx-board-shake {
   0% { transform: translate(0, 0) rotate(0deg); }
   12% { transform: translate(-0.8%, 0.5%) rotate(-0.35deg); }
