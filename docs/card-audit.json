@@ -1,8 +1,8 @@
 {
  "summary": {
-  "total": 2443,
+  "total": 2448,
   "byKind": {
-   "buff": 966,
+   "buff": 971,
    "hex": 543,
    "boon": 418,
    "item": 129,
@@ -18,7 +18,7 @@
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2382
+  "reviewed": 2387
  },
  "rows": [
   {
@@ -24033,6 +24033,60 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "cr_chat_picks",
+   "name": "Chat Picks",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "You do not get an effect. Instead your opponent picks one of your pieces, and for your next 5 turns you may not move it at all.",
+   "trigger": "activated",
+   "duration": "5-turns",
+   "targets": "enemy",
+   "signature": "draft|activated|effect+targets+aug+onMove|5-turns|enemy|move,n:5",
+   "animation": "plugin",
+   "location": "src/engine/buffs/creators.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cr_family_game_night",
+   "name": "Family Game Night",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Choose one enemy piece. For the next 4 turns neither player may capture it, and both players can see every card the other is holding.",
+   "trigger": "activated",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "info|activated|effect+targets+filter|4-turns|enemy|capture,n:4,see",
+   "animation": "plugin",
+   "location": "src/engine/buffs/creators.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cr_stalling_bishop",
+   "name": "The Stalling Bishop",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Choose one of your bishops. For your opponent's next 3 turns it cannot be captured, and it cannot capture either. It just sits there being a problem.",
+   "trigger": "activated",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets+aug+onMove|3-turns|enemy|bishop,capture,n:3",
+   "animation": "plugin",
+   "location": "src/engine/buffs/creators.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "deep_freeze",
    "name": "Deep Freeze",
    "kind": "buff",
@@ -25385,6 +25439,42 @@
    "signature": "tempo|activated|effect+targets|next-turn|enemy|freeze,king,move,n:3",
    "animation": "bespoke",
    "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cr_oh_no_my_queen",
+   "name": "Oh No My Queen",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Your queen is snatched back to her starting square. Every enemy piece that was attacking her is frozen for 2 of their turns, and you gain 30 seconds.",
+   "trigger": "activated",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect|2-turns|enemy|king,n:2,n:30,queen,seconds,square",
+   "animation": "plugin",
+   "location": "src/engine/buffs/creators.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cr_speedrun_protocol",
+   "name": "Speedrun Protocol",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "For your opponent's next 6 turns they may only play a capture, a check, or a pawn move. Every turn the protocol holds, you gain 3 seconds.",
+   "trigger": "passive",
+   "duration": "6-turns",
+   "targets": "enemy",
+   "signature": "tempo|passive|init+filter+onMove|6-turns|enemy|capture,check,move,n:3,n:6,pawn,seconds",
+   "animation": "plugin",
+   "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
    ],

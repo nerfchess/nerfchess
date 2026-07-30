@@ -205,6 +205,8 @@ export const PLUGIN_IDS: readonly string[] = [
   "hw3_fifth_column", "hw3_curse_hop", "hw3_mutiny", "hw3_defectors_mark", "hw3_aging_blade", "hw3_enemy_within",
   "hw3_eclipse", "hw3_hydra_hex", "hw3_pyrrhic_toll", "hw3_martyrs_crown", "hw3_curse_engine", "hw3_blood_tithe",
   "hw3_inverted_crown",
+  // creatorPlays.tsx (5)
+  "cr_stalling_bishop", "cr_oh_no_my_queen", "cr_family_game_night", "cr_speedrun_protocol", "cr_chat_picks",
 ];
 // </plugin-ids:generated>
 
