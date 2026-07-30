@@ -51,6 +51,7 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   g08CrowdPlays: () => import("./g08CrowdPlays"),
   g09FrostPlays: () => import("./g09FrostPlays"),
   g10ThawPlays: () => import("./g10ThawPlays"),
+  g11BrittlePlays: () => import("./g11BrittlePlays"),
   g12ClockworkPlays: () => import("./g12ClockworkPlays"),
   g20RampartPlays: () => import("./g20RampartPlays"),
   g22VeilPlays: () => import("./g22VeilPlays"),
