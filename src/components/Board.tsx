@@ -127,6 +127,7 @@ import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
 import { resolveCardVfx } from "./effects/vfxSpecs";
+import { resolveVfxSource } from "./effects/vfxSource";
 import type { SigPlaySlot } from "./effects/useSignatureQueue";
 import {
   boardCentreShift,
@@ -2256,11 +2257,19 @@ export function Board({
   // show stands down automatically, independent of the dial.
   const fxCalmClock = !!fxTimePressure;
   const fxCalmClockRef = useRef(fxCalmClock);
-  // Mirror both dials into refs so the stable callbacks (vfxShake) read current
+  // Board geometry the cast effect needs to place its floor burst. Same
+  // reason as the dials above: that effect deliberately deps only on
+  // signatureCard (it must fire once per PLAY, not on every move or flip), so
+  // it reads current values through refs instead of widening its dep array.
+  const orientationRef = useRef(orientation);
+  const lastMoveToRef = useRef<Square | null>(lastMove?.to ?? null);
+  // Mirror the dials into refs so the stable callbacks (vfxShake) read current
   // values; written in an effect, never during render.
   useEffect(() => {
     fxLevelRef.current = fxLevel;
     fxCalmClockRef.current = fxCalmClock;
+    orientationRef.current = orientation;
+    lastMoveToRef.current = lastMove?.to ?? null;
   });
   // Warm the code-split signature-visuals chunk (SignatureOverlay's burst art
   // + the merged plugin registry) so it is loaded long before any card can fire
@@ -2589,6 +2598,13 @@ export function Board({
       const key = signatureCard.key;
       const id = signatureCard.id;
       const tier = def.tier;
+      // Where the floor burst lands. The surface's cast square when it told us
+      // one, else the square the last move ended on — either way, somewhere
+      // the play actually touched. Read here, in the effect body, so the timer
+      // closure does not capture a later render's values.
+      const floorSq = signatureCard.sq ?? lastMoveToRef.current;
+      const floorAt: VfxPoint =
+        floorSq != null ? sqToFrac(floorSq, orientationRef.current) : { x: 0.5, y: 0.5 };
       floorTimer = window.setTimeout(() => {
         if (vfxStagedKeyRef.current === key) return; // a real play landed meanwhile
         const spec = resolveCardVfx(id, tier, genFamilyOf(id));
@@ -2596,8 +2612,12 @@ export function Board({
         const vfx = FX_LEVELS[fxLevelRef.current].vfx;
         if (vfx <= 0 || motionOff()) return;
         const calm = fxCalmClockRef.current;
-        // A centred burst — always on-screen, no caster/board dependency.
-        const p: VfxPoint = { x: 0.5, y: 0.5 };
+        // A burst where the play happened. This used to be hardcoded to the
+        // board centre, so the whole class of cards that clears nothing and
+        // matches no zone threw its only particles into the middle of the
+        // board no matter what it did. Falls back to centre only when there is
+        // genuinely no square to point at.
+        const p = floorAt;
         const source: VfxPoint = spec.source === "sky" ? { x: 0.5, y: -0.06 } : p;
         vfxPlay({
           tier,
@@ -2714,8 +2734,8 @@ export function Board({
         if (hits.length > 0) {
           hits.sort((a, b) => a.order - b.order);
           const leadSq = hits.find((h) => h.role === "lead")?.sq ?? hits[0].sq;
-          // The caster is whichever side lost FEWER pieces in this diff (the
-          // same majority read orderSignature uses).
+          // The caster: what the surface told us, else whichever side lost
+          // FEWER pieces in this diff (the same fallback orderSignature uses).
           let wLost = 0;
           let bLost = 0;
           for (const h of hits) {
@@ -2723,33 +2743,26 @@ export function Board({
             if (p?.color === "w") wLost++;
             else if (p?.color === "b") bLost++;
           }
-          const casterColor: Color = bLost >= wLost ? "w" : "b";
-          let source: VfxPoint;
-          switch (spec.source) {
-            case "mover":
-              source = lastMove ? sqToFrac(lastMove.from, orientation) : sqToFrac(leadSq, orientation);
-              break;
-            case "caster": {
-              const k = findKing(board, casterColor);
-              source = k != null ? sqToFrac(k, orientation) : { x: 0.5, y: 0.5 };
-              break;
-            }
-            case "sky":
-              source = { x: 0.5, y: -0.06 };
-              break;
-            case "center":
-              source = { x: 0.5, y: 0.5 };
-              break;
-            default:
-              source = sqToFrac(leadSq, orientation);
-          }
+          const casterColor: Color = signatureCard?.caster ?? (bLost >= wLost ? "w" : "b");
+          const source = resolveVfxSource(spec.source, {
+            leadSq,
+            castSq: signatureCard?.sq ?? null,
+            moveFrom: lastMove?.from ?? null,
+            casterColor,
+            board,
+            orientation,
+          });
           pendingVfxRef.current.push({
             tier: def.tier,
             palette: spec.palette,
             source,
-            targets: hits.map((h) => ({
+            targets: hits.map((h, i) => ({
               p: sqToFrac(h.sq, orientation),
               delayMs: h.order * sigCfg.staggerMs,
+              // Chained specs travel along the real victim order: this leg
+              // starts where the previous one landed, matching the DOM art's
+              // per-target legs exactly.
+              from: spec.chain && i > 0 ? sqToFrac(hits[i - 1].sq, orientation) : undefined,
             })),
             travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,
@@ -3396,34 +3409,29 @@ export function Board({
         if (spec && def) {
           const ordered = [...marks.entries()].sort((a, b) => a[1].order - b[1].order);
           const leadSq = ordered.find(([, m]) => m.role === "lead")?.[0] ?? ordered[0][0];
-          // Zone effects land on the AFFECTED side's pieces; the caster is
-          // the other side's king.
+          // Zone effects land on the AFFECTED side's pieces, so absent an
+          // explicit caster the other side is the one who cast this.
           const affected = board.pieces[leadSq]?.color;
-          const casterColor: Color = affected === "w" ? "b" : "w";
-          let source: VfxPoint;
-          switch (spec.source) {
-            case "caster":
-            case "mover": {
-              const k = findKing(board, casterColor);
-              source = k != null ? sqToFrac(k, orientation) : { x: 0.5, y: 0.5 };
-              break;
-            }
-            case "sky":
-              source = { x: 0.5, y: -0.06 };
-              break;
-            case "center":
-              source = { x: 0.5, y: 0.5 };
-              break;
-            default:
-              source = sqToFrac(leadSq, orientation);
-          }
+          const casterColor: Color = signatureCard.caster ?? (affected === "w" ? "b" : "w");
+          // A zone play has no moving piece, so "mover" resolves to the
+          // caster's king here — the same reading the old local switch used.
+          const source = resolveVfxSource(spec.source === "mover" ? "caster" : spec.source, {
+            leadSq: leadSq as Square,
+            castSq: signatureCard.sq ?? null,
+            moveFrom: null,
+            casterColor,
+            board,
+            orientation,
+          });
           pendingVfxRef.current.push({
             tier: def.tier,
             palette: spec.palette,
             source,
-            targets: ordered.map(([sq, m]) => ({
+            targets: ordered.map(([sq, m], i) => ({
               p: sqToFrac(sq, orientation),
               delayMs: m.order * cfg.staggerMs,
+              from:
+                spec.chain && i > 0 ? sqToFrac(ordered[i - 1][0] as Square, orientation) : undefined,
             })),
             travel: fxCalmClock ? "none" : spec.travel,
             impact: spec.impact,

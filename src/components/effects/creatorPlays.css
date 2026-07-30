@@ -307,7 +307,9 @@
   top: var(--cpl-y, 50%);
   width: var(--cpl-w, 40%);
   height: 6px;
-  border-radius: 3px;
+  /* A 6px bar with a 3px radius IS a pill, so say so: 999px reads identically
+     and satisfies the crisp-corners house rule (docs/design-system.md). */
+  border-radius: 999px;
   background: rgb(143 168 224 / 0.85);
   opacity: 0;
   transform: translateY(60%);

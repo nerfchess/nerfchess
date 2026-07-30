@@ -8,7 +8,11 @@ export interface VfxPlay {
   tier: number;                       // drives intensity + cinematic staging (7+ = full ~2s sequence)
   palette: string[];                  // 2-4 css colors, primary first
   source?: VfxPoint;                  // where the effect originates (omitted = center-top of board)
-  targets: { p: VfxPoint; delayMs?: number }[];  // where it lands, staggered
+  // Where it lands, staggered. `from` overrides `source` for that one target,
+  // which is how a play travels along its real victim order: a sweep rolls
+  // square to square and a chain hops victim to victim, instead of every leg
+  // firing from one origin. Omitted = start at `source`, the original fan.
+  targets: { p: VfxPoint; delayMs?: number; from?: VfxPoint }[];
   travel?: VfxTravel;                 // how it gets there ("none" = impacts only)
   impact?: VfxImpact;
   aftermath?: VfxAftermath;           // lingering residue on target squares (~600ms fade)

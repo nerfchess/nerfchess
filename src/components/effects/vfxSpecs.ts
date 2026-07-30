@@ -32,9 +32,16 @@ export interface CardVfx {
   /** 2-4 css colors, primary first — matched to the card's fiction. */
   palette: string[];
   /** Where the travel starts: the moving piece's origin square, the
-   * choreography lead square, the caster's king, above the board, or
-   * board center. */
-  source: "mover" | "lead" | "caster" | "sky" | "center";
+   * choreography lead square, the caster's king, above the board, board
+   * center, or the square the card was actually cast on. Resolved by
+   * resolveVfxSource (vfxSource.ts) into the same board-fraction space the DOM
+   * scene layer derives its geometry vars from, so the two layers always aim
+   * at the same place. */
+  source: "mover" | "lead" | "caster" | "sky" | "center" | "cast";
+  /** Travel along the real victim order rather than fanning from one origin:
+   * leg N starts where leg N-1 landed. Matches the DOM layer's per-target legs,
+   * so a sweep reads as one travelling strike on both layers at once. */
+  chain?: boolean;
   /** Board thump on impact — a tier 7+ privilege. No spec below tier 7 sets
    * this (the tier 5-6 "great" band tops out at travel + impact + one
    * shockwave in its overlay art). */
