@@ -341,8 +341,21 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
   {
     id: "promotion-denial",
     label: "Blocks or taxes promotion",
-    blurb: "Promotion is forbidden, delayed, downgraded or made conditional.",
-    patterns: [/promot/, /queening/, /last rank/, /eighth rank/, /8th rank/],
+    blurb: "Promotion itself is forbidden, delayed, downgraded or made conditional.",
+    // A bare /last rank/ is NOT promotion denial. Almost every teleport, swap
+    // and army-shuffle card carries the legality footnote "Pawns cannot land on
+    // a first or last rank" (bn4_ghost_walk, warp_cataclysm, total_warp,
+    // bw2_carnival_of_masks, ov_player_trade...), because a pawn may not legally
+    // stand there. That rider is rules plumbing, not the card's mechanic, and it
+    // was filing 12 of this bucket's 14 cards. The prohibition has to be about
+    // promoting.
+    patterns: [
+      /(cannot|can(no|')t|may not|must not|never|no longer) promot/,
+      /promotions? (is|are) (forbidden|blocked|denied|impossible|off|barred)/,
+      /(no|without) promotion/,
+      /(promot|queening)[^.]{0,40}(costs?|instead of|only if|only when|must first|is delayed)/,
+      /(promot|queening)\w*[^.]{0,30}(taxed?|denied|blocked|refused)/,
+    ],
   },
 
   // --- Transformation -------------------------------------------------------
@@ -407,6 +420,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
       /(exchange|trade|switch)[sd]? (places|squares|positions)/,
       /change places/,
       /trade their (entire )?contents/,
+      /(types|places) (are|is) shuffled among/,
     ],
   },
 
@@ -464,17 +478,31 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
   {
     id: "extra-move",
     label: "Grants an extra move inside your turn",
-    blurb: "A free action or bonus move that does not cost the holder their turn.",
+    blurb: "A bonus move on top of your normal one: the card hands you board actions, not just a cheap activation.",
+    // "Free action" is deliberately NOT a pattern here. In this engine a free
+    // action is the ACTIVATION MODE (Buff.freeAction, turnCost() === "free"): the
+    // card resolves inside your turn instead of spending it. That is orthogonal
+    // to what the card does, and matching it filed 58 of this bucket's 92 cards
+    // by their activation cost alone - nerf suspensions, scouting flashes, pawn
+    // shields and coin flips that grant no move whatsoever.
     patterns: [
-      /free action/,
-      /(extra|additional|bonus|second|free) moves?\b/,
+      /(extra|additional|bonus) moves?\b/,
+      /take a second move/,
       /without (using|spending|costing) your turn/,
       /does not (use|cost|spend) your turn/,
       /marches a free/,
       /advances a free/,
+      // The mover has to be YOU. A bare /move again/ also caught "the next piece
+      // they move is left so groggy it must move again" (jet_lag, an enemy
+      // restriction) and "cannot move again" on the quicksand nerf; a bare
+      // "second move" caught "starting on your second move" (vampiric,
+      // solar_flare), which is a timing phrase, not a bonus action.
       /(lets|let) you (immediately )?move again/,
-      /move again\b/,
+      /you (immediately |then )?move again/,
+      /you take (an|one|two|three) (extra|bonus|more) move/,
     ],
+    // A nerf is a handicap: it never hands its owner a bonus action.
+    when: (c) => c.kind === "buff",
   },
   {
     id: "teleport-relocate",
@@ -500,7 +528,13 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
     blurb:
       "A piece is dragged, bounced or advanced a square by the card itself, not by its owner playing a move.",
     patterns: [
-      /(drag|drags|dragged|shove|shoves|push|pushes|pull|pulls|nudge|nudges|bounce|bounced|yank|hauls?)\b/,
+      // The shove verb has to act on something on the BOARD. Bare /push|pull/
+      // also caught the gambling and draft cards, whose push is a betting idiom:
+      // "Push your chips in, half and half" (gm_double_down_draft), "Push it all
+      // onto the next hand" (bw3_double_down), "Push everything to the center"
+      // (all_in), plus "Pull of the Center" (pull_of_the_center), whose only
+      // shove is in its NAME.
+      /(drag|drags|dragged|shove|shoves|push|pushes|pull|pulls|nudge|nudges|bounce|bounced|yank|yanks|haul|hauls)\w* (it|them|one|two|three|every|each|all|the|that|any|up to|your|their|its|back|off) /,
       /(advance|advances|sidesteps?|marches|slides?|steps?|retreats?) one square (at random|immediately|back|inward|toward)/,
       /each advance one square immediately/,
       /(is|are) (sent|carried|returned|bounced) back to/,
@@ -512,6 +546,10 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
       /(pushed|swept|lured|carried|forced|herded) (one|two|three) squares?/,
       /(falls? back|advances?|retreats?|steps? back) one square/,
     ],
+    // The betting cards say push too: "Push your chips in", "Push it all
+    // onto the next hand", "Push your queen across the felt". None of them
+    // shoves a piece a square.
+    when: (c) => !/(\bchips?\b|\bfelt\b|the next hand|\ball in\b|everything to the)/.test(text(c)),
   },
   {
     id: "movement-phase-jump",
@@ -535,6 +573,8 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
     patterns: [
       /(castling|castle)\w* (right|is restored|again|even if|on both sides)/,
       /right to castle/,
+      /and castle toward/,
+      /castle[^.]{0,60}even if your (king|rook)/,
       /(may|can) (still )?castle/,
       /en passant/,
       /double-?step/,
@@ -557,7 +597,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
     label: "Widens how your pieces move",
     blurb: "New directions, longer strides or a borrowed movement pattern for the holder.",
     patterns: [
-      /(may|can|could) (also |now |still |each )?(move|slide|step|spring|sidestep|advance|retreat|shuffle|travel|walk|glide|dash|slip|hop|creep|drift|vault)/,
+      /(may|can|could) (also |now |still |each |once |each once )?(move|slide|step|spring|sidestep|advance|retreat|shuffle|travel|walk|glide|dash|slip|hop|creep|drift|vault)/,
       /moves? (also )?(as|like)\b/,
       /gains? \w+ movement/,
       /moves? (one|two|three) squares?/,
@@ -739,6 +779,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
       /(square|rank|file|half|zone|centre|center|region|band)\w*[^.]{0,80}(may not|cannot|can(no|')t|must not|no move|is closed|are closed|off limits|forbidden)/,
       /(squares?|ranks?|files?|zone|half|centre|center|border|gate|moat|band)s? (is|are) (sealed|walled off|closed|blocked off|barred)/,
       /no piece may (enter|cross)/,
+      /(cannot|can(no|')t|may not|must not) (end a move|land|stop|settle|be) (there|on it|on them|on that)/,
       /impassable/,
       /no (piece|pawn|knight|bishop|rook|queen|king) may be on/,
       /home row/,
@@ -855,7 +896,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
     label: "Suspends or removes your own nerf",
     blurb: "The boon pool's core promise: the holder's hidden handicap goes away for a while.",
     patterns: [
-      /nerfs?[^.]{0,40}(suspended|lifted|paused|disabled)/,
+      /nerfs?[^.]{0,40}(suspend|suspends|suspending|suspended|lifted|paused|disabled)/,
       /(suspend|suspends)[^.]{0,20}nerf/,
       /your nerf (ends|stops|is gone|is off|no longer applies|stays)/,
       /(remove|lift|shed|cancel|cut|halve)\w* your nerf/,
@@ -1020,6 +1061,8 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
       /\broll\b|\brolls\b/,
       /half the time/,
       /(one|two|three) chances? in/,
+      /times? in a hundred/,
+      /(shove|shoves) all in/,
     ],
   },
   {

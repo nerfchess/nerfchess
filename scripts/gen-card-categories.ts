@@ -10,14 +10,17 @@
 // Run: npx -y tsx scripts/gen-card-categories.ts          (writes the doc)
 //      npx -y tsx scripts/gen-card-categories.ts --check  (verify it is current)
 //
-// --check additionally fails on four things the taxonomy must never do:
+// --check additionally fails on five things the taxonomy must never do:
 //   1. leave a card unclassified (fix a pattern, or add an override);
 //   2. keep a category with no cards in it (a dead bucket);
 //   3. carry an override for a card id that does not exist;
 //   4. classify a card in one of draft.ts's exclusive COMBO_TAGS families as an
 //      incidental rider (clock, reroll, marking). Those cards are, by the
 //      engine's own account, oppressive primary effects; if one lands in a rider
-//      bucket the ladder has mis-read it.
+//      bucket the ladder has mis-read it;
+//   5. move any card in the EXPECTED table below, which pins the cards whose
+//      text reads like a mechanic they do not have (a legality footnote, an
+//      activation mode, a betting metaphor).
 
 import { ALL_NERFS } from "../src/engine/nerfs/library";
 import { ALL_BUFFS } from "../src/engine/buffs/library";
@@ -145,7 +148,81 @@ if (badOverrideTargets.length) {
   problems.push(`Override(s) point at no such category: ${badOverrideTargets.join(", ")}.`);
 }
 
+// Cards the ladder has read wrong at least once, pinned to where they belong.
+// Every entry is a case where the card's text contains a phrase that reads like
+// a different mechanic: a legality footnote, an activation mode, or a betting
+// metaphor. Cheaper than re-auditing 2,448 rows by hand after every tuning pass.
+const EXPECTED: Record<string, string> = {
+  // "Pawns cannot land on a first or last rank" is a legality footnote carried
+  // by every teleport / swap / shuffle card, not a promotion rule.
+  "buff:bn4_ghost_walk": "teleport-relocate",
+  "buff:bn4_faerie_door": "teleport-relocate",
+  "buff:total_warp": "teleport-relocate",
+  "buff:warp_cataclysm": "teleport-relocate",
+  "buff:bn4_wheelbarrow": "piece-swap",
+  "buff:ov_player_trade": "piece-swap",
+  "buff:bw2_carnival_of_masks": "piece-swap",
+  "buff:bn4_tide_of_pawns": "movement-upgrade",
+  // ...and these two really are promotion denial.
+  "nerf:promotion_phobia": "promotion-denial",
+  "buff:hx4_glass_ceiling": "promotion-denial",
+
+  // "Free action" is an activation mode (Buff.freeAction), not an extra move.
+  "buff:break_the_nerf": "nerf-relief",
+  "buff:deep_breath": "nerf-relief",
+  "buff:op_border_report": "info-reveal",
+  "buff:op_bricklayer": "single-piece-shield",
+  "buff:op_chairs_on_tables": "zone-denial",
+  // ...and these really do hand you a board action.
+  "buff:counterstep": "extra-move",
+  "buff:momentum": "extra-move",
+  "buff:sugar_rush": "extra-move",
+  "buff:ov_blood_moon": "extra-move",
+  // A nerf never grants one: "starting on your second move" is a timing phrase.
+  "nerf:vampiric": "capture-condition",
+  "nerf:solar_flare": "capture-condition",
+  "nerf:quicksand": "terrain-hazard",
+  "buff:jet_lag": "forced-move",
+
+  // The betting cards say "push" without shoving anything.
+  "buff:gm_double_down_draft": "draft-denial",
+  "buff:bw3_double_down": "draft-advantage",
+  "buff:all_in": "draft-advantage",
+  "buff:cs_poker_bluff": "randomness-gamble",
+  "nerf:pull_of_the_center": "capture-condition",
+  // ...and these really do shove a piece a square.
+  "buff:nudge": "piece-nudge-reposition",
+  "buff:board_quake": "piece-nudge-reposition",
+  "buff:ww_muster_the_ranks": "piece-nudge-reposition",
+
+  // Flavour names that read as a mechanic (these go through the override table).
+  "buff:withered_hands": "capture-denial",
+  "buff:royal_summons": "forced-move",
+  "buff:lag_spike": "clock-drain-enemy",
+  "buff:quick_glance": "draft-denial",
+  // The nine reused ids must classify independently on each side.
+  "buff:heavy_boots": "special-rule-denial",
+  "nerf:heavy_boots": "move-budget-change",
+  "buff:slowpoke": "move-budget-change",
+  "nerf:slowpoke": "move-budget-change",
+};
+
 const categoryOf = new Map(rows.map((r) => [r.key, r.effectCategory]));
+
+const misfiled = Object.entries(EXPECTED)
+  .filter(([key]) => categoryOf.has(key))
+  .filter(([key, want]) => categoryOf.get(key) !== want)
+  .map(([key, want]) => `${key}: expected ${want}, got ${categoryOf.get(key)}`);
+if (misfiled.length) {
+  problems.push(
+    `${misfiled.length} card(s) landed in the wrong bucket:\n` +
+      misfiled.map((m) => `    ${m}`).join("\n"),
+  );
+}
+const goneExpected = Object.keys(EXPECTED).filter((k) => !categoryOf.has(k));
+if (goneExpected.length) {
+  problems.push(`EXPECTED names card(s) that no longer exist: ${goneExpected.join(", ")}.`);
+}
 const riderComboCards: string[] = [];
 for (const id of Object.keys(COMBO_TAGS)) {
   // A COMBO_TAGS id may name a buff, a nerf, or (for the nine reused ids) both.
