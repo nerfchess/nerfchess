@@ -1929,7 +1929,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "rocperch", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
   stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "golemrise", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
-  direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wolfpack", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
+  direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wolfpack", hasLead: false, sound: "wall", source: "summon", anchor: "board" },
 
   // --- Batch 4: WILD set (wild/elemental|warfare|arcane|chaos) + Computer
   // Virus. Removal-sourced entries (fire / storm / siege charges /
@@ -1959,12 +1959,12 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   we_thorn_barrier: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "thornwall", hasLead: true, sound: "wall", source: "blindfold" },
 
   // STORM (wild/elemental): targeted bolts and a summoned thunderhead.
-  we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "boltcharge", hasLead: false, sound: "lightning", anchor: "aim" },
+  we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "boltcharge", hasLead: false, sound: "lightning", anchor: "board" },
   we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "jacobsladder", hasLead: true, sound: "lightning", anchor: "aim" },
   we_thunderhead: { ordering: "radial", staggerMs: 0, victims: "all", visual: "stormcloud", hasLead: false, sound: "wall", source: "summon" },
 
   // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
-  ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "bayonetrush", hasLead: true, sound: "rampage", anchor: "aim" },
+  ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "bayonetrush", hasLead: true, sound: "rampage", anchor: "board" },
   ww_spearhead: { ordering: "line", staggerMs: 90, victims: "all", mover: "r", visual: "spearcharge", hasLead: true, sound: "siege" },
   ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage" },
   ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege" },
@@ -1989,7 +1989,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   wc_wrecking_ball: { ordering: "line", staggerMs: 85, victims: "all", mover: "q", visual: "wreckingball", hasLead: true, sound: "rampage" },
   wc_pinata: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pinata", hasLead: true, sound: "rampage" },
   wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wishlamp", hasLead: true, sound: "wall", source: "summon" },
-  wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hotseat", hasLead: true, sound: "snooze", source: "stun", anchor: "cast" },
+  wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hotseat", hasLead: true, sound: "snooze", source: "stun", anchor: "board" },
 
   // FUNNY (funny/clock): the Computer Virus corrupts the opponent's clock. No
   // board removal / zone effect, so like the Batch 2/3 stun-zone entries it is
@@ -2013,14 +2013,14 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Core removals (detonation diff): a piece is unmade in a crumble of motes.
   purge: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: true, sound: "extinction" },
   annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "annihilatepulse", hasLead: true, sound: "extinction", anchor: "cast" },
-  shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "shellcrack", hasLead: true, sound: "rampage", anchor: "cast" },
+  shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "shellcrack", hasLead: true, sound: "rampage", anchor: "board" },
   purge_two: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "purgefrost", hasLead: false, sound: "cataclysm", anchor: "cast" },
   we_scorch: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "scorchspread", hasLead: true, sound: "atomic", anchor: "cast" },
   wc_sacrificial_bishop: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "caldera", hasLead: false, sound: "atomic", anchor: "cast" },
   cavalry_charge: { ordering: "line", staggerMs: 95, victims: "all", mover: "n", visual: "cavalrycharge", hasLead: true, sound: "rampage" },
 
   // Freezes (frozen zone): each ice card its own read, varied stagger.
-  wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "tarpit", hasLead: false, sound: "massfreeze", source: "frozen", anchor: "cast" },
+  wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "tarpit", hasLead: false, sound: "massfreeze", source: "frozen", anchor: "board" },
   wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mirrorburst", hasLead: true, sound: "massfreeze", source: "frozen" },
   ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "pincerjaws", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
   wa_arrest_time: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
@@ -2041,7 +2041,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   wc_panic_button: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "panicbutton", hasLead: true, sound: "shades", source: "kingSafe", anchor: "cast" },
 
   // Skips + clock theft (stun zone: opponent's stalled ranks / clock area).
-  tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "tempolift", hasLead: true, sound: "snooze", source: "stun", anchor: "cast" },
+  tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "tempolift", hasLead: true, sound: "snooze", source: "stun", anchor: "board" },
   time_lock: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockseal", hasLead: true, sound: "clockcage", source: "stun" },
   time_thief: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
   wa_chrono_siphon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosiphon", hasLead: true, sound: "clockcage", source: "stun", anchor: "cast" },
@@ -2049,7 +2049,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Extra-move rallies (rally zone): lightning strobes and war-banner surges.
   extra_move: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "triplewave", hasLead: true, sound: "blitz", source: "rally" },
-  wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "dispelthaw", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
+  wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "dispelthaw", hasLead: true, sound: "blitz", source: "rally", anchor: "board" },
   ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "relentless", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
   wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "juggleorbit", hasLead: true, sound: "blitz", source: "rally" },
   berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "ragefrenzy", hasLead: true, sound: "blitz", source: "rally" },
@@ -2069,7 +2069,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // sibling card Clone — a board-wide scan-bar lead instead of the generic
   // reinforcement pop.
   clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "printpress", hasLead: true, sound: "wall", source: "summon" },
-  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "congaline", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "congaline", hasLead: true, sound: "wall", source: "summon", anchor: "board" },
   // Batch 11 upgrade: the pizza actually gets DELIVERED — a scooter tears
   // across the whole board trailing steam (was a generic portal pop).
   pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pizzarun", hasLead: true, sound: "wall", source: "summon" },
@@ -2317,7 +2317,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // FUNNY / PT clock economy (stun = the opponent's clock area, rally = ours).
   deadline: { ordering: "radial", staggerMs: 0, victims: "all", visual: "deadlineclock", hasLead: true, sound: "clockcage", source: "stun" },
-  buzzer_beater: { ordering: "radial", staggerMs: 0, victims: "all", visual: "buzzerbeat", hasLead: true, sound: "clockcage", source: "stun", anchor: "cast" },
+  buzzer_beater: { ordering: "radial", staggerMs: 0, victims: "all", visual: "buzzerbeat", hasLead: true, sound: "clockcage", source: "stun", anchor: "board" },
   overtime_whistle: { ordering: "radial", staggerMs: 0, victims: "all", visual: "whistleblast", hasLead: true, sound: "blitz", source: "rally" },
   time_out: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timeoutflag", hasLead: true, sound: "snooze", source: "stun" },
   overtime_pay: { ordering: "radial", staggerMs: 0, victims: "all", visual: "cashclock", hasLead: true, sound: "coronation", source: "rally" },
@@ -2377,7 +2377,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // live in the personal plugin set (personalPlays.tsx) — their plays star the
   // /newjeans and /companions portrait art. No core entries: core beats
   // plugins at the resolve site, so entries here would shadow the portraits.
-  fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "pianorun", hasLead: true, sound: "lightning", anchor: "aim" },
+  fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "pianorun", hasLead: true, sound: "lightning", anchor: "board" },
   geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "neondash", hasLead: true, sound: "lightning" },
   check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "golive", hasLead: true, sound: "massfreeze", source: "frozen" },
   bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "schoolbell", hasLead: true, sound: "massfreeze", source: "frozen" },

@@ -2503,15 +2503,15 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- the season arriving: washes and garrisons ---
   bn4_long_winter: S(LongWinterScene, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "cast",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   bn4_winter_garrison: S(WinterGarrisonScene, {
     ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
-    sound: "wall", source: "summon", anchor: "cast",
+    sound: "wall", source: "summon", anchor: "board",
   }),
   bn4_frozen_moat: S(FrozenMoatScene, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "cast",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   bn4_glacier_calving: S(GlacierCalvingScene, {
     ordering: "radial", staggerMs: 65, victims: "all", hasLead: true,
@@ -2529,11 +2529,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_kings_ransom: S(KingsRansomScene, {
     ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
-    sound: "clockice", source: "frozen", anchor: "cast",
+    sound: "clockice", source: "frozen", anchor: "board",
   }),
   hx4_tribute_demand: S(TributeDemandScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "clockice", source: "frozen", anchor: "cast",
+    sound: "clockice", source: "frozen", anchor: "board",
   }),
 
   // --- clocks and bells: the cold on a count ---
@@ -2553,7 +2553,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- gates, keeps and councils: the cold seizes the works ---
   hx4_burned_keep: S(BurnedKeepScene, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true,
-    sound: "wall", source: "frozen", anchor: "cast",
+    sound: "wall", source: "frozen", anchor: "board",
   }),
   hx4_oathbreakers_brand: S(OathbreakersBrandScene, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true,
@@ -2561,21 +2561,21 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_shattered_council: S(ShatteredCouncilScene, {
     ordering: "radial", staggerMs: 65, victims: ["q", "r"], hasLead: true,
-    sound: "petrify", source: "frozen", anchor: "cast",
+    sound: "petrify", source: "frozen", anchor: "board",
   }),
   hx4_frozen_reserves: S(FrozenReservesScene, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "cast",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   hx4_hearth_frost: S(HearthFrostScene, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true,
-    sound: "petrify", source: "frozen", anchor: "cast",
+    sound: "petrify", source: "frozen", anchor: "board",
   }),
 
   // --- the cold that travels: fronts, scythes and tracks ---
   hx4_great_glacier: S(GreatGlacierScene, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "aim",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   hx4_reapers_due: S(ReapersDueScene, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true,
@@ -2583,7 +2583,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_winter_that_stays: S(WinterThatStaysScene, {
     ordering: "line", staggerMs: 65, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "aim",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   hx4_watchmans_whistle: S(WatchmansWhistleScene, {
     ordering: "line", staggerMs: 0, victims: "all", hasLead: true,
@@ -2609,7 +2609,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_kraken_arms: S(KrakenArmsScene, {
     ordering: "radial", staggerMs: 75, victims: "all", hasLead: true,
-    sound: "massfreeze", source: "frozen", anchor: "cast",
+    sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   hx4_lovestruck_majesty: S(LovestruckMajestyScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
@@ -2627,6 +2627,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_frozen_harbor: S(FrozenHarborScene, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "wall", source: "frozen", anchor: "cast",
+    sound: "wall", source: "frozen", anchor: "board",
   }),
 };

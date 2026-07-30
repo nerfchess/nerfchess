@@ -2184,7 +2184,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- the reserves: rolls, gates, satchels, stretchers ---
   bn4_endless_militia: S(EndlessMilitiaScene, {
     ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true,
-    sound: "crownrain", source: "summon", anchor: "cast",
+    sound: "crownrain", source: "summon", anchor: "board",
   }),
   bn4_menagerie_gates: S(MenagerieGatesScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
@@ -2192,7 +2192,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_drawbridge_crew: S(DrawbridgeCrewScene, {
     ordering: "line", staggerMs: 80, victims: ["p"], hasLead: true,
-    sound: "siege", source: "summon", anchor: "cast",
+    sound: "siege", source: "summon", anchor: "board",
   }),
   bn4_field_hospital: S(FieldHospitalScene, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true,
@@ -2200,7 +2200,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_letters_home: S(LettersHomeScene, {
     ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true,
-    sound: "gacha", anchor: "cast",
+    sound: "gacha", anchor: "board",
   }),
   bn4_small_consolation: S(SmallConsolationScene, {
     ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true,
@@ -2222,7 +2222,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_field_of_spears: S(FieldOfSpearsScene, {
     ordering: "line", staggerMs: 80, victims: ["p"], hasLead: true,
-    sound: "petrify", anchor: "cast",
+    sound: "petrify", anchor: "board",
   }),
   bn4_leapfrog: S(LeapfrogScene, {
     ordering: "line", staggerMs: 0, victims: ["p"], hasLead: true,
@@ -2250,7 +2250,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- the line is held, starved or dug in ---
   hx4_famine_year: S(FamineYearScene, {
     ordering: "line", staggerMs: 80, victims: ["p"], hasLead: true,
-    sound: "petrifiedforest", source: "slow", anchor: "cast",
+    sound: "petrifiedforest", source: "slow", anchor: "board",
   }),
   hx4_pawn_embargo: S(PawnEmbargoScene, {
     ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true,
@@ -2258,7 +2258,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_famine: S(FamineScene, {
     ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true,
-    sound: "aegis", source: "shield", anchor: "cast",
+    sound: "aegis", source: "shield", anchor: "board",
   }),
   hx4_no_doubling: S(NoDoublingScene, {
     ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true,
@@ -2276,7 +2276,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_echo_of_bells: S(EchoOfBellsScene, {
     ordering: "line", staggerMs: 80, victims: "all", hasLead: true,
-    sound: "cathedral", source: "blindfold", anchor: "cast",
+    sound: "cathedral", source: "blindfold", anchor: "board",
   }),
   hx4_candle_curfew: S(CandleCurfewScene, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
@@ -2294,15 +2294,15 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- the line is broken by something bigger ---
   ov_cloud_serpent: S(CloudSerpentScene, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "colossus", anchor: "aim",
+    sound: "colossus", anchor: "board",
   }),
   ov_locust_swarm: S(LocustSwarmScene, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true,
-    sound: "extinction", anchor: "aim",
+    sound: "extinction", anchor: "board",
   }),
   ov_volcanic_vent: S(VolcanicVentScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "atomic", anchor: "cast",
+    sound: "atomic", anchor: "board",
   }),
   ov_fireworks_barge: S(FireworksBargeScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,

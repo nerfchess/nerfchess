@@ -1389,17 +1389,17 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
-  ov_elder_wyrm: S(ElderWyrmScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
+  ov_elder_wyrm: S(ElderWyrmScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
   bn4_house_of_banners: S(HouseOfBannersScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast" }),
   ov_symphony_of_the_legion: S(SymphonyOfTheLegionScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
   bn4_life_insurance: S(LifeInsuranceScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "cast" }),
-  hx4_siren_song: S(SirenSongScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
+  hx4_siren_song: S(SirenSongScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
   bn4_forward_banners: S(ForwardBannersScene, { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim" }),
-  bn4_war_room_map: S(WarRoomMapScene, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }),
-  hx4_soggy_invaders: S(SoggyInvadersScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }),
-  hx4_elbow_room: S(ElbowRoomScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
+  bn4_war_room_map: S(WarRoomMapScene, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
+  hx4_soggy_invaders: S(SoggyInvadersScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
+  hx4_elbow_room: S(ElbowRoomScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   hx4_moths_in_the_banner: S(MothsInTheBannerScene, { ordering: "radial", staggerMs: 70, victims: ["r"], hasLead: true, sound: "blitz", anchor: "cast" }),
-  ov_moat_digger: S(MoatDiggerScene, { ordering: "line", staggerMs: 90, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
+  ov_moat_digger: S(MoatDiggerScene, { ordering: "line", staggerMs: 90, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
   ov_second_breakfast: S(SecondBreakfastScene, { ordering: "line", staggerMs: 80, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim" }),
   op_bridle_path: S(BridlePathScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "blitz", anchor: "aim" }),
   op_drawbridge_in: S(DrawbridgeInScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", anchor: "aim" }),
@@ -1411,6 +1411,6 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_palace_gate: S(PalaceGateScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim" }),
   op_quickstep: S(QuickstepScene, { ordering: "line", staggerMs: 65, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
   op_squires_errand: S(SquiresErrandScene, { ordering: "line", staggerMs: 75, victims: ["p"], hasLead: true, sound: "wall", anchor: "aim" }),
-  op_team_photo: S(TeamPhotoScene, { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "crownrain", anchor: "cast" }),
+  op_team_photo: S(TeamPhotoScene, { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),
   op_waltz_left: S(WaltzLeftScene, { ordering: "line", staggerMs: 80, victims: ["k"], hasLead: true, sound: "coronation", anchor: "aim" }),
 };

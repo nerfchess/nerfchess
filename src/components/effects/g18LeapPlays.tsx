@@ -1789,7 +1789,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 65, victims: ["n", "b"], hasLead: true, sound: "coronation", anchor: "aim",
   }),
   bn4_pocket_cavalry: S(TrapezeCatch, {
-    ordering: "line", staggerMs: 55, victims: ["n", "p"], hasLead: true, sound: "gacha", anchor: "aim",
+    ordering: "line", staggerMs: 55, victims: ["n", "p"], hasLead: true, sound: "gacha", anchor: "board",
   }),
 
   // --- Tier 6 ---
@@ -1802,7 +1802,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 5 ---
   bn4_falconers_glove: S(FalconBate, {
-    ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", source: "empower", anchor: "aim",
+    ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", source: "empower", anchor: "board",
   }),
   bn4_pathfinders: S(StoneSkip, {
     ordering: "line", staggerMs: 50, victims: ["n"], hasLead: true, sound: "blitz", source: "empower", anchor: "aim",
@@ -1814,19 +1814,19 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "wheel", anchor: "aim",
   }),
   hx4_ash_veil: S(AshFlea, {
-    ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "blitz", anchor: "cast",
+    ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   hx4_grooms_leash: S(LungeLine, {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
   }),
   hx4_honey_spill: S(HoneyPour, {
-    ordering: "radial", staggerMs: 70, victims: ["n"], hasLead: true, sound: "siege", anchor: "cast",
+    ordering: "radial", staggerMs: 70, victims: ["n"], hasLead: true, sound: "siege", anchor: "board",
   }),
   hx4_paddock_fence: S(WaterJump, {
     ordering: "line", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
   }),
   hx4_toy_box: S(StuntRamp, {
-    ordering: "line", staggerMs: 50, victims: "all", hasLead: true, sound: "gacha", source: "slow", anchor: "aim",
+    ordering: "line", staggerMs: 50, victims: "all", hasLead: true, sound: "gacha", source: "slow", anchor: "board",
   }),
 
   // --- Tier 4 ---
@@ -1840,10 +1840,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
   }),
   hx4_skittish_mounts: S(CatPounce, {
-    ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim",
+    ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   hx4_tin_soldiers: S(TinTip, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "gacha", anchor: "aim",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "gacha", anchor: "board",
   }),
   ov_templar_vows: S(PoleVault, {
     ordering: "radial", staggerMs: 55, victims: ["b"], hasLead: true, sound: "coronation", anchor: "aim",

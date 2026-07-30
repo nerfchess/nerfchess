@@ -1359,7 +1359,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 4 ---
   bn4_processional: S(Paternoster, {
-    ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
+    ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "board",
   }),
   ov_priest_hole: S(TurningPanel, {
     ordering: "line", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "vault", anchor: "aim",
@@ -1395,13 +1395,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 60, victims: ["b", "n"], hasLead: true, sound: "gacha", anchor: "aim",
   }),
   op_fresh_sod: S(TurfPlugs, {
-    ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "aim",
+    ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "board",
   }),
   op_identical_twins: S(Thimblerig, {
     ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "gacha", anchor: "aim",
   }),
   op_personal_space: S(PassingLoop, {
-    ordering: "octagon", staggerMs: 50, victims: ["k"], hasLead: true, sound: "blitz", source: "kingSafe", anchor: "aim",
+    ordering: "octagon", staggerMs: 50, victims: ["k"], hasLead: true, sound: "blitz", source: "kingSafe", anchor: "board",
   }),
   op_royal_barter: S(ExchequerTable, {
     ordering: "line", staggerMs: 60, victims: ["q", "b"], hasLead: true, sound: "vault", anchor: "aim",

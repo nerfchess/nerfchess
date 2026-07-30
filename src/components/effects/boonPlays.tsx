@@ -23,10 +23,26 @@
 // RestitutionScene, LongTruceScene, GreatReturnScene, ShadowReserveScene,
 // EternalKeepScene.
 
+// STAGING. Every card declares an anchor, so the scene happens where the card
+// was actually played. `Stage` is the shared <BoardWideStage>, which clamps
+// itself over the board from --fx-anchor-dx/dy; anything that means THE BOARD
+// (the wash, the edge gilt) renders inside <BoardFrame> so it stays exact at
+// any anchor. Aim-anchored cards additionally lay a travelling leg down the
+// real source -> target vector: <AimLeg> carries AimStage's own `fx-aim`
+// rotation and is the ONLY thing that gets it, because an upright subject
+// rotated onto the attack vector would lie on its side.
+//
+// Geometry reaches the art through boonPlays.css: bwp-rise arrives from the
+// caster's own edge (--fx-side), bwp-target leans in from it, bwp-glint's
+// settle drifts away from the board centre (--fx-ox/--fx-oy), bwp-rain slants
+// with it, bwp-beam reaches by --fx-len, and bwp-leg/bwp-legtip are sized by
+// --fx-len outright.
+
 import "./boonPlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
    Shared bits (module-local — deliberately NOT imported from other modules)
@@ -38,14 +54,19 @@ interface TemplateProps {
   palette: Palette;
   glyph: ReactNode;
   lead: boolean;
+  role: SigRole;
   delayMs: number;
   /** Per-card structural flourish key: every card on a shared template MUST
    * pass one, and every key below has its own dressing block. */
   flourish?: string;
+  /** Set for `anchor: "aim"` cards: lay the travelling leg down the real
+   * source -> target vector as well as playing the template's own beats. */
+  aim?: boolean;
 }
 
 interface SceneProps {
   lead: boolean;
+  role: SigRole;
   delayMs: number;
 }
 
@@ -60,18 +81,52 @@ function tint(hex: string, alpha: number): string {
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** Oversized-clipped board-wide stage: the overlay mounts inside ONE square;
- * this canvas is ~14 squares wide (the board is the central ~57%). */
+ * this canvas is ~14 squares wide, anchored on the cast square and clamping
+ * itself over the board (see stage.tsx). */
 function Stage({ children }: { children: ReactNode }) {
+  return <BoardWideStage>{children}</BoardWideStage>;
+}
+
+/** Full-board colour wash. Inside <BoardFrame>, so it is exactly the board at
+ * any anchor rather than a fixed slice of a canvas that has moved. */
+function Wash({ color, delayMs }: { color: string; delayMs: number }) {
   return (
-    <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
-    </span>
+    <BoardFrame>
+      <span className="bwp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />
+    </BoardFrame>
   );
 }
 
-/** Full-board colour wash. */
-function Wash({ color, delayMs }: { color: string; delayMs: number }) {
-  return <span className="bwp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />;
+/** The travelling part of an `anchor: "aim"` play: a lance of light laid from
+ * the cast square down the real source -> target leg, its reach driven by
+ * --fx-len and its tip riding out to the victim.
+ *
+ * Authored pointing RIGHT; `fx-aim` (the rotation AimStage applies internally)
+ * turns it onto the vector. It is applied HERE rather than by wrapping the leg
+ * in <AimStage>, because this already renders inside <Stage>: a second staging
+ * box would multiply the 14-cell canvas by 14 again. Nothing upright may go
+ * inside it - a subject rotated onto the attack vector lies on its side. */
+function AimLeg({ color, delayMs }: { color: string; delayMs: number }) {
+  return (
+    <span className="fx-aim absolute inset-0 block" aria-hidden="true">
+      <span
+        className="bwp-leg absolute block"
+        style={{
+          left: "50%",
+          top: "49.7%",
+          width: "7.15%",
+          height: "0.7%",
+          background: `linear-gradient(90deg, ${color}, transparent)`,
+          transformOrigin: "0% 50%",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="bwp-legtip absolute block rounded-full"
+        style={{ left: "49.4%", top: "49%", width: "1.2%", height: "1.2%", background: color, animationDelay: `${delayMs + 90}ms` }}
+      />
+    </span>
+  );
 }
 
 /** The shockwave ring; tier 7-8 scenes stack a second, later one. */
@@ -124,12 +179,34 @@ function Beam({
   );
 }
 
-/** Board-edge glow — reserved for the tier 7-8 bespoke scenes' grandeur. */
+/** Board-edge glow — reserved for the tier 7-8 bespoke scenes' grandeur. It
+ * means the BOARD's edge, so it lives inside <BoardFrame>. */
 function EdgeGlow({ delayMs, color }: { delayMs: number; color: string }) {
   return (
+    <BoardFrame>
+      <span
+        className="bwp-edge absolute inset-0 block"
+        style={{ boxShadow: `inset 0 0 26px 9px ${color}`, animationDelay: `${delayMs}ms` }}
+      />
+    </BoardFrame>
+  );
+}
+
+/** The anticipation beat: light gathers on the point the play is about to
+ * claim, one short breath before the strike. Deliberately ONE node — the tier
+ * 7-8 scenes that need it are already near the 16-node ceiling. */
+function Tell({ color, delayMs, left = 38, top = 36, size = 24 }: { color: string; delayMs: number; left?: number; top?: number; size?: number }) {
+  return (
     <span
-      className="bwp-edge absolute block"
-      style={{ left: "28%", top: "28%", width: "44%", height: "44%", boxShadow: `inset 0 0 26px 9px ${color}`, animationDelay: `${delayMs}ms` }}
+      className="bwp-tell absolute block rounded-full"
+      style={{
+        left: `${left}%`,
+        top: `${top}%`,
+        width: `${size}%`,
+        height: `${size}%`,
+        background: `radial-gradient(circle, ${color}, transparent 70%)`,
+        animationDelay: `${delayMs}ms`,
+      }}
     />
   );
 }
@@ -195,17 +272,83 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   );
 }
 
+/** The ENTRANCE cut: the card arriving in a hand, at ~56% of the crop. Same
+ * palette and the play's own central object, three short beats (the light
+ * gathers, the object arrives, two glints settle off it), and no board
+ * takeover — nothing here leaves the one square it is mounted on. `mark` is
+ * the scene's own central object; without one the card's device stands in. */
+function EntranceCut({ palette, glyph, delayMs, mark }: { palette: Palette; glyph: ReactNode; delayMs: number; mark?: ReactNode }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      {/* tell: the light gathers behind the card */}
+      <span
+        className="bwp-facein absolute block rounded-full"
+        style={{ left: "18%", top: "18%", width: "64%", height: "64%", background: `radial-gradient(circle, ${tint(p0, 0.55)}, transparent 70%)`, animationDelay: `${delayMs}ms` }}
+      />
+      {/* strike: the central object rises into the crop */}
+      <span className="bwp-rise absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", animationDelay: `${delayMs + 150}ms` }}>
+        {mark ?? glyph}
+      </span>
+      {/* settle: two sparks drift off it */}
+      <Glint delayMs={delayMs + 430} color={tint(p1, 0.95)} left={64} top={22} size={12} />
+      <Glint delayMs={delayMs + 530} color={tint(p2, 0.9)} left={24} top={66} size={9} />
+    </span>
+  );
+}
+
+/** Each shared template's central object, drawn small enough to carry an
+ * entrance on its own. Kept beside EntranceCut so the card arriving in a hand
+ * and the card being played show the SAME thing. */
+const MARK: Record<string, (p: Palette) => ReactNode> = {
+  halo: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="6.4" fill={tint(p0, 0.3)} stroke={tint(p1, 0.95)} strokeWidth="0.9" />
+      <circle cx="10" cy="10" r="4.4" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.4" strokeDasharray="1.4 1" />
+      <path d="M10 0.6 V3 M10 17 V19.4 M0.6 10 H3 M17 10 H19.4" stroke={tint(p1, 0.9)} strokeWidth="0.8" {...SJ} />
+    </svg>
+  ),
+  chest: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M3.4 9.6 C3.4 6 6.4 4 10 4 C13.6 4 16.6 6 16.6 9.6 Z" fill={tint(p1, 0.7)} stroke={p2} strokeWidth="0.7" {...SJ} />
+      <rect x="3.4" y="10.2" width="13.2" height="6" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.7" />
+      <rect x="9.1" y="10.8" width="1.8" height="2.8" fill={tint(p1, 0.95)} />
+    </svg>
+  ),
+  anvil: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M2.6 7.6 H14.4 C16.6 7.6 17.6 8.6 17.8 10.2 L14.6 10.2 C13.6 12 12 12.6 10.4 12.6 H8 V15.4 H12 V17 H5.4 V15.4 H6.6 V12.6 H4.4 C3 12.6 2.6 11.4 2.6 10 Z" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="0.7" {...SJ} />
+      <path d="M4.6 5 L9 3" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
+    </svg>
+  ),
+  scroll: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="3" y="5.4" width="14" height="9.2" fill="#f4ead2" stroke={p2} strokeWidth="0.6" />
+      <path d="M5.4 8 H14 M5.4 10 H12.6 M5.4 12 H11" stroke={tint(p0, 0.85)} strokeWidth="0.55" strokeLinecap="round" />
+      <circle cx="14.6" cy="12.6" r="1.9" fill={tint(p1, 0.95)} stroke={p2} strokeWidth="0.5" />
+    </svg>
+  ),
+  falcon: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M1.6 12.6 C6.4 13.6 9.8 11.4 11.8 6.6 C13.2 10.4 16.4 12 18.6 11 C15.8 15.6 10.4 18 6 16.8 C3.6 16.2 2 14.8 1.6 12.6 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.5" {...SJ} />
+      <path d="M2.4 5 H12 M5 7.4 H14.6" stroke={tint(p0, 0.85)} strokeWidth="0.9" strokeLinecap="round" />
+    </svg>
+  ),
+};
+
 /* =============================================================================
    Template 1: DawnHalo — a dawn sun-disc settles over the board centre, eight
    rays wheel out, and the card's device burns in the disc (miracles / wards).
    ========================================================================== */
 const RAYS = [0, 45, 90, 135, 180, 225, 270, 315];
-function DawnHalo({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function DawnHalo({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.halo(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       {/* the disc, settling out of the sky */}
       <span className="bwp-drop absolute block" style={{ left: "36%", top: "24%", width: "28%", height: "28%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
@@ -377,12 +520,14 @@ function DawnHalo({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 2: Reliquary — a reliquary chest slides up mid-board, its lid
    swings back, and a column of light carries the card's device out of it.
    ========================================================================== */
-function Reliquary({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function Reliquary({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.chest(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       {/* the chest rises */}
       <span className="bwp-rise absolute block" style={{ left: "40%", top: "50%", width: "20%", height: "13%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 20 13" className="block h-full w-full" aria-hidden="true">
@@ -567,12 +712,14 @@ function Reliquary({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 3: AstralAnvil — the alchemist's anvil rises mid-board, the hammer
    falls once, and the work is remade inside the strike flash.
    ========================================================================== */
-function AstralAnvil({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function AstralAnvil({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.anvil(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       {/* the anvil rises */}
       <span className="bwp-rise absolute block" style={{ left: "39%", top: "48%", width: "22%", height: "13%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 22 13" className="block h-full w-full" aria-hidden="true">
@@ -768,12 +915,14 @@ function AstralAnvil({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
    Template 4: PactScroll — a great pact unrolls across the board, the quill
    flashes its signature, and the wax seal thumps down beside the device.
    ========================================================================== */
-function PactScroll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function PactScroll({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.scroll(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       {/* the scroll unrolls left to right */}
       <span className="bwp-unroll absolute block" style={{ left: "28%", top: "42%", width: "44%", height: "14%", transformOrigin: "0% 50%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 44 14" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
@@ -942,12 +1091,14 @@ function PactScroll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
    Template 5: FalconDash — speed lines rake the crop and a falcon-comet
    streaks through, the card's device flaring at the strike point.
    ========================================================================== */
-function FalconDash({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function FalconDash({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.falcon(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.2)} delayMs={delayMs} />
+      {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       {/* speed lines */}
       {[34, 44, 56].map((t, i) => (
         <Beam key={t} delayMs={delayMs + 120 + i * 70} color={tint(p1, 0.55)} left={26} top={t} w={30 - i * 4} h={0.8} />
@@ -1085,11 +1236,14 @@ function FalconDash({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
 
 /** Kingmaker's Pact — the unseen hand lowers an outsized crown onto a throne
  * built of dealt cards while the tier-pips climb and gold rains. */
-function KingmakerScene({ lead, delayMs }: SceneProps) {
+function KingmakerScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
+      {/* tell: the unseen hand's light gathers over the empty table */}
+      <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 220} left={40} top={40} />
       {/* the card-throne stacks itself */}
       {[0, 1, 2].map((i) => (
         <span key={i} className="bwp-rise absolute block" style={{ left: `${43 - i * 2.4}%`, top: `${56 - i * 5}%`, width: `${14 + i * 4.8}%`, height: "6%", animationDelay: `${delayMs + 160 + (2 - i) * 130}ms` }}>
@@ -1131,7 +1285,8 @@ function KingmakerScene({ lead, delayMs }: SceneProps) {
 
 /** Bolt Hole — check-rays close on the king, the wall opens its secret door,
  * and the king is simply not there anymore. */
-function BoltHoleScene({ lead, delayMs }: SceneProps) {
+function BoltHoleScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#cdd6ff", "#1c1c2a"]} glyph={GLYPH.bw2_bolt_hole} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#cdd6ff", "#1c1c2a"]} glyph={GLYPH.bw2_bolt_hole} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1168,7 +1323,8 @@ function BoltHoleScene({ lead, delayMs }: SceneProps) {
 
 /** Carnival of Masks — the carousel spins the whole court and hands every
  * piece back under somebody else's hat. */
-function CarnivalScene({ lead, delayMs }: SceneProps) {
+function CarnivalScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#c94ad1", "#ffd76a", "#2a1030"]} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#c94ad1", "#ffd76a", "#2a1030"]} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
   const riders: { k: keyof typeof CHESSMAN; swap: keyof typeof CHESSMAN; l: number; t: number }[] = [
     { k: "r", swap: "b", l: 46.75, t: 28 },
@@ -1211,11 +1367,14 @@ function CarnivalScene({ lead, delayMs }: SceneProps) {
 
 /** Restitution — the great scale descends tilted, the owed pieces march onto
  * the light pan, and the beam levels. */
-function RestitutionScene({ lead, delayMs }: SceneProps) {
+function RestitutionScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(58,48,38,0.34)" delayMs={delayMs} />
+      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
+      <AimLeg color="rgba(255,215,106,0.85)" delayMs={delayMs + 300} />
       {/* the pillar and the tilted beam */}
       <span className="bwp-gate absolute block" style={{ left: "49.3%", top: "34%", width: "1.4%", height: "24%", transformOrigin: "50% 100%", background: "rgba(201,184,154,0.95)", animationDelay: `${delayMs + 160}ms` }} />
       <span className="bwp-tip absolute block" style={{ left: "32%", top: "33%", width: "36%", height: "3%", transformOrigin: "50% 50%", animationDelay: `${delayMs + 420}ms` }}>
@@ -1248,11 +1407,14 @@ function RestitutionScene({ lead, delayMs }: SceneProps) {
 
 /** The Long Truce — banners dip on both wings, the dove crosses the whole
  * field, and twin domes of quiet settle over the two armies. */
-function LongTruceScene({ lead, delayMs }: SceneProps) {
+function LongTruceScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(28,58,50,0.34)" delayMs={delayMs} />
+      {/* tell: the field draws one breath and the noise drops out of it */}
+      <Tell color="rgba(95,201,176,0.5)" delayMs={delayMs + 220} left={40} top={34} size={26} />
       {/* the two war banners dip toward each other */}
       {[
         { l: 30, rot: "18deg", c: "#e8fff7" },
@@ -1290,7 +1452,8 @@ function LongTruceScene({ lead, delayMs }: SceneProps) {
 
 /** The Great Return — the underworld gate opens on the horizon and the dead
  * of BOTH armies stream home in one long procession. */
-function GreatReturnScene({ lead, delayMs }: SceneProps) {
+function GreatReturnScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#8f6bff", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8f6bff", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
   const procession: { k: keyof typeof CHESSMAN; dx: number; d: number; c: string; s: string }[] = [
     { k: "q", dx: -240, d: 0, c: "#e3d0ff", s: "#5b2b8f" },
@@ -1326,7 +1489,8 @@ function GreatReturnScene({ lead, delayMs }: SceneProps) {
 
 /** Shadow Reserve — the smuggler opens the coat: three heavy pieces hang in
  * the lining, and two of your dealt futures burn away as the fee. */
-function ShadowReserveScene({ lead, delayMs }: SceneProps) {
+function ShadowReserveScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1373,7 +1537,8 @@ function ShadowReserveScene({ lead, delayMs }: SceneProps) {
 
 /** The Eternal Keep — the home rank itself is raised into rampart and towers,
  * and the gate booms shut on forever. */
-function EternalKeepScene({ lead, delayMs }: SceneProps) {
+function EternalKeepScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#8a8478", "#e8dcc0", "#3a3026"]} glyph={GLYPH.bw2_eternal_keep} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a8478", "#e8dcc0", "#3a3026"]} glyph={GLYPH.bw2_eternal_keep} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1418,7 +1583,8 @@ function EternalKeepScene({ lead, delayMs }: SceneProps) {
 
 /** Mummers' Dance — the whole minor corps whirls behind carnival masks and
  * every knight trades faces with a bishop. */
-function MummersDanceScene({ lead, delayMs }: SceneProps) {
+function MummersDanceScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#6b4a8f", "#c9b0e8", "#1c0f28"]} glyph={GLYPH.bw3_mummers_dance} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#6b4a8f", "#c9b0e8", "#1c0f28"]} glyph={GLYPH.bw3_mummers_dance} delayMs={delayMs} />;
   const corps: { k: keyof typeof CHESSMAN; swap: keyof typeof CHESSMAN; l: number; t: number }[] = [
     { k: "n", swap: "b", l: 33, t: 34 },
@@ -1454,11 +1620,14 @@ function MummersDanceScene({ lead, delayMs }: SceneProps) {
 
 /** Last Stand — a shield wall snaps up along the whole front and a dome of
  * king-safety settles over the army. */
-function LastStandScene({ lead, delayMs }: SceneProps) {
+function LastStandScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#ffe9b0", "#1c2438"]} glyph={GLYPH.bw3_last_stand} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#ffe9b0", "#1c2438"]} glyph={GLYPH.bw3_last_stand} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(28,36,56,0.34)" delayMs={delayMs} />
+      {/* tell: the muster-light gathers along the line before the shields go up */}
+      <Tell color="rgba(255,233,176,0.45)" delayMs={delayMs + 220} left={38} top={44} size={26} />
       {[30, 40, 50, 60].map((l, i) => (
         <span key={l} className="bwp-rise absolute block" style={{ left: `${l}%`, top: "50%", width: "8%", height: "13%", animationDelay: `${delayMs + 200 + i * 100}ms` }}>
           <svg viewBox="0 0 8 13" className="block h-full w-full" aria-hidden="true">
@@ -1487,11 +1656,14 @@ function LastStandScene({ lead, delayMs }: SceneProps) {
 
 /** High Stakes — the whole offer table is swept toward the holder and the
  * forfeited reroll dice shatter mid-air. */
-function HighStakesScene({ lead, delayMs }: SceneProps) {
+function HighStakesScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
+      {/* tell: the table lamp swells over the offer before the sweep */}
+      <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 240} left={40} top={34} />
       {[30, 42, 54, 64].map((l, i) => (
         <span key={l} className="bwp-cross absolute block" style={{ left: `${l}%`, top: "30%", width: "6%", height: "9%", rotate: `${(i - 1.5) * 8}deg`, "--dx": "0%", "--dy": "160%", animationDelay: `${delayMs + 300 + i * 110}ms` } as CSSProperties}>
           <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
@@ -1519,7 +1691,8 @@ function HighStakesScene({ lead, delayMs }: SceneProps) {
 }
 
 /** From the Ashes — the fallen re-form up to a level line, embers rising. */
-function FromTheAshesScene({ lead, delayMs }: SceneProps) {
+function FromTheAshesScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1542,11 +1715,14 @@ function FromTheAshesScene({ lead, delayMs }: SceneProps) {
 
 /** Kingsguard Duel — two guards charge from before their kings, meet, and both
  * fall in one flash. */
-function KingsguardDuelScene({ lead, delayMs }: SceneProps) {
+function KingsguardDuelScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#ff9d9d", "#22283a"]} glyph={GLYPH.bw3_kingsguard_duel} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#ff9d9d", "#22283a"]} glyph={GLYPH.bw3_kingsguard_duel} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(34,40,58,0.34)" delayMs={delayMs} />
+      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
+      <AimLeg color="rgba(255,157,157,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-hold absolute block" style={{ left: "26%", top: "44%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 200}ms` }}>
         <Man kind="k" fill="#cdd6ff" stroke="#22283a" />
       </span>
@@ -1575,11 +1751,16 @@ function KingsguardDuelScene({ lead, delayMs }: SceneProps) {
 
 /** King's Sanctuary — the king streaks to the safest corner, haloed in
  * sanctuary light. */
-function KingsSanctuaryScene({ lead, delayMs }: SceneProps) {
+function KingsSanctuaryScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(28,42,68,0.34)" delayMs={delayMs} />
+      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
+      <AimLeg color="rgba(223,232,255,0.85)" delayMs={delayMs + 300} />
+      {/* tell: sanctuary light kindles in the far corner before the king runs */}
+      <Tell color="rgba(223,232,255,0.45)" delayMs={delayMs + 230} left={56} top={38} size={22} />
       {[36, 46, 56].map((t, i) => (
         <Beam key={t} delayMs={delayMs + 200 + i * 70} color="rgba(223,232,255,0.5)" left={26} top={t} w={34 - i * 4} h={0.8} />
       ))}
@@ -1602,11 +1783,14 @@ function KingsSanctuaryScene({ lead, delayMs }: SceneProps) {
 
 /** Martyrdom — one friendly minor shatters and its light strikes two enemy
  * minors down in answer. */
-function MartyrdomScene({ lead, delayMs }: SceneProps) {
+function MartyrdomScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(43,24,32,0.34)" delayMs={delayMs} />
+      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
+      <AimLeg color="rgba(255,208,216,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-shatter absolute block" style={{ left: "45%", top: "44%", width: "8%", height: "12%", animationDelay: `${delayMs + 360}ms` }}>
         <Man kind="n" fill="#ffd0d8" stroke="#2b1820" />
       </span>
@@ -1630,7 +1814,8 @@ function MartyrdomScene({ lead, delayMs }: SceneProps) {
 
 /** The Reckoning — a single sweep and every knight and bishop of both armies
  * dissolves. */
-function ReckoningScene({ lead, delayMs }: SceneProps) {
+function ReckoningScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#3a3a40", "#c9c9cf", "#12121a"]} glyph={GLYPH.bw3_the_reckoning} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a3a40", "#c9c9cf", "#12121a"]} glyph={GLYPH.bw3_the_reckoning} delayMs={delayMs} />;
   const fallen: { k: keyof typeof CHESSMAN; l: number; t: number; d: number }[] = [
     { k: "n", l: 30, t: 36, d: 0 },
@@ -1661,7 +1846,8 @@ function ReckoningScene({ lead, delayMs }: SceneProps) {
 
 /** Covenant of Return — an eternal loop sigil turns and the fallen arc back
  * home along it. */
-function CovenantScene({ lead, delayMs }: SceneProps) {
+function CovenantScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#5b2b8f", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw3_covenant_of_return} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5b2b8f", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw3_covenant_of_return} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1687,11 +1873,14 @@ function CovenantScene({ lead, delayMs }: SceneProps) {
 
 /** The Homecoming — under a mustering tent-banner, a veteran major and minor
  * march back to the home rank. */
-function HomecomingScene({ lead, delayMs }: SceneProps) {
+function HomecomingScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color="rgba(42,34,22,0.34)" delayMs={delayMs} />
+      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
+      <AimLeg color="rgba(255,233,176,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-drop absolute block" style={{ left: "36%", top: "26%", width: "28%", height: "14%", animationDelay: `${delayMs + 220}ms` }}>
         <svg viewBox="0 0 28 14" className="block h-full w-full" aria-hidden="true">
           <path d="M2 13 L14 2 L26 13 Z" fill="rgba(106,90,58,0.55)" stroke="#ffe9b0" strokeWidth="0.6" {...SJ} />
@@ -1716,7 +1905,8 @@ function HomecomingScene({ lead, delayMs }: SceneProps) {
 
 /** Turn the Tide — the whole pawn front surges forward one rank as a single
  * wave. */
-function TurnTheTideScene({ lead, delayMs }: SceneProps) {
+function TurnTheTideScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#3a6b7a", "#a8e0e8", "#16303a"]} glyph={GLYPH.bw3_turn_the_tide} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a6b7a", "#a8e0e8", "#16303a"]} glyph={GLYPH.bw3_turn_the_tide} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1739,7 +1929,8 @@ function TurnTheTideScene({ lead, delayMs }: SceneProps) {
 
 /** Pretender to the Throne — a new queen is crowned out of a pillar of light,
  * gold raining. */
-function PretenderScene({ lead, delayMs }: SceneProps) {
+function PretenderScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#8a6a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_pretender} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a6a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_pretender} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1765,7 +1956,8 @@ function PretenderScene({ lead, delayMs }: SceneProps) {
 
 /** Drive Them Out — a river-line splits the board and two sweeps clear the
  * invaders from either half. */
-function DriveThemOutScene({ lead, delayMs }: SceneProps) {
+function DriveThemOutScene({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") return <EntranceCut palette={["#3a5a6a", "#bfe0e8", "#16282e"]} glyph={GLYPH.bw3_drive_them_out} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a5a6a", "#bfe0e8", "#16282e"]} glyph={GLYPH.bw3_drive_them_out} delayMs={delayMs} />;
   return (
     <Stage>
@@ -2391,10 +2583,21 @@ function G(
   config: SigPlugin["config"],
   flourish?: string,
 ): SigPlugin {
+  const aim = config.anchor === "aim";
   return {
     config,
-    Render: function BoonPlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} flourish={flourish} />;
+    Render: function BoonPlayRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      return (
+        <Template
+          palette={palette}
+          glyph={glyph}
+          lead={lead}
+          role={role}
+          delayMs={delayMs}
+          flourish={flourish}
+          aim={aim}
+        />
+      );
     },
   };
 }
@@ -2403,8 +2606,8 @@ function G(
 function S(Scene: ComponentType<SceneProps>, config: SigPlugin["config"]): SigPlugin {
   return {
     config,
-    Render: function BoonSceneRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Scene lead={lead} delayMs={delayMs} />;
+    Render: function BoonSceneRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      return <Scene lead={lead} role={role} delayMs={delayMs} />;
     },
   };
 }
@@ -2413,97 +2616,125 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- FalconDash (raids / escapes / duels) ------------------------------- */
   bw2_ancient_custom: G(FalconDash, ["#8a6a3a", "#e8dcc0", "#4a3a22"], GLYPH.bw2_ancient_custom, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz",
+    anchor: "cast",
   }, "passant"),
   bw2_hit_and_run: G(FalconDash, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.bw2_hit_and_run, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    anchor: "cast",
   }, "raid"),
   bw2_cornered_king: G(FalconDash, ["#5a6b8f", "#6fe3ff", "#1c1c2a"], GLYPH.bw2_cornered_king, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz",
+    anchor: "cast",
   }, "cornered"),
   bw2_blood_duel: G(FalconDash, ["#c94a3a", "#ffb454", "#2b1218"], GLYPH.bw2_blood_duel, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r"], hasLead: true, sound: "siege",
+    anchor: "board",
   }, "duel"),
 
   /* --- DawnHalo (miracles / wards / oaths) -------------------------------- */
   bw2_divine_right: G(DawnHalo, ["#ffd76a", "#ffe9b0", "#4a3a22"], GLYPH.bw2_divine_right, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral",
+    anchor: "board",
   }, "edict"),
   bw2_pioneers_banner: G(DawnHalo, ["#7c8a4a", "#ffd166", "#3a3526"], GLYPH.bw2_pioneers_banner, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
+    anchor: "board",
   }, "banner"),
   bw2_diplomatic_immunity: G(DawnHalo, ["#5a8fc0", "#dfe8ff", "#2c3e6b"], GLYPH.bw2_diplomatic_immunity, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
+    anchor: "cast",
   }, "laissez"),
   bw2_deathless_oath: G(DawnHalo, ["#ffb454", "#ffe9b0", "#5a4a36"], GLYPH.bw2_deathless_oath, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
+    anchor: "cast",
   }, "rebirth"),
 
   /* --- Reliquary (spoils / exchanges / inheritances) ---------------------- */
   bw2_spoils_of_war: G(Reliquary, ["#8a6a3a", "#ffd76a", "#3a3026"], GLYPH.bw2_spoils_of_war, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "summon",
+    anchor: "cast",
   }, "defector"),
   bw2_prisoner_exchange: G(Reliquary, ["#c9b89a", "#ffe9b0", "#4a3a2a"], GLYPH.bw2_prisoner_exchange, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "summon",
+    anchor: "cast",
   }, "exchange"),
   bw2_highwaymans_toll: G(Reliquary, ["#c9a84c", "#ffd76a", "#2a1c08"], GLYPH.bw2_highwaymans_toll, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation",
+    anchor: "board",
   }, "toll"),
   bw2_queens_testament: G(Reliquary, ["#8f2bbf", "#e3d0ff", "#2a1030"], GLYPH.bw2_queens_testament, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "cathedral", source: "summon",
+    anchor: "aim",
   }, "testament"),
 
   /* --- AstralAnvil (makings and remakings) -------------------------------- */
   bw2_scarecrow: G(AstralAnvil, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.bw2_scarecrow, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
+    anchor: "cast",
   }, "strawman"),
   bw2_masquerade: G(AstralAnvil, ["#6b4a8f", "#b98cff", "#1c0f18"], GLYPH.bw2_masquerade, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r", "q"], hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "masks"),
   bw2_alchemists_trade: G(AstralAnvil, ["#c9a84c", "#ffd76a", "#4a3a22"], GLYPH.bw2_alchemists_trade, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r", "q"], hasLead: true, sound: "coronation",
+    anchor: "aim",
   }, "transmute"),
   bw2_early_coronation: G(AstralAnvil, ["#ffd76a", "#ffe9b0", "#8a6a3a"], GLYPH.bw2_early_coronation, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "coronation",
+    anchor: "cast",
   }, "coronet"),
   bw2_standard_bearer: G(AstralAnvil, ["#c94ad1", "#e3d0ff", "#5b2b8f"], GLYPH.bw2_standard_bearer, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall",
+    anchor: "cast",
   }, "standard"),
 
   /* --- PactScroll (bargains / vows / court rules) ------------------------- */
   bw2_ascetics_bargain: G(PactScroll, ["#8a7a63", "#e8dcc0", "#3a3026"], GLYPH.bw2_ascetics_bargain, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "fasting"),
   bw2_jesters_rule: G(PactScroll, ["#c94ad1", "#ffd76a", "#2a1030"], GLYPH.bw2_jesters_rule, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "motley"),
   bw2_blood_price: G(PactScroll, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.bw2_blood_price, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "bloodseal"),
 
   /* --- Tier 7-8 bespoke scenes -------------------------------------------- */
   bw2_kingmakers_pact: S(KingmakerScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain",
+    anchor: "board",
   }),
   bw2_bolt_hole: S(BoltHoleScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz",
+    anchor: "cast",
   }),
   bw2_carnival_of_masks: S(CarnivalScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "nova",
+    anchor: "board",
   }),
   bw2_restitution: S(RestitutionScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "colossus", source: "summon",
+    anchor: "aim",
   }),
   bw2_long_truce: S(LongTruceScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
+    anchor: "board",
   }),
   bw2_great_return: S(GreatReturnScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon",
+    anchor: "board",
   }),
   bw2_shadow_reserve: S(ShadowReserveScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "cast",
   }),
   bw2_eternal_keep: S(EternalKeepScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall",
+    anchor: "board",
   }),
 
   /* === WAVE 3 ============================================================== */
@@ -2511,144 +2742,188 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- FalconDash (movement / relocation / footwork) ---------------------- */
   bw3_forced_march: G(FalconDash, ["#7c8a4a", "#ffd166", "#3a3526"], GLYPH.bw3_forced_march, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "blitz",
+    anchor: "board",
   }, "march2"),
   bw3_royal_caper: G(FalconDash, ["#5a6b8f", "#6fe3ff", "#1c1c2a"], GLYPH.bw3_royal_caper, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz",
+    anchor: "cast",
   }, "caper"),
   bw3_tunnelers: G(FalconDash, ["#5a6b8f", "#9fd8ff", "#1c2438"], GLYPH.bw3_tunnelers, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz",
+    anchor: "cast",
   }, "tunnel"),
   bw3_rally_royal: G(FalconDash, ["#5a6b8f", "#ffd76a", "#22304a"], GLYPH.bw3_rally_royal, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    anchor: "aim",
   }, "rally"),
   bw3_underdogs_gambit: G(FalconDash, ["#8a3a2a", "#ff9d3d", "#2b1410"], GLYPH.bw3_underdogs_gambit, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "siege",
+    anchor: "board",
   }, "sidejab"),
 
   /* --- DawnHalo (relational wards / protection) --------------------------- */
   bw3_bishops_blessing: G(DawnHalo, ["#5a8fc0", "#dfe8ff", "#22406b"], GLYPH.bw3_bishops_blessing, {
     ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "aegis", source: "shield",
+    anchor: "board",
   }, "b3ward"),
   bw3_shield_wall: G(DawnHalo, ["#4a7a5a", "#bfe6c8", "#1c3a2a"], GLYPH.bw3_shield_wall, {
     ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "aegis", source: "shield",
+    anchor: "board",
   }, "phalanx3"),
   bw3_kings_shield: G(DawnHalo, ["#5a6b8f", "#ffd76a", "#1c2438"], GLYPH.bw3_kings_shield, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "shield",
+    anchor: "cast",
   }, "kingfront"),
   bw3_praetorian: G(DawnHalo, ["#8f2bbf", "#e3d0ff", "#2a1030"], GLYPH.bw3_praetorian, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "aegis", source: "shield",
+    anchor: "cast",
   }, "praetor"),
   bw3_watchword: G(DawnHalo, ["#5a7a4a", "#cde8a8", "#22301a"], GLYPH.bw3_watchword, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    anchor: "aim",
   }, "sentry"),
   bw3_vantage_point: G(DawnHalo, ["#5a7a8f", "#cde8ff", "#1c2a34"], GLYPH.bw3_vantage_point, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    anchor: "board",
   }, "vantage"),
   bw3_hallowed_ground: G(DawnHalo, ["#c9b84c", "#fff2c0", "#4a3a1a"], GLYPH.bw3_hallowed_ground, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", source: "kingSafe",
+    anchor: "cast",
   }, "hallow"),
 
   /* --- Reliquary (grants / economy / self-clock payouts) ------------------ */
   bw3_first_blood: G(Reliquary, ["#7a2030", "#ff9d9d", "#2b1218"], GLYPH.bw3_first_blood, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    anchor: "board",
   }, "firstblood"),
   bw3_postern_gate: G(Reliquary, ["#5a6b8f", "#cdd6ff", "#1c1c2a"], GLYPH.bw3_postern_gate, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
+    anchor: "board",
   }, "postern"),
   bw3_coronation_bonus: G(Reliquary, ["#c9a84c", "#ffd76a", "#2a1c08"], GLYPH.bw3_coronation_bonus, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
+    anchor: "board",
   }, "coronclock"),
   bw3_plunderers_ledger: G(Reliquary, ["#8a6a3a", "#e8dcc0", "#3a2a16"], GLYPH.bw3_plunderers_ledger, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "ledger"),
   bw3_eleventh_hour: G(Reliquary, ["#5b2b8f", "#e3d0ff", "#1c0f18"], GLYPH.bw3_eleventh_hour, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", source: "summon",
+    anchor: "cast",
   }, "eleventh"),
   bw3_deep_position: G(Reliquary, ["#3a6b5a", "#a8e0c0", "#16302a"], GLYPH.bw3_deep_position, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    anchor: "board",
   }, "deeptime"),
   bw3_martyrs_gift: G(Reliquary, ["#8a4a5a", "#ffd0d8", "#2b1820"], GLYPH.bw3_martyrs_gift, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "martyrgift"),
 
   /* --- AstralAnvil (transformations / promotions in place) ---------------- */
   bw3_heir_apparent: G(AstralAnvil, ["#8a6a3a", "#ffd76a", "#3a2a16"], GLYPH.bw3_heir_apparent, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower",
+    anchor: "cast",
   }, "heir"),
   bw3_field_knighting: G(AstralAnvil, ["#5a6b8f", "#cdd6ff", "#22304a"], GLYPH.bw3_field_knighting, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower",
+    anchor: "cast",
   }, "knighting"),
   bw3_battlefield_commission: G(AstralAnvil, ["#6a7a3a", "#ffd76a", "#2a3016"], GLYPH.bw3_battlefield_commission, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower",
+    anchor: "cast",
   }, "commission"),
   bw3_ironwrights_bargain: G(AstralAnvil, ["#c9a84c", "#ffd76a", "#4a3a22"], GLYPH.bw3_ironwrights_bargain, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "coronation", source: "empower",
+    anchor: "board",
   }, "ironwright"),
   bw3_second_face: G(AstralAnvil, ["#6b4a8f", "#c9b0e8", "#1c0f28"], GLYPH.bw3_second_face, {
     ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "coronation", source: "empower",
+    anchor: "cast",
   }, "archbishop"),
 
   /* --- PactScroll (draft bets / decrees / terrain / summons) -------------- */
   bw3_home_guard: G(PactScroll, ["#6a5a3a", "#e8dcc0", "#2a2216"], GLYPH.bw3_home_guard, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
+    anchor: "board",
   }, "homeward"),
   bw3_double_down: G(PactScroll, ["#8a5a2a", "#ffd76a", "#2a1c0e"], GLYPH.bw3_double_down, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "doubledown"),
   bw3_kings_road: G(PactScroll, ["#8a7a4a", "#ffe9b0", "#3a3222"], GLYPH.bw3_kings_road, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
+    anchor: "board",
   }, "kingsroad"),
   bw3_futures_market: G(PactScroll, ["#8a6a2a", "#ffd76a", "#2a1c08"], GLYPH.bw3_futures_market, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain",
+    anchor: "board",
   }, "futures"),
   bw3_castle_in_the_storm: G(PactScroll, ["#4a5a7a", "#cdd6ff", "#1c2436"], GLYPH.bw3_castle_in_the_storm, {
     ordering: "radial", staggerMs: 0, victims: ["k", "r"], hasLead: true, sound: "wall",
+    anchor: "aim",
   }, "stormcastle"),
   bw3_last_muster: G(PactScroll, ["#7a6a4a", "#e8dcc0", "#2a2216"], GLYPH.bw3_last_muster, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
+    anchor: "aim",
   }, "muster"),
   bw3_funeral_pyre: G(PactScroll, ["#8a3a1a", "#ff9d3d", "#2b1208"], GLYPH.bw3_funeral_pyre, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "atomic",
+    anchor: "board",
   }, "pyre"),
 
   /* --- Tier 7-8 bespoke scenes -------------------------------------------- */
   bw3_mummers_dance: S(MummersDanceScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "shades", source: "empower",
+    anchor: "board",
   }),
   bw3_last_stand: S(LastStandScene, {
     ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
+    anchor: "board",
   }),
   bw3_high_stakes: S(HighStakesScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    anchor: "board",
   }),
   bw3_from_the_ashes: S(FromTheAshesScene, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon",
+    anchor: "board",
   }),
   bw3_kingsguard_duel: S(KingsguardDuelScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "p"], hasLead: true, sound: "siege",
+    anchor: "aim",
   }),
   bw3_kings_sanctuary: S(KingsSanctuaryScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", source: "kingSafe",
+    anchor: "aim",
   }),
   bw3_martyrdom: S(MartyrdomScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "siege",
+    anchor: "aim",
   }),
   bw3_the_reckoning: S(ReckoningScene, {
     ordering: "sweep", staggerMs: 65, victims: ["n", "b"], hasLead: true, sound: "extinction",
+    anchor: "board",
   }),
   bw3_covenant_of_return: S(CovenantScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "summon",
+    anchor: "board",
   }),
   bw3_the_homecoming: S(HomecomingScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon",
+    anchor: "board",
   }),
   bw3_turn_the_tide: S(TurnTheTideScene, {
     ordering: "sweep", staggerMs: 45, victims: ["p"], hasLead: true, sound: "siege",
+    anchor: "board",
   }),
   bw3_pretender: S(PretenderScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "summon",
+    anchor: "cast",
   }),
   bw3_drive_them_out: S(DriveThemOutScene, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "rampage",
+    anchor: "board",
   }),
 };

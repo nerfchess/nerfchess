@@ -1859,16 +1859,16 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim",
   }),
   bn4_wall_of_faith: S(FaithCourse, {
-    ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast",
+    ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
   }),
   hx4_dead_march: S(DeadDrums, {
-    ordering: "line", staggerMs: 65, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "aim",
+    ordering: "line", staggerMs: 65, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "board",
   }),
   hx4_the_long_siege: S(Circumvallation, {
-    ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim",
+    ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "board",
   }),
   ov_world_serpent: S(BoomChain, {
-    ordering: "sweep", staggerMs: 50, victims: ["r", "q"], hasLead: true, sound: "cataclysm", anchor: "cast",
+    ordering: "sweep", staggerMs: 50, victims: ["r", "q"], hasLead: true, sound: "cataclysm", anchor: "board",
   }),
 
   // --- Tier 7 ---
@@ -1876,12 +1876,12 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "colossus", anchor: "cast",
   }),
   bn4_palace_walls: S(CurtainWall, {
-    ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast",
+    ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }),
 
   // --- Tier 6 ---
   bn4_castle_ditch: S(RingDitch, {
-    ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true, sound: "wall", anchor: "cast",
+    ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }),
   bn4_dowry: S(DowryChest, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "vault", anchor: "cast",
@@ -1896,12 +1896,12 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "cast",
   }),
   hx4_rusted_battlements: S(RustHinge, {
-    ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", anchor: "cast",
+    ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", anchor: "board",
   }),
 
   // --- Tier 5 ---
   hx4_wagon_ruts: S(RamCarriage, {
-    ordering: "line", staggerMs: 50, victims: ["r"], hasLead: true, sound: "rampage", anchor: "aim",
+    ordering: "line", staggerMs: 50, victims: ["r"], hasLead: true, sound: "rampage", anchor: "board",
   }),
 
   // --- Tier 4 ---
@@ -1909,13 +1909,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }),
   bn4_pawn_bulwark: S(GabionLine, {
-    ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "wall", source: "shield", anchor: "cast",
+    ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "wall", source: "shield", anchor: "board",
   }),
   bn4_town_walls: S(Drawbridge, {
-    ordering: "file", staggerMs: 45, victims: "all", hasLead: true, sound: "wall", anchor: "cast",
+    ordering: "file", staggerMs: 45, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }),
   hx4_feuding_towers: S(SurveyorLine, {
-    ordering: "line", staggerMs: 60, victims: ["r"], hasLead: true, sound: "siege", anchor: "aim",
+    ordering: "line", staggerMs: 60, victims: ["r"], hasLead: true, sound: "siege", anchor: "board",
   }),
   hx4_wet_powder: S(WetFuse, {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "bust", anchor: "aim",
@@ -1929,12 +1929,12 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "aim",
   }),
   bn4_rampart_watch: S(LanternWatch, {
-    ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
+    ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "board",
   }),
   bn4_rook_nest: S(TwigNest, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }),
   hx4_crooked_arrow: S(BentBolt, {
-    ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "siege", anchor: "aim",
+    ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "siege", anchor: "board",
   }),
 };

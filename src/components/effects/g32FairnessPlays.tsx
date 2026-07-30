@@ -1645,7 +1645,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ov_monks_of_the_fifth_bell: S(MonksFifthBellScene, {
     ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true,
-    sound: "wheel", anchor: "cast",
+    sound: "wheel", anchor: "board",
   }),
 
   // --- the machines that run down a line ---
@@ -1673,7 +1673,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ov_flash_mob: S(FlashMobScene, {
     ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true,
-    sound: "slots", anchor: "cast",
+    sound: "slots", anchor: "board",
   }),
 
   // --- the small honest machines ---
@@ -1687,7 +1687,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ov_dragon_egg: S(DragonEggScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "vault", source: "summon", anchor: "cast",
+    sound: "vault", source: "summon", anchor: "board",
   }),
   ov_glass_bridge: S(GlassBridgeScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
@@ -1695,7 +1695,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ov_petting_zoo: S(PettingZooScene, {
     ordering: "radial", staggerMs: 65, victims: ["p"], hasLead: true,
-    sound: "chips", source: "summon", anchor: "cast",
+    sound: "chips", source: "summon", anchor: "board",
   }),
 
   // --- and the machines with a thumb on them ---
@@ -1705,7 +1705,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_honor_roll: S(HonorRollScene, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true,
-    sound: "chips", anchor: "cast",
+    sound: "chips", anchor: "board",
   }),
   op_late_spring: S(LateSpringScene, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true,
@@ -1713,7 +1713,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_roll_call: S(RollCallScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "vault", anchor: "cast",
+    sound: "vault", anchor: "board",
   }),
   op_sap_run: S(SapRunScene, {
     ordering: "line", staggerMs: 0, victims: ["p"], hasLead: true,

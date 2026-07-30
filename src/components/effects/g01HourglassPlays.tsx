@@ -1699,11 +1699,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_great_armistice: S(GreatArmisticeScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "snooze", source: "shield", anchor: "cast",
+    sound: "snooze", source: "shield", anchor: "board",
   }),
   bn4_hundred_year_lease: S(HundredYearLeaseScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   bn4_royal_we: S(RoyalWeScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
@@ -1711,25 +1711,25 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_royal_lockdown: S(RoyalLockdownScene, {
     ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "cast",
+    sound: "clockcage", anchor: "board",
   }),
   hx4_tithe_of_silence: S(TitheOfSilenceScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
 
   // --- mechanisms let go: something free-runs ---
   bn4_liberators_march: S(LiberatorsMarchScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "aim",
+    sound: "blitz", anchor: "board",
   }),
   bn4_escape_artist: S(EscapeArtistScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
   bn4_jubilee: S(JubileeScene, {
     ordering: "radial", staggerMs: 45, victims: "all", hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
   bn4_keys_to_the_city: S(KeysToTheCityScene, {
     ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true,
@@ -1739,27 +1739,27 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- mechanisms wound, bought or ratcheted forward ---
   bn4_royal_privilege: S(RoyalPrivilegeScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
   bn4_midas_charter: S(MidasCharterScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
   bn4_year_of_jubilee: S(YearOfJubileeScene, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
   bn4_hundred_days: S(HundredDaysScene, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
   bn4_debtors_holiday: S(DebtorsHolidayScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
   bn4_crown_jubilee: S(CrownJubileeScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "cast",
+    sound: "blitz", anchor: "board",
   }),
 
   // --- mechanisms that measure two sides against each other ---
@@ -1769,21 +1769,21 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_unequal_treaty: S(UnequalTreatyScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "cast",
+    sound: "clockcage", anchor: "board",
   }),
   bn4_grand_bargain: S(GrandBargainScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "cast",
+    sound: "clockcage", anchor: "board",
   }),
   bn4_patrons_favor: S(PatronsFavorScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
 
   // --- mechanisms tied to a body on the board ---
   bn4_queens_aegis: S(QueensAegisScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   bn4_masked_ball: S(MaskedBallScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true,
@@ -1791,33 +1791,33 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_flag_on_their_wall: S(FlagOnTheirWallScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "aim",
+    sound: "clockcage", anchor: "board",
   }),
   bn4_siege_mentality: S(SiegeMentalityScene, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "cast",
+    sound: "clockcage", anchor: "board",
   }),
   bn4_champions_rest: S(ChampionsRestScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
 
   // --- mechanisms on a cycle: phases, tides, seasons, dawns ---
   bn4_half_moon_charter: S(HalfMoonCharterScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   bn4_moonlit_reprieve: S(MoonlitReprieveScene, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   bn4_pact_of_the_dawn: S(PactOfTheDawnScene, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
-    sound: "snooze", source: "frozen", anchor: "cast",
+    sound: "snooze", source: "frozen", anchor: "board",
   }),
   bn4_second_spring: S(SecondSpringScene, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
 
   // --- mechanisms turned against the opponent ---
@@ -1827,10 +1827,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_last_toll: S(LastTollScene, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "aim",
+    sound: "clockcage", anchor: "board",
   }),
   ov_time_heist: S(TimeHeistScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "blitz", anchor: "aim",
+    sound: "blitz", anchor: "board",
   }),
 };

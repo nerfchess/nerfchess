@@ -1461,7 +1461,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 6 ---
   hx4_gilded_cage: S(GildedCage, {
-    ordering: "octagon", staggerMs: 60, victims: ["q"], hasLead: true, sound: "siege", anchor: "cast",
+    ordering: "octagon", staggerMs: 60, victims: ["q"], hasLead: true, sound: "siege", anchor: "board",
   }),
 
   // --- Tier 5 ---
@@ -1482,13 +1482,13 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 3 ---
   bn4_danger_sense: S(CompassRose, {
-    ordering: "line", staggerMs: 45, victims: "all", hasLead: true, sound: "blitz", anchor: "aim",
+    ordering: "line", staggerMs: 45, victims: "all", hasLead: true, sound: "blitz", anchor: "board",
   }),
   bn4_slow_procession: S(ProcessionWheel, {
-    ordering: "radial", staggerMs: 70, victims: ["q"], hasLead: true, sound: "cathedral", anchor: "cast",
+    ordering: "radial", staggerMs: 70, victims: ["q"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   hx4_court_gossip: S(DandelionClock, {
-    ordering: "octagon", staggerMs: 45, victims: "all", hasLead: true, sound: "blitz", anchor: "cast",
+    ordering: "octagon", staggerMs: 45, victims: "all", hasLead: true, sound: "blitz", anchor: "board",
   }),
   ov_quicksilver: S(QuicksilverBead, {
     ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "blitz", anchor: "aim",
@@ -1499,7 +1499,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 55, victims: ["q"], hasLead: true, sound: "cathedral", anchor: "cast",
   }),
   hx4_leaky_quiver: S(LeakyQuiver, {
-    ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "siege", anchor: "aim",
+    ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "siege", anchor: "board",
   }),
   hx4_slippery_scepter: S(SlipperyScepter, {
     ordering: "radial", staggerMs: 55, victims: ["q"], hasLead: true, sound: "crownrain", anchor: "cast",
@@ -1513,7 +1513,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "siege", anchor: "aim",
   }),
   op_follow_spot: S(FollowSpot, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "blitz", anchor: "cast",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   op_painters_lift: S(PaintersLift, {
     ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "siege", anchor: "aim",
@@ -1525,6 +1525,6 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "blitz", anchor: "cast",
   }),
   op_queens_holiday: S(HolidayShades, {
-    ordering: "radial", staggerMs: 45, victims: ["q"], hasLead: true, sound: "blitz", anchor: "cast",
+    ordering: "radial", staggerMs: 45, victims: ["q"], hasLead: true, sound: "blitz", anchor: "board",
   }),
 };

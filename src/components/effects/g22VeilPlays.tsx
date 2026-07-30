@@ -1393,7 +1393,7 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_great_waltz: S(GreatWaltzScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "shades", source: "slow", anchor: "cast",
+    sound: "shades", source: "slow", anchor: "board",
   }),
   hx4_donkey_ears: S(DonkeyEarsScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
@@ -1401,7 +1401,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_eclipse: S(EclipseScene, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
-    sound: "shades", source: "slow", anchor: "cast",
+    sound: "shades", source: "slow", anchor: "board",
   }),
   hx4_falling_rubble: S(FallingRubbleScene, {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true,
@@ -1413,19 +1413,19 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_the_long_night: S(TheLongNightScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "shades", anchor: "cast",
+    sound: "shades", anchor: "board",
   }),
   ov_big_nap: S(BigNapScene, {
     ordering: "radial", staggerMs: 70, victims: ["n", "b", "r", "q"], hasLead: true,
-    sound: "snooze", source: "frozen", anchor: "cast",
+    sound: "snooze", source: "frozen", anchor: "board",
   }),
   bn4_hourglass_throne: S(HourglassThroneScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   bn4_tithe_of_time: S(TitheOfTimeScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "shades", anchor: "cast",
+    sound: "shades", anchor: "board",
   }),
   hx4_white_flag_hour: S(WhiteFlagHourScene, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
@@ -1433,31 +1433,31 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_smoke_break_union: S(SmokeBreakScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "shades", anchor: "cast",
+    sound: "shades", anchor: "board",
   }),
   bn4_stolen_hour: S(StolenHourScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "clockice", anchor: "cast",
+    sound: "clockice", anchor: "board",
   }),
   hx4_court_in_session: S(CourtInSessionScene, {
     ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "wall", anchor: "cast",
+    sound: "wall", anchor: "board",
   }),
   hx4_drawn_curtain: S(DrawnCurtainScene, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true,
-    sound: "wall", source: "blindfold", anchor: "cast",
+    sound: "wall", source: "blindfold", anchor: "board",
   }),
   hx4_lockstep: S(LockstepScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "clockice", source: "slow", anchor: "cast",
+    sound: "clockice", source: "slow", anchor: "board",
   }),
   hx4_night_ledger: S(NightLedgerScene, {
     ordering: "file", staggerMs: 80, victims: ["r", "q"], hasLead: true,
-    sound: "shades", anchor: "cast",
+    sound: "shades", anchor: "board",
   }),
   hx4_night_watch_rota: S(NightWatchRotaScene, {
     ordering: "radial", staggerMs: 70, victims: ["n", "b"], hasLead: true,
-    sound: "clockice", source: "slow", anchor: "aim",
+    sound: "clockice", source: "slow", anchor: "board",
   }),
   hx4_censors_ink: S(CensorsInkScene, {
     ordering: "file", staggerMs: 60, victims: "all", hasLead: true,
@@ -1465,7 +1465,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   hx4_moth_eaten_gloves: S(MothGlovesScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
   hx4_night_soil: S(NightSoilScene, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true,

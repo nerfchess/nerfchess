@@ -1498,11 +1498,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: AvalanchePassScene,
   },
   hx4_beartrap_cache: {
-    config: { ordering: "file", staggerMs: 110, victims: "all", hasLead: true, sound: "snooze", anchor: "cast" },
+    config: { ordering: "file", staggerMs: 110, victims: "all", hasLead: true, sound: "snooze", anchor: "board" },
     Render: BeartrapCacheScene,
   },
   hx4_black_lotus: {
-    config: { ordering: "radial", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: BlackLotusScene,
   },
   hx4_gale_warning: {
@@ -1514,7 +1514,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: GlacierGateScene,
   },
   hx4_grave_chill: {
-    config: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" },
     Render: GraveChillScene,
   },
   hx4_hundred_year_nap: {
@@ -1526,7 +1526,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: IronMaidenScene,
   },
   hx4_narcolepsy: {
-    config: { ordering: "radial", staggerMs: 120, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "snooze", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 120, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "snooze", source: "frozen", anchor: "board" },
     Render: NarcolepsyScene,
   },
   hx4_pillory: {
@@ -1534,15 +1534,15 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: PilloryScene,
   },
   hx4_silken_net: {
-    config: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: SilkenNetScene,
   },
   hx4_thunderhead: {
-    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "slow", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "slow", anchor: "board" },
     Render: ThunderheadScene,
   },
   ov_frost_wyrm: {
-    config: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
+    config: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: FrostWyrmScene,
   },
   bn4_flash_frost: {
@@ -1550,11 +1550,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: FlashFrostScene,
   },
   bn4_grandmas_cookies: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "snooze", source: "shield", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "snooze", source: "shield", anchor: "board" },
     Render: GrandmasCookiesScene,
   },
   bn4_prison_break: {
-    config: { ordering: "radial", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: PrisonBreakScene,
   },
   hx4_ashen_bread: {
@@ -1562,15 +1562,15 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: AshenBreadScene,
   },
   hx4_clay_hooves: {
-    config: { ordering: "radial", staggerMs: 90, victims: ["n"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 90, victims: ["n"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" },
     Render: ClayHoovesScene,
   },
   hx4_cold_reception: {
-    config: { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", source: "slow", anchor: "cast" },
+    config: { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", source: "slow", anchor: "board" },
     Render: ColdReceptionScene,
   },
   hx4_frost_heave: {
-    config: { ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    config: { ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: FrostHeaveScene,
   },
   hx4_grasping_ivy: {
@@ -1578,7 +1578,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: GraspingIvyScene,
   },
   hx4_haunted_gallery: {
-    config: { ordering: "line", staggerMs: 85, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "snooze", source: "frozen", anchor: "cast" },
+    config: { ordering: "line", staggerMs: 85, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "snooze", source: "frozen", anchor: "board" },
     Render: HauntedGalleryScene,
   },
   hx4_silk_cocoon: {
@@ -1586,7 +1586,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: SilkCocoonScene,
   },
   hx4_tithe_of_blood: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "board" },
     Render: TitheOfBloodScene,
   },
   hx4_undertow: {

@@ -1773,7 +1773,7 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
   bn4_written_in_stone: S(LetterCut, {
-    ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "cast",
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board",
   }),
   hx4_gorgons_court: S(PlugFeather, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
@@ -1790,7 +1790,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 7 ---
   hx4_castle_of_sand: S(SandSaw, {
-    ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "siege", source: "walnut", anchor: "aim",
+    ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "siege", source: "walnut", anchor: "board",
   }),
   hx4_gorgon_field: S(BankerTurn, {
     ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify", anchor: "cast",
@@ -1821,7 +1821,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 5 ---
   bn4_stone_cloak: S(RubbingStone, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield", anchor: "cast",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield", anchor: "board",
   }),
   hx4_gargoyle_perch: S(PointingMachine, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
@@ -1846,7 +1846,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "colossus", source: "walnut", anchor: "cast",
   }),
   hx4_soft_shells: S(ScutchComb, {
-    ordering: "file", staggerMs: 65, victims: ["p"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
+    ordering: "file", staggerMs: 65, victims: ["p"], hasLead: true, sound: "petrify", source: "walnut", anchor: "board",
   }),
 
   // --- Tier 2 ---

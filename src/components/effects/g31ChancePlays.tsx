@@ -1612,7 +1612,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_bottled_courage: S(BottledCourageScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "crashrocket", source: "kingSafe", anchor: "cast",
+    sound: "crashrocket", source: "kingSafe", anchor: "board",
   }),
 
   // --- tolls, ponds and held spins ---
@@ -1626,7 +1626,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_lucky_coin: S(LuckyCoinScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "coinflip", anchor: "cast",
+    sound: "coinflip", anchor: "board",
   }),
 
   // --- the openers: eleven different ways to ask the world a question ---
@@ -1648,7 +1648,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_fools_gold: S(FoolsGoldScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
-    sound: "chips", anchor: "cast",
+    sound: "chips", anchor: "board",
   }),
   op_four_leaf_clover: S(FourLeafCloverScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
@@ -1656,7 +1656,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_gossip_charm: S(GossipCharmScene, {
     ordering: "radial", staggerMs: 40, victims: "all", hasLead: true,
-    sound: "slots", anchor: "cast",
+    sound: "slots", anchor: "board",
   }),
   op_horseshoe_nail: S(HorseshoeNailScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
@@ -1676,7 +1676,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_sunday_best: S(SundayBestScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
-    sound: "bust", anchor: "cast",
+    sound: "bust", anchor: "board",
   }),
   op_tea_leaves: S(TeaLeavesScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,

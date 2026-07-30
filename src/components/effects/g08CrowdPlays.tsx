@@ -1712,13 +1712,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "lightning", anchor: "cast",
   }),
   op_harborside_rider: S(GapCloses, {
-    ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "wall", source: "shield", anchor: "cast",
+    ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "wall", source: "shield", anchor: "board",
   }),
   op_homesick_private: S(RanksBreak, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "cast",
   }),
   op_homing_pigeon: S(FlockLifts, {
-    ordering: "radial", staggerMs: 45, victims: ["p"], hasLead: true, sound: "blitz", anchor: "aim",
+    ordering: "radial", staggerMs: 45, victims: ["p"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   op_parade_route: S(CrowdWave, {
     ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "cast",
@@ -1766,10 +1766,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim",
   }),
   ov_growth_spurt: S(CrowdLooks, {
-    ordering: "radial", staggerMs: 50, victims: ["p"], hasLead: true, sound: "colossus", source: "empower", anchor: "cast",
+    ordering: "radial", staggerMs: 50, victims: ["p"], hasLead: true, sound: "colossus", source: "empower", anchor: "board",
   }),
   ov_pebble_toss: S(FlinchRuns, {
-    ordering: "radial", staggerMs: 55, victims: ["p"], hasLead: true, sound: "dice", anchor: "aim",
+    ordering: "radial", staggerMs: 55, victims: ["p"], hasLead: true, sound: "dice", anchor: "board",
   }),
   ov_tiny_trebuchet: S(PassedOnPalms, {
     ordering: "line", staggerMs: 50, victims: ["p"], hasLead: true, sound: "crashrocket", anchor: "aim",

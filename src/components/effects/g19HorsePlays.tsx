@@ -1458,10 +1458,10 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
-  hx4_overslept_officers: S(OversleptOfficersScene, { ordering: "radial", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "snooze", anchor: "cast" }),
-  hx4_short_stirrups: S(ShortStirrupsScene, { ordering: "octagon", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "cast" }),
+  hx4_overslept_officers: S(OversleptOfficersScene, { ordering: "radial", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "snooze", anchor: "board" }),
+  hx4_short_stirrups: S(ShortStirrupsScene, { ordering: "octagon", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "board" }),
   op_no_horses_on_lawn: S(NoHorsesOnLawnScene, { ordering: "sweep", staggerMs: 65, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_old_counselor: S(OldCounselorScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
+  op_old_counselor: S(OldCounselorScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }),
   op_stable_gate: S(StableGateScene, { ordering: "line", staggerMs: 70, victims: ["r", "n"], hasLead: true, sound: "wall", anchor: "cast" }),
   bn4_gum_drop: S(GumDropScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "snooze", anchor: "cast" }),
   bn4_knights_errand: S(KnightsErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
@@ -1480,9 +1480,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_pole_vault: S(PoleVaultScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
   op_signal_rocket: S(SignalRocketScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
   op_stage_left: S(StageLeftScene, { ordering: "sweep", staggerMs: 70, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_title_deed: S(TitleDeedScene, { ordering: "radial", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "siege", anchor: "cast" }),
+  op_title_deed: S(TitleDeedScene, { ordering: "radial", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "siege", anchor: "board" }),
   op_vaulting_horse: S(VaultingHorseScene, { ordering: "line", staggerMs: 65, victims: ["b", "n"], hasLead: true, sound: "wall", anchor: "cast" }),
   op_viziers_errand: S(ViziersErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
   op_zebra_crossing: S(ZebraCrossingScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  ov_nightlight: S(NightlightScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
+  ov_nightlight: S(NightlightScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }),
 };

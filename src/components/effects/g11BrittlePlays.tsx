@@ -1648,15 +1648,15 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: CreakingGallowsScene,
   },
   hx4_pawnbrokers_lien: {
-    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" },
     Render: PawnbrokersLienScene,
   },
   hx4_sagging_shelves: {
-    config: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
+    config: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "wall", source: "frozen", anchor: "board" },
     Render: SaggingShelvesScene,
   },
   hx4_second_frost: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" },
     Render: SecondFrostScene,
   },
   bn4_glass_of_water: {
@@ -1664,7 +1664,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: GlassOfWaterScene,
   },
   bn4_kettle_on: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: KettleOnScene,
   },
   bn4_puddle_freeze: {
@@ -1676,11 +1676,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: CarrionCrowsScene,
   },
   hx4_heavy_dew: {
-    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
+    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: HeavyDewScene,
   },
   hx4_jam_on_the_row: {
-    config: { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "board" },
     Render: JamOnTheRowScene,
   },
   hx4_the_ides: {
@@ -1700,7 +1700,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: ColdStartScene,
   },
   hx4_frost_footprints: {
-    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "aim" },
+    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
     Render: FrostFootprintsScene,
   },
   hx4_hand_cramp: {
@@ -1736,7 +1736,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: ThinIcePatchScene,
   },
   op_first_frost: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockice", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockice", anchor: "board" },
     Render: FirstFrostScene,
   },
   op_snowdrop: {

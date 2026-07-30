@@ -1567,7 +1567,7 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 3 ---
   hx4_guild_insurance: S(TallySticks, {
-    ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "vault", source: "shield", anchor: "cast",
+    ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "vault", source: "shield", anchor: "board",
   }),
 
   // --- Tier 2 ---
@@ -1581,13 +1581,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "file", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "cast",
   }),
   hx4_slow_clap: S(GalleryClap, {
-    ordering: "line", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "cathedral", anchor: "aim",
+    ordering: "line", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   op_new_locks: S(NewLockPlate, {
-    ordering: "radial", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "board",
   }),
   op_siege_wagon: S(LaundryChute, {
-    ordering: "line", staggerMs: 50, victims: ["n"], hasLead: true, sound: "wall", anchor: "aim",
+    ordering: "line", staggerMs: 50, victims: ["n"], hasLead: true, sound: "wall", anchor: "board",
   }),
   op_tower_warden: S(JudasHatch, {
     ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
@@ -1598,31 +1598,31 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   // --- Tier 1 ---
   hx4_creaky_axles: S(WellWinch, {
-    ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "cast",
+    ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "board",
   }),
   hx4_second_thoughts: S(NewelStair, {
-    ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "cathedral", anchor: "cast",
+    ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   hx4_squeaky_wheel: S(KitchenSpit, {
     ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "cast",
   }),
   op_change_of_address: S(NameBoard, {
-    ordering: "radial", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "wall", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "wall", anchor: "board",
   }),
   op_driftwood_tower: S(MantelPiece, {
-    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast",
+    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "board",
   }),
   op_gilded_doorknob: S(Gilding, {
-    ordering: "radial", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "board",
   }),
   op_home_office: S(WindowDesk, {
-    ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "cathedral", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   op_keys_copied: S(KeyFiling, {
-    ordering: "radial", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "vault", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "vault", anchor: "board",
   }),
   op_meet_the_neighbors: S(HallShutters, {
-    ordering: "line", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "cathedral", anchor: "aim",
+    ordering: "line", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   op_rolling_gantry: S(BedCurtain, {
     ordering: "line", staggerMs: 50, victims: ["r"], hasLead: true, sound: "wall", anchor: "aim",
@@ -1640,6 +1640,6 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast",
   }),
   op_wall_sentries: S(MurderHoles, {
-    ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", anchor: "aim",
+    ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", anchor: "board",
   }),
 };

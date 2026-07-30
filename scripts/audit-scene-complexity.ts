@@ -23,8 +23,11 @@
 //             which is what makes a scene point at what it is doing rather
 //             than just decorate the square it landed on.
 //   palette   warm whites, never pure #fff.
-//   anchor    a declared anchor, so the scene has an opinion about WHERE it
-//             happens.
+//   anchor    a declared anchor, AND one the card can justify: the rule is
+//             that a general effect is centralized while an effect landing on
+//             a few pieces lasers them down, so an anchor outside what the
+//             card's own category and rule text allow is a failure. See
+//             scripts/lib/anchor-rule.ts for the derivation.
 //
 // HOW IT MEASURES
 //
@@ -40,6 +43,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+
+import { allowedAnchors, type Anchor } from "./lib/anchor-rule";
 
 const ROOT = path.join(__dirname, "..");
 const EFFECTS = path.join(ROOT, "src", "components", "effects");
@@ -366,6 +371,53 @@ function visualComponents(src: string): Map<string, string> {
 
 // --- Run --------------------------------------------------------------------
 
+/**
+ * card id -> its mechanical category and rule text, from master's taxonomy.
+ *
+ * Read rather than re-derived: gen-card-categories.ts already sorts all 2,448
+ * cards from rules text plus engine hooks, and a second derivation would only
+ * give two things to disagree about.
+ */
+function cardFacts(): Map<string, { cat: string; rule: string }> {
+  const t = fs.readFileSync(path.join(ROOT, "docs", "card-categories.md"), "utf8");
+  const out = new Map<string, { cat: string; rule: string }>();
+  let cat = "";
+  for (const line of t.split("\n")) {
+    const h = /^## ([a-z0-9-]+)/.exec(line);
+    if (h) {
+      cat = h[1];
+      continue;
+    }
+    const c = line.split("|").map((x) => x.trim());
+    if (c.length >= 8 && c[1] && c[1] !== "id" && !c[1].startsWith("---") && cat) {
+      out.set(c[1], { cat, rule: c[6] ?? "" });
+    }
+  }
+  return out;
+}
+
+/**
+ * The anchor failure for one card, or null when it is defensible.
+ *
+ * Two distinct failures, reported separately because they need different
+ * fixes: no anchor at all means the scene has no opinion about where it
+ * happens, while a disallowed anchor means it has the wrong one.
+ */
+function anchorReason(
+  chunk: string,
+  facts: { cat: string; rule: string } | undefined,
+): string | null {
+  const declared = /anchor:\s*"(cast|aim|board)"/.exec(chunk)?.[1] as Anchor | undefined;
+  if (!declared) return "no declared anchor";
+  if (!facts) return null; // not in the taxonomy: nothing to check against
+  const allowed = allowedAnchors(facts.cat, facts.rule);
+  if (allowed.includes(declared)) return null;
+  return (
+    `anchor "${declared}" contradicts the card: ${facts.cat} allows ` +
+    `${allowed.map((a) => `"${a}"`).join(" or ")}`
+  );
+}
+
 function cardTiers(): Map<string, number> {
   const reg = JSON.parse(
     fs.readFileSync(path.join(ROOT, "docs", "animation-registry.json"), "utf8"),
@@ -375,6 +427,7 @@ function cardTiers(): Map<string, number> {
 
 function main(): void {
   const tiers = cardTiers();
+  const facts = cardFacts();
   const findings: Finding[] = [];
   let measured = 0;
   let unmeasurable = 0;
@@ -431,7 +484,8 @@ function main(): void {
 
       if (hasPureWhite(body)) reasons.push("pure white in the palette (whites must be warm)");
       if (!usesGeometry(body, css, src)) reasons.push("no layer driven by the directional geometry vars");
-      if (!/anchor:\s*"(cast|aim|board)"/.test(chunk)) reasons.push("no declared anchor");
+      const anchorBad = anchorReason(chunk, facts.get(id));
+      if (anchorBad) reasons.push(anchorBad);
 
       if (reasons.length) findings.push({ id, module: mod, tier, scene, reasons });
     }
@@ -482,7 +536,8 @@ function main(): void {
       if (!usesGeometry(body, coreCss, sigSrc)) {
         reasons.push("no layer driven by the directional geometry vars");
       }
-      if (!/anchor:\s*"(cast|aim|board)"/.test(chunk)) reasons.push("no declared anchor");
+      const coreAnchorBad = anchorReason(chunk, facts.get(id));
+      if (coreAnchorBad) reasons.push(coreAnchorBad);
       if (reasons.length) findings.push({ id, module: "core", tier, scene: comp, reasons });
     }
   }

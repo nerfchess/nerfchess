@@ -1287,7 +1287,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: ChoirBeam,
   },
   hx4_clipped_diagonals: {
-    config: { ordering: "line", staggerMs: 60, victims: ["b", "q"], hasLead: true, sound: "siege", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 60, victims: ["b", "q"], hasLead: true, sound: "siege", anchor: "board" },
     Render: ClippedShears,
   },
   ov_regency_council: {
@@ -1295,7 +1295,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: CouncilBrace,
   },
   hx4_mitred_blinders: {
-    config: { ordering: "line", staggerMs: 60, victims: ["b"], hasLead: true, sound: "wall", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 60, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" },
     Render: MitreJoint,
   },
   ov_puppet_practice: {
@@ -1311,11 +1311,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: CrackedLens,
   },
   hx4_borrowed_ladder: {
-    config: { ordering: "line", staggerMs: 60, victims: ["b"], hasLead: true, sound: "wall", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 60, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" },
     Render: BorrowedLadder,
   },
   hx4_soot_fall: {
-    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "siege", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "siege", anchor: "board" },
     Render: SootFall,
   },
   hx4_left_glove: {
@@ -1323,7 +1323,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: CaughtBlade,
   },
   hx4_narrow_lane: {
-    config: { ordering: "line", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "wall", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "wall", anchor: "board" },
     Render: NarrowLane,
   },
   op_chimney_sweep: {
@@ -1331,7 +1331,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: SweepRods,
   },
   op_quiet_cloister: {
-    config: { ordering: "line", staggerMs: 65, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 65, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "board" },
     Render: CloisterArcade,
   },
   bn4_bishops_stroll: {
@@ -1339,7 +1339,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: FlippedTile,
   },
   hx4_one_way_cloister: {
-    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "wall", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" },
     Render: RatchetRack,
   },
   op_prompt_corner: {
