@@ -211,7 +211,6 @@ function Grit({ tone, d = 140 }: { tone: string; d?: number }) {
 const TWO = [0, 1];
 const THREE = [0, 1, 2];
 const FOUR = [0, 1, 2, 3];
-const FIVE = [0, 1, 2, 3, 4];
 const SIX = [0, 1, 2, 3, 4, 5];
 
 /* =============================================================================

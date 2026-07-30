@@ -1613,7 +1613,65 @@ export type SigVisual =
   | "selfpyre" // we_immolation (was inferno): the self-burning ring closes in on the sacrifice
   | "bramblecage" // wall_of_thorns hex (was thornwall): brambles creep in and knit a cage
   | "combinedpush" // ww_combined_arms (was reinforce): infantry, cavalry and siege converge in one push
-  | "watchtower"; // ww_forward_outpost (was reinforce): a watchtower rises and lights its signal fire
+  | "watchtower" // ww_forward_outpost (was reinforce): a watchtower rises and lights its signal fire
+  // --- Batch 16: the core signature SPLIT (art in sigVisuals.tsx). Thirty-three
+  // visuals were each doing duty for two to five cards, so several different
+  // cards played literally the same scene. Every card in those groups now has
+  // its own scene except one baseline card per group, which keeps the shared
+  // key above. Each entry names the card it belongs to and the key it left. ---
+  | "impperch" // imp_familiar (was summonrift): a brimstone puff and a smug imp on his perch
+  | "spectralswap" // wa_spectral_minors (was summonrift): two ghosts cross through and trade forms, one spared
+  | "wolfpack" // direwolf_pack (was summonrift): a howl, and two wolves lope out of the mist
+  | "golemrise" // stone_golem (was summonrift): slabs fly together and the golem plants a fist
+  | "twinknot" // wa_twin_blink (was blink): two knots pulled taut and snapped at once
+  | "legionrally" // warp_legion (was blink): three chevrons converge on the king's crown
+  | "yeetlaunch" // wc_yeet (was blink): a wind-up, a long throw, a face-plant landing
+  | "dispelthaw" // wa_quicken (was blitz): cold shells crack off and shed in a warm pulse
+  | "energycan" // white_monster (was blitz): the tab pops, carbonation sprays, three claw strikes
+  | "relentless" // ww_relentless_assault (was blitz): two paced sabre strikes, then the burnt draft
+  | "purgefrost" // purge_two (was disintegrate): one pawn taken, rime creeping over the rest
+  | "shellcrack" // shatter (was disintegrate): a scored shell that splits on the late beat
+  | "annihilatepulse" // annihilate (was disintegrate): an implosion and four orthogonal freeze spikes
+  | "panicbutton" // wc_panic_button (was wardpulse): cover up, button slammed, klaxon, bonus move
+  | "borrowedhour" // borrowed_time (was wardpulse): the hourglass ward whose last grain kills her
+  | "formsquare" // ww_form_square (was wardpulse): four faces wheel into a hollow square, pikes out
+  | "buzzerbeat" // buzzer_beater (was chronosteal): the shot clock hits zero and the seconds fly home
+  | "chronosiphon" // wa_chrono_siphon (was chronosteal): a tube draws time off, a frost padlock clamps
+  | "voidtear" // wa_void_rift (was vortex): a hard jagged tear, and the four touching squares ice
+  | "hauntedrooms" // wc_haunted_house (was vortex): two lit rooms whose lights go out, trap armed
+  | "godknight" // god_knight (was coronation): knight and coronet welded, rune-locked for the game
+  | "commandtent" // ww_command_tent (was coronation): the staff tent unfurls and issues a knight's L
+  | "caldera" // wc_sacrificial_bishop (was inferno): a bishop fed in, a lance of fire back out
+  | "scorchspread" // we_scorch (was inferno): one hit, then the burn runs outward neighbour to neighbour
+  | "pawnquarry" // wa_stone_pawns (was greyhex): a chisel squares off pawn after pawn down the rank
+  | "statuerank" // we_petrify_ranks (was greyhex): plinths rise and a grey wave sets them mid-stride
+  | "jacobsladder" // we_arc_lightning (was arclight): an arc climbs two electrodes and jumps clear
+  | "pianorun" // fur_elise (was arclight): a run down the keys, hammers, three notes, the pedal
+  | "tarpit" // wc_tar_pit (was chainfreeze): tar wells up, a bishop sinks, strings sag, one glop
+  | "glassseal" // wa_frozen_moment (was chainfreeze): a pinned pane, then the recall yanks it back
+  | "depotgate" // reinforcements (was paradrop): the depot shutter rolls up and two pawns walk out
+  | "congaline" // wc_conga_line (was paradrop): a sideways hip-swing wave down the whole rank
+  | "goosecharge" // wc_attack_goose (was portal): a low invasion run, one HONK, loose feathers
+  | "rubberbounce" // wc_rubber_duck_squad (was portal): an attacker squashes the duck and is flung back
+  | "townsfolk" // onett (was cratedrop): the streetlamp lights and a townsperson joins the line
+  | "thrallbind" // undying_thrall (was gravehands): a spirit hauled up, shackled, on a four-turn lease
+  | "slimslip" // waist_25 (was bladegift): a tape snaps round and the pawn wiggles through the gap
+  | "hoodiewrap" // ilovesmellingmygfshoodie (was bubblewrap): one hoodie over two, drawstring cinched
+  | "tempolift" // tempo_theft (was snooze): their turn-token picked out of their pocket
+  | "banishmark" // wa_banish (was unmake): a brand that holds, then the floor opens under it
+  | "basiliskeye" // basilisk_stare (was gorgonstare): the target bolts and is caught anyway
+  | "hallowedreturn" // hallowed_return (was holylight): motes gather home into the piece's own square
+  | "homeground" // home_field (was hillflag): the caster's own half chalked out, crowd, compass roses
+  | "pincerjaws" // ww_pincer_movement (was snapfrost): two jaws close on the axis and pin what is between
+  | "glyphfile" // wa_glyph_seal (was borderward): one file sealed tile by tile, a lock rune on the way
+  | "boltcharge" // we_lightning_bolt (was strike): a coil that holds, then lets go down the vector
+  | "dragoonvault" // ww_dragoons (was warhorn): a rail goes up and the horse clears it in one arc
+  | "flamelance" // we_flame_lance (was dragonfire): a narrow jet up the file, stopped by a friendly
+  | "musterstep" // ww_muster_the_ranks (was reinforce): the bugle, the line steps off, one holds
+  | "hotseat" // wc_hot_seat (was decree): the spotlight lands on a throne that goes red hot
+  | "bayonetrush" // ww_bayonet_charge (was spearcharge): one fixed bayonet, one lunge, one step past
+  | "counterbattery" // ww_counter_battery (was artillery): their muzzle first, then one return shell
+  | "concreteshoes"; // wc_concrete_shoes (was stonechain): a pour that sets and crazes on the late beat
 import type { SigRole } from "./sigPlugins";
 export type { SigRole };
 
@@ -1785,7 +1843,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // --- Batch 2: movement / coronation grants (empower motif zone) ---
   amazon_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
-  god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  god_knight: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "godknight", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
   double_amazon: { ordering: "sweep", staggerMs: 110, victims: ["n"], visual: "twincrown", hasLead: true, sound: "crownrain", source: "empower" },
   triple_amazon: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "triumvirate", hasLead: true, sound: "crownrain", source: "empower" },
   amazon_army: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], visual: "crownlegion", hasLead: true, sound: "crownrain", source: "empower" },
@@ -1834,7 +1892,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   evil_eye: { ordering: "radial", staggerMs: 0, victims: "all", visual: "frostsweep", hasLead: false, sound: "massfreeze", source: "frozen" },
 
   // Petrify / stone (walnut zone).
-  basilisk_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gorgonstare", hasLead: true, sound: "petrify", source: "walnut" },
+  basilisk_stare: { ordering: "radial", staggerMs: 0, victims: "all", visual: "basiliskeye", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast" },
   serpent_brood: { ordering: "sweep", staggerMs: 60, victims: ["b"], visual: "serpentstone", hasLead: false, sound: "petrify", source: "walnut" },
   withering_touch: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wither", hasLead: true, sound: "petrify", source: "walnut" },
   chains_of_binding: { ordering: "sweep", staggerMs: 70, victims: ["r"], visual: "stonechain", hasLead: true, sound: "petrify", source: "walnut" },
@@ -1863,15 +1921,15 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   starfall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "meteor", hasLead: true, sound: "wall", source: "summon" },
   army_of_the_dead: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "deadlegion", hasLead: true, sound: "wall", source: "summon" },
   raise_dead: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
-  undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "gravehands", hasLead: false, sound: "wall", source: "summon" },
-  hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "holylight", hasLead: true, sound: "wall", source: "summon" },
-  imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  undying_thrall: { ordering: "radial", staggerMs: 0, victims: "all", visual: "thrallbind", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
+  hallowed_return: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hallowedreturn", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  imp_familiar: { ordering: "radial", staggerMs: 0, victims: "all", visual: "impperch", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
   summoning_circle: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "chalkcircle", hasLead: true, sound: "wall", source: "summon" },
   horn_of_summoning: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "hornnote", hasLead: true, sound: "wall", source: "summon" },
   roost_of_rocs: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "rocperch", hasLead: true, sound: "wall", source: "summon" },
   phantom_guardian: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
-  stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
-  direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "summonrift", hasLead: false, sound: "wall", source: "summon" },
+  stone_golem: { ordering: "radial", staggerMs: 0, victims: "all", visual: "golemrise", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  direwolf_pack: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wolfpack", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
 
   // --- Batch 4: WILD set (wild/elemental|warfare|arcane|chaos) + Computer
   // Virus. Removal-sourced entries (fire / storm / siege charges /
@@ -1884,7 +1942,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // FIRE (wild/elemental): big removals and a queen's hellfire beam.
   we_immolation: { ordering: "radial", staggerMs: 0, victims: ["r", "q"], visual: "selfpyre", hasLead: true, sound: "atomic" },
   we_conflagration: { ordering: "sweep", staggerMs: 120, victims: ["p", "n", "b"], visual: "inferno", hasLead: true, sound: "cataclysm" },
-  we_flame_lance: { ordering: "line", staggerMs: 95, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic" },
+  we_flame_lance: { ordering: "line", staggerMs: 95, victims: "all", mover: "r", visual: "flamelance", hasLead: true, sound: "atomic", anchor: "aim" },
   we_hellfire_beam: { ordering: "line", staggerMs: 70, victims: "all", mover: "q", visual: "hellfire", hasLead: true, sound: "cataclysm" },
 
   // ICE (wild/elemental): mass freezes, an ice wall, a whiteout blizzard.
@@ -1894,25 +1952,25 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   we_whiteout: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blizzard", hasLead: true, sound: "clockice", source: "stun" },
 
   // EARTH (wild/elemental): petrify, summon, rock walls, a landslide.
-  we_petrify_ranks: { ordering: "sweep", staggerMs: 60, victims: ["n", "b"], visual: "greyhex", hasLead: true, sound: "petrify", source: "walnut" },
+  we_petrify_ranks: { ordering: "sweep", staggerMs: 60, victims: ["n", "b"], visual: "statuerank", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast" },
   we_stone_soldiers: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "stonerise", hasLead: false, sound: "wall", source: "summon" },
   we_mountain_range: { ordering: "sweep", staggerMs: 65, victims: "all", visual: "mountainwall", hasLead: true, sound: "wall", source: "blindfold" },
   we_landslide: { ordering: "sweep", staggerMs: 100, victims: ["r", "q"], visual: "rockfall", hasLead: true, sound: "cataclysm" },
   we_thorn_barrier: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "thornwall", hasLead: true, sound: "wall", source: "blindfold" },
 
   // STORM (wild/elemental): targeted bolts and a summoned thunderhead.
-  we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "strike", hasLead: false, sound: "lightning" },
-  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "arclight", hasLead: true, sound: "lightning" },
+  we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "boltcharge", hasLead: false, sound: "lightning", anchor: "aim" },
+  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "jacobsladder", hasLead: true, sound: "lightning", anchor: "aim" },
   we_thunderhead: { ordering: "radial", staggerMs: 0, victims: "all", visual: "stormcloud", hasLead: false, sound: "wall", source: "summon" },
 
   // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
-  ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "spearcharge", hasLead: false, sound: "rampage" },
+  ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "bayonetrush", hasLead: true, sound: "rampage", anchor: "aim" },
   ww_spearhead: { ordering: "line", staggerMs: 90, victims: "all", mover: "r", visual: "spearcharge", hasLead: true, sound: "siege" },
   ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage" },
   ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege" },
-  ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "artillery", hasLead: true, sound: "siege" },
+  ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "counterbattery", hasLead: true, sound: "siege", anchor: "aim" },
   ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "combinedpush", hasLead: true, sound: "wall", source: "summon" },
-  ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "reinforce", hasLead: true, sound: "wall", source: "summon" },
+  ww_muster_the_ranks: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "musterstep", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
   ww_forward_outpost: { ordering: "radial", staggerMs: 0, victims: "all", visual: "watchtower", hasLead: true, sound: "wall", source: "summon" },
   ww_paratroopers: { ordering: "sweep", staggerMs: 100, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
   ww_suppressive_fire: { ordering: "radial", staggerMs: 45, victims: ["n"], visual: "suppress", hasLead: false, sound: "massfreeze", source: "frozen" },
@@ -1921,17 +1979,17 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // ARCANE (wild/arcane): time stop, mass freeze/petrify, disintegration, conjure.
   wa_time_stop: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timestop", hasLead: true, sound: "clockcage", source: "walnut" },
-  wa_frozen_moment: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "chainfreeze", hasLead: true, sound: "massfreeze", source: "frozen" },
-  wa_stone_pawns: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
+  wa_frozen_moment: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "glassseal", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+  wa_stone_pawns: { ordering: "sweep", staggerMs: 55, victims: ["p"], visual: "pawnquarry", hasLead: false, sound: "petrify", source: "walnut", anchor: "cast" },
   wa_unmake: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "unmake", hasLead: true, sound: "extinction" },
-  wa_banish: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], visual: "unmake", hasLead: false, sound: "extinction" },
-  wa_spectral_minors: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "summonrift", hasLead: true, sound: "wall", source: "summon" },
+  wa_banish: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], visual: "banishmark", hasLead: false, sound: "extinction", anchor: "cast" },
+  wa_spectral_minors: { ordering: "sweep", staggerMs: 85, victims: "all", visual: "spectralswap", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
 
   // CHAOS (wild/chaos): wrecking ball, pinata, genie, hot seat.
   wc_wrecking_ball: { ordering: "line", staggerMs: 85, victims: "all", mover: "q", visual: "wreckingball", hasLead: true, sound: "rampage" },
   wc_pinata: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pinata", hasLead: true, sound: "rampage" },
   wc_genie_wish: { ordering: "radial", staggerMs: 0, victims: "all", visual: "wishlamp", hasLead: true, sound: "wall", source: "summon" },
-  wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "decree", hasLead: true, sound: "snooze", source: "stun" },
+  wc_hot_seat: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hotseat", hasLead: true, sound: "snooze", source: "stun", anchor: "cast" },
 
   // FUNNY (funny/clock): the Computer Virus corrupts the opponent's clock. No
   // board removal / zone effect, so like the Batch 2/3 stun-zone entries it is
@@ -1954,52 +2012,52 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // Core removals (detonation diff): a piece is unmade in a crumble of motes.
   purge: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: true, sound: "extinction" },
-  annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "disintegrate", hasLead: true, sound: "extinction" },
-  shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "disintegrate", hasLead: true, sound: "rampage" },
-  purge_two: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "disintegrate", hasLead: false, sound: "cataclysm" },
-  we_scorch: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "inferno", hasLead: false, sound: "atomic" },
-  wc_sacrificial_bishop: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "inferno", hasLead: false, sound: "atomic" },
+  annihilate: { ordering: "radial", staggerMs: 40, victims: ["p", "n", "b", "r"], visual: "annihilatepulse", hasLead: true, sound: "extinction", anchor: "cast" },
+  shatter: { ordering: "radial", staggerMs: 55, victims: ["r", "b", "n"], visual: "shellcrack", hasLead: true, sound: "rampage", anchor: "cast" },
+  purge_two: { ordering: "sweep", staggerMs: 90, victims: ["p"], visual: "purgefrost", hasLead: false, sound: "cataclysm", anchor: "cast" },
+  we_scorch: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "scorchspread", hasLead: true, sound: "atomic", anchor: "cast" },
+  wc_sacrificial_bishop: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], visual: "caldera", hasLead: false, sound: "atomic", anchor: "cast" },
   cavalry_charge: { ordering: "line", staggerMs: 95, victims: "all", mover: "n", visual: "cavalrycharge", hasLead: true, sound: "rampage" },
 
   // Freezes (frozen zone): each ice card its own read, varied stagger.
-  wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "chainfreeze", hasLead: false, sound: "massfreeze", source: "frozen" },
+  wc_tar_pit: { ordering: "radial", staggerMs: 55, victims: ["b"], visual: "tarpit", hasLead: false, sound: "massfreeze", source: "frozen", anchor: "cast" },
   wc_double_trouble: { ordering: "radial", staggerMs: 60, victims: "all", visual: "mirrorburst", hasLead: true, sound: "massfreeze", source: "frozen" },
-  ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "snapfrost", hasLead: true, sound: "massfreeze", source: "frozen" },
+  ww_pincer_movement: { ordering: "radial", staggerMs: 50, victims: "all", visual: "pincerjaws", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
   wa_arrest_time: { ordering: "radial", staggerMs: 50, victims: ["r", "q"], visual: "deepglacier", hasLead: true, sound: "massfreeze", source: "frozen" },
 
   // Petrify (walnut zone): concrete shoes clamp the heavy pieces.
-  wc_concrete_shoes: { ordering: "radial", staggerMs: 40, victims: ["r", "q"], visual: "stonechain", hasLead: true, sound: "petrify", source: "walnut" },
+  wc_concrete_shoes: { ordering: "radial", staggerMs: 40, victims: ["r", "q"], visual: "concreteshoes", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast" },
   we_stone_grip: { ordering: "radial", staggerMs: 0, victims: "all", visual: "greyhex", hasLead: false, sound: "petrify", source: "walnut" },
 
   // Shields / wards (shield zone): stone shells, bark canopies, rune pulses.
   we_stoneskin: { ordering: "radial", staggerMs: 45, victims: "all", visual: "stonehide", hasLead: true, sound: "aegis", source: "shield" },
-  ww_form_square: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
+  ww_form_square: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "formsquare", hasLead: true, sound: "aegis", source: "shield", anchor: "cast" },
   we_verdant_shield: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "canopy", hasLead: false, sound: "aegis", source: "shield" },
   wa_royal_aegis: { ordering: "radial", staggerMs: 0, victims: ["k", "q"], visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
-  borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "wardpulse", hasLead: true, sound: "aegis", source: "shield" },
+  borrowed_time: { ordering: "radial", staggerMs: 0, victims: ["q"], visual: "borrowedhour", hasLead: true, sound: "aegis", source: "shield", anchor: "cast" },
 
   // King wards (kingSafe zone).
   we_frost_ward: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "frozenmoat", hasLead: true, sound: "shades", source: "kingSafe" },
-  wc_panic_button: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "wardpulse", hasLead: true, sound: "shades", source: "kingSafe" },
+  wc_panic_button: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "panicbutton", hasLead: true, sound: "shades", source: "kingSafe", anchor: "cast" },
 
   // Skips + clock theft (stun zone: opponent's stalled ranks / clock area).
-  tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "snooze", hasLead: true, sound: "snooze", source: "stun" },
+  tempo_theft: { ordering: "radial", staggerMs: 0, victims: "all", visual: "tempolift", hasLead: true, sound: "snooze", source: "stun", anchor: "cast" },
   time_lock: { ordering: "radial", staggerMs: 0, victims: "all", visual: "clockseal", hasLead: true, sound: "clockcage", source: "stun" },
   time_thief: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
-  wa_chrono_siphon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
+  wa_chrono_siphon: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosiphon", hasLead: true, sound: "clockcage", source: "stun", anchor: "cast" },
 
   // Extra-move rallies (rally zone): lightning strobes and war-banner surges.
   extra_move: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
   overwhelm: { ordering: "radial", staggerMs: 70, victims: "all", visual: "triplewave", hasLead: true, sound: "blitz", source: "rally" },
-  wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
-  ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  wa_quicken: { ordering: "radial", staggerMs: 60, victims: "all", visual: "dispelthaw", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
+  ww_relentless_assault: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "relentless", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
   wc_juggling_act: { ordering: "sweep", staggerMs: 70, victims: "all", visual: "juggleorbit", hasLead: true, sound: "blitz", source: "rally" },
   berserker: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "ragefrenzy", hasLead: true, sound: "blitz", source: "rally" },
 
   // Movement grants / veteran upgrades (empower zone).
-  ww_command_tent: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "coronation", hasLead: true, sound: "coronation", source: "empower" },
+  ww_command_tent: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "commandtent", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
   ww_flanking_knights: { ordering: "sweep", staggerMs: 100, victims: ["n"], visual: "warhorn", hasLead: true, sound: "blitz", source: "empower" },
-  ww_dragoons: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "warhorn", hasLead: true, sound: "coronation", source: "empower" },
+  ww_dragoons: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "dragoonvault", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
   glass_cannon: { ordering: "radial", staggerMs: 0, victims: ["b"], visual: "glassforge", hasLead: true, sound: "coronation", source: "empower" },
 
   // Summons / reinforcements (summon zone).
@@ -2011,31 +2069,31 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // sibling card Clone — a board-wide scan-bar lead instead of the generic
   // reinforcement pop.
   clone_army: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "printpress", hasLead: true, sound: "wall", source: "summon" },
-  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "paradrop", hasLead: true, sound: "wall", source: "summon" },
+  wc_conga_line: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "congaline", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
   // Batch 11 upgrade: the pizza actually gets DELIVERED — a scooter tears
   // across the whole board trailing steam (was a generic portal pop).
   pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pizzarun", hasLead: true, sound: "wall", source: "summon" },
   wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
-  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
-  wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon" },
+  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "rubberbounce", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "goosecharge", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
 
   // Teleports / relocations (summon zone: the landing squares gain a piece).
   wa_far_step: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
-  wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
-  wc_yeet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "blink", hasLead: false, sound: "wall", source: "summon" },
-  warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "blink", hasLead: true, sound: "wall", source: "summon" },
+  wa_twin_blink: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "twinknot", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  wc_yeet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "yeetlaunch", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
+  warp_legion: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "legionrally", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
   warp_storm: { ordering: "sweep", staggerMs: 75, victims: "all", visual: "warpquad", hasLead: true, sound: "wall", source: "summon" },
 
   // Walls / voids / traps (blindfold zone).
   fault_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "trench", hasLead: false, sound: "wall", source: "blindfold" },
   fissure: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "magmarift", hasLead: true, sound: "wall", source: "blindfold" },
-  wa_glyph_seal: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "borderward", hasLead: false, sound: "wall", source: "blindfold" },
+  wa_glyph_seal: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "glyphfile", hasLead: false, sound: "wall", source: "blindfold", anchor: "cast" },
   wa_border_ward: { ordering: "sweep", staggerMs: 50, victims: "all", visual: "borderward", hasLead: true, sound: "wall", source: "blindfold" },
   wc_banana_peel_trail: { ordering: "sweep", staggerMs: 55, victims: "all", visual: "banana", hasLead: false, sound: "wall", source: "blindfold" },
   ww_claymore_line: { ordering: "sweep", staggerMs: 60, victims: "all", visual: "minefield", hasLead: true, sound: "siege", source: "blindfold" },
   wc_black_hole: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
-  wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
-  wa_void_rift: { ordering: "radial", staggerMs: 0, victims: "all", visual: "vortex", hasLead: true, sound: "wall", source: "blindfold" },
+  wc_haunted_house: { ordering: "sweep", staggerMs: 80, victims: "all", visual: "hauntedrooms", hasLead: true, sound: "wall", source: "blindfold", anchor: "cast" },
+  wa_void_rift: { ordering: "radial", staggerMs: 0, victims: "all", visual: "voidtear", hasLead: true, sound: "wall", source: "blindfold", anchor: "cast" },
 
   // --- Batch 6: MARQUEE spectacles for the top-tier (tier-8) cards. A dragon
   // that sweeps the board breathing fire (removal diff, like Nova), and an
@@ -2259,7 +2317,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // FUNNY / PT clock economy (stun = the opponent's clock area, rally = ours).
   deadline: { ordering: "radial", staggerMs: 0, victims: "all", visual: "deadlineclock", hasLead: true, sound: "clockcage", source: "stun" },
-  buzzer_beater: { ordering: "radial", staggerMs: 0, victims: "all", visual: "chronosteal", hasLead: true, sound: "clockcage", source: "stun" },
+  buzzer_beater: { ordering: "radial", staggerMs: 0, victims: "all", visual: "buzzerbeat", hasLead: true, sound: "clockcage", source: "stun", anchor: "cast" },
   overtime_whistle: { ordering: "radial", staggerMs: 0, victims: "all", visual: "whistleblast", hasLead: true, sound: "blitz", source: "rally" },
   time_out: { ordering: "radial", staggerMs: 0, victims: "all", visual: "timeoutflag", hasLead: true, sound: "snooze", source: "stun" },
   overtime_pay: { ordering: "radial", staggerMs: 0, victims: "all", visual: "cashclock", hasLead: true, sound: "coronation", source: "rally" },
@@ -2292,7 +2350,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   fan_club: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "fanclub", hasLead: true, sound: "aegis", source: "shield" },
   gravity_well: { ordering: "radial", staggerMs: 0, victims: ["k"], visual: "gravitywell", hasLead: true, sound: "shades", source: "kingSafe" },
   guardian_angel: { ordering: "radial", staggerMs: 0, victims: "all", visual: "angelward", hasLead: true, sound: "aegis", source: "shield" },
-  home_field: { ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], visual: "hillflag", hasLead: true, sound: "coronation", source: "empower" },
+  home_field: { ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], visual: "homeground", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
   landlord: { ordering: "radial", staggerMs: 60, victims: "all", visual: "evictnotice", hasLead: true, sound: "wall", source: "blindfold" },
   magnetism: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "magnetpull", hasLead: true, sound: "colossus", source: "empower" },
   photosynthesis: { ordering: "sweep", staggerMs: 75, victims: ["p"], visual: "photosyn", hasLead: true, sound: "aegis", source: "empower" },
@@ -2306,7 +2364,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   insurance: { ordering: "radial", staggerMs: 0, victims: ["n", "q"], visual: "umbrella", hasLead: false, sound: "aegis", source: "shield" },
   understudy: { ordering: "radial", staggerMs: 0, victims: ["b", "q"], visual: "spotlight", hasLead: true, sound: "coronation", source: "shield" },
   summon_intern: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "internpop", hasLead: false, sound: "wall", source: "summon" },
-  reinforcements: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "paradrop", hasLead: false, sound: "wall", source: "summon" },
+  reinforcements: { ordering: "sweep", staggerMs: 100, victims: ["p"], visual: "depotgate", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
   supply_drop: { ordering: "radial", staggerMs: 0, victims: ["n"], visual: "cratedrop", hasLead: true, sound: "wall", source: "summon" },
   rent_a_rook: { ordering: "radial", staggerMs: 0, victims: ["r"], visual: "rentarook", hasLead: true, sound: "wall", source: "summon" },
 
@@ -2319,7 +2377,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // live in the personal plugin set (personalPlays.tsx) — their plays star the
   // /newjeans and /companions portrait art. No core entries: core beats
   // plugins at the resolve site, so entries here would shadow the portraits.
-  fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning" },
+  fur_elise: { ordering: "line", staggerMs: 90, victims: "all", mover: "b", visual: "pianorun", hasLead: true, sound: "lightning", anchor: "aim" },
   geometry_dash: { ordering: "sweep", staggerMs: 110, victims: "all", visual: "neondash", hasLead: true, sound: "lightning" },
   check_out_our_socials: { ordering: "radial", staggerMs: 65, victims: ["p", "n", "b", "r", "q"], visual: "golive", hasLead: true, sound: "massfreeze", source: "frozen" },
   bayview_secondary_school: { ordering: "radial", staggerMs: 55, victims: "all", visual: "schoolbell", hasLead: true, sound: "massfreeze", source: "frozen" },
@@ -2328,19 +2386,19 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // Second batch: summon (piece placement), shield, and freeze cards, each on a
   // distinct shipped visual so they do not read the same.
   bee_swarm_simulator: { ordering: "radial", staggerMs: 60, victims: ["p"], visual: "geniepoof", hasLead: true, sound: "wall", source: "summon" },
-  onett: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "cratedrop", hasLead: false, sound: "wall", source: "summon" },
+  onett: { ordering: "radial", staggerMs: 0, victims: ["p"], visual: "townsfolk", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
   i_love_abs: { ordering: "radial", staggerMs: 30, victims: "all", visual: "dugin", hasLead: true, sound: "aegis", source: "shield" },
-  ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "bubblewrap", hasLead: false, sound: "aegis", source: "shield" },
+  ilovesmellingmygfshoodie: { ordering: "radial", staggerMs: 0, victims: "all", visual: "hoodiewrap", hasLead: false, sound: "aegis", source: "shield", anchor: "cast" },
   ilovemysister: { ordering: "radial", staggerMs: 0, victims: "all", visual: "sistergrove", hasLead: true, sound: "aegis", source: "shield" },
   ihatemyex: { ordering: "radial", staggerMs: 0, victims: "all", visual: "exsmash", hasLead: true, sound: "rampage" },
   // Third batch: empower / rally / shield grants. Each of these cards now
   // declares fx.pieces (added alongside), so its empower/rally motif paints a
   // real zone the signature reads, exactly like double_amazon (empower) and
   // blitzkrieg (rally). Cards without a resolvable zone stay on genSignature.
-  waist_25: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "bladegift", hasLead: true, sound: "coronation", source: "empower" },
+  waist_25: { ordering: "sweep", staggerMs: 70, victims: ["p"], visual: "slimslip", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
   rgb_keyboard: { ordering: "sweep", staggerMs: 90, victims: ["n", "b", "r"], visual: "crownrain", hasLead: true, sound: "crownrain", source: "empower" },
   i_love_newjeans: { ordering: "radial", staggerMs: 40, victims: "all", visual: "idolstage", hasLead: true, sound: "coronation", source: "empower" },
-  white_monster: { ordering: "radial", staggerMs: 70, victims: "all", visual: "blitz", hasLead: true, sound: "blitz", source: "rally" },
+  white_monster: { ordering: "radial", staggerMs: 70, victims: "all", visual: "energycan", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
   joseph_leung: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mandate", hasLead: true, sound: "aegis", source: "shield" },
 };
 

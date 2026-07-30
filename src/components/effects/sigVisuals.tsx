@@ -31,7 +31,7 @@ import { renderPluginVisual } from "./sigPluginsMerged";
 // every plugin module stages identically (and so anchoring is implemented
 // once); BoardFrame is what a layer uses to mean "the whole board" now that
 // the stage is centred on the cast square rather than on the board.
-import { BoardFrame, BoardWideStage } from "./stage";
+import { AimStage, BoardFrame, BoardWideStage } from "./stage";
 import "./effects.css";
 import "./godPlays.css";
 
@@ -12621,6 +12621,3917 @@ function KingsLeapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   );
 }
 
+
+// =============================================================================
+// Batch 16 — the core signature SPLIT.
+//
+// Thirty-three core visuals were each doing duty for two to five different
+// cards, so (for one example) Imp Familiar, Spectral Retinue, Direwolf Pack,
+// Phantom Guardian and Stone Golem all played the same conjuring rift with
+// nothing but the card banner to tell them apart. Every card in every one of
+// those groups now has its own scene except a single baseline card per group,
+// which keeps the shared visual it was designed around.
+//
+// House laws for everything below (docs/animation-design-brief.md §0/0b/0c):
+//   - the scene is the CARD's own rule text happening, not a recolour of its
+//     siblings: a different object, a different verb, a different ending;
+//   - three beats — a tell in the first third, the strike, a settle in the
+//     last half — expressed as animation delays off `delayMs`;
+//   - exactly three palette colours per scene (core / glow / deep accent),
+//     declared in one const above it, warm whites and never pure #fff;
+//   - at least one layer driven by the directional geometry vars, via the
+//     fx-sig-lean / aimrun / aimswing / ordertick / homeward classes;
+//   - transform / opacity only, <= 16 animated nodes, and every SIGNATURES
+//     entry pointed here declares anchor "cast" or "aim" (none of these
+//     scenes is something happening to the WHOLE board).
+// =============================================================================
+
+/**
+ * The shared skeleton of a split LEAD cut: the crop washes in the card's tint
+ * (the tell), the card's own staging plays over it, and a shockwave rolls past
+ * the board edges as the scene settles. The wash rides inside BoardFrame (via
+ * BoardWash) so it means the BOARD from any anchor, which is what lets these
+ * scenes sit on the cast square instead of the board centre.
+ */
+function SplitLead({
+  wash,
+  boom,
+  delayMs,
+  settleMs = 620,
+  children,
+}: {
+  wash: string;
+  boom: string;
+  delayMs: number;
+  settleMs?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <BoardWideStage>
+      <BoardWash color={wash} delayMs={delayMs} />
+      {children}
+      <BoardBoom delayMs={delayMs + settleMs} color={boom} />
+    </BoardWideStage>
+  );
+}
+
+/** The shared skeleton of a split TARGET cut: one square, no board-wide art. */
+function SplitTarget({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {children}
+    </span>
+  );
+}
+
+// --- Group: core:summonrift (baseline stays on phantom_guardian) -------------
+
+/** Imp Familiar: brimstone red / ember white / soot. */
+const P_IMP = { core: "#c2543a", glow: "#ffe6b8", deep: "#3a1c18" };
+/**
+ * Imp Familiar (t2) — "a smug little imp perches on an empty square of your
+ * back rank... using it consumes your next unused reroll".
+ * A brimstone puff burps out of the floor, the imp DROPS onto a perch and sits
+ * there pleased with himself, his tail flicks, and the reroll token he ate
+ * spins away behind him.
+ */
+function ImpPerchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(194,84,58,0.18)" boom="rgba(194,84,58,0.75)" delayMs={delayMs}>
+        {/* tell: the brimstone puff swells under the empty square */}
+        <span
+          className="fx-sig-swell absolute left-[40%] top-[52%] block h-[18%] w-[20%] rounded-full"
+          style={{
+            background: `radial-gradient(circle, ${P_IMP.deep}, rgba(58,28,24,0) 70%)`,
+            animationDelay: `${delayMs + 100}ms`,
+          }}
+        />
+        {/* strike: the imp himself, landing on his perch */}
+        <span
+          className="fx-sig-slam absolute left-[38%] top-[26%] block h-[32%] w-[24%]"
+          style={{ animationDelay: `${delayMs + 300}ms` }}
+        >
+          <svg viewBox="0 0 24 32" className="h-full w-full" aria-hidden="true">
+            <path d="M6 6 L4 1 L9 4 Z M18 6 L20 1 L15 4 Z" fill={P_IMP.core} stroke={P_IMP.deep} strokeWidth="1" strokeLinejoin="round" />
+            <circle cx="12" cy="9" r="5.4" fill={P_IMP.core} stroke={P_IMP.deep} strokeWidth="1" />
+            <path d="M9.6 8.4 L11.4 9.4 M14.4 8.4 L12.6 9.4" stroke={P_IMP.deep} strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M9.4 11.6 C10.8 13.2 13.2 13.2 14.6 11.6" fill="none" stroke={P_IMP.deep} strokeWidth="1" strokeLinecap="round" />
+            <path d="M12 14 C15.4 14 17 17 16.4 22 L7.6 22 C7 17 8.6 14 12 14 Z" fill={P_IMP.glow} stroke={P_IMP.deep} strokeWidth="1" strokeLinejoin="round" />
+            <path d="M16 20 C21 21 22 25 19 29" fill="none" stroke={P_IMP.core} strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M19 29 L22 27 L21 31 Z" fill={P_IMP.core} stroke={P_IMP.deep} strokeWidth="0.7" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the perch itself: a ledge that snaps out under him */}
+        <span
+          className="fx-sig-uncoil absolute left-[34%] top-[56%] block h-[3%] w-[32%]"
+          style={{ background: P_IMP.deep, animationDelay: `${delayMs + 250}ms` }}
+        />
+        {/* the eaten reroll token, spinning off */}
+        <span
+          className="fx-sig-spin absolute left-[58%] top-[38%] block h-[9%] w-[9%] rounded-full"
+          style={{ border: `2px solid ${P_IMP.glow}`, animationDelay: `${delayMs + 470}ms` }}
+        />
+        {/* settle: smug little sulphur motes leaning off the caster's side */}
+        {[
+          { l: "36%", t: "44%", d: 560 },
+          { l: "52%", t: "40%", d: 640 },
+          { l: "45%", t: "50%", d: 700 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[4%] w-[4%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_IMP.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-swell absolute inset-[26%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_IMP.deep}, rgba(58,28,24,0) 70%)`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-slam absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 120}ms` }}>
+        <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+          <path d="M6 6 L4 1 L9 4 Z M18 6 L20 1 L15 4 Z" fill={P_IMP.core} stroke={P_IMP.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          <circle cx="12" cy="11" r="6.4" fill={P_IMP.core} stroke={P_IMP.deep} strokeWidth="1.2" />
+          <path d="M9.4 10 L11.4 11.2 M14.6 10 L12.6 11.2" stroke={P_IMP.deep} strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[54%] top-[24%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_IMP.glow, animationDelay: `${delayMs + 240}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Spectral Retinue: spectral teal / pale bone / deep indigo. */
+const P_SPEC = { core: "#79b3ad", glow: "#f0e6cd", deep: "#22303c" };
+/**
+ * Spectral Retinue (t3) — "your knights and bishops swap forms where they
+ * stand... but one of them is spared".
+ * Two ghost silhouettes go translucent, cross THROUGH each other, and land
+ * wearing the other's shape; a third stands still and stays solid — the spared
+ * one — while the swap ripples out from it.
+ */
+function SpectralSwapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(121,179,173,0.18)" boom="rgba(121,179,173,0.8)" delayMs={delayMs}>
+        {/* tell: both silhouettes go spectral (a thin phase ring on each) */}
+        {[
+          { l: "30%", d: 110 },
+          { l: "56%", d: 150 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-ring absolute top-[40%] block h-[16%] w-[14%] rounded-full"
+            style={{ left: s.l, border: `2px solid ${P_SPEC.core}`, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* strike: the knight crosses right, wearing a bishop's mitre on arrival */}
+        <span
+          className="fx-sig-tether absolute left-[32%] top-[46%] block h-[2%] w-[36%]"
+          style={{ background: P_SPEC.core, animationDelay: `${delayMs + 280}ms` }}
+        />
+        <span
+          className="fx-sig-cross absolute left-[26%] top-[30%] block h-[26%] w-[16%]"
+          style={{ animationDelay: `${delayMs + 300}ms` }}
+        >
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M5 27 L15 27 L14 22 C17 18 17 10 12 6 L13 2 L9 4 C5 6 4 12 6 15 L4 18 Z" fill={P_SPEC.core} stroke={P_SPEC.deep} strokeWidth="1" strokeLinejoin="round" opacity="0.85" />
+          </svg>
+        </span>
+        <span
+          className="fx-sig-crossback absolute left-[52%] top-[30%] block h-[26%] w-[16%]"
+          style={{ animationDelay: `${delayMs + 320}ms` }}
+        >
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M10 2 C14 7 15 13 13 18 L15 27 L5 27 L7 18 C5 13 6 7 10 2 Z" fill={P_SPEC.glow} stroke={P_SPEC.deep} strokeWidth="1" strokeLinejoin="round" opacity="0.85" />
+            <path d="M8.4 9 H11.6 M10 7.4 V10.6" stroke={P_SPEC.deep} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the SPARED one: stays put, stays solid, and pulses once */}
+        <span
+          className="fx-sig-grow absolute left-[43%] top-[54%] block h-[20%] w-[13%]"
+          style={{ animationDelay: `${delayMs + 470}ms` }}
+        >
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M10 2 C14 7 15 13 13 18 L15 27 L5 27 L7 18 C5 13 6 7 10 2 Z" fill={P_SPEC.glow} stroke={P_SPEC.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: the swap's residue lifts off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[44%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_SPEC.core, animationDelay: `${delayMs + 600}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-ring absolute inset-[18%] block rounded-full"
+        style={{ border: `2px solid ${P_SPEC.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-afterimage absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 130}ms` }}>
+        <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+          <path d="M10 2 C14 7 15 13 13 18 L15 27 L5 27 L7 18 C5 13 6 7 10 2 Z" fill={P_SPEC.glow} stroke={P_SPEC.deep} strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[24%] top-[42%] block h-[14%] w-[52%]"
+        style={{ background: P_SPEC.core, animationDelay: `${delayMs + 260}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Direwolf Pack: winter pelt / mist white / pine dark. */
+const P_WOLF = { core: "#8d9aa8", glow: "#f2e8cf", deep: "#26313a" };
+/**
+ * Direwolf Pack (t4) — "two spectral direwolves answer your howl... the pack
+ * melts back into the mist".
+ * A howl ring goes up, TWO wolves lope in out of a mist bank from opposite
+ * sides, and the settle is paw prints fading and the mist closing again.
+ */
+function WolfPackBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const wolf = (
+    <svg viewBox="0 0 34 22" className="h-full w-full" aria-hidden="true">
+      <path d="M2 18 C4 10 9 8 15 8 L22 7 L24 3 L26 7 L30 6 L31 10 C32 14 29 18 25 19 L22 15 L17 16 L14 20 L11 15 L6 19 Z" fill={P_WOLF.core} stroke={P_WOLF.deep} strokeWidth="1" strokeLinejoin="round" />
+      <circle cx="27" cy="9.4" r="0.9" fill={P_WOLF.deep} />
+      <path d="M2 18 L0 21" stroke={P_WOLF.deep} strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(141,154,168,0.20)" boom="rgba(141,154,168,0.8)" delayMs={delayMs}>
+        {/* tell: the howl — a rising ring off the empty square */}
+        <span
+          className="fx-sig-ring absolute left-[40%] top-[40%] block h-[20%] w-[20%] rounded-full"
+          style={{ border: `2px solid ${P_WOLF.glow}`, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* the mist bank they come out of */}
+        <span
+          className="fx-sig-uncoil absolute left-[24%] top-[50%] block h-[9%] w-[52%]"
+          style={{ background: `linear-gradient(90deg, rgba(242,232,207,0), ${P_WOLF.glow}, rgba(242,232,207,0))`, animationDelay: `${delayMs + 180}ms` }}
+        />
+        {/* strike: two wolves lope in from either flank */}
+        <span className="fx-sig-cross absolute left-[20%] top-[38%] block h-[16%] w-[26%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          {wolf}
+        </span>
+        <span className="fx-sig-crossback absolute left-[54%] top-[46%] block h-[16%] w-[26%]" style={{ animationDelay: `${delayMs + 360}ms` }}>
+          {wolf}
+        </span>
+        {/* settle: paw prints, and the mist drifting off the caster's side */}
+        {[
+          { l: "36%", t: "58%", d: 540 },
+          { l: "46%", t: "62%", d: 590 },
+          { l: "56%", t: "58%", d: 640 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[4%] w-[3%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_WOLF.deep, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-ring absolute inset-[20%] block rounded-full"
+        style={{ border: `2px solid ${P_WOLF.glow}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-dart absolute left-[6%] top-[34%] block h-[34%] w-[70%]" style={{ animationDelay: `${delayMs + 110}ms` }}>
+        {wolf}
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[44%] top-[62%] block h-[12%] w-[10%] rounded-full"
+        style={{ background: P_WOLF.deep, animationDelay: `${delayMs + 260}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Stone Golem: quarry grey / lit granite / basalt. */
+const P_GOLEM = { core: "#8b8579", glow: "#f0e3c4", deep: "#33302b" };
+/**
+ * Stone Golem (t5) — "bind a spirit into rock and stone: a lumbering golem
+ * serves as a rook".
+ * Loose rubble RATTLES on the square, four slabs fly together and lock into a
+ * hulking body, and it plants one fist with a quake that shakes dust off it.
+ */
+function GolemRiseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(139,133,121,0.20)" boom="rgba(139,133,121,0.85)" delayMs={delayMs}>
+        {/* tell: rubble rattles up off the ground before anything assembles */}
+        {[
+          { l: "36%", t: "58%", d: 90 },
+          { l: "50%", t: "62%", d: 130 },
+          { l: "60%", t: "57%", d: 110 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-tiltwob absolute block h-[5%] w-[5%]"
+            style={{ left: s.l, top: s.t, background: P_GOLEM.deep, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the slabs flying in and locking */}
+        {[
+          { l: "34%", t: "34%", w: "12%", h: "16%", d: 240 },
+          { l: "54%", t: "34%", w: "12%", h: "16%", d: 280 },
+          { l: "40%", t: "24%", w: "20%", h: "12%", d: 320 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-homeward absolute block"
+            style={{ left: s.l, top: s.t, width: s.w, height: s.h, background: P_GOLEM.core, border: `2px solid ${P_GOLEM.deep}`, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* strike: the golem stands up */}
+        <span className="fx-sig-rise absolute left-[34%] top-[22%] block h-[44%] w-[32%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+          <svg viewBox="0 0 32 44" className="h-full w-full" aria-hidden="true">
+            <path d="M9 12 H23 V26 H9 Z" fill={P_GOLEM.core} stroke={P_GOLEM.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M11 2 H21 V11 H11 Z" fill={P_GOLEM.core} stroke={P_GOLEM.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M13.4 6 H14.8 M17.2 6 H18.6" stroke={P_GOLEM.glow} strokeWidth="2" strokeLinecap="round" />
+            <path d="M2 14 H8 V24 H2 Z M24 14 H30 V24 H24 Z" fill={P_GOLEM.core} stroke={P_GOLEM.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M11 27 H15 V42 H11 Z M17 27 H21 V42 H17 Z" fill={P_GOLEM.core} stroke={P_GOLEM.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M12 16 L20 22 M20 16 L12 22" stroke={P_GOLEM.glow} strokeWidth="1" strokeLinecap="round" opacity="0.75" />
+          </svg>
+        </span>
+        {/* the fist plant */}
+        <span
+          className="fx-sig-quake absolute left-[28%] top-[62%] block h-[6%] w-[44%]"
+          style={{ background: P_GOLEM.deep, animationDelay: `${delayMs + 520}ms` }}
+        />
+        {/* settle: quarry dust off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[56%] block h-[8%] w-[8%] rounded-full"
+          style={{ background: P_GOLEM.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-tiltwob absolute left-[30%] top-[62%] block h-[12%] w-[12%]"
+        style={{ background: P_GOLEM.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-rise absolute inset-[16%] block" style={{ animationDelay: `${delayMs + 130}ms` }}>
+        <svg viewBox="0 0 32 44" className="h-full w-full" aria-hidden="true">
+          <path d="M9 12 H23 V26 H9 Z M11 2 H21 V11 H11 Z M11 27 H15 V42 H11 Z M17 27 H21 V42 H17 Z" fill={P_GOLEM.core} stroke={P_GOLEM.deep} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M13.4 6 H14.8 M17.2 6 H18.6" stroke={P_GOLEM.glow} strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[52%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_GOLEM.glow, animationDelay: `${delayMs + 280}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:blink (baseline stays on wa_far_step) -----------------------
+
+/** Twin Blink: arcane violet / spark white / void navy. */
+const P_TWIN = { core: "#8f7ac4", glow: "#f4e8c8", deep: "#211d3a" };
+/**
+ * Twin Blink (t4) — "two knots in the world come undone at once: choose one of
+ * your pieces and one enemy piece; each blinks away to a random empty square".
+ * TWO knots, drawn as tied loops, are pulled taut by the thread between them,
+ * both snap at the same instant, and each end whips away in its own direction.
+ */
+function TwinKnotBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const knot = (
+    <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+      <path d="M4 10 C4 5 9 3 12 6 C15 9 12 14 8 13 C4 12 4 7 8 6 C12 5 16 9 16 13" fill="none" stroke={P_TWIN.core} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(143,122,196,0.18)" boom="rgba(143,122,196,0.8)" delayMs={delayMs}>
+        {/* tell: the two knots, one at each end */}
+        <span className="fx-sig-swirl absolute left-[24%] top-[40%] block h-[16%] w-[14%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          {knot}
+        </span>
+        <span className="fx-sig-swirl absolute left-[62%] top-[40%] block h-[16%] w-[14%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          {knot}
+        </span>
+        {/* the thread between them draws taut, then lets go */}
+        <span
+          className="fx-sig-tether absolute left-[30%] top-[47%] block h-[2%] w-[40%]"
+          style={{ background: P_TWIN.glow, animationDelay: `${delayMs + 260}ms` }}
+        />
+        {/* strike: both ends snap at once */}
+        <span
+          className="fx-sig-flash absolute left-[20%] top-[38%] block h-[20%] w-[20%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_TWIN.glow}, rgba(244,232,200,0) 70%)`, animationDelay: `${delayMs + 420}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[60%] top-[38%] block h-[20%] w-[20%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_TWIN.glow}, rgba(244,232,200,0) 70%)`, animationDelay: `${delayMs + 420}ms` }}
+        />
+        {/* settle: the loose thread ends whip off, leaning off the caster */}
+        {[
+          { l: "30%", t: "44%", d: 560 },
+          { l: "64%", t: "44%", d: 600 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[3%] w-[10%]"
+            style={{ left: s.l, top: s.t, background: P_TWIN.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-swirl absolute inset-[24%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        {knot}
+      </span>
+      <span
+        className="fx-sig-tether absolute left-[10%] top-[48%] block h-[6%] w-[80%]"
+        style={{ background: P_TWIN.glow, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span
+        className="fx-sig-aimrun absolute left-[38%] top-[38%] block h-[24%] w-[24%] rounded-full"
+        style={{ background: P_TWIN.core, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Warp Legion: rally gold / banner white / campaign brown. */
+const P_LEGION = { core: "#c99a3c", glow: "#f7ecc9", deep: "#3b2c19" };
+/**
+ * Warp Legion (t4) — "the legion rallies to the crown: up to three of your
+ * pieces teleport to empty squares BESIDE YOUR KING".
+ * The king's crown lights first and stays lit; three legionary chevrons come
+ * in from three different bearings and lock into the ring of squares around
+ * it. Nothing here is a generic blink: everything converges on one point.
+ */
+function LegionRallyBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(201,154,60,0.18)" boom="rgba(201,154,60,0.85)" delayMs={delayMs}>
+        {/* tell: the crown they are rallying to */}
+        <span className="fx-sig-crown absolute left-[42%] top-[42%] block h-[16%] w-[16%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 24 18" className="h-full w-full" aria-hidden="true">
+            <path d="M2 16 L4 4 L9 9 L12 2 L15 9 L20 4 L22 16 Z" fill={P_LEGION.core} stroke={P_LEGION.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the muster ring around the king */}
+        <span
+          className="fx-sig-ring absolute left-[36%] top-[36%] block h-[28%] w-[28%] rounded-full"
+          style={{ border: `2px solid ${P_LEGION.glow}`, animationDelay: `${delayMs + 200}ms` }}
+        />
+        {/* strike: three chevrons converge from three bearings */}
+        {[
+          { l: "18%", t: "20%", r: "38deg", d: 300 },
+          { l: "70%", t: "30%", r: "160deg", d: 350 },
+          { l: "42%", t: "72%", r: "-84deg", d: 400 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-homeward absolute block h-[10%] w-[12%]"
+            style={{ left: s.l, top: s.t, transform: `rotate(${s.r})`, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 20 14" className="h-full w-full" aria-hidden="true">
+              <path d="M1 1 L11 7 L1 13 L5 7 Z M9 1 L19 7 L9 13 L13 7 Z" fill={P_LEGION.core} stroke={P_LEGION.deep} strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: the formed-up ranks flash, then dust leans off the caster */}
+        <span
+          className="fx-sig-flash absolute left-[38%] top-[38%] block h-[24%] w-[24%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_LEGION.glow}, rgba(247,236,201,0) 72%)`, animationDelay: `${delayMs + 520}ms` }}
+        />
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[52%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_LEGION.glow, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-ring absolute inset-[20%] block rounded-full"
+        style={{ border: `2px solid ${P_LEGION.glow}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-aimrun absolute left-[24%] top-[36%] block h-[28%] w-[30%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+        <svg viewBox="0 0 20 14" className="h-full w-full" aria-hidden="true">
+          <path d="M1 1 L11 7 L1 13 L5 7 Z M9 1 L19 7 L9 13 L13 7 Z" fill={P_LEGION.core} stroke={P_LEGION.deep} strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-flash absolute inset-[28%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_LEGION.glow}, rgba(247,236,201,0) 72%)`, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Yeet: launch orange / dust cream / bruise brown. */
+const P_YEET = { core: "#e08033", glow: "#fbeccb", deep: "#40260f" };
+/**
+ * Yeet (t4) — "wind up and LAUNCH one of your own pieces deep into enemy
+ * territory... launching it burns your next unused draft reroll".
+ * A wind-up crank hauls back, the piece is flung on a long arc down the play's
+ * own vector, and lands nose-first in a puff of dust with comic speed lines.
+ */
+function YeetLaunchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(224,128,51,0.18)" boom="rgba(224,128,51,0.85)" delayMs={delayMs}>
+        {/* tell: the wind-up — an arm hauls back past vertical */}
+        <span className="fx-sig-pendulum absolute left-[30%] top-[30%] block h-[26%] w-[6%]" style={{ background: P_YEET.deep, animationDelay: `${delayMs + 90}ms` }} />
+        {/* strike: the launched piece, thrown along the aim vector */}
+        <span className="fx-sig-aimrun absolute left-[34%] top-[36%] block h-[18%] w-[14%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+            <path d="M10 1 C14 6 15 12 13 17 L15 25 L5 25 L7 17 C5 12 6 6 10 1 Z" fill={P_YEET.core} stroke={P_YEET.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* comic speed lines trailing the throw */}
+        {[
+          { t: "34%", d: 330 },
+          { t: "44%", d: 360 },
+          { t: "54%", d: 390 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-uncoil absolute left-[26%] block h-[2%] w-[34%]"
+            style={{ top: s.t, background: P_YEET.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the landing: a face-plant puff */}
+        <span
+          className="fx-sig-splat absolute left-[58%] top-[50%] block h-[12%] w-[20%] rounded-full"
+          style={{ background: P_YEET.glow, animationDelay: `${delayMs + 520}ms` }}
+        />
+        {/* settle: the burnt reroll token spins off, leaning off the caster */}
+        <span
+          className="fx-sig-lean absolute left-[52%] top-[42%] block h-[8%] w-[8%] rounded-full"
+          style={{ border: `2px solid ${P_YEET.deep}`, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-pendulum absolute left-[16%] top-[18%] block h-[40%] w-[10%]" style={{ background: P_YEET.deep, animationDelay: `${delayMs}ms` }} />
+      <span className="fx-sig-aimrun absolute left-[30%] top-[30%] block h-[40%] w-[30%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path d="M10 1 C14 6 15 12 13 17 L15 25 L5 25 L7 17 C5 12 6 6 10 1 Z" fill={P_YEET.core} stroke={P_YEET.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-splat absolute left-[26%] top-[62%] block h-[22%] w-[48%] rounded-full"
+        style={{ background: P_YEET.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:blitz (baseline stays on extra_move) ------------------------
+
+/** Quicken: thaw amber / released white / iron-cold blue. */
+const P_QUICK = { core: "#d9a441", glow: "#fdf0cd", deep: "#3d5a72" };
+/**
+ * Quicken (t5) — "every freeze, stasis and walnut afflicting YOUR pieces is
+ * dispelled on the spot".
+ * The opposite of a freeze scene: three cold shells already ON the board crack
+ * from the inside, the ice sheds off them, and a warm pulse washes out. The
+ * strike is a RELEASE, not a hit.
+ */
+function DispelThawBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(61,90,114,0.20)" boom="rgba(217,164,65,0.85)" delayMs={delayMs}>
+        {/* tell: the shells that are about to go, drawn cold and intact */}
+        {[
+          { l: "28%", t: "38%", d: 100 },
+          { l: "44%", t: "48%", d: 140 },
+          { l: "60%", t: "36%", d: 120 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-ice absolute block h-[16%] w-[12%]"
+            style={{ left: s.l, top: s.t, background: P_QUICK.deep, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* strike: the warm pulse that breaks them */}
+        <span
+          className="fx-sig-shock absolute left-[32%] top-[30%] block h-[36%] w-[36%] rounded-full"
+          style={{ border: `3px solid ${P_QUICK.core}`, animationDelay: `${delayMs + 320}ms` }}
+        />
+        {/* the shed ice, falling away in flakes */}
+        {[
+          { l: "30%", t: "48%", d: 420 },
+          { l: "48%", t: "58%", d: 450 },
+          { l: "62%", t: "46%", d: 480 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-crumble absolute block h-[7%] w-[5%]"
+            style={{ left: s.l, top: s.t, background: P_QUICK.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the freed pieces breathe: a single clean glyph over the middle */}
+        <span className="fx-sig-grow absolute left-[40%] top-[36%] block h-[22%] w-[20%]" style={{ animationDelay: `${delayMs + 500}ms` }}>
+          <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke={P_QUICK.core} strokeWidth="1.6" />
+            <path d="M12 5 V12 L17 15" fill="none" stroke={P_QUICK.glow} strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* settle: thaw vapour lifting off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[50%] block h-[8%] w-[8%] rounded-full"
+          style={{ background: P_QUICK.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-ice absolute inset-[24%] block"
+        style={{ background: P_QUICK.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-shock absolute inset-[14%] block rounded-full"
+        style={{ border: `2px solid ${P_QUICK.core}`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span
+        className="fx-sig-crumble absolute left-[36%] top-[46%] block h-[18%] w-[14%]"
+        style={{ background: P_QUICK.glow, animationDelay: `${delayMs + 280}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[44%] top-[36%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_QUICK.glow, animationDelay: `${delayMs + 360}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** White Monster: can silver / fizz cream / zero-sugar black. */
+const P_CAN = { core: "#c8ccd2", glow: "#fdf3d4", deep: "#1d1f22" };
+/**
+ * White Monster (t5) — "crack the can: take 2 extra moves right now for a
+ * triple-move turn".
+ * The can tips into frame, the TAB pops with a spray of carbonation, and three
+ * claw-marks strike out one after another — one per move of the triple turn.
+ */
+function EnergyCanBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(29,31,34,0.22)" boom="rgba(253,243,212,0.9)" delayMs={delayMs}>
+        {/* tell: the can tips in and rocks */}
+        <span className="fx-sig-tiltwob absolute left-[40%] top-[28%] block h-[36%] w-[16%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 20 44" className="h-full w-full" aria-hidden="true">
+            <path d="M3 4 H17 V40 H3 Z" fill={P_CAN.core} stroke={P_CAN.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M3 4 H17 M3 40 H17" stroke={P_CAN.deep} strokeWidth="2" />
+            <path d="M7 14 L9 26 M10 12 L12 26 M13 14 L15 26" stroke={P_CAN.deep} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the tab pops */}
+        <span
+          className="fx-sig-flash absolute left-[42%] top-[24%] block h-[12%] w-[12%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_CAN.glow}, rgba(253,243,212,0) 70%)`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* carbonation spray */}
+        <ShardBurst vectors={BURST_MED} fill={P_CAN.glow} stroke={P_CAN.deep} delayMs={delayMs + 330} sizePct={6} />
+        {/* three claw strikes, one per bonus move */}
+        {[
+          { l: "26%", t: "44%", d: 420 },
+          { l: "42%", t: "50%", d: 490 },
+          { l: "58%", t: "44%", d: 560 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-slash absolute block h-[18%] w-[16%]"
+            style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 16 20" className="h-full w-full" aria-hidden="true">
+              <path d="M2 1 C5 7 6 13 5 19 M8 0 C11 6 12 13 11 19 M14 2 C16 8 16 14 15 19" fill="none" stroke={P_CAN.glow} strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: fizz drifting off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[34%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_CAN.glow, animationDelay: `${delayMs + 650}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-flash absolute inset-[26%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_CAN.glow}, rgba(253,243,212,0) 70%)`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-slash absolute inset-[18%] block" style={{ animationDelay: `${delayMs + 140}ms` }}>
+        <svg viewBox="0 0 16 20" className="h-full w-full" aria-hidden="true">
+          <path d="M2 1 C5 7 6 13 5 19 M8 0 C11 6 12 13 11 19 M14 2 C16 8 16 14 15 19" fill="none" stroke={P_CAN.glow} strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[20%] top-[46%] block h-[8%] w-[60%]"
+        style={{ background: P_CAN.core, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Relentless Assault: sabre steel / muzzle white / dried blood. */
+const P_RELENT = { core: "#b7bdc6", glow: "#fbeecb", deep: "#5a1f1c" };
+/**
+ * Relentless Assault (t5) — "each of your next TWO capturing moves immediately
+ * grants an extra move... once both are spent, you skip your next draft".
+ * Two sabre strikes, deliberately paced apart, each cocking a fresh arrow back
+ * into the rack; then the third beat is the price — a draft card burning away.
+ */
+function RelentlessBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(90,31,28,0.20)" boom="rgba(183,189,198,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the guard comes up */}
+        <span
+          className="fx-sig-uncoil absolute left-[30%] top-[46%] block h-[3%] w-[40%]"
+          style={{ background: P_RELENT.core, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike one */}
+        <span className="fx-sig-slash absolute left-[26%] top-[28%] block h-[30%] w-[26%]" style={{ animationDelay: `${delayMs + 280}ms` }}>
+          <svg viewBox="0 0 28 30" className="h-full w-full" aria-hidden="true">
+            <path d="M2 28 C10 20 20 10 27 2" fill="none" stroke={P_RELENT.core} strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M2 28 C10 20 20 10 27 2" fill="none" stroke={P_RELENT.glow} strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the first re-arm arrow snaps back into the rack */}
+        <span
+          className="fx-sig-aimrun absolute left-[46%] top-[36%] block h-[7%] w-[12%]"
+          style={{ background: P_RELENT.glow, animationDelay: `${delayMs + 380}ms` }}
+        />
+        {/* strike two, a clear beat later */}
+        <span className="fx-sig-slash absolute left-[48%] top-[38%] block h-[30%] w-[26%]" style={{ animationDelay: `${delayMs + 480}ms` }}>
+          <svg viewBox="0 0 28 30" className="h-full w-full" aria-hidden="true">
+            <path d="M27 28 C19 20 9 10 2 2" fill="none" stroke={P_RELENT.core} strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M27 28 C19 20 9 10 2 2" fill="none" stroke={P_RELENT.glow} strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* settle: the skipped draft card curls and burns */}
+        <span className="fx-sig-peel absolute left-[40%] top-[58%] block h-[16%] w-[12%]" style={{ animationDelay: `${delayMs + 620}ms` }}>
+          <svg viewBox="0 0 16 22" className="h-full w-full" aria-hidden="true">
+            <path d="M2 2 H14 V20 H2 Z" fill={P_RELENT.deep} stroke={P_RELENT.core} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M5 7 H11 M5 11 H11" stroke={P_RELENT.glow} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[54%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_RELENT.glow, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-slash absolute inset-[14%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 28 30" className="h-full w-full" aria-hidden="true">
+          <path d="M2 28 C10 20 20 10 27 2" fill="none" stroke={P_RELENT.core} strokeWidth="3.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-slash absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 190}ms` }}>
+        <svg viewBox="0 0 28 30" className="h-full w-full" aria-hidden="true">
+          <path d="M27 28 C19 20 9 10 2 2" fill="none" stroke={P_RELENT.glow} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[18%] top-[44%] block h-[10%] w-[64%]"
+        style={{ background: P_RELENT.deep, animationDelay: `${delayMs + 330}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:disintegrate (baseline stays on purge) ----------------------
+
+/** Purge Two: frost blue / rime white / deep slate. */
+const P_PURGE2 = { core: "#7aa8c6", glow: "#f6ecd0", deep: "#26384a" };
+/**
+ * Purge Two (t4) — "remove ONE enemy pawn, and FREEZE every other enemy pawn".
+ * One pawn is taken cleanly; the interest is the second half, so rime creeps
+ * out from the empty square along the rank and locks the survivors in place.
+ */
+function PurgeFrostBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(122,168,198,0.20)" boom="rgba(122,168,198,0.85)" delayMs={delayMs}>
+        {/* tell: the chosen pawn is picked out */}
+        <span
+          className="fx-sig-reticle absolute left-[42%] top-[38%] block h-[18%] w-[16%] rounded-full"
+          style={{ border: `2px solid ${P_PURGE2.glow}`, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: it comes apart into motes */}
+        <span className="fx-sig-crumble absolute left-[43%] top-[38%] block h-[20%] w-[14%]" style={{ animationDelay: `${delayMs + 290}ms` }}>
+          <svg viewBox="0 0 16 22" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C11 1 12 4 10 6 C13 8 13 12 11 14 L13 21 H3 L5 14 C3 12 3 8 6 6 C4 4 5 1 8 1 Z" fill={P_PURGE2.glow} stroke={P_PURGE2.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the rime creeps out along the rank, square by square */}
+        {[
+          { l: "22%", d: 380 },
+          { l: "34%", d: 420 },
+          { l: "58%", d: 420 },
+          { l: "70%", d: 460 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-frost absolute top-[42%] block h-[12%] w-[10%]"
+            style={{ left: s.l, background: P_PURGE2.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the locked rank line */}
+        <span
+          className="fx-sig-uncoil absolute left-[18%] top-[54%] block h-[2%] w-[64%]"
+          style={{ background: P_PURGE2.core, animationDelay: `${delayMs + 500}ms` }}
+        />
+        {/* settle: frost vapour off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[46%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_PURGE2.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-reticle absolute inset-[18%] block rounded-full"
+        style={{ border: `2px solid ${P_PURGE2.glow}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-crumble absolute inset-[26%] block"
+        style={{ background: P_PURGE2.glow, animationDelay: `${delayMs + 140}ms` }}
+      />
+      <span
+        className="fx-sig-frost absolute inset-[10%] block"
+        style={{ border: `2px solid ${P_PURGE2.core}`, animationDelay: `${delayMs + 260}ms` }}
+      />
+      <span
+        className="fx-sig-ordertick absolute left-[16%] top-[48%] block h-[8%] w-[68%]"
+        style={{ background: P_PURGE2.core, animationDelay: `${delayMs + 340}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Shatter: shell brown / hairline gold / bruised umber. */
+const P_SHELL = { core: "#9a6b3c", glow: "#f6e0ac", deep: "#33200f" };
+/**
+ * Shatter (t5) — "after your opponent's NEXT move it shatters into a walnut for
+ * the rest of the game".
+ * A delayed-fuse scene: a hairline crack is scored into a shell now, the shell
+ * closes over the piece, and only on the late beat does it split — the halves
+ * hinge apart and clap shut again as a walnut that will never open.
+ */
+function ShellCrackBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(154,107,60,0.20)" boom="rgba(246,224,172,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the hairline is scored in first */}
+        <span
+          className="fx-sig-uncoil absolute left-[36%] top-[46%] block h-[2%] w-[28%]"
+          style={{ background: P_SHELL.glow, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* the shell closes over the piece */}
+        <span className="fx-sig-grow absolute left-[36%] top-[30%] block h-[34%] w-[28%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 28 34" className="h-full w-full" aria-hidden="true">
+            <path d="M14 1 C23 1 27 9 27 17 C27 26 21 33 14 33 C7 33 1 26 1 17 C1 9 5 1 14 1 Z" fill={P_SHELL.core} stroke={P_SHELL.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M14 2 V32 M7 8 C9 15 9 21 7 27 M21 8 C19 15 19 21 21 27" fill="none" stroke={P_SHELL.deep} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike, on the LATE beat: the two halves hinge apart */}
+        <span
+          className="fx-sig-flap-l absolute left-[34%] top-[30%] block h-[34%] w-[16%]"
+          style={{ background: P_SHELL.core, transformOrigin: "100% 50%", animationDelay: `${delayMs + 470}ms` }}
+        />
+        <span
+          className="fx-sig-flap-r absolute left-[50%] top-[30%] block h-[34%] w-[16%]"
+          style={{ background: P_SHELL.core, transformOrigin: "0% 50%", animationDelay: `${delayMs + 470}ms` }}
+        />
+        {/* the seam flashes gold as it clamps shut for good */}
+        <span
+          className="fx-sig-seamflash absolute left-[46%] top-[28%] block h-[38%] w-[3%]"
+          style={{ background: P_SHELL.glow, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: shell grit leaning off the caster */}
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[50%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_SHELL.glow, animationDelay: `${delayMs + 690}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[20%] top-[48%] block h-[6%] w-[60%]"
+        style={{ background: P_SHELL.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[18%] block" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 28 34" className="h-full w-full" aria-hidden="true">
+          <path d="M14 1 C23 1 27 9 27 17 C27 26 21 33 14 33 C7 33 1 26 1 17 C1 9 5 1 14 1 Z" fill={P_SHELL.core} stroke={P_SHELL.deep} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M14 2 V32" stroke={P_SHELL.deep} strokeWidth="1.2" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-seamflash absolute left-[46%] top-[16%] block h-[68%] w-[8%]"
+        style={{ background: P_SHELL.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[40%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_SHELL.glow, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Annihilate: void magenta / flash cream / abyss. */
+const P_ANNI = { core: "#b5567f", glow: "#fbecc6", deep: "#1e1424" };
+/**
+ * Annihilate (t6) — "remove one enemy piece below the queen, and FREEZE every
+ * enemy piece ORTHOGONALLY BESIDE IT for 2 turns".
+ * The piece implodes to a point rather than crumbling, and the four orthogonal
+ * neighbours are pinned by four spikes driven out along the compass — the
+ * card's own geometry, not a radial spray.
+ */
+function AnnihilatePulseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(30,20,36,0.24)" boom="rgba(181,86,127,0.9)" delayMs={delayMs}>
+        {/* tell: the point of collapse draws everything in */}
+        <span
+          className="fx-sig-implode absolute left-[38%] top-[38%] block h-[24%] w-[24%] rounded-full"
+          style={{ border: `2px solid ${P_ANNI.core}`, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the collapse itself */}
+        <span
+          className="fx-sig-flash absolute left-[44%] top-[44%] block h-[12%] w-[12%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_ANNI.glow}, rgba(251,236,198,0) 70%)`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* the four orthogonal spikes that pin the neighbours */}
+        {[
+          { l: "46%", t: "22%", r: "0deg", d: 400 },
+          { l: "46%", t: "62%", r: "180deg", d: 430 },
+          { l: "26%", t: "42%", r: "-90deg", d: 460 },
+          { l: "66%", t: "42%", r: "90deg", d: 490 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-ice absolute block h-[16%] w-[8%]"
+            style={{ left: s.l, top: s.t, transform: `rotate(${s.r})`, background: P_ANNI.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the frost lock closing on them */}
+        <span
+          className="fx-sig-frost absolute left-[30%] top-[28%] block h-[44%] w-[40%]"
+          style={{ border: `2px solid ${P_ANNI.glow}`, animationDelay: `${delayMs + 540}ms` }}
+        />
+        {/* settle: void motes leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[46%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_ANNI.core, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-implode absolute inset-[16%] block rounded-full"
+        style={{ border: `2px solid ${P_ANNI.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[34%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_ANNI.glow}, rgba(251,236,198,0) 70%)`, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-ice absolute left-[42%] top-[4%] block h-[26%] w-[16%]"
+        style={{ background: P_ANNI.core, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[40%] top-[54%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_ANNI.core, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:wardpulse (baseline stays on wa_royal_aegis) ----------------
+
+/** Panic Button: alarm red / klaxon cream / console charcoal. */
+const P_PANIC = { core: "#d1462f", glow: "#fceeca", deep: "#2b2b30" };
+/**
+ * Panic Button (t4) — "your king cannot be captured on your opponent's next
+ * turn, AND you take one extra move right now to sort out the mess".
+ * The safety cover flips up, the big red button is SLAMMED, the klaxon strobes
+ * twice, and a bonus-move arrow kicks out of the console.
+ */
+function PanicButtonBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(209,70,47,0.20)" boom="rgba(209,70,47,0.9)" delayMs={delayMs}>
+        {/* tell: the safety cover flips up */}
+        <span
+          className="fx-sig-peel absolute left-[36%] top-[36%] block h-[8%] w-[28%]"
+          style={{ background: P_PANIC.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the button slams */}
+        <span className="fx-sig-slam absolute left-[38%] top-[38%] block h-[22%] w-[24%]" style={{ animationDelay: `${delayMs + 290}ms` }}>
+          <svg viewBox="0 0 24 22" className="h-full w-full" aria-hidden="true">
+            <path d="M2 14 H22 V20 H2 Z" fill={P_PANIC.deep} stroke={P_PANIC.deep} strokeWidth="1" strokeLinejoin="round" />
+            <circle cx="12" cy="10" r="8" fill={P_PANIC.core} stroke={P_PANIC.deep} strokeWidth="1.4" />
+            <path d="M8 8 C10 6 14 6 16 8" fill="none" stroke={P_PANIC.glow} strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the klaxon strobes twice */}
+        <span
+          className="fx-sig-flash absolute left-[28%] top-[26%] block h-[16%] w-[16%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_PANIC.glow}, rgba(252,238,202,0) 70%)`, animationDelay: `${delayMs + 380}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[58%] top-[26%] block h-[16%] w-[16%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_PANIC.glow}, rgba(252,238,202,0) 70%)`, animationDelay: `${delayMs + 460}ms` }}
+        />
+        {/* the bonus move kicks out of the console, down the play's vector */}
+        <span className="fx-sig-aimrun absolute left-[42%] top-[58%] block h-[10%] w-[18%]" style={{ animationDelay: `${delayMs + 540}ms` }}>
+          <svg viewBox="0 0 22 10" className="h-full w-full" aria-hidden="true">
+            <path d="M0 5 H16 M12 1 L20 5 L12 9" fill="none" stroke={P_PANIC.glow} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: the shield the button bought, holding one beat */}
+        <span
+          className="fx-sig-dome absolute left-[34%] top-[32%] block h-[34%] w-[32%]"
+          style={{ border: `2px solid ${P_PANIC.glow}`, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-peel absolute left-[18%] top-[26%] block h-[16%] w-[64%]"
+        style={{ background: P_PANIC.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-slam absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 24 22" className="h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="11" r="9" fill={P_PANIC.core} stroke={P_PANIC.deep} strokeWidth="1.6" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_PANIC.glow}, rgba(252,238,202,0) 70%)`, animationDelay: `${delayMs + 280}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[36%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_PANIC.glow, animationDelay: `${delayMs + 360}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Borrowed Time: hourglass brass / sand cream / debt black. */
+const P_BORROW = { core: "#c08c3a", glow: "#f9e9c0", deep: "#241a12" };
+/**
+ * Borrowed Time (t5) — "your queen becomes uncapturable for your next 4 moves,
+ * AND THEN her time runs out: she is removed from the board".
+ * The ward is drawn as an hourglass wrapped round her. The sand DRAINS through
+ * the whole scene, and when the last grain lands the ward is what kills her:
+ * the silhouette goes with it.
+ */
+function BorrowedHourBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(192,140,58,0.18)" boom="rgba(192,140,58,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the hourglass ward closes round her */}
+        <span className="fx-sig-grow absolute left-[38%] top-[26%] block h-[42%] w-[24%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 24 42" className="h-full w-full" aria-hidden="true">
+            <path d="M3 2 H21 L13 21 L21 40 H3 L11 21 Z" fill="none" stroke={P_BORROW.core} strokeWidth="2" strokeLinejoin="round" />
+            <path d="M2 1 H22 M2 41 H22" stroke={P_BORROW.core} strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the queen inside it */}
+        <span className="fx-sig-dome absolute left-[42%] top-[36%] block h-[24%] w-[16%]" style={{ animationDelay: `${delayMs + 230}ms` }}>
+          <svg viewBox="0 0 18 24" className="h-full w-full" aria-hidden="true">
+            <path d="M2 6 L5 13 L9 4 L13 13 L16 6 L15 20 H3 Z" fill={P_BORROW.glow} stroke={P_BORROW.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* strike: the sand runs out */}
+        <span
+          className="fx-sig-drain absolute left-[44%] top-[30%] block h-[16%] w-[12%]"
+          style={{ background: P_BORROW.glow, animationDelay: `${delayMs + 300}ms` }}
+        />
+        <span
+          className="fx-sig-swell absolute left-[44%] top-[50%] block h-[14%] w-[12%]"
+          style={{ background: P_BORROW.glow, animationDelay: `${delayMs + 420}ms` }}
+        />
+        {/* the last grain lands and the debt is called in */}
+        <span
+          className="fx-sig-crumble absolute left-[44%] top-[38%] block h-[20%] w-[12%]"
+          style={{ background: P_BORROW.deep, animationDelay: `${delayMs + 620}ms` }}
+        />
+        {/* settle: her dust leans off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[44%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_BORROW.glow, animationDelay: `${delayMs + 710}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-grow absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 42" className="h-full w-full" aria-hidden="true">
+          <path d="M3 2 H21 L13 21 L21 40 H3 L11 21 Z" fill="none" stroke={P_BORROW.core} strokeWidth="2.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-drain absolute left-[40%] top-[20%] block h-[30%] w-[20%]"
+        style={{ background: P_BORROW.glow, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-crumble absolute inset-[30%] block"
+        style={{ background: P_BORROW.deep, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[38%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_BORROW.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Form Square: drill red / pike steel / parade dark. */
+const P_SQUARE = { core: "#b5452f", glow: "#f5e6c2", deep: "#2f2a24" };
+/**
+ * Form Square (t5) — "pick any square: your pieces on it OR ANY OF THE UP-TO-
+ * EIGHT SQUARES AROUND IT cannot be captured".
+ * Four ranks wheel in and lock into a hollow square around the picked cell —
+ * the actual infantry formation — and the pikes come down to bristle outward
+ * on every face. The shape IS the rule: a 3x3 with a hole in the middle.
+ */
+function FormSquareBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(181,69,47,0.18)" boom="rgba(245,230,194,0.85)" delayMs={delayMs}>
+        {/* tell: the drill mark on the chosen square */}
+        <span
+          className="fx-sig-reticle absolute left-[43%] top-[43%] block h-[14%] w-[14%]"
+          style={{ border: `2px solid ${P_SQUARE.glow}`, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the four faces wheel in and lock */}
+        {[
+          { l: "32%", t: "28%", w: "36%", h: "6%", d: 280 },
+          { l: "32%", t: "66%", w: "36%", h: "6%", d: 320 },
+          { l: "30%", t: "30%", w: "5%", h: "40%", d: 360 },
+          { l: "65%", t: "30%", w: "5%", h: "40%", d: 400 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-homeward absolute block"
+            style={{ left: s.l, top: s.t, width: s.w, height: s.h, background: P_SQUARE.core, border: `1px solid ${P_SQUARE.deep}`, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the pikes come down, bristling outward on every face */}
+        {[
+          { l: "36%", t: "18%", r: "0deg", d: 470 },
+          { l: "60%", t: "18%", r: "0deg", d: 490 },
+          { l: "36%", t: "72%", r: "180deg", d: 510 },
+          { l: "60%", t: "72%", r: "180deg", d: 530 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-rise absolute block h-[12%] w-[3%]"
+            style={{ left: s.l, top: s.t, transform: `rotate(${s.r})`, background: P_SQUARE.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* settle: parade dust leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[47%] top-[56%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_SQUARE.glow, animationDelay: `${delayMs + 630}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-reticle absolute inset-[30%] block"
+        style={{ border: `2px solid ${P_SQUARE.glow}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-ordertick absolute inset-[16%] block"
+        style={{ border: `3px solid ${P_SQUARE.core}`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span
+        className="fx-sig-rise absolute left-[46%] top-[4%] block h-[26%] w-[8%]"
+        style={{ background: P_SQUARE.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[52%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_SQUARE.glow, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:chronosteal (baseline stays on time_thief) ------------------
+
+/** Buzzer Beater: court orange / scoreboard cream / arena black. */
+const P_BUZZ = { core: "#e08a2b", glow: "#fdf1cd", deep: "#1a1a1e" };
+/**
+ * Buzzer Beater (t2) — "steal a buzzer-beating 20 SECONDS off your opponent's
+ * clock and put it on yours".
+ * A shot clock counts down to nothing, the buzzer light strobes, and the twenty
+ * seconds physically fly across the board and land on the caster's own side.
+ */
+function BuzzerBeatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(26,26,30,0.22)" boom="rgba(224,138,43,0.9)" delayMs={delayMs}>
+        {/* tell: the shot clock, ticking down */}
+        <span className="fx-sig-tick absolute left-[38%] top-[30%] block h-[20%] w-[24%]" style={{ animationDelay: `${delayMs + 90}ms` }}>
+          <svg viewBox="0 0 24 20" className="h-full w-full" aria-hidden="true">
+            <path d="M1 1 H23 V19 H1 Z" fill={P_BUZZ.deep} stroke={P_BUZZ.core} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M5 6 V14 M9 6 V14 M5 10 H9 M15 6 V14 M19 6 V14 M15 6 H19 M15 10 H19 M15 14 H19" fill="none" stroke={P_BUZZ.glow} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the buzzer goes off */}
+        <span
+          className="fx-sig-flash absolute left-[34%] top-[26%] block h-[30%] w-[32%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_BUZZ.core}, rgba(224,138,43,0) 70%)`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* the stolen seconds cross the board toward the caster's own edge */}
+        {[
+          { l: "30%", d: 400 },
+          { l: "44%", d: 440 },
+          { l: "58%", d: 480 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute top-[54%] block h-[8%] w-[7%] rounded-full"
+            style={{ left: s.l, background: P_BUZZ.glow, border: `2px solid ${P_BUZZ.core}`, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* settle: the horn's afterglow bar */}
+        <span
+          className="fx-sig-uncoil absolute left-[26%] top-[64%] block h-[3%] w-[48%]"
+          style={{ background: P_BUZZ.core, animationDelay: `${delayMs + 600}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-tick absolute inset-[24%] block"
+        style={{ border: `2px solid ${P_BUZZ.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[14%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_BUZZ.core}, rgba(224,138,43,0) 70%)`, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[40%] top-[44%] block h-[16%] w-[16%] rounded-full"
+        style={{ background: P_BUZZ.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Chrono Siphon: siphon teal / drawn-off cream / stasis indigo. */
+const P_SIPHON = { core: "#4fa8a0", glow: "#f6ecc9", deep: "#282a55" };
+/**
+ * Chrono Siphon (t2) — "steal UP TO 20 SECONDS from your opponent's clock AND
+ * freeze one enemy piece for its next 2 turns".
+ * A siphon tube bites into their dial and pulls a bead of time down its length
+ * — a continuous draw, not a snatch — while at the far end a frost padlock
+ * clamps shut on the piece that paid for it.
+ */
+function ChronoSiphonBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(40,42,85,0.20)" boom="rgba(79,168,160,0.85)" delayMs={delayMs}>
+        {/* tell: the dial that is about to be tapped */}
+        <span className="fx-sig-tick absolute left-[24%] top-[34%] block h-[20%] w-[16%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.6" fill="none" stroke={P_SIPHON.glow} strokeWidth="1.6" />
+            <path d="M10 4 V10 L14 12" fill="none" stroke={P_SIPHON.core} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the tube bites in and runs across */}
+        <span
+          className="fx-sig-uncoil absolute left-[34%] top-[42%] block h-[4%] w-[34%]"
+          style={{ background: P_SIPHON.core, animationDelay: `${delayMs + 240}ms` }}
+        />
+        {/* strike: the bead of time draws down the tube */}
+        <span
+          className="fx-sig-aimrun absolute left-[36%] top-[40%] block h-[8%] w-[8%] rounded-full"
+          style={{ background: P_SIPHON.glow, animationDelay: `${delayMs + 340}ms` }}
+        />
+        {/* the frost padlock clamps on the piece that paid */}
+        <span className="fx-sig-frost absolute left-[62%] top-[36%] block h-[22%] w-[16%]" style={{ animationDelay: `${delayMs + 470}ms` }}>
+          <svg viewBox="0 0 18 22" className="h-full w-full" aria-hidden="true">
+            <path d="M5 9 V6 C5 3 13 3 13 6 V9" fill="none" stroke={P_SIPHON.deep} strokeWidth="2" strokeLinecap="round" />
+            <path d="M3 9 H15 V20 H3 Z" fill={P_SIPHON.core} stroke={P_SIPHON.deep} strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: the drawn-off seconds lean home to the caster */}
+        <span
+          className="fx-sig-lean absolute left-[42%] top-[50%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_SIPHON.glow, animationDelay: `${delayMs + 610}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[8%] top-[46%] block h-[8%] w-[84%]"
+        style={{ background: P_SIPHON.core, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-aimrun absolute left-[30%] top-[38%] block h-[22%] w-[22%] rounded-full"
+        style={{ background: P_SIPHON.glow, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span className="fx-sig-frost absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 320}ms` }}>
+        <svg viewBox="0 0 18 22" className="h-full w-full" aria-hidden="true">
+          <path d="M5 9 V6 C5 3 13 3 13 6 V9" fill="none" stroke={P_SIPHON.deep} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M3 9 H15 V20 H3 Z" fill={P_SIPHON.core} stroke={P_SIPHON.deep} strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:vortex (baseline stays on wc_black_hole) --------------------
+
+/** Void Rift: rift violet / torn-edge cream / nothing. */
+const P_RIFT = { core: "#7b5fb0", glow: "#f3e8c8", deep: "#141021" };
+/**
+ * Void Rift (t3) — "tear a PERMANENT rift on an empty square: anything that
+ * steps on it is pulled out of the game, and anything that ENDS ITS MOVE NEXT
+ * TO IT is frozen".
+ * Not a spiral: a TEAR. Two lips of the world are pulled apart to leave a hard
+ * jagged slit that stays open, and the freeze bites on the four squares that
+ * touch it.
+ */
+function VoidTearBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(20,16,33,0.24)" boom="rgba(123,95,176,0.85)" delayMs={delayMs}>
+        {/* tell: the hairline stress line before it gives */}
+        <span
+          className="fx-sig-uncoil absolute left-[42%] top-[46%] block h-[2%] w-[16%]"
+          style={{ background: P_RIFT.glow, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the lips pull apart and the tear opens */}
+        <span className="fx-sig-grow absolute left-[38%] top-[28%] block h-[44%] w-[24%]" style={{ animationDelay: `${delayMs + 290}ms` }}>
+          <svg viewBox="0 0 24 44" className="h-full w-full" aria-hidden="true">
+            <path d="M12 1 L17 9 L13 17 L19 25 L12 33 L15 43 L9 34 L12 25 L6 18 L11 10 L7 3 Z" fill={P_RIFT.deep} stroke={P_RIFT.core} strokeWidth="1.6" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the torn edges glow and stay */}
+        <span
+          className="fx-sig-seamflash absolute left-[46%] top-[26%] block h-[48%] w-[3%]"
+          style={{ background: P_RIFT.core, animationDelay: `${delayMs + 380}ms` }}
+        />
+        {/* the four touching squares ice over */}
+        {[
+          { l: "34%", t: "34%", d: 470 },
+          { l: "58%", t: "34%", d: 500 },
+          { l: "34%", t: "58%", d: 530 },
+          { l: "58%", t: "58%", d: 560 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-frost absolute block h-[10%] w-[8%]"
+            style={{ left: s.l, top: s.t, background: P_RIFT.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* settle: shreds of world leaning off the caster */}
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_RIFT.core, animationDelay: `${delayMs + 650}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[30%] top-[48%] block h-[6%] w-[40%]"
+        style={{ background: P_RIFT.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[16%] block" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 24 44" className="h-full w-full" aria-hidden="true">
+          <path d="M12 1 L17 9 L13 17 L19 25 L12 33 L15 43 L9 34 L12 25 L6 18 L11 10 L7 3 Z" fill={P_RIFT.deep} stroke={P_RIFT.core} strokeWidth="1.8" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-frost absolute inset-[8%] block"
+        style={{ border: `2px solid ${P_RIFT.glow}`, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[40%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_RIFT.core, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Haunted House: lamp amber / spectre cream / boarded-up brown. */
+const P_HAUNT = { core: "#d9a441", glow: "#f7edd2", deep: "#3b2a35" };
+/**
+ * Haunted House (t5) — "TWO ROOMS turn haunted: mark two empty squares and any
+ * enemy piece that enters one VANISHES. The haunting lasts 3 of your turns".
+ * Two little houses go up side by side, their windows light, a sheet-ghost
+ * slips in through one door — and then both sets of lights go OUT, which is
+ * the trap being armed rather than a vortex opening.
+ */
+function HauntedRoomsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const house = (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+      <path d="M2 11 L12 2 L22 11 V22 H2 Z" fill={P_HAUNT.deep} stroke={P_HAUNT.core} strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M6 13 H10 V17 H6 Z M14 13 H18 V17 H14 Z" fill={P_HAUNT.core} stroke={P_HAUNT.deep} strokeWidth="0.8" />
+      <path d="M10 22 V18 H14 V22" fill={P_HAUNT.deep} stroke={P_HAUNT.core} strokeWidth="1" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(59,42,53,0.22)" boom="rgba(217,164,65,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the two rooms rise on their marked squares */}
+        <span className="fx-sig-rise absolute left-[26%] top-[36%] block h-[24%] w-[20%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          {house}
+        </span>
+        <span className="fx-sig-rise absolute left-[54%] top-[36%] block h-[24%] w-[20%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+          {house}
+        </span>
+        {/* strike: a sheet-ghost slips in through the near door */}
+        <span className="fx-sig-shade absolute left-[42%] top-[30%] block h-[26%] w-[16%]" style={{ animationDelay: `${delayMs + 320}ms` }}>
+          <svg viewBox="0 0 18 26" className="h-full w-full" aria-hidden="true">
+            <path d="M9 1 C14 1 16 6 16 11 V24 L13 21 L11 24 L9 21 L7 24 L5 21 L2 24 V11 C2 6 4 1 9 1 Z" fill={P_HAUNT.glow} stroke={P_HAUNT.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <circle cx="7" cy="10" r="1.1" fill={P_HAUNT.deep} />
+            <circle cx="11.4" cy="10" r="1.1" fill={P_HAUNT.deep} />
+          </svg>
+        </span>
+        {/* the lights go out in both rooms: the trap is armed */}
+        <span
+          className="fx-sig-drain absolute left-[28%] top-[44%] block h-[12%] w-[16%]"
+          style={{ background: P_HAUNT.core, animationDelay: `${delayMs + 520}ms` }}
+        />
+        <span
+          className="fx-sig-drain absolute left-[56%] top-[44%] block h-[12%] w-[16%]"
+          style={{ background: P_HAUNT.core, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: a cold draught leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[52%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_HAUNT.glow, animationDelay: `${delayMs + 680}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-rise absolute inset-[18%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        {house}
+      </span>
+      <span className="fx-sig-shade absolute inset-[28%] block" style={{ animationDelay: `${delayMs + 170}ms` }}>
+        <svg viewBox="0 0 18 26" className="h-full w-full" aria-hidden="true">
+          <path d="M9 1 C14 1 16 6 16 11 V24 L13 21 L11 24 L9 21 L7 24 L5 21 L2 24 V11 C2 6 4 1 9 1 Z" fill={P_HAUNT.glow} stroke={P_HAUNT.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-drain absolute left-[30%] top-[40%] block h-[26%] w-[40%]"
+        style={{ background: P_HAUNT.core, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[30%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_HAUNT.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:coronation (baseline stays on amazon_knight) ---------------
+
+/** God Knight: divine gold / halo cream / consecrated indigo. */
+const P_GODKN = { core: "#d7a93f", glow: "#fbeec6", deep: "#232a4a" };
+/**
+ * God Knight (t4) — "one knight becomes an amazon (queen plus knight), FOR THE
+ * GAME".
+ * The point is permanence, so this is a WELD, not a coronation: a knight's head
+ * and a queen's coronet are brought together over the square, fused with a seam
+ * flash, and a rune ring locks around the join so it can never come apart.
+ */
+function GodKnightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(35,42,74,0.22)" boom="rgba(215,169,63,0.9)" delayMs={delayMs}>
+        {/* tell: the two halves drift in from either side */}
+        <span className="fx-sig-homeward absolute left-[24%] top-[36%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M5 27 L15 27 L14 22 C17 18 17 10 12 6 L13 2 L9 4 C5 6 4 12 6 15 L4 18 Z" fill={P_GODKN.glow} stroke={P_GODKN.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-homeward absolute left-[58%] top-[36%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs + 140}ms` }}>
+          <svg viewBox="0 0 24 18" className="h-full w-full" aria-hidden="true">
+            <path d="M2 16 L4 4 L9 9 L12 2 L15 9 L20 4 L22 16 Z" fill={P_GODKN.core} stroke={P_GODKN.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* strike: the weld */}
+        <span
+          className="fx-sig-seamflash absolute left-[46%] top-[30%] block h-[36%] w-[4%]"
+          style={{ background: P_GODKN.glow, animationDelay: `${delayMs + 330}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[38%] top-[36%] block h-[24%] w-[24%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_GODKN.glow}, rgba(251,238,198,0) 70%)`, animationDelay: `${delayMs + 360}ms` }}
+        />
+        {/* the rune ring locks the join for good */}
+        <span
+          className="fx-sig-swirl absolute left-[34%] top-[32%] block h-[34%] w-[32%] rounded-full"
+          style={{ border: `2px solid ${P_GODKN.core}`, animationDelay: `${delayMs + 490}ms` }}
+        />
+        {/* settle: forge sparks leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[47%] top-[48%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_GODKN.core, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-homeward absolute left-[12%] top-[30%] block h-[40%] w-[30%]"
+        style={{ background: P_GODKN.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-seamflash absolute left-[46%] top-[14%] block h-[72%] w-[8%]"
+        style={{ background: P_GODKN.glow, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-swirl absolute inset-[16%] block rounded-full"
+        style={{ border: `2px solid ${P_GODKN.core}`, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[42%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_GODKN.core, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Command Tent: canvas ochre / lamplight cream / staff-map green. */
+const P_TENT = { core: "#c08a45", glow: "#f8ecc9", deep: "#2c4034" };
+/**
+ * Command Tent (t4) — "your KING may also leap like a KNIGHT to an empty
+ * square, without capturing, for the game".
+ * A staff tent unfurls over the square, a pennant runs up the pole, and the
+ * order that comes out of it is drawn on the map: a dotted knight's L stepped
+ * out from the king's own marker.
+ */
+function CommandTentBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(44,64,52,0.20)" boom="rgba(192,138,69,0.85)" delayMs={delayMs}>
+        {/* tell: the pole goes up */}
+        <span
+          className="fx-sig-rise absolute left-[49%] top-[24%] block h-[26%] w-[2%]"
+          style={{ background: P_TENT.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the canvas unfurls off it */}
+        <span className="fx-sig-uncoil absolute left-[30%] top-[36%] block h-[26%] w-[40%]" style={{ animationDelay: `${delayMs + 280}ms` }}>
+          <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+            <path d="M20 1 L39 25 H1 Z" fill={P_TENT.core} stroke={P_TENT.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M20 1 V25 M14 25 L20 14 L26 25" fill="none" stroke={P_TENT.deep} strokeWidth="1.1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the pennant runs up */}
+        <span
+          className="fx-sig-tether absolute left-[50%] top-[24%] block h-[5%] w-[12%]"
+          style={{ background: P_TENT.glow, animationDelay: `${delayMs + 380}ms` }}
+        />
+        {/* the order: a knight's L stepped out from the king's marker */}
+        {[
+          { l: "48%", t: "62%", d: 470 },
+          { l: "48%", t: "70%", d: 510 },
+          { l: "56%", t: "70%", d: 550 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-ordertick absolute block h-[5%] w-[5%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_TENT.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* settle: lamp smoke leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[44%] top-[46%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_TENT.glow, animationDelay: `${delayMs + 630}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-rise absolute left-[48%] top-[8%] block h-[40%] w-[6%]"
+        style={{ background: P_TENT.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-uncoil absolute inset-[20%] block" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 40 26" className="h-full w-full" aria-hidden="true">
+          <path d="M20 1 L39 25 H1 Z" fill={P_TENT.core} stroke={P_TENT.deep} strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[54%] top-[60%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_TENT.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:inferno (baseline stays on we_conflagration) ---------------
+
+/** Sacrificial Bishop: magma orange / ash cream / caldera basalt. */
+const P_CALDERA = { core: "#e2701f", glow: "#fbe6bd", deep: "#2a1c1a" };
+/**
+ * Sacrificial Bishop (t3) — "FEED ONE OF YOUR BISHOPS to the volcano to smite
+ * one enemy knight or bishop: BOTH leave the board".
+ * The trade is the scene. A mitre is dropped into a caldera mouth, the volcano
+ * swallows it, and what comes back out is a single lance of fire that takes the
+ * named piece — two silhouettes gone, one payment and one kill.
+ */
+function CalderaBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(42,28,26,0.24)" boom="rgba(226,112,31,0.9)" delayMs={delayMs}>
+        {/* tell: the caldera mouth opens and glows */}
+        <span
+          className="fx-sig-hole absolute left-[36%] top-[50%] block h-[16%] w-[28%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_CALDERA.core}, rgba(42,28,26,0) 72%)`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* the offered bishop goes in */}
+        <span className="fx-sig-crumble absolute left-[43%] top-[34%] block h-[20%] w-[14%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 16 22" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C11 5 12 10 10 14 L12 21 H4 L6 14 C4 10 5 5 8 1 Z" fill={P_CALDERA.glow} stroke={P_CALDERA.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M6.4 7 H9.6 M8 5.4 V8.6" stroke={P_CALDERA.deep} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: what comes back out is a lance of fire */}
+        <span
+          className="fx-sig-firebreath absolute left-[46%] top-[16%] block h-[38%] w-[10%]"
+          style={{ background: `linear-gradient(0deg, ${P_CALDERA.core}, rgba(251,230,189,0))`, animationDelay: `${delayMs + 380}ms` }}
+        />
+        <span
+          className="fx-sig-scorch absolute left-[40%] top-[14%] block h-[14%] w-[22%] rounded-full"
+          style={{ background: P_CALDERA.core, animationDelay: `${delayMs + 470}ms` }}
+        />
+        {/* settle: ash flecks leaning off the caster's side */}
+        {[
+          { l: "38%", t: "40%", d: 580 },
+          { l: "56%", t: "36%", d: 640 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[5%] w-[5%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_CALDERA.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-hole absolute left-[22%] top-[54%] block h-[26%] w-[56%] rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_CALDERA.core}, rgba(42,28,26,0) 72%)`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-crumble absolute inset-[28%] block"
+        style={{ background: P_CALDERA.glow, animationDelay: `${delayMs + 140}ms` }}
+      />
+      <span
+        className="fx-sig-firebreath absolute left-[40%] top-[2%] block h-[56%] w-[20%]"
+        style={{ background: `linear-gradient(0deg, ${P_CALDERA.core}, rgba(251,230,189,0))`, animationDelay: `${delayMs + 280}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[36%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_CALDERA.glow, animationDelay: `${delayMs + 360}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Scorch: ember red / cinder cream / charred ground. */
+const P_SCORCH = { core: "#c9421f", glow: "#f9e2b4", deep: "#2b1d15" };
+/**
+ * Scorch (t6) — "remove one enemy knight or bishop; THE FIRE SPREADS to every
+ * enemy pawn standing BESIDE IT".
+ * A single hit, then contagion: a black scorch mark lands, and the burn runs
+ * outward through a chain of neighbouring char marks in the victim order, each
+ * catching a beat after the last.
+ */
+function ScorchSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(43,29,21,0.22)" boom="rgba(201,66,31,0.9)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the ground blackens under the target */}
+        <span
+          className="fx-sig-scorch absolute left-[42%] top-[42%] block h-[16%] w-[16%] rounded-full"
+          style={{ background: P_SCORCH.deep, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* strike: the hit itself */}
+        <span
+          className="fx-sig-flash absolute left-[38%] top-[38%] block h-[24%] w-[24%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_SCORCH.core}, rgba(201,66,31,0) 70%)`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* the spread: char marks catching outward, one beat apart */}
+        {[
+          { l: "30%", t: "40%", d: 420 },
+          { l: "62%", t: "40%", d: 470 },
+          { l: "46%", t: "26%", d: 520 },
+          { l: "46%", t: "60%", d: 570 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-scorch absolute block h-[12%] w-[10%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_SCORCH.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the flame front joining them up */}
+        <span
+          className="fx-sig-uncoil absolute left-[28%] top-[46%] block h-[3%] w-[46%]"
+          style={{ background: P_SCORCH.core, animationDelay: `${delayMs + 540}ms` }}
+        />
+        {/* settle: cinders leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[46%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_SCORCH.glow, animationDelay: `${delayMs + 680}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-scorch absolute inset-[28%] block rounded-full"
+        style={{ background: P_SCORCH.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[18%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_SCORCH.core}, rgba(201,66,31,0) 70%)`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span
+        className="fx-sig-ordertick absolute left-[14%] top-[42%] block h-[16%] w-[72%]"
+        style={{ background: P_SCORCH.core, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[34%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_SCORCH.glow, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:greyhex (baseline stays on we_stone_grip) ------------------
+
+/** Stone the Pawns: quarry grey / chisel dust / seam black. */
+const P_QUARRY = { core: "#8a8a86", glow: "#f1e6cb", deep: "#2a2a28" };
+/**
+ * Stone the Pawns (t4) — "EVERY ONE of their PAWNS turns to stone... each may
+ * only shuffle one square at a time".
+ * A quarry line: pawn after pawn along the rank is squared off into a rough
+ * block by a chisel that works its way down the row, dust flying at each cut.
+ */
+function PawnQuarryBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(138,138,134,0.22)" boom="rgba(138,138,134,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the chisel line is struck along the rank */}
+        <span
+          className="fx-sig-uncoil absolute left-[22%] top-[40%] block h-[2%] w-[56%]"
+          style={{ background: P_QUARRY.glow, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* strike: the pawns square off one after another */}
+        {[
+          { l: "24%", d: 280 },
+          { l: "38%", d: 340 },
+          { l: "52%", d: 400 },
+          { l: "66%", d: 460 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-petrify absolute top-[42%] block h-[16%] w-[10%]"
+            style={{ left: s.l, background: P_QUARRY.core, border: `2px solid ${P_QUARRY.deep}`, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the chisel dust off each cut */}
+        <ShardBurst vectors={BURST_MED} fill={P_QUARRY.glow} stroke={P_QUARRY.deep} delayMs={delayMs + 470} sizePct={5} />
+        {/* the short-shuffle leash each block is left on */}
+        <span
+          className="fx-sig-tether absolute left-[24%] top-[60%] block h-[2%] w-[52%]"
+          style={{ background: P_QUARRY.deep, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: quarry dust leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[52%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_QUARRY.glow, animationDelay: `${delayMs + 690}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[10%] top-[40%] block h-[6%] w-[80%]"
+        style={{ background: P_QUARRY.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-petrify absolute inset-[24%] block"
+        style={{ background: P_QUARRY.core, border: `2px solid ${P_QUARRY.deep}`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span
+        className="fx-sig-ordertick absolute left-[16%] top-[62%] block h-[8%] w-[68%]"
+        style={{ background: P_QUARRY.deep, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[34%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_QUARRY.glow, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Petrify the Ranks: statue grey / marble cream / plinth shadow. */
+const P_STATUE = { core: "#9d9a90", glow: "#f4ead0", deep: "#31302c" };
+/**
+ * Petrify the Ranks (t5) — "every enemy KNIGHT AND BISHOP turns to stone: they
+ * CANNOT MOVE for their next 2 turns".
+ * Statuary, not quarrying: the pieces are caught mid-stride, plinths rise under
+ * them, and a grey wave passes over the pair leaving two monuments and a
+ * settling of marble dust.
+ */
+function StatueRankBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(157,154,144,0.22)" boom="rgba(157,154,144,0.85)" delayMs={delayMs}>
+        {/* tell: the plinths rise under them */}
+        <span
+          className="fx-sig-rise absolute left-[28%] top-[58%] block h-[8%] w-[18%]"
+          style={{ background: P_STATUE.deep, animationDelay: `${delayMs + 100}ms` }}
+        />
+        <span
+          className="fx-sig-rise absolute left-[54%] top-[58%] block h-[8%] w-[18%]"
+          style={{ background: P_STATUE.deep, animationDelay: `${delayMs + 150}ms` }}
+        />
+        {/* strike: the grey wave passes and catches both mid-stride */}
+        <span
+          className="fx-sig-wave absolute left-[20%] top-[34%] block h-[28%] w-[60%]"
+          style={{ background: `linear-gradient(90deg, rgba(157,154,144,0), ${P_STATUE.core}, rgba(157,154,144,0))`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        <span className="fx-sig-petrify absolute left-[30%] top-[34%] block h-[26%] w-[14%]" style={{ animationDelay: `${delayMs + 400}ms` }}>
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M5 27 L15 27 L14 22 C17 18 17 10 12 6 L13 2 L9 4 C5 6 4 12 6 15 L4 18 Z" fill={P_STATUE.core} stroke={P_STATUE.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <span className="fx-sig-petrify absolute left-[56%] top-[34%] block h-[26%] w-[14%]" style={{ animationDelay: `${delayMs + 450}ms` }}>
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M10 2 C14 7 15 13 13 18 L15 27 L5 27 L7 18 C5 13 6 7 10 2 Z" fill={P_STATUE.core} stroke={P_STATUE.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: marble dust off the caster's side */}
+        {[
+          { l: "36%", t: "50%", d: 570 },
+          { l: "60%", t: "50%", d: 620 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[6%] w-[6%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_STATUE.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-rise absolute left-[24%] top-[68%] block h-[16%] w-[52%]"
+        style={{ background: P_STATUE.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-wave absolute left-[4%] top-[30%] block h-[36%] w-[92%]"
+        style={{ background: `linear-gradient(90deg, rgba(157,154,144,0), ${P_STATUE.core}, rgba(157,154,144,0))`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span className="fx-sig-petrify absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+          <path d="M10 2 C14 7 15 13 13 18 L15 27 L5 27 L7 18 C5 13 6 7 10 2 Z" fill={P_STATUE.core} stroke={P_STATUE.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[34%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_STATUE.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:arclight (baseline stays on chain_lightning) ---------------
+
+/** Arc Lightning: arc blue-white / plasma cream / conductor iron. */
+const P_JACOB = { core: "#79c8e8", glow: "#fbf0c8", deep: "#20303c" };
+/**
+ * Arc Lightning (t4) — "one ROOK arcs lightning ALONG A DIAGONAL... the bolt
+ * then JUMPS to freeze the nearest surviving enemy piece".
+ * A Jacob's ladder: two iron rook-towers as electrodes, an arc that CLIMBS the
+ * gap between them in rungs, and at the top it lets go and jumps clear, leaving
+ * a frost bite where it lands.
+ */
+function JacobsLadderBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(32,48,60,0.22)" boom="rgba(121,200,232,0.9)" delayMs={delayMs}>
+        {/* tell: the two electrodes stand up */}
+        <span
+          className="fx-sig-rise absolute left-[32%] top-[30%] block h-[34%] w-[5%]"
+          style={{ background: P_JACOB.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        <span
+          className="fx-sig-rise absolute left-[62%] top-[30%] block h-[34%] w-[5%]"
+          style={{ background: P_JACOB.deep, animationDelay: `${delayMs + 120}ms` }}
+        />
+        {/* strike: the arc climbs the gap in rungs */}
+        {[
+          { t: "56%", d: 280 },
+          { t: "46%", d: 330 },
+          { t: "36%", d: 380 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-uncoil absolute left-[35%] block h-[3%] w-[28%]"
+            style={{ top: s.t, background: P_JACOB.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* at the top it lets go and jumps clear */}
+        <span
+          className="fx-sig-aimrun absolute left-[46%] top-[30%] block h-[10%] w-[10%]"
+          style={{ background: P_JACOB.glow, animationDelay: `${delayMs + 460}ms` }}
+        />
+        {/* the frost bite where it lands */}
+        <span
+          className="fx-sig-frost absolute left-[62%] top-[24%] block h-[16%] w-[14%]"
+          style={{ border: `2px solid ${P_JACOB.core}`, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: ozone leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_JACOB.glow, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <AimStage>
+        <span
+          className="fx-sig-aimswing absolute left-[50%] top-[49%] block h-[1.5%] w-[22%]"
+          style={{ background: P_JACOB.core, animationDelay: `${delayMs}ms` }}
+        />
+      </AimStage>
+      <span
+        className="fx-sig-rise absolute left-[46%] top-[16%] block h-[64%] w-[8%]"
+        style={{ background: P_JACOB.deep, animationDelay: `${delayMs + 130}ms` }}
+      />
+      <span
+        className="fx-sig-flash absolute inset-[22%] block rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_JACOB.glow}, rgba(251,240,200,0) 70%)`, animationDelay: `${delayMs + 280}ms` }}
+      />
+      <span
+        className="fx-sig-frost absolute inset-[14%] block"
+        style={{ border: `2px solid ${P_JACOB.core}`, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Fur Elise: ivory key / lamplit brass / ebony key. */
+const P_PIANO = { core: "#c9a961", glow: "#f8eed2", deep: "#1e1b18" };
+/**
+ * Fur Elise (t5) — "run your fingers down the keys: glide a BISHOP along one
+ * diagonal, sweeping away up to 3 enemy pieces as it lands".
+ * A run down a keyboard. Keys depress one after another along the play's own
+ * diagonal, hammers strike, three notes fly off the struck keys, and the pedal
+ * lets the last chord ring out.
+ */
+function PianoRunBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(30,27,24,0.22)" boom="rgba(201,169,97,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the keyboard is laid out */}
+        <span
+          className="fx-sig-uncoil absolute left-[22%] top-[44%] block h-[12%] w-[56%]"
+          style={{ background: P_PIANO.glow, border: `2px solid ${P_PIANO.deep}`, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the run — four keys depress in order */}
+        {[
+          { l: "26%", d: 280 },
+          { l: "38%", d: 340 },
+          { l: "50%", d: 400 },
+          { l: "62%", d: 460 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-slam absolute top-[44%] block h-[12%] w-[6%]"
+            style={{ left: s.l, background: P_PIANO.deep, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* three notes fly off the struck keys */}
+        {[
+          { l: "32%", t: "30%", d: 480 },
+          { l: "48%", t: "26%", d: 530 },
+          { l: "62%", t: "30%", d: 580 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[9%] w-[7%]"
+            style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 14 18" className="h-full w-full" aria-hidden="true">
+              <path d="M11 1 V12" stroke={P_PIANO.core} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+              <ellipse cx="7.5" cy="13.4" rx="4" ry="3.2" fill={P_PIANO.core} stroke={P_PIANO.deep} strokeWidth="0.9" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: the sustain pedal lets the last chord ring */}
+        <span
+          className="fx-sig-shimmer absolute left-[34%] top-[58%] block h-[10%] w-[32%]"
+          style={{ background: P_PIANO.core, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <AimStage>
+        <span
+          className="fx-sig-aimswing absolute left-[50%] top-[48%] block h-[3%] w-[20%]"
+          style={{ background: P_PIANO.glow, animationDelay: `${delayMs}ms` }}
+        />
+      </AimStage>
+      <span
+        className="fx-sig-slam absolute left-[38%] top-[34%] block h-[34%] w-[24%]"
+        style={{ background: P_PIANO.deep, animationDelay: `${delayMs + 140}ms` }}
+      />
+      <span className="fx-sig-lean absolute left-[46%] top-[18%] block h-[26%] w-[20%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        <svg viewBox="0 0 14 18" className="h-full w-full" aria-hidden="true">
+          <path d="M11 1 V12" stroke={P_PIANO.core} strokeWidth="2" strokeLinecap="round" fill="none" />
+          <ellipse cx="7.5" cy="13.4" rx="4" ry="3.2" fill={P_PIANO.core} stroke={P_PIANO.deep} strokeWidth="1" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-shimmer absolute left-[26%] top-[62%] block h-[16%] w-[48%]"
+        style={{ background: P_PIANO.core, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </span>
+  );
+}
+
+// --- Group: core:chainfreeze (baseline stays on staff_of_stasis) ------------
+
+/** Tar Pit: tar black / sun-bleached cream / oil sheen brown. */
+const P_TAR = { core: "#2d2823", glow: "#f2e4bd", deep: "#6b4a22" };
+/**
+ * Tar Pit (t4) — "every one of your opponent's BISHOPS is STUCK FAST and cannot
+ * move or capture".
+ * Nothing freezes here: it CLINGS. Tar wells up through the square, a bishop's
+ * mitre sinks into it to the shoulders, strings of tar stretch and sag, and one
+ * fat bubble surfaces and glops.
+ */
+function TarPitBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(45,40,35,0.24)" boom="rgba(107,74,34,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the tar wells up */}
+        <span
+          className="fx-sig-swell absolute left-[32%] top-[46%] block h-[18%] w-[36%] rounded-full"
+          style={{ background: P_TAR.core, animationDelay: `${delayMs + 110}ms` }}
+        />
+        {/* strike: the bishop sinks in */}
+        <span className="fx-sig-drain absolute left-[42%] top-[26%] block h-[28%] w-[16%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 16 28" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C11 6 12 12 10 17 L12 27 H4 L6 17 C4 12 5 6 8 1 Z" fill={P_TAR.glow} stroke={P_TAR.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M6.4 8 H9.6 M8 6.4 V9.6" stroke={P_TAR.deep} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strings of tar stretch and sag off it */}
+        {[
+          { l: "40%", d: 420 },
+          { l: "52%", d: 460 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-tether absolute top-[50%] block h-[14%] w-[3%]"
+            style={{ left: s.l, background: P_TAR.core, transformOrigin: "50% 0%", animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* one fat bubble surfaces and glops */}
+        <span
+          className="fx-sig-swell absolute left-[56%] top-[52%] block h-[10%] w-[10%] rounded-full"
+          style={{ background: P_TAR.deep, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: an oily sheen creeping off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[44%] top-[56%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_TAR.deep, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-swell absolute left-[16%] top-[48%] block h-[34%] w-[68%] rounded-full"
+        style={{ background: P_TAR.core, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-drain absolute inset-[24%] block"
+        style={{ background: P_TAR.glow, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-tether absolute left-[46%] top-[56%] block h-[26%] w-[8%]"
+        style={{ background: P_TAR.core, transformOrigin: "50% 0%", animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[40%] top-[38%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_TAR.deep, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Frozen Moment: glass cyan / pinned-light cream / museum navy. */
+const P_GLASS = { core: "#8fc6d4", glow: "#f7eeca", deep: "#1f2c3d" };
+/**
+ * Frozen Moment (t6) — "SEAL THIS MOMENT IN GLASS: after 3 of their turns,
+ * wherever it has run to, it is SNAPPED BACK to the square it stands on now".
+ * A pane of glass slides across the square and a pin is driven through it to
+ * mark the spot; the late beat is the recall — a hook line yanks the silhouette
+ * back INTO the pane, which is the card's whole trick.
+ */
+function GlassSealBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(31,44,61,0.22)" boom="rgba(143,198,212,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the pane slides across */}
+        <span
+          className="fx-sig-uncoil absolute left-[30%] top-[28%] block h-[42%] w-[40%]"
+          style={{ background: "rgba(143,198,212,0.22)", border: `2px solid ${P_GLASS.core}`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* the moment inside it */}
+        <span className="fx-sig-grow absolute left-[43%] top-[36%] block h-[24%] w-[14%]" style={{ animationDelay: `${delayMs + 240}ms` }}>
+          <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C11 6 12 12 10 16 L12 23 H4 L6 16 C4 12 5 6 8 1 Z" fill={P_GLASS.glow} stroke={P_GLASS.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* strike: the pin is driven through to mark the spot */}
+        <span
+          className="fx-sig-slam absolute left-[47%] top-[22%] block h-[24%] w-[4%]"
+          style={{ background: P_GLASS.deep, animationDelay: `${delayMs + 340}ms` }}
+        />
+        {/* the late beat: the recall line yanks it back into the pane */}
+        <span
+          className="fx-sig-tether absolute left-[50%] top-[46%] block h-[2%] w-[26%]"
+          style={{ background: P_GLASS.core, animationDelay: `${delayMs + 540}ms` }}
+        />
+        <span
+          className="fx-sig-homeward absolute left-[62%] top-[40%] block h-[12%] w-[8%]"
+          style={{ background: P_GLASS.glow, animationDelay: `${delayMs + 600}ms` }}
+        />
+        {/* settle: the pane frosts over and holds */}
+        <span
+          className="fx-sig-frost absolute left-[32%] top-[30%] block h-[38%] w-[36%]"
+          style={{ border: `2px solid ${P_GLASS.glow}`, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute inset-[14%] block"
+        style={{ background: "rgba(143,198,212,0.22)", border: `2px solid ${P_GLASS.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-slam absolute left-[46%] top-[8%] block h-[46%] w-[8%]"
+        style={{ background: P_GLASS.deep, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span
+        className="fx-sig-homeward absolute left-[54%] top-[38%] block h-[20%] w-[16%]"
+        style={{ background: P_GLASS.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-frost absolute inset-[10%] block"
+        style={{ border: `2px solid ${P_GLASS.glow}`, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:paradrop (baseline stays on ww_paratroopers) ---------------
+
+/** Reinforcements: depot green / lamplight cream / crate brown. */
+const P_DEPOT = { core: "#5c7a52", glow: "#f6ebc7", deep: "#3a2a1a" };
+/**
+ * Reinforcements (t5) — "two pawns march in FROM THE DEPOT RIGHT NOW: place
+ * them on empty squares of your back two ranks".
+ * Nothing falls from the sky. A depot shutter rolls UP at the caster's own end
+ * of the board and two pawns walk out of it in step, kicking boot dust.
+ */
+function DepotGateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pawn = (
+    <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+      <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_DEPOT.glow} stroke={P_DEPOT.deep} strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(92,122,82,0.20)" boom="rgba(92,122,82,0.85)" delayMs={delayMs}>
+        {/* tell: the depot front, with its shutter still down */}
+        <span
+          className="fx-sig-uncoil absolute left-[30%] top-[52%] block h-[16%] w-[40%]"
+          style={{ background: P_DEPOT.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the shutter rolls up */}
+        <span
+          className="fx-sig-drain absolute left-[34%] top-[38%] block h-[18%] w-[32%]"
+          style={{ background: P_DEPOT.core, animationDelay: `${delayMs + 280}ms` }}
+        />
+        {/* two pawns walk out in step */}
+        <span className="fx-sig-marchstep absolute left-[38%] top-[36%] block h-[22%] w-[10%]" style={{ animationDelay: `${delayMs + 400}ms` }}>
+          {pawn}
+        </span>
+        <span className="fx-sig-marchstep absolute left-[52%] top-[36%] block h-[22%] w-[10%]" style={{ animationDelay: `${delayMs + 460}ms` }}>
+          {pawn}
+        </span>
+        {/* settle: boot dust kicked off the caster's own edge */}
+        {[
+          { l: "40%", t: "58%", d: 590 },
+          { l: "54%", t: "58%", d: 640 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[6%] w-[6%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_DEPOT.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[10%] top-[66%] block h-[18%] w-[80%]"
+        style={{ background: P_DEPOT.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-drain absolute left-[20%] top-[24%] block h-[42%] w-[60%]"
+        style={{ background: P_DEPOT.core, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span className="fx-sig-marchstep absolute left-[38%] top-[26%] block h-[46%] w-[24%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        {pawn}
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[56%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_DEPOT.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Conga Line: carnival pink / party cream / stage plum. */
+const P_CONGA = { core: "#d4568c", glow: "#fbeccd", deep: "#3a1f38" };
+/**
+ * Conga Line (t5) — "the whole line dances ONE STEP TO THE SIDE: every one of
+ * your pawns shifts one square toward the edge you pick".
+ * A sideways wave, not a drop: five pawns hip-swing in sequence so the shuffle
+ * ripples down the rank, with a couple of notes over the top and the last one
+ * left standing where it ran out of room.
+ */
+function CongaLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(212,86,140,0.18)" boom="rgba(212,86,140,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the beat drops — a bar across the rank */}
+        <span
+          className="fx-sig-uncoil absolute left-[22%] top-[58%] block h-[3%] w-[56%]"
+          style={{ background: P_CONGA.core, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the shuffle ripples along the line */}
+        {[
+          { l: "24%", d: 260 },
+          { l: "36%", d: 320 },
+          { l: "48%", d: 380 },
+          { l: "60%", d: 440 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-wiggle absolute top-[38%] block h-[20%] w-[9%]"
+            style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+              <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_CONGA.glow} stroke={P_CONGA.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* the whole line slides one step toward the chosen edge */}
+        <span
+          className="fx-sig-ordertick absolute left-[22%] top-[36%] block h-[24%] w-[56%]"
+          style={{ background: "rgba(212,86,140,0.28)", animationDelay: `${delayMs + 480}ms` }}
+        />
+        {/* settle: two notes floating off the caster's side */}
+        {[
+          { l: "34%", t: "26%", d: 600 },
+          { l: "58%", t: "24%", d: 660 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[8%] w-[6%]"
+            style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 14 18" className="h-full w-full" aria-hidden="true">
+              <path d="M11 1 V12" stroke={P_CONGA.core} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+              <ellipse cx="7.5" cy="13.4" rx="4" ry="3.2" fill={P_CONGA.core} stroke={P_CONGA.deep} strokeWidth="0.9" />
+            </svg>
+          </span>
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[8%] top-[66%] block h-[8%] w-[84%]"
+        style={{ background: P_CONGA.core, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-wiggle absolute inset-[22%] block" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+          <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_CONGA.glow} stroke={P_CONGA.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[10%] top-[30%] block h-[40%] w-[80%]"
+        style={{ background: "rgba(212,86,140,0.28)", animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[44%] top-[20%] block h-[16%] w-[12%] rounded-full"
+        style={{ background: P_CONGA.core, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:portal (baseline stays on wc_clown_car) --------------------
+
+/** Attack Goose: goose white-cream / bill orange / pond slate. */
+const P_GOOSE = { core: "#e8912c", glow: "#f8f0d6", deep: "#31383f" };
+/**
+ * Attack Goose (t5) — "an attack goose INVADES YOUR OPPONENT'S HALF as a knight
+ * for 2 of your turns, then honks off".
+ * No portal: an INVASION. The goose comes in low across the board wings out and
+ * neck flat, HONKS (a ring), and leaves a trail of loose feathers behind it.
+ */
+function GooseChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const goose = (
+    <svg viewBox="0 0 40 22" className="h-full w-full" aria-hidden="true">
+      <path d="M2 15 C6 8 14 6 22 8 L30 6 L31 2 L36 5 L39 4 L37 9 C36 15 30 19 22 18 C14 20 6 19 2 15 Z" fill={P_GOOSE.glow} stroke={P_GOOSE.deep} strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M31 2 L38 4 L33 7 Z" fill={P_GOOSE.core} stroke={P_GOOSE.deep} strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M8 12 C14 9 20 9 25 11" fill="none" stroke={P_GOOSE.deep} strokeWidth="1" strokeLinecap="round" />
+      <circle cx="32.4" cy="4.6" r="0.8" fill={P_GOOSE.deep} />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(49,56,63,0.20)" boom="rgba(232,145,44,0.9)" delayMs={delayMs}>
+        {/* tell: the run-up ripple across the water */}
+        <span
+          className="fx-sig-uncoil absolute left-[20%] top-[56%] block h-[3%] w-[52%]"
+          style={{ background: P_GOOSE.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the goose comes in low, right across the crop */}
+        <span className="fx-sig-cross absolute left-[22%] top-[34%] block h-[22%] w-[40%]" style={{ animationDelay: `${delayMs + 280}ms` }}>
+          {goose}
+        </span>
+        {/* the HONK */}
+        <span
+          className="fx-sig-ring absolute left-[54%] top-[28%] block h-[24%] w-[24%] rounded-full"
+          style={{ border: `3px solid ${P_GOOSE.core}`, animationDelay: `${delayMs + 430}ms` }}
+        />
+        {/* settle: loose feathers leaning off the caster's side */}
+        {[
+          { l: "34%", t: "44%", d: 560 },
+          { l: "48%", t: "50%", d: 610 },
+          { l: "60%", t: "44%", d: 660 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[6%] w-[4%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_GOOSE.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[8%] top-[64%] block h-[8%] w-[84%]"
+        style={{ background: P_GOOSE.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-dart absolute left-[4%] top-[28%] block h-[40%] w-[76%]" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        {goose}
+      </span>
+      <span
+        className="fx-sig-ring absolute inset-[16%] block rounded-full"
+        style={{ border: `3px solid ${P_GOOSE.core}`, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[42%] block h-[12%] w-[10%] rounded-full"
+        style={{ background: P_GOOSE.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+/** Rubber Duck Squad: duck yellow / bath cream / bill orange. */
+const P_DUCK = { core: "#e8c341", glow: "#fbf1cf", deep: "#c4601c" };
+/**
+ * Rubber Duck Squad (t5) — "your bishops are secretly RUBBER: any enemy piece
+ * that captures one BOUNCES STRAIGHT BACK to the square it came from".
+ * The gag is the rebound. A duck squeaks into place, an attacker slams into it,
+ * squashes it flat, and is flung back the way it came along the very vector it
+ * arrived on.
+ */
+function RubberBounceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const duck = (
+    <svg viewBox="0 0 26 22" className="h-full w-full" aria-hidden="true">
+      <path d="M4 18 C2 13 5 9 10 9 C10 4 15 2 18 5 C21 5 22 8 20 10 C24 12 24 18 19 20 C13 22 7 21 4 18 Z" fill={P_DUCK.core} stroke={P_DUCK.deep} strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M20 7 L25 8 L20 10 Z" fill={P_DUCK.deep} stroke={P_DUCK.deep} strokeWidth="0.6" strokeLinejoin="round" />
+      <circle cx="17.4" cy="6.6" r="0.9" fill={P_DUCK.deep} />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(232,195,65,0.18)" boom="rgba(196,96,28,0.85)" delayMs={delayMs}>
+        {/* tell: the duck squeaks into place */}
+        <span className="fx-sig-hop absolute left-[40%] top-[40%] block h-[22%] w-[24%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          {duck}
+        </span>
+        {/* strike: the attacker piles in and squashes it */}
+        <span
+          className="fx-sig-aimrun absolute left-[24%] top-[42%] block h-[16%] w-[12%]"
+          style={{ background: P_DUCK.glow, border: `2px solid ${P_DUCK.deep}`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        <span
+          className="fx-sig-splat absolute left-[38%] top-[50%] block h-[10%] w-[28%] rounded-full"
+          style={{ background: P_DUCK.core, animationDelay: `${delayMs + 400}ms` }}
+        />
+        {/* the rebound: straight back the way it came */}
+        <span
+          className="fx-sig-homeward absolute left-[46%] top-[40%] block h-[14%] w-[10%]"
+          style={{ background: P_DUCK.glow, border: `2px solid ${P_DUCK.deep}`, animationDelay: `${delayMs + 500}ms` }}
+        />
+        {/* settle: the squeak ring, and bath bubbles off the caster's side */}
+        <span
+          className="fx-sig-ring absolute left-[36%] top-[36%] block h-[28%] w-[28%] rounded-full"
+          style={{ border: `2px solid ${P_DUCK.deep}`, animationDelay: `${delayMs + 580}ms` }}
+        />
+        <span
+          className="fx-sig-lean absolute left-[48%] top-[46%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_DUCK.glow, animationDelay: `${delayMs + 650}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-hop absolute inset-[22%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        {duck}
+      </span>
+      <span
+        className="fx-sig-splat absolute left-[24%] top-[58%] block h-[20%] w-[52%] rounded-full"
+        style={{ background: P_DUCK.core, animationDelay: `${delayMs + 170}ms` }}
+      />
+      <span
+        className="fx-sig-homeward absolute left-[40%] top-[32%] block h-[24%] w-[18%]"
+        style={{ background: P_DUCK.glow, border: `2px solid ${P_DUCK.deep}`, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-ring absolute inset-[12%] block rounded-full"
+        style={{ border: `2px solid ${P_DUCK.deep}`, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:cratedrop (baseline stays on supply_drop) ------------------
+
+/** Onett: streetlamp gold / townhouse cream / dusk blue. */
+const P_TOWN = { core: "#e0b455", glow: "#f9eed3", deep: "#2b3a53" };
+/**
+ * Onett (t2) — "after your opponent's next move, A TOWNSPERSON REPORTS FOR
+ * DUTY: a new pawn takes the nearest open square on your pawn line".
+ * A small-town scene rather than an airdrop: the streetlamp comes on, a door
+ * opens under it, and a townsperson walks out and takes their place in the
+ * line with a little wave.
+ */
+function TownsfolkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(43,58,83,0.20)" boom="rgba(224,180,85,0.85)" delayMs={delayMs}>
+        {/* tell: the streetlamp comes on */}
+        <span className="fx-sig-flash absolute left-[30%] top-[26%] block h-[16%] w-[12%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 14 18" className="h-full w-full" aria-hidden="true">
+            <path d="M7 17 V8" stroke={P_TOWN.deep} strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M3 8 L7 2 L11 8 Z" fill={P_TOWN.core} stroke={P_TOWN.deep} strokeWidth="1.1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the door opens under it */}
+        <span
+          className="fx-sig-peel absolute left-[44%] top-[38%] block h-[24%] w-[10%]"
+          style={{ background: P_TOWN.deep, animationDelay: `${delayMs + 260}ms` }}
+        />
+        {/* strike: the townsperson walks out and falls in */}
+        <span className="fx-sig-marchstep absolute left-[46%] top-[38%] block h-[22%] w-[10%]" style={{ animationDelay: `${delayMs + 380}ms` }}>
+          <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_TOWN.glow} stroke={P_TOWN.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the pawn line they join */}
+        <span
+          className="fx-sig-uncoil absolute left-[26%] top-[60%] block h-[2%] w-[48%]"
+          style={{ background: P_TOWN.core, animationDelay: `${delayMs + 500}ms` }}
+        />
+        {/* settle: lamplight motes leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[42%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_TOWN.core, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-flash absolute left-[16%] top-[10%] block h-[34%] w-[26%] rounded-full"
+        style={{ background: `radial-gradient(circle, ${P_TOWN.core}, rgba(224,180,85,0) 70%)`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-peel absolute left-[38%] top-[26%] block h-[50%] w-[22%]"
+        style={{ background: P_TOWN.deep, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span className="fx-sig-marchstep absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+          <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_TOWN.glow} stroke={P_TOWN.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[40%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_TOWN.core, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:gravehands (baseline stays on raise_dead) ------------------
+
+/** Undying Thrall: bound-spirit green / bone cream / iron shackle. */
+const P_THRALL = { core: "#6fae86", glow: "#f2e7c6", deep: "#2c2f33" };
+/**
+ * Undying Thrall (t2) — "BIND a restless spirit into service: it fights for 4
+ * of your turns, THEN CRUMBLES TO DUST".
+ * A binding, not a resurrection: a rune circle is drawn, the spirit is hauled
+ * up out of it by a chain, a shackle claps shut on it — and four tally marks
+ * burn away one at a time, its lease counting down as it settles.
+ */
+function ThrallBindBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(44,47,51,0.22)" boom="rgba(111,174,134,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the rune circle is drawn */}
+        <span
+          className="fx-sig-swirl absolute left-[36%] top-[44%] block h-[24%] w-[28%] rounded-full"
+          style={{ border: `2px solid ${P_THRALL.core}`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* the chain that hauls it up */}
+        <span
+          className="fx-sig-tether absolute left-[48%] top-[24%] block h-[24%] w-[3%]"
+          style={{ background: P_THRALL.deep, transformOrigin: "50% 0%", animationDelay: `${delayMs + 240}ms` }}
+        />
+        {/* strike: the spirit comes up */}
+        <span className="fx-sig-rise absolute left-[42%] top-[30%] block h-[28%] w-[16%]" style={{ animationDelay: `${delayMs + 340}ms` }}>
+          <svg viewBox="0 0 18 28" className="h-full w-full" aria-hidden="true">
+            <path d="M9 1 C14 1 16 6 16 12 V26 L13 23 L11 26 L9 23 L7 26 L5 23 L2 26 V12 C2 6 4 1 9 1 Z" fill={P_THRALL.glow} stroke={P_THRALL.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <circle cx="7" cy="11" r="1.1" fill={P_THRALL.core} />
+            <circle cx="11.4" cy="11" r="1.1" fill={P_THRALL.core} />
+          </svg>
+        </span>
+        {/* the shackle claps shut */}
+        <span
+          className="fx-sig-slam absolute left-[44%] top-[50%] block h-[8%] w-[12%]"
+          style={{ border: `2px solid ${P_THRALL.deep}`, animationDelay: `${delayMs + 460}ms` }}
+        />
+        {/* settle: four tally marks, the lease counting down and leaning away */}
+        {[
+          { l: "34%", d: 570 },
+          { l: "42%", d: 610 },
+          { l: "58%", d: 650 },
+          { l: "66%", d: 690 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute top-[62%] block h-[8%] w-[2%]"
+            style={{ left: s.l, background: P_THRALL.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-swirl absolute inset-[18%] block rounded-full"
+        style={{ border: `2px solid ${P_THRALL.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-rise absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 18 28" className="h-full w-full" aria-hidden="true">
+          <path d="M9 1 C14 1 16 6 16 12 V26 L13 23 L11 26 L9 23 L7 26 L5 23 L2 26 V12 C2 6 4 1 9 1 Z" fill={P_THRALL.glow} stroke={P_THRALL.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-slam absolute left-[36%] top-[56%] block h-[16%] w-[28%]"
+        style={{ border: `2px solid ${P_THRALL.deep}`, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[44%] top-[36%] block h-[12%] w-[8%]"
+        style={{ background: P_THRALL.core, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:bladegift (baseline stays on excalibur) --------------------
+
+/** 25 Inch Waist: tape-measure yellow / linen cream / gap shadow. */
+const P_SLIM = { core: "#e0bf4a", glow: "#f9f0d5", deep: "#3a3128" };
+/**
+ * 25 Inch Waist (t2) — "LEAN AND NIMBLE: each of your pawns may also SLIP
+ * DIAGONALLY FORWARD one square onto empty ground, wiggling past the traffic".
+ * Two blockers stand shoulder to shoulder with a hairline gap; a tape measure
+ * snaps around the pawn, it narrows, and it wiggles diagonally through the gap
+ * that should not have fit it.
+ */
+function SlimSlipBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(224,191,74,0.16)" boom="rgba(224,191,74,0.85)" delayMs={delayMs}>
+        {/* tell: the tape measure snaps around */}
+        <span
+          className="fx-sig-uncoil absolute left-[34%] top-[44%] block h-[4%] w-[32%]"
+          style={{ background: P_SLIM.core, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* the two blockers, with the gap between them */}
+        <span
+          className="fx-sig-grow absolute left-[36%] top-[34%] block h-[26%] w-[10%]"
+          style={{ background: P_SLIM.deep, animationDelay: `${delayMs + 200}ms` }}
+        />
+        <span
+          className="fx-sig-grow absolute left-[54%] top-[34%] block h-[26%] w-[10%]"
+          style={{ background: P_SLIM.deep, animationDelay: `${delayMs + 230}ms` }}
+        />
+        {/* strike: the pawn wiggles diagonally through */}
+        <span className="fx-sig-wiggle absolute left-[46%] top-[36%] block h-[22%] w-[8%]" style={{ animationDelay: `${delayMs + 340}ms` }}>
+          <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+            <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_SLIM.glow} stroke={P_SLIM.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* it comes out diagonally forward, on the play's own vector */}
+        <span
+          className="fx-sig-aimrun absolute left-[48%] top-[32%] block h-[12%] w-[8%]"
+          style={{ background: P_SLIM.glow, animationDelay: `${delayMs + 470}ms` }}
+        />
+        {/* settle: the tape reels back off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[44%] top-[48%] block h-[5%] w-[10%]"
+          style={{ background: P_SLIM.core, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[12%] top-[46%] block h-[10%] w-[76%]"
+        style={{ background: P_SLIM.core, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-wiggle absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+          <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_SLIM.glow} stroke={P_SLIM.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-aimrun absolute left-[40%] top-[24%] block h-[24%] w-[18%]"
+        style={{ background: P_SLIM.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:bubblewrap (baseline stays on bubble_wrap) -----------------
+
+/** GF's Hoodie: soft rose / warm cotton cream / cocoa. */
+const P_HOODIE = { core: "#c98a9c", glow: "#f8ead0", deep: "#4a3128" };
+/**
+ * I Love Smelling My GF's Hoodie (t3) — "wrap one of your pieces in the hoodie:
+ * IT AND THE FRIENDLY PIECE DIRECTLY BEHIND IT cannot be captured".
+ * Two silhouettes, one behind the other, and one hoodie big enough for both: it
+ * drops over the pair, the drawstring cinches, and warmth rises off it.
+ */
+function HoodieWrapBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(201,138,156,0.18)" boom="rgba(201,138,156,0.8)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the two of them, one behind the other */}
+        <span
+          className="fx-sig-grow absolute left-[40%] top-[40%] block h-[24%] w-[12%]"
+          style={{ background: P_HOODIE.glow, animationDelay: `${delayMs + 90}ms` }}
+        />
+        <span
+          className="fx-sig-grow absolute left-[52%] top-[44%] block h-[22%] w-[11%]"
+          style={{ background: P_HOODIE.glow, animationDelay: `${delayMs + 130}ms` }}
+        />
+        {/* strike: the hoodie comes down over both */}
+        <span className="fx-sig-slam absolute left-[34%] top-[30%] block h-[34%] w-[34%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 34 34" className="h-full w-full" aria-hidden="true">
+            <path d="M17 2 C24 2 27 7 28 12 L32 16 L28 20 V32 H6 V20 L2 16 L6 12 C7 7 10 2 17 2 Z" fill={P_HOODIE.core} stroke={P_HOODIE.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M11 10 C13 15 21 15 23 10" fill="none" stroke={P_HOODIE.deep} strokeWidth="1.1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the drawstring cinches */}
+        <span
+          className="fx-sig-tether absolute left-[42%] top-[52%] block h-[2%] w-[18%]"
+          style={{ background: P_HOODIE.glow, animationDelay: `${delayMs + 440}ms` }}
+        />
+        {/* settle: warmth rising off it, leaning off the caster's side */}
+        {[
+          { l: "40%", t: "34%", d: 580 },
+          { l: "56%", t: "32%", d: 640 },
+          { l: "48%", t: "38%", d: 690 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[5%] w-[5%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_HOODIE.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-grow absolute left-[26%] top-[36%] block h-[36%] w-[22%]"
+        style={{ background: P_HOODIE.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-slam absolute inset-[14%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 34 34" className="h-full w-full" aria-hidden="true">
+          <path d="M17 2 C24 2 27 7 28 12 L32 16 L28 20 V32 H6 V20 L2 16 L6 12 C7 7 10 2 17 2 Z" fill={P_HOODIE.core} stroke={P_HOODIE.deep} strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-tether absolute left-[34%] top-[62%] block h-[6%] w-[34%]"
+        style={{ background: P_HOODIE.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[44%] top-[28%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_HOODIE.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:snooze (baseline stays on time_skip) -----------------------
+
+/** Tempo Theft: pickpocket plum / lifted-gold cream / coat lining. */
+const P_LIFT = { core: "#a05fa8", glow: "#f7ebc9", deep: "#2a2233" };
+/**
+ * Tempo Theft (t3) — "STEAL your opponent's next turn (you move twice, they
+ * wait)".
+ * Not a snooze button: a lift. A hand comes out of frame, hooks the ticking
+ * turn-token out of their pocket, and drops it on the caster's own side, where
+ * it buys two move-arrows instead of one.
+ */
+function TempoLiftBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(42,34,51,0.20)" boom="rgba(160,95,168,0.85)" delayMs={delayMs}>
+        {/* tell: their pocket, with the token still in it */}
+        <span
+          className="fx-sig-uncoil absolute left-[26%] top-[38%] block h-[18%] w-[20%]"
+          style={{ background: P_LIFT.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        <span
+          className="fx-sig-tick absolute left-[32%] top-[40%] block h-[12%] w-[10%] rounded-full"
+          style={{ background: P_LIFT.glow, border: `2px solid ${P_LIFT.core}`, animationDelay: `${delayMs + 140}ms` }}
+        />
+        {/* strike: the hand hooks it out */}
+        <span className="fx-sig-aimrun absolute left-[36%] top-[36%] block h-[16%] w-[14%]" style={{ animationDelay: `${delayMs + 320}ms` }}>
+          <svg viewBox="0 0 20 16" className="h-full w-full" aria-hidden="true">
+            <path d="M1 12 C4 7 9 4 14 5 L18 3 L19 7 L15 9 C12 13 7 15 2 15 Z" fill={P_LIFT.glow} stroke={P_LIFT.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* it lands on the caster's own side and buys two moves */}
+        {[
+          { l: "52%", t: "56%", d: 460 },
+          { l: "62%", t: "56%", d: 520 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-ordertick absolute block h-[9%] w-[14%]"
+            style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 22 10" className="h-full w-full" aria-hidden="true">
+              <path d="M0 5 H16 M12 1 L20 5 L12 9" fill="none" stroke={P_LIFT.core} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: the emptied pocket sags, and lint drifts off the caster */}
+        <span
+          className="fx-sig-lean absolute left-[34%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_LIFT.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-tick absolute inset-[30%] block rounded-full"
+        style={{ background: P_LIFT.glow, border: `2px solid ${P_LIFT.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-aimrun absolute left-[20%] top-[34%] block h-[32%] w-[34%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 16" className="h-full w-full" aria-hidden="true">
+          <path d="M1 12 C4 7 9 4 14 5 L18 3 L19 7 L15 9 C12 13 7 15 2 15 Z" fill={P_LIFT.glow} stroke={P_LIFT.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[26%] top-[62%] block h-[16%] w-[48%]"
+        style={{ background: P_LIFT.core, animationDelay: `${delayMs + 320}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:unmake (baseline stays on wa_unmake) -----------------------
+
+/** Banish: sigil indigo / brand cream / exile black. */
+const P_BANISH = { core: "#5f6bb5", glow: "#f6e9c5", deep: "#161422" };
+/**
+ * Banish (t3) — "MARK one enemy pawn, knight or bishop: AFTER YOUR OPPONENT
+ * REPLIES, it is banished from the board".
+ * The mark comes first and HOLDS — that delay is the card. A brand is stamped
+ * on the piece, sits there burning, and only on the late beat does the floor
+ * open under it and take it, leaving the brand hanging in the air.
+ */
+function BanishMarkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const sigil = (
+    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+      <circle cx="12" cy="12" r="10.4" fill="none" stroke={P_BANISH.core} strokeWidth="1.6" strokeDasharray="3 2.4" />
+      <path d="M12 4 L19 16 H5 Z" fill="none" stroke={P_BANISH.glow} strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M12 9 V19" stroke={P_BANISH.glow} strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(22,20,34,0.22)" boom="rgba(95,107,181,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the brand is stamped on */}
+        <span className="fx-sig-sealstamp absolute left-[38%] top-[34%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          {sigil}
+        </span>
+        {/* it holds, burning, while they reply */}
+        <span
+          className="fx-sig-shimmer absolute left-[42%] top-[38%] block h-[20%] w-[16%]"
+          style={{ background: P_BANISH.core, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* strike, on the LATE beat: the floor opens and takes it */}
+        <span
+          className="fx-sig-hole absolute left-[38%] top-[44%] block h-[18%] w-[24%] rounded-full"
+          style={{ background: P_BANISH.deep, animationDelay: `${delayMs + 500}ms` }}
+        />
+        <span
+          className="fx-sig-drain absolute left-[44%] top-[34%] block h-[22%] w-[12%]"
+          style={{ background: P_BANISH.glow, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: the brand left hanging, leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[40%] block h-[8%] w-[8%] rounded-full"
+          style={{ border: `2px solid ${P_BANISH.core}`, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-sealstamp absolute inset-[20%] block" style={{ animationDelay: `${delayMs}ms` }}>
+        {sigil}
+      </span>
+      <span
+        className="fx-sig-hole absolute left-[26%] top-[46%] block h-[36%] w-[48%] rounded-full"
+        style={{ background: P_BANISH.deep, animationDelay: `${delayMs + 200}ms` }}
+      />
+      <span
+        className="fx-sig-drain absolute inset-[30%] block"
+        style={{ background: P_BANISH.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[32%] block h-[14%] w-[14%] rounded-full"
+        style={{ border: `2px solid ${P_BANISH.core}`, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:gorgonstare (baseline stays on medusas_stare) --------------
+
+/** Basilisk's Gaze: serpent green / slit-pupil cream / stone grey. */
+const P_BASIL = { core: "#6f9a4e", glow: "#f5eac6", deep: "#4a4a46" };
+/**
+ * Basilisk's Gaze (t3) — "it may MAKE ONE LAST LEGAL MOVE TO ESCAPE; then it
+ * becomes a walnut... and while petrified it cannot capture".
+ * The escape is the scene Medusa's does not have. A single reptilian eye opens,
+ * the target BOLTS (an after-image running clear), the gaze catches it anyway,
+ * and stone closes over it where it stopped.
+ */
+function BasiliskEyeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(74,74,70,0.22)" boom="rgba(111,154,78,0.85)" delayMs={delayMs}>
+        {/* tell: the eye opens */}
+        <span className="fx-sig-gaze absolute left-[34%] top-[32%] block h-[20%] w-[32%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 32 20" className="h-full w-full" aria-hidden="true">
+            <path d="M1 10 C7 3 25 3 31 10 C25 17 7 17 1 10 Z" fill={P_BASIL.glow} stroke={P_BASIL.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <ellipse cx="16" cy="10" rx="4.4" ry="6.4" fill={P_BASIL.core} stroke={P_BASIL.deep} strokeWidth="1" />
+            <path d="M16 5 C17.4 8 17.4 12 16 15 C14.6 12 14.6 8 16 5 Z" fill={P_BASIL.deep} />
+          </svg>
+        </span>
+        {/* strike: the target bolts */}
+        <span
+          className="fx-sig-afterimage absolute left-[40%] top-[46%] block h-[20%] w-[12%]"
+          style={{ background: P_BASIL.glow, animationDelay: `${delayMs + 300}ms` }}
+        />
+        <span
+          className="fx-sig-aimrun absolute left-[46%] top-[46%] block h-[20%] w-[12%]"
+          style={{ background: P_BASIL.glow, animationDelay: `${delayMs + 360}ms` }}
+        />
+        {/* the gaze catches it anyway */}
+        <span
+          className="fx-sig-uncoil absolute left-[46%] top-[42%] block h-[3%] w-[26%]"
+          style={{ background: P_BASIL.core, animationDelay: `${delayMs + 470}ms` }}
+        />
+        {/* stone closes over where it stopped */}
+        <span
+          className="fx-sig-petrify absolute left-[62%] top-[44%] block h-[22%] w-[14%]"
+          style={{ background: P_BASIL.deep, animationDelay: `${delayMs + 560}ms` }}
+        />
+        {/* settle: grit leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[50%] top-[52%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_BASIL.glow, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-gaze absolute left-[10%] top-[26%] block h-[32%] w-[80%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 32 20" className="h-full w-full" aria-hidden="true">
+          <path d="M1 10 C7 3 25 3 31 10 C25 17 7 17 1 10 Z" fill={P_BASIL.glow} stroke={P_BASIL.deep} strokeWidth="1.6" strokeLinejoin="round" />
+          <ellipse cx="16" cy="10" rx="4.4" ry="6.4" fill={P_BASIL.core} stroke={P_BASIL.deep} strokeWidth="1.2" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-afterimage absolute inset-[28%] block"
+        style={{ background: P_BASIL.glow, animationDelay: `${delayMs + 170}ms` }}
+      />
+      <span
+        className="fx-sig-petrify absolute inset-[22%] block"
+        style={{ background: P_BASIL.deep, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[40%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_BASIL.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:holylight (baseline stays on divine_intervention) ----------
+
+/** Hallowed Return: chapel gold / candle cream / vestry blue. */
+const P_HALLOW = { core: "#dcb457", glow: "#fbf0d2", deep: "#243a55" };
+/**
+ * Hallowed Return (t4) — "a prayer is answered EXACTLY: one of your captured
+ * knights, bishops or rooks is restored TO ONE OF ITS OWN STARTING SQUARES".
+ * The scene is the homecoming: a chapel arch stands up, motes gather from all
+ * over the crop and re-form the missing piece INSIDE its own home square's
+ * outline, and a feather settles.
+ */
+function HallowedReturnBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(36,58,85,0.20)" boom="rgba(220,180,87,0.85)" delayMs={delayMs}>
+        {/* tell: the home square's own outline lights up */}
+        <span
+          className="fx-sig-reticle absolute left-[40%] top-[44%] block h-[20%] w-[20%]"
+          style={{ border: `2px solid ${P_HALLOW.core}`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* the chapel arch stands behind it */}
+        <span className="fx-sig-rise absolute left-[34%] top-[22%] block h-[36%] w-[32%]" style={{ animationDelay: `${delayMs + 220}ms` }}>
+          <svg viewBox="0 0 32 36" className="h-full w-full" aria-hidden="true">
+            <path d="M4 35 V16 C4 7 10 2 16 2 C22 2 28 7 28 16 V35" fill="none" stroke={P_HALLOW.core} strokeWidth="2" strokeLinejoin="round" />
+            <path d="M16 8 V16 M12 12 H20" stroke={P_HALLOW.glow} strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the motes gather home from across the crop */}
+        {[
+          { l: "24%", t: "26%", d: 340 },
+          { l: "70%", t: "30%", d: 380 },
+          { l: "30%", t: "62%", d: 420 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-homeward absolute block h-[6%] w-[6%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_HALLOW.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the piece re-forms inside the outline */}
+        <span className="fx-sig-grow absolute left-[43%] top-[42%] block h-[22%] w-[14%]" style={{ animationDelay: `${delayMs + 500}ms` }}>
+          <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+            <path d="M5 27 L15 27 L14 22 C17 18 17 10 12 6 L13 2 L9 4 C5 6 4 12 6 15 L4 18 Z" fill={P_HALLOW.glow} stroke={P_HALLOW.deep} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: a single feather */}
+        <span
+          className="fx-sig-driftmote absolute left-[56%] top-[36%] block h-[8%] w-[5%] rounded-full"
+          style={{ background: P_HALLOW.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-reticle absolute inset-[20%] block"
+        style={{ border: `2px solid ${P_HALLOW.core}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-homeward absolute left-[10%] top-[16%] block h-[16%] w-[16%] rounded-full"
+        style={{ background: P_HALLOW.glow, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 320}ms` }}>
+        <svg viewBox="0 0 20 28" className="h-full w-full" aria-hidden="true">
+          <path d="M5 27 L15 27 L14 22 C17 18 17 10 12 6 L13 2 L9 4 C5 6 4 12 6 15 L4 18 Z" fill={P_HALLOW.glow} stroke={P_HALLOW.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-driftmote absolute left-[56%] top-[20%] block h-[18%] w-[12%] rounded-full"
+        style={{ background: P_HALLOW.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:hillflag (baseline stays on king_of_the_hill) --------------
+
+/** Home Field: turf green / floodlight cream / stand shadow. */
+const P_HOME = { core: "#4f8a56", glow: "#f7edcb", deep: "#26332c" };
+/**
+ * Home Field (t6) — "while standing IN YOUR OWN HALF of the board or one rank
+ * past it, each of your knights, bishops and rooks may also step ONE SQUARE IN
+ * ANY DIRECTION".
+ * The scene is the territory: the caster's own half is marked out with a
+ * boundary line across the BOARD (not the canvas), the home crowd roars in from
+ * that edge, and three pieces get a one-step compass rose.
+ */
+function HomeGroundBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(79,138,86,0.18)" boom="rgba(247,237,203,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the halfway line is chalked across the BOARD */}
+        <BoardFrame>
+          <span
+            className="fx-sig-uncoil absolute left-0 top-[49%] block h-[2%] w-full"
+            style={{ background: P_HOME.glow, animationDelay: `${delayMs + 100}ms` }}
+          />
+          <span
+            className="fx-sig-ordertick absolute left-0 top-[50%] block h-[50%] w-full"
+            style={{ background: "rgba(79,138,86,0.26)", animationDelay: `${delayMs + 260}ms` }}
+          />
+        </BoardFrame>
+        {/* strike: the home crowd roars in from the caster's own edge */}
+        <span
+          className="fx-sig-lean absolute left-[30%] top-[56%] block h-[10%] w-[40%]"
+          style={{ background: P_HOME.core, animationDelay: `${delayMs + 340}ms` }}
+        />
+        {/* three pieces get their one-step compass rose */}
+        {[
+          { l: "30%", t: "40%", d: 420 },
+          { l: "46%", t: "48%", d: 470 },
+          { l: "62%", t: "40%", d: 520 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-grow absolute block h-[14%] w-[12%]"
+            style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+              <circle cx="10" cy="10" r="8.4" fill="none" stroke={P_HOME.glow} strokeWidth="1.4" />
+              <path d="M10 1.6 V5 M10 15 V18.4 M1.6 10 H5 M15 10 H18.4 M4.4 4.4 L6.8 6.8 M15.6 15.6 L13.2 13.2 M15.6 4.4 L13.2 6.8 M4.4 15.6 L6.8 13.2" stroke={P_HOME.core} strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: floodlight flare over the home half */}
+        <span
+          className="fx-sig-shimmer absolute left-[34%] top-[58%] block h-[12%] w-[32%]"
+          style={{ background: P_HOME.glow, animationDelay: `${delayMs + 660}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[6%] top-[46%] block h-[6%] w-[88%]"
+        style={{ background: P_HOME.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="8.4" fill="none" stroke={P_HOME.glow} strokeWidth="1.6" />
+          <path d="M10 1.6 V5 M10 15 V18.4 M1.6 10 H5 M15 10 H18.4" stroke={P_HOME.core} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[30%] top-[58%] block h-[18%] w-[40%]"
+        style={{ background: P_HOME.core, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-shimmer absolute left-[26%] top-[24%] block h-[20%] w-[48%]"
+        style={{ background: P_HOME.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:snapfrost (baseline stays on mass_freeze) ------------------
+
+/** Pincer Movement: jaw steel / bite cream / crushed shadow. */
+const P_PINCER = { core: "#8d97a4", glow: "#f6ebc9", deep: "#232a33" };
+/**
+ * Pincer Movement (t6) — "every enemy piece CAUGHT DIRECTLY BETWEEN TWO OF YOUR
+ * PIECES (left and right, above and below, or across a diagonal) is pinned".
+ * Two jaws, not a frost wave: they come in from opposite ends of the play's own
+ * axis, close on the piece between them, and hold it there while the crunch
+ * ring rolls out.
+ */
+function PincerJawsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const jaw = (flip: boolean) => (
+    <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true" style={flip ? { transform: "scaleX(-1)" } : undefined}>
+      <path d="M2 1 C12 5 17 11 17 13 C17 15 12 21 2 25 C8 19 10 15 10 13 C10 11 8 7 2 1 Z" fill={P_PINCER.core} stroke={P_PINCER.deep} strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(35,42,51,0.22)" boom="rgba(141,151,164,0.9)" delayMs={delayMs}>
+        {/* tell: the axis they will close along */}
+        <span
+          className="fx-sig-uncoil absolute left-[24%] top-[47%] block h-[2%] w-[52%]"
+          style={{ background: P_PINCER.glow, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* strike: the two jaws come in and close */}
+        <span className="fx-sig-homeward absolute left-[22%] top-[36%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          {jaw(false)}
+        </span>
+        <span className="fx-sig-homeward absolute left-[60%] top-[36%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs + 340}ms` }}>
+          {jaw(true)}
+        </span>
+        {/* the piece caught between them */}
+        <span
+          className="fx-sig-splat absolute left-[45%] top-[42%] block h-[16%] w-[10%]"
+          style={{ background: P_PINCER.glow, animationDelay: `${delayMs + 450}ms` }}
+        />
+        {/* it is pinned where it stands */}
+        <span
+          className="fx-sig-frost absolute left-[40%] top-[38%] block h-[24%] w-[20%]"
+          style={{ border: `2px solid ${P_PINCER.core}`, animationDelay: `${delayMs + 540}ms` }}
+        />
+        {/* settle: shed grit leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[47%] top-[52%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_PINCER.glow, animationDelay: `${delayMs + 640}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-aimswing absolute left-[50%] top-[48%] block h-[4%] w-[42%]"
+        style={{ background: P_PINCER.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-homeward absolute left-[2%] top-[26%] block h-[48%] w-[34%]" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        {jaw(false)}
+      </span>
+      <span className="fx-sig-homeward absolute left-[64%] top-[26%] block h-[48%] w-[34%]" style={{ animationDelay: `${delayMs + 190}ms` }}>
+        {jaw(true)}
+      </span>
+      <span
+        className="fx-sig-frost absolute inset-[24%] block"
+        style={{ border: `2px solid ${P_PINCER.core}`, animationDelay: `${delayMs + 340}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:borderward (baseline stays on wa_border_ward) --------------
+
+/** Glyph Seal: seal violet / rune cream / basalt. */
+const P_GLYPH = { core: "#8168c0", glow: "#f6ecc9", deep: "#20202e" };
+/**
+ * Glyph Seal (t4) — "SEAL ONE FILE: pick any square and its WHOLE FILE becomes
+ * impassable... and every enemy piece already standing on it is BOUND".
+ * A file, not a border: eight glyph tiles stamp themselves down the column one
+ * after another from one end to the other, and a lock rune snaps onto whatever
+ * was standing in the way.
+ */
+function GlyphFileBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(32,32,46,0.22)" boom="rgba(129,104,192,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell + strike: the file seals itself, tile by tile, inside the BOARD */}
+        <BoardFrame>
+          <span
+            className="fx-sig-uncoil absolute left-[44%] top-0 block h-full w-[12%]"
+            style={{ background: "rgba(129,104,192,0.24)", animationDelay: `${delayMs + 100}ms` }}
+          />
+          {[
+            { t: "4%", d: 260 },
+            { t: "28%", d: 320 },
+            { t: "52%", d: 380 },
+            { t: "76%", d: 440 },
+          ].map((s, i) => (
+            <span
+              key={i}
+              className="fx-sig-sealstamp absolute left-[44%] block h-[20%] w-[12%]"
+              style={{ top: s.t, border: `2px solid ${P_GLYPH.core}`, animationDelay: `${delayMs + s.d}ms` }}
+            />
+          ))}
+        </BoardFrame>
+        {/* the lock rune snaps onto whatever was standing in the file */}
+        <span className="fx-sig-slam absolute left-[44%] top-[42%] block h-[18%] w-[12%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <svg viewBox="0 0 18 22" className="h-full w-full" aria-hidden="true">
+            <path d="M5 9 V6 C5 3 13 3 13 6 V9" fill="none" stroke={P_GLYPH.glow} strokeWidth="2" strokeLinecap="round" />
+            <path d="M3 9 H15 V20 H3 Z" fill={P_GLYPH.core} stroke={P_GLYPH.glow} strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* settle: rune sparks leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[50%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_GLYPH.core, animationDelay: `${delayMs + 680}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-uncoil absolute left-[30%] top-0 block h-full w-[40%]"
+        style={{ background: "rgba(129,104,192,0.24)", animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-sealstamp absolute inset-[18%] block"
+        style={{ border: `2px solid ${P_GLYPH.core}`, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span className="fx-sig-slam absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 320}ms` }}>
+        <svg viewBox="0 0 18 22" className="h-full w-full" aria-hidden="true">
+          <path d="M5 9 V6 C5 3 13 3 13 6 V9" fill="none" stroke={P_GLYPH.glow} strokeWidth="2.2" strokeLinecap="round" />
+          <path d="M3 9 H15 V20 H3 Z" fill={P_GLYPH.core} stroke={P_GLYPH.glow} strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[36%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_GLYPH.core, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:strike (baseline stays on lightning_strike) ----------------
+
+/** Lightning Bolt: charge blue / arc cream / thunderhead navy. */
+const P_BOLTC = { core: "#6fb6de", glow: "#fbf0c9", deep: "#1d2a3c" };
+/**
+ * Lightning Bolt (t4) — "one QUEEN CHARGES a bolt down a diagonal; AFTER YOUR
+ * OPPONENT'S NEXT MOVE IT FIRES".
+ * The whole card is the wait. A coil winds up on the queen's square and holds,
+ * crackling, through the middle of the scene; only on the late beat does the
+ * charge let go and run down the play's own vector.
+ */
+function BoltChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(29,42,60,0.22)" boom="rgba(111,182,222,0.9)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the coil winds up */}
+        <span className="fx-sig-swirl absolute left-[40%] top-[38%] block h-[24%] w-[20%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 20 24" className="h-full w-full" aria-hidden="true">
+            <path d="M4 3 H16 M5 7 H15 M6 11 H14 M7 15 H13 M8 19 H12" stroke={P_BOLTC.core} strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* it holds, crackling, while they reply */}
+        {[
+          { l: "38%", t: "34%", d: 280 },
+          { l: "58%", t: "44%", d: 340 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-glitch absolute block h-[8%] w-[6%]"
+            style={{ left: s.l, top: s.t, background: P_BOLTC.glow, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* strike, LATE: the charge lets go down the play's vector */}
+        <span className="fx-sig-aimrun absolute left-[44%] top-[36%] block h-[24%] w-[14%]" style={{ animationDelay: `${delayMs + 520}ms` }}>
+          <JagBolt />
+        </span>
+        {/* the discharge flash where it lands */}
+        <span
+          className="fx-sig-scorch absolute left-[58%] top-[46%] block h-[16%] w-[18%] rounded-full"
+          style={{ background: P_BOLTC.core, animationDelay: `${delayMs + 620}ms` }}
+        />
+        {/* settle: ozone leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[50%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_BOLTC.glow, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <AimStage>
+        <span
+          className="fx-sig-aimswing absolute left-[50%] top-[49%] block h-[2%] w-[24%]"
+          style={{ background: P_BOLTC.core, animationDelay: `${delayMs}ms` }}
+        />
+      </AimStage>
+      <span className="fx-sig-swirl absolute inset-[30%] block" style={{ animationDelay: `${delayMs + 140}ms` }}>
+        <svg viewBox="0 0 20 24" className="h-full w-full" aria-hidden="true">
+          <path d="M4 3 H16 M5 7 H15 M6 11 H14 M7 15 H13 M8 19 H12" stroke={P_BOLTC.core} strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-bolt absolute left-[36%] top-[4%] block h-[62%] w-[28%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        <JagBolt />
+      </span>
+      <span
+        className="fx-sig-scorch absolute inset-[26%] block rounded-full"
+        style={{ background: P_BOLTC.core, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </span>
+  );
+}
+
+// --- Group: core:warhorn (baseline stays on ww_flanking_knights) ------------
+
+/** Dragoons: cavalry crimson / spur brass / saddle brown. */
+const P_DRAGOON = { core: "#a83a34", glow: "#f4e2b4", deep: "#3a2717" };
+/**
+ * Dragoons (t4) — "one of your knights trains to VAULT THE LINE: it may also
+ * jump exactly TWO SQUARES STRAIGHT in any direction, OVER ANYTHING".
+ * The obstacle is the point. A rail goes up across the square, the horse gathers
+ * itself, and it clears the rail in one arc to land two squares clean on the
+ * far side with a spray of turf.
+ */
+function DragoonVaultBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(168,58,52,0.18)" boom="rgba(168,58,52,0.85)" delayMs={delayMs}>
+        {/* tell: the rail goes up in front of them */}
+        <span
+          className="fx-sig-rise absolute left-[44%] top-[36%] block h-[24%] w-[4%]"
+          style={{ background: P_DRAGOON.deep, animationDelay: `${delayMs + 90}ms` }}
+        />
+        <span
+          className="fx-sig-uncoil absolute left-[36%] top-[38%] block h-[3%] w-[22%]"
+          style={{ background: P_DRAGOON.glow, animationDelay: `${delayMs + 130}ms` }}
+        />
+        {/* strike: the horse clears it in one arc */}
+        <span className="fx-sig-gallop absolute left-[26%] top-[28%] block h-[28%] w-[24%]" style={{ animationDelay: `${delayMs + 300}ms` }}>
+          <svg viewBox="0 0 26 28" className="h-full w-full" aria-hidden="true">
+            <path d="M6 27 L20 27 L18.6 21 C23 16 22.6 8 16 4 L17.4 1 L12 3 C6 5 4.6 12 7.4 15.6 L4.6 20 Z" fill={P_DRAGOON.core} stroke={P_DRAGOON.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <circle cx="14.6" cy="7" r="0.9" fill={P_DRAGOON.deep} />
+            <path d="M9 12 C12 10 15 10 18 12" fill="none" stroke={P_DRAGOON.glow} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* it lands two squares clean on the far side */}
+        <span
+          className="fx-sig-aimrun absolute left-[52%] top-[46%] block h-[12%] w-[16%]"
+          style={{ background: P_DRAGOON.glow, animationDelay: `${delayMs + 450}ms` }}
+        />
+        {/* settle: turf kicked up, leaning off the caster's side */}
+        {[
+          { l: "56%", t: "56%", d: 570 },
+          { l: "66%", t: "54%", d: 620 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-lean absolute block h-[5%] w-[5%] rounded-full"
+            style={{ left: s.l, top: s.t, background: P_DRAGOON.deep, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-rise absolute left-[46%] top-[26%] block h-[46%] w-[8%]"
+        style={{ background: P_DRAGOON.deep, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-gallop absolute inset-[16%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 26 28" className="h-full w-full" aria-hidden="true">
+          <path d="M6 27 L20 27 L18.6 21 C23 16 22.6 8 16 4 L17.4 1 L12 3 C6 5 4.6 12 7.4 15.6 L4.6 20 Z" fill={P_DRAGOON.core} stroke={P_DRAGOON.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-aimrun absolute left-[34%] top-[42%] block h-[24%] w-[30%]"
+        style={{ background: P_DRAGOON.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:dragonfire (baseline stays on dragons_breath) --------------
+
+/** Flame Lance: lance white-gold / jet orange / rook iron. */
+const P_LANCE = { core: "#f0932b", glow: "#fbeec4", deep: "#3a3733" };
+/**
+ * Flame Lance (t6) — "one of your ROOKS breathes a lance of flame STRAIGHT UP
+ * ITS OWN FILE, WITHOUT MOVING... FRIENDLY PIECES BLOCK THE FLAME".
+ * A weapon, not a dragon: the rook stays put, a narrow jet lances out of its
+ * crenellations with a hard spear tip, and where a friendly piece stands the
+ * jet stops dead against a glinting block mark.
+ */
+function FlameLanceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(58,55,51,0.22)" boom="rgba(240,147,43,0.9)" delayMs={delayMs}>
+        {/* tell: the rook braces, and does not move */}
+        <span className="fx-sig-grow absolute left-[42%] top-[54%] block h-[18%] w-[16%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 20 20" className="h-full w-full" aria-hidden="true">
+            <path d="M3 2 H6 V5 H9 V2 H12 V5 H15 V2 H18 V19 H3 Z" fill={P_LANCE.deep} stroke={P_LANCE.glow} strokeWidth="1.2" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* strike: the narrow jet lances up the file */}
+        <span
+          className="fx-sig-firebreath absolute left-[46%] top-[18%] block h-[38%] w-[7%]"
+          style={{ background: `linear-gradient(0deg, ${P_LANCE.core}, rgba(251,238,196,0))`, animationDelay: `${delayMs + 300}ms` }}
+        />
+        {/* the hard spear tip at its head */}
+        <span className="fx-sig-aimrun absolute left-[44%] top-[14%] block h-[12%] w-[10%]" style={{ animationDelay: `${delayMs + 400}ms` }}>
+          <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+            <path d="M6 0 L11 15 L6 12 L1 15 Z" fill={P_LANCE.glow} stroke={P_LANCE.core} strokeWidth="1.1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* where a friendly stands, the jet stops dead */}
+        <span
+          className="fx-sig-seamflash absolute left-[40%] top-[12%] block h-[4%] w-[20%]"
+          style={{ background: P_LANCE.glow, animationDelay: `${delayMs + 500}ms` }}
+        />
+        {/* settle: cinders leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[47%] top-[40%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_LANCE.core, animationDelay: `${delayMs + 630}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <AimStage>
+        <span
+          className="fx-sig-aimswing absolute left-[50%] top-[47%] block h-[6%] w-[30%]"
+          style={{ background: `linear-gradient(90deg, ${P_LANCE.core}, rgba(251,238,196,0))`, animationDelay: `${delayMs}ms` }}
+        />
+      </AimStage>
+      <span
+        className="fx-sig-firebreath absolute left-[42%] top-[6%] block h-[56%] w-[16%]"
+        style={{ background: `linear-gradient(0deg, ${P_LANCE.core}, rgba(251,238,196,0))`, animationDelay: `${delayMs + 150}ms` }}
+      />
+      <span className="fx-sig-grow absolute inset-[30%] block" style={{ animationDelay: `${delayMs + 300}ms` }}>
+        <svg viewBox="0 0 12 16" className="h-full w-full" aria-hidden="true">
+          <path d="M6 0 L11 15 L6 12 L1 15 Z" fill={P_LANCE.glow} stroke={P_LANCE.core} strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[44%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_LANCE.core, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </span>
+  );
+}
+
+// --- Group: core:reinforce (baseline stays on second_army) ------------------
+
+/** Muster the Ranks: bugle brass / dust cream / greatcoat green. */
+const P_MUSTER = { core: "#cfa23e", glow: "#f8edcc", deep: "#37452f" };
+/**
+ * Muster the Ranks (t5) — "the trumpet sounds and THE WHOLE LINE STEPS OFF:
+ * every one of your pawns with an empty square ahead ADVANCES ONE SQUARE. Pawns
+ * one step from the last rank HOLD THEIR GROUND".
+ * A bugle note goes up, five pawns step off together in stepped, booted motion,
+ * and one of them visibly holds — the exception drawn into the scene.
+ */
+function MusterStepBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  const pawn = (
+    <svg viewBox="0 0 16 24" className="h-full w-full" aria-hidden="true">
+      <path d="M8 1 C10.6 1 11.8 3.6 10.2 5.4 C12.6 7 12.6 10.6 10.8 12.2 L13 23 H3 L5.2 12.2 C3.4 10.6 3.4 7 5.8 5.4 C4.2 3.6 5.4 1 8 1 Z" fill={P_MUSTER.glow} stroke={P_MUSTER.deep} strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(55,69,47,0.20)" boom="rgba(207,162,62,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the bugle note */}
+        <span className="fx-sig-crown absolute left-[42%] top-[24%] block h-[14%] w-[16%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 24 14" className="h-full w-full" aria-hidden="true">
+            <path d="M1 7 H14 C18 3 22 3 23 7 C22 11 18 11 14 7" fill="none" stroke={P_MUSTER.core} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the whole line steps off together */}
+        {[
+          { l: "24%", d: 300 },
+          { l: "36%", d: 320 },
+          { l: "48%", d: 340 },
+          { l: "60%", d: 360 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-marchstep absolute top-[42%] block h-[22%] w-[9%]"
+            style={{ left: s.l, animationDelay: `${delayMs + s.d}ms` }}
+          >
+            {pawn}
+          </span>
+        ))}
+        {/* one of them holds its ground: the exception, drawn in */}
+        <span className="fx-sig-grow absolute left-[70%] top-[42%] block h-[22%] w-[9%]" style={{ animationDelay: `${delayMs + 460}ms` }}>
+          {pawn}
+        </span>
+        <span
+          className="fx-sig-uncoil absolute left-[68%] top-[64%] block h-[2%] w-[14%]"
+          style={{ background: P_MUSTER.core, animationDelay: `${delayMs + 520}ms` }}
+        />
+        {/* settle: boot dust leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[44%] top-[62%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_MUSTER.glow, animationDelay: `${delayMs + 660}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span className="fx-sig-crown absolute left-[28%] top-[6%] block h-[28%] w-[44%]" style={{ animationDelay: `${delayMs}ms` }}>
+        <svg viewBox="0 0 24 14" className="h-full w-full" aria-hidden="true">
+          <path d="M1 7 H14 C18 3 22 3 23 7 C22 11 18 11 14 7" fill="none" stroke={P_MUSTER.core} strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="fx-sig-marchstep absolute inset-[26%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        {pawn}
+      </span>
+      <span
+        className="fx-sig-ordertick absolute left-[14%] top-[64%] block h-[10%] w-[72%]"
+        style={{ background: P_MUSTER.core, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[42%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_MUSTER.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:decree (baseline stays on divine_reckoning) ----------------
+
+/** Hot Seat: spotlight cream / hot-metal red / studio black. */
+const P_HOTSEAT = { core: "#d24a2a", glow: "#fbf0cd", deep: "#1c1a1c" };
+/**
+ * Hot Seat (t5) — "the SPOTLIGHT swings to their KING AND QUEEN: on their next
+ * turn they may move ONLY those two, and neither may capture".
+ * The rest of the board goes dark, one hard spotlight swings across and stops on
+ * a throne, and the seat itself goes red hot — they have to sit in it.
+ */
+function HotSeatBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(28,26,28,0.30)" boom="rgba(210,74,42,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: the spotlight swings across and stops */}
+        <span
+          className="fx-sig-pendulum absolute left-[44%] top-[8%] block h-[34%] w-[12%]"
+          style={{ background: `linear-gradient(180deg, ${P_HOTSEAT.glow}, rgba(251,240,205,0))`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* strike: it lands on the throne */}
+        <span className="fx-sig-slam absolute left-[42%] top-[38%] block h-[26%] w-[18%]" style={{ animationDelay: `${delayMs + 320}ms` }}>
+          <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+            <path d="M4 25 V10 H16 V25 M4 10 V3 H8 V10 M12 10 V3 H16 V10" fill={P_HOTSEAT.deep} stroke={P_HOTSEAT.glow} strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* the seat goes red hot */}
+        <span
+          className="fx-sig-scorch absolute left-[44%] top-[48%] block h-[8%] w-[14%]"
+          style={{ background: P_HOTSEAT.core, animationDelay: `${delayMs + 440}ms` }}
+        />
+        {/* heat shimmer coming off it */}
+        <span
+          className="fx-sig-shimmer absolute left-[42%] top-[38%] block h-[16%] w-[18%]"
+          style={{ background: P_HOTSEAT.core, animationDelay: `${delayMs + 540}ms` }}
+        />
+        {/* settle: a bead of sweat leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[54%] top-[40%] block h-[6%] w-[5%] rounded-full"
+          style={{ background: P_HOTSEAT.glow, animationDelay: `${delayMs + 670}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-pendulum absolute left-[38%] top-[-6%] block h-[56%] w-[24%]"
+        style={{ background: `linear-gradient(180deg, ${P_HOTSEAT.glow}, rgba(251,240,205,0))`, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-slam absolute inset-[24%] block" style={{ animationDelay: `${delayMs + 170}ms` }}>
+        <svg viewBox="0 0 20 26" className="h-full w-full" aria-hidden="true">
+          <path d="M4 25 V10 H16 V25 M4 10 V3 H8 V10 M12 10 V3 H16 V10" fill={P_HOTSEAT.deep} stroke={P_HOTSEAT.glow} strokeWidth="1.6" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-shimmer absolute inset-[28%] block"
+        style={{ background: P_HOTSEAT.core, animationDelay: `${delayMs + 330}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[56%] top-[30%] block h-[14%] w-[12%] rounded-full"
+        style={{ background: P_HOTSEAT.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:spearcharge (baseline stays on ww_spearhead) ---------------
+
+/** Bayonet Charge: bayonet steel / powder cream / regimental blue. */
+const P_BAYONET = { core: "#b9c0c8", glow: "#f7ebc4", deep: "#26354d" };
+/**
+ * Bayonet Charge (t5) — "one of your BISHOPS charges DIAGONALLY, capturing the
+ * first enemy piece in its path and LANDING JUST BEYOND".
+ * One man, one lunge: the bayonet is fixed with a click, the bishop drives down
+ * the play's own diagonal behind three motion streaks, and overruns the square
+ * by exactly one step.
+ */
+function BayonetRushBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(38,53,77,0.20)" boom="rgba(185,192,200,0.85)" delayMs={delayMs}>
+        {/* tell: the bayonet is fixed */}
+        <span className="fx-sig-slam absolute left-[38%] top-[36%] block h-[10%] w-[20%]" style={{ animationDelay: `${delayMs + 100}ms` }}>
+          <svg viewBox="0 0 24 10" className="h-full w-full" aria-hidden="true">
+            <path d="M1 5 H16 L23 5 M16 2 L23 5 L16 8 Z" fill={P_BAYONET.core} stroke={P_BAYONET.deep} strokeWidth="1.1" strokeLinejoin="round" />
+          </svg>
+        </span>
+        {/* strike: the lunge down the diagonal */}
+        <span className="fx-sig-aimrun absolute left-[36%] top-[40%] block h-[22%] w-[16%]" style={{ animationDelay: `${delayMs + 290}ms` }}>
+          <svg viewBox="0 0 18 26" className="h-full w-full" aria-hidden="true">
+            <path d="M9 1 C13 6 14 13 12 18 L14 25 H4 L6 18 C4 13 5 6 9 1 Z" fill={P_BAYONET.glow} stroke={P_BAYONET.deep} strokeWidth="1.2" strokeLinejoin="round" />
+            <path d="M7.4 8 H10.6 M9 6.4 V9.6" stroke={P_BAYONET.deep} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* motion streaks behind the charge */}
+        {[
+          { t: "40%", d: 330 },
+          { t: "48%", d: 360 },
+          { t: "56%", d: 390 },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="fx-sig-uncoil absolute left-[26%] block h-[2%] w-[26%]"
+            style={{ top: s.t, background: P_BAYONET.core, animationDelay: `${delayMs + s.d}ms` }}
+          />
+        ))}
+        {/* the thrust connects */}
+        <span
+          className="fx-sig-muzzle absolute left-[58%] top-[44%] block h-[10%] w-[18%]"
+          style={{ background: P_BAYONET.glow, animationDelay: `${delayMs + 480}ms` }}
+        />
+        {/* settle: powder smoke leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[52%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_BAYONET.glow, animationDelay: `${delayMs + 620}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <AimStage>
+        <span
+          className="fx-sig-aimswing absolute left-[50%] top-[48%] block h-[3%] w-[26%]"
+          style={{ background: P_BAYONET.core, animationDelay: `${delayMs}ms` }}
+        />
+      </AimStage>
+      <span className="fx-sig-aimrun absolute left-[26%] top-[28%] block h-[44%] w-[30%]" style={{ animationDelay: `${delayMs + 150}ms` }}>
+        <svg viewBox="0 0 18 26" className="h-full w-full" aria-hidden="true">
+          <path d="M9 1 C13 6 14 13 12 18 L14 25 H4 L6 18 C4 13 5 6 9 1 Z" fill={P_BAYONET.glow} stroke={P_BAYONET.deep} strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-muzzle absolute left-[40%] top-[42%] block h-[16%] w-[48%]"
+        style={{ background: P_BAYONET.glow, animationDelay: `${delayMs + 300}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[34%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_BAYONET.glow, animationDelay: `${delayMs + 400}ms` }}
+      />
+    </span>
+  );
+}
+
+// --- Group: core:artillery (baseline stays on ww_bombardment) ---------------
+
+/** Counter Battery Fire: spotter green / tracer cream / gun-pit brown. */
+const P_COUNTER = { core: "#6f9a55", glow: "#f8eec6", deep: "#3d2f1e" };
+/**
+ * Counter Battery Fire (t6) — "remove one enemy ROOK OR BISHOP you name".
+ * This is not bombardment: it is the RETURN shot. An enemy muzzle flashes first,
+ * a spotter's crosshair walks back down the bearing it came from, and ONE
+ * precise shell lands on the gun that fired, leaving it smoking.
+ */
+function CounterBatteryBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(61,47,30,0.22)" boom="rgba(111,154,85,0.85)" delayMs={delayMs} settleMs={700}>
+        {/* tell: THEIR muzzle flashes first */}
+        <span
+          className="fx-sig-muzzle absolute left-[58%] top-[34%] block h-[10%] w-[20%]"
+          style={{ background: P_COUNTER.glow, animationDelay: `${delayMs + 90}ms` }}
+        />
+        {/* the spotter's crosshair walks back down the bearing */}
+        <span className="fx-sig-reticle absolute left-[36%] top-[30%] block h-[24%] w-[24%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
+          <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.6" fill="none" stroke={P_COUNTER.core} strokeWidth="1.4" />
+            <path d="M12 1 V7 M12 17 V23 M1 12 H7 M17 12 H23" stroke={P_COUNTER.core} strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: ONE shell, back down the same bearing */}
+        <span
+          className="fx-sig-aimrun absolute left-[42%] top-[38%] block h-[8%] w-[8%] rounded-full"
+          style={{ background: P_COUNTER.glow, animationDelay: `${delayMs + 400}ms` }}
+        />
+        <span
+          className="fx-sig-flash absolute left-[58%] top-[30%] block h-[22%] w-[22%] rounded-full"
+          style={{ background: `radial-gradient(circle, ${P_COUNTER.glow}, rgba(248,238,198,0) 70%)`, animationDelay: `${delayMs + 520}ms` }}
+        />
+        {/* settle: the wrecked gun smoking off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[62%] top-[42%] block h-[7%] w-[7%] rounded-full"
+          style={{ background: P_COUNTER.deep, animationDelay: `${delayMs + 660}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-muzzle absolute left-[44%] top-[26%] block h-[16%] w-[48%]"
+        style={{ background: P_COUNTER.glow, animationDelay: `${delayMs}ms` }}
+      />
+      <span className="fx-sig-reticle absolute inset-[18%] block" style={{ animationDelay: `${delayMs + 160}ms` }}>
+        <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.6" fill="none" stroke={P_COUNTER.core} strokeWidth="1.6" />
+          <path d="M12 1 V7 M12 17 V23 M1 12 H7 M17 12 H23" stroke={P_COUNTER.core} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-aimrun absolute left-[38%] top-[38%] block h-[22%] w-[22%] rounded-full"
+        style={{ background: P_COUNTER.glow, animationDelay: `${delayMs + 320}ms` }}
+      />
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[46%] block h-[14%] w-[14%] rounded-full"
+        style={{ background: P_COUNTER.deep, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
+
+// --- Group: core:stonechain (baseline stays on chains_of_binding) -----------
+
+/** Concrete Shoes: wet-concrete grey / formwork cream / harbour dark. */
+const P_SHOES = { core: "#9c9a93", glow: "#f4ead0", deep: "#2b3134" };
+/**
+ * Concrete Shoes (t6) — "fit one of your opponent's rooks or queens with
+ * CONCRETE SHOES: it cannot move at all for 3 turns, THEN IT HARDENS INTO A
+ * WALNUT for the rest of the game".
+ * A pouring, not a chaining: formwork is dropped around the base, wet concrete
+ * glugs in, bubbles surface, and on the late beat it SETS — hard hairline cracks
+ * craze across the slab and it stops moving for good.
+ */
+function ConcreteShoesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+  if (lead) {
+    return (
+      <SplitLead wash="rgba(43,49,52,0.22)" boom="rgba(156,154,147,0.85)" delayMs={delayMs} settleMs={720}>
+        {/* tell: the formwork drops around the base */}
+        <span
+          className="fx-sig-slam absolute left-[38%] top-[52%] block h-[12%] w-[24%]"
+          style={{ border: `2px solid ${P_SHOES.deep}`, animationDelay: `${delayMs + 100}ms` }}
+        />
+        {/* strike: the pour */}
+        <span
+          className="fx-sig-drain absolute left-[46%] top-[26%] block h-[28%] w-[8%]"
+          style={{ background: P_SHOES.core, animationDelay: `${delayMs + 300}ms` }}
+        />
+        <span
+          className="fx-sig-swell absolute left-[40%] top-[52%] block h-[12%] w-[20%]"
+          style={{ background: P_SHOES.core, animationDelay: `${delayMs + 400}ms` }}
+        />
+        {/* a bubble surfaces in the wet slab */}
+        <span
+          className="fx-sig-swell absolute left-[54%] top-[54%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_SHOES.glow, animationDelay: `${delayMs + 480}ms` }}
+        />
+        {/* the late beat: it SETS, and crazes */}
+        <span className="fx-sig-petrify absolute left-[38%] top-[50%] block h-[16%] w-[24%]" style={{ animationDelay: `${delayMs + 600}ms` }}>
+          <svg viewBox="0 0 24 16" className="h-full w-full" aria-hidden="true">
+            <path d="M1 1 H23 V15 H1 Z" fill={P_SHOES.core} stroke={P_SHOES.deep} strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M6 1 L9 8 L5 15 M15 1 L13 7 L18 15" fill="none" stroke={P_SHOES.deep} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* settle: cement dust leaning off the caster's side */}
+        <span
+          className="fx-sig-lean absolute left-[46%] top-[48%] block h-[6%] w-[6%] rounded-full"
+          style={{ background: P_SHOES.glow, animationDelay: `${delayMs + 700}ms` }}
+        />
+      </SplitLead>
+    );
+  }
+  return (
+    <SplitTarget>
+      <span
+        className="fx-sig-slam absolute left-[24%] top-[56%] block h-[24%] w-[52%]"
+        style={{ border: `2px solid ${P_SHOES.deep}`, animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className="fx-sig-drain absolute left-[42%] top-[10%] block h-[52%] w-[16%]"
+        style={{ background: P_SHOES.core, animationDelay: `${delayMs + 160}ms` }}
+      />
+      <span className="fx-sig-petrify absolute left-[22%] top-[54%] block h-[30%] w-[56%]" style={{ animationDelay: `${delayMs + 320}ms` }}>
+        <svg viewBox="0 0 24 16" className="h-full w-full" aria-hidden="true">
+          <path d="M1 1 H23 V15 H1 Z" fill={P_SHOES.core} stroke={P_SHOES.deep} strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M6 1 L9 8 L5 15 M15 1 L13 7 L18 15" fill="none" stroke={P_SHOES.deep} strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="fx-sig-lean absolute left-[42%] top-[36%] block h-[12%] w-[12%] rounded-full"
+        style={{ background: P_SHOES.glow, animationDelay: `${delayMs + 420}ms` }}
+      />
+    </SplitTarget>
+  );
+}
 /** One square's slice of a signature sequence. `role` is "lead" for the single
  * origin flourish (nova's pop, atomic's central thump, the siege muzzle) and
  * "target" for every cleared enemy square; `delayMs` is the pre-computed
@@ -12636,6 +16547,115 @@ export default function SignatureVisual({
 }) {
   const lead = role === "lead";
   switch (visual) {
+    // --- Batch 16: the core signature split. One case per card that used to
+    // share a visual with its group; the group's baseline card keeps the
+    // original case further down. ---
+    case "impperch":
+      return <ImpPerchBurst lead={lead} delayMs={delayMs} />;
+    case "spectralswap":
+      return <SpectralSwapBurst lead={lead} delayMs={delayMs} />;
+    case "wolfpack":
+      return <WolfPackBurst lead={lead} delayMs={delayMs} />;
+    case "golemrise":
+      return <GolemRiseBurst lead={lead} delayMs={delayMs} />;
+    case "twinknot":
+      return <TwinKnotBurst lead={lead} delayMs={delayMs} />;
+    case "legionrally":
+      return <LegionRallyBurst lead={lead} delayMs={delayMs} />;
+    case "yeetlaunch":
+      return <YeetLaunchBurst lead={lead} delayMs={delayMs} />;
+    case "dispelthaw":
+      return <DispelThawBurst lead={lead} delayMs={delayMs} />;
+    case "energycan":
+      return <EnergyCanBurst lead={lead} delayMs={delayMs} />;
+    case "relentless":
+      return <RelentlessBurst lead={lead} delayMs={delayMs} />;
+    case "purgefrost":
+      return <PurgeFrostBurst lead={lead} delayMs={delayMs} />;
+    case "shellcrack":
+      return <ShellCrackBurst lead={lead} delayMs={delayMs} />;
+    case "annihilatepulse":
+      return <AnnihilatePulseBurst lead={lead} delayMs={delayMs} />;
+    case "panicbutton":
+      return <PanicButtonBurst lead={lead} delayMs={delayMs} />;
+    case "borrowedhour":
+      return <BorrowedHourBurst lead={lead} delayMs={delayMs} />;
+    case "formsquare":
+      return <FormSquareBurst lead={lead} delayMs={delayMs} />;
+    case "buzzerbeat":
+      return <BuzzerBeatBurst lead={lead} delayMs={delayMs} />;
+    case "chronosiphon":
+      return <ChronoSiphonBurst lead={lead} delayMs={delayMs} />;
+    case "voidtear":
+      return <VoidTearBurst lead={lead} delayMs={delayMs} />;
+    case "hauntedrooms":
+      return <HauntedRoomsBurst lead={lead} delayMs={delayMs} />;
+    case "godknight":
+      return <GodKnightBurst lead={lead} delayMs={delayMs} />;
+    case "commandtent":
+      return <CommandTentBurst lead={lead} delayMs={delayMs} />;
+    case "caldera":
+      return <CalderaBurst lead={lead} delayMs={delayMs} />;
+    case "scorchspread":
+      return <ScorchSpreadBurst lead={lead} delayMs={delayMs} />;
+    case "pawnquarry":
+      return <PawnQuarryBurst lead={lead} delayMs={delayMs} />;
+    case "statuerank":
+      return <StatueRankBurst lead={lead} delayMs={delayMs} />;
+    case "jacobsladder":
+      return <JacobsLadderBurst lead={lead} delayMs={delayMs} />;
+    case "pianorun":
+      return <PianoRunBurst lead={lead} delayMs={delayMs} />;
+    case "tarpit":
+      return <TarPitBurst lead={lead} delayMs={delayMs} />;
+    case "glassseal":
+      return <GlassSealBurst lead={lead} delayMs={delayMs} />;
+    case "depotgate":
+      return <DepotGateBurst lead={lead} delayMs={delayMs} />;
+    case "congaline":
+      return <CongaLineBurst lead={lead} delayMs={delayMs} />;
+    case "goosecharge":
+      return <GooseChargeBurst lead={lead} delayMs={delayMs} />;
+    case "rubberbounce":
+      return <RubberBounceBurst lead={lead} delayMs={delayMs} />;
+    case "townsfolk":
+      return <TownsfolkBurst lead={lead} delayMs={delayMs} />;
+    case "thrallbind":
+      return <ThrallBindBurst lead={lead} delayMs={delayMs} />;
+    case "slimslip":
+      return <SlimSlipBurst lead={lead} delayMs={delayMs} />;
+    case "hoodiewrap":
+      return <HoodieWrapBurst lead={lead} delayMs={delayMs} />;
+    case "tempolift":
+      return <TempoLiftBurst lead={lead} delayMs={delayMs} />;
+    case "banishmark":
+      return <BanishMarkBurst lead={lead} delayMs={delayMs} />;
+    case "basiliskeye":
+      return <BasiliskEyeBurst lead={lead} delayMs={delayMs} />;
+    case "hallowedreturn":
+      return <HallowedReturnBurst lead={lead} delayMs={delayMs} />;
+    case "homeground":
+      return <HomeGroundBurst lead={lead} delayMs={delayMs} />;
+    case "pincerjaws":
+      return <PincerJawsBurst lead={lead} delayMs={delayMs} />;
+    case "glyphfile":
+      return <GlyphFileBurst lead={lead} delayMs={delayMs} />;
+    case "boltcharge":
+      return <BoltChargeBurst lead={lead} delayMs={delayMs} />;
+    case "dragoonvault":
+      return <DragoonVaultBurst lead={lead} delayMs={delayMs} />;
+    case "flamelance":
+      return <FlameLanceBurst lead={lead} delayMs={delayMs} />;
+    case "musterstep":
+      return <MusterStepBurst lead={lead} delayMs={delayMs} />;
+    case "hotseat":
+      return <HotSeatBurst lead={lead} delayMs={delayMs} />;
+    case "bayonetrush":
+      return <BayonetRushBurst lead={lead} delayMs={delayMs} />;
+    case "counterbattery":
+      return <CounterBatteryBurst lead={lead} delayMs={delayMs} />;
+    case "concreteshoes":
+      return <ConcreteShoesBurst lead={lead} delayMs={delayMs} />;
     case "nova":
       return <NovaBurst lead={lead} delayMs={delayMs} />;
     case "trapdoor":

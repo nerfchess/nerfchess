@@ -1318,7 +1318,7 @@ function PoltergeistScene({ role, delayMs }: SceneProps) {
         <g className="g32-arrive" style={d(delayMs)}>
           <path d="M8 12h24l-3 16H8z" fill={C_CS.deep} stroke={C_CS.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g32-cs-under" style={d(delayMs + 250)}>
+        <g className="g32-cs-slide" style={d(delayMs + 250)}>
           <rect x="10" y="24" width="16" height="9" fill={C_CS.glow} stroke={C_CS.deep} strokeWidth="1.6" />
         </g>
         <g className="g32-cs-skid" style={d(delayMs + 430)}>
@@ -1570,7 +1570,7 @@ function SapRunScene({ role, delayMs }: SceneProps) {
           <rect x="5" y="16" width="30" height="9" fill={C_SL.core} stroke={C_SL.deep} strokeWidth="2" />
           <rect x="16" y="18" width="9" height="5" fill={C_SL.glow} />
         </g>
-        <g className="g32-sl-run" style={d(delayMs + 210)}>
+        <g className="g32-sl-drip" style={d(delayMs + 210)}>
           <circle cx="28" cy="30" r="3" fill={C_SL.glow} />
         </g>
       </Sq>
