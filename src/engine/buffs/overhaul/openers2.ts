@@ -230,11 +230,15 @@ function luckyCharm(entry: (typeof LUCKY_CHARMS)[number]): Buff {
 // enemy squares flashes on the board until your opponent replies.
 // ---------------------------------------------------------------------------
 
-const FIELD_REPORTS: Array<OpenerMeta & { what: string; squares: (api: BuffApi) => Square[] }> = [
+// `desc` overrides the family sentence for the two reports that read as the
+// same glance twice; each now says what its own scout actually looks at.
+const FIELD_REPORTS: Array<
+  OpenerMeta & { what: string; squares: (api: BuffApi) => Square[]; desc?: string }
+> = [
   { id: "margin_notes", name: "Margin Notes", flavor: "Someone before you penciled in every loose piece.", icon: "BookOpen", what: "every currently undefended enemy piece", squares: (api) => undefendedPieces(api.board, api.opp) },
   { id: "siege_survey", name: "Siege Survey", flavor: "Mark the big engines first. The rest is carpentry.", icon: "Binoculars", what: "every enemy queen and rook", squares: (api) => { const engines = [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")]; const struck = mySquares(api.board, api.me).filter((t) => engines.some((e) => attacksSquare(api.board, e, t))); return [...engines, ...struck]; }, desc: "Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies, along with each of your pieces they are aimed at." },
   { id: "field_sketch", name: "Field Sketch", flavor: "Quick charcoal lines: horses here, clergy there.", icon: "Pencil", what: "every enemy knight and bishop", squares: (api) => [...mySquares(api.board, api.opp, "n"), ...mySquares(api.board, api.opp, "b")] },
-  { id: "portrait_of_a_lady", name: "Portrait of a Lady", flavor: "One subject, one sitting, one very bright frame.", icon: "Frame", what: "the enemy queen", squares: (api) => mySquares(api.board, api.opp, "q") },
+  { id: "portrait_of_a_lady", name: "Portrait of a Lady", flavor: "One subject, one sitting, one very bright frame.", icon: "Frame", what: "the enemy queen", squares: (api) => { const q = mySquares(api.board, api.opp, "q"); if (q.length > 0) return q; const k = kingSquare(api.board, api.opp); return k == null ? [] : [k]; }, desc: "Use once as a free action: the enemy queen flashes on the board until your opponent replies. Every portrait needs a sitter, so if she has already fallen, the frame hangs on their king instead." },
   { id: "palace_floor_plan", name: "Palace Floor Plan", flavor: "The interesting rooms are always next to the throne.", icon: "Map", what: "every enemy piece adjacent to the enemy king", squares: (api) => { const k = kingSquare(api.board, api.opp); return k == null ? [] : ringAround(k).filter((sq) => api.board.pieces[sq]?.color === api.opp); } },
   { id: "day_census", name: "Day Census", flavor: "Everyone standing in the sun, raise a hand.", icon: "Sun", what: "every enemy piece on a light square", squares: (api) => mySquares(api.board, api.opp).filter((sq) => (FILE(sq) + RANK(sq)) % 2 === 1) },
   { id: "night_census", name: "Night Census", flavor: "Everyone lurking in the shade gets a lantern anyway.", icon: "MoonStar", what: "every enemy piece on a dark square", squares: (api) => mySquares(api.board, api.opp).filter((sq) => (FILE(sq) + RANK(sq)) % 2 === 0) },
@@ -248,7 +252,7 @@ const FIELD_REPORTS: Array<OpenerMeta & { what: string; squares: (api: BuffApi) 
 function fieldReport(entry: (typeof FIELD_REPORTS)[number]): Buff {
   return opener(
     entry,
-    `Use once as a free action: ${entry.what} flashes on the board until your opponent replies.`,
+    entry.desc ?? `Use once as a free action: ${entry.what} flashes on the board until your opponent replies.`,
     {
       ...activatedSimple((_inst, api) => {
         flashSquares(api, entry.squares(api));
@@ -712,21 +716,33 @@ function watchtower(entry: (typeof WATCHTOWER)[number]): Buff {
 // from a themed zone; enemy pieces cannot end a move there for a turn or two.
 // ---------------------------------------------------------------------------
 
+// The four house rules that differed only in which patch of board they cover
+// now each say what kind of sign they are: the brass reservation sits out on
+// the floor, the booth is only kept while the king is at his own table, the
+// cleaning closes the room to everybody, and the door hanger needs a door.
 const HOUSE_RULES: Array<
-  OpenerMeta & { turns: number; where: string; zone: (api: BuffApi) => Square[] }
+  OpenerMeta & {
+    turns: number;
+    where: string;
+    zone: (api: BuffApi) => Square[];
+    desc?: string;
+    /** The cordon also keeps the owner's own pieces out. */
+    bothSides?: boolean;
+  }
 > = [
-  { id: "reserved_table", name: "Reserved Table", flavor: "The little brass sign has repelled entire armies.", icon: "Utensils", turns: 1, where: "an empty square in your half", zone: (api) => emptySquares(api.board, (sq) => inHalf(api.me, sq)) },
-  { id: "private_booth", name: "Private Booth", flavor: "The king dines undisturbed, one chair over.", icon: "Sofa", turns: 1, where: "an empty square next to your king", zone: (api) => { const k = kingSquare(api.board, api.me); return k == null ? [] : ringAround(k).filter((sq) => !api.board.pieces[sq]); } },
-  { id: "closed_for_cleaning", name: "Closed for Cleaning", flavor: "The mop bucket outranks the cavalry for two turns.", icon: "Paintbrush", turns: 2, where: "an empty square on your back rank", zone: (api) => emptySquares(api.board, (sq) => RANK(sq) === ownRank(api.me, 0)) },
+  { id: "reserved_table", name: "Reserved Table", flavor: "The little brass sign has repelled entire armies.", icon: "Utensils", turns: 1, where: "an empty square in your half", zone: (api) => emptySquares(api.board, (sq) => inHalf(api.me, sq) && RANK(sq) !== ownRank(api.me, 0)), desc: "Use once as a free action: put the brass sign on any empty square in your half except your back rank. Enemy pieces cannot end a move there for your opponent's next turn." },
+  { id: "private_booth", name: "Private Booth", flavor: "The king dines undisturbed, one chair over.", icon: "Sofa", turns: 1, where: "an empty square next to your king", zone: (api) => { const k = kingSquare(api.board, api.me); return k == null || k !== SQ(4, ownRank(api.me, 0)) ? [] : ringAround(k).filter((sq) => !api.board.pieces[sq]); }, desc: "Use once as a free action, while your king still sits at his own table: reserve one empty square beside him. No enemy piece may end a move there during your opponent's next turn." },
+  { id: "closed_for_cleaning", name: "Closed for Cleaning", flavor: "The mop bucket outranks the cavalry for two turns.", icon: "Paintbrush", turns: 2, where: "an empty square on your back rank", zone: (api) => emptySquares(api.board, (sq) => RANK(sq) === ownRank(api.me, 0)), bothSides: true, desc: "Use once as a free action: rope off one empty square on your back rank. Nobody at all, yours or theirs, may end a move there for the next 2 turns." },
   { id: "wet_floor_sign", name: "Wet Floor Sign", flavor: "Yellow, plastic, legally binding.", icon: "TrafficCone", turns: 1, where: "an empty square directly in front of one of your pawns", zone: (api) => { const out: Square[] = []; const fwd = fwdOf(api.me); for (const sq of mySquares(api.board, api.me, "p")) { const to = sq + fwd; if (to >= 0 && to <= 63 && !api.board.pieces[to] && !out.includes(to)) out.push(to); } return out; } },
   { id: "chairs_on_tables", name: "Chairs on Tables", flavor: "The center is closing early tonight.", icon: "Armchair", turns: 1, where: "an empty center square (d4, d5, e4 or e5)", zone: (api) => CENTER4.filter((sq) => !api.board.pieces[sq]) },
-  { id: "do_not_disturb", name: "Do Not Disturb", flavor: "Housekeeping respects the sign. So, briefly, does the enemy.", icon: "BellOff", turns: 2, where: "an empty square on your second rank", zone: (api) => emptySquares(api.board, (sq) => RANK(sq) === ownRank(api.me, 1)) },
+  { id: "do_not_disturb", name: "Do Not Disturb", flavor: "Housekeeping respects the sign. So, briefly, does the enemy.", icon: "BellOff", turns: 2, where: "an empty square on your second rank", zone: (api) => emptySquares(api.board, (sq) => RANK(sq) === ownRank(api.me, 1) && ringAround(sq).some((n) => api.board.pieces[n]?.color === api.me)), desc: "Use once as a free action: hang the sign on an empty square on your second rank beside one of your pieces. Enemy pieces cannot end a move there for your opponent's next 2 turns." },
 ];
 
 function houseRule(entry: (typeof HOUSE_RULES)[number]): Buff {
   return opener(
     entry,
-    `Use once as a free action: choose ${entry.where}. Enemy pieces cannot end a move there for your opponent's next ${entry.turns === 1 ? "turn" : `${entry.turns} turns`}.`,
+    entry.desc ??
+      `Use once as a free action: choose ${entry.where}. Enemy pieces cannot end a move there for your opponent's next ${entry.turns === 1 ? "turn" : `${entry.turns} turns`}.`,
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -735,6 +751,11 @@ function houseRule(entry: (typeof HOUSE_RULES)[number]): Buff {
       (_inst, api, picks) => {
         if (picks[0]?.square == null) return;
         addEffect(api, { kind: "barred", squares: [picks[0].square], against: api.opp, turns: entry.turns });
+        // Closed for cleaning means closed: the mop bucket keeps the owner's
+        // own pieces off the square for the same two turns.
+        if (entry.bothSides) {
+          addEffect(api, { kind: "barred", squares: [picks[0].square], against: api.me, turns: entry.turns });
+        }
       },
       { freeAction: true },
     ),
@@ -762,6 +783,10 @@ const GRADUATIONS: Array<
      * unlike the shared shield). The guard turns aside that single reply, then
      * ends. */
     guardPlain?: boolean;
+    /** The milestone is refused outright when the move that reaches it is a
+     * capture: no guard is granted and the card is done (Ordination Day, whose
+     * calling cannot begin with a killing). */
+    guardRefusedIfCapture?: boolean;
   }
 > = [
   { id: "first_day_badge", name: "First Day Badge", flavor: "Rank four! The pin is enormous on so small a chest.", icon: "BadgeCheck", tier: 2, what: "The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn, and the guard ends the moment that pawn makes a capture", cond: (move, api) => move.piece === "p" && relRank(api.me, move.to) === 4, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true, fx: { motif: "ward", pieces: ["p"], self: true } },
@@ -769,8 +794,8 @@ const GRADUATIONS: Array<
   { id: "riding_certificate", name: "Riding Certificate", flavor: "Licensed for forward operations at last.", icon: "FileCheck", tier: 2, what: "The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn; the guard ends once it has turned that reply aside", cond: (move, api) => move.piece === "n" && relRank(api.me, move.to) >= 4, pay: (move, api) => shield1(api, move.to), guardPlain: true, fx: { motif: "ward", pieces: ["n"], self: true } },
   { id: "exchange_student", name: "Exchange Student", flavor: "First semester abroad comes with an escort.", icon: "Backpack", tier: 2, what: "The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn, except by a pawn", cond: (move, api) => inHalf(api.opp, move.to), pay: (move, api) => shield1(api, move.to), guardExceptPawns: true, fx: { motif: "ward", pieces: "all", self: true } },
   { id: "debutante_ball", name: "Debutante Ball", flavor: "Her first appearance is, by decree, uninterruptible.", icon: "Sparkles", tier: 2, what: "When your queen makes her first move, she cannot be captured during your opponent's turn after next (the guard begins only after their next reply)", cond: (move) => move.piece === "q", pay: (move, api) => shield1(api, move.to), guardDelay: true, fx: { motif: "ward", pieces: ["q"], self: true } },
-  { id: "tower_inspection", name: "Tower Inspection", flavor: "Freshly certified: one tower, structurally smug.", icon: "Castle", tier: 2, what: "When your first rook moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that rook makes a capture", cond: (move) => move.piece === "r" && !move.castle, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true, fx: { motif: "ward", pieces: ["r"], self: true } },
-  { id: "ordination_day", name: "Ordination Day", flavor: "The diagonal is a calling, formally answered.", icon: "Church", tier: 2, what: "When your first bishop moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that bishop makes a capture", cond: (move) => move.piece === "b", pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true, fx: { motif: "ward", pieces: ["b"], self: true } },
+  { id: "tower_inspection", name: "Tower Inspection", flavor: "Freshly certified: one tower, structurally smug.", icon: "Castle", tier: 2, what: "When your first rook moves, the inspector signs off: it cannot be captured during your opponent's next turn, and the certificate is void the moment that rook makes a capture", cond: (move) => move.piece === "r" && !move.castle, pay: (move, api) => shield1(api, move.to), guardEndsOnCapture: true, fx: { motif: "ward", pieces: ["r"], self: true } },
+  { id: "ordination_day", name: "Ordination Day", flavor: "The diagonal is a calling, formally answered.", icon: "Church", tier: 2, what: "When your first bishop moves, he is ordained and cannot be captured during your opponent's next turn. A calling that begins with a capture is refused, and no guard is granted", cond: (move) => move.piece === "b", pay: (move, api) => shield1(api, move.to), guardPlain: true, guardRefusedIfCapture: true, fx: { motif: "ward", pieces: ["b"], self: true } },
   { id: "morning_constitutional", name: "Morning Constitutional", flavor: "A king who walks before breakfast earns his hat.", icon: "Footprints", what: "When your king makes his first non-castling move, he earns a hat, purely cosmetically, forever, every enemy piece he could capture flashes until your opponent replies, and you gain 5 seconds", cond: (move) => move.piece === "k" && !move.castle, pay: (move, api) => { pinCosmetic(api, move.to, api.me, "hat", null); flashSquares(api, [move.to], true); const caps = capturesFrom(api, move.to, api.opp); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
 ];
 
@@ -797,6 +822,13 @@ function graduation(entry: (typeof GRADUATIONS)[number]): Buff {
       // Arm on the milestone move.
       if (inst.state.sq == null && !inst.state.done) {
         if (move.color !== api.me || !entry.cond(move, api)) return;
+        // A calling that opens with a killing is refused: the milestone is
+        // reached, the guard is not granted, and the card is done.
+        if (entry.guardRefusedIfCapture && move.captured) {
+          inst.state.done = true;
+          inst.spent = true;
+          return;
+        }
         inst.state.sq = move.to;
         inst.state.delay = entry.guardDelay ? 1 : 0;
         inst.state.turns = 1;
@@ -988,8 +1020,10 @@ const SPRING_THAW: Array<
   { id: "first_robin", name: "First Robin", flavor: "It lands kingside and declares the season open.", icon: "Bird", after: 6, files: [4, 5, 6, 7], who: "kingside (files e through h)", bankRetry: true, consolationSec: 15, fx: { motif: "rally", pieces: ["p"], self: true } },
   { id: "river_breakup", name: "River Breakup", flavor: "When the center ice cracks, something always floats forward.", icon: "Waves", after: 7, files: [2, 3, 4, 5], who: "central (files c through f)", bankRetry: true, consolationSec: 15, consolationRerolls: 2, fx: { motif: "rally", pieces: ["p"], self: true } },
   { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)", doubleRoll: true, jackpotAlt: (api) => { api.mine.flags.seeOppTier = true; api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If none can, you instead learn your opponent's next offer tier and gain a reroll.", fx: { motif: "rally", pieces: ["p"], self: true } },
-  { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns.", fx: { motif: "rally", pieces: ["p"], self: true } },
-  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns.", fx: { motif: "rally", pieces: ["p"], self: true } },
+  // Two cards that shared one floor sentence word for word. Each keeps its own
+  // consolation now: the tap still drips syrup, while spring simply arrives.
+  { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file", jackpotAlt: (api) => { api.adjustClock({ addSelfSec: 8 }); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If neither can, the tap still drips: you gain 8 seconds and one draft reroll.", fx: { motif: "rally", pieces: ["p"], self: true } },
+  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "If none can, spring comes anyway: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next 4 turns.", fx: { motif: "rally", pieces: ["p"], self: true } },
 ];
 
 function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
