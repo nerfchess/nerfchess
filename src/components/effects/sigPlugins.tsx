@@ -223,6 +223,18 @@ export const PLUGIN_IDS: readonly string[] = [
   "hw3_inverted_crown",
   // creatorPlays.tsx (5)
   "cr_stalling_bishop", "cr_oh_no_my_queen", "cr_family_game_night", "cr_speedrun_protocol", "cr_chat_picks",
+  // g26ShieldPlays.tsx (32)
+  "bn4_age_of_peace", "bn4_guardian_of_the_line", "bn4_saints_procession", "bn4_warding_circle", "ov_plot_armor", "bn4_ancestral_shield",
+  "bn4_shieldmaidens", "bn4_bodyguard_detail", "bn4_color_guard", "bn4_old_guard", "bn4_confetti_cannon", "bn4_quilted_armor",
+  "bn4_boundary_stones", "bn4_pocket_shield", "op_alley_cat", "op_cloister_bell", "op_debutante_ball", "op_first_day_badge",
+  "op_gallery_docent", "op_lady_in_waiting", "op_lighthouse_keeper", "op_ordination_day", "op_parade_marshal", "op_riding_certificate",
+  "op_stable_groom", "op_stage_armor", "op_tower_inspection", "op_victory_lap", "ov_traffic_cone", "bn4_doorstop",
+  "op_guardian_sprite", "ov_wet_paint",
+  // g31ChancePlays.tsx (20)
+  "bn4_costume_trunk", "bn4_bottled_courage", "hx4_ferrymans_coin", "bn4_rubber_duck", "bn4_lucky_coin", "op_chairs_on_tables",
+  "op_crystal_ball", "op_dowsing_rod", "op_evil_eye_bead", "op_fools_gold", "op_four_leaf_clover", "op_gossip_charm",
+  "op_horseshoe_nail", "op_private_booth", "op_rabbits_foot", "op_starboard_chart", "op_sunday_best", "op_tea_leaves",
+  "op_wishbone", "ov_lucky_penny",
 ];
 // </plugin-ids:generated>
 

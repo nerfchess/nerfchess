@@ -198,11 +198,25 @@ function componentBody(src: string, name: string): string | null {
  */
 function delaysOf(body: string): number[] {
   const out: number[] = [0];
+  // `${delayMs + 120}ms`, and the same with the offset from a data row.
   for (const m of body.matchAll(/\$\{[^}]*?\+\s*(\d+(?:\.\d+)?)\s*\}ms/g)) out.push(Number(m[1]));
+  // dm(delayMs, 120) — two-arg helper.
   for (const m of body.matchAll(/\b(?:dm|d)\(\s*\w+\s*,\s*(\d+(?:\.\d+)?)\s*\)/g)) {
     out.push(Number(m[1]));
   }
+  // d(delayMs + 120) and d(120) — single-arg helper taking an expression.
+  for (const m of body.matchAll(/\b(?:dm|d)\(\s*(?:\w+\s*\+\s*)?(\d+(?:\.\d+)?)\s*\)/g)) {
+    out.push(Number(m[1]));
+  }
+  // beat(0.34) / beat(0.34 + i * 0.09) — fractional beats.
   for (const m of body.matchAll(/\bbeat\(\s*(\d+(?:\.\d+)?)/g)) out.push(Number(m[1]) * 1000);
+  // delayMs={delayMs + 120} on a child component.
+  for (const m of body.matchAll(/delayMs=\{[^}]*?\+\s*(\d+(?:\.\d+)?)\s*\}/g)) out.push(Number(m[1]));
+  // A bare numeric delay prop on a local layer helper: <V ... d={280}>.
+  for (const m of body.matchAll(/\b(?:d|dl|delay|delayMs)=\{\s*(\d+(?:\.\d+)?)\s*\}/g)) {
+    out.push(Number(m[1]));
+  }
+  // data rows that feed a delay: { d: 120 }, { delay: 120 }, { at: 120 }.
   for (const m of body.matchAll(/\b(?:d|dl|delay|at)\s*:\s*(\d+(?:\.\d+)?)\b/g)) {
     out.push(Number(m[1]));
   }
@@ -239,8 +253,82 @@ function hasPureWhite(body: string): boolean {
   return /#ffffff\b/i.test(body) || /#fff\b/i.test(body);
 }
 
-function usesGeometry(body: string): boolean {
-  return GEO_VARS.some((v) => body.includes(v));
+/** Class names a scene body mentions, used to look up its CSS rules. */
+function classesOf(body: string): string[] {
+  const out: string[] = [];
+  for (const m of body.matchAll(/["'`]([^"'`\n]*)["'`]/g)) {
+    for (const cls of m[1].split(/\s+/)) {
+      if (/^[a-z][a-z0-9]{1,6}-[a-z0-9-]{2,}$/i.test(cls) && !TAILWIND.test(cls)) out.push(cls);
+    }
+  }
+  return out;
+}
+
+/** Local helper components a scene renders, so geometry applied by a shared
+ *  helper counts for the scenes that use it. A shared board-frame that leans by
+ *  --fx-side genuinely makes every scene using it directional. */
+function helpersOf(body: string): string[] {
+  const out = new Set<string>();
+  for (const m of body.matchAll(/<([A-Z]\w*)/g)) out.add(m[1]);
+  return [...out];
+}
+
+/**
+ * Is any layer of this scene driven by the directional geometry?
+ *
+ * Checked three ways, because all three are legitimate places to apply it and
+ * a gate that only looked inline would fail correct work:
+ *   1. the component body mentions a geo var directly;
+ *   2. a CSS rule for one of the scene's own classes uses one (the usual place
+ *      a transform lives);
+ *   3. a local helper component the scene renders uses one.
+ */
+/**
+ * Does the CSS apply a geometry var to this class?
+ *
+ * Three places to look, and missing the third made the gate reject correct
+ * work: the class rule itself, a `@keyframes` block of the same name, and the
+ * keyframes the class rule names in its `animation:` shorthand. Directional
+ * motion almost always lives in the keyframes, not the rule.
+ */
+function cssGeoForClass(css: string, cls: string): boolean {
+  const bodies: string[] = [];
+  for (const m of css.matchAll(new RegExp(`\\.${cls}\\b[^{]*\\{([^}]*)\\}`, "g"))) {
+    bodies.push(m[1]);
+  }
+  const kf = (name: string): void => {
+    const at = css.indexOf(`@keyframes ${name}`);
+    if (at < 0) return;
+    const open = css.indexOf("{", at);
+    let depth = 0;
+    for (let j = open; j < css.length; j++) {
+      if (css[j] === "{") depth++;
+      else if (css[j] === "}") {
+        depth--;
+        if (depth === 0) {
+          bodies.push(css.slice(open, j + 1));
+          return;
+        }
+      }
+    }
+  };
+  kf(cls);
+  for (const b of [...bodies]) {
+    for (const m of b.matchAll(/animation:\s*([\w-]+)/g)) kf(m[1]);
+  }
+  return bodies.some((b) => GEO_VARS.some((v) => b.includes(v)));
+}
+
+function usesGeometry(body: string, css: string, src: string): boolean {
+  if (GEO_VARS.some((v) => body.includes(v))) return true;
+  if (classesOf(body).some((cls) => cssGeoForClass(css, cls))) return true;
+  for (const h of helpersOf(body)) {
+    const hb = componentBody(src, h);
+    if (!hb) continue;
+    if (GEO_VARS.some((v) => hb.includes(v))) return true;
+    if (classesOf(hb).some((cls) => cssGeoForClass(css, cls))) return true;
+  }
+  return false;
 }
 
 // --- Run --------------------------------------------------------------------
@@ -260,6 +348,14 @@ function main(): void {
 
   for (const mod of pluginModules()) {
     const src = read(`${mod}.tsx`);
+    // The module's stylesheet, so geometry applied in CSS (where transforms
+    // normally live) counts. Missing is fine: some modules ride shared CSS.
+    let css = "";
+    try {
+      css = read(`${mod}.css`);
+    } catch {
+      css = "";
+    }
     for (const [id, chunk] of entryChunks(playsBlock(src, `${mod}.tsx`))) {
       const scene = sceneNameOf(chunk);
       const body = scene ? componentBody(src, scene) : null;
@@ -280,12 +376,17 @@ function main(): void {
       else if (!hasTell) reasons.push("no anticipation beat before the strike");
       else if (!hasSettle) reasons.push("no settle beat after the strike");
 
-      const layers = layersOf(body);
+      // Layers include those contributed by the scene's own local helpers: a
+      // scene that composes a board frame, a rail and three props has those
+      // layers whether they are inline or one call away.
+      const layers = layersOf(
+        body + helpersOf(body).map((h) => componentBody(src, h) ?? "").join("\n"),
+      );
       const floor = layerFloor(tier);
       if (layers < floor) reasons.push(`${layers} animated layers, tier ${tier} floor is ${floor}`);
 
       if (hasPureWhite(body)) reasons.push("pure white in the palette (whites must be warm)");
-      if (!usesGeometry(body)) reasons.push("no layer driven by the directional geometry vars");
+      if (!usesGeometry(body, css, src)) reasons.push("no layer driven by the directional geometry vars");
       if (!/anchor:\s*"(cast|aim|board)"/.test(chunk)) reasons.push("no declared anchor");
 
       if (reasons.length) findings.push({ id, module: mod, tier, scene, reasons });
@@ -293,6 +394,15 @@ function main(): void {
   }
 
   const below = findings.length;
+
+  const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
+  if (only) {
+    for (const f of findings.filter((x) => x.module.includes(only))) {
+      console.log(`  [t${f.tier}] ${f.module}.${f.scene} (${f.id})`);
+      for (const r of f.reasons) console.log(`      - ${r}`);
+    }
+    console.log(`(${findings.filter((x) => x.module.includes(only)).length} failing in ${only})`);
+  }
 
   if (REPORT) {
     const hist = new Map<string, number>();

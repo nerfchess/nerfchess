@@ -388,9 +388,14 @@ function FerrymansCoinScene({ role, delayMs }: SceneProps) {
         <span className="g31-fm-travel absolute inset-0 block" style={d(delayMs + 200)}>
           <P x={50} y={50} w={4.4} h={4.4} style={{ background: C_FM.glow, borderRadius: "50%", border: `2px solid ${C_FM.deep}` }} />
         </span>
-        <span className="g31-fm-land absolute inset-0 block" style={d(delayMs + 620)}>
-          <P x={50} y={50} w={14} h={5} cls="g31-fm-ripple2" style={{ border: `2px solid ${C_FM.glow}`, borderRadius: "50%" }} />
-        </span>
+        <P
+          x={50}
+          y={50}
+          w={14}
+          h={5}
+          cls="g31-fm-ripple2"
+          style={{ border: `2px solid ${C_FM.glow}`, borderRadius: "50%", ...d(delayMs + 620) }}
+        />
         <P x={50} y={50} w={3} h={16} cls="g31-fm-gate" style={{ background: C_FM.core, ...d(delayMs + 700) }} />
         <P x={50} y={50} w={26} h={2} cls="g31-fm-wake" style={{ background: C_FM.deep, ...d(delayMs + 780) }} />
       </Aim>

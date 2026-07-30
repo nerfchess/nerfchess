@@ -156,12 +156,10 @@ const KNIGHT = "M8.2 19V13c0-3.8 2.5-5.9 4.6-6.5L12 4.2l3 1.2c2 .9 2.9 2.9 2.9 5
 const ROOK = "M7 4.8h2.3v1.6h1.6V4.8h2.2v1.6h1.6V4.8H17v3.6h-1.2v6.8H17V19H7v-3.8h1.2V8.4H7z";
 const QUEEN = "M6.4 6l1.3 3.2L9.4 6.6 12 9.4l2.6-2.8 1.7 2.6L17.6 6l-1 10.4H7.4zM7 17.4h10v2.4H7z";
 
-/* =============================================================================
-   1. Age of Peace (t8) — THE PEACE VAULT. Four stone ribs swing overhead and
-   interlock, a keystone drops into the crown, a dove settles on it and an
-   olive sprig opens while dust sifts from the seams.
-   Palette: #f0d089 / #fff4d6 / #2a2415.
-   ========================================================================== */
+/* --- 1. Age of Peace (t8) — THE PEACE VAULT ---------------------------------
+   Four stone ribs swing overhead and interlock, a keystone drops into the
+   crown, a dove settles on it and an olive sprig opens while dust sifts from
+   the seams. Palette: #f0d089 / #fff4d6 / #2a2415. */
 const AO_RIB = "M2 22C2 11.5 6.6 4 12 4s10 7.5 10 18";
 
 function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
@@ -175,9 +173,7 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-ao-rib" l={10} t={26} w={80} h={58} d={40}>
-          <path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="2.2" {...SJ} />
-        </V>
+        <V c="g26-ao-rib" l={10} t={26} w={80} h={58} d={40}><path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="2.2" {...SJ} /></V>
         <V c="g26-ao-key" l={40} t={32} w={20} h={20} d={280}>{keystone}</V>
         <V c="g26-ent-mote" l={34} t={10} w={32} h={32} d={470}>{dove}</V>
       </Cut>
@@ -186,9 +182,7 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
   if (role === "target") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-hit" l={8} t={18} w={84} h={62} d={0}>
-          <path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="2.4" {...SJ} />
-        </V>
+        <V c="g26-hit" l={8} t={18} w={84} h={62} d={0}><path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="2.4" {...SJ} /></V>
         <V c="g26-hitside" l={38} t={30} w={24} h={24} d={110}>{keystone}</V>
         <L c="g26-hit2" l={46} t={70} w={8} h={8} d={230} st={{ borderRadius: "50%", background: "#fff4d6" }} />
       </Cut>
@@ -206,9 +200,7 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
     >
       {[0, 1, 2, 3].map((i) => (
         <P key={i} l={25} t={25} w={50} h={50} rot={`${i * 90}deg`}>
-          <V c="g26-ao-rib" d={120 + i * 80}>
-            <path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="1.9" {...SJ} />
-          </V>
+          <V c="g26-ao-rib" d={120 + i * 80}><path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="1.9" {...SJ} /></V>
         </P>
       ))}
       <L c="g26-shaft" l={45} t={20} w={10} h={40} d={520} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.68), transparent)", transformOrigin: "50% 0%" }} />
@@ -227,12 +219,10 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   2. Guardian of the Line (t8) — THE SHIELD WALL. Tower shields slam down in a
-   row along the source-to-target run, overlap edge over edge, and a rivet is
-   driven through the seam. Aim-staged: the wall runs the real vector.
-   Palette: #8fa6c4 / #fff2dc / #1b2431.
-   ========================================================================== */
+/* --- 2. Guardian of the Line (t8) — THE SHIELD WALL -------------------------
+   Tower shields slam down in a row along the source-to-target run, overlap
+   edge over edge, and a rivet is driven through the seam. Aim-staged: the
+   wall runs the real vector. Palette: #8fa6c4 / #fff2dc / #1b2431. */
 const GL_TOWER = "M4 3h16v12.5c0 3.4-3.4 5.2-8 6.5-4.6-1.3-8-3.1-8-6.5z";
 
 function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
@@ -242,9 +232,7 @@ function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g26-ent-drop" l={10} t={16} w={44} h={62} d={40}>{shield("#8fa6c4")}</V>
         <V c="g26-ent-drop" l={44} t={22} w={44} h={62} d={220}>{shield("#fff2dc")}</V>
-        <V c="g26-gl-rivet" l={40} t={44} w={20} h={20} d={430}>
-          <circle cx="12" cy="12" r="5" fill="#fff2dc" stroke="#1b2431" strokeWidth="1.6" />
-        </V>
+        <V c="g26-gl-rivet" l={40} t={44} w={20} h={20} d={430}><circle cx="12" cy="12" r="5" fill="#fff2dc" stroke="#1b2431" strokeWidth="1.6" /></V>
       </Cut>
     );
   }
@@ -253,9 +241,7 @@ function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g26-hitside" l={14} t={12} w={72} h={76} d={0}>{shield("#8fa6c4")}</V>
         <L c="g26-hit2" l={20} t={54} w={60} h={3} d={160} st={{ borderRadius: "999px", background: "#fff2dc" }} />
-        <V c="g26-hit" l={40} t={40} w={20} h={20} d={240}>
-          <circle cx="12" cy="12" r="4.4" fill="#fff2dc" />
-        </V>
+        <V c="g26-hit" l={40} t={40} w={20} h={20} d={240}><circle cx="12" cy="12" r="4.4" fill="#fff2dc" /></V>
       </Cut>
     );
   }
@@ -275,9 +261,7 @@ function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
           {shield(i % 2 ? "#fff2dc" : "#8fa6c4")}
         </V>
       ))}
-      <V c="g26-gl-rivet" l={45.4} t={46} w={4.4} h={4.4} d={640}>
-        <circle cx="12" cy="12" r="6" fill="#fff2dc" stroke="#1b2431" strokeWidth="2.2" />
-      </V>
+      <V c="g26-gl-rivet" l={45.4} t={46} w={4.4} h={4.4} d={640}><circle cx="12" cy="12" r="6" fill="#fff2dc" stroke="#1b2431" strokeWidth="2.2" /></V>
       <L c="g26-gl-clang" l={42} t={44} w={12} h={12} d={660} st={{ borderRadius: "50%", border: "2px solid #fff2dc" }} />
       {[0, 1, 2].map((i) => (
         <L key={i} c="g26-sift" l={46 + i * 6} t={56} w={1.4} h={1.4} d={720 + i * 90} st={{ borderRadius: "50%", background: "#8fa6c4" }} />
@@ -286,12 +270,10 @@ function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   3. Saint's Procession (t7) — THE CANOPY. Hooded bearers carry a reliquary
-   canopy across the run; candle flames lean, the censer swings, and the
-   incense they trail hangs behind them.
-   Palette: #e6c46a / #fff4d6 / #2b2110.
-   ========================================================================== */
+/* --- 3. Saint's Procession (t7) — THE CANOPY --------------------------------
+   Hooded bearers carry a reliquary canopy across the run; candle flames lean,
+   the censer swings, and the incense they trail hangs behind them. Palette:
+   #e6c46a / #fff4d6 / #2b2110. */
 function SaintsProcessionScene({ role, delayMs }: SceneProps) {
   const bearer = (
     <g fill="#2b2110" stroke="#e6c46a" strokeWidth="1.1" {...SJ}>
@@ -310,9 +292,7 @@ function SaintsProcessionScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g26-ent-rise" l={8} t={22} w={84} h={56} d={40}>{canopy}</V>
         <V c="g26-sp-walk" l={38} t={40} w={24} h={44} d={250}>{bearer}</V>
-        <V c="g26-ent-pop" l={58} t={16} w={20} h={20} d={440}>
-          <path d="M12 3c2 3.4 4 5.2 4 7.8a4 4 0 0 1-8 0C8 8.2 10 6.4 12 3z" fill="#fff4d6" />
-        </V>
+        <V c="g26-ent-pop" l={58} t={16} w={20} h={20} d={440}><path d="M12 3c2 3.4 4 5.2 4 7.8a4 4 0 0 1-8 0C8 8.2 10 6.4 12 3z" fill="#fff4d6" /></V>
       </Cut>
     );
   }
@@ -345,12 +325,10 @@ function SaintsProcessionScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   4. Warding Circle (t7) — CHALK, THEN FIRE. A hand-drawn chalk ring is scored
-   onto the boards, four chalked marks thump down at the compass points, then
-   the flame runs the whole circumference and the chalk dust lifts.
-   Palette: #b8f0e2 / #fff4d6 / #10312c.
-   ========================================================================== */
+/* --- 4. Warding Circle (t7) — CHALK, THEN FIRE ------------------------------
+   A hand-drawn chalk ring is scored onto the boards, four chalked marks thump
+   down at the compass points, then the flame runs the whole circumference and
+   the chalk dust lifts. Palette: #b8f0e2 / #fff4d6 / #10312c. */
 const WC_MARKS = [0, 90, 180, 270];
 
 function WardingCircleScene({ role, delayMs }: SceneProps) {
@@ -371,9 +349,7 @@ function WardingCircleScene({ role, delayMs }: SceneProps) {
   if (role === "target") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-hit" l={12} t={12} w={76} h={76} d={0}>
-          <circle cx="12" cy="12" r="9" fill="none" stroke="#b8f0e2" strokeWidth="2" strokeDasharray="2.8 1.6" />
-        </V>
+        <V c="g26-hit" l={12} t={12} w={76} h={76} d={0}><circle cx="12" cy="12" r="9" fill="none" stroke="#b8f0e2" strokeWidth="2" strokeDasharray="2.8 1.6" /></V>
         <V c="g26-hitside" l={30} t={30} w={40} h={40} d={130}>{glyph}</V>
         <L c="g26-hit2" l={22} t={22} w={56} h={56} d={250} st={{ borderRadius: "50%", border: "2px solid #fff4d6" }} />
       </Cut>
@@ -402,12 +378,10 @@ function WardingCircleScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   5. Plot Armor (t7) — THE SCRIPT INSISTS. A spotlight snaps on, a script page
-   thumps down over the piece, the clapper board snaps shut and a red SURVIVES
-   stamp rolls on. The stunt pad straps over the piece as it settles.
-   Palette: #ffb9a0 / #fff4d6 / #331a14.
-   ========================================================================== */
+/* --- 5. Plot Armor (t7) — THE SCRIPT INSISTS --------------------------------
+   A spotlight snaps on, a script page thumps down over the piece, the clapper
+   board snaps shut and a red SURVIVES stamp rolls on. The stunt pad straps
+   over the piece as it settles. Palette: #ffb9a0 / #fff4d6 / #331a14. */
 function PlotArmorScene({ role, delayMs }: SceneProps) {
   const page = (
     <g {...SJ}>
@@ -436,9 +410,7 @@ function PlotArmorScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g26-hitside" l={24} t={10} w={52} h={70} d={0}>{page}</V>
-        <V c="g26-hit" l={30} t={38} w={40} h={40} d={140}>
-          <path d={PAWN} fill="#ffb9a0" />
-        </V>
+        <V c="g26-hit" l={30} t={38} w={40} h={40} d={140}><path d={PAWN} fill="#ffb9a0" /></V>
         <L c="g26-hit2" l={18} t={44} w={64} h={5} d={250} st={{ borderRadius: "999px", background: "#fff4d6" }} />
       </Cut>
     );
@@ -460,9 +432,7 @@ function PlotArmorScene({ role, delayMs }: SceneProps) {
         <rect x="1" y="2" width="38" height="16" rx="1" fill="none" stroke="#ffb9a0" strokeWidth="1.6" />
         <text x="20" y="14" textAnchor="middle" fontSize="9" fontWeight="700" fill="#ffb9a0">SURVIVES</text>
       </V>
-      <V c="g26-pa-pad" l={45} t={45} w={10} h={12} d={760}>
-        <path d={PAWN} fill="none" stroke="#fff4d6" strokeWidth="1.6" {...SJ} />
-      </V>
+      <V c="g26-pa-pad" l={45} t={45} w={10} h={12} d={760}><path d={PAWN} fill="none" stroke="#fff4d6" strokeWidth="1.6" {...SJ} /></V>
       {[0, 1, 2].map((i) => (
         <L key={i} c="g26-glint" l={38 + i * 12} t={38 + (i % 2) * 14} w={2.4} h={2.4} d={700 + i * 110} st={{ borderRadius: "50%", background: "#fff4d6" }} />
       ))}
@@ -470,12 +440,10 @@ function PlotArmorScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   6. Ancestral Shield (t6) — THE ANCESTOR STEPS IN. A portrait frame fades up
-   behind the square, the old one walks out of it, plants a heirloom kite
-   shield in front of the piece and dissolves back into dust.
-   Palette: #c8b4e0 / #fff4d6 / #221733.
-   ========================================================================== */
+/* --- 6. Ancestral Shield (t6) — THE ANCESTOR STEPS IN -----------------------
+   A portrait frame fades up behind the square, the old one walks out of it,
+   plants a heirloom kite shield in front of the piece and dissolves back into
+   dust. Palette: #c8b4e0 / #fff4d6 / #221733. */
 function AncestralShieldScene({ role, delayMs }: SceneProps) {
   const kite = (
     <g {...SJ}>
@@ -522,12 +490,10 @@ function AncestralShieldScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   7. Shieldmaidens (t6) — SPEARS PLANTED POINT-DOWN. Six round shields and
-   crossed spears drive into the boards in a tight ring around the queen, the
-   helm crest tips forward, and the boards kick up splinters.
-   Palette: #9fd6c0 / #fff4d6 / #16302a.
-   ========================================================================== */
+/* --- 7. Shieldmaidens (t6) — SPEARS PLANTED POINT-DOWN ----------------------
+   Six round shields and crossed spears drive into the boards in a tight ring
+   around the queen, the helm crest tips forward, and the boards kick up
+   splinters. Palette: #9fd6c0 / #fff4d6 / #16302a. */
 const SM_RING = [0, 60, 120, 180, 240, 300];
 
 function ShieldmaidensScene({ role, delayMs }: SceneProps) {
@@ -553,18 +519,14 @@ function ShieldmaidensScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g26-hitside" l={18} t={18} w={64} h={64} d={0}>{round}</V>
-        <V c="g26-hit" l={44} t={2} w={12} h={70} d={140}>
-          <path d="M12 1l2 4-2 16-2-16z" fill="#fff4d6" />
-        </V>
+        <V c="g26-hit" l={44} t={2} w={12} h={70} d={140}><path d="M12 1l2 4-2 16-2-16z" fill="#fff4d6" /></V>
         <L c="g26-hit2" l={34} t={76} w={32} h={4} d={250} st={{ borderRadius: "999px", background: "#16302a" }} />
       </Cut>
     );
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(159,214,192,0.26)" />}>
-      <V c="g26-sm-queen" l={45.5} t={44} w={9} h={12} d={100}>
-        <path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g26-sm-queen" l={45.5} t={44} w={9} h={12} d={100}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       {SM_RING.map((a, i) => (
         <P key={a} l={33} t={33} w={34} h={34} rot={`${a}deg`}>
           <V c="g26-sm-spear" w={100} h={100} d={200 + i * 70} st={{ transformOrigin: "50% 50%" }}>
@@ -586,12 +548,10 @@ function ShieldmaidensScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   8. Bodyguard Detail (t5) — FOUR SUITS CLOSE THE BOX. Dark silhouettes step
-   in from the caster's own side, plant a square around the king, one raises a
-   flat palm and an earpiece coil catches the light.
-   Palette: #7f93b8 / #fff4d6 / #10141f.
-   ========================================================================== */
+/* --- 8. Bodyguard Detail (t5) — FOUR SUITS CLOSE THE BOX --------------------
+   Dark silhouettes step in from the caster's own side, plant a square around
+   the king, one raises a flat palm and an earpiece coil catches the light.
+   Palette: #7f93b8 / #fff4d6 / #10141f. */
 const BD_SPOTS: Array<[number, number]> = [[41, 40], [55, 40], [41, 52], [55, 52]];
 
 function BodyguardDetailScene({ role, delayMs }: SceneProps) {
@@ -633,9 +593,7 @@ function BodyguardDetailScene({ role, delayMs }: SceneProps) {
         </>
       }
     >
-      <V c="g26-bd-king" l={45.5} t={44} w={9} h={12} d={80}>
-        <path d={KING} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g26-bd-king" l={45.5} t={44} w={9} h={12} d={80}><path d={KING} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       {BD_SPOTS.map(([l, t], i) => (
         <V key={i} c="g26-bd-step" l={l} t={t} w={6} h={9} d={180 + i * 110}>{suit}</V>
       ))}
@@ -648,12 +606,10 @@ function BodyguardDetailScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   9. Color Guard (t5) — THE COLOURS ARE PLANTED. Two regimental standards
-   drive their pole butts into the second rank, the silks snap open, sabres
-   cross overhead and two fresh pawns rise under the arch.
-   Palette: #e0a860 / #fff4d6 / #2c1a0e.
-   ========================================================================== */
+/* --- 9. Color Guard (t5) — THE COLOURS ARE PLANTED --------------------------
+   Two regimental standards drive their pole butts into the second rank, the
+   silks snap open, sabres cross overhead and two fresh pawns rise under the
+   arch. Palette: #e0a860 / #fff4d6 / #2c1a0e. */
 function ColorGuardScene({ role, delayMs }: SceneProps) {
   const standard = (fill: string) => (
     <g {...SJ}>
@@ -666,9 +622,7 @@ function ColorGuardScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g26-cg-plant" l={6} t={14} w={44} h={70} d={40}>{standard("#e0a860")}</V>
         <V c="g26-cg-plant" l={48} t={18} w={44} h={70} d={230}>{standard("#fff4d6")}</V>
-        <V c="g26-ent-pop" l={30} t={38} w={40} h={40} d={440}>
-          <path d="M3 20L20 4M4 4l17 16" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} />
-        </V>
+        <V c="g26-ent-pop" l={30} t={38} w={40} h={40} d={440}><path d="M3 20L20 4M4 4l17 16" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} /></V>
       </Cut>
     );
   }
@@ -676,9 +630,7 @@ function ColorGuardScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g26-hitside" l={18} t={8} w={64} h={72} d={0}>{standard("#e0a860")}</V>
-        <V c="g26-hit" l={38} t={44} w={24} h={40} d={150}>
-          <path d={PAWN} fill="#fff4d6" />
-        </V>
+        <V c="g26-hit" l={38} t={44} w={24} h={40} d={150}><path d={PAWN} fill="#fff4d6" /></V>
         <L c="g26-hit2" l={26} t={82} w={48} h={4} d={260} st={{ borderRadius: "999px", background: "#2c1a0e" }} />
       </Cut>
     );
@@ -687,14 +639,10 @@ function ColorGuardScene({ role, delayMs }: SceneProps) {
     <Lead d={delayMs} frame={<Wash tone="rgba(224,168,96,0.28)" />}>
       <V c="g26-cg-plant" l={38} t={34} w={12} h={20} d={120}>{standard("#e0a860")}</V>
       <V c="g26-cg-plant" l={50} t={34} w={12} h={20} d={280}>{standard("#fff4d6")}</V>
-      <V c="g26-cg-sabre" l={41} t={30} w={18} h={18} d={470}>
-        <path d="M3 20L20 4M4 4l17 16" stroke="#fff4d6" strokeWidth="1.5" fill="none" {...SJ} />
-      </V>
+      <V c="g26-cg-sabre" l={41} t={30} w={18} h={18} d={470}><path d="M3 20L20 4M4 4l17 16" stroke="#fff4d6" strokeWidth="1.5" fill="none" {...SJ} /></V>
       <L c="g26-cg-thump" l={39} t={53} w={22} h={4} d={430} st={{ borderRadius: "999px", background: "rgba(44,26,14,0.7)" }} />
       {[0, 1].map((i) => (
-        <V key={i} c="g26-guardin" l={43 + i * 9} t={46} w={7} h={10} d={560 + i * 150}>
-          <path d={PAWN} fill="#fff4d6" stroke="#2c1a0e" strokeWidth="1" {...SJ} />
-        </V>
+        <V key={i} c="g26-guardin" l={43 + i * 9} t={46} w={7} h={10} d={560 + i * 150}><path d={PAWN} fill="#fff4d6" stroke="#2c1a0e" strokeWidth="1" {...SJ} /></V>
       ))}
       {[0, 1, 2].map((i) => (
         <L key={i} c="g26-sift" l={42 + i * 7} t={54} w={1.5} h={1.5} d={700 + i * 100} st={{ borderRadius: "50%", background: "#e0a860" }} />
@@ -703,12 +651,10 @@ function ColorGuardScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   10. The Old Guard (t5) — TWO HELMS COME OFF THE RACK. A weapons rack fades
-   up, a knight's barbute and a bishop's mitre are lifted off their pegs, dust
-   sheets slide away, and both settle onto the boards still trailing cobweb.
-   Palette: #b9a889 / #fff4d6 / #2a2216.
-   ========================================================================== */
+/* --- 10. The Old Guard (t5) — TWO HELMS COME OFF THE RACK -------------------
+   A weapons rack fades up, a knight's barbute and a bishop's mitre are lifted
+   off their pegs, dust sheets slide away, and both settle onto the boards
+   still trailing cobweb. Palette: #b9a889 / #fff4d6 / #2a2216. */
 function OldGuardScene({ role, delayMs }: SceneProps) {
   const barbute = (
     <g {...SJ}>
@@ -759,12 +705,10 @@ function OldGuardScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   11. Confetti Cannon (t4) — SHADES ON, STRUT ON. A pair of sunglasses slides
-   down onto the piece, the cannon barrel tips up and fires streamers, and the
-   piece struts a two-step under falling confetti.
-   Palette: #ff8fb4 / #fff4d6 / #2c1424.
-   ========================================================================== */
+/* --- 11. Confetti Cannon (t4) — SHADES ON, STRUT ON -------------------------
+   A pair of sunglasses slides down onto the piece, the cannon barrel tips up
+   and fires streamers, and the piece struts a two-step under falling
+   confetti. Palette: #ff8fb4 / #fff4d6 / #2c1424. */
 const CC_BITS: Array<[number, number, string]> = [
   [40, 30, "#ff8fb4"], [48, 24, "#fff4d6"], [56, 32, "#ff8fb4"],
   [44, 20, "#fff4d6"], [53, 18, "#ff8fb4"], [37, 26, "#fff4d6"],
@@ -793,9 +737,7 @@ function ConfettiCannonScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g26-hit" l={16} t={34} w={68} h={32} d={0}>{shades}</V>
-        <V c="g26-hitside" l={34} t={40} w={32} h={50} d={130}>
-          <path d={PAWN} fill="#ff8fb4" />
-        </V>
+        <V c="g26-hitside" l={34} t={40} w={32} h={50} d={130}><path d={PAWN} fill="#ff8fb4" /></V>
         {[0, 1, 2].map((i) => (
           <L key={i} c="g26-hit2" l={26 + i * 22} t={14} w={6} h={6} d={220 + i * 80} st={{ background: "#fff4d6" }} />
         ))}
@@ -809,9 +751,7 @@ function ConfettiCannonScene({ role, delayMs }: SceneProps) {
       </V>
       <L c="g26-cc-pop" l={47} t={40} w={10} h={10} d={340} st={{ borderRadius: "50%", background: "radial-gradient(circle, #fff4d6, transparent 68%)" }} />
       <V c="g26-cc-shades" l={44} t={43} w={12} h={6} d={420}>{shades}</V>
-      <V c="g26-cc-strut" l={45} t={45} w={10} h={13} d={520}>
-        <path d={PAWN} fill="#ff8fb4" stroke="#2c1424" strokeWidth="1" {...SJ} />
-      </V>
+      <V c="g26-cc-strut" l={45} t={45} w={10} h={13} d={520}><path d={PAWN} fill="#ff8fb4" stroke="#2c1424" strokeWidth="1" {...SJ} /></V>
       {CC_BITS.map(([l, t, col], i) => (
         <L key={i} c="g26-cc-bit" l={l} t={t} w={1.8} h={2.6} d={400 + i * 80} st={{ background: col }} />
       ))}
@@ -820,12 +760,10 @@ function ConfettiCannonScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   12. Quilted Armor (t3) — THE GAMBESON SEWS ITSELF. A needle runs a diagonal
-   seam, the diamond stitching fills in row by row, and the padding puffs out
-   with a small burst of lint.
-   Palette: #d8b98a / #fff4d6 / #33251a.
-   ========================================================================== */
+/* --- 12. Quilted Armor (t3) — THE GAMBESON SEWS ITSELF ----------------------
+   A needle runs a diagonal seam, the diamond stitching fills in row by row,
+   and the padding puffs out with a small burst of lint. Palette: #d8b98a /
+   #fff4d6 / #33251a. */
 const QA_ROWS = [0, 1, 2];
 
 function QuiltedArmorScene({ role, delayMs }: SceneProps) {
@@ -838,9 +776,7 @@ function QuiltedArmorScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-qa-needle" l={4} t={4} w={54} h={54} d={40}>
-          <path d="M2 22L20 4M20 4l-1.6 4.4" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
-        </V>
+        <V c="g26-qa-needle" l={4} t={4} w={54} h={54} d={40}><path d="M2 22L20 4M20 4l-1.6 4.4" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} /></V>
         <V c="g26-qa-stitch" l={16} t={16} w={68} h={68} d={260}>{quilt}</V>
         <L c="g26-qa-puff" l={28} t={28} w={44} h={44} d={450} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.7), transparent 70%)" }} />
       </Cut>
@@ -850,18 +786,14 @@ function QuiltedArmorScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g26-hitside" l={10} t={10} w={80} h={80} d={0}>{quilt}</V>
-        <V c="g26-hit" l={4} t={6} w={44} h={44} d={130}>
-          <path d="M2 22L20 4" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} />
-        </V>
+        <V c="g26-hit" l={4} t={6} w={44} h={44} d={130}><path d="M2 22L20 4" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} /></V>
         <L c="g26-hit2" l={30} t={30} w={40} h={40} d={250} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.6), transparent 70%)" }} />
       </Cut>
     );
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(216,185,138,0.24)" />}>
-      <V c="g26-qa-needle" l={34} t={32} w={16} h={16} d={90}>
-        <path d="M2 22L20 4M20 4l-1.6 4.4" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} />
-      </V>
+      <V c="g26-qa-needle" l={34} t={32} w={16} h={16} d={90}><path d="M2 22L20 4M20 4l-1.6 4.4" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} /></V>
       {QA_ROWS.map((i) => (
         <V key={i} c="g26-qa-stitch" l={38} t={36 + i * 7} w={24} h={8} d={230 + i * 150} par="none" vb="0 0 48 12">
           <path d="M0 6L6 0l6 6-6 6zM12 6L18 0l6 6-6 6zM24 6L30 0l6 6-6 6zM36 6L42 0l6 6-6 6z" fill="none" stroke="#d8b98a" strokeWidth="1.2" strokeDasharray="2 1.4" />
@@ -876,12 +808,10 @@ function QuiltedArmorScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   13. Boundary Stones (t2) — TWO MARKERS AND A CHAIN. Carved stones thump into
-   the boards at either end of the run, turf sprays, and the surveyor's chain
-   snaps taut between them. Aim-staged along the real line.
-   Palette: #9fb0a2 / #fff4d6 / #23291f.
-   ========================================================================== */
+/* --- 13. Boundary Stones (t2) — TWO MARKERS AND A CHAIN ---------------------
+   Carved stones thump into the boards at either end of the run, turf sprays,
+   and the surveyor's chain snaps taut between them. Aim-staged along the real
+   line. Palette: #9fb0a2 / #fff4d6 / #23291f. */
 function BoundaryStonesScene({ role, delayMs }: SceneProps) {
   const stone = (
     <g {...SJ}>
@@ -921,12 +851,10 @@ function BoundaryStonesScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   14. Pocket Shield (t2) — IT FOLDS OUT. A flat disc is flicked out of a coat
-   pocket, unfolds like a fan into three overlapping leaves and locks with a
-   click, the coat flap falling shut behind it.
-   Palette: #86c8e0 / #fff4d6 / #14293a.
-   ========================================================================== */
+/* --- 14. Pocket Shield (t2) — IT FOLDS OUT ----------------------------------
+   A flat disc is flicked out of a coat pocket, unfolds like a fan into three
+   overlapping leaves and locks with a click, the coat flap falling shut
+   behind it. Palette: #86c8e0 / #fff4d6 / #14293a. */
 const PS_LEAVES = [-38, 0, 38];
 
 function PocketShieldScene({ role, delayMs }: SceneProps) {
@@ -958,9 +886,7 @@ function PocketShieldScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(134,200,224,0.24)" />}>
-      <V c="g26-ps-pocket" l={36} t={48} w={14} h={12} d={70}>
-        <path d="M3 6h18v3l-9 4-9-4z" fill="#14293a" stroke="#86c8e0" strokeWidth="1.1" {...SJ} />
-      </V>
+      <V c="g26-ps-pocket" l={36} t={48} w={14} h={12} d={70}><path d="M3 6h18v3l-9 4-9-4z" fill="#14293a" stroke="#86c8e0" strokeWidth="1.1" {...SJ} /></V>
       <V c="g26-ps-flick" l={41} t={44} w={9} h={12} d={200}>{leaf("#86c8e0")}</V>
       {PS_LEAVES.map((a, i) => (
         <P key={a} l={43} t={38} w={14} h={18} rot={`${a}deg`}>
@@ -975,12 +901,10 @@ function PocketShieldScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   15. Alley Cat (t2) — THE BIN-LID AMBUSH. A bin lid clatters, the cat arches
-   its back on top of it, fur bristling, and a claw swipe scores three lines
-   across the square before it slinks off.
-   Palette: #f0a860 / #fff4d6 / #241a12.
-   ========================================================================== */
+/* --- 15. Alley Cat (t2) — THE BIN-LID AMBUSH --------------------------------
+   A bin lid clatters, the cat arches its back on top of it, fur bristling,
+   and a claw swipe scores three lines across the square before it slinks off.
+   Palette: #f0a860 / #fff4d6 / #241a12. */
 const AC_CLAWS = [0, 1, 2];
 
 function AlleyCatScene({ role, delayMs }: SceneProps) {
@@ -996,9 +920,7 @@ function AlleyCatScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-ac-lid" l={6} t={58} w={88} h={30} d={40}>
-          <path d="M2 16h20l-2.6-5H4.6z" fill="#f0a860" stroke="#241a12" strokeWidth="1.1" {...SJ} />
-        </V>
+        <V c="g26-ac-lid" l={6} t={58} w={88} h={30} d={40}><path d="M2 16h20l-2.6-5H4.6z" fill="#f0a860" stroke="#241a12" strokeWidth="1.1" {...SJ} /></V>
         <V c="g26-ac-arch" l={16} t={16} w={68} h={54} d={240}>{cat}</V>
         {AC_CLAWS.map((i) => (
           <L key={i} c="g26-ac-claw" l={22 + i * 18} t={20} w={4} h={54} d={450 + i * 70} st={{ background: "#fff4d6", rotate: "16deg" }} />
@@ -1018,9 +940,7 @@ function AlleyCatScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(240,168,96,0.24)" />}>
-      <V c="g26-ac-lid" l={38} t={52} w={24} h={9} d={80}>
-        <path d="M2 16h20l-2.6-5H4.6z" fill="#f0a860" stroke="#241a12" strokeWidth="1.1" {...SJ} />
-      </V>
+      <V c="g26-ac-lid" l={38} t={52} w={24} h={9} d={80}><path d="M2 16h20l-2.6-5H4.6z" fill="#f0a860" stroke="#241a12" strokeWidth="1.1" {...SJ} /></V>
       <V c="g26-ac-arch" l={41} t={40} w={18} h={14} d={260}>{cat}</V>
       <L c="g26-ac-bristle" l={40} t={38} w={20} h={18} d={380} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.5), transparent 70%)" }} />
       {AC_CLAWS.map((i) => (
@@ -1031,12 +951,10 @@ function AlleyCatScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   16. Cloister Bell (t2) — THE BELL OF SILENCE. The great bell swings twice on
-   its headstock, the clapper strikes, and three rings of hush roll out and
-   flatten everything they cross.
-   Palette: #cbb98a / #fff4d6 / #241f14.
-   ========================================================================== */
+/* --- 16. Cloister Bell (t2) — THE BELL OF SILENCE ---------------------------
+   The great bell swings twice on its headstock, the clapper strikes, and
+   three rings of hush roll out and flatten everything they cross. Palette:
+   #cbb98a / #fff4d6 / #241f14. */
 const CB_RINGS = [0, 1, 2];
 
 function CloisterBellScene({ role, delayMs }: SceneProps) {
@@ -1087,12 +1005,10 @@ function CloisterBellScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   17. Debutante Ball (t2) — THE FAN SNAPS OPEN. A gloved hand rises, the lace
-   fan whips open in front of the queen, and the chandelier above throws a
-   single hard gleam across the lace.
-   Palette: #f0b8cc / #fff4d6 / #2b1622.
-   ========================================================================== */
+/* --- 17. Debutante Ball (t2) — THE FAN SNAPS OPEN ---------------------------
+   A gloved hand rises, the lace fan whips open in front of the queen, and the
+   chandelier above throws a single hard gleam across the lace. Palette:
+   #f0b8cc / #fff4d6 / #2b1622. */
 const DB_RIBS = [-34, -17, 0, 17, 34];
 
 function DebutanteBallScene({ role, delayMs }: SceneProps) {
@@ -1126,9 +1042,7 @@ function DebutanteBallScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(240,184,204,0.26)" />}>
-      <V c="g26-db-queen" l={45.5} t={44} w={9} h={12} d={70}>
-        <path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g26-db-queen" l={45.5} t={44} w={9} h={12} d={70}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-db-hand" l={44} t={50} w={12} h={14} d={200}>{glove}</V>
       {DB_RIBS.map((a, i) => (
         <P key={a} l={38} t={34} w={24} h={22} rot={`${a}deg`}>
@@ -1141,12 +1055,10 @@ function DebutanteBallScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   18. First Day Badge (t2) — CLIPPED ON. A lanyard drops out of the light, the
-   laminated badge swings on its clip, snaps flat, and the plastic sleeve
-   catches one shine as the clip bites.
-   Palette: #8fd6a8 / #fff4d6 / #16301f.
-   ========================================================================== */
+/* --- 18. First Day Badge (t2) — CLIPPED ON ----------------------------------
+   A lanyard drops out of the light, the laminated badge swings on its clip,
+   snaps flat, and the plastic sleeve catches one shine as the clip bites.
+   Palette: #8fd6a8 / #fff4d6 / #16301f. */
 function FirstDayBadgeScene({ role, delayMs }: SceneProps) {
   const badge = (
     <g {...SJ}>
@@ -1185,12 +1097,10 @@ function FirstDayBadgeScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   19. Gallery Docent (t2) — VELVET ROPE. Two brass stanchions plant, the
-   velvet rope swags between them, and a small DO NOT TOUCH placard tips up on
-   its stand.
-   Palette: #d2a0d0 / #fff4d6 / #2a1a2c.
-   ========================================================================== */
+/* --- 19. Gallery Docent (t2) — VELVET ROPE ----------------------------------
+   Two brass stanchions plant, the velvet rope swags between them, and a small
+   DO NOT TOUCH placard tips up on its stand. Palette: #d2a0d0 / #fff4d6 /
+   #2a1a2c. */
 function GalleryDocentScene({ role, delayMs }: SceneProps) {
   const post = (
     <g {...SJ}>
@@ -1235,12 +1145,10 @@ function GalleryDocentScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   20. Lady in Waiting (t2) — SHE STEPS IN FRONT. A court lady sweeps in from
-   the caster's side, spreads a hooped skirt into a screen across the queen and
-   raises one warning hand; a hairpin glints as she settles.
-   Palette: #e8c8f0 / #fff4d6 / #2a1c33.
-   ========================================================================== */
+/* --- 20. Lady in Waiting (t2) — SHE STEPS IN FRONT --------------------------
+   A court lady sweeps in from the caster's side, spreads a hooped skirt into
+   a screen across the queen and raises one warning hand; a hairpin glints as
+   she settles. Palette: #e8c8f0 / #fff4d6 / #2a1c33. */
 function LadyInWaitingScene({ role, delayMs }: SceneProps) {
   const lady = (
     <g {...SJ}>
@@ -1271,9 +1179,7 @@ function LadyInWaitingScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(232,200,240,0.24)" />}>
-      <V c="g26-lw-target" l={45.5} t={43} w={9} h={12} d={70}>
-        <path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g26-lw-target" l={45.5} t={43} w={9} h={12} d={70}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-guardin" l={43} t={39} w={11} h={13} d={220}>{lady}</V>
       <V c="g26-lw-skirt" l={38} t={46} w={24} h={13} d={420} par="none" vb="0 0 40 24" st={{ transformOrigin: "50% 100%" }}>{skirt}</V>
       <V c="g26-lw-hand" l={53} t={40} w={6} h={7} d={600}>
@@ -1285,12 +1191,10 @@ function LadyInWaitingScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   21. Lighthouse Keeper (t2) — THE LAMP COMES ROUND. The tower rises out of
-   the dark, the lamp room kindles, and the beam sweeps the run twice before
-   settling on the guarded pawn. Aim-staged: the beam runs the real vector.
-   Palette: #7fd0e8 / #fff4d6 / #10222e.
-   ========================================================================== */
+/* --- 21. Lighthouse Keeper (t2) — THE LAMP COMES ROUND ----------------------
+   The tower rises out of the dark, the lamp room kindles, and the beam sweeps
+   the run twice before settling on the guarded pawn. Aim-staged: the beam
+   runs the real vector. Palette: #7fd0e8 / #fff4d6 / #10222e. */
 function LighthouseKeeperScene({ role, delayMs }: SceneProps) {
   const tower = (
     <g {...SJ}>
@@ -1332,9 +1236,7 @@ function LighthouseKeeperScene({ role, delayMs }: SceneProps) {
       <L c="g26-lh-lamp" l={45.5} t={41} w={5} h={5} d={280} st={{ borderRadius: "50%", background: "radial-gradient(circle, #fff4d6, transparent 68%)" }} />
       <L c="g26-lh-beam" l={49} t={41.5} w={26} h={4} d={380} st={{ background: "linear-gradient(90deg, rgba(255,244,214,0.85), transparent)", transformOrigin: "0% 50%" }} />
       <L c="g26-runout" l={49} t={45.6} w={22} h={1.6} d={560} st={{ borderRadius: "999px", background: "#7fd0e8", transformOrigin: "0% 50%" }} />
-      <V c="g26-lh-pawn" l={62} t={44} w={7} h={9} d={700}>
-        <path d={PAWN} fill="#fff4d6" />
-      </V>
+      <V c="g26-lh-pawn" l={62} t={44} w={7} h={9} d={700}><path d={PAWN} fill="#fff4d6" /></V>
       {[0, 1, 2].map((i) => (
         <L key={i} c="g26-sift" l={52 + i * 5} t={48} w={1.4} h={1.4} d={640 + i * 100} st={{ borderRadius: "50%", background: "#7fd0e8" }} />
       ))}
@@ -1342,12 +1244,10 @@ function LighthouseKeeperScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   22. Ordination Day (t2) — THE MITRE IS LOWERED. Two hands come down out of
-   the light holding the mitre, set it, and the stole falls over the bishop's
-   shoulders as the chrism gleams.
-   Palette: #e8dcb0 / #fff4d6 / #2b2414.
-   ========================================================================== */
+/* --- 22. Ordination Day (t2) — THE MITRE IS LOWERED -------------------------
+   Two hands come down out of the light holding the mitre, set it, and the
+   stole falls over the bishop's shoulders as the chrism gleams. Palette:
+   #e8dcb0 / #fff4d6 / #2b2414. */
 function OrdinationDayScene({ role, delayMs }: SceneProps) {
   const mitre = (
     <g {...SJ}>
@@ -1385,12 +1285,10 @@ function OrdinationDayScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   23. Parade Marshal (t2) — BARRIERS ACROSS THE ROUTE. The white baton snaps
-   up, crowd barriers march out along the run and clack together, and a whistle
-   puff hangs over the line.
-   Palette: #f0d478 / #fff4d6 / #2c2410.
-   ========================================================================== */
+/* --- 23. Parade Marshal (t2) — BARRIERS ACROSS THE ROUTE --------------------
+   The white baton snaps up, crowd barriers march out along the run and clack
+   together, and a whistle puff hangs over the line. Palette: #f0d478 /
+   #fff4d6 / #2c2410. */
 const PM_BARS = [0, 1, 2];
 
 function ParadeMarshalScene({ role, delayMs }: SceneProps) {
@@ -1431,12 +1329,10 @@ function ParadeMarshalScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   24. Riding Certificate (t2) — SEALED AND ROSETTED. The certificate unrolls,
-   a horseshoe device is struck into it, and the ribbon rosette blooms in the
-   corner with its tails dropping.
-   Palette: #c9a2f0 / #fff4d6 / #241a33.
-   ========================================================================== */
+/* --- 24. Riding Certificate (t2) — SEALED AND ROSETTED ----------------------
+   The certificate unrolls, a horseshoe device is struck into it, and the
+   ribbon rosette blooms in the corner with its tails dropping. Palette:
+   #c9a2f0 / #fff4d6 / #241a33. */
 function RidingCertificateScene({ role, delayMs }: SceneProps) {
   const paper = (
     <g {...SJ}>
@@ -1477,12 +1373,10 @@ function RidingCertificateScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   25. Stable Groom (t2) — THE BLANKET GOES ON. The stable bolt slides, a
-   quilted horse blanket is thrown over the knight and smoothed down, and loose
-   hay drifts across the boards.
-   Palette: #c8a06a / #fff4d6 / #2b1f12.
-   ========================================================================== */
+/* --- 25. Stable Groom (t2) — THE BLANKET GOES ON ----------------------------
+   The stable bolt slides, a quilted horse blanket is thrown over the knight
+   and smoothed down, and loose hay drifts across the boards. Palette: #c8a06a
+   / #fff4d6 / #2b1f12. */
 const SG_HAY: Array<[number, number, string]> = [[40, 52, "18deg"], [51, 55, "-24deg"], [46, 58, "40deg"]];
 
 function StableGroomScene({ role, delayMs }: SceneProps) {
@@ -1506,9 +1400,7 @@ function StableGroomScene({ role, delayMs }: SceneProps) {
   if (role === "target") {
     return (
       <Cut d={delayMs}>
-        <V c="g26-hitside" l={22} t={8} w={56} h={56} d={0}>
-          <path d={KNIGHT} fill="#fff4d6" />
-        </V>
+        <V c="g26-hitside" l={22} t={8} w={56} h={56} d={0}><path d={KNIGHT} fill="#fff4d6" /></V>
         <V c="g26-hit" l={10} t={38} w={80} h={44} d={150} par="none" vb="0 0 40 24">{blanket}</V>
         <L c="g26-hit2" l={30} t={80} w={40} h={4} d={260} st={{ borderRadius: "999px", background: "#c8a06a" }} />
       </Cut>
@@ -1517,9 +1409,7 @@ function StableGroomScene({ role, delayMs }: SceneProps) {
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(200,160,106,0.24)" />}>
       <L c="g26-sg-bolt" l={40} t={35} w={12} h={2.2} d={70} st={{ borderRadius: "1px", background: "#fff4d6" }} />
-      <V c="g26-sg-knight" l={45.5} t={42} w={9} h={12} d={200}>
-        <path d={KNIGHT} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g26-sg-knight" l={45.5} t={42} w={9} h={12} d={200}><path d={KNIGHT} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-sg-throw" l={40} t={41} w={20} h={12} d={340} par="none" vb="0 0 40 24">{blanket}</V>
       <L c="g26-sg-smooth" l={40} t={46} w={20} h={3} d={560} st={{ background: "linear-gradient(90deg, transparent, #fff4d6, transparent)" }} />
       {SG_HAY.map(([l, t, rot], i) => (
@@ -1530,12 +1420,10 @@ function StableGroomScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   26. Stage Armor (t2) — FLOWN IN FROM THE FLIES. Two ropes drop out of the
-   grid, a prop breastplate lands on the checking piece, the footlights flare
-   from below and the curtain edge sways back into place.
-   Palette: #e07f7f / #fff4d6 / #2a1414.
-   ========================================================================== */
+/* --- 26. Stage Armor (t2) — FLOWN IN FROM THE FLIES -------------------------
+   Two ropes drop out of the grid, a prop breastplate lands on the checking
+   piece, the footlights flare from below and the curtain edge sways back into
+   place. Palette: #e07f7f / #fff4d6 / #2a1414. */
 function StageArmorScene({ role, delayMs }: SceneProps) {
   const plate = (
     <g {...SJ}>
@@ -1585,12 +1473,10 @@ function StageArmorScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   27. Tower Inspection (t2) — THE PORTCULLIS DROPS. The gate teeth fall into
-   their sockets with a jolt, the inspector's tick is struck across the sheet
-   and a PASSED chalk mark is scrawled on the stone.
-   Palette: #a8b8c8 / #fff4d6 / #1c242c.
-   ========================================================================== */
+/* --- 27. Tower Inspection (t2) — THE PORTCULLIS DROPS -----------------------
+   The gate teeth fall into their sockets with a jolt, the inspector's tick is
+   struck across the sheet and a PASSED chalk mark is scrawled on the stone.
+   Palette: #a8b8c8 / #fff4d6 / #1c242c. */
 const TI_TEETH = [0, 1, 2, 3, 4];
 
 function TowerInspectionScene({ role, delayMs }: SceneProps) {
@@ -1601,9 +1487,7 @@ function TowerInspectionScene({ role, delayMs }: SceneProps) {
           <L key={i} c="g26-ti-drop" l={10 + i * 17} t={2} w={7} h={72} d={40 + i * 70} st={{ background: "linear-gradient(90deg, #1c242c, #a8b8c8 55%, #1c242c)", transformOrigin: "50% 0%" }} />
         ))}
         <L c="g26-ti-rail" l={6} t={68} w={88} h={6} d={430} st={{ borderRadius: "1px", background: "#a8b8c8" }} />
-        <V c="g26-ent-pop" l={34} t={30} w={34} h={34} d={560}>
-          <path d="M3.4 12.6l5.2 5.4L20.6 6" fill="none" stroke="#fff4d6" strokeWidth="3" {...SJ} />
-        </V>
+        <V c="g26-ent-pop" l={34} t={30} w={34} h={34} d={560}><path d="M3.4 12.6l5.2 5.4L20.6 6" fill="none" stroke="#fff4d6" strokeWidth="3" {...SJ} /></V>
       </Cut>
     );
   }
@@ -1627,27 +1511,21 @@ function TowerInspectionScene({ role, delayMs }: SceneProps) {
         </>
       }
     >
-      <V c="g26-ti-rook" l={45.5} t={42} w={9} h={13} d={70}>
-        <path d={ROOK} fill="none" stroke="#fff4d6" strokeWidth="1.3" {...SJ} />
-      </V>
+      <V c="g26-ti-rook" l={45.5} t={42} w={9} h={13} d={70}><path d={ROOK} fill="none" stroke="#fff4d6" strokeWidth="1.3" {...SJ} /></V>
       {TI_TEETH.map((i) => (
         <L key={i} c="g26-ti-drop" l={40 + i * 4.4} t={32} w={2.2} h={24} d={200 + i * 80} st={{ background: "linear-gradient(90deg, #1c242c, #a8b8c8 55%, #1c242c)", transformOrigin: "50% 0%" }} />
       ))}
       <L c="g26-ti-rail" l={39} t={54} w={22} h={2} d={620} st={{ borderRadius: "1px", background: "#a8b8c8" }} />
-      <V c="g26-ti-tick" l={52} t={36} w={9} h={9} d={700}>
-        <path d="M3.4 12.6l5.2 5.4L20.6 6" fill="none" stroke="#fff4d6" strokeWidth="3" {...SJ} />
-      </V>
+      <V c="g26-ti-tick" l={52} t={36} w={9} h={9} d={700}><path d="M3.4 12.6l5.2 5.4L20.6 6" fill="none" stroke="#fff4d6" strokeWidth="3" {...SJ} /></V>
       <L c="g26-leanshadow" l={40} t={57} w={20} h={3} d={740} st={{ borderRadius: "999px", background: "rgba(28,36,44,0.65)" }} />
     </Lead>
   );
 }
 
-/* =============================================================================
-   28. Victory Lap (t2) — THROUGH THE TAPE. The finish tape stretches, breaks
-   across the piece, and the laurel wreath drops over it while the two tape
-   ends flutter away.
-   Palette: #a8e07f / #fff4d6 / #1d2c14.
-   ========================================================================== */
+/* --- 28. Victory Lap (t2) — THROUGH THE TAPE --------------------------------
+   The finish tape stretches, breaks across the piece, and the laurel wreath
+   drops over it while the two tape ends flutter away. Palette: #a8e07f /
+   #fff4d6 / #1d2c14. */
 function VictoryLapScene({ role, delayMs }: SceneProps) {
   const laurel = (
     <g fill="none" stroke="#a8e07f" strokeWidth="1.8" {...SJ}>
@@ -1678,9 +1556,7 @@ function VictoryLapScene({ role, delayMs }: SceneProps) {
       <L c="g26-vl-tape" l={36} t={47} w={28} h={1.8} d={90} st={{ borderRadius: "999px", background: "#fff4d6" }} />
       <L c="g26-vl-endl" l={36} t={47} w={13} h={1.8} d={330} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "0% 50%" }} />
       <L c="g26-vl-endr" l={51} t={47} w={13} h={1.8} d={330} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "100% 50%" }} />
-      <V c="g26-vl-piece" l={45.5} t={43} w={9} h={12} d={380}>
-        <path d={PAWN} fill="#fff4d6" />
-      </V>
+      <V c="g26-vl-piece" l={45.5} t={43} w={9} h={12} d={380}><path d={PAWN} fill="#fff4d6" /></V>
       <V c="g26-vl-wreath" l={42} t={39} w={16} h={18} d={520}>{laurel}</V>
       <L c="g26-leanshadow" l={43} t={57} w={14} h={3} d={640} st={{ borderRadius: "999px", background: "rgba(29,44,20,0.6)" }} />
       {[0, 1, 2].map((i) => (
@@ -1690,12 +1566,10 @@ function VictoryLapScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   29. Traffic Cone (t2) — CONES DOWN THE FILE. Three cones bounce down the run
-   one after another, their reflective bands catching the light, and a folding
-   CLOSED sign flips upright behind them. Aim-staged along the file.
-   Palette: #ff9a52 / #fff4d6 / #2c1a0c.
-   ========================================================================== */
+/* --- 29. Traffic Cone (t2) — CONES DOWN THE FILE ----------------------------
+   Three cones bounce down the run one after another, their reflective bands
+   catching the light, and a folding CLOSED sign flips upright behind them.
+   Aim-staged along the file. Palette: #ff9a52 / #fff4d6 / #2c1a0c. */
 const TC_CONES = [0, 1, 2];
 
 function TrafficConeScene({ role, delayMs }: SceneProps) {
@@ -1737,12 +1611,10 @@ function TrafficConeScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   30. Doorstop (t1) — THE WEDGE BITES. A heavy door swings in from the caster's
-   side, the wooden wedge is kicked under it, and the door JAMS dead with a
-   shudder and a puff of splinters.
-   Palette: #d09a5a / #fff4d6 / #2b1c0e.
-   ========================================================================== */
+/* --- 30. Doorstop (t1) — THE WEDGE BITES ------------------------------------
+   A heavy door swings in from the caster's side, the wooden wedge is kicked
+   under it, and the door JAMS dead with a shudder and a puff of splinters.
+   Palette: #d09a5a / #fff4d6 / #2b1c0e. */
 function DoorstopScene({ role, delayMs }: SceneProps) {
   const door = (
     <g {...SJ}>
@@ -1783,12 +1655,10 @@ function DoorstopScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   31. Guardian Sprite (t1) — THE COIN DECIDES. A pocket sprite flutters up,
-   flips a coin that tumbles and lands, and either lifts a leaf over the pawn
-   or shrugs in a sheepish little flash.
-   Palette: #9ce8d0 / #fff4d6 / #143028.
-   ========================================================================== */
+/* --- 31. Guardian Sprite (t1) — THE COIN DECIDES ----------------------------
+   A pocket sprite flutters up, flips a coin that tumbles and lands, and
+   either lifts a leaf over the pawn or shrugs in a sheepish little flash.
+   Palette: #9ce8d0 / #fff4d6 / #143028. */
 function GuardianSpriteScene({ role, delayMs }: SceneProps) {
   const sprite = (
     <g {...SJ}>
@@ -1802,9 +1672,7 @@ function GuardianSpriteScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g26-gs-flit" l={26} t={30} w={48} h={54} d={40}>{sprite}</V>
         <L c="g26-gs-coin" l={40} t={8} w={20} h={20} d={260} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-        <V c="g26-ent-pop" l={54} t={46} w={32} h={32} d={480}>
-          <path d="M3.4 19.4C3.4 11 8 5 15 3.4c1.6 5.6-.6 12-6 16z" fill="#9ce8d0" />
-        </V>
+        <V c="g26-ent-pop" l={54} t={46} w={32} h={32} d={480}><path d="M3.4 19.4C3.4 11 8 5 15 3.4c1.6 5.6-.6 12-6 16z" fill="#9ce8d0" /></V>
       </Cut>
     );
   }
@@ -1831,12 +1699,10 @@ function GuardianSpriteScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* =============================================================================
-   32. Wet Paint (t1) — THE ROLLER GOES OVER IT. A roller lays one wide glossy
-   stripe across the square, a WET PAINT sign is jabbed into the boards, and a
-   single drip runs down off the edge of the fresh coat.
-   Palette: #7fb6f0 / #fff4d6 / #14243a.
-   ========================================================================== */
+/* --- 32. Wet Paint (t1) — THE ROLLER GOES OVER IT ---------------------------
+   A roller lays one wide glossy stripe across the square, a WET PAINT sign is
+   jabbed into the boards, and a single drip runs down off the edge of the
+   fresh coat. Palette: #7fb6f0 / #fff4d6 / #14243a. */
 function WetPaintScene({ role, delayMs }: SceneProps) {
   const roller = (
     <g {...SJ}>
@@ -1887,133 +1753,42 @@ function WetPaintScene({ role, delayMs }: SceneProps) {
    played on, exactly as the generated family resolved before.
    ========================================================================== */
 
+/** Bind one bespoke scene to its config. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
+  return { config, Render };
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
-  bn4_age_of_peace: {
-    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" },
-    Render: AgeOfPeaceScene,
-  },
-  bn4_guardian_of_the_line: {
-    config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "aim" },
-    Render: GuardianOfTheLineScene,
-  },
-  bn4_saints_procession: {
-    config: { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" },
-    Render: SaintsProcessionScene,
-  },
-  bn4_warding_circle: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: WardingCircleScene,
-  },
-  ov_plot_armor: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: PlotArmorScene,
-  },
-  bn4_ancestral_shield: {
-    config: { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "cast" },
-    Render: AncestralShieldScene,
-  },
-  bn4_shieldmaidens: {
-    config: { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
-    Render: ShieldmaidensScene,
-  },
-  bn4_bodyguard_detail: {
-    config: { ordering: "octagon", staggerMs: 50, victims: ["k", "p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: BodyguardDetailScene,
-  },
-  bn4_color_guard: {
-    config: { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: ColorGuardScene,
-  },
-  bn4_old_guard: {
-    config: { ordering: "file", staggerMs: 110, victims: ["n", "b"], hasLead: true, sound: "vault", anchor: "cast" },
-    Render: OldGuardScene,
-  },
-  bn4_confetti_cannon: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "cast" },
-    Render: ConfettiCannonScene,
-  },
-  bn4_quilted_armor: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: QuiltedArmorScene,
-  },
-  bn4_boundary_stones: {
-    config: { ordering: "line", staggerMs: 90, victims: "all", hasLead: true, sound: "petrify", anchor: "aim" },
-    Render: BoundaryStonesScene,
-  },
-  bn4_pocket_shield: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: PocketShieldScene,
-  },
-  op_alley_cat: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", anchor: "cast" },
-    Render: AlleyCatScene,
-  },
-  op_cloister_bell: {
-    config: { ordering: "radial", staggerMs: 70, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "cast" },
-    Render: CloisterBellScene,
-  },
-  op_debutante_ball: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: DebutanteBallScene,
-  },
-  op_first_day_badge: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "slots", anchor: "cast" },
-    Render: FirstDayBadgeScene,
-  },
-  op_gallery_docent: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" },
-    Render: GalleryDocentScene,
-  },
-  op_lady_in_waiting: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: LadyInWaitingScene,
-  },
-  op_lighthouse_keeper: {
-    config: { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "aim" },
-    Render: LighthouseKeeperScene,
-  },
-  op_ordination_day: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "cast" },
-    Render: OrdinationDayScene,
-  },
-  op_parade_marshal: {
-    config: { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim" },
-    Render: ParadeMarshalScene,
-  },
-  op_riding_certificate: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "vault", anchor: "cast" },
-    Render: RidingCertificateScene,
-  },
-  op_stable_groom: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" },
-    Render: StableGroomScene,
-  },
-  op_stage_armor: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "colossus", anchor: "cast" },
-    Render: StageArmorScene,
-  },
-  op_tower_inspection: {
-    config: { ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast" },
-    Render: TowerInspectionScene,
-  },
-  op_victory_lap: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: VictoryLapScene,
-  },
-  ov_traffic_cone: {
-    config: { ordering: "file", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", anchor: "aim" },
-    Render: TrafficConeScene,
-  },
-  bn4_doorstop: {
-    config: { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "cast" },
-    Render: DoorstopScene,
-  },
-  op_guardian_sprite: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coinflip", anchor: "cast" },
-    Render: GuardianSpriteScene,
-  },
-  ov_wet_paint: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" },
-    Render: WetPaintScene,
-  },
+  bn4_age_of_peace: S(AgeOfPeaceScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
+  bn4_guardian_of_the_line: S(GuardianOfTheLineScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
+  bn4_saints_procession: S(SaintsProcessionScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }),
+  bn4_warding_circle: S(WardingCircleScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
+  ov_plot_armor: S(PlotArmorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
+  bn4_ancestral_shield: S(AncestralShieldScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
+  bn4_shieldmaidens: S(ShieldmaidensScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }),
+  bn4_bodyguard_detail: S(BodyguardDetailScene, { ordering: "octagon", staggerMs: 50, victims: ["k", "p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", anchor: "cast" }),
+  bn4_color_guard: S(ColorGuardScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast" }),
+  bn4_old_guard: S(OldGuardScene, { ordering: "file", staggerMs: 110, victims: ["n", "b"], hasLead: true, sound: "vault", anchor: "cast" }),
+  bn4_confetti_cannon: S(ConfettiCannonScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "cast" }),
+  bn4_quilted_armor: S(QuiltedArmorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
+  bn4_boundary_stones: S(BoundaryStonesScene, { ordering: "line", staggerMs: 90, victims: "all", hasLead: true, sound: "petrify", anchor: "aim" }),
+  bn4_pocket_shield: S(PocketShieldScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
+  op_alley_cat: S(AlleyCatScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", anchor: "cast" }),
+  op_cloister_bell: S(CloisterBellScene, { ordering: "radial", staggerMs: 70, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "cast" }),
+  op_debutante_ball: S(DebutanteBallScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", anchor: "cast" }),
+  op_first_day_badge: S(FirstDayBadgeScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "slots", anchor: "cast" }),
+  op_gallery_docent: S(GalleryDocentScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" }),
+  op_lady_in_waiting: S(LadyInWaitingScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "aegis", anchor: "cast" }),
+  op_lighthouse_keeper: S(LighthouseKeeperScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "aim" }),
+  op_ordination_day: S(OrdinationDayScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "cast" }),
+  op_parade_marshal: S(ParadeMarshalScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim" }),
+  op_riding_certificate: S(RidingCertificateScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "vault", anchor: "cast" }),
+  op_stable_groom: S(StableGroomScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
+  op_stage_armor: S(StageArmorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "colossus", anchor: "cast" }),
+  op_tower_inspection: S(TowerInspectionScene, { ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast" }),
+  op_victory_lap: S(VictoryLapScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
+  ov_traffic_cone: S(TrafficConeScene, { ordering: "file", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
+  bn4_doorstop: S(DoorstopScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "cast" }),
+  op_guardian_sprite: S(GuardianSpriteScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coinflip", anchor: "cast" }),
+  ov_wet_paint: S(WetPaintScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
 };
