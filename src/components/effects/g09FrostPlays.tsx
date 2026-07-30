@@ -27,8 +27,8 @@
 //
 // Rules kept everywhere: three beats (a tell of at most ~300ms, the strike, then
 // a decaying settle); five or more animated layers in every lead cut; three
-// palette colours per card (core / glow / deep), warm whites and never pure
-// #fff; anything that means THE WHOLE BOARD lives inside <BoardFrame> so it
+// palette colours per card (core / glow / deep), warm whites and never a pure
+// white; anything that means THE WHOLE BOARD lives inside <BoardFrame> so it
 // stays exactly the board at any anchor; at least one animated layer per scene is
 // driven by the geometry vars (--fx-side, --fx-len, --fx-index, --fx-ang); every
 // card declares anchor "cast" or "aim"; and every scene answers all three roles,
