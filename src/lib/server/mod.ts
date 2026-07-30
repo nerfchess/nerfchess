@@ -14,6 +14,7 @@ import {
   type UserRole,
 } from "./auth";
 import { createNotification } from "./social";
+import { notifyModEvent, type ModEventKind } from "./modWebhook";
 
 // Sentinel for "permanent": far enough out to outlive the site.
 export const PERMANENT_MS = 4102444800000; // 2100-01-01
@@ -157,5 +158,19 @@ export async function applyModAction(
       await createNotification(db, { userId: target.id, type: action, text });
     } catch {}
   }
+  // Outbound notification (Google Sheets, when configured). Placed AFTER the
+  // audit row so the spreadsheet can never claim an action the database does not
+  // have, and fire-and-forget so a slow endpoint cannot delay the response. This
+  // one hook covers every action that goes through applyModAction; the routes
+  // that mutate state WITHOUT coming through here (card overrides, the house
+  // toggles and persona editor, ratings, the god panel, report and chat-flag
+  // triage) call notifyModEvent themselves.
+  notifyModEvent({
+    kind: action as ModEventKind,
+    actor: mod.username,
+    target: target.username,
+    detail: [role ? `role=${role}` : null, note].filter(Boolean).join(" ") || undefined,
+    expiresAt: timed ? until : null,
+  });
   return null;
 }

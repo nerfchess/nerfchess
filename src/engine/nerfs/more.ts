@@ -1748,8 +1748,8 @@ function bestHeuristicMove(moves: Move[]): Move | null {
 
 export const ICHTHYOPHOBE: Nerf = db({
   id: "ichthyophobe", name: "Ichthyophobe", tier: 3, implemented: true,
-  description:
-    "Each turn you can't play the move a simple greedy engine would pick (its single best move by a one ply look: the most valuable safe capture, or a basic developing move when there is no capture). Every other legal move is fine; if that one move is your only legal move, you may still play it. This activates only after your move 3.",
+  description: "From your move 3 on, you cannot play the move a simple greedy engine would pick: its single best move on a one-ply look, the most valuable safe capture, or a basic developing move when there is no capture. Every other legal move is fine.",
+      tip: "If that one move is your only legal move you may still play it, so it can never strand you.",
   filterMoves: (moves, _s, ctx) => {
     if (ctx.moveNumber < 3) return moves;
     const best = bestHeuristicMove(moves);
@@ -2153,8 +2153,8 @@ export const ABSOLUTION: Nerf = db({
 
 export const QUICKSAND: Nerf = db({
   id: "quicksand", name: "Quicksand", tier: 4, implemented: true,
-  description:
-    "The 4th and 5th ranks are quicksand, shown on the board. If one of your pieces lands on the same 4th or 5th rank square for the second time in the game (tracing that piece's own path, not necessarily on consecutive moves), it is stuck and can never move from that square again. A piece one visit from being stuck is flagged the move before.",
+  description: "The 4th and 5th ranks are quicksand, shown on the board. If one of your pieces lands on the same 4th- or 5th-rank square for the second time in the game, tracing that piece's own path, it is stuck there for good and can never move again.",
+      tip: "A piece one visit from being stuck is flagged the move before, so you always get a warning.",
   filterMoves: (moves, _s, ctx) => {
     // A piece is stuck if that SAME piece has ended on this middle-rank square
     // (rank 3 or 4) at least twice. Follow the current piece's own move chain
@@ -2301,8 +2301,8 @@ export const SECRET_GARDEN: Nerf = db({
 
 export const THUNDERDOME: Nerf = db({
   id: "thunderdome", name: "Thunderdome", tier: 6, implemented: true,
-  description:
-    "The center 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is on those squares it can never move out of the zone for the rest of the game (it may still move within the zone). Pieces enter; pieces do not leave. A move granted by another card can't carry a piece out of the zone.",
+  description: "The centre 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is inside, it can never leave the zone for the rest of the game, though it may still move within it. A card-granted move cannot carry a piece out either.",
+      tip: "Pieces enter; pieces do not leave. Send in only what you are happy to leave there.",
   // The filter runs over every offered move (card-injected moves included) with no
   // escape hatch, so a dome piece stays locked in however the move was granted.
   filterMoves: (moves) => {
@@ -2388,7 +2388,8 @@ export const THEOCRACY: Nerf = db({
 
 export const BOTTLED_LIGHTNING: Nerf = db({
   id: "bottled_lightning", name: "Bottled Lightning", tier: 8, implemented: true,
-  description: "If your king can move forward or sideways, it must, and it may never move backward toward your own side. When every king move would go backward you may move another piece instead, but the move right after any non-king move must be a king move. The king moves backward only as a last resort with no other legal move.",
+  description: "If your king can move forward or sideways, it must, and it may never move backward toward your own side. When every king move would go backward you may move another piece instead, but the move right after any non-king move must be a king move.",
+      tip: "The king moves backward only as a last resort, with no other legal move at all.",
   filterMoves: (moves, _s, ctx) => {
     const dir = ctx.me === "w" ? 1 : -1;
     const kingMoves = moves.filter((m) => m.piece === "k");

@@ -58,6 +58,8 @@ import {
 // --- Local plumbing (mirrors boons4.ts; boons4b cannot import boons4) --------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -1679,7 +1681,8 @@ export const BOON_WAVE4B: Buff[] = [
 
   card(
     { id: "bn4_relay_baton", name: "Relay Baton", tier: 6, category: "tempo", icon: "Zap",
-      description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on the bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, and then the baton is dropped.",
+      description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on that bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, then the baton is dropped.",
+      tip: "Hold it until a promotion is close, so the free move lands in a sharp position.",
       flavor: "Pass the baton. Keep running anyway." },
     {
       kind: "passive",

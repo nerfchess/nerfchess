@@ -624,7 +624,8 @@ const T5: Buff[] = [
     }),
   ),
   H5(
-    { id: "hx4_ford_crossing", name: "Ford Crossing", description: "For your opponent's next 4 turns, any move that crosses the midline into your half must stop on the first rank of your half. Deeper landings are forbidden. Their king is exempt. The first piece the ford would stop may make one forbidden crossing, then it binds fully.", flavor: "Everyone wades. Nobody swims.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
+    { id: "hx4_ford_crossing", name: "Ford Crossing", description: "For your opponent's next 4 turns, any move that crosses the midline into your half must stop on the first rank of your half; deeper landings are forbidden. Their king is exempt. The first piece the ford would stop may cross once, then it binds fully.",
+      tip: "It cannot stop an invasion, only slow it to one rank at a time.", flavor: "Everyone wades. Nobody swims.", icon: "Footprints", fx: { motif: "anchor", pieces: "all" } },
     escapeCurse(4, (moves, api) =>
       moves.filter(
         (m) =>
@@ -700,7 +701,8 @@ const T5: Buff[] = [
     curse(5, (moves) => moves.filter((m) => m.piece !== "q" || !m.captured)),
   ),
   H5(
-    { id: "hx4_grasping_ivy", name: "Grasping Ivy", description: "Ivy coils around your king's court: for your opponent's next 4 turns, any piece of theirs that ends a move adjacent to your king is seized by vines and frozen for 1 of their turns. The first piece to reach the court escapes the vines; every piece after it is seized.", flavor: "The garden defends the gardener.", icon: "Leaf", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_grasping_ivy", name: "Grasping Ivy", description: "For your opponent's next 4 turns, any piece of theirs that ends a move adjacent to your king is seized by vines and frozen for 1 of their turns. The first piece to reach the court escapes the vines; every piece after it is seized.",
+      tip: "It punishes a mating attack specifically, so it is best held until their king hunt starts.", flavor: "The garden defends the gardener.", icon: "Leaf", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(4, (move, api, inst) => {
       const k = myKing(api);
       if (k != null && move.piece !== "k" && cheb(move.to, k) <= 1) {
@@ -1279,7 +1281,8 @@ const T6: Buff[] = [
     ),
   ),
   H6(
-    { id: "hx4_gale_warning", name: "Gale Warning", description: "A gale rakes the rim of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on an edge square is pinned flat and frozen for 1 of their turns. The first piece the gale would pin keeps its footing; every piece after it is frozen. Kings keep their footing.", flavor: "The edge of the world has weather.", icon: "Tornado", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_gale_warning", name: "Gale Warning", description: "For your opponent's next 3 turns, any piece of theirs that ends a move on an edge square is pinned flat and frozen for 1 of their turns. The first piece the gale would pin keeps its footing. Kings keep their footing.",
+      tip: "It taxes rook lifts and knight tours around the rim, and does nothing in the centre.", flavor: "The edge of the world has weather.", icon: "Tornado", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(3, (move, api, inst) => {
       const f = FILE(move.to);
       const r = RANK(move.to);
@@ -1387,7 +1390,8 @@ const T7: Buff[] = [
     },
   ),
   H7(
-    { id: "hx4_stone_garden", name: "Stone Garden", description: "All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square at a time. Two of the affected pieces resist and keep their footing: since the defender cannot pick here, their two most valuable affected pieces are spared.", flavor: "Arranged tastefully. Screaming silently.", icon: "Trees", fx: { motif: "anchor", pieces: ["n", "b", "r"] } },
+    { id: "hx4_stone_garden", name: "Stone Garden", description: "All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns, heavy nuts that can only shuffle one square at a time. Their two most valuable affected pieces resist and keep their footing.",
+      tip: "One turn, but it lands on their whole middle game at once.", flavor: "Arranged tastefully. Screaming silently.", icon: "Trees", fx: { motif: "anchor", pieces: ["n", "b", "r"] } },
     instant((_inst, api) => {
       const affected = mySquares(api.board, api.opp).filter((sq) => {
         const t = api.board.pieces[sq]!.type;
@@ -1579,7 +1583,8 @@ const T7: Buff[] = [
     },
   ),
   H7(
-    { id: "hx4_command_paralysis", name: "Command Paralysis", description: "Their high command falls silent: for your opponent's next 3 turns, they may only move pieces standing in your half of the board. The first piece the silence would stop may move once regardless, then it binds fully. If they have none in your half, they move freely that turn.", flavor: "The ones at the front stopped waiting for orders.", icon: "Radio", fx: { motif: "jail", pieces: "all" } },
+    { id: "hx4_command_paralysis", name: "Command Paralysis", description: "For your opponent's next 3 turns they may only move pieces standing in your half of the board. The first piece the silence would stop may move once regardless, then it binds fully. If they have none in your half, they move freely that turn.",
+      tip: "Devastating against a defensive setup, and nearly free against a committed attack.", flavor: "The ones at the front stopped waiting for orders.", icon: "Radio", fx: { motif: "jail", pieces: "all" } },
     escapeCurse(3, (moves, api) => moves.filter((m) => relRank(api.opp, m.from) >= 5)),
   ),
   H7(
@@ -1640,7 +1645,8 @@ const T7: Buff[] = [
     nullifyDrafts(1),
   ),
   H7(
-    { id: "hx4_tidal_wall", name: "Tidal Wall", description: "A wall of seawater stands across the middle of the board: your opponent's pieces cannot stop on either central rank (the 4th and 5th) for their next 2 turns, save one bridge square left standing. Since the defender cannot pick here, the bridge is the wall square nearest their king.", flavor: "The tide takes sides.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_tidal_wall", name: "Tidal Wall", description: "Your opponent's pieces cannot stop on either central rank, the 4th and 5th, for their next 2 turns, save one bridge square left standing: the wall square nearest their king.",
+      tip: "Two turns of no crossings, which is usually two turns to land a threat of your own.", flavor: "The tide takes sides.", icon: "Waves", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {
       const wall = [...rankSquares(3), ...rankSquares(4)];
       const k = oppKing(api);
@@ -1780,7 +1786,8 @@ const T7: Buff[] = [
     instant((_inst, api) => addEffect(api, { kind: "no_pawn_advance", against: api.opp, turns: 5 })),
   ),
   H7(
-    { id: "hx4_wheel_of_ice", name: "Wheel of Ice", description: "A ribbon of ice sweeps the board one file per turn, starting at the a file: for your opponent's next 4 turns, their pieces standing on the current icy file cannot move. Their king is exempt. The first piece the ice would pin may make one move, then it binds fully.", flavor: "You can hear it coming, column by column.", icon: "LoaderCircle", fx: { motif: "jail", pieces: "all" } },
+    { id: "hx4_wheel_of_ice", name: "Wheel of Ice", description: "A ribbon of ice sweeps one file per turn, starting at the a-file: for your opponent's next 4 turns, their pieces on the current icy file cannot move. Their king is exempt. The first piece the ice would pin may move once, then it binds fully.",
+      tip: "The schedule is fixed and visible, so they can shepherd pieces off a file before it freezes.", flavor: "You can hear it coming, column by column.", icon: "LoaderCircle", fx: { motif: "jail", pieces: "all" } },
     {
       kind: "passive",
       init: (inst) => {
@@ -2237,7 +2244,8 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_doomsday_clock", name: "Doomsday Clock", description: "A great clock begins to tick, in full view: after 3 of your opponent's turns, every piece of theirs then standing in your half of the board becomes a walnut for 2 of their turns. If none are present, their most advanced piece is instead frozen for 1 of their turns.", flavor: "Midnight is a place, and they are marching into it.", icon: "AlarmClock", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_doomsday_clock", name: "Doomsday Clock", description: "A great clock ticks in full view: after 3 of your opponent's turns, every piece of theirs then standing in your half becomes a walnut for 2 of their turns. If none are there, their most advanced piece is frozen for 1 turn instead.",
+      tip: "It is a threat first and a punishment second: it may just push their attack back home.", flavor: "Midnight is a place, and they are marching into it.", icon: "AlarmClock", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(3, (_move, api, inst) => {
       if (turnsLeft(inst) === 1) {
         let any = false;
@@ -2257,7 +2265,8 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_kings_ransom", name: "King's Ransom", description: "For your opponent's next 4 turns, every time their king moves, the ransom is collected: 2 of their other pieces, chosen at random, are frozen for 1 of their turns. The very first piece the ransom would seize slips free; every piece it reaches after that is frozen.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_kings_ransom", name: "King's Ransom", description: "For your opponent's next 4 turns, every time their king moves the ransom is collected: 2 of their other pieces, chosen at random, are frozen for 1 of their turns. The very first piece the ransom would seize slips free.",
+      tip: "It taxes castling and king walks, so it bites hardest on an uncastled king.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(4, (move, api, inst) => {
       if (move.piece !== "k") return;
       const pool = mySquares(api.board, api.opp).filter(
@@ -2285,7 +2294,8 @@ const T8: Buff[] = [
     escapeCurse(6, (moves, api) => moves.filter((m) => m.piece !== "p" || relRank(api.opp, m.to) <= 4)),
   ),
   H8(
-    { id: "hx4_tempest", name: "Tempest", description: "A storm tears across the board: 6 random empty squares become impassable wreckage your opponent cannot stop on for their next 3 turns, save one bridge square, the wreckage nearest their king, which the defender keeps passable, and 2 of their pieces, chosen at random, are stunned frozen for 1 of their turns.", flavor: "The sky finally picked a side.", icon: "CloudLightning", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_tempest", name: "Tempest", description: "6 random empty squares become wreckage your opponent cannot stop on for their next 3 turns, save one bridge, the wreckage nearest their king. 2 of their pieces, chosen at random, are also stunned for 1 of their turns.",
+      tip: "Random placement makes it unreliable but wide: expect clutter, not a clean wall.", flavor: "The sky finally picked a side.", icon: "CloudLightning", fx: { motif: "blindfold", pieces: "all" } },
     instant((_inst, api) => {
       const wreck = drawRandom(api, emptySquares(api.board), 6);
       const k = oppKing(api);
@@ -2384,7 +2394,8 @@ const T8: Buff[] = [
     },
   ),
   H8(
-    { id: "hx4_burned_keep", name: "The Burned Keep", description: "Their castle burns to the ground: your opponent may not castle, and both of their rooks, busy fighting the fire, are frozen for 1 of their turns. The ban holds with no time limit, until they make a capture, which douses the flames and lets them castle once more.", flavor: "Insurance does not cover acts of hex.", icon: "FlameKindling", fx: { motif: "jail", pieces: ["r", "k"] } },
+    { id: "hx4_burned_keep", name: "The Burned Keep", description: "Your opponent may not castle, and both of their rooks, busy fighting the fire, are frozen for 1 of their turns. The ban has no time limit and holds until they make a capture, which douses the flames.",
+      tip: "Against a quiet, capture-free defence the ban can last a very long time.", flavor: "Insurance does not cover acts of hex.", icon: "FlameKindling", fx: { motif: "jail", pieces: ["r", "k"] } },
     {
       kind: "passive",
       init: (_inst, api) => {
@@ -2515,7 +2526,8 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_tolling_thirds", name: "The Tolling Thirds", description: "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns as the bell tolls. Their single most valuable piece (never the king) is immune, so the bell instead takes their next most valuable piece.", flavor: "It knows exactly whom it tolls for.", icon: "Bell", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_tolling_thirds", name: "The Tolling Thirds", description: "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
+      tip: "Two known freezes on a known schedule: line your own threats up with the tolls.", flavor: "It knows exactly whom it tolls for.", icon: "Bell", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(6, (_move, api, inst) => {
       if (turnsLeft(inst) % 3 === 1) {
         const best = victimByValue(api);

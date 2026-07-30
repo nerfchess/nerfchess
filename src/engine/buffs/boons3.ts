@@ -59,6 +59,8 @@ import {
 // --- Local plumbing ----------------------------------------------------------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -331,8 +333,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_forced_march",
       name: "Forced March",
-      description:
-        "Sound the double-quick: for your next 2 turns, any of your pawns may advance two squares in one move from wherever it stands (both squares ahead must be empty), not only from its starting rank. It cannot double-step onto the final rank. Each such advance flags its landing square for your opponent until they reply.",
+      description: "For your next 2 turns, any of your pawns may advance two squares in one move from wherever it stands, both squares ahead being empty, not only from its starting rank. It cannot double-step onto the final rank. Each such advance flashes its landing square.",
+      tip: "Two turns is enough to break a blockade or race a passed pawn two ranks closer.",
       tier: 3,
       category: "movement",
       icon: "Footprints",
@@ -401,8 +403,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_underdogs_gambit",
       name: "Underdog's Gambit",
-      description:
-        "Desperation sharpens the rank and file: while you have fewer pieces than your opponent (kings aside), your pawns may also capture an enemy piece standing directly beside them, one square to the left or right. Draw level and they fight like pawns again. The gift takes hold only after your opponent's next move.",
+      description: "While you have fewer pieces than your opponent, kings aside, your pawns may also capture an enemy piece standing directly beside them, one square left or right. Draw level and they fight like pawns again. It takes hold after your opponent's next move.",
+      tip: "A comeback card: it does nothing at all while you are level or ahead.",
       tier: 3,
       category: "movement",
       icon: "Swords",
@@ -542,8 +544,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_battlefield_commission",
       name: "Battlefield Commission",
-      description:
-        "The deeper the hole, the higher the field promotion: if you have fewer pieces than your opponent (kings aside), your most advanced pawn is promoted where it stands - to a knight, or to a rook if you are outnumbered by four pieces or more. Used while you are not behind, the commission goes unsigned. The newly commissioned piece cannot move again on your next turn.",
+      description: "If you have fewer pieces than your opponent, kings aside, your most advanced pawn is promoted where it stands: to a knight, or to a rook if you are outnumbered by four or more. The new piece cannot move again on your next turn.",
+      tip: "Used while you are not behind the commission goes unsigned, so save it.",
       tier: 4,
       category: "pieces",
       icon: "Medal",
@@ -899,8 +901,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_watchword",
       name: "Watchword",
-      description:
-        "A pawn's protection covers only so many: up to four of your pieces (your king aside) that are defended by one of your pawns cannot be captured. When more than four qualify, the four most valuable are the ones sheltered, and removing a piece's pawn drops its shelter.",
+      description: "Up to four of your pieces, your king aside, that are defended by one of your pawns cannot be captured. When more than four qualify, the four most valuable are sheltered.",
+      tip: "Removing a piece's pawn drops its shelter, so keep the defending pawns alive.",
       tier: 5,
       category: "protection",
       icon: "Eye",
@@ -1166,8 +1168,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_castle_in_the_storm",
       name: "Castle in the Storm",
-      description:
-        "Throw up the walls mid-battle: choose one of your rooks on your king's rank with an empty path to the king, and castle toward it at once (king two squares over, rook to the square it passed) even if your king or that rook has already moved. The rook that just castled cannot move again on your next turn.",
+      description: "Choose one of your rooks on your king's rank with an empty path to the king and castle toward it at once, king two squares over, rook to the square it passed, even if your king or that rook has already moved. That rook cannot move again on your next turn.",
+      tip: "It ignores spent castling rights entirely, so a king caught in the centre can still tuck away.",
       tier: 6,
       category: "movement",
       icon: "Castle",
@@ -1351,8 +1353,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_mummers_dance",
       name: "Mummers' Dance",
-      description:
-        "The masks come round and everyone swaps: every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged, only re-tasked. While the troupe is changing costume, none of the re-tasked minors can be captured on your opponent's next turn.",
+      description: "Every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged, only re-tasked. None of the re-tasked minors can be captured on your opponent's next turn.",
+      tip: "Useful when your knights are stuck on open diagonals, or your bishops on a closed board.",
       tier: 8,
       category: "pieces",
       icon: "VenetianMask",
@@ -1386,8 +1388,8 @@ export const BOON_WAVE3: Buff[] = [
     {
       id: "bw3_last_stand",
       name: "Last Stand",
-      description:
-        "Raise the shield wall around everything and pay for it later: for the next 3 turns none of your pieces can be captured and your king cannot be taken, but the wall falls the instant one of your pieces makes a capture. The smiths take their due up front - your next 3 drafts are skipped.",
+      description: "For the next 3 turns none of your pieces can be captured and your king cannot be taken, but the wall falls the instant one of your pieces makes a capture. Your next 3 drafts are skipped.",
+      tip: "Three turns of total safety, paid for up front: use them to untangle, not to attack.",
       tier: 7,
       category: "protection",
       icon: "ShieldPlus",

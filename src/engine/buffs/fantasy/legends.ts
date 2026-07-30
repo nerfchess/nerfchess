@@ -291,8 +291,8 @@ export const FANTASY_LEGENDS: Buff[] = [
     {
       id: "valkyrie",
       name: "Valkyrie",
-      description:
-        "A chooser of the slain rides beside your army: for your opponent's next 3 turns, any knight, bishop, or rook of yours they capture is carried home to your pocket instead of being lost for good. Drop it back onto an empty square on a later turn. In exchange, you skip your next draft.",
+      description: "For your opponent's next 3 turns, any knight, bishop, or rook of yours they capture is carried home to your pocket instead of being lost for good. Drop it back onto an empty square on a later turn. In exchange, you skip your next draft.",
+      tip: "It turns three turns of trades into free repositioning, so invite the trades.",
       tier: 6,
       category: "pieces",
       flavor: "Not this one. This one still has work to do.",

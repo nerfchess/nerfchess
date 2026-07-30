@@ -52,6 +52,8 @@ import {
 // --- Local plumbing ----------------------------------------------------------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -192,8 +194,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_ancient_custom",
       name: "Ancient Custom",
-      description:
-        "The old law never expired: once, one of your pawns may capture an enemy pawn standing directly beside it en passant, as though it had just double-stepped. That pawn is rooted and cannot move again on your next turn. (Reaching your last rank this way promotes to a queen.)",
+      description: "Once, one of your pawns may capture an enemy pawn standing directly beside it en passant, as though it had just double-stepped. That pawn is then rooted and cannot move again on your next turn. Reaching your last rank this way promotes to a queen.",
+      tip: "The rooted turn is the price: do not play it into a position where the pawn must run.",
       tier: 1,
       category: "movement",
       icon: "Scroll",
@@ -561,8 +563,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_spoils_of_war",
       name: "Spoils of War",
-      description:
-        "The finest piece you have captured from your opponent defects to your colors: place it on an empty square on your home rank. It leaves your opponent's revival pool for eighteen of your turns, then rejoins it, and you gain one draft reroll. Queens defect first, then rooks, bishops, knights, pawns.",
+      description: "The finest piece you have captured defects to your colours: place it on an empty square on your home rank. It leaves your opponent's revival pool for eighteen of your turns, then rejoins it, and you gain one draft reroll.",
+      tip: "Queens defect first, then rooks, bishops, knights, pawns.",
       tier: 4,
       category: "pieces",
       icon: "Handshake",
@@ -1112,8 +1114,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_carnival_of_masks",
       name: "Carnival of Masks",
-      description:
-        "Ring the carnival bell: every one of your pieces except your king puts on another's mask. Their types are shuffled among their squares at random. The army keeps exactly the same pieces, but nobody is where their powers say they are. Pawns never land on a first or last rank.",
+      description: "Every one of your pieces except your king puts on another's mask: their types are shuffled among their squares at random. You keep exactly the same pieces, but nobody is where their powers say they are. Pawns never land on a first or last rank.",
+      tip: "Best played from a tangled position, where scrambling your own army costs least.",
       tier: 7,
       category: "pieces",
       icon: "PartyPopper",
@@ -1150,8 +1152,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_restitution",
       name: "Restitution",
-      description:
-        "The scales demand balance: for every kind of piece where your opponent outnumbers you on the board, one of your captured pieces of that kind returns to the empty square nearest your home rank. The most valuable returning piece is rooted and cannot move on your next turn. Played from ahead, it restores nothing.",
+      description: "For every kind of piece where your opponent outnumbers you on the board, one of your captured pieces of that kind returns to the empty square nearest your home rank. The most valuable returning piece is rooted and cannot move on your next turn.",
+      tip: "Played from ahead it restores nothing, so it is a comeback card only.",
       tier: 7,
       category: "pieces",
       icon: "Landmark",
@@ -1210,8 +1212,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_great_return",
       name: "The Great Return",
-      description:
-        "The gates of the underworld open both ways: every captured piece of BOTH sides still owed to the board returns at once, each placed on empty squares nearest its own home rank. The side that has lost more, regains more. Your most valuable returning piece arrives rooted and cannot move on your next turn.",
+      description: "Every captured piece of BOTH sides still owed to the board returns at once, each placed on the empty square nearest its own home rank. Your most valuable returning piece arrives rooted and cannot move on your next turn.",
+      tip: "The side that has lost more regains more, so play it when you are behind on material.",
       tier: 8,
       category: "pieces",
       icon: "Sparkles",
@@ -1252,8 +1254,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_shadow_reserve",
       name: "Shadow Reserve",
-      description:
-        "Open the coat: a knight, a bishop and a rook slip into your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). The heaviest of them, the rook, still lands on an empty square, so it cannot capture on the turn it arrives, only once your opponent has replied. The smugglers take their fee up front: your next 2 drafts are skipped outright.",
+      description: "A knight, a bishop and a rook slip into your pocket, ready to be dropped onto empty squares on later turns, each drop spending that turn. A drop lands on an empty square, so it cannot capture until your opponent has replied. Your next 2 drafts are skipped.",
+      tip: "You are trading two drafts for three pieces and three turns to place them.",
       tier: 8,
       category: "pieces",
       icon: "Gift",
@@ -1273,8 +1275,8 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_eternal_keep",
       name: "The Eternal Keep",
-      description:
-        "Your home rank is raised into a fortress: for the opponent's next 4 turns, your pieces standing on your first rank (your king excepted) can never be captured. The ward ends the moment your king crosses the midline into the opponent's half. Step off the rampart, and the stone no longer knows you.",
+      description: "For your opponent's next 4 turns, your pieces standing on your first rank cannot be captured, your king excepted. The ward ends the moment your king crosses the midline into their half.",
+      tip: "Step off the rampart and the stone no longer knows you: keep the king at home to keep it.",
       tier: 8,
       category: "protection",
       icon: "Castle",

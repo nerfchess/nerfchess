@@ -15,6 +15,7 @@ import { NERF_MODE_CADENCE, DEFAULT_CADENCE } from "../src/engine/draft";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
 import {
   pickHouseMove, houseThinkMs, houseDraftThinkMs, houseNerfPickIndex, houseSeedRating,
+  houseSnapReplyMs, snapContext,
   houseStyle,
   type HousePersona,
 } from "../src/lib/server/bots";
@@ -69,6 +70,10 @@ export class ArenaGame {
     // Filler pacing decimation (config.thinkMult), passed INTO houseThinkMs so
     // its clock clamps still apply: slow pacing can never flag a bot.
     private readonly thinkMult = 1,
+    // Per-move search ceiling (config.searchCeilingMs). Filler shares one event
+    // loop with the tick, so an uncapped search at high concurrency starves it.
+    // Safe to cap: filler is never rated or archived.
+    private readonly searchCeilingMs: number | undefined = undefined,
   ) {
     this.seats = { w: white, b: black };
     this.ratings = { w: houseSeedRating(white), b: houseSeedRating(black) };
@@ -311,6 +316,11 @@ export class ArenaGame {
     const turn = g.board.turn;
     const grace = this.movedOnce[turn] ? 0 : firstMoveGraceMs;
     const clock = this.timeSec > 0 ? this.clocks[turn] + grace : 0;
+    // The premove tell also runs in filler: a trade answered instantly is the
+    // single most human thing a bot on TV can do, and it costs less pacing than
+    // a normal think rather than more. The position is already in hand here.
+    const snap = houseSnapReplyMs(this.seats[turn], randomInt, snapContext(g, turn));
+    if (snap != null) return snap;
     return houseThinkMs(randomInt, clock, this.timeSec, this.thinkMult, houseStyle(this.seats[turn]).tempo);
   }
 
@@ -412,7 +422,7 @@ export class ArenaGame {
         this.seats[turn].skill,
         randomInt,
         this.timeSec > 0 ? this.clocks[turn] : undefined,
-        undefined,
+        this.searchCeilingMs,
         undefined,
         this.seats[turn],
       );

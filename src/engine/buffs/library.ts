@@ -14,6 +14,7 @@ import { REGICIDE, TIER9, TIER10 } from "./tier9";
 import { BRAINROT } from "./brainrot";
 import { OVERHAUL_CARDS } from "./overhaul";
 import { PERSONAL_CARDS, NEWJEANS_CARDS } from "./personal";
+import { CREATOR_CARDS } from "./creators";
 import { buffRegistry } from "./registry";
 import { Buff, BuffApi, BuffCategory, BuffInstance, CardFx } from "../buff";
 import { Tier } from "../nerf";
@@ -78,6 +79,8 @@ import {
 // ---------------------------------------------------------------------------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -6318,6 +6321,7 @@ export const ALL_BUFFS: Buff[] = [
   ...BRAINROT,
   ...PERSONAL_CARDS,
   ...NEWJEANS_CARDS,
+  ...CREATOR_CARDS,
   ...ITEMS,
   ...OVERHAUL_CARDS,
   REGICIDE,

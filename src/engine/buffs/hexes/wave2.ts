@@ -78,8 +78,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_witchs_veto",
       name: "Witch's Veto",
-      description:
-        "The witch forbids revenge, with one loophole: their first move under the curse ignores the veto, one free strike, then for the rest of your opponent's next 4 turns they cannot capture the piece you moved on your previous turn. Everything else is always fair game: they can attack other pieces, or simply wait a turn for the veto to move on.",
+      description: "Their first move under the curse ignores the veto, one free strike. Then for the rest of your opponent's next 4 turns they cannot capture the piece you moved on your previous turn.",
+      tip: "Everything else stays fair game: they can attack other pieces, or wait a turn for the veto to move on.",
       flavor: "You may not strike back. Those are the rules of the feud.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -157,8 +157,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_cold_footprints",
       name: "Cold Footprints",
-      description:
-        "The ground remembers their tread, but wakes a beat late: their next move passes untouched, then for their following 5 turns, whenever they move a piece, the square it left is frozen over for their next turn, and no enemy piece may step onto it. Retracing their own steps is what the curse hates most.",
+      description: "Their next move passes untouched, then for their following 5 turns: whenever they move a piece, the square it left freezes over for their next turn and no enemy piece may step onto it.",
+      tip: "Retracing their own steps is what the curse hates most.",
       flavor: "Walk away and the door ices shut behind you.",
       fx: { motif: "blindfold" },
     },
@@ -198,8 +198,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_long_road_home",
       name: "The Long Road Home",
-      description:
-        "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank; otherwise it fades after 5 of their turns. Their other pieces are free; the victim can simply obey, stand still, or be played around.",
+      description: "Lay a calling on one enemy knight, bishop or rook: every move it makes must bring it closer to its own back rank. The curse lifts the moment it stands on that rank, and otherwise fades after 5 of their turns.",
+      tip: "Their other pieces are free; the victim can simply obey, stand still, or be played around.",
       flavor: "Its name is spoken at the hearth, and its feet must answer.",
     },
     {
@@ -265,8 +265,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_blood_price",
       name: "Blood IOU",
-      description:
-        "A price is set on your blood: the next time your opponent captures one of your pieces within their next 6 turns, the debt comes due at once. They lose 12 seconds from their clock (nothing in an untimed game) and, if they still hold one, a draft reroll. If they hold their blades for 6 turns, the price expires unpaid.",
+      description: "The next time your opponent captures one of your pieces within their next 6 turns, the debt comes due: they lose 12 seconds of clock (nothing in an untimed game) and a draft reroll if they hold one. Held blades for 6 turns and it expires unpaid.",
+      tip: "It costs them nothing if they can afford to stop trading for six turns.",
       flavor: "Take what you like. The collector calls the same evening.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -299,8 +299,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_tarnished_crown",
       name: "Tarnished Crown",
-      description:
-        "Their coronations are cursed, all but the first: for your opponent's next 6 turns, any pawn they promote arrives exhausted, frozen for 2 of their turns the moment it is crowned. The first pawn to promote escapes the curse and arrives free; every coronation after it pays the price.",
+      description: "For your opponent's next 6 turns, any pawn they promote arrives exhausted and frozen for 2 of their turns. The very first pawn to promote escapes and arrives free; every coronation after it pays.",
+      tip: "One promotion is safe, so they should make the first one count.",
       flavor: "The crown fits. It just weighs like a gravestone.",
       fx: { motif: "slow", pieces: ["p"] },
     },
@@ -340,8 +340,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_tolling_bell",
       name: "Tolling Bell",
-      description:
-        "A cracked bell hangs over their army: starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), its toll deafens the long arms: their bishops, rooks and queen cannot move on tolling turns. On the quiet turns in between, everything moves freely. Fades after their 5th turn.",
+      description: "Starting with your opponent's next turn and on every second turn after (their 1st, 3rd and 5th), the toll deafens their long arms: bishops, rooks and queen cannot move on tolling turns. It fades after their 5th turn.",
+      tip: "The quiet turns in between are free, so the schedule is theirs to plan around.",
       flavor: "You learn to march between the tolls.",
       fx: { motif: "slow", pieces: ["b", "r", "q"] },
     },
@@ -410,8 +410,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_no_reins",
       name: "No Reins",
-      description:
-        "Their long pieces bolt, a beat late: their next move keeps its footing, then for their following 4 turns, every bishop, rook or queen slide must run as far as the line allows: to the board's edge, into a capture, or right up against one of their own pieces. No stopping halfway. Knights, pawns and the king keep their footing.",
+      description: "Their next move keeps its footing, then for their following 4 turns every bishop, rook or queen slide must run as far as the line allows: to the edge, into a capture, or up against one of their own pieces. Knights, pawns and the king are unaffected.",
+      tip: "Their own pieces become useful buffers, since a slide stops against them.",
       flavor: "The horses took the bits in their teeth.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
@@ -464,8 +464,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_war_rations",
       name: "War Rations",
-      description:
-        "Their war chest is sealed a beat late: their next move is free, then across your opponent's following 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends. They pick which battles are worth the ration.",
+      description: "Their next move is free, then across your opponent's following 5 turns they may make at most 2 captures. Once both are spent, their army cannot capture at all until the curse ends.",
+      tip: "They pick which two battles are worth the ration.",
       flavor: "The quartermaster stamps two chits. The rest is on credit.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -512,8 +512,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_witching_hour",
       name: "The Witching Hour",
-      description:
-        "Midnight creeps up on their army: for your opponent's next 3 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 3 turns, all touched pieces freeze for 2 of their turns. Moving few pieces, or only ones they can spare, keeps the damage down.",
+      description: "For your opponent's next 3 turns, every piece they move is touched by the hour. When midnight strikes at the end of those 3 turns, every touched piece freezes for 2 of their turns.",
+      tip: "Moving few pieces, or only ones they can spare, keeps the damage down.",
       flavor: "Whatever stirred after dark, the hour keeps.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -559,8 +559,8 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_weight_of_toil",
       name: "Weight of Toil",
       tier: 5,
-      description:
-        "The curse counts every errand: for your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns (shuffling one square at a time). Spreading the work across the army avoids it entirely. Kings never collapse.",
+      description: "For your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns, shuffling one square at a time. Kings never collapse.",
+      tip: "Spreading the work across the army avoids it entirely.",
       flavor: "The willing horse is the one that founders.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -604,8 +604,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_compounding_misery",
       name: "Compounding Misery",
-      description:
-        "Misery multiplies: freeze one enemy piece you target for 1 of their turns, plus 1 more turn for every other curse-effect already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 3 turns total. Cast onto a clean board it is a small chill; stacked on other hexes it bites deep. Kings cannot be targeted.",
+      description: "Freeze one enemy piece for 1 of their turns, plus 1 more turn for every other curse already afflicting your opponent (each frozen or petrified piece, sealed ground, or royal edict), up to 3 turns. Kings cannot be targeted.",
+      tip: "On a clean board it is a small chill; stacked on other hexes it bites deep.",
       flavor: "One leech is a nuisance. The third one finds the vein.",
     },
     {
@@ -647,8 +647,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_twinned_torment",
       name: "Twinned Torment",
-      description:
-        "Stitch two enemy pieces into one fate: their next move slips the fresh bond, then for their following 6 turns, whenever one of the bound pair moves, the other seizes up and is frozen for 1 turn. They can still use one of the two freely, but only by leaving its twin nailed down. A captured twin slips the bond and frees the other. Kings cannot be bound.",
+      description: "Their next move slips the fresh bond, then for their following 6 turns: whenever one of two bound enemy pieces moves, the other is frozen for 1 turn. A captured twin slips the bond and frees the other. Kings cannot be bound.",
+      tip: "They can still use one of the pair freely, but only by leaving its twin nailed down.",
       flavor: "Two dolls, one thread. Pull either arm.",
     },
     {
@@ -730,8 +730,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_cursed_coin",
       name: "Cursed Coin",
-      description:
-        "Press a cursed coin into one enemy piece's hand: the holder's first move slips free, then for the rest of your opponent's next 8 turns the holder cannot capture and can move at most 2 squares. The coin is eager to be passed: whenever the holder ends a move beside another of their pieces, or one of their pieces ends a move beside the holder, the coin jumps to that piece. Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin. Kings never take the coin.",
+      description: "The holder's first move slips free, then for the rest of your opponent's next 8 turns the holder cannot capture and moves at most 2 squares. Whenever the holder and another of their pieces end a move beside each other, the coin jumps. Kings never take it.",
+      tip: "Quarantining the holder away from the army contains it; capturing the holder yourself destroys the coin.",
       flavor: "Everyone swears they will not hold it long.",
     },
     {
@@ -816,8 +816,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_creeping_blight",
       name: "Creeping Blight",
-      description:
-        "Blight one square in your opponent's half of the board: their next move may still cross it, one last time, then the ground closes and no enemy piece may move onto blighted ground (pieces already standing there may still leave). On each of their following turns the blight creeps to one more adjacent square in their half, for 5 of their turns, then the whole patch withers away. Play around the spread, or stay out of its half entirely.",
+      description: "Blight one square in your opponent's half. Their next move may still cross it, then no enemy piece may move onto blighted ground, though pieces already there may leave. Each of their following turns it creeps to one more adjacent square, for 5 turns.",
+      tip: "Play around the spread, or stay out of that half entirely.",
       flavor: "First one flagstone went grey. By Friday, the courtyard.",
       fx: { motif: "blindfold" },
     },
@@ -893,8 +893,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_queens_ransom",
       name: "Queen's Ransom",
-      description:
-        "A ransom is set on her majesty's steps: for your opponent's next 4 turns, each time they move their queen, two other pieces of theirs (chosen by the curse) are seized as surety and frozen for 1 turn. The queen herself is never restrained: benching her costs nothing, using her taxes the court.",
+      description: "For your opponent's next 4 turns, each time they move their queen, two other pieces of theirs are seized as surety and frozen for 1 turn. The queen herself is never restrained.",
+      tip: "Benching her costs nothing; using her taxes the court.",
       flavor: "Her majesty may walk wherever she pleases. The escort is billed.",
       fx: { motif: "slow", pieces: ["q"] },
     },
@@ -930,8 +930,8 @@ export const HEX_WAVE2: Buff[] = [
       id: "hw2_bound_court",
       name: "Chains of the Court",
       tier: 6,
-      description:
-        "Your opponent's knights and bishops are chained into stone for 4 of their turns (walnuts that shuffle one square at a time). The chains have a lock: if their KING steps onto one of the four center squares (d4, e4, d5, e5) while the curse holds, every petrified courtier is freed at once. Wait it out in safety, or walk the king into the open to break it early.",
+      description: "Your opponent's knights and bishops are petrified into walnuts for 4 of their turns, shuffling one square at a time. The chains have a lock: if their king steps onto one of the four centre squares, every petrified courtier is freed at once.",
+      tip: "They can wait it out in safety, or walk the king into the open to break it early.",
       flavor: "The key was hung in the middle of the battlefield. Of course it was.",
       fx: { motif: "jail", pieces: ["n", "b"] },
     },
@@ -984,8 +984,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_gathering_storm",
       name: "Gathering Storm",
-      description:
-        "A storm gathers over their army, holding off for one move: their next move is clear, then it worsens every two turns across your opponent's following 6 turns. Turns 1 and 2: their pawns cannot advance (captures still allowed). Turns 3 and 4: their knights and bishops also cannot cross into your half. Turns 5 and 6: their bishops, rooks and queen are also capped at 2 squares per move. Then it breaks all at once. The early turns are the time to act.",
+      description: "Their next move is clear, then the storm worsens every two turns across their following 6. Turns 1-2: their pawns cannot advance, captures still fine. Turns 3-4: knights and bishops also cannot cross into your half. Turns 5-6: long pieces capped at 2 squares.",
+      tip: "The early turns are the time to act, because it only tightens.",
       flavor: "You could see it coming for miles. That was the point.",
       fx: { motif: "anchor", pieces: "all" },
     },
@@ -1041,8 +1041,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_gravebloom",
       name: "Gravebloom",
-      description:
-        "Flowers with long memories, slow to root: their next move passes untouched, then for their following 6 turns, every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms. Each kill costs them the ground it was won on; capturing less, or only on squares they don't need, is the way through.",
+      description: "Their next move passes untouched, then for their following 6 turns every square where they capture becomes a grave-garden for 3 of their turns: the capturing piece may leave, but no enemy piece may move onto that square while it blooms.",
+      tip: "Each kill costs them the ground it was won on, so capturing less, or only on squares they can spare, is the way through.",
       flavor: "The garden takes root where the blood went in.",
       fx: { motif: "blindfold" },
     },
@@ -1079,8 +1079,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_gilded_rot",
       name: "Gilded Rot",
-      description:
-        "Whatever they touch turns to gold, a beat late: their next move passes untouched, then for their following 5 turns, each piece they move is gilded, and gilded pieces cannot capture for the rest of the curse. Unmoved pieces keep their teeth, so they must choose between developing their game and keeping their army dangerous. When the curse ends the gold flakes off everything at once.",
+      description: "Their next move passes untouched, then for their following 5 turns each piece they move is gilded, and a gilded piece cannot capture for the rest of the curse. When the curse ends the gold flakes off everything at once.",
+      tip: "Unmoved pieces keep their teeth, so they must choose between developing and staying dangerous.",
       flavor: "The blessing of Midas, distributed fairly.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -1136,8 +1136,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_death_knell",
       name: "Death Knell",
-      description:
-        "Toll the knell over one enemy piece you target: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Your opponent sees the count the whole time: they can feed the bell a pawn, spend the piece in a trade, or gamble on saving it. Kings cannot be tolled.",
+      description: "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
+      tip: "They see the count throughout: feed the bell a pawn, spend the piece in a trade, or gamble on saving it.",
       flavor: "Three strokes. Blood on its hands buys the fourth never ringing.",
     },
     {
@@ -1208,8 +1208,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_hollow_crown",
       name: "The Hollow Crown",
-      description:
-        "The crown itself is cursed, for the rest of the game: whenever your opponent's king moves (castling included), the court mourns: on their FOLLOWING turn they may move only pawns or the king. The curse sleeps as long as the king holds still, so they must choose between a frozen throne and a stumbling court every time the king needs to act.",
+      description: "For the rest of the game, whenever your opponent's king moves, castling included, the court mourns: on their following turn they may move only pawns or the king.",
+      tip: "The curse sleeps while the king holds still, so every king move costs them a stumbling court.",
       flavor: "Uneasy sits the head. Unbearable, the morning after it stirs.",
       fx: { motif: "slow", pieces: ["k"] },
     },
@@ -1241,8 +1241,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_tide_of_ash",
       name: "Tide of Ash",
-      description:
-        "Ash rolls in over their homeland: their 1st rank is buried at once, and the tide swallows one more of their home ranks on each of their next 3 turns, up to their 4th rank. Buried ground cannot be moved ONTO by your opponent, but the ash is a drift, not a wall: any piece already standing in it may leave normally, gliding or stepping out of the ash onto clear ground. So their army is herded forward rank by rank. The whole tide blows away after their 6th turn.",
+      description: "Their 1st rank is buried at once, and the tide swallows one more home rank on each of their next 3 turns, up to their 4th. No enemy piece may move ONTO buried ground, but a piece already standing in it may leave normally. It blows away after their 6th turn.",
+      tip: "Their army is herded forward rank by rank, so moving out early beats being pushed.",
       flavor: "The mountain did not erupt at the army. It erupted at the address.",
       fx: { motif: "blindfold" },
     },
@@ -1303,8 +1303,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_crown_of_thorns",
       name: "Crown of Thorns",
-      description:
-        "A briar is woven around your king, in full view: for your opponent's next 5 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts, but the attacker is rooted, and the follow-up must come from somewhere else. Attacking anything BUT your king costs them nothing.",
+      description: "For your opponent's next 5 turns, any enemy piece whose move leaves your king in check is seized by the thorns and frozen for 2 of their turns where it stands. The check still counts; the attacker is simply rooted.",
+      tip: "Attacking anything but your king costs them nothing, and the follow-up has to come from elsewhere.",
       flavor: "By all means, reach for the crown.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -1336,8 +1336,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_pauper_crown",
       name: "Pauper's Crown",
-      description:
-        "Strip the crown from their queen: she is humbled into a ROOK for 4 of their turns, then restored. Blood restores pride sooner: the moment she captures anything while humbled, she becomes a queen again on the spot. She still fights as a full rook the whole time, and if she is captured while humbled she is simply lost as a rook. Requires an enemy queen on the board.",
+      description: "Their queen is humbled into a rook for 4 of their turns, then restored. Blood restores her sooner: the moment she captures anything while humbled she becomes a queen again. If she is captured while humbled she is lost as a rook. Requires an enemy queen.",
+      tip: "She still fights as a full rook the whole time, so it is a demotion, not a paralysis.",
       flavor: "Walk a mile in a tower's boots, your majesty.",
       fx: { motif: "anchor", pieces: ["q"] },
     },
@@ -1414,8 +1414,8 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_beacon_of_woe",
       name: "Beacon of Woe",
-      description:
-        "Light a doom-beacon on one of your OWN pieces, in full view of both players: when your opponent's 6th turn from now ends, every enemy knight, bishop, rook and queen is frozen for 2 of their turns. Snuffing the flame is the only cure: if they capture the beacon-bearer before it strikes, the curse dies with it. You must keep the bearer alive for six turns; they must decide whether to spend those turns hunting it.",
+      description: "Light a doom-beacon on one of your OWN pieces, in full view. When your opponent's 6th turn from now ends, every enemy knight, bishop, rook and queen is frozen for 2 of their turns. If they capture the beacon-bearer first, the curse dies with it.",
+      tip: "You must keep the bearer alive for six turns; they must decide whether to spend those turns hunting it.",
       flavor: "The pyre was lit on the hill where everyone could see. That was a promise.",
     },
     {

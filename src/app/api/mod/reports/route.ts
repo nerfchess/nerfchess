@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireMod } from "@/lib/server/mod";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -42,5 +43,10 @@ export async function POST(request: Request) {
     .bind(status, mod.username, Date.now(), id)
     .run();
   if (!result.meta.changes) return NextResponse.json({ error: "Report not found." }, { status: 404 });
+  notifyModEvent({
+    kind: status === "resolved" ? "report_resolved" : "report_dismissed",
+    actor: mod.username,
+    target: id,
+  });
   return NextResponse.json({ ok: true });
 }

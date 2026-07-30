@@ -17,18 +17,21 @@ import {
   HOUSE_ROSTER,
   HOUSE_AVATAR_IDS,
   HOUSE_COUNT_MAX,
-  HOUSE_ONLINE_COUNT,
-  HOUSE_RATING_UPLIFT_MIN,
-  HOUSE_RATING_UPLIFT_MAX,
+  HOUSE_PRESENCE_LIST_MAX,
+  HOUSE_ONLINE_MIN,
+  HOUSE_ONLINE_MAX,
+  HOUSE_SKILL_WEIGHTS,
+  houseSkillForName,
+  houseOnlineCount,
   EXPANSION_SIZE,
   EXPANSION_BIO_COUNT,
   EXPANSION_BIO_POOL_SIZE,
   houseIdentity,
-  houseRatingUplift,
   houseSeedRating,
   houseSeedRatingForMode,
   houseStyle,
   isExpansionPersona,
+  isNewWavePersona,
   personaBio,
   ogClubMembers,
   OG_CLUB_NAME,
@@ -66,10 +69,10 @@ for (const p of HOUSE_ROSTER) {
   names.add(p.name.toLowerCase());
   note(typeof p.skill === "number" && p.skill > 0, `bad skill: ${p.name}`);
   note(houseSeedRating(p) >= 100, `bad seed rating: ${p.name}`);
-  // Legacy personas carry a /mod-editor location label; the 2026-07 expansion
-  // wave deliberately carries NONE (no fictional hometowns for labeled bots).
-  if (isExpansionPersona(p.name)) {
-    note(p.location === "", `expansion persona has a fictional location: ${p.name}`);
+  // Original personas carry a /mod-editor location label; the 2026-07 waves
+  // deliberately carry NONE (no fictional hometowns for hundreds of accounts).
+  if (isNewWavePersona(p.name)) {
+    note(p.location === "", `wave persona has a fictional location: ${p.name}`);
   } else {
     note(!!p.location && p.location.length > 0, `missing location: ${p.name}`);
   }
@@ -130,16 +133,54 @@ for (const bio of expansionBios) {
   note(bio.length <= 70, `bio too long (${bio.length}): ${bio}`);
 }
 
-// Legacy uplift: every legacy persona's deterministic uplift is in [300, 400]
-// and stable across calls (the "no re-randomizing" guarantee).
+// --- The rating curve ------------------------------------------------------
+//
+// The roster's shape is the point of the 2026-07 spread, so it is asserted
+// rather than trusted: the field must stay bottom-heavy (a large majority of
+// beginners and club players) with only a small elite tail, or new players are
+// back to having nobody at their level.
+note(
+  HOUSE_SKILL_WEIGHTS.reduce((a, [, w]) => a + w, 0) === 100,
+  "HOUSE_SKILL_WEIGHTS must sum to 100",
+);
+// Every declared tier must be the one the curve produces for that name, so the
+// numbers in PERSONA_DEFS can never quietly drift away from the table.
 for (const p of HOUSE_ROSTER) {
-  if (isExpansionPersona(p.name)) continue;
-  const uplift = houseRatingUplift(p.name);
   note(
-    uplift >= HOUSE_RATING_UPLIFT_MIN && uplift <= HOUSE_RATING_UPLIFT_MAX,
-    `uplift out of [300,400] for ${p.name}: ${uplift}`,
+    p.skill === houseSkillForName(p.name),
+    `declared skill ${p.skill} != curve ${houseSkillForName(p.name)} for ${p.name}`,
   );
-  note(uplift === houseRatingUplift(p.name), `uplift not deterministic for ${p.name}`);
+}
+const seeded = HOUSE_ROSTER.map((p) => houseSeedRating(p));
+const shareIn = (lo: number, hi: number) =>
+  (seeded.filter((r) => r >= lo && r < hi).length / seeded.length) * 100;
+const underTwoK = shareIn(0, 2000);
+const eliteShare = shareIn(2400, 100_000);
+note(underTwoK >= 75, `too few sub-2000 personas: ${underTwoK.toFixed(1)}% (want >= 75%)`);
+note(eliteShare <= 12, `too many 2400+ personas: ${eliteShare.toFixed(1)}% (want <= 12%)`);
+note(eliteShare >= 6, `too few 2400+ personas: ${eliteShare.toFixed(1)}% (want >= 6%)`);
+note(Math.min(...seeded) >= 100, "a seeded rating fell below the floor");
+
+// --- The shown population --------------------------------------------------
+// houseOnlineCount must stay inside its band at every minute of a day, and must
+// be a pure function of the timestamp (same input, same output for every viewer).
+{
+  const day = Date.UTC(2026, 6, 30);
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let minute = 0; minute < 1440; minute += 7) {
+    const at = day + minute * 60_000;
+    const n = houseOnlineCount(at);
+    note(
+      n >= HOUSE_ONLINE_MIN && n <= HOUSE_ONLINE_MAX,
+      `online count ${n} outside [${HOUSE_ONLINE_MIN}, ${HOUSE_ONLINE_MAX}] at minute ${minute}`,
+    );
+    note(n === houseOnlineCount(at), `online count not deterministic at minute ${minute}`);
+    lo = Math.min(lo, n);
+    hi = Math.max(hi, n);
+  }
+  // It has to actually breathe, not sit flat near one end of the band.
+  note(hi - lo > (HOUSE_ONLINE_MAX - HOUSE_ONLINE_MIN) * 0.6, `online count barely moves across a day: ${lo}..${hi}`);
 }
 
 // Seed ratings and styles are deterministic (same inputs, same outputs).
@@ -162,12 +203,12 @@ for (const p of HOUSE_ROSTER.slice(0, 25)) {
 // Availability: never everyone online at once — both windows must sit clearly
 // below the roster size, and active stays a subset of online.
 note(
-  HOUSE_ONLINE_COUNT < HOUSE_ROSTER.length,
-  `online window (${HOUSE_ONLINE_COUNT}) must be below the roster size (${HOUSE_ROSTER.length})`,
+  HOUSE_ONLINE_MAX < HOUSE_ROSTER.length,
+  `peak shown population (${HOUSE_ONLINE_MAX}) must be below the roster size (${HOUSE_ROSTER.length})`,
 );
 note(
-  HOUSE_COUNT_MAX <= HOUSE_ONLINE_COUNT,
-  `active window max (${HOUSE_COUNT_MAX}) must not exceed the online window (${HOUSE_ONLINE_COUNT})`,
+  HOUSE_COUNT_MAX <= HOUSE_PRESENCE_LIST_MAX,
+  `active window max (${HOUSE_COUNT_MAX}) must not exceed the presence list (${HOUSE_PRESENCE_LIST_MAX})`,
 );
 
 // --- OG club membership (informational + sanity) ---------------------------

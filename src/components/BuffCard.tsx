@@ -176,6 +176,16 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
       <p className={`leading-snug text-parchment-100 ${compact ? "mt-1.5 text-[12px]" : "flex-1 text-[13px]"}`}>
         <GlossaryText text={buff.description} />
       </p>
+      {/* How to play it / play against it. Advice, never a rule, so it sits
+          below the rule text in the same quiet register as the footnotes. Full
+          cards only: a dock row or a compact pick shows the rule and nothing
+          else. */}
+      {!compact && buff.tip && (
+        <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
+          <span className="smallcaps text-parchment-300">Tip</span>{" "}
+          <GlossaryText text={buff.tip} />
+        </p>
+      )}
       {/* Rules footnote, auto-attached to every card that grants
           uncapturability (owner request): the engine never lets a piece that
           cannot be captured deliver the king capture itself (you must expose

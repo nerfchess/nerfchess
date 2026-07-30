@@ -95,6 +95,8 @@ export type HexMeta = {
   id: string;
   name: string;
   description: string;
+  /** Advice, not a rule (see Buff.tip): how to play against the hex. */
+  tip?: string;
   tier: Tier;
   /** Per-card lucide-react icon name; overrides the category glyph. */
   icon?: string;

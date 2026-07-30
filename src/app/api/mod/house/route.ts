@@ -22,6 +22,7 @@ import {
   VERY_WEAK_PRESET,
   WEAKEN_CLAMP,
 } from "@/lib/server/bots";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -147,6 +148,30 @@ export async function POST(request: Request) {
     const current = parseSkillOverrides(await getAppSetting(guard.db, HOUSE_SKILL_OVERRIDES_KEY));
     const merged = mergeOverrides(current, body.skillOverrides as Record<string, unknown>);
     await setAppSetting(guard.db, HOUSE_SKILL_OVERRIDES_KEY, JSON.stringify(merged));
+  }
+
+  // One event per knob actually touched, so the sheet reads as a change log
+  // rather than one opaque "house settings saved" row.
+  if (hasEnabled) {
+    notifyModEvent({
+      kind: "house_toggled",
+      actor: guard.mod.username,
+      detail: body.enabled ? "on" : "off",
+    });
+  }
+  if (hasGames) {
+    notifyModEvent({
+      kind: "house_games_pinned",
+      actor: guard.mod.username,
+      detail: String(clampHouseGames(body.games as number)),
+    });
+  }
+  if (hasReset || hasOverrides) {
+    notifyModEvent({
+      kind: "house_skill_override",
+      actor: guard.mod.username,
+      detail: hasReset ? "reset to baked" : JSON.stringify(body.skillOverrides).slice(0, 400),
+    });
   }
 
   return NextResponse.json(await state(guard.db));

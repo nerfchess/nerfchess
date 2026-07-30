@@ -882,8 +882,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_martingale",
       name: "Martingale",
-      description:
-        "Flip until you miss, half odds each flip, ladder capped at four: one win pays a pawn, two pays two pawns, three a knight and a pawn, four a rook and a knight. You keep the rung you reached, but going bust on the very first flip stuns the last piece you moved for a turn.",
+      description: "Flip until you miss, half odds each flip, ladder capped at four. One win pays a pawn, two pays two pawns, three a knight and a pawn, four a rook and a knight. You keep the rung you reached.",
+      tip: "Going bust on the very first flip stuns the last piece you moved for a turn.",
       tier: 6,
       category: "pieces",
       icon: "Repeat",
@@ -921,8 +921,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_devils_deck",
       name: "Devil's Deck",
-      description:
-        "Six cards fanned face up, three drawn at random without replacement, all three resolve: the blessings summon a knight, stun three enemy pieces for a turn, revive one of your captured minors, and shield your army for a turn; the two curses take a random pawn of yours, or freeze one of your minors for 2 turns.",
+      description: "Six cards fanned face up, three drawn at random, all three resolve. The blessings: summon a knight, stun three enemy pieces, revive a captured minor, shield your army for a turn. The two curses: lose a random pawn, or freeze one of your minors for 2 turns.",
+      tip: "Four blessings to two curses, so the odds are with you but not by much.",
       tier: 7,
       category: "item",
       icon: "Flame",
@@ -976,8 +976,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_break_the_bank",
       name: "Break the Bank",
-      description:
-        "Run the heist: three laser grids, 60% each to slip through. Three clean: your best captured piece returns AND a random tier 6 card joins your hand. Two: the tier 6 card. One: a consolation pawn, but a random piece of yours sits jailed for 2 turns. Zero: two of your pieces are jailed for 2 turns.",
+      description: "Three laser grids, 60% each to slip through. Three clean: your best captured piece returns AND a random tier 6 card joins your hand. Two: the tier 6 card. One: a pawn, and a random piece of yours is jailed 2 turns. Zero: two pieces jailed 2 turns.",
+      tip: "Roughly a one-in-five chance of the full heist, and a similar chance of the worst outcome.",
       tier: 7,
       category: "pieces",
       icon: "Vault",
@@ -1024,8 +1024,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_wheel_of_the_cosmos",
       name: "Wheel of the Cosmos",
-      description:
-        "Twelve equal segments, spun once. Eight are kind: revive a captured minor, march every pawn you own, a three card draft, stun two enemy pieces, promote a random pawn to knight, two rerolls, thaw your whole army, or summon a knight. Four are cruel: lose a random pawn, one of your minors freezes for 2 turns, your opponent gains a reroll, or one of your pawns defects.",
+      description: "Twelve equal segments, spun once. Eight are kind: revive a captured minor, march every pawn, a three card draft, stun two enemy pieces, promote a random pawn to knight, two rerolls, thaw your army, or summon a knight. Four are cruel, up to a defecting pawn.",
+      tip: "Two thirds kind, one third cruel: a good spin when you can afford a bad one.",
       tier: 8,
       category: "item",
       icon: "Orbit",
@@ -1124,8 +1124,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_cursed_dice",
       name: "Cursed Dice",
-      description:
-        "Force your opponent to roll the bone dice: 40% one random enemy piece is cursed to freeze for a turn, but it gets one free move to escape first and freezes wherever that move leaves it (or in place if it does not move). 35% a random enemy pawn stumbles back a square. 25% the dice grin and nothing happens.",
+      description: "Your opponent rolls the bone dice. 40%: one random enemy piece is cursed to freeze for a turn, but gets one free move to escape first and freezes wherever that leaves it. 35%: a random enemy pawn stumbles back a square. 25%: the dice grin and nothing happens.",
+      tip: "Three quarters of the time something lands, but never anything decisive.",
       tier: 3,
       category: "hex",
       icon: "Dices",
@@ -1309,8 +1309,8 @@ export const OVERHAUL_GAMBLING: Buff[] = [
     {
       id: "gm_the_last_bet",
       name: "The Last Bet",
-      description:
-        "Push your queen across the felt: 70% she returns empowered, adding knight leaps to her slides for 6 of your turns, but those knight leaps cannot capture. 30% the back room keeps her for 2 of your turns, then returns her untouched to her square, or the nearest empty one.",
+      description: "Push your queen across the felt. 70%: she returns empowered, adding knight leaps to her slides for 6 of your turns, though those leaps cannot capture. 30%: the back room keeps her for 2 of your turns, then returns her to her square or the nearest empty one.",
+      tip: "The bad outcome is only a delay, not a loss, so the odds are worth taking.",
       tier: 8,
       category: "pieces",
       icon: "Gem",

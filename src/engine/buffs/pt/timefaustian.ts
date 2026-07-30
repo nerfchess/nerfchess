@@ -213,8 +213,8 @@ export const PT_TIME_CARDS: Buff[] = [
       id: "last_meal",
       icon: "Drumstick",
       name: "Last Meal",
-      description:
-        "Your king ties on a napkin. For your next 3 turns it may capture any enemy piece (other than a king) up to two squares away, leaping over anything in between. The napkin is good for a single outing: the first time your king moves, whether it feasts or comes up empty, the meal is over.",
+      description: "For your next 3 turns your king may capture any enemy piece other than a king up to two squares away, leaping over anything in between. The first time your king moves, whether it feasts or comes up empty, the meal is over.",
+      tip: "One outing only, so line the target up before you move the king at all.",
       tier: 5,
       category: "attack",
       flavor: "Fork, knife, and no table manners.",
@@ -376,8 +376,8 @@ export const PT_TIME_CARDS: Buff[] = [
       id: "gamble",
       icon: "Spade",
       name: "Gamble",
-      description:
-        "Flip a fair coin, heads half the time. Heads: for your next two draft offers you take every card instead of one, and your next offer rolls a tier higher. Tails: both you and your opponent skip your next draft, but your following offer still rolls a tier higher.",
+      description: "Flip a fair coin. Heads: your next two draft offers give you every card instead of one, and your next offer rolls a tier higher. Tails: you and your opponent both skip your next draft, but your following offer still rolls a tier higher.",
+      tip: "The downside is shared, so a losing flip costs your opponent a draft too.",
       tier: 3,
       category: "draft",
       flavor: "Heads you win, tails you win a little.",

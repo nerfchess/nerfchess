@@ -132,7 +132,8 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "glass_king",
       name: "Glass King",
-      description: "Your king is made of glass. From your move 10 on he is exiled from his own back two ranks: he must leave them if he is still there and may never step back onto them, and from that move any check anywhere on the board loses instantly. Before move 10 he is safe at home.",
+      description: "From your move 10 on, your king is exiled from his own back two ranks: he must leave them if he is still there, may never step back onto them, and from that move any check anywhere on the board loses instantly.",
+      tip: "Before move 10 he is safe at home, so use those moves to find him somewhere else to live.",
       flavor: "Safe in his chambers, shattered in the open.",
       icon: "shield-alert",
     },

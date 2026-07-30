@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireMod } from "@/lib/server/mod";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +35,18 @@ export async function POST(request: Request) {
   }
 
   if (body.all === true) {
-    await db.prepare("UPDATE chat_flags SET reviewed = 1 WHERE reviewed = 0").run();
+    const cleared = await db.prepare("UPDATE chat_flags SET reviewed = 1 WHERE reviewed = 0").run();
+    notifyModEvent({
+      kind: "chat_flag_reviewed",
+      actor: guard.mod.username,
+      target: "all",
+      detail: `${cleared.meta.changes ?? 0} flag(s)`,
+    });
     return NextResponse.json({ ok: true });
   }
   const id = typeof body.id === "string" ? body.id : "";
   if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 });
   await db.prepare("UPDATE chat_flags SET reviewed = 1 WHERE id = ?").bind(id).run();
+  notifyModEvent({ kind: "chat_flag_reviewed", actor: guard.mod.username, target: id });
   return NextResponse.json({ ok: true });
 }

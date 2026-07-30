@@ -388,7 +388,8 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
 export const UNTITLED_DUCK: Nerf = db({
   id: "untitled_duck",
   name: "Untitled duck nerf",
-  description: "A duck occupies one random square, marked on the board from the opening turn (a full turn before it can matter), all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it. If the duck would leave you fewer than three legal moves, it steps aside for that turn.",
+  description: "A duck occupies one random square, marked from the opening turn, all game. No piece may land on it and sliders cannot pass through it, though knights may leap over. If the duck would leave you fewer than three legal moves, it steps aside for that turn.",
+      tip: "You see the square a full turn before it can matter, so build your plans around it.",
   flavor: "Quack.",
   tier: 1,
   icon: "bird",
@@ -438,17 +439,35 @@ export const RISING_WATER: Nerf = db({
   filterMoves: (moves, state, ctx) => {
     const s = state as { level: number };
     if (s.level <= 0) return moves;
-    // Water rises from the owner's own back rank, mirrored by color so the
-    // handicap is symmetric: white floods rank 1 upward, black floods rank 8 downward.
-    const underwater =
-      ctx.me === "w"
-        ? (sq: number) => RANK(sq) < s.level
-        : (sq: number) => RANK(sq) > 7 - s.level;
+    const underwater = risingWaterTest(s.level, ctx.me);
     const dry = moves.filter((m) => !underwater(m.from) && !underwater(m.to));
     return dry.length ? dry : moves;
   },
-  visual: (state) => ({ waterRank: (state as { level: number }).level }),
+  // The board paints exactly the squares the filter above forbids. Handing over
+  // the square list (rather than a bare rank) is what keeps the two in step:
+  // the paint used to re-derive the geometry as `RANK(sq) < level` for BOTH
+  // colours, so a black-side flood tinted rank 1 — the opposite end of the
+  // board from the water — and washed cyan over a corner rook.
+  visual: (state, ctx) => ({
+    waterSquares: risingWaterSquares((state as { level: number }).level, ctx.me),
+  }),
 });
+
+/** Is this square underwater for `me` at this flood level? Water rises from the
+ * owner's own back rank, mirrored by colour so the handicap is symmetric: white
+ * floods rank 1 upward, black floods rank 8 downward. */
+function risingWaterTest(level: number, me: Color): (sq: number) => boolean {
+  return me === "w" ? (sq: number) => RANK(sq) < level : (sq: number) => RANK(sq) > 7 - level;
+}
+
+/** Every flooded square for `me`, as board indices. */
+function risingWaterSquares(level: number, me: Color): number[] {
+  if (level <= 0) return [];
+  const test = risingWaterTest(level, me);
+  const out: number[] = [];
+  for (let sq = 0; sq < 64; sq++) if (test(sq)) out.push(sq);
+  return out;
+}
 
 export const FOG_OF_WAR: Nerf = db({
   id: "fog_of_war",

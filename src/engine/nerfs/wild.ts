@@ -763,7 +763,8 @@ export const PERFECT_DEFENSE: Nerf = db({
 
 export const FLOOR_IS_LAVA: Nerf = db({
   id: "wn_floor_is_lava", name: "The Floor Is Lava", tier: 8, icon: "flame", implemented: true,
-  description: "Each turn, three random ranks turn to lava; you can't move a piece from or onto those ranks this turn. Next turn's lava ranks are revealed a turn early, and while any of your pieces stands on a rank that will ignite next turn, your move must take a piece off an igniting rank, or you lose.",
+  description: "Each turn, three random ranks turn to lava and you cannot move a piece from or onto them. While any of your pieces stands on a rank that will ignite next turn, your move must take a piece off an igniting rank, or you lose.",
+      tip: "Next turn's lava ranks are revealed a turn early, so the loss is always avoidable.",
   flavor: "Mind your step.",
   init: (rng) => {
     const roll = () => {

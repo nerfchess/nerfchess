@@ -19,6 +19,11 @@ export interface Nerf {
   id: string;
   name: string;
   description: string;
+  /** Advice, not a rule: how to live with the handicap. One sentence, shown
+   * small and dim under the rule text. See the same field on Buff for why it
+   * exists — it keeps strategy hints out of the rule paragraph. Nothing here
+   * may change what the engine does. */
+  tip?: string;
   flavor?: string;
   tier: Tier;
   icon?: string;
@@ -43,7 +48,14 @@ export interface Nerf {
   // Hooks for visualization
   visual?: (state: NerfState, ctx: GameContext) => {
     fogged?: boolean;
-    waterRank?: number; // ranks 1..8 underwater
+    /** Flooded squares, as explicit square indices. Deliberately NOT a rank
+     * number: the flood rises from the OWNER's back rank, so a rank alone
+     * cannot be painted without re-deriving the colour mirroring in the view.
+     * That is exactly what went wrong before — Rising Water's rule mirrored by
+     * colour while the board painted white's geometry for both sides, washing
+     * a black-side flood over rank 1 (and so over a corner rook). The nerf now
+     * hands over the same squares its own move filter uses. */
+    waterSquares?: number[];
     duckSquare?: number;
     bannedSquares?: number[];
     highlightSquares?: number[];

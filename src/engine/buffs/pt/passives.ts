@@ -143,8 +143,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
     {
       id: "photosynthesis",
       name: "Photosynthesis",
-      description:
-        "Your pawns grow toward the light: after every 3 of your turns, one of your pawns advances one square on its own (the pawn nearest promotion that has an empty square ahead). The auto-step only ever moves onto an empty square straight ahead, so it never captures, and it never auto-advances onto the promotion rank.",
+      description: "After every 3 of your turns, one of your pawns advances a square on its own: the pawn nearest promotion with an empty square ahead. The step only ever moves onto an empty square, so it never captures, and never auto-advances onto the promotion rank.",
+      tip: "Free tempo in a long game, and it will not promote for you: the last step is yours.",
       tier: 4,
       category: "tempo",
       flavor: "Just add sunlight.",
@@ -315,8 +315,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "contagion",
       icon: "Radiation",
       name: "Contagion",
-      description:
-        "Freezes are catching, but the strain lies dormant until after your opponent's next move. Once it wakes, whenever one of your opponent's pieces is newly frozen, one adjacent enemy piece (never a king) catches it and is frozen for 2 of their turns. Each fresh freeze spreads at most one square, so it never runs away.",
+      description: "The strain lies dormant until after your opponent's next move. Once it wakes, whenever one of their pieces is newly frozen, one adjacent enemy piece, never a king, catches it and is frozen for 2 of their turns.",
+      tip: "Each fresh freeze spreads at most one square, so it never runs away: pair it with freeze cards.",
       tier: 7,
       category: "hex",
       flavor: "Cover your cough.",
@@ -372,8 +372,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "guardian_angel",
       icon: "HandHeart",
       name: "Guardian Angel",
-      description:
-        "Twice per game, when your opponent captures one of your pieces (not your king), that piece is spirited to safety instead: an identical piece reappears on an empty square deep in your own half. The returning piece needs a moment to find its feet and cannot move (so it cannot capture) until after your opponent replies.",
+      description: "Twice per game, when your opponent captures one of your pieces (not your king), it is spirited to safety instead: an identical piece reappears on an empty square deep in your half. It cannot move, so cannot capture, until your opponent replies.",
+      tip: "It converts two losses into two repositionings, so trade freely while it holds.",
       tier: 6,
       category: "protection",
       flavor: "Someone up there is watching.",
@@ -452,8 +452,8 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       id: "fan_club",
       icon: "Megaphone",
       name: "Fan Club",
-      description:
-        "The home crowd guards your bench: while you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops. Once two of those back-rank pawns have made a capture, the crowd goes home and the shield ends for good.",
+      description: "While you have as many or more pieces as your opponent, your pawns on your back three ranks cannot be captured. Fall behind on material and the cheering stops. Once two of those pawns have made a capture, the crowd goes home and the shield ends for good.",
+      tip: "Keeping those pawns out of the fighting is what keeps the shield up.",
       tier: 4,
       category: "protection",
       requires: ["p"],

@@ -177,8 +177,8 @@ export const FANTASY_CURSES: Buff[] = [
       id: "chains_of_binding",
       icon: "Anchor",
       name: "Chains of Binding",
-      description:
-        "A spectral chain shackles the enemy's rooks to each other: the chain settles after your opponent's next move, then while both live neither rook may end a move more than 3 squares from the other, for the 5 of their turns after it. A lone rook drags its broken chain and moves freely.",
+      description: "A spectral chain shackles the enemy's rooks to each other. It settles after your opponent's next move, then while both live neither rook may end a move more than 3 squares from the other, for the 5 of their turns after.",
+      tip: "A lone rook drags its broken chain and moves freely, so trading one off ends it.",
       tier: 5,
       category: "hex",
       flavor: "The clank of iron, wherever the other tower goes.",
@@ -202,8 +202,8 @@ export const FANTASY_CURSES: Buff[] = [
       id: "hex_of_stone",
       icon: "Mountain",
       name: "Hex of Stone",
-      description:
-        "A creeping grey hex hardens the enemy's flanks: every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move before it too turns to a walnut; and for those 4 turns their rooks and queen may slide no more than two squares.",
+      description: "Every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move first. For those same 4 turns their rooks and queen may slide no more than two squares.",
+      tip: "It hits their whole army at once, which makes it strongest before trades thin the board.",
       tier: 7,
       category: "hex",
       flavor: "The cavalry and the clergy, all one quarry now.",

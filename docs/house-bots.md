@@ -7,25 +7,55 @@ like ordinary players everywhere (real accounts, ratings, profiles, leaderboard)
 no bot flag ever leaves the server, in any payload or API (owner request: no
 trace anywhere on the site).
 
-TL;DR of the moving parts (2026-07 expansion):
+TL;DR of the moving parts (2026-07, after the wave-3 spread):
 
-- **510 accounts** ("personas"): the 210-deep legacy roster plus a 300-persona
-  expansion wave spanning genuine beginner (new 900 / 1050 / 1200 tiers)
-  through elite (2200) strength.
-- Every **legacy** persona's advertised rating gained a deterministic
-  **+300..400** (name-hashed, stable across resyncs — `houseRatingUplift`), and
-  every tier's engine profile was strengthened in the same change (bigger
-  search budgets, fewer forced blunders) so real strength moves with the number.
-  **Expansion** personas advertise their tier directly (no uplift stack).
+- **900 accounts** ("personas") across three waves: the original 210, a 300
+  persona expansion, and a 390 persona wave 3. The roster had to reach 900
+  because the shown population now peaks at `HOUSE_ONLINE_MAX` (800) and the
+  presence window is bounded by the roster length.
+- **Every persona advertises its own tier** (± a name-hashed 40), and the
+  roster's shape is set in ONE place: `HOUSE_SKILL_WEIGHTS`. About **82% of the
+  field sits between 800 and 2000** and only **~9% at 2400 or above**, because a
+  lobby whose bots all played 1500-2200 left genuinely new players with nobody at
+  their level. `scripts/audit-house-bots.ts` asserts both the curve and that
+  every declared tier matches it.
+- The old three-layer rating stack is **gone** (a +100 spread, a 100-150 drop
+  below 1600, an owner boost of +100..+300, and a +300..+400 uplift, all applied
+  only to the legacy half). It made the field impossible to aim: two personas on
+  the same tier could read 400 apart and no tier's displayed band matched its
+  engine strength.
+- **Tiers 2400-2700 advertise more than the engine can currently back.** The
+  remote engine clamps every search to its own ceiling and measured wall time
+  runs 1.5-2.5x nominal, so 900ms already sits close to the Worker's 3000ms
+  engine timeout. Those tiers differ from 2200 only by having no forced blunder.
+  Their live ratings will drift down toward what they actually play, which is
+  self-correcting; making them genuinely 2400+ needs a bigger service ceiling and
+  a raised worker timeout, measured against the public URL first.
 - Exactly **150 of the 300** expansion personas carry a short, casual,
   unique bio; the other 150 stay blank. Expansion personas carry **no**
   fictional location.
 - Each persona has a stable **style** (`houseStyle`): think tempo, buff
   activation appetite, draft bank bias, aggression-driven search jitter, and a
   pet opening for each color — so no two bots pace or play identically.
-- **Availability**: never the whole roster at once. The ACTIVE window breathes
-  daily between 180 and 240 personas, the ONLINE window shows at most 280, and
-  both rotate daily through the full roster.
+- **Availability**: never the whole roster at once. The ACTIVE window (bots that
+  seek, get picked up, or play filler) breathes daily between 260 and 380, and
+  both windows rotate daily through the full roster.
+- **The shown population and the presence list are different numbers.**
+  `HOUSE_PRESENCE_LIST_MAX` (400) bounds how many personas are ENUMERATED into
+  the lobby snapshot, because every one is a row in a payload every client polls.
+  `houseOnlineCount(now)` is the COUNT the site displays: it breathes between
+  **350 and 800** on a time-of-day curve (trough about 05:00 UTC, peak about
+  17:00) with a per-day scale, and the DO pads the anonymous tally up to it. That
+  separation is what lets the site read 800 online without shipping 800 rows.
+- **Concurrent filler games run 80-120** (was 40-55), which is safe only because
+  filler lives in `arena-service` rather than the Durable Object, and because
+  bot-vs-bot is never rated or archived — so the arena caps each filler search at
+  `ARENA_SEARCH_CEILING_MS` (300ms) to keep 120 games inside one event loop.
+- Bots now occasionally play a **premove-style instant recapture**
+  (`houseSnapReplyMs`): when the opponent just traded, or the bot has one legal
+  move, it sometimes answers in 120-350ms instead of thinking for 1-4 seconds.
+  Appetite is stable per persona (0.15-0.50), so a given bot is consistently
+  snappy or consistently deliberate, and no bot snaps every time.
 - Each move is chosen by a **local chess engine** (a small alpha-beta search in
   `src/engine/ai.ts`) with a **hard 80ms budget** so it can never stall the
   server. It is NOT Maia and nothing is outsourced (see "Notes vs the original
@@ -57,18 +87,22 @@ ripped out. Every cap below exists because of that.
 
 ## The roster (`src/lib/server/bots.ts`)
 
-There are **50 personas** defined in `PERSONA_DEFS`. Each has a Lichess-style
-username (nothing that says "bot": `pawnstorm77`, `caroCannon`, `zwischenzugzz`,
-`SIXSEVENHAHAHAH`, `kingcongo`, `anarchychess`, ...) and a fixed skill tier.
+There are **900 personas** defined in `PERSONA_DEFS` (the original list plus
+`EXPANSION_DEFS` and `WAVE3_DEFS`, folded in at module load). Each has a
+Lichess-style username (nothing that says "bot": `pawnstorm77`, `caroCannon`,
+`zwischenzugzz`, `SIXSEVENHAHAHAH`, `toastyweasel`, `idontknowopenings`, ...) and
+a tier DERIVED FROM ITS NAME by `houseSkillForName` against
+`HOUSE_SKILL_WEIGHTS`. Deriving it means a name maps to the same tier forever and
+adding names later never reshuffles anyone else; the tuples still carry the
+number so the file stays readable, and the audit asserts the two agree.
 
-Skill distribution (roughly 40 / 30 / 20 / 10):
+Resulting shape (900 personas):
 
-| Skill | Count |
+| Band | Share |
 | --- | --- |
-| ~1200 | 20 |
-| ~1400 | 15 |
-| ~1600 | 10 |
-| ~1750 | 5 |
+| 800-2000 | ~82% |
+| 2000-2400 | ~8% |
+| 2400+ | ~9% |
 
 Each persona is a **real user row** in the database (`ensureHouseUsers`, run on
 cold start, idempotent):
@@ -113,12 +147,12 @@ House players use the SAME engine but on a **tiny time budget**, and their
 strength difference comes from the budget plus a blunder chance, not from deep
 thinking:
 
-| Skill | Engine level | Search budget | Blunder chance |
+| Skill band | Engine level | Search budget | Blunder chance |
 | --- | --- | --- | --- |
-| 1200 | medium | 25 ms | 10% |
-| 1400 | medium | 40 ms | 5% |
-| 1600 | hard | 60 ms | 2% |
-| 1750 | hard | 80 ms | 0.5% |
+| 800-1200 | easy/medium | 12-20 ms, plus baked weakening (shallow depth, top-K, noise) | 28% down to 12% |
+| 1350-1750 | medium/hard | 60-300 ms | 5% down to 0.3% |
+| 1900-2200 | hard | 380-900 ms | 0.2% down to 0.05% |
+| 2400-2700 | hard | 900 ms (the ceiling) | 0.02% down to 0 |
 
 - **Blunder chance** is the probability, per move, of ignoring the search
   entirely and playing a random legal move (that does not instantly lose to the
@@ -200,8 +234,9 @@ tick.
 | Cap | Value | Meaning |
 | --- | --- | --- |
 | `houseSeekMin` / `houseSeekMax` | 2 / 4 | Personas kept in the queue at once |
-| `houseVsHouseCap` | 18 | Simultaneous bot-vs-bot games (~36 bots in games) |
-| `houseTotalGamesCap` | 20 | Unfinished games with any house seat at all |
+| `HOUSE_VS_HOUSE_FLOOR` / `HOUSE_VS_HOUSE_CAP` | 80 / 120 | Simultaneous bot-vs-bot games (160-240 bots in games) |
+| `HOUSE_GAMES_MAX` | 140 | Ceiling on the moderator's "Active games" pin |
+| `ARENA_SEARCH_CEILING_MS` | 300 ms | Per-move search in a FILLER game (unrated, so safe to cap) |
 | `houseMaxActionsPerTick` | 3 | Engine actions (moves + draft resolves) per alarm tick, across all bot games |
 | `houseTickBudgetMs` | 250 ms | Soft wall-clock budget for one tick's bot work |
 | `houseHumanPickupMs` | 4.5 s | Wait before a lone human is given a bot opponent |
@@ -242,9 +277,17 @@ blip. Both switches must be on for the roster to run.
    then buff/hex offers are resolved every few moves as they come.
 4. On the bot's turn the alarm, after the pacing delay, either fires a held buff
    (40% coin) or plays a move from the capped engine search.
-5. If the human seat disconnects, that game's clock pauses so the human never
-   flags while away; the bot resumes when they return. If the server is updated
-   mid-game, the game ends as a drawn, unrated result.
+5. If the human seat disconnects **during its own turn**, that game's clock
+   pauses so a dropped socket never flags them mid-move, and the bot resumes
+   when they return. The pause is **bounded**: one absence buys at most 45
+   seconds and a seat gets at most 90 seconds across the whole game
+   (`src/lib/server/clockPause.ts`). Past that the clock restarts itself from
+   the alarm and the ordinary flag path applies, so an absent player can lose on
+   time like anyone else. Without those bounds nothing could ever end the pause
+   (`currentClocks` returns banked values while it holds and `candidateAlarm`
+   arms no flag), so five minutes away cost only the ~10s the socket took to
+   notice, and backgrounding a phone tab froze the clock indefinitely. If the
+   server is updated mid-game, the game ends as a drawn, unrated result.
 
 ---
 

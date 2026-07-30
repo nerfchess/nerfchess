@@ -570,8 +570,8 @@ export const OVERHAUL_T6: Buff[] = [
     {
       id: "ov_meteor_golf",
       name: "Meteor Golf",
-      description:
-        "Tee off at any square, in plain sight of both players. Until it lands the target and its adjacent squares are sealed shut against your opponent. After their next move the meteor strikes: any piece on the target (kings excluded) is destroyed and the seal vanishes.",
+      description: "Tee off at any square, in plain sight of both players. Until it lands, the target and its adjacent squares are sealed against your opponent. After their next move the meteor strikes: any piece on the target, kings excluded, is destroyed and the seal lifts.",
+      tip: "The seal is half the value: it bars nine squares for a turn whether or not the strike hits.",
       tier: 6,
       category: "attack",
       icon: "Target",

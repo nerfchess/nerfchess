@@ -174,7 +174,7 @@ const CURATED_PFP_NAMES = [
 // a unique pfp per persona with headroom. Indexes 0-199 are byte-identical to
 // the previous generation (the generator only appends), so every already-
 // assigned avatar stays exactly the same between sessions and deployments.
-export const GENERATED_PFP_COUNT = 560;
+export const GENERATED_PFP_COUNT = 1000;
 export function generatedPfpName(i: number): string {
   return `gen_${String(i).padStart(3, "0")}`;
 }

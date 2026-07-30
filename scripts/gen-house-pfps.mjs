@@ -36,7 +36,7 @@ const OUT_DIR = join(__dirname, "..", "public", "house-pfp");
 // grow, and the MOTIFS/PALETTES/BACKDROPS arrays must never be reordered or
 // resized — buildSvg(i) must stay byte-stable for every already-shipped index
 // so stored "house_pfp:gen_NNN" avatars never change appearance.
-export const GENERATED_PFP_COUNT = 560;
+export const GENERATED_PFP_COUNT = 1000;
 export const generatedPfpName = (i) => `gen_${String(i).padStart(3, "0")}`;
 
 // A tiny deterministic PRNG (mulberry32) so each index yields a stable image.

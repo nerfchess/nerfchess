@@ -13,7 +13,7 @@ import { moveToUCI } from "../../engine/board";
 import { legalMoves, type NerfGame } from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
 import type { DraftMode } from "../../engine/buff";
-import type { Move } from "../../engine/types";
+import type { Color, Move } from "../../engine/types";
 import { HOUSE_PFP_IDS, HOUSE_PFP_NAMES, HOUSE_PFP_PREFIX } from "../avatars";
 
 // Absolute ceiling for a house-player search running ON THE DO ITSELF (local
@@ -47,6 +47,7 @@ export const HOUSE_SEARCH_CEILING_MS = 80;
 // these -- don't trust the nominal number, and don't trust a localhost-only
 // measurement either.
 export type HouseSkill =
+  | 800
   | 900
   | 1050
   | 1200
@@ -61,7 +62,11 @@ export type HouseSkill =
   | 2050
   | 2100
   | 2150
-  | 2200;
+  | 2200
+  | 2400
+  | 2500
+  | 2600
+  | 2700;
 
 // Baked per-tier profile. The weakening fields are OPTIONAL and every baked
 // tier below leaves them unset, so a fresh install resolves to topK:1 / no
@@ -108,6 +113,7 @@ export type ResolvedSkillProfile = {
 // blunders) so low-rated humans finally have peers. Their displayed rating
 // matches their strength directly (no legacy uplift stack — see houseSeedBase).
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
+  800: { level: "easy", budgetMs: 12, blunderChance: 0.28, maxDepth: 2, topK: 7, temperatureCp: 320, evalNoiseCp: 150, extendedEval: false },
   900: { level: "easy", budgetMs: 15, blunderChance: 0.22, maxDepth: 2, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
   1050: { level: "easy", budgetMs: 20, blunderChance: 0.16, maxDepth: 2, topK: 5, temperatureCp: 200, evalNoiseCp: 90, extendedEval: false },
   1200: { level: "medium", budgetMs: 20, blunderChance: 0.12, maxDepth: 3, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
@@ -123,6 +129,21 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
   2100: { level: "hard", budgetMs: 760, blunderChance: 0.001 },
   2150: { level: "hard", budgetMs: 840, blunderChance: 0.0005 },
   2200: { level: "hard", budgetMs: 900, blunderChance: 0.0005 },
+  // The 2400+ band, added with the 2026-07 rating spread so the roster has a
+  // credible elite tail (about 10% of it). HONEST LIMITATION: budgetMs cannot
+  // usefully climb past 900 today. The remote engine clamps every request to
+  // REMOTE_SEARCH_CEILING_MS (engine-service/server.ts) and measured wall time
+  // runs 1.5-2.5x the nominal budget, so 900 already sits close to the Worker's
+  // 3000ms HOUSE_ENGINE_TIMEOUT_MS. These tiers therefore differ from 2200 only
+  // by having no forced blunder at all, which means they ADVERTISE more strength
+  // than the engine can currently back. Their live ratings will drift down
+  // toward what they actually play, which is the self-correcting outcome. Making
+  // them genuinely 2400+ needs a bigger service ceiling AND a raised worker
+  // timeout, measured against the public URL first (see the note above).
+  2400: { level: "hard", budgetMs: 900, blunderChance: 0.0002 },
+  2500: { level: "hard", budgetMs: 900, blunderChance: 0.0001 },
+  2600: { level: "hard", budgetMs: 900, blunderChance: 0 },
+  2700: { level: "hard", budgetMs: 900, blunderChance: 0 },
 };
 
 // ---------------------------------------------------------------------------
@@ -328,243 +349,271 @@ export type HousePersona = {
   location: string;
 };
 
+// The roster's target rating curve (2026-07 spread). Weights are percentages and
+// must sum to 100.
+//
+// The field is deliberately bottom-heavy: about 85% of the roster sits under
+// 2000 and only ~9% at 2400 or above, because a lobby whose bots all played
+// 1500-2200 left genuinely new players with nobody at their level. A persona's
+// tier is derived from its own name hash against this table
+// (houseSkillForName), so it is stable forever and adding names later never
+// reshuffles anyone else. Every tuple in PERSONA_DEFS below carries the tier
+// this table produces, and scripts/audit-house-bots.ts asserts that agreement —
+// so the declared numbers can never quietly drift from the curve.
+export const HOUSE_SKILL_WEIGHTS: ReadonlyArray<readonly [HouseSkill, number]> = [
+  [800, 11], [900, 9], [1050, 9], [1200, 9], [1350, 8], [1450, 8], [1550, 8],
+  [1650, 7], [1750, 6], [1900, 5], [1950, 4],
+  [2000, 2], [2050, 2], [2100, 1], [2150, 1],
+  [2400, 4], [2500, 3], [2600, 2], [2700, 1],
+];
+
+/** The tier a persona name maps to on the curve above. Pure and stable. */
+export function houseSkillForName(name: string): HouseSkill {
+  let roll = nameHash(name + "|tier2026") % 100;
+  for (const [skill, weight] of HOUSE_SKILL_WEIGHTS) {
+    if (roll < weight) return skill;
+    roll -= weight;
+  }
+  return HOUSE_SKILL_WEIGHTS[HOUSE_SKILL_WEIGHTS.length - 1][0];
+}
+
 const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // ~1550
-  ["pawnstorm77", 1550],
-  ["coffeeknight", 1550],
-  ["blitzbrain", 1550],
-  ["night0wl", 1550],
-  ["sarah92", 1550],
+  ["pawnstorm77", 1200],
+  ["coffeeknight", 900],
+  ["blitzbrain", 1900],
+  ["night0wl", 1350],
+  ["sarah92", 800],
   // ~1750
-  ["kev_in99", 1750],
-  ["frostbyte", 1750],
-  ["sleepyknight", 1750],
-  ["omar_23", 1750],
-  ["CHECKMATE99", 1750],
-  ["discocheck", 1750],
+  ["kev_in99", 1050],
+  ["frostbyte", 1050],
+  ["sleepyknight", 1550],
+  ["omar_23", 2700],
+  ["CHECKMATE99", 1200],
+  ["discocheck", 1950],
   // ~1900
-  ["alexk2004", 1900],
-  ["natalie88", 1900],
+  ["alexk2004", 2600],
+  ["natalie88", 2500],
   ["forkmaster", 1900],
-  ["e4e5nf3", 1900],
-  ["capitals", 1900],
+  ["e4e5nf3", 1550],
+  ["capitals", 900],
   // ~1950
-  ["matt_b44", 1950],
-  ["veselin88", 1950],
-  ["priya_r", 1950],
+  ["matt_b44", 1450],
+  ["veselin88", 1450],
+  ["priya_r", 800],
   // ~2000
-  ["tom_lee23", 2000],
-  ["endgamegrace", 2000],
-  ["petrosianfan", 2000],
+  ["tom_lee23", 2100],
+  ["endgamegrace", 1650],
+  ["petrosianfan", 800],
   // ~2050
-  ["riptide", 2050],
-  ["KINGSLAYER", 2050],
+  ["riptide", 1200],
+  ["KINGSLAYER", 1200],
   // 2100-2200
   // (Three of this band's original handles read as obvious joke names —
   // "Stickygamer123", "ilovewhitestickystuff", "ilovemysister" — and were
   // rewritten to realistic chess-site handles. New names mean new hp_ user
   // ids, so worker.ts's houseSeededKey was bumped to v4; the old accounts
   // stay orphaned in the DB, harmless, same as the v3 renames.)
-  ["passed_pawn", 2100],
-  ["e4enjoyer", 2100],
-  ["mellowmove", 2150],
-  ["viktor_m85", 2150],
-  ["cobrakai", 2200],
-  ["KnightSlayer99", 2200],
+  ["passed_pawn", 2000],
+  ["e4enjoyer", 900],
+  ["mellowmove", 2400],
+  ["viktor_m85", 900],
+  ["cobrakai", 800],
+  ["KnightSlayer99", 1650],
 
   // ~1550
-  ["lukas_j", 1550],
-  ["mira_k", 1550],
+  ["lukas_j", 1450],
+  ["mira_k", 900],
   ["casualcastle", 1550],
-  ["h4habit", 1550],
-  ["teatimechess", 1550],
-  ["chessnoob2012", 1550],
+  ["h4habit", 1950],
+  ["teatimechess", 2600],
+  ["chessnoob2012", 2150],
   // ~1750
-  ["dev_e4", 1750],
-  ["rybkafan", 1750],
-  ["quietqueen", 1750],
-  ["sam_b12", 1750],
-  ["boardsnack", 1750],
-  ["midnightblitz", 1750],
+  ["dev_e4", 1900],
+  ["rybkafan", 1550],
+  ["quietqueen", 1200],
+  ["sam_b12", 1050],
+  ["boardsnack", 1050],
+  ["midnightblitz", 1550],
   // ~1900
-  ["tanya_v", 1900],
-  ["forkfiend", 1900],
-  ["karpov_enjoyer", 1900],
+  ["tanya_v", 1650],
+  ["forkfiend", 800],
+  ["karpov_enjoyer", 2400],
   ["elena_88", 1900],
   ["coffeehousepro", 1900],
   // ~1950
-  ["yasser64", 1950],
-  ["coldblood_c", 1950],
-  ["maya_r2", 1950],
-  ["jess2001", 1950],
+  ["yasser64", 2150],
+  ["coldblood_c", 2600],
+  ["maya_r2", 1650],
+  ["jess2001", 2500],
   // ~2000
-  ["marat90", 2000],
-  ["sasha_p", 2000],
-  ["thefianchetto", 2000],
-  ["sacpawn", 2000],
+  ["marat90", 900],
+  ["sasha_p", 1750],
+  ["thefianchetto", 2100],
+  ["sacpawn", 1900],
   // ~2050
-  ["nadia_x", 2050],
-  ["crushingpawns", 2050],
-  ["stefan_bg", 2050],
+  ["nadia_x", 2400],
+  ["crushingpawns", 1200],
+  ["stefan_bg", 1450],
   // 2100-2200 top band
-  ["quietstormq", 2150],
-  ["apexpawn", 2200],
+  ["quietstormq", 1650],
+  ["apexpawn", 1450],
 
   // --- Expansion wave: 150 more personas so the roster is 210 deep, letting
   // the daily active window (60-90) cycle through a large, ever-changing
   // crowd instead of always showing the same faces. Skills span the full
   // 1350-2200 range; handles are in the same Lichess-style mix. New handles
   // mean new hp_ ids, so worker.ts's houseSeededKey is bumped to create them.
-  ["kaij25", 1900],
-  ["swiftblitz", 1950],
-  ["chenj48", 1550],
-  ["najdorfflag", 1350],
-  ["grinddragon9", 1550],
-  ["swiftlondon", 2000],
-  ["clock90", 1950],
-  ["crushh4ing", 1650],
-  ["pressgambiting", 1750],
-  ["slavpetroff", 2050],
-  ["e4gambit", 1900],
-  ["irina26", 1900],
-  ["hannah35", 1650],
-  ["crushskewer", 2200],
-  ["chloe_sergei", 2100],
-  ["flickd4", 2150],
-  ["mike_mila", 1900],
-  ["carlosc90", 1650],
-  ["bjornm21", 2100],
-  ["pedro_mateo", 1900],
-  ["hans_pat", 1650],
-  ["slav30", 1650],
-  ["goran59", 2050],
-  ["d427", 1750],
-  ["tim_alex", 1650],
-  ["olga_mila", 1750],
-  ["c4castle", 1450],
-  ["stalemateg6", 1450],
-  ["boris_j37", 1450],
-  ["raul19", 1450],
-  ["sergei_luca", 1550],
-  ["dodgecometz", 2000],
+  ["kaij25", 1450],
+  ["swiftblitz", 1450],
+  ["chenj48", 1650],
+  ["najdorfflag", 2500],
+  ["grinddragon9", 1350],
+  ["swiftlondon", 1550],
+  ["clock90", 2400],
+  ["crushh4ing", 1200],
+  ["pressgambiting", 1900],
+  ["slavpetroff", 1200],
+  ["e4gambit", 1450],
+  ["irina26", 1650],
+  ["hannah35", 800],
+  ["crushskewer", 1900],
+  ["chloe_sergei", 1200],
+  ["flickd4", 1950],
+  ["mike_mila", 2050],
+  ["carlosc90", 1550],
+  ["bjornm21", 900],
+  ["pedro_mateo", 2000],
+  ["hans_pat", 1200],
+  ["slav30", 800],
+  ["goran59", 800],
+  ["d427", 2500],
+  ["tim_alex", 1200],
+  ["olga_mila", 1350],
+  ["c4castle", 900],
+  ["stalemateg6", 1900],
+  ["boris_j37", 1550],
+  ["raul19", 800],
+  ["sergei_luca", 1350],
+  ["dodgecometz", 900],
   ["javierj54", 1550],
-  ["hangslavz", 2100],
-  ["novaecho", 1900],
-  ["dodgebullet14", 2000],
-  ["adam_javier", 1750],
-  ["blitz68", 2000],
-  ["stackclocking", 1750],
-  ["paolot44", 1650],
-  ["dawn77", 1900],
+  ["hangslavz", 1650],
+  ["novaecho", 2050],
+  ["dodgebullet14", 1050],
+  ["adam_javier", 2150],
+  ["blitz68", 1050],
+  ["stackclocking", 800],
+  ["paolot44", 1200],
+  ["dawn77", 1200],
   ["coldgrind", 1450],
-  ["priya_kenji", 1350],
-  ["silentbaitz", 1950],
-  ["john_b2011", 1450],
-  ["baitf6er", 1550],
-  ["erik15", 1750],
-  ["rajb31", 1550],
-  ["priya13", 2100],
+  ["priya_kenji", 2150],
+  ["silentbaitz", 800],
+  ["john_b2011", 1650],
+  ["baitf6er", 1750],
+  ["erik15", 1200],
+  ["rajb31", 900],
+  ["priya13", 900],
   ["rajc2007", 1750],
-  ["finn_m64", 1900],
-  ["boldblunder", 1650],
-  ["teae4", 2100],
-  ["luke37", 1350],
-  ["presstempo", 1750],
-  ["hannah55", 1650],
-  ["kenji_sergei", 1750],
-  ["grimstackz", 2150],
-  ["humblefrost", 1950],
-  ["bjorn79", 2000],
-  ["lena_omar", 1450],
-  ["luke95", 1650],
+  ["finn_m64", 1050],
+  ["boldblunder", 1350],
+  ["teae4", 900],
+  ["luke37", 1650],
+  ["presstempo", 2500],
+  ["hannah55", 2100],
+  ["kenji_sergei", 1200],
+  ["grimstackz", 1950],
+  ["humblefrost", 1550],
+  ["bjorn79", 1750],
+  ["lena_omar", 900],
+  ["luke95", 800],
   ["boris87", 1550],
-  ["slav85", 2050],
-  ["dodgeskewerer", 1950],
+  ["slav85", 1750],
+  ["dodgeskewerer", 800],
   ["sleepycomet", 1650],
-  ["catalan28", 1750],
-  ["gambitopening", 1550],
-  ["catalan2", 2000],
-  ["coldendgame", 2100],
-  ["leo38", 1350],
-  ["shinyhunt", 2000],
-  ["humbletrapz", 1900],
-  ["echoknight", 1750],
-  ["flagb6", 1750],
-  ["petroffecho", 2150],
-  ["tim_t6", 2100],
-  ["grimhangz", 2150],
-  ["chloe_b81", 1350],
-  ["vikram_g23", 2100],
-  ["crushlufter", 1950],
-  ["arjun_alex", 1950],
-  ["grimdragon", 1450],
-  ["tariq_diego", 1750],
-  ["sleepysniper", 1750],
-  ["openingdraw", 2050],
-  ["cozyoutpost", 1900],
-  ["sleepyd4", 1650],
-  ["dmitri55", 1750],
-  ["trapdrawing", 1900],
-  ["layla_w8", 1350],
-  ["tempoecho", 1900],
-  ["diego_j26", 2000],
-  ["king4", 2150],
-  ["bullet72", 2050],
-  ["dan_k60", 1450],
-  ["frost21", 1950],
-  ["silverskewer", 1900],
-  ["mattw34", 2050],
-  ["g673", 1650],
-  ["latte76", 1950],
-  ["snipelufting", 1350],
-  ["matt_v46", 1450],
-  ["gambitd4", 2000],
-  ["silverd4", 1450],
-  ["caro56", 1750],
-  ["sergei_mila", 1950],
-  ["cozystorm", 1650],
-  ["skewermate", 1900],
-  ["sneakybaitr", 1450],
+  ["catalan28", 2000],
+  ["gambitopening", 2400],
+  ["catalan2", 1200],
+  ["coldendgame", 800],
+  ["leo38", 800],
+  ["shinyhunt", 2600],
+  ["humbletrapz", 2050],
+  ["echoknight", 1950],
+  ["flagb6", 2500],
+  ["petroffecho", 1200],
+  ["tim_t6", 2050],
+  ["grimhangz", 1550],
+  ["chloe_b81", 1900],
+  ["vikram_g23", 800],
+  ["crushlufter", 2000],
+  ["arjun_alex", 1050],
+  ["grimdragon", 1750],
+  ["tariq_diego", 1350],
+  ["sleepysniper", 900],
+  ["openingdraw", 2100],
+  ["cozyoutpost", 1750],
+  ["sleepyd4", 1050],
+  ["dmitri55", 1450],
+  ["trapdrawing", 2500],
+  ["layla_w8", 1450],
+  ["tempoecho", 1950],
+  ["diego_j26", 900],
+  ["king4", 1350],
+  ["bullet72", 1750],
+  ["dan_k60", 1200],
+  ["frost21", 2600],
+  ["silverskewer", 1650],
+  ["mattw34", 1050],
+  ["g673", 1200],
+  ["latte76", 800],
+  ["snipelufting", 1050],
+  ["matt_v46", 1050],
+  ["gambitd4", 800],
+  ["silverd4", 1350],
+  ["caro56", 800],
+  ["sergei_mila", 1550],
+  ["cozystorm", 2400],
+  ["skewermate", 1750],
+  ["sneakybaitr", 1550],
   ["chris77", 1750],
-  ["sharpdrift", 1450],
-  ["stormmate", 1650],
-  ["layla_marco", 2050],
-  ["humbleecho", 1350],
-  ["trapmateer", 2000],
-  ["slaylondon", 1650],
-  ["blunderdrifter", 1900],
-  ["olga_nina", 1450],
+  ["sharpdrift", 2150],
+  ["stormmate", 1550],
+  ["layla_marco", 1050],
+  ["humbleecho", 900],
+  ["trapmateer", 1550],
+  ["slaylondon", 1050],
+  ["blunderdrifter", 1200],
+  ["olga_nina", 900],
   ["stackzug", 1650],
-  ["finn_marco", 2050],
-  ["hassan_t64", 1950],
-  ["embernova", 1950],
-  ["wei_max", 1650],
-  ["bishop95", 1950],
-  ["coldpunishr", 2050],
-  ["vera_raul", 1350],
-  ["frostpetroff", 1550],
-  ["blunderpining", 1350],
-  ["sneakyhuntr", 2050],
-  ["convertf6z", 1450],
-  ["lazydodge", 1750],
-  ["silverconvert", 1950],
-  ["quietsnipez", 2000],
-  ["carlos_chris", 2000],
-  ["warmhang", 1650],
-  ["outpost33", 2100],
-  ["slowzug", 1650],
-  ["aleks_alex", 2000],
-  ["flickdawner", 1450],
-  ["silentpressr", 2200],
-  ["jordan24", 1350],
-  ["ren60", 1900],
-  ["gracew16", 2200],
-  ["ren59", 1350],
-  ["kenji11", 1650],
-  ["steve77", 1950],
-  ["cozyslay", 2100],
-  ["wei52", 2050],
-  ["paolo2002", 1650],
+  ["finn_marco", 1550],
+  ["hassan_t64", 1200],
+  ["embernova", 1050],
+  ["wei_max", 2100],
+  ["bishop95", 2400],
+  ["coldpunishr", 1350],
+  ["vera_raul", 1200],
+  ["frostpetroff", 1050],
+  ["blunderpining", 2150],
+  ["sneakyhuntr", 1550],
+  ["convertf6z", 1650],
+  ["lazydodge", 1350],
+  ["silverconvert", 1650],
+  ["quietsnipez", 1650],
+  ["carlos_chris", 800],
+  ["warmhang", 1050],
+  ["outpost33", 1200],
+  ["slowzug", 1750],
+  ["aleks_alex", 1950],
+  ["flickdawner", 1650],
+  ["silentpressr", 1950],
+  ["jordan24", 2600],
+  ["ren60", 2050],
+  ["gracew16", 900],
+  ["ren59", 800],
+  ["kenji11", 900],
+  ["steve77", 1050],
+  ["cozyslay", 1950],
+  ["wei52", 900],
+  ["paolo2002", 900],
 ];
 
 // ---------------------------------------------------------------------------
@@ -581,320 +630,320 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
 // ---------------------------------------------------------------------------
 const EXPANSION_DEFS: Array<[name: string, skill: HouseSkill]> = [
   // --- beginner: 900 (35) ---
-  ["tomas_r7", 900],
-  ["emilylovescats", 900],
-  ["justvibing64", 900],
-  ["marcus2011", 900],
-  ["pineapplepawn", 900],
-  ["sofie_kk", 900],
-  ["deniz_04", 900],
-  ["lowkeylearning", 900],
-  ["rainydaymoves", 900],
-  ["benji_h", 900],
-  ["chessafterwork", 900],
-  ["mia_rose22", 900],
-  ["pawnandorder", 900],
-  ["arlo_finn", 900],
-  ["sleepysunday9", 900],
-  ["katya_m8", 900],
-  ["bignoobenergy", 900],
-  ["leo_dubs", 900],
-  ["strawberryking", 900],
-  ["hannah_bee3", 900],
-  ["couchplayer99", 900],
+  ["tomas_r7", 2100],
+  ["emilylovescats", 1550],
+  ["justvibing64", 2500],
+  ["marcus2011", 1350],
+  ["pineapplepawn", 800],
+  ["sofie_kk", 1750],
+  ["deniz_04", 1650],
+  ["lowkeylearning", 800],
+  ["rainydaymoves", 2600],
+  ["benji_h", 1200],
+  ["chessafterwork", 1050],
+  ["mia_rose22", 2400],
+  ["pawnandorder", 1750],
+  ["arlo_finn", 800],
+  ["sleepysunday9", 1450],
+  ["katya_m8", 1950],
+  ["bignoobenergy", 1550],
+  ["leo_dubs", 1200],
+  ["strawberryking", 1950],
+  ["hannah_bee3", 2400],
+  ["couchplayer99", 2000],
   ["oskar_pl", 900],
-  ["checkpleaseok", 900],
-  ["tiredteacher77", 900],
-  ["lunapark12", 900],
-  ["whatevermate", 900],
-  ["rileyq_", 900],
+  ["checkpleaseok", 800],
+  ["tiredteacher77", 1550],
+  ["lunapark12", 1550],
+  ["whatevermate", 2150],
+  ["rileyq_", 2000],
   ["dad_of_three", 900],
-  ["zeynep_a", 900],
-  ["grumpygrandpa1", 900],
-  ["firstyearuni", 900],
-  ["bo_jax88", 900],
-  ["milkteamoves", 900],
+  ["zeynep_a", 800],
+  ["grumpygrandpa1", 1200],
+  ["firstyearuni", 1200],
+  ["bo_jax88", 1650],
+  ["milkteamoves", 1050],
   ["pdx_rainplayer", 900],
-  ["sam_i_am_99", 900],
+  ["sam_i_am_99", 1900],
   // --- beginner: 1050 (35) ---
   ["kevin_t99", 1050],
-  ["midnightcaro", 1050],
-  ["anya_petrova11", 1050],
-  ["e4e5whatnow", 1050],
-  ["quietcornercafe", 1050],
-  ["dylan_t20", 1050],
+  ["midnightcaro", 900],
+  ["anya_petrova11", 1550],
+  ["e4e5whatnow", 900],
+  ["quietcornercafe", 1650],
+  ["dylan_t20", 1200],
   ["rustyandback", 1050],
-  ["nightshiftnurse2", 1050],
-  ["pawnstorm_92", 1050],
-  ["gabe_2007", 1050],
-  ["sundaymornings4", 1050],
-  ["lichenmoss4", 1050],
-  ["tariq_zz", 1050],
+  ["nightshiftnurse2", 800],
+  ["pawnstorm_92", 1550],
+  ["gabe_2007", 900],
+  ["sundaymornings4", 900],
+  ["lichenmoss4", 1200],
+  ["tariq_zz", 800],
   ["mollys_dad", 1050],
   ["brokenclockwins", 1050],
   ["ines_lisboa", 1050],
-  ["halfcaffholly", 1050],
-  ["rando_cal77", 1050],
-  ["jules_vr", 1050],
-  ["stonecoldpawn", 1050],
-  ["tinytownchamp", 1050],
-  ["priya_sings", 1050],
-  ["losingstreak12", 1050],
-  ["mika_polar", 1050],
-  ["caffeineandchess", 1050],
+  ["halfcaffholly", 2400],
+  ["rando_cal77", 2050],
+  ["jules_vr", 1950],
+  ["stonecoldpawn", 900],
+  ["tinytownchamp", 1750],
+  ["priya_sings", 2100],
+  ["losingstreak12", 1650],
+  ["mika_polar", 1900],
+  ["caffeineandchess", 900],
   ["ollie_oxen3", 1050],
-  ["slowtrainrider", 1050],
-  ["fernwood_78", 1050],
-  ["chess_and_chill", 1050],
-  ["tuck_everlast", 1050],
-  ["nightowl_nadia", 1050],
-  ["bricklayerbrett", 1050],
-  ["vanillalatte7", 1050],
-  ["georgie_pie", 1050],
-  ["apartment4b", 1050],
+  ["slowtrainrider", 900],
+  ["fernwood_78", 1350],
+  ["chess_and_chill", 1750],
+  ["tuck_everlast", 1450],
+  ["nightowl_nadia", 2400],
+  ["bricklayerbrett", 2400],
+  ["vanillalatte7", 1550],
+  ["georgie_pie", 2400],
+  ["apartment4b", 1350],
   // --- beginner-plus: 1200 (30) ---
-  ["zwischenzug77", 1200],
-  ["ruben_dario5", 1200],
-  ["londonsystemfan", 1200],
-  ["clara_bell12", 1200],
-  ["knightowl_23", 1200],
-  ["caro_kann_stan", 1200],
-  ["felix_the_2nd", 1200],
-  ["bulletproofbex", 1200],
-  ["skatepark_sasha", 1200],
-  ["gambitgremlin", 1200],
-  ["marseille_mo", 1200],
-  ["offbeatopenings", 1200],
-  ["theo_v12", 1200],
-  ["chai_and_chess", 1200],
-  ["rainyrook", 1200],
-  ["dario_88", 1200],
-  ["stalemate_steph", 1200],
-  ["pnw_hiker42", 1200],
-  ["vince_van_go", 1200],
-  ["slowcookedwins", 1200],
-  ["basia_k", 1200],
+  ["zwischenzug77", 2600],
+  ["ruben_dario5", 2050],
+  ["londonsystemfan", 1550],
+  ["clara_bell12", 1650],
+  ["knightowl_23", 1650],
+  ["caro_kann_stan", 1050],
+  ["felix_the_2nd", 2150],
+  ["bulletproofbex", 1050],
+  ["skatepark_sasha", 1650],
+  ["gambitgremlin", 1650],
+  ["marseille_mo", 2500],
+  ["offbeatopenings", 1450],
+  ["theo_v12", 1450],
+  ["chai_and_chess", 1050],
+  ["rainyrook", 1650],
+  ["dario_88", 2400],
+  ["stalemate_steph", 1450],
+  ["pnw_hiker42", 1650],
+  ["vince_van_go", 900],
+  ["slowcookedwins", 1050],
+  ["basia_k", 800],
   ["fried_liver_fan", 1200],
   ["murathan_35", 1200],
-  ["grindcoregreg", 1200],
-  ["josie_moves", 1200],
-  ["halfpastblitz", 1200],
-  ["nordicwinters", 1200],
-  ["tomek_pl99", 1200],
-  ["bookishbrooke", 1200],
-  ["subwaysolver", 1200],
+  ["grindcoregreg", 1350],
+  ["josie_moves", 900],
+  ["halfpastblitz", 1550],
+  ["nordicwinters", 1450],
+  ["tomek_pl99", 800],
+  ["bookishbrooke", 800],
+  ["subwaysolver", 1050],
   // --- casual: 1350 (25) ---
-  ["sicilian_sisters", 1350],
-  ["andres_1998", 1350],
-  ["blitzntears", 1350],
-  ["quiet_riot88", 1350],
-  ["matcha_mate", 1350],
-  ["leftybishop", 1350],
-  ["warsaw_wanderer", 1350],
-  ["keegan_77", 1350],
-  ["vegan_gambit", 1350],
-  ["rue_de_rivoli", 1350],
-  ["smotheredhopes", 1350],
-  ["danny_twopawns", 1350],
-  ["elif_yildiz3", 1350],
-  ["garagebandgary", 1350],
+  ["sicilian_sisters", 1050],
+  ["andres_1998", 1200],
+  ["blitzntears", 2100],
+  ["quiet_riot88", 1550],
+  ["matcha_mate", 1050],
+  ["leftybishop", 1550],
+  ["warsaw_wanderer", 1200],
+  ["keegan_77", 1750],
+  ["vegan_gambit", 1900],
+  ["rue_de_rivoli", 2500],
+  ["smotheredhopes", 1750],
+  ["danny_twopawns", 1900],
+  ["elif_yildiz3", 900],
+  ["garagebandgary", 1650],
   ["nihal_x", 1350],
-  ["offseasonhooper", 1350],
-  ["bird_gang44", 1350],
-  ["prettygoodatthis", 1350],
-  ["marcin_k2", 1350],
+  ["offseasonhooper", 800],
+  ["bird_gang44", 2050],
+  ["prettygoodatthis", 2400],
+  ["marcin_k2", 2100],
   ["latenightlaszlo", 1350],
-  ["tempo_tantrum", 1350],
-  ["saltlakesolo", 1350],
-  ["fiona_h20", 1350],
-  ["secondhandbooks", 1350],
-  ["rowdyrook55", 1350],
+  ["tempo_tantrum", 1750],
+  ["saltlakesolo", 2100],
+  ["fiona_h20", 1550],
+  ["secondhandbooks", 800],
+  ["rowdyrook55", 1050],
   // --- casual: 1450 (25) ---
-  ["najdorfandchill", 1450],
-  ["petra_svit", 1450],
-  ["glasgow_g1", 1450],
-  ["hypermodernhank", 1450],
-  ["crimsonfile", 1450],
-  ["yusuf_bey7", 1450],
-  ["blitzburgh412", 1450],
-  ["quietmovequinn", 1450],
-  ["antwerp_ace", 1450],
-  ["el_blunderino", 1450],
-  ["sofia_bg1988", 1450],
-  ["graveyardshift64", 1450],
-  ["pawnbrokerphil", 1450],
-  ["mangolassi22", 1450],
-  ["tundraking77", 1450],
+  ["najdorfandchill", 1200],
+  ["petra_svit", 1650],
+  ["glasgow_g1", 1350],
+  ["hypermodernhank", 1750],
+  ["crimsonfile", 1200],
+  ["yusuf_bey7", 1050],
+  ["blitzburgh412", 1050],
+  ["quietmovequinn", 1650],
+  ["antwerp_ace", 1750],
+  ["el_blunderino", 2400],
+  ["sofia_bg1988", 1750],
+  ["graveyardshift64", 900],
+  ["pawnbrokerphil", 1200],
+  ["mangolassi22", 1750],
+  ["tundraking77", 2400],
   ["rios_r9", 1450],
-  ["cornfieldchess", 1450],
-  ["velvetknight", 1450],
-  ["arjun_kt", 1450],
-  ["doubleespresso2", 1450],
-  ["winterberlin", 1450],
-  ["slipperyelo", 1450],
-  ["nadia_pm", 1450],
-  ["heavypieces", 1450],
-  ["last_rank_larry", 1450],
+  ["cornfieldchess", 2500],
+  ["velvetknight", 1650],
+  ["arjun_kt", 2400],
+  ["doubleespresso2", 2000],
+  ["winterberlin", 1200],
+  ["slipperyelo", 900],
+  ["nadia_pm", 1550],
+  ["heavypieces", 1750],
+  ["last_rank_larry", 1050],
   // --- intermediate: 1550 (20) ---
-  ["catalan_dreams", 1550],
-  ["boris_not_that1", 1550],
-  ["slavdefender", 1550],
-  ["marina_vl", 1550],
-  ["benoni_blues", 1550],
-  ["kolya_k77", 1550],
-  ["stonewall_dutch", 1550],
-  ["hansen_hs", 1550],
-  ["nimzoindianfan", 1550],
+  ["catalan_dreams", 1350],
+  ["boris_not_that1", 1900],
+  ["slavdefender", 1900],
+  ["marina_vl", 1450],
+  ["benoni_blues", 2050],
+  ["kolya_k77", 1200],
+  ["stonewall_dutch", 800],
+  ["hansen_hs", 1950],
+  ["nimzoindianfan", 1200],
   ["closedsicilian", 1550],
-  ["tarrasch_talks", 1550],
-  ["mehmet_efe1", 1550],
-  ["kingsindianattack", 1550],
-  ["lena_bxh7", 1550],
-  ["scandi_main", 1550],
-  ["old_benoni", 1550],
-  ["diegof_1989", 1550],
-  ["hippo_setup", 1550],
-  ["reti_forever", 1550],
-  ["engine_says_no", 1550],
+  ["tarrasch_talks", 1950],
+  ["mehmet_efe1", 1050],
+  ["kingsindianattack", 1050],
+  ["lena_bxh7", 800],
+  ["scandi_main", 1450],
+  ["old_benoni", 1750],
+  ["diegof_1989", 1050],
+  ["hippo_setup", 800],
+  ["reti_forever", 2000],
+  ["engine_says_no", 1950],
   // --- intermediate: 1650 (20) ---
-  ["rookonseventh", 1650],
-  ["tempo_thief", 1650],
-  ["milan_c4", 1650],
+  ["rookonseventh", 2700],
+  ["tempo_thief", 800],
+  ["milan_c4", 900],
   ["badbishopclub", 1650],
-  ["outpost_hermit", 1650],
-  ["sylvia_r66", 1650],
+  ["outpost_hermit", 1950],
+  ["sylvia_r66", 2150],
   ["openfileaddict", 1650],
-  ["overprotection", 1650],
-  ["hangingpawnsok", 1650],
-  ["darjeelingdraw", 1650],
-  ["marco_lt17", 1650],
-  ["isolani_life", 1650],
-  ["spacegrabber", 1650],
-  ["fianchettofiend", 1650],
-  ["aksel_no", 1650],
-  ["twobishopsplease", 1650],
-  ["middlegamemess", 1650],
-  ["rooklifts4days", 1650],
-  ["chessdadof2", 1650],
+  ["overprotection", 2700],
+  ["hangingpawnsok", 1750],
+  ["darjeelingdraw", 900],
+  ["marco_lt17", 1200],
+  ["isolani_life", 900],
+  ["spacegrabber", 1050],
+  ["fianchettofiend", 900],
+  ["aksel_no", 2400],
+  ["twobishopsplease", 1900],
+  ["middlegamemess", 1750],
+  ["rooklifts4days", 1550],
+  ["chessdadof2", 1050],
   ["tightsqueeze77", 1650],
   // --- advanced: 1750 (20) ---
-  ["endgamegrinder", 1750],
-  ["bridgebuilder64", 1750],
-  ["karpov_stan99", 1750],
-  ["quietmoves_only", 1750],
+  ["endgamegrinder", 1550],
+  ["bridgebuilder64", 1900],
+  ["karpov_stan99", 800],
+  ["quietmoves_only", 1550],
   ["zugzwang_artist", 1750],
-  ["renata_cz", 1750],
-  ["fortress_or_bust", 1750],
-  ["twoweaknesses", 1750],
-  ["igor_bp", 1750],
-  ["passedpawnpusher", 1750],
-  ["triangulate_this", 1750],
-  ["rookendingsdrawn", 1750],
-  ["opposition_guru", 1750],
-  ["vasyl_uv", 1750],
-  ["knightvsbishop", 1750],
-  ["wrongbishop", 1750],
-  ["technique_tbd", 1750],
-  ["grindtilldawn", 1750],
-  ["helen_e6", 1750],
-  ["practicalplay", 1750],
+  ["renata_cz", 1200],
+  ["fortress_or_bust", 1050],
+  ["twoweaknesses", 900],
+  ["igor_bp", 900],
+  ["passedpawnpusher", 1900],
+  ["triangulate_this", 1650],
+  ["rookendingsdrawn", 1350],
+  ["opposition_guru", 1350],
+  ["vasyl_uv", 1650],
+  ["knightvsbishop", 1550],
+  ["wrongbishop", 1650],
+  ["technique_tbd", 2600],
+  ["grindtilldawn", 800],
+  ["helen_e6", 800],
+  ["practicalplay", 2400],
   // --- advanced: 1900 (20) ---
-  ["novelty_on_nine", 1900],
-  ["theoryhound", 1900],
-  ["carlsbad_grip", 1900],
-  ["hedgehog_life", 1900],
-  ["maroczy_wall", 1900],
-  ["anti_berlin", 1900],
-  ["katarina_2k", 1900],
-  ["sacthexchange", 1900],
-  ["dubov_lines", 1900],
-  ["meran_madness", 1900],
-  ["zaitsev_files", 1900],
-  ["botvinnik_lab", 1900],
-  ["marshall_denier", 1900],
-  ["structure_nerd", 1900],
-  ["ivan_ivanov19", 1900],
-  ["chigorin_soul", 1900],
-  ["c_file_junkie", 1900],
-  ["lena_prep", 1900],
+  ["novelty_on_nine", 900],
+  ["theoryhound", 900],
+  ["carlsbad_grip", 2400],
+  ["hedgehog_life", 1050],
+  ["maroczy_wall", 1350],
+  ["anti_berlin", 1200],
+  ["katarina_2k", 1050],
+  ["sacthexchange", 1550],
+  ["dubov_lines", 1350],
+  ["meran_madness", 2400],
+  ["zaitsev_files", 2500],
+  ["botvinnik_lab", 1650],
+  ["marshall_denier", 1750],
+  ["structure_nerd", 900],
+  ["ivan_ivanov19", 1350],
+  ["chigorin_soul", 2400],
+  ["c_file_junkie", 2150],
+  ["lena_prep", 1750],
   ["middlegamemaps", 1900],
   ["najdorf_lifer", 1900],
   // --- expert: 1950 (15) ---
-  ["no_bad_pieces", 1950],
-  ["forcinglines", 1950],
-  ["alexey_v88", 1950],
-  ["tiniestedge", 1950],
-  ["smalledgegrind", 1950],
-  ["defends_anything", 1950],
-  ["miguel_santos7", 1950],
-  ["accuracy_junkie", 1950],
-  ["stonepatience", 1950],
-  ["fiftygoodmoves", 1950],
-  ["karolina_ww", 1950],
-  ["silentgrind", 1950],
-  ["tablebase_ted", 1950],
-  ["defensivegenius", 1950],
-  ["win_the_won_game", 1950],
+  ["no_bad_pieces", 1050],
+  ["forcinglines", 2000],
+  ["alexey_v88", 1200],
+  ["tiniestedge", 1750],
+  ["smalledgegrind", 2100],
+  ["defends_anything", 2000],
+  ["miguel_santos7", 1050],
+  ["accuracy_junkie", 2050],
+  ["stonepatience", 1050],
+  ["fiftygoodmoves", 1350],
+  ["karolina_ww", 1050],
+  ["silentgrind", 1200],
+  ["tablebase_ted", 900],
+  ["defensivegenius", 1750],
+  ["win_the_won_game", 1200],
   // --- expert: 2000 (12) ---
-  ["titled_someday", 2000],
-  ["blindfold_bruno", 2000],
-  ["simul_ghost", 2000],
-  ["threecandidates", 2000],
-  ["dmitry_dk", 2000],
-  ["patternhoarder", 2000],
-  ["visualizer_v", 2000],
-  ["attack_f7", 2000],
-  ["sacs_on_sight", 2000],
-  ["irina_wins", 2000],
-  ["prep_and_pray", 2000],
-  ["no_draws_today", 2000],
+  ["titled_someday", 1450],
+  ["blindfold_bruno", 2500],
+  ["simul_ghost", 2500],
+  ["threecandidates", 800],
+  ["dmitry_dk", 1450],
+  ["patternhoarder", 900],
+  ["visualizer_v", 2400],
+  ["attack_f7", 1950],
+  ["sacs_on_sight", 1050],
+  ["irina_wins", 900],
+  ["prep_and_pray", 1050],
+  ["no_draws_today", 800],
   // --- expert: 2050 (10) ---
-  ["boa_constrictor", 2050],
-  ["stalkingbishop", 2050],
-  ["marat_ke", 2050],
-  ["repertoirewall", 2050],
-  ["deepcalc_dana", 2050],
-  ["novelty_sniper", 2050],
-  ["edgehunterx", 2050],
-  ["initiative_only", 2050],
-  ["sofia_grinds", 2050],
-  ["momentum_merchant", 2050],
+  ["boa_constrictor", 2000],
+  ["stalkingbishop", 1550],
+  ["marat_ke", 900],
+  ["repertoirewall", 1750],
+  ["deepcalc_dana", 1750],
+  ["novelty_sniper", 1650],
+  ["edgehunterx", 1950],
+  ["initiative_only", 1200],
+  ["sofia_grinds", 1900],
+  ["momentum_merchant", 1200],
   // --- elite: 2100 (12) ---
-  ["relentlessgrind", 2100],
-  ["fortresscracker", 2100],
-  ["cleansheetchess", 2100],
-  ["passers_united", 2100],
-  ["diagonal_doom", 2100],
-  ["anaconda_style", 2100],
-  ["endgame_surgeon", 2100],
-  ["autopilot_wins", 2100],
-  ["praxisfirst", 2100],
-  ["abyssal_prep", 2100],
-  ["mia_gm_track", 2100],
-  ["cold_technique", 2100],
+  ["relentlessgrind", 1350],
+  ["fortresscracker", 1200],
+  ["cleansheetchess", 2600],
+  ["passers_united", 2500],
+  ["diagonal_doom", 2400],
+  ["anaconda_style", 1450],
+  ["endgame_surgeon", 1900],
+  ["autopilot_wins", 1650],
+  ["praxisfirst", 1950],
+  ["abyssal_prep", 2700],
+  ["mia_gm_track", 800],
+  ["cold_technique", 900],
   // --- elite: 2150 (10) ---
-  ["totalcontrol64", 2150],
-  ["surgical_rook", 2150],
-  ["vise_grip_vic", 2150],
-  ["prep_leviathan", 2150],
-  ["lasersharplines", 2150],
-  ["fullboardvision", 2150],
-  ["ironclad_endings", 2150],
-  ["anna_in_the_lab", 2150],
-  ["theorycrusher", 2150],
-  ["immortal_grind", 2150],
+  ["totalcontrol64", 1650],
+  ["surgical_rook", 800],
+  ["vise_grip_vic", 1050],
+  ["prep_leviathan", 1050],
+  ["lasersharplines", 1200],
+  ["fullboardvision", 1350],
+  ["ironclad_endings", 900],
+  ["anna_in_the_lab", 1900],
+  ["theorycrusher", 1450],
+  ["immortal_grind", 1650],
   // --- elite: 2200 (11) ---
-  ["apex_predator64", 2200],
-  ["silent_titan", 2200],
-  ["finalboss_e4", 2200],
-  ["endgame_oracle", 2200],
-  ["deepest_prep", 2200],
-  ["grandsqueeze", 2200],
-  ["absolute_zero64", 2200],
-  ["ghost_king64", 2200],
-  ["the_last_rank", 2200],
-  ["summit_seeker", 2200],
-  ["zerocounterplay", 2200],
+  ["apex_predator64", 1650],
+  ["silent_titan", 1550],
+  ["finalboss_e4", 1200],
+  ["endgame_oracle", 1200],
+  ["deepest_prep", 1750],
+  ["grandsqueeze", 800],
+  ["absolute_zero64", 1750],
+  ["ghost_king64", 2500],
+  ["the_last_rank", 1750],
+  ["summit_seeker", 1200],
+  ["zerocounterplay", 2100],
 ];
 
 // The names of the 2026-07 expansion wave, for the "is this a new-wave
@@ -1066,8 +1115,436 @@ const EXPANSION_BIO_BY_NAME: Map<string, string> = new Map(
   ),
 );
 
-// Fold the expansion wave into the roster proper.
-PERSONA_DEFS.push(...EXPANSION_DEFS);
+
+// ---------------------------------------------------------------------------
+// WAVE 3 (2026-07): 390 further personas, taking the roster to 900.
+//
+// The roster had to grow because the ONLINE-presence window is bounded by the
+// roster length, and the site now shows a population that breathes between
+// HOUSE_ONLINE_MIN and HOUSE_ONLINE_MAX. Names follow the same
+// lichess-account register as the rest of the file: lowercase handles, number
+// suffixes, deliberate mashes and misspellings, opening puns, the occasional
+// shouty one. Nothing that reads as a bot, nothing that reads as a chess-site
+// house account. Tiers are name-derived (see HOUSE_SKILL_WEIGHTS), which is why
+// they are grouped rather than hand-chosen.
+//
+// These personas carry no fictional location and no baked bio, like the wave-2
+// expansion: a blank profile is the commonest shape on a real chess site.
+// ---------------------------------------------------------------------------
+const WAVE3_DEFS: Array<[name: string, skill: HouseSkill]> = [
+  // --- 800 (55) ---
+  ["tempoforever", 800],
+  ["itwasadraw", 800],
+  ["navidmoth", 800],
+  ["sneakycrow", 800],
+  ["mai_magpie", 800],
+  ["maya_vole", 800],
+  ["yannis_h69", 800],
+  ["colleandy", 800],
+  ["finnplaysfianchetto", 800],
+  ["miles_65", 800],
+  ["lankypuffin", 800],
+  ["jonas_42", 800],
+  ["fatima31", 800],
+  ["pinmerchant", 800],
+  ["READTHECARD", 800],
+  ["nico_r90", 800],
+  ["endgamehelp", 800],
+  ["eunbi_gecko", 800],
+  ["meera_shrew", 800],
+  ["NOTLIKETHIS", 800],
+  ["bishopnever", 800],
+  ["idontknowopenings", 800],
+  ["taeyangraccoon", 800],
+  ["taeyangtoaster", 800],
+  ["giorgia_puffin", 800],
+  ["berlindiehard", 800],
+  ["nick63", 800],
+  ["funkylemur1996", 800],
+  ["onur77", 800],
+  ["radu69", 800],
+  ["goofycapybara", 800],
+  ["grumpytoaster", 800],
+  ["SIXSEVENAGAIN", 800],
+  ["martina_magpie", 800],
+  ["blundergaming", 800],
+  ["carorespecter", 800],
+  ["lukeplaystilt", 800],
+  ["jakub63", 800],
+  ["pinhelp", 800],
+  ["camila_possum", 800],
+  ["knightenjoyer", 800],
+  ["arda_j0", 800],
+  ["dai_m78", 800],
+  ["maxmoth", 800],
+  ["reza_50", 800],
+  ["miles40", 800],
+  ["pekka18", 800],
+  ["anders8", 800],
+  ["ana1995", 800],
+  ["sneakytern", 800],
+  ["mai_beetle", 800],
+  ["thu_beetle", 800],
+  ["grumpyshrew9", 800],
+  ["heronenjoyer", 800],
+  ["jiwoo_tern", 800],
+  // --- 900 (30) ---
+  ["clara_crow", 900],
+  ["vlad_n1996", 900],
+  ["frida_weasel", 900],
+  ["isla_crow", 900],
+  ["thu_weasel", 900],
+  ["megan_newt", 900],
+  ["stefan_h80", 900],
+  ["nikosplaysgambit", 900],
+  ["maria_walrus", 900],
+  ["miles_2000", 900],
+  ["joonatern", 900],
+  ["callum49", 900],
+  ["moodypossum", 900],
+  ["smithaddict", 900],
+  ["lankywalrus", 900],
+  ["rookhelp", 900],
+  ["nick2000", 900],
+  ["whyisthislegal", 900],
+  ["wobblypigeon91", 900],
+  ["saltymagpie81", 900],
+  ["yuki63", 900],
+  ["sana_capybara", 900],
+  ["londonmerchant", 900],
+  ["crustyraccoon", 900],
+  ["fiftymoverule", 900],
+  ["rani1", 900],
+  ["eino_3", 900],
+  ["tempomerchant", 900],
+  ["weaselenjoyer", 900],
+  ["deniz57", 900],
+  // --- 1050 (39) ---
+  ["gambithelp", 1050],
+  ["tapirenjoyer", 1050],
+  ["ivanpigeon", 1050],
+  ["FLAGGEDAGAIN", 1050],
+  ["stavros_30", 1050],
+  ["sean_a2008", 1050],
+  ["dailimpet", 1050],
+  ["maria_weasel", 1050],
+  ["dragonandy", 1050],
+  ["flaggedonpurpose", 1050],
+  ["mert_2003", 1050],
+  ["toastyferret", 1050],
+  ["grumpylimpet2011", 1050],
+  ["goodgamewelp", 1050],
+  ["bruno_h89", 1050],
+  ["jonas1990", 1050],
+  ["tilthelp", 1050],
+  ["ternenjoyer", 1050],
+  ["funkybeetle", 1050],
+  ["knighthaver", 1050],
+  ["seantern", 1050],
+  ["taimanovfan", 1050],
+  ["sleepyheron", 1050],
+  ["capybaraenjoyer", 1050],
+  ["onurplaysknight", 1050],
+  ["olivia_walrus", 1050],
+  ["clumsyraccoon", 1050],
+  ["perpetualtilt", 1050],
+  ["arjunplayspawn", 1050],
+  ["enpassantorlose", 1050],
+  ["stonewalllover", 1050],
+  ["roisin_wombat", 1050],
+  ["moderntruther", 1050],
+  ["reza40", 1050],
+  ["clockedmyself", 1050],
+  ["zestymagpie02", 1050],
+  ["tamar98", 1050],
+  ["jun_s96", 1050],
+  ["jelena9", 1050],
+  // --- 1200 (27) ---
+  ["joona53", 1200],
+  ["niklas_n1996", 1200],
+  ["chiara_lemur", 1200],
+  ["clumsynewt99", 1200],
+  ["hana_tern", 1200],
+  ["bishophelp", 1200],
+  ["bruna_newt", 1200],
+  ["fianchettoalways", 1200],
+  ["ville_n1", 1200],
+  ["rhys_e61", 1200],
+  ["aditya90", 1200],
+  ["garethsnail", 1200],
+  ["felix_73", 1200],
+  ["gloomytapir", 1200],
+  ["feralferret", 1200],
+  ["modernlover", 1200],
+  ["hazywombat7", 1200],
+  ["alexplaysknight", 1200],
+  ["petarplaysqueen", 1200],
+  ["ryanplaysgambit", 1200],
+  ["benonidiehard", 1200],
+  ["anhplaysqueen", 1200],
+  ["magpieenjoyer", 1200],
+  ["foggyquokka92", 1200],
+  ["dragonenjoyer", 1200],
+  ["zestyweasel67", 1200],
+  ["reza_46", 1200],
+  // --- 1350 (31) ---
+  ["jiwoo50", 1350],
+  ["amir_62", 1350],
+  ["giulia4", 1350],
+  ["fianchettomerchant", 1350],
+  ["crankycrow", 1350],
+  ["zoe_badger", 1350],
+  ["alex_s1996", 1350],
+  ["artemsnail", 1350],
+  ["spookypossum", 1350],
+  ["pavel_1997", 1350],
+  ["pleasedontresign", 1350],
+  ["crankypossum", 1350],
+  ["signe2001", 1350],
+  ["mattia_l2", 1350],
+  ["karan_r94", 1350],
+  ["sillynewt", 1350],
+  ["hana_newt", 1350],
+  ["aino_tern", 1350],
+  ["onur_b39", 1350],
+  ["pawnenjoyer", 1350],
+  ["THATWASMATE", 1350],
+  ["lasse_v8", 1350],
+  ["rohan_46", 1350],
+  ["hazygoose65", 1350],
+  ["andreiplaysrook", 1350],
+  ["tomasplayspawn", 1350],
+  ["ines7", 1350],
+  ["ihatethiscard", 1350],
+  ["omarplaysrook", 1350],
+  ["zara29", 1350],
+  ["BONGCLOUDONLY", 1350],
+  // --- 1450 (19) ---
+  ["stoppremoving", 1450],
+  ["tereza_magpie", 1450],
+  ["badgerenjoyer", 1450],
+  ["frida46", 1450],
+  ["nam1996", 1450],
+  ["ingrid9", 1450],
+  ["clara74", 1450],
+  ["nam_e15", 1450],
+  ["gooseenjoyer", 1450],
+  ["ruyenjoyer", 1450],
+  ["bishopgaming", 1450],
+  ["diegoshrew", 1450],
+  ["lucapuffin", 1450],
+  ["siobhan04", 1450],
+  ["tiltedagain", 1450],
+  ["lena_beetle", 1450],
+  ["quirkystoat", 1450],
+  ["cantstoplosing", 1450],
+  ["wobblyferret86", 1450],
+  // --- 1550 (28) ---
+  ["sveshrespecter", 1550],
+  ["sleepyvole2010", 1550],
+  ["nico50", 1550],
+  ["saga60", 1550],
+  ["petarplaystempo", 1550],
+  ["puffinenjoyer", 1550],
+  ["ben_82", 1550],
+  ["ana86", 1550],
+  ["omar_6", 1550],
+  ["kalashtruther", 1550],
+  ["elena5", 1550],
+  ["petar54", 1550],
+  ["deniz33", 1550],
+  ["goofygecko98", 1550],
+  ["pedro_2005", 1550],
+  ["wobblypossum", 1550],
+  ["jihoonplaystempo", 1550],
+  ["sillyotter", 1550],
+  ["sofia1997", 1550],
+  ["pinenjoyer", 1550],
+  ["crispyferret", 1550],
+  ["fianchettoplease", 1550],
+  ["bayu_a15", 1550],
+  ["idris_a3", 1550],
+  ["hugo_s07", 1550],
+  ["tereza_vole", 1550],
+  ["anders_2000", 1550],
+  ["IWASWINNING", 1550],
+  // --- 1650 (27) ---
+  ["amirplaysskewer", 1650],
+  ["mossyraccoon52", 1650],
+  ["blunderforever", 1650],
+  ["emma27", 1650],
+  ["possumenjoyer", 1650],
+  ["STOPFREEZINGME", 1650],
+  ["sneakyquokka9", 1650],
+  ["ryan6", 1650],
+  ["roisin_puffin", 1650],
+  ["ville7", 1650],
+  ["wombatenjoyer", 1650],
+  ["tamar08", 1650],
+  ["hugoweasel", 1650],
+  ["reedbadger", 1650],
+  ["sarah_moth", 1650],
+  ["yael_heron", 1650],
+  ["funkynewt", 1650],
+  ["nikostern", 1650],
+  ["morraandy", 1650],
+  ["spookymagpie", 1650],
+  ["yael_goose", 1650],
+  ["najdorfrespecter", 1650],
+  ["moiraplaysknight", 1650],
+  ["yusuf_07", 1650],
+  ["dario_j6", 1650],
+  ["forkenjoyer", 1650],
+  ["crowenjoyer", 1650],
+  // --- 1750 (22) ---
+  ["milesplaysking", 1750],
+  ["stefanplaysrook", 1750],
+  ["spicytapir1999", 1750],
+  ["chunkysnail01", 1750],
+  ["mia55", 1750],
+  ["olivia8", 1750],
+  ["ioana0", 1750],
+  ["saltyotter", 1750],
+  ["nikos_2000", 1750],
+  ["olavplayspin", 1750],
+  ["bishopplease", 1750],
+  ["queennever", 1750],
+  ["artemotter", 1750],
+  ["rossolimoguy", 1750],
+  ["crankypigeon", 1750],
+  ["ewanmarmot", 1750],
+  ["spicycrow", 1750],
+  ["junotter", 1750],
+  ["dina_magpie", 1750],
+  ["funkymoth31", 1750],
+  ["astrid_crow", 1750],
+  ["NOMORENERFS", 1750],
+  // --- 1900 (22) ---
+  ["zara_pigeon", 1900],
+  ["finnplaysknight", 1900],
+  ["JUSTONEMOREGAME", 1900],
+  ["frostypuffin44", 1900],
+  ["berlinenjoyer", 1900],
+  ["emma58", 1900],
+  ["pedro6", 1900],
+  ["kaan_d4", 1900],
+  ["zestystoat", 1900],
+  ["ENPASSANTNOW", 1900],
+  ["niklas_p2000", 1900],
+  ["nuttycrow7", 1900],
+  ["callum2002", 1900],
+  ["mossyotter10", 1900],
+  ["dewi_lemur", 1900],
+  ["paula_limpet", 1900],
+  ["petar_n54", 1900],
+  ["andrei_50", 1900],
+  ["readthecardagain", 1900],
+  ["rhys2007", 1900],
+  ["zestybeetle", 1900],
+  ["almostslept", 1900],
+  // --- 1950 (19) ---
+  ["mothenjoyer", 1950],
+  ["zestymagpie", 1950],
+  ["rani1999", 1950],
+  ["zara_weasel", 1950],
+  ["sillygannet", 1950],
+  ["nick_a09", 1950],
+  ["daria_goose", 1950],
+  ["zara_limpet", 1950],
+  ["tobiasplayspin", 1950],
+  ["walrusenjoyer", 1950],
+  ["nobodyresigns", 1950],
+  ["taeyang_1999", 1950],
+  ["sofia_tern", 1950],
+  ["taeyang_2002", 1950],
+  ["renplaysrook", 1950],
+  ["moodywombat6", 1950],
+  ["maya_otter", 1950],
+  ["frida1995", 1950],
+  ["vladplaysendgame", 1950],
+  // --- 2000 (10) ---
+  ["chunkyshrew", 2000],
+  ["sanjay57", 2000],
+  ["pawnforever", 2000],
+  ["finn_8", 2000],
+  ["forkplease", 2000],
+  ["andersmarmot", 2000],
+  ["sarah2003", 2000],
+  ["lemurenjoyer", 2000],
+  ["valeria57", 2000],
+  ["joona_s46", 2000],
+  // --- 2050 (7) ---
+  ["budapestrespecter", 2050],
+  ["julia74", 2050],
+  ["hanna68", 2050],
+  ["maria26", 2050],
+  ["onurgannet", 2050],
+  ["nuttyraccoon", 2050],
+  ["haoplaystilt", 2050],
+  // --- 2100 (4) ---
+  ["googleenpassant", 2100],
+  ["paolo5", 2100],
+  ["aoife42", 2100],
+  ["colegoose", 2100],
+  // --- 2150 (4) ---
+  ["lasseplayspawn", 2150],
+  ["petarplayspawn", 2150],
+  ["jonas22", 2150],
+  ["mossynewt", 2150],
+  // --- 2400 (20) ---
+  ["kasper_2003", 2400],
+  ["backtoblitz", 2400],
+  ["voleenjoyer", 2400],
+  ["newtenjoyer", 2400],
+  ["jihoon54", 2400],
+  ["kingenjoyer", 2400],
+  ["scandihater", 2400],
+  ["feralcrow78", 2400],
+  ["ardaplaysbishop", 2400],
+  ["ferretenjoyer", 2400],
+  ["funkywombat52", 2400],
+  ["onur_r8", 2400],
+  ["andrei4", 2400],
+  ["tiltgaming", 2400],
+  ["hakimotter", 2400],
+  ["toastyweasel", 2400],
+  ["stavros_m2", 2400],
+  ["imalwaysdown", 2400],
+  ["leila_gannet", 2400],
+  ["paolo2007", 2400],
+  // --- 2500 (11) ---
+  ["budapestfan", 2500],
+  ["ryan_j93", 2500],
+  ["giulia56", 2500],
+  ["lukeplaysknight", 2500],
+  ["rossolimoaddict", 2500],
+  ["mynerfwasfine", 2500],
+  ["ivanplaysrook", 2500],
+  ["forkmerchant", 2500],
+  ["shrewenjoyer", 2500],
+  ["seojunwombat", 2500],
+  ["adibgecko", 2500],
+  // --- 2600 (9) ---
+  ["daria_lemur", 2600],
+  ["actuallyitsforced", 2600],
+  ["holyhellagain", 2600],
+  ["MYROOKWASFINE", 2600],
+  ["itsjustachess", 2600],
+  ["tarek9", 2600],
+  ["felix03", 2600],
+  ["bishopandy", 2600],
+  ["hugoplayszug", 2600],
+  // --- 2700 (6) ---
+  ["stefanheron", 2700],
+  ["einoplaysking", 2700],
+  ["LETHIMCOOKNOW", 2700],
+  ["duc_p64", 2700],
+  ["astrid_lemur", 2700],
+  ["yuna_gecko", 2700],
+];
+
+// Fold the expansion waves into the roster proper.
+PERSONA_DEFS.push(...EXPANSION_DEFS, ...WAVE3_DEFS);
 
 // Flowered avatar presets (see lib/avatars.ts): the ordinary piece-on-plate
 // look plus a small flower mark. Never offered to real accounts (isAvatarId
@@ -1245,11 +1722,25 @@ export function personaBio(persona: HousePersona): string | null {
   return HOUSE_BIOS[nameHash(persona.name + "|bio") % HOUSE_BIOS.length];
 }
 
-/** True for a 2026-07 expansion-wave persona (new-style seeding: rating tracks
- * the tier directly, no legacy uplift stack; no fictional location). Exported
- * for the roster audit. */
+/** True for a 2026-07 wave-2 expansion persona. Exported for the roster audit,
+ * which checks that wave's own invariants (bio count, blank location). */
 export function isExpansionPersona(name: string): boolean {
   return EXPANSION_NAME_SET.has(name);
+}
+
+const WAVE3_NAME_SET = new Set(WAVE3_DEFS.map(([name]) => name));
+
+/** True for a 2026-07 wave-3 persona. */
+export function isWave3Persona(name: string): boolean {
+  return WAVE3_NAME_SET.has(name);
+}
+
+/** True for any 2026-07 wave persona (2 or 3). These carry NO fictional
+ * location: an invented hometown on hundreds of accounts reads as generated,
+ * and a blank location is the commonest shape on a real chess site anyway. Only
+ * the original roster keeps its /mod-editor location labels. */
+export function isNewWavePersona(name: string): boolean {
+  return EXPANSION_NAME_SET.has(name) || WAVE3_NAME_SET.has(name);
 }
 
 /** Expansion-wave seeding facts, exported for the roster audit script. */
@@ -1354,10 +1845,18 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
   // expansion wave carries NO fictional location: a blank location is the
   // commonest shape on real chess sites anyway, and it keeps the expansion
   // personas from accumulating invented biography beyond their short bios.
-  location: isExpansionPersona(name) ? "" : HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
+  location: isNewWavePersona(name) ? "" : HOUSE_LOCATIONS[i % HOUSE_LOCATIONS.length],
 }));
 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
+
+/** house user id -> engine skill tier. The tier lives in code, never in the
+ * database, so anything that wants to group archived games by tier (the
+ * moderator overview's house-vs-human win rate) has to fold the rows in
+ * TypeScript against this map rather than GROUP BY a column. */
+export const HOUSE_BY_ID_SKILL: ReadonlyMap<string, HouseSkill> = new Map(
+  HOUSE_ROSTER.map((p) => [p.userId, p.skill]),
+);
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
 // ---------------------------------------------------------------------------
@@ -1380,6 +1879,9 @@ export type HouseStyle = {
   bankBias: number;
   /** 0..1 aggression/risk lean; drives the search jitter below. */
   aggression: number;
+  /** How often this persona plays a recapture instantly, as if it had a premove
+   * queued: 0.15 .. 0.50. See houseSnapReplyMs. */
+  snapAppetite: number;
   /** Preferred first move as White (UCI), tried when legal. */
   openingWhite: string;
   /** Preferred reply to 1.e4 / 1.d4 as Black (UCI), tried when legal. */
@@ -1398,6 +1900,7 @@ export function houseStyle(persona: HousePersona): HouseStyle {
     activationChance: 0.25 + h("act", 31) / 100, // 0.25..0.55
     bankBias: h("bank", 26) / 100, // 0..0.25
     aggression: h("aggro", 101) / 100, // 0..1
+    snapAppetite: 0.15 + h("snap", 36) / 100, // 0.15..0.50
     openingWhite: OPENING_WHITE[h("openw", OPENING_WHITE.length)],
     openingBlackVsE4: OPENING_BLACK_E4[h("openbe", OPENING_BLACK_E4.length)],
     openingBlackVsD4: OPENING_BLACK_D4[h("openbd", OPENING_BLACK_D4.length)],
@@ -1436,18 +1939,64 @@ export function applyPersonaStyle(
 // site cycles through every persona over time. Every persona still holds a seeded
 // account, so its profile/rating/leaderboard entry stay intact whether or not it
 // is currently in a window.
-// With the 2026-07 expansion the roster is ~510 deep, and marking all of them
+// With the 2026-07 waves the roster is ~900 deep, and marking all of them
 // online at once would read as absurd (and be one). The ACTIVE window (bots
-// that seek / get picked up / play filler) breathes daily between 180 and 240
+// that seek / get picked up / play filler) breathes daily between 260 and 380
 // — comfortably above the seat budget the filler-games cap needs (2 seats x
-// HOUSE_GAMES_MAX = 140) plus pickup headroom — and the ONLINE window shows at
-// most ~55% of the roster at a time. Both windows rotate daily
+// HOUSE_GAMES_MAX = 280) plus pickup headroom — and the presence LIST shows at
+// most HOUSE_PRESENCE_LIST_MAX at a time. Both windows rotate daily
 // (houseWindowStart), so every persona cycles through availability over time:
 // a believable "some regulars are on tonight, some aren't" schedule.
-export const HOUSE_COUNT_MIN = 180;
-export const HOUSE_COUNT_MAX = 240;
-// How many bots show "online" at once: the active window plus idlers.
-export const HOUSE_ONLINE_COUNT = 280;
+export const HOUSE_COUNT_MIN = 260;
+export const HOUSE_COUNT_MAX = 380;
+
+// --- The shown population ---------------------------------------------------
+//
+// Two different numbers, and it matters which is which:
+//
+//   HOUSE_PRESENCE_LIST_MAX  how many personas are ENUMERATED into the lobby's
+//                            online list. Bounded on purpose: every entry is a
+//                            row in the shared lobby snapshot, so this is the
+//                            payload cost, and nobody scrolls past a few
+//                            hundred names anyway.
+//   houseOnlineCount(now)    the COUNT the site displays, which breathes
+//                            between HOUSE_ONLINE_MIN and HOUSE_ONLINE_MAX.
+//                            The DO pads the anonymous tally up to it
+//                            (worker.ts), the same mechanism that used to hold
+//                            a flat floor of 280.
+//
+// Separating them is what lets the shown population run to 800 without turning
+// every lobby poll into a 60KB list.
+// 400, not 300: the ACTIVE window must stay a subset of the presence list (the
+// windows share a day offset so active is a prefix of online), and the active
+// window has to cover 2 seats x HOUSE_GAMES_MAX plus pickup headroom. 400 rows
+// costs roughly 32KB per lobby snapshot, up from 22KB at the old 280.
+export const HOUSE_PRESENCE_LIST_MAX = 400;
+export const HOUSE_ONLINE_MIN = 350;
+export const HOUSE_ONLINE_MAX = 800;
+
+/**
+ * How many players the site reads as online at a given moment.
+ *
+ * Breathes on two cycles so the number drifts rather than stepping: a
+ * time-of-day curve (a trough in the small hours, a peak in the evening, both
+ * UTC) and a per-day scale so no two days peak identically. Deterministic in
+ * `nowMs` alone, so every viewer polling at the same moment sees the same
+ * number, and it never needs storing.
+ */
+export function houseOnlineCount(nowMs: number): number {
+  const dayMs = 86_400_000;
+  const dayIndex = Math.floor(nowMs / dayMs);
+  const minuteOfDay = Math.floor((nowMs % dayMs) / 60_000);
+  // 0 at 05:00 UTC (the trough), 1 at 17:00 UTC (the peak), smooth between.
+  const phase = (((minuteOfDay - 300) % 1440) + 1440) % 1440;
+  const tod = 0.5 - 0.5 * Math.cos((phase / 1440) * 2 * Math.PI);
+  // 0.90..1.00: a quiet day tops out a little lower than a busy one.
+  const dayScale = 0.9 + (nameHash("house-online:" + dayIndex) % 101) / 1000;
+  const span = HOUSE_ONLINE_MAX - HOUSE_ONLINE_MIN;
+  const n = Math.round(HOUSE_ONLINE_MIN + span * tod * dayScale);
+  return Math.max(HOUSE_ONLINE_MIN, Math.min(HOUSE_ONLINE_MAX, n));
+}
 
 export function clampHouseCount(n: number): number {
   return Number.isFinite(n)
@@ -1494,10 +2043,12 @@ export function activeHouseRoster(count: number, dayIndex = 0): HousePersona[] {
 }
 
 /** The ONLINE-presence personas for a day: the active window PLUS extra idle bots,
- * up to HOUSE_ONLINE_COUNT, sharing the same day offset so the active set is a
- * prefix. Used only for the lobby "online" list — the extra ones never seek/play. */
+ * up to HOUSE_PRESENCE_LIST_MAX, sharing the same day offset so the active set is
+ * a prefix. Used only for the lobby "online" LIST — the extra ones never
+ * seek/play, and the shown COUNT comes from houseOnlineCount(), not from the
+ * length of this list. */
 export function onlineHouseRoster(dayIndex = 0): HousePersona[] {
-  return houseWindow(HOUSE_ONLINE_COUNT, dayIndex);
+  return houseWindow(HOUSE_PRESENCE_LIST_MAX, dayIndex);
 }
 
 export function isHouseUserId(id: string | null | undefined): boolean {
@@ -1665,40 +2216,20 @@ export function pickHouseFillerPair(
   return [a, b];
 }
 
-// The rating a persona ADVERTISES is decoupled from its engine `skill`. The skill
-// still drives how hard it actually plays (HOUSE_SKILL_PROFILES, capped by the DO
-// ceiling), but the displayed/rated number is shifted here so the field can be
-// re-spread without touching strength or the difficulty-band picker.
+// Every persona now ADVERTISES its own tier, plus a stable name-hashed jitter of
+// about +-40 so the roster does not debut as blocks of identical numbers. A
+// 800-tier bot reads ~800, a 2500-tier bot reads ~2500.
 //
-// LEGACY roster: the ORIGINAL spread (every bot +100, sub-1600 tiers dropping
-// 100-150), PLUS the owner boost (+100..+300), PLUS the 2026-07 uplift: every
-// legacy bot gains a further deterministic +300..+400 Elo, name-hashed so each
-// persona's number is stable (never re-randomized on refresh or resync). The
-// engine profiles were strengthened in the same change (HOUSE_SKILL_PROFILES)
-// so real strength moves with the advertised number.
-//
-// EXPANSION roster (2026-07 wave): the advertised rating tracks the tier
-// directly (skill +-40 jitter only) — a 900-tier bot debuts around 900, a
-// 2200-tier bot around 2200 — so the new beginner tiers finally read as
-// beginners instead of inheriting the legacy uplift stack.
-export const HOUSE_RATING_UPLIFT_MIN = 300;
-export const HOUSE_RATING_UPLIFT_MAX = 400;
-
-/** The deterministic 2026-07 rating uplift for a LEGACY persona name:
- * a stable value in [300, 400]. Exported for the roster audit. */
-export function houseRatingUplift(name: string): number {
-  const span = HOUSE_RATING_UPLIFT_MAX - HOUSE_RATING_UPLIFT_MIN + 1;
-  return HOUSE_RATING_UPLIFT_MIN + (nameHash(name + "|uplift2026") % span);
-}
-
+// This replaced a three-layer stack that applied only to the legacy half of the
+// roster (a +100 spread, sub-1600 tiers dropping 100-150, an owner boost of
+// +100..+300, and a 2026-07 uplift of a further +300..+400). The stack made the
+// advertised field impossible to reason about or to aim: two personas on the
+// same tier could read 400 apart, and no tier's displayed band matched its
+// engine strength. With the ratings tied to the tier, the ROSTER's distribution
+// is set in one place (HOUSE_SKILL_WEIGHTS) and asserted by the audit, which is
+// what lets the field be weighted toward genuine beginners.
 function houseSeedBase(persona: HousePersona): number {
-  const seed = persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
-  if (isExpansionPersona(persona.name)) return seed;
-  const spread = persona.skill < 1600
-    ? -(100 + (nameHash(persona.name + "|drop") % 51)) // 100..150 drop
-    : 100;
-  const boost = 100 + (nameHash(persona.name + "|boost") % 201); // +100..+300
-  return seed + spread + boost + houseRatingUplift(persona.name);
+  return persona.skill - 40 + (nameHash(persona.name) % 81); // skill +-40 jitter
 }
 
 /** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
@@ -2216,16 +2747,25 @@ export const FILLER_EXCLUDED_CARD_IDS: readonly string[] = ["chess_diff"];
 
 // ---------------------------------------------------------------------------
 // Filler concurrency targets (owner spec): the Watch tab / TV should always
-// show a busy site, so the steady state is 40-55 SIMULTANEOUS bot-vs-bot games
-// (80-110 seated bots), never dipping below the floor while the house is
+// show a busy site, so the steady state is 80-120 SIMULTANEOUS bot-vs-bot games
+// (160-240 seated bots), never dipping below the floor while the house is
 // enabled. Shared between worker.ts (the spawner) and the sim so the sim
 // asserts the exact production numbers.
+//
+// 2026-07: raised from 40-55. This is safe ONLY because filler no longer runs
+// inside the game-server Durable Object: arena-service owns it
+// (ARENA_OWNS_FILLER, with the DO standing down at worker.ts's arena-health
+// check), and the arena runs each search on a worker_threads pool rather than
+// its own event loop. The DO's per-tick caps (houseMaxActionsPerTick,
+// houseTickBudgetMs, HOUSE_SEARCH_CEILING_MS) are unchanged and still govern the
+// fallback path, so a dead arena degrades to the old, slow, DO-local behaviour
+// instead of stalling the single thread.
 // ---------------------------------------------------------------------------
 
 /** Minimum concurrent bot-vs-bot games at steady state. */
-export const HOUSE_VS_HOUSE_FLOOR = 40;
-/** Hard cap on concurrent bot-vs-bot games (natural variance runs 40-55). */
-export const HOUSE_VS_HOUSE_CAP = 55;
+export const HOUSE_VS_HOUSE_FLOOR = 80;
+/** Hard cap on concurrent bot-vs-bot games (natural variance runs 80-120). */
+export const HOUSE_VS_HOUSE_CAP = 120;
 /** Spawn-ahead hysteresis: the spawner keeps ramping quickly until this many
  * games ABOVE the floor are live, so the count settles comfortably above the
  * floor and a normal trickle of games ending never drops it below the floor
@@ -2249,7 +2789,7 @@ export const HOUSE_FILLER_SPAWN_BUFFER = 10;
 // spawner keeps separate headroom for them).
 // ---------------------------------------------------------------------------
 export const HOUSE_GAMES_MIN = 0;
-export const HOUSE_GAMES_MAX = 70;
+export const HOUSE_GAMES_MAX = 140;
 /** The default concurrent-filler target when a moderator has not pinned one: the
  * historical cap, so unpinned behaviour stays the familiar 40-55 band. */
 export const HOUSE_GAMES_DEFAULT = HOUSE_VS_HOUSE_CAP;
@@ -2336,6 +2876,77 @@ export function houseThinkMs(
     else if (delay > myClockMs / 5) delay = Math.max(500, Math.floor(myClockMs / 5));
   }
   return delay;
+}
+
+/**
+ * The "I had that premoved" reply: a near-instant 120-350ms delay instead of the
+ * normal think, played SOMETIMES and only when there was nothing to think about.
+ *
+ * Real players queue premoves, and the tell is unmistakable: the recapture comes
+ * back before you have let go of the mouse. House bots never did this — every
+ * move took at least a second, which is a giveaway in the other direction, and
+ * the one place it reads worst is a trade, where a human answers instantly and a
+ * bot sat there "thinking" about its only sensible move.
+ *
+ * Returns a snap delay, or null to pace normally. Conditions, all required:
+ *   - the opponent's last move was a CAPTURE on a square this bot can recapture
+ *     (or the bot has exactly one legal move, which is the other case a human
+ *     always premoves), and
+ *   - the persona's own appetite roll comes up. Appetite is 0.15-0.50 per
+ *     persona, so the same bot is consistently snappy or consistently
+ *     deliberate, and no bot snaps EVERY time — a bot that always premoved the
+ *     recapture would be as robotic as one that never did.
+ *
+ * Deliberately NOT a strength change: the move still comes from the normal
+ * search, with the same blunder roll. This only changes how long the bot waits
+ * before playing it, so a snapped recapture can still be the wrong recapture.
+ */
+export function houseSnapReplyMs(
+  persona: HousePersona,
+  random: (max: number) => number,
+  opts: {
+    /** The square the opponent just captured on, if their last move was a capture. */
+    capturedOn: number | null;
+    /** Squares this bot could recapture on (the `to` of each of its legal captures). */
+    myCaptureTargets: readonly number[];
+    /** How many legal moves this bot has. */
+    legalCount: number;
+  },
+): number | null {
+  const forced = opts.legalCount === 1;
+  const recapture =
+    opts.capturedOn != null && opts.myCaptureTargets.includes(opts.capturedOn);
+  if (!forced && !recapture) return null;
+  const appetite = houseStyle(persona).snapAppetite;
+  // A forced move is premoved far more often than a discretionary recapture:
+  // there is literally nothing else to play.
+  const chance = forced ? Math.min(0.9, appetite + 0.4) : appetite;
+  if (random(1000) >= Math.round(chance * 1000)) return null;
+  return 120 + random(231); // 120-350ms
+}
+
+/**
+ * Gather what houseSnapReplyMs needs from a live position: whether the opponent
+ * just captured, where, which squares this side could recapture on, and how many
+ * legal moves it has.
+ *
+ * Kept beside houseSnapReplyMs (rather than duplicated in the DO and the arena)
+ * so both callers ask the question the same way. Costs one legal-move
+ * generation, so only call it where the position is already in hand.
+ */
+export function snapContext(
+  game: NerfGame,
+  me: Color,
+): { capturedOn: number | null; myCaptureTargets: number[]; legalCount: number } {
+  const history = game.board.history;
+  const last = history.length ? history[history.length - 1] : null;
+  const capturedOn = last && last.color !== me && last.captured ? last.to : null;
+  const mine = legalMoves(game);
+  return {
+    capturedOn,
+    myCaptureTargets: capturedOn == null ? [] : mine.filter((m) => m.captured).map((m) => m.to),
+    legalCount: mine.length,
+  };
 }
 
 /** Draft pacing: 2-8s before a pick lands, comfortably inside the 15s

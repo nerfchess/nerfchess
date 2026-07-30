@@ -50,8 +50,8 @@ export const MYSTIC_OCCULT: Buff[] = [
     {
       id: "seance",
       name: "Seance",
-      description:
-        "The circle trades places with the beyond: send one of your knights or bishops across to the other side, and one of your captured rooks returns in its place, on the square that knight or bishop just vacated. Casting the circle also spends your next unused reroll, if you have one.",
+      description: "Send one of your knights or bishops across to the other side, and one of your captured rooks returns in its place, on the square that knight or bishop just vacated. Casting the circle also spends your next unused reroll, if you have one.",
+      tip: "A straight upgrade in material, as long as the square suits a rook.",
       tier: 3,
       category: "pieces",
       requires: ["n", "b"],

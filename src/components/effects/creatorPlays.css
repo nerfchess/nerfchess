@@ -1,0 +1,368 @@
+/* Creator-card scenes (creatorPlays.tsx).
+ *
+ * Laws, from docs/animation-design-brief.md and the rest of this directory:
+ *   - transform and opacity ONLY. No layout, no filter, no box-shadow animation.
+ *   - every scene is tell -> strike -> settle; the tell is under 300ms.
+ *   - three colours per scene, warm whites (#fff4d6-ish), never pure #fff.
+ *   - board-centred, so nothing clips mid-screen on a phone.
+ *   - everything here is decorative: pointer-events: none throughout, and all
+ *     motion is dropped under html[data-anim="off"] and reduced motion, leaving
+ *     the still frame so the play still reads.
+ *
+ * --cpl-hue is an "R G B" triple set inline per scene, so the shared tell and
+ * settle take each card's own colour without a rule per card.
+ */
+
+.cpl-stage {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cpl-mark {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* --- Shared beats ---------------------------------------------------------- */
+
+/* The tell: one dim-and-inhale under 300ms so the strike lands on something. */
+.cpl-tell {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(var(--cpl-hue) / 0.12),
+    rgba(0, 0, 0, 0.34) 72%
+  );
+  opacity: 0;
+  transform: scale(1.06);
+  animation: cpl-tell 300ms ease-out both;
+}
+@keyframes cpl-tell {
+  0% { opacity: 0; transform: scale(1.06); }
+  60% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.55; transform: scale(1); }
+}
+
+/* The settle: a slow decaying afterglow, so nothing ends on a hard cut. */
+.cpl-settle {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgb(var(--cpl-hue) / 0.2), transparent 62%);
+  opacity: 0;
+  animation: cpl-settle 900ms ease-out both;
+}
+@keyframes cpl-settle {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+/* Shared star framing: the emblem sits board-centred at a readable size. */
+.cpl-bishop__star,
+.cpl-queen__star,
+.cpl-family__star,
+.cpl-speed__star,
+.cpl-chat__star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  margin-left: -17%;
+  margin-top: -17%;
+}
+
+/* --- The Stalling Bishop (Eric Rosen) ------------------------------------- */
+/* Cold blue: it is not a threat, it is a nuisance that will not leave. */
+
+.cpl-bishop__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  height: 52%;
+  margin-left: -26%;
+  margin-top: -26%;
+  border: 3px solid rgb(200 220 255 / 0.9);
+  border-radius: 999px;
+  opacity: 0;
+  transform: scale(1.9);
+  animation: cpl-ring-slam 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both,
+    cpl-ring-breathe 2.4s ease-in-out 640ms infinite;
+}
+@keyframes cpl-ring-slam {
+  0% { opacity: 0; transform: scale(1.9); }
+  70% { opacity: 1; transform: scale(0.96); }
+  100% { opacity: 0.85; transform: scale(1); }
+}
+@keyframes cpl-ring-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.95; }
+}
+
+.cpl-bishop__star {
+  opacity: 0;
+  transform: scale(0.6);
+  animation: cpl-pop 380ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+@keyframes cpl-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Two crossed bars: cannot be taken, cannot take. */
+.cpl-bishop__bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 4px;
+  margin-left: -23%;
+  margin-top: -2px;
+  background: linear-gradient(90deg, transparent, rgb(200 220 255 / 0.95), transparent);
+  opacity: 0;
+  transform: scaleX(0.2) rotate(var(--cpl-r, 45deg));
+  animation: cpl-bar 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.cpl-bishop__bar--a { --cpl-r: 45deg; }
+.cpl-bishop__bar--b { --cpl-r: -45deg; }
+@keyframes cpl-bar {
+  0% { opacity: 0; transform: scaleX(0.2) rotate(var(--cpl-r, 45deg)); }
+  60% { opacity: 1; transform: scaleX(1.05) rotate(var(--cpl-r, 45deg)); }
+  100% { opacity: 0.9; transform: scaleX(1) rotate(var(--cpl-r, 45deg)); }
+}
+
+/* --- Oh No My Queen (GothamChess) ----------------------------------------- */
+/* Red panic into gold relief: the disaster that turns out fine. */
+
+.cpl-queen__panic {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 40%, rgb(255 120 96 / 0.34), transparent 58%);
+  opacity: 0;
+  animation: cpl-panic 420ms ease-out both;
+}
+@keyframes cpl-panic {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* The yank: she is dragged across the stage on an arc, not teleported. */
+.cpl-queen__star {
+  opacity: 0;
+  animation: cpl-yank 560ms cubic-bezier(0.3, 0.05, 0.2, 1) both;
+}
+@keyframes cpl-yank {
+  0% { opacity: 0; transform: translate(26%, -22%) scale(1.25) rotate(16deg); }
+  30% { opacity: 1; transform: translate(14%, -6%) scale(1.1) rotate(8deg); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+/* Shock pips fire out at the pieces that were attacking her. */
+.cpl-queen__pip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 999px;
+  background: rgb(255 233 176 / 0.95);
+  opacity: 0;
+  transform: rotate(var(--cpl-a, 45deg)) translateX(0);
+  animation: cpl-pip 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes cpl-pip {
+  0% { opacity: 0; transform: rotate(var(--cpl-a, 45deg)) translateX(0) scale(0.4); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--cpl-a, 45deg)) translateX(230%) scale(1); }
+}
+
+/* The clock gift, as one pip rising out of the settle. */
+.cpl-queen__tick {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 22%;
+  height: 3px;
+  margin-left: -11%;
+  background: linear-gradient(90deg, transparent, rgb(255 215 106 / 0.9), transparent);
+  opacity: 0;
+  animation: cpl-tick 700ms ease-out both;
+}
+@keyframes cpl-tick {
+  0% { opacity: 0; transform: translateY(0) scaleX(0.4); }
+  35% { opacity: 1; transform: translateY(-40%) scaleX(1); }
+  100% { opacity: 0; transform: translateY(-120%) scaleX(0.8); }
+}
+
+/* --- Family Game Night (Anna Cramling) ------------------------------------ */
+/* Warm lamp light, nothing hidden. */
+
+.cpl-family__lamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 84%;
+  height: 84%;
+  margin-left: -42%;
+  margin-top: -42%;
+  background: radial-gradient(circle at 50% 50%, rgb(255 214 150 / 0.4), transparent 60%);
+  opacity: 0;
+  transform: scale(0.6);
+  animation: cpl-lamp 620ms ease-out both;
+}
+@keyframes cpl-lamp {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 0.8; transform: scale(1); }
+}
+
+.cpl-family__star {
+  opacity: 0;
+  animation: cpl-clasp 560ms cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+@keyframes cpl-clasp {
+  0% { opacity: 0; transform: scale(1.3); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Both card fans flip face up: the mutual reveal. */
+.cpl-family__card {
+  position: absolute;
+  top: 56%;
+  width: 7%;
+  height: 15%;
+  border-radius: 2px;
+  background: linear-gradient(160deg, #fff4d6, #d9c4a0);
+  border: 1px solid rgb(74 58 34 / 0.7);
+  opacity: 0;
+  transform: rotateY(90deg) rotate(var(--cpl-r, 0deg));
+  animation: cpl-flip 460ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.cpl-family__card--l { left: 22%; transform-origin: bottom center; }
+.cpl-family__card--r { right: 22%; transform-origin: bottom center; }
+@keyframes cpl-flip {
+  0% { opacity: 0; transform: rotateY(90deg) rotate(var(--cpl-r, 0deg)); }
+  60% { opacity: 1; transform: rotateY(-8deg) rotate(var(--cpl-r, 0deg)); }
+  100% { opacity: 0.95; transform: rotateY(0deg) rotate(var(--cpl-r, 0deg)); }
+}
+
+/* --- Speedrun Protocol (Daniel Naroditsky) -------------------------------- */
+/* Forward pressure, in orange. */
+
+.cpl-speed__line {
+  position: absolute;
+  left: -20%;
+  top: var(--cpl-y, 50%);
+  width: 140%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgb(255 138 52 / 0.9) 40%, rgb(255 214 150 / 0.95) 55%, transparent);
+  opacity: 0;
+  transform: translateX(-40%) scaleX(0.6);
+  animation: cpl-rake 460ms cubic-bezier(0.3, 0.05, 0.2, 1) both;
+}
+@keyframes cpl-rake {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.6); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(40%) scaleX(1); }
+}
+
+.cpl-speed__star {
+  opacity: 0;
+  animation: cpl-pin 480ms cubic-bezier(0.2, 1.4, 0.35, 1) both;
+}
+@keyframes cpl-pin {
+  0% { opacity: 0; transform: scale(0.7) rotate(-14deg); }
+  70% { opacity: 1; transform: scale(1.05) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* The pressure does not stop when the strike does. */
+.cpl-speed__pulse {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgb(255 138 52 / 0.16), transparent 58%);
+  opacity: 0;
+  animation: cpl-pulse 1.6s ease-in-out both;
+}
+@keyframes cpl-pulse {
+  0%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+  70% { opacity: 0.4; }
+}
+
+/* --- Chat Picks ----------------------------------------------------------- */
+/* Cool chat blue, then a hard stamp. */
+
+.cpl-chat__line {
+  position: absolute;
+  left: 12%;
+  top: var(--cpl-y, 50%);
+  width: var(--cpl-w, 40%);
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(143 168 224 / 0.85);
+  opacity: 0;
+  transform: translateY(60%);
+  animation: cpl-scroll 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes cpl-scroll {
+  0% { opacity: 0; transform: translateY(60%); }
+  40% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0.25; transform: translateY(-30%); }
+}
+
+.cpl-chat__star {
+  opacity: 0;
+  animation: cpl-seize 440ms cubic-bezier(0.2, 1.3, 0.35, 1) both;
+}
+@keyframes cpl-seize {
+  0% { opacity: 0; transform: scale(0.5) translateY(30%); }
+  70% { opacity: 1; transform: scale(1.08) translateY(-4%); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* One of them is chosen, and stamped over the board. */
+.cpl-chat__stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 46%;
+  margin-left: -23%;
+  margin-top: -23%;
+  border: 4px solid rgb(143 168 224 / 0.9);
+  border-radius: 2px;
+  opacity: 0;
+  transform: scale(1.8) rotate(-8deg);
+  animation: cpl-stamp 520ms cubic-bezier(0.25, 1, 0.3, 1) both;
+}
+@keyframes cpl-stamp {
+  0% { opacity: 0; transform: scale(1.8) rotate(-8deg); }
+  55% { opacity: 1; transform: scale(0.94) rotate(-3deg); }
+  100% { opacity: 0; transform: scale(1) rotate(-3deg); }
+}
+
+/* --- Motion off ----------------------------------------------------------- */
+/* Animations off in Settings, and reduced motion: hold the still frame so the
+ * play still reads, rather than skipping the scene entirely. */
+html[data-anim="off"] .cpl-stage *,
+html[data-anim="off"] .cpl-stage {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cpl-stage *,
+  .cpl-stage {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -130,6 +130,8 @@ export type {
 
 /** Metadata for a funny card. Unlike a hex, the category is chosen per card. */
 export type FunnyMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

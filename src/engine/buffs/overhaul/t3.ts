@@ -308,8 +308,8 @@ export const OVERHAUL_T3: Buff[] = [
     {
       id: "ov_backseat_gamer",
       name: "Backseat Gamer",
-      description:
-        "A suggested move flashes on your opponent's board. If their next move is anything else, you gain 13 seconds for being ignored, one of your pawns advances one square for free, and you gain one draft reroll. In untimed games only the free pawn step and the reroll apply.",
+      description: "A suggested move flashes on your opponent's board. If their next move is anything else, you gain 13 seconds, one of your pawns advances one square for free, and you gain a draft reroll. In untimed games only the free pawn step and the reroll apply.",
+      tip: "They almost never play the suggestion, so treat the payout as the default.",
       tier: 3,
       category: "info",
       icon: "Gamepad2",
@@ -502,8 +502,8 @@ export const OVERHAUL_T3: Buff[] = [
     {
       id: "ov_tax_audit",
       name: "Tax Audit",
-      description:
-        "Audit both armies: your opponent loses 15 seconds for every piece they have beyond your piece count, up to 50. If they are not ahead in material, the audit finds nothing. Either way you gain one draft reroll and see the tier of your opponent's next draft. In untimed games only the reroll and the reveal apply.",
+      description: "Audit both armies: your opponent loses 15 seconds for every piece they hold beyond your count, up to 50. If they are not ahead in material the audit finds nothing. Either way you gain a reroll and see their next draft's tier. Untimed: reroll and reveal only.",
+      tip: "A comeback card in timed games: the further behind you are, the more it takes.",
       tier: 3,
       category: "tempo",
       icon: "Calculator",

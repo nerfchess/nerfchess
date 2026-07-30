@@ -24,6 +24,7 @@ import {
   houseSeedRatingForMode,
   loadHouseIdentityOverrides,
 } from "@/lib/server/bots";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -331,5 +332,11 @@ export async function POST(request: Request) {
     );
   }
 
+  notifyModEvent({
+    kind: "house_persona_edited",
+    actor: guard.user.username,
+    target: persona.name,
+    detail: "identity or rating changed",
+  });
   return NextResponse.json(await personasView(db));
 }

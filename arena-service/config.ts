@@ -28,6 +28,9 @@ export interface ArenaConfig {
   // seen (a /lobby fetch or a live spectator socket) within this window —
   // replaces the DO's stand-down signal.
   presenceTtlMs: number;
+  // Per-move search ceiling for FILLER games, in ms. See ARENA_SEARCH_CEILING_MS
+  // in loadConfig for why this exists and why it is safe to cap.
+  searchCeilingMs: number;
   // Tier 3 / M1: absolute URL of the Worker archive route
   // (https://nerfchess.com/api/arena/end). When set, finished games archive
   // there — a plain Worker request, no DO wake — and the DO is only notified
@@ -46,6 +49,20 @@ export function loadConfig(): ArenaConfig {
     // or smaller boxes. Affordable because thinkMult decimates per-game pacing,
     // exactly like the DO's filler multiplier.
     maxGames: Number(process.env.ARENA_MAX_GAMES ?? String(HOUSE_VS_HOUSE_CAP)),
+    // The arena runs every search on ONE Node event loop, so total CPU is
+    // games/meanDelay x meanSearch. At the 2026-07 numbers (120 games,
+    // thinkMult 8 giving a ~23s mean delay, so ~5 searches/second) an uncapped
+    // search would want ~1.2 CPU-seconds per wall second at the roster's mean
+    // budget, and far more in the elite-vs-elite pairings the filler matcher
+    // makes: the loop would fall behind its own 1s tick.
+    //
+    // Capping is safe because BOT-VS-BOT FILLER IS NEVER RATED OR ARCHIVED
+    // (owner rule; see the ArenaEndRecord comment in worker.ts). Nothing here
+    // feeds a rating, a profile, or a game history, so the search budget is
+    // purely how good the games on TV look. Human-facing bot moves are
+    // untouched: those go through engine-service with its own 900ms ceiling.
+    // 300ms keeps ~0.7 CPU-seconds per wall second at 120 games.
+    searchCeilingMs: Math.max(20, Number(process.env.ARENA_SEARCH_CEILING_MS ?? "300")),
     thinkMult: Math.max(1, Number(process.env.ARENA_THINK_MULT ?? String(HOUSE_FILLER_THINK_MULTIPLIER))),
     enabled: (process.env.ARENA_ENABLED ?? "true") !== "false",
     port: Number(process.env.PORT ?? "8788"),
