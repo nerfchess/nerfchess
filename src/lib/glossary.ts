@@ -223,6 +223,39 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     related: ["activated", "free-action", "instant", "passive"],
   },
   {
+    term: "One use",
+    slug: "one-use",
+    group: "Playing a card",
+    // Deliberately NOT "once": it is everywhere in ordinary card prose ("once
+    // every 3 turns", "judged once") where it does not mean one-use, and
+    // underlining it there would mislead rather than help.
+    aliases: ["one-use", "single use"],
+    def: "The card fires a single time and is then spent, staying in your dock as a record.",
+    detail:
+      "Almost every card in the library is one use: the moment its effect resolves it is marked spent and can never fire again. A few carry two or three charges instead, and those say so on the card. A spent card is not discarded, it stays visible so both the game log and the end-of-game reveal can show what you played.",
+    related: ["activated", "instant", "dock"],
+  },
+  {
+    term: "Dock",
+    slug: "dock",
+    group: "Playing a card",
+    aliases: ["docks", "hand"],
+    def: "The tray beside the board holding the cards you have drafted, spent and unspent.",
+    detail:
+      "Cards you hold sit in the dock; activated ones are clicked from there, passives simply sit and work, and spent ones stay put greyed out. A card you hold unspent is never offered to you again in a later draft.",
+    related: ["activated", "passive", "one-use"],
+  },
+  {
+    term: "Offer",
+    slug: "offer",
+    group: "The draft",
+    aliases: ["offers", "offered"],
+    def: "The set of cards a draft deals you to choose from, normally two.",
+    detail:
+      "A prep effect widens the next offer to three cards, take-both lets you keep every card in it, and banking a skip rolls the next offer one tier higher. Banking an offer that contained a tier-8 card promotes your next one into a guaranteed apex pair.",
+    related: ["draft", "prep", "take-both", "bank"],
+  },
+  {
     term: "Signature animation",
     slug: "signature-animation",
     group: "Playing a card",
@@ -353,6 +386,85 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
   },
 
   // --- Effects on the board ----------------------------------------------------
+  {
+    term: "Marked",
+    slug: "marked",
+    group: "Effects on the board",
+    aliases: ["mark", "marks", "flash", "flashes", "flashed", "lit"],
+    def: "A square lit up as a warning: it is purely visual and changes no rule.",
+    detail:
+      "Marking and flashing are the same thing under the hood, which is why some cards use both words in one sentence: the square glows until your opponent plays their reply, then fades. Nothing on a marked square is frozen, protected, or forbidden. Watchtower-style cards use it to point at a piece that just did something (the first enemy knight to move, the first capture) and usually pay you something real alongside it, like a reroll or five seconds of clock.",
+    example: "Hoofbeat Log marks the first enemy knight to move and flashes every piece of yours it could take.",
+    related: ["strike", "capture"],
+  },
+  {
+    term: "Curse",
+    slug: "curse",
+    group: "Effects on the board",
+    aliases: ["curses", "cursed"],
+    def: "Everyday word for a hex: an effect cast on your opponent to hamper them.",
+    related: ["hex", "freeze", "walnut"],
+  },
+  {
+    term: "Stun",
+    slug: "stun",
+    group: "Effects on the board",
+    aliases: ["stuns", "stunned"],
+    def: "A freeze wearing a different coat: the piece cannot move until the timer runs out.",
+    detail:
+      "Stun, glue, sleep, tar and web are all the same mechanic as a freeze, painted differently so two 'stuck' cards never look alike. Kings are never stunned.",
+    related: ["freeze", "forced-pass"],
+  },
+  {
+    term: "Nullify",
+    slug: "nullify",
+    group: "Effects on the board",
+    aliases: ["nullified", "nullifies"],
+    def: "To kill a card's effect: a nullified card is held but does nothing.",
+    detail:
+      "Nullify can arrive before or after the fact: some cards make your opponent's next drafted cards land dead, others reach into their dock and switch off something they already hold. A nullified passive stops working immediately and a nullified activated card can never be fired.",
+    related: ["blocked-draft", "passive", "dock"],
+  },
+  {
+    term: "Doomed",
+    slug: "doomed",
+    group: "Effects on the board",
+    aliases: ["doom", "dooms"],
+    def: "A piece on a countdown: when the timer hits zero it dies.",
+    detail:
+      "Doom timers come from trade-off cards that lend you something now and take a piece later, and from death-curse cards aimed at the enemy. The board shows the countdown on the square. A doomed piece is reclaimed rather than captured, so it does not feed the other player's revival pool, and a king is never doomed.",
+    related: ["freeze", "capture"],
+  },
+  {
+    term: "Trap",
+    slug: "trap",
+    group: "Effects on the board",
+    aliases: ["traps", "trapped"],
+    def: "A hazard placed on an empty square that triggers on whoever steps there.",
+    detail:
+      "Mines, sinkholes, trapdoors, bear traps and banana peels are all traps. Every trap is public from the moment it lands, marked with its own icon, so both players can see and avoid it: nothing here is hidden information.",
+    related: ["bonk", "freeze"],
+  },
+  {
+    term: "Summon",
+    slug: "summon",
+    group: "Effects on the board",
+    aliases: ["summons", "summoned"],
+    def: "To create a new piece straight onto an empty square.",
+    detail:
+      "Different from a drop, which spends your turn placing a piece you already hold in your pocket. A summon conjures the piece as part of the card's own effect. Nothing ever summons a king.",
+    related: ["drop", "pocket"],
+  },
+  {
+    term: "Bind",
+    slug: "bind",
+    group: "Effects on the board",
+    aliases: ["binds", "bound", "binding"],
+    def: "To tie an effect to one chosen piece, so the effect follows that piece until it dies.",
+    detail:
+      "Bound pieces are how the longer-lived cards stay honest: you pick the piece when the card fires, the effect (a new way to move, a standing guard, an aura) rides along as it moves, and capturing the piece ends the effect with it.",
+    related: ["shield", "uncapturable"],
+  },
   {
     term: "Freeze",
     slug: "freeze",
@@ -534,6 +646,60 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     slug: "rim",
     group: "Board vocabulary",
     def: "The outer edge of the board: the a- and h-files and the 1st and 8th ranks.",
+  },
+  {
+    term: "Your half",
+    slug: "your-half",
+    group: "Board vocabulary",
+    aliases: ["my half", "their half", "half of the board", "own half", "enemy half"],
+    def: "The four ranks nearest you: ranks 1 to 4 for White, ranks 5 to 8 for Black.",
+    detail:
+      "The board splits down the middle and each player owns the side their pieces started on, so \"your half\" means the same four ranks all game no matter where the pieces have got to.",
+    related: ["rank", "back-rank"],
+  },
+  {
+    term: "Adjacent",
+    slug: "adjacent",
+    group: "Board vocabulary",
+    aliases: ["adjacent to", "beside", "next to"],
+    def: "One king step away, so any of the up to eight squares touching a square, diagonals included.",
+    related: ["chebyshev-distance"],
+  },
+  {
+    term: "Army",
+    slug: "army",
+    group: "Board vocabulary",
+    def: "All of one player's pieces, the king included.",
+    detail:
+      "Cards that say \"your whole army\" apply to every piece you have on the board at that moment, and do not cover pieces you gain afterwards unless the card says so. Whole-army shields are the one shield kind that is never pruned as pieces move, though they still never protect the king.",
+    related: ["shield", "king-safe"],
+  },
+  {
+    term: "Leap",
+    slug: "leap",
+    group: "Board vocabulary",
+    aliases: ["leaps", "leaping"],
+    def: "To jump straight to a square, ignoring anything standing in between.",
+    detail:
+      "A knight is the standard leaper. Cards that grant leaps are giving a piece a jump it cannot be blocked out of, which is very different from a slide: a slider is stopped by the first piece in its path.",
+    related: ["amazon", "minor-piece"],
+  },
+  {
+    term: "Shuffle",
+    slug: "shuffle",
+    group: "Board vocabulary",
+    aliases: ["shuffles", "shuffling"],
+    def: "To crawl one square at a time, the only movement a walnut or petrified piece keeps.",
+    related: ["walnut", "freeze"],
+  },
+  {
+    term: "Tempo",
+    slug: "tempo",
+    group: "Board vocabulary",
+    def: "A single move's worth of time; to gain tempo is to get a move's value for free.",
+    detail:
+      "Extra-move and skip cards are the blunt version of this, buying you a whole move that your opponent does not get to answer. Cards that cost you your turn are spending tempo to buy their effect.",
+    related: ["extra-move", "skip", "turn-cost"],
   },
   {
     term: "File",
