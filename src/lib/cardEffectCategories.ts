@@ -205,7 +205,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
       /every (enemy |their )?(pawn|knight|bishop|rook|piece)s? [^.]{0,120}(removed|destroyed|captured|blown off|swept off|banned from the board)/,
       /(up to )?(two|three|four) [^.]{0,40}(are|is) (permanently )?banned from the board/,
       /(clear|clears|sweep|sweeps|purge|purges|destroy|destroys)\w* (all|every|each|up to)/,
-      /(remove|destroy|erase|clear|wipe)\w* up to (two|three|four|five|\d+)/,
+      /(remov|destroy|eras|clear|wip|captur|kill)\w* up to (two|three|four|five|\d+)/,
       /wink out of existence/,
       /devour/,
       /every [^.]{0,120}(is|are) consumed/,
@@ -312,7 +312,7 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
     blurb: "A piece already taken off the board returns to play.",
     patterns: [
       /(revive|resurrect|reincarnat)/,
-      /(captured|fallen|lost|dead) [^.]{0,30}(returns?|comes? back|is restored|rejoins?)/,
+      /(captured|fallen|lost|dead) [^.]{0,70}(returns?|comes? back|is restored|rejoins?)/,
       /returns? (at once |immediately )?to (the board|an empty square|the square|your)/,
       /best captured piece/,
       /(comes?|comes back) back (to|from) (the board|the dead)/,
@@ -425,6 +425,23 @@ export const EFFECT_CATEGORY_DEFS: readonly EffectCategoryDef[] = [
   },
 
   // --- Immobilize -----------------------------------------------------------
+  {
+    id: "freeze-cleanse",
+    label: "Frees your own frozen pieces",
+    blurb:
+      "Thaws, cleanses and jailbreaks: the counterplay to the freeze family, not a member of it.",
+    // Sits above the freeze rungs on purpose. Every one of these was filed as
+    // APPLYING a freeze because its text is full of freeze words, which meant a
+    // buff to the freeze family would have buffed its own answer alongside it.
+    patterns: [
+      /(one|every one|all|any) of your (own )?[^.]{0,40}(frozen|stuck|petrified|freeze)/,
+      /(thaw|thaws|cleanse|cleanses|unfreeze|unfreezes)\w* (one|every|all|any|your)/,
+      /free all of your own/,
+      /pieces? thaws? at once/,
+    ],
+    // A nerf is a handicap: it never hands its owner the cure.
+    when: (c) => c.kind === "buff",
+  },
   {
     id: "mass-freeze",
     label: "Freezes the whole enemy army",

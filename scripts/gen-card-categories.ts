@@ -195,6 +195,21 @@ const EXPECTED: Record<string, string> = {
   "buff:board_quake": "piece-nudge-reposition",
   "buff:ww_muster_the_ranks": "piece-nudge-reposition",
 
+  // Undoing a freeze is the counterplay to the freeze family, not a member of
+  // it. All six of these were filed as APPLYING a freeze.
+  "buff:bn4_warm_soup": "freeze-cleanse",
+  "buff:bn4_glass_of_water": "freeze-cleanse",
+  "buff:bn4_kettle_on": "freeze-cleanse",
+  "buff:time_rewind": "freeze-cleanse",
+  "buff:bn4_grandmas_cookies": "freeze-cleanse",
+  "buff:bn4_prison_break": "freeze-cleanse",
+  // ...while these still apply one, despite saying "thaws".
+  "buff:hx4_hundred_year_nap": "single-piece-freeze",
+  "buff:absolute_zero": "mass-freeze",
+  // "removing up to two enemy pieces": "remove" is not a prefix of "removing".
+  "buff:we_arc_lightning": "mass-removal",
+  "buff:chain_lightning": "mass-removal",
+
   // Flavour names that read as a mechanic (these go through the override table).
   "buff:withered_hands": "capture-denial",
   "buff:royal_summons": "forced-move",
