@@ -19,6 +19,7 @@
     "test:arena-seat": "npx -y tsx scripts/test-arena-seat.ts",
     "test:rules": "npm run server:build && node scripts/gen-card-icons.mjs --check && node scripts/test-hexes.cjs && node scripts/check-sig-plugins.cjs",
     "test:nerfs": "npm run server:build && node scripts/test-nerfs.cjs",
+    "test:nerf-visuals": "npx -y tsx scripts/test-nerf-visuals.ts",
     "test:passive-registry": "npx -y tsx scripts/test-passive-registry.ts",
     "test:animations": "npx -y tsx scripts/audit-animations.ts",
     "test:emdash": "npx -y tsx scripts/check-emdash.ts",

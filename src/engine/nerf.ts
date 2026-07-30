@@ -43,7 +43,14 @@ export interface Nerf {
   // Hooks for visualization
   visual?: (state: NerfState, ctx: GameContext) => {
     fogged?: boolean;
-    waterRank?: number; // ranks 1..8 underwater
+    /** Flooded squares, as explicit square indices. Deliberately NOT a rank
+     * number: the flood rises from the OWNER's back rank, so a rank alone
+     * cannot be painted without re-deriving the colour mirroring in the view.
+     * That is exactly what went wrong before — Rising Water's rule mirrored by
+     * colour while the board painted white's geometry for both sides, washing
+     * a black-side flood over rank 1 (and so over a corner rook). The nerf now
+     * hands over the same squares its own move filter uses. */
+    waterSquares?: number[];
     duckSquare?: number;
     bannedSquares?: number[];
     highlightSquares?: number[];

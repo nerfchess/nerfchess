@@ -188,7 +188,10 @@ import {
 
 interface Visual {
   fogged?: boolean;
-  waterRank?: number;
+  /** Flooded squares, straight from the nerf's own move filter. Never a rank
+   * number: the flood is colour-mirrored, so deriving it here painted the wrong
+   * end of the board for the black side. */
+  waterSquares?: number[];
   duckSquare?: number;
   bannedSquares?: number[];
   highlightSquares?: number[];
@@ -1280,6 +1283,8 @@ interface SquareEnv {
   moveRisks: Map<string, MoveRisk> | undefined;
   castleHintSquares: Set<Square>;
   bannedSquares: Set<Square>;
+  /** Flooded squares (Rising Water), already colour-resolved by the nerf. */
+  waterSquares: Set<Square>;
   visual: Visual | undefined;
   lastMove: Move | null | undefined;
   highlightLastMove: boolean;
@@ -1367,6 +1372,7 @@ const BoardSquare = React.memo(function BoardSquare({
     moveRisks,
     castleHintSquares,
     bannedSquares,
+    waterSquares,
     visual,
     lastMove,
     highlightLastMove,
@@ -1421,7 +1427,7 @@ const BoardSquare = React.memo(function BoardSquare({
             const targetRisk = isTarget ? riskOf(targets[sq], moveRisks) : null;
             const banned = bannedSquares.has(sq);
             const isDuck = visual?.duckSquare === sq;
-            const underwater = visual?.waterRank ? RANK(sq) < visual.waterRank : false;
+            const underwater = waterSquares.has(sq);
             const lastFrom = lastMove?.from === sq;
             const lastTo = lastMove?.to === sq;
             const isForced = highlightSquares.has(sq);
@@ -2773,6 +2779,7 @@ export function Board({
 
   const orderedSquares = orientation === "w" ? ORDERED_SQUARES_WHITE : ORDERED_SQUARES_BLACK;
   const bannedSquares = useMemo(() => new Set(visual?.bannedSquares ?? []), [visual?.bannedSquares]);
+  const waterSquares = useMemo(() => new Set(visual?.waterSquares ?? []), [visual?.waterSquares]);
   const frozenSquares = useMemo(() => new Set(visual?.frozenSquares ?? []), [visual?.frozenSquares]);
   // Green shield tint squares. Recompute from the LIVE effect state every
   // render so a stale square can never keep the tint lit: a shield square is
@@ -4089,6 +4096,7 @@ export function Board({
       moveRisks,
       castleHintSquares,
       bannedSquares,
+      waterSquares,
       visual,
       lastMove,
       highlightLastMove,
@@ -4140,6 +4148,7 @@ export function Board({
       moveRisks,
       castleHintSquares,
       bannedSquares,
+      waterSquares,
       visual,
       lastMove,
       highlightLastMove,

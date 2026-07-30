@@ -438,17 +438,35 @@ export const RISING_WATER: Nerf = db({
   filterMoves: (moves, state, ctx) => {
     const s = state as { level: number };
     if (s.level <= 0) return moves;
-    // Water rises from the owner's own back rank, mirrored by color so the
-    // handicap is symmetric: white floods rank 1 upward, black floods rank 8 downward.
-    const underwater =
-      ctx.me === "w"
-        ? (sq: number) => RANK(sq) < s.level
-        : (sq: number) => RANK(sq) > 7 - s.level;
+    const underwater = risingWaterTest(s.level, ctx.me);
     const dry = moves.filter((m) => !underwater(m.from) && !underwater(m.to));
     return dry.length ? dry : moves;
   },
-  visual: (state) => ({ waterRank: (state as { level: number }).level }),
+  // The board paints exactly the squares the filter above forbids. Handing over
+  // the square list (rather than a bare rank) is what keeps the two in step:
+  // the paint used to re-derive the geometry as `RANK(sq) < level` for BOTH
+  // colours, so a black-side flood tinted rank 1 — the opposite end of the
+  // board from the water — and washed cyan over a corner rook.
+  visual: (state, ctx) => ({
+    waterSquares: risingWaterSquares((state as { level: number }).level, ctx.me),
+  }),
 });
+
+/** Is this square underwater for `me` at this flood level? Water rises from the
+ * owner's own back rank, mirrored by colour so the handicap is symmetric: white
+ * floods rank 1 upward, black floods rank 8 downward. */
+function risingWaterTest(level: number, me: Color): (sq: number) => boolean {
+  return me === "w" ? (sq: number) => RANK(sq) < level : (sq: number) => RANK(sq) > 7 - level;
+}
+
+/** Every flooded square for `me`, as board indices. */
+function risingWaterSquares(level: number, me: Color): number[] {
+  if (level <= 0) return [];
+  const test = risingWaterTest(level, me);
+  const out: number[] = [];
+  for (let sq = 0; sq < 64; sq++) if (test(sq)) out.push(sq);
+  return out;
+}
 
 export const FOG_OF_WAR: Nerf = db({
   id: "fog_of_war",
