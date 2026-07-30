@@ -1614,6 +1614,9 @@ export type SigVisual =
   | "bramblecage" // wall_of_thorns hex (was thornwall): brambles creep in and knit a cage
   | "combinedpush" // ww_combined_arms (was reinforce): infantry, cavalry and siege converge in one push
   | "watchtower"; // ww_forward_outpost (was reinforce): a watchtower rises and lights its signal fire
+import type { SigRole } from "./sigPlugins";
+export type { SigRole };
+
 export type SigOrdering = "file" | "sweep" | "octagon" | "line" | "radial";
 export type SigSoundKey =
   | "nova"
@@ -2466,7 +2469,7 @@ export function BrainrotFigure({ id, className = "" }: { id: string; className?:
 // animation layer stays empty rather than crashing — sounds, zones and every
 // other play cue still run off the eager config.
 
-type SignatureVisualProps = { visual: SigVisual; role: "lead" | "target"; delayMs: number };
+type SignatureVisualProps = { visual: SigVisual; role: SigRole; delayMs: number };
 
 let LoadedSignatureVisual: React.ComponentType<SignatureVisualProps> | null = null;
 const LazySignatureVisual = React.lazy(() => import("./sigVisuals"));

@@ -30,9 +30,25 @@
 import type { ComponentType } from "react";
 import type { SignatureConfig } from "./BoardEffects";
 
+/**
+ * Which beat of a card's life this render is playing.
+ *
+ *   "lead"     the play's board-scale flourish, on the cast square
+ *   "target"   the per-victim hit, on each affected square
+ *   "entrance" the card ARRIVING in a hand (draft pick, steal, grant), before
+ *              it is ever played. Reduced scale, no board takeover: it should
+ *              read as the same card as the play without pretending to BE the
+ *              play. A scene that does not handle it falls back to its target
+ *              cut, which is correct but generic; every new scene should give
+ *              the entrance its own beat.
+ */
+export type SigRole = "lead" | "target" | "entrance";
+
 export interface SigPlugin {
   config: Omit<SignatureConfig, "visual">;
-  Render: ComponentType<{ lead: boolean; delayMs: number }>;
+  /** `lead` is kept as a derived alias of `role === "lead"` so the modules
+   *  written before entrances existed keep working unchanged. */
+  Render: ComponentType<{ lead: boolean; role: SigRole; delayMs: number }>;
 }
 
 /** Full SignatureConfig per plugin card id, visual keyed back to the merged

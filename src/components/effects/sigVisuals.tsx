@@ -21,6 +21,7 @@ import {
   type SigVisual,
   SparkStar,
 } from "./BoardEffects";
+import type { SigRole } from "./sigPlugins";
 // Plug-in signature visuals (`x:<key>`): the merged plugin registry rides in
 // this same lazy chunk (sigPluginsMerged.tsx pulls all six plugin modules and
 // publishes their configs into the eager sigPlugins registry as a side
@@ -12630,7 +12631,7 @@ export default function SignatureVisual({
   delayMs,
 }: {
   visual: SigVisual;
-  role: "lead" | "target";
+  role: SigRole;
   delayMs: number;
 }) {
   const lead = role === "lead";

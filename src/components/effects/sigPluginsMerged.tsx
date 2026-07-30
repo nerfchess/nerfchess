@@ -9,7 +9,7 @@
 // side effect, after which Board resolves plugin cards exactly as before the
 // split.
 
-import { PLUGIN_IDS, PLUGIN_SIGNATURES, type SigPlugin } from "./sigPlugins";
+import { PLUGIN_IDS, PLUGIN_SIGNATURES, type SigPlugin, type SigRole } from "./sigPlugins";
 import { PLAYS as GOD_PLAYS } from "./godPlays";
 import { PLAYS as FUNNY_PLAYS } from "./funnyPlays";
 import { PLAYS as GREAT_PLAYS } from "./greatPlays";
@@ -64,10 +64,18 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
-/** SignatureOverlay's default-case hook: render an `x:<key>` plugin visual. */
-export function renderPluginVisual(key: string, role: "lead" | "target", delayMs: number) {
+/** SignatureOverlay's default-case hook: render an `x:<key>` plugin visual.
+ *  `lead` is passed alongside `role` as a derived alias so scenes written
+ *  before entrances existed keep working untouched. */
+export function renderPluginVisual(key: string, role: SigRole, delayMs: number) {
   const p = MERGED[key];
   if (!p) return null;
   const R = p.Render;
-  return <R lead={role === "lead"} delayMs={delayMs} />;
+  return <R lead={role === "lead"} role={role} delayMs={delayMs} />;
+}
+
+/** True when a card has hand-made art at all — the entrance layer asks before
+ *  falling back to its category arrival. */
+export function hasPluginVisual(key: string): boolean {
+  return MERGED[key] != null;
 }
