@@ -60,11 +60,14 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   g17HeraldPlays: () => import("./g17HeraldPlays"),
   g19HorsePlays: () => import("./g19HorsePlays"),
   g20RampartPlays: () => import("./g20RampartPlays"),
+  g21KeepPlays: () => import("./g21KeepPlays"),
   g22VeilPlays: () => import("./g22VeilPlays"),
   g24RegaliaPlays: () => import("./g24RegaliaPlays"),
+  g25CourtPlays: () => import("./g25CourtPlays"),
   g26ShieldPlays: () => import("./g26ShieldPlays"),
   g27ThornPlays: () => import("./g27ThornPlays"),
   g29RallyPlays: () => import("./g29RallyPlays"),
+  g30ReachPlays: () => import("./g30ReachPlays"),
   g31ChancePlays: () => import("./g31ChancePlays"),
 };
 // </plugin-modules:generated>

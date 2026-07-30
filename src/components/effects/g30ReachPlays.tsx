@@ -270,7 +270,8 @@ function HarborOars({ role, delayMs }: SceneProps) {
       {/* tell: the coxswain's course, called down the whole line */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.16), background: "#fdf0cf" })} />
       {/* strike: the hull runs the real length of the vector */}
-      <svg viewBox="0 0 24 12" className="g30-run absolute block" style={st({ ...d(delayMs, 250), ...box(1.9, 0.95), filter: "drop-shadow(0 0 4px rgba(111,183,200,0.8))" })}>
+      {/* sized to exactly ONE CELL, so translateX(--fx-len * 100%) is cells */}
+      <svg viewBox="0 0 24 12" className="g30-run absolute block" style={st({ ...d(delayMs, 250), ...box(1, 0.5), filter: "drop-shadow(0 0 4px rgba(111,183,200,0.8))" })}>
         <path d="M1 4h20l2 2.4-3.4 3.6H4.4z" fill="#12303a" stroke="#6fb7c8" strokeWidth="1.1" {...SJ} />
         <path d="M11.4 4V0.8" stroke="#fdf0cf" strokeWidth="1.2" {...SJ} />
       </svg>
@@ -809,8 +810,11 @@ function QuicksilverBead({ role, delayMs }: SceneProps) {
     <AimLead frame={<Frame base={delayMs} tone="rgba(184,196,204,0.22)" />}>
       {/* tell: the channel is scribed, exactly as far as she may run */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.2), background: "#b8c4cc" })} />
-      {/* strike: the bead runs the real length of the line */}
-      <span className="g30-run absolute block" style={st({ ...d(delayMs, 240), ...box(0.72, 0.72), borderRadius: "50%", background: "radial-gradient(circle at 34% 30%, #fff4e2, #1b2126 84%)" })} />
+      {/* strike: the bead runs the real length of the line (one-cell body) */}
+      <svg viewBox="0 0 24 24" className="g30-run absolute block" style={st({ ...d(delayMs, 240), ...box(1, 1) })}>
+        <circle cx="12" cy="12" r="5.8" fill="#b8c4cc" stroke="#1b2126" strokeWidth="1.1" />
+        <circle cx="10.2" cy="9.8" r="1.9" fill="#fff4e2" />
+      </svg>
       {/* the elbow: the one ninety-degree turn she is allowed */}
       <span className="g30-elbow absolute block" style={st({ ...d(delayMs, 430), ...farEnd(0.2, 3), background: "linear-gradient(180deg, rgba(184,196,204,0), #b8c4cc, rgba(184,196,204,0))" })} />
       {/* the bead goes on off the corner */}
@@ -929,7 +933,7 @@ function LeakyQuiver({ role, delayMs }: SceneProps) {
       {/* tell: the range she means to shoot, called the whole way */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.14), background: "#f6ecc9" })} />
       {/* strike: the arrow flies, and stops at four cells however long the line */}
-      <svg viewBox="0 0 24 24" className="g30-short absolute block" style={st({ ...d(delayMs, 250), ...box(1.3, 0.8), filter: "drop-shadow(0 0 3px rgba(246,236,201,0.7))" })}>
+      <svg viewBox="0 0 24 24" className="g30-short absolute block" style={st({ ...d(delayMs, 250), ...box(1, 0.62), filter: "drop-shadow(0 0 3px rgba(246,236,201,0.7))" })}>
         {arrow}
       </svg>
       {/* the split quiver, seam open */}
@@ -1121,7 +1125,7 @@ function CraneJib({ role, delayMs }: SceneProps) {
         <path d="M0 2h48M0 6h48M0 2l6 4M6 2l6 4M12 2l6 4M18 2l6 4M24 2l6 4M30 2l6 4M36 2l6 4M42 2l6 4" stroke="#e0a83c" strokeWidth="1" {...SJ} />
       </svg>
       {/* the hook runs out the whole length of the jib */}
-      <svg viewBox="0 0 24 24" className="g30-hook absolute block" style={st({ ...d(delayMs, 400), ...box(0.9, 1.6, 0, 0.9) })}>
+      <svg viewBox="0 0 24 24" className="g30-hook absolute block" style={st({ ...d(delayMs, 400), ...box(1, 1.8, 0, 0.95) })}>
         <path d="M12 1v10a5 5 0 1 1-6 4.6" fill="none" stroke="#ffeec6" strokeWidth="2.8" {...SJ} />
       </svg>
       {/* the counterweight goes the other way, as it must */}
@@ -1221,7 +1225,7 @@ function PaintersLift({ role, delayMs }: SceneProps) {
       {/* the rope pays out exactly as far as she is going */}
       <span className="g30-rope2 absolute block" style={st({ ...d(delayMs, 220), ...lane(0.22, -0.5), background: "linear-gradient(90deg, #8fb2a0, rgba(143,178,160,0.2))" })} />
       {/* strike: the cradle rides the vector, straight past the obstruction */}
-      <svg viewBox="0 0 24 24" className="g30-run absolute block" style={st({ ...d(delayMs, 300), ...box(1.5, 1.1) })}>
+      <svg viewBox="0 0 24 24" className="g30-run absolute block" style={st({ ...d(delayMs, 300), ...box(1, 0.74) })}>
         <path d="M1.6 8.4h20.8v9.2H1.6z" fill="#1a2620" stroke="#8fb2a0" strokeWidth="1.4" />
         <path d="M5.4 8.4V2M18.6 8.4V2" stroke="#fdf2d6" strokeWidth="1.3" {...SJ} />
       </svg>

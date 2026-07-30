@@ -49,6 +49,13 @@ wrong:
 A fixed percentage of the stage does **not** mean the board any more. Anything
 that means "the whole board" goes in `BoardFrame`.
 
+**`AimStage` rotates everything inside it**, which is right for a beam, a
+trench or a ram, and wrong for a character: a town crier does not lie on his
+side to point at a victim. When a scene has both an upright subject and a
+travelling part, stage them separately - the subject in `BoardWideStage` on the
+cast square, only the travelling part in `AimStage`. The herald module
+(`g17HeraldPlays`) composes exactly that and is the reference for it.
+
 **Geometry reaches the art as inheriting CSS custom properties**, set on the
 wrapper span (never on the transform wrapper, whose `z-30` stacking-context fix
 is load-bearing):
