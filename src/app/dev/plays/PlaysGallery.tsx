@@ -23,6 +23,7 @@ import {
   boardCentreShift,
   cellPos,
   geoVars,
+  cellDelta,
   neutralGeo,
 } from "@/components/effects/geometry";
 import type { Square } from "@/engine/types";
@@ -99,9 +100,38 @@ const PROBE_SQUARES: { label: string; sq: number }[] = [
  * it aims. So each tile is a whole board with the scene mounted in one cell,
  * publishing the same geometry vars Board publishes.
  */
+/**
+ * A victim square for each probe, so the aim vars are REAL.
+ *
+ * neutralGeo reports angle 0 and length 0, which is correct for a play with no
+ * travel but makes an "aim" scene unreviewable: a beam sized to --fx-len is
+ * zero cells long and a rotation of --fx-ang points nowhere. Every probe now
+ * also names a target, so the gallery publishes the same angle and distance
+ * Board would for a real play.
+ */
+const PROBE_TARGET: Record<number, number> = {
+  0: 27, // a1 -> d4, a long diagonal
+  7: 31, // h1 -> h4, straight up the file
+  28: 60, // e4 -> e8
+  56: 35, // a8 -> d5
+  63: 32, // h8 -> a5, across the board
+};
+
 function BoardProbe({ row, sq, runKey }: { row: Row; sq: number; runKey: number }) {
   const { col, row: r } = cellPos(sq as Square, "w");
-  const geo = geoVars(neutralGeo(sq as Square, "w"));
+  const base = neutralGeo(sq as Square, "w");
+  const to = PROBE_TARGET[sq];
+  if (to != null) {
+    const d = cellDelta(sq as Square, to as Square, "w");
+    base.angDeg = d.angDeg;
+    base.len = d.dist;
+    if (d.dist > 0) {
+      base.aimX = d.dx / d.dist;
+      base.aimY = d.dy / d.dist;
+    }
+    base.n = 3;
+  }
+  const geo = geoVars(base);
   const anchored = row.anchor !== "board";
   // Board's own placement rule, mirrored: an anchored scene stays on its cell
   // and the stage clamps itself; a board-anchored one re-centres.
