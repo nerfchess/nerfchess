@@ -857,10 +857,17 @@ html[data-anim="off"] .dock-pocket-flash { animation: none; }
   animation-delay: var(--reveal-delay, 700ms);
 }
 
-/* Keep the real card above the tier edge but below the shine. The pick
-   dissolve layer is excluded: it positions itself absolutely over the
-   card. */
-.draft-fx > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve) {
+/* Keep the real card above the tier edge but below the shine. Every child that
+   positions itself ABSOLUTELY over the card must be excluded, because three
+   chained :not()s give this selector specificity (0,5,0) — it beats a plain
+   single-class rule like `.draft-sel-check { position: absolute }` and silently
+   drags the layer back into flow. That is exactly how the selection check badge
+   ended up rendering as an orange square nudged into the card's top-LEFT
+   corner instead of pinned outside its top-right: it was added after this rule
+   and never added to the list. Anything new with `position: absolute` belongs
+   here too. */
+.draft-fx
+  > :not(.draft-fx__glow):not(.draft-fx__sheen):not(.pick-dissolve):not(.draft-sel-check) {
   position: relative;
   z-index: 1;
 }

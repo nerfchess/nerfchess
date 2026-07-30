@@ -1505,8 +1505,16 @@ export function DraftOverlay({
         // player row, and at 20% the logo, avatar and clocks read straight
         // through the timer chip and the clock notice, which is the single
         // worst readability problem on the mobile draft.
+        // overflow-x-hidden is load-bearing, not tidiness: `overflow-y: auto`
+        // with overflow-x left at `visible` makes the browser COMPUTE
+        // overflow-x as `auto` too, so the decorations that deliberately bleed
+        // outside the panel (the wall torches at left/right -8px, the corner
+        // braces, every -2px ring glow) made this root horizontally
+        // scrollable on a phone. Any stray sideways scroll then dragged the
+        // whole panel off-centre and clipped the ember frame at both edges,
+        // which is exactly what the off-centre-frame report showed.
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overscroll-contain bg-black/70 sm:bg-black/20" +
+          "fixed inset-0 z-[55] overflow-y-auto overflow-x-hidden overscroll-contain bg-black/70 sm:bg-black/20" +
           (hidden ? " invisible" : "")
         }
       >
