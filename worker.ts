@@ -477,6 +477,15 @@ export interface Env {
   ARENA_INGEST_TOKEN?: string;
   ARENA_INGEST_ENABLED?: string;
   ARENA_LOBBY_ENABLED?: string;
+  // Moderator-activity notifications (see docs/mod-notifications.md and
+  // src/lib/server/modWebhook.ts). MOD_WEBHOOK_URL is a Google Apps Script /exec
+  // URL that appends a row to a spreadsheet; MOD_WEBHOOK_TOKEN is an optional
+  // shared secret the script checks so a leaked URL alone cannot write junk.
+  // Unset = notifications are off, silently. Declared here because this
+  // interface is the worker's whole env surface, even though only the Next.js
+  // side reads these two.
+  MOD_WEBHOOK_URL?: string;
+  MOD_WEBHOOK_TOKEN?: string;
   // Tier 2 / M4 cutover, reversible. When "true", the DO stops spawning its own
   // house-vs-house filler (the arena owns bot-vs-bot); bot-vs-human pickup and
   // house seeks stay on the DO. Off = the DO runs filler itself, as before.

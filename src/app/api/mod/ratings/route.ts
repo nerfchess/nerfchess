@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/auth";
 import { isRatingEditor } from "@/lib/godPanel";
 import { MODE_CATEGORIES } from "@/lib/speed";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -141,5 +142,11 @@ export async function POST(request: Request) {
       .bind(rating, SETTLED_RD, rating, target.id),
   ]);
 
+  notifyModEvent({
+    kind: "rating_set",
+    actor: guard.user.username,
+    target: target.username,
+    detail: String(rating),
+  });
   return NextResponse.json({ ok: true, username: target.username, rating });
 }

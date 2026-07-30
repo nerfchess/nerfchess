@@ -50,7 +50,14 @@
     // rewrites plaintext vars from this file on every deploy, so a dashboard-only
     // "true" gets clobbered back to the committed value each time. To stand the
     // DO filler back up, set this to "false" here and redeploy.
-    "ARENA_OWNS_FILLER": "true"
+    "ARENA_OWNS_FILLER": "true",
+    // Moderator-activity notifications (see docs/mod-notifications.md). Paste the
+    // Google Apps Script /exec URL here to switch them on; empty = off, silently.
+    // Like every plaintext var this MUST live in this file: `wrangler deploy`
+    // rewrites vars from here, so a dashboard-only value is clobbered on the next
+    // deploy. The optional shared secret is set separately:
+    //   wrangler secret put MOD_WEBHOOK_TOKEN
+    "MOD_WEBHOOK_URL": ""
     // Cloudflare Turnstile on the signup form. The public sitekey is a build-time
     // var (NEXT_PUBLIC_TURNSTILE_SITEKEY) set in the build environment, not here.
     // The secret is set with: wrangler secret put TURNSTILE_SECRET_KEY

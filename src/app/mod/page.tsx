@@ -11,9 +11,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { isGodPanelUser } from "@/lib/godPanel";
+import { OverviewTab } from "@/components/mod/OverviewTab";
 import { ModeBadge } from "@/components/ModeBadge";
 
-type Tab = "reports" | "games" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
+type Tab = "overview" | "reports" | "games" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
 
 interface Report {
   id: string;
@@ -101,7 +102,9 @@ async function postJson(path: string, body: unknown): Promise<{ ok: boolean; err
 
 export default function ModPage() {
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
-  const [tab, setTab] = useState<Tab>("reports");
+  // Opens on the overview, not the report queue: a moderator arriving cold needs
+  // "is anything wrong" before "here is the oldest report".
+  const [tab, setTab] = useState<Tab>("overview");
 
   useEffect(() => {
     fetchMe().then(setMe);
@@ -165,6 +168,7 @@ export default function ModPage() {
             <div className="mt-6 flex flex-wrap gap-1 border-b border-white/10 pb-px">
               {(
                 [
+                  ["overview", "Overview"],
                   ["reports", "Reports"],
                   ["games", "Games"],
                   ["chat", "Chat flags"],
@@ -190,6 +194,7 @@ export default function ModPage() {
             </div>
 
             <div className="mt-6">
+              {tab === "overview" && <OverviewTab />}
               {tab === "reports" && <ReportsTab />}
               {tab === "games" && <GamesTab />}
               {tab === "chat" && <ChatFlagsTab />}

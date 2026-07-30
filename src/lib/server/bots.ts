@@ -1849,6 +1849,14 @@ export const HOUSE_ROSTER: HousePersona[] = PERSONA_DEFS.map(([name, skill], i) 
 }));
 
 const HOUSE_USER_IDS = new Set(HOUSE_ROSTER.map((p) => p.userId));
+
+/** house user id -> engine skill tier. The tier lives in code, never in the
+ * database, so anything that wants to group archived games by tier (the
+ * moderator overview's house-vs-human win rate) has to fold the rows in
+ * TypeScript against this map rather than GROUP BY a column. */
+export const HOUSE_BY_ID_SKILL: ReadonlyMap<string, HouseSkill> = new Map(
+  HOUSE_ROSTER.map((p) => [p.userId, p.skill]),
+);
 const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/cardOverrides";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { getNerf } from "@/engine/nerfs/library";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,11 @@ export async function POST(request: Request) {
     // Nothing overrides the code definition: drop the row instead of keeping
     // a no-op record around.
     await deleteCardOverride(guard.db, id);
+    notifyModEvent({
+      kind: "card_override_cleared",
+      actor: guard.mod.username,
+      target: `${body.kind}:${id}`,
+    });
     return NextResponse.json({ ok: true, cleared: true });
   }
 
@@ -103,6 +109,20 @@ export async function POST(request: Request) {
     flavor,
     tier,
     enabled,
+  });
+  notifyModEvent({
+    kind: "card_override_saved",
+    actor: guard.mod.username,
+    target: `${body.kind}:${id}`,
+    detail: [
+      name != null ? `name="${name}"` : null,
+      description != null ? "description" : null,
+      flavor != null ? "flavor" : null,
+      tier != null ? `tier=${tier}` : null,
+      enabled ? null : "disabled",
+    ]
+      .filter(Boolean)
+      .join(" "),
   });
   return NextResponse.json({ ok: true });
 }

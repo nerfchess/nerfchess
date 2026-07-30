@@ -7,6 +7,7 @@ import {
   setAppSetting,
   settingIsOnStrict,
 } from "@/lib/server/settings";
+import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -48,5 +49,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "`enabled` must be a boolean." }, { status: 400 });
   }
   await setAppSetting(guard.db, GOD_PANEL_KEY, body.enabled ? "1" : "0");
+  notifyModEvent({
+    kind: "god_panel_toggled",
+    actor: guard.mod.username,
+    detail: body.enabled ? "on" : "off",
+  });
   return NextResponse.json({ enabled: body.enabled });
 }
