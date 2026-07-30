@@ -16,6 +16,8 @@ import {
   HOUSE_SKILLS,
   HOUSE_WINDOW_STEP,
   HOUSE_COUNT_MIN,
+  HOUSE_ONLINE_MAX,
+  HOUSE_GAMES_MAX,
   HOUSE_VS_HOUSE_FLOOR,
   HOUSE_VS_HOUSE_CAP,
   HOUSE_FILLER_SPAWN_BUFFER,
@@ -58,6 +60,7 @@ import {
 } from "../src/engine/game";
 import { moveToUCI } from "../src/engine/board";
 import { PLAYABLE_NERFS } from "../src/engine/nerfs/library";
+import { BUFF_BY_ID } from "../src/engine/buffs/library";
 import type { Color } from "../src/engine/types";
 import { playMove } from "../src/engine/game";
 
@@ -190,15 +193,24 @@ console.log("pacing: low-clock clamps and 2-8s draft picks ok");
 // 3. Roster shape, seek mix, nerf pick.
 // ---------------------------------------------------------------------------
 
-// The roster grew to 210 personas (an active window of 60-90 rotates daily) and
-// spans the 1350-2200 skill tiers: assert the invariants that must hold whatever
-// the current mix is, not a frozen census.
-check(HOUSE_ROSTER.length === 210, "roster size");
+// The roster is ~900 personas across three waves, spanning the 800-2700 tiers.
+// Assert the invariants that must hold whatever the current mix is, never a
+// frozen census: a hardcoded 210 sat here through two roster expansions and
+// simply reported FAIL every run, which is worse than no check at all.
+check(HOUSE_ROSTER.length > HOUSE_ONLINE_MAX, `roster (${HOUSE_ROSTER.length}) must exceed the peak shown population (${HOUSE_ONLINE_MAX})`);
+check(HOUSE_ROSTER.length >= 2 * HOUSE_GAMES_MAX, `roster (${HOUSE_ROSTER.length}) must cover 2 seats x HOUSE_GAMES_MAX (${2 * HOUSE_GAMES_MAX})`);
 check(
   HOUSE_ROSTER.every((p) => HOUSE_SKILL_PROFILES[p.skill] != null),
   "every persona uses a real skill tier",
 );
-check(HOUSE_ROSTER.every((p) => !/bot/i.test(p.name)), "no 'bot' in names");
+// No name may advertise itself as a bot. "botvinnik_lab" is the one allowed
+// exception: it is named for the world champion, not for what it is, and the
+// substring test flagged it on every run since the roster shipped.
+const BOT_SUBSTRING_EXEMPT = new Set(["botvinnik_lab"]);
+check(
+  HOUSE_ROSTER.every((p) => BOT_SUBSTRING_EXEMPT.has(p.name.toLowerCase()) || !/bot/i.test(p.name)),
+  "no 'bot' in names",
+);
 // Every persona debuts with a house look: an uploaded-style image pfp
 // (house_pfp:) or a flower preset. Both live only in the house avatar space.
 check(
@@ -206,10 +218,21 @@ check(
   "house avatar preset ids",
 );
 check(new Set(HOUSE_ROSTER.map((p) => p.name.toLowerCase())).size === HOUSE_ROSTER.length, "unique names");
-console.log(
-  "roster:",
-  HOUSE_ROSTER.map((p) => `${p.name}(${p.skill}->${houseSeedRating(p)})`).join(", "),
-);
+// A 900-name dump buried every other line of output. Print the shape instead,
+// plus a small sample, and leave the full census to scripts/audit-house-bots.ts.
+{
+  const byTier = new Map<number, number>();
+  for (const p of HOUSE_ROSTER) byTier.set(p.skill, (byTier.get(p.skill) ?? 0) + 1);
+  const shape = [...byTier.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([skill, n]) => `${skill}:${n}`)
+    .join(" ");
+  console.log(`roster: ${HOUSE_ROSTER.length} personas -> ${shape}`);
+  console.log(
+    "  sample:",
+    HOUSE_ROSTER.slice(0, 6).map((p) => `${p.name}(${p.skill}->${houseSeedRating(p)})`).join(", "),
+  );
+}
 
 let nerfSeeks = 0;
 for (let i = 0; i < 10_000; i++) {
@@ -229,10 +252,22 @@ check(houseNerfPickIndex([6, 3], random) === 1, "nerf pick lower tier second");
 // 4. Skill resolution & clamping (pure — the /mod override path).
 // ---------------------------------------------------------------------------
 
-// No overrides == baked, and baked is the un-weakened search (topK 1, no noise).
+// No overrides == baked. Baked is the un-weakened search (topK 1, no noise) for
+// every tier EXCEPT the beginner band, which bakes its weakening deliberately:
+// a genuinely 800-1200 bot needs shallow, noisy, top-K play, and that is a
+// property of the tier rather than a moderator override. The blanket assertion
+// here predated those tiers and failed on all four of them every run.
+const BAKED_WEAKENED_MAX_SKILL = 1200;
 for (const skill of HOUSE_SKILLS) {
   const baked = bakedResolvedProfile(skill);
-  check(baked.topK === 1 && baked.temperatureCp === 0 && baked.evalNoiseCp === 0, `${skill}: baked is un-weakened`);
+  if (skill <= BAKED_WEAKENED_MAX_SKILL) {
+    check(
+      baked.topK > 1 || baked.temperatureCp > 0 || baked.evalNoiseCp > 0,
+      `${skill}: beginner tier must bake its weakening`,
+    );
+  } else {
+    check(baked.topK === 1 && baked.temperatureCp === 0 && baked.evalNoiseCp === 0, `${skill}: baked is un-weakened`);
+  }
   check(
     JSON.stringify(resolveSkillProfile(skill, null)) === JSON.stringify(baked),
     `${skill}: null overrides == baked`,
@@ -598,24 +633,30 @@ console.log(
 // ---------------------------------------------------------------------------
 // 9. Chess Diff is never drafted in a bot-vs-bot filler game.
 //
-// Chess Diff (id "chess_diff", tier 6) is a board-rewriting card that breaks
-// spectator reconstruction, so worker.ts folds FILLER_EXCLUDED_CARD_IDS into a
-// filler match's draft-pool `off` set (the same mechanism a moderator-disabled
-// card uses). Roll real offers through the engine's draft path at tier 6 (where
-// Chess Diff lives, and where it is 2x-weighted), across many seeds and BOTH
-// modes, with that override installed, and assert it is never offered. A control
-// run WITHOUT the override proves the roll path can and does produce it, so the
-// exclusion is doing real work. Human games install no such override and keep
-// the card.
+// Chess Diff (id "chess_diff") is a board-rewriting card that breaks spectator
+// reconstruction, so worker.ts folds FILLER_EXCLUDED_CARD_IDS into a filler
+// match's draft-pool `off` set (the same mechanism a moderator-disabled card
+// uses). Roll real offers through the engine's draft path AT THE CARD'S OWN
+// TIER, across many seeds and BOTH modes, with that override installed, and
+// assert it is never offered. A control run WITHOUT the override proves the roll
+// path can and does produce it, so the exclusion is doing real work. Human games
+// install no such override and keep the card.
+//
+// The tier is read from the card rather than hardcoded: it used to be pinned at
+// 6 here, the card was later rebalanced to tier 4, and the control silently
+// stopped being able to produce it at all — so the exclusion assertion below was
+// passing vacuously, which is the one thing a control exists to prevent.
 // ---------------------------------------------------------------------------
 
 const CHESS_DIFF_ID = "chess_diff";
+const CHESS_DIFF_TIER = BUFF_BY_ID[CHESS_DIFF_ID]?.tier ?? 6;
 check(FILLER_EXCLUDED_CARD_IDS.includes(CHESS_DIFF_ID), "filler exclusion set contains chess_diff");
+check(BUFF_BY_ID[CHESS_DIFF_ID] != null, "chess_diff still exists in the library");
 
 /** Count how many of `samples` offers (per mode) contain Chess Diff when rolled
- * at tier 6, with the given draft-pool override installed. Each sample builds a
- * fresh draft state seeded distinctly, so draws are deterministic and
- * independent. */
+ * at the card's own tier, with the given draft-pool override installed. Each
+ * sample builds a fresh draft state seeded distinctly, so draws are
+ * deterministic and independent. */
 function countChessDiffOffers(off: string[] | null, samples: number): number {
   setDraftPoolOverrides(off ? { off } : null);
   let seen = 0;
@@ -626,7 +667,7 @@ function countChessDiffOffers(off: string[] | null, samples: number): number {
         enableDraftMode(game, 0x51d1ff + s * 2654435761, { mode });
         // Vary the draft RNG per sample so each roll is an independent draw.
         game.buffs!.rngState = ((0x9e3779b9 ^ (s * 2246822519)) >>> 0) || 1;
-        const offer = rollOffer(game.buffs!, "w", [6, 6], game.board);
+        const offer = rollOffer(game.buffs!, "w", [CHESS_DIFF_TIER, CHESS_DIFF_TIER], game.board);
         if (offer?.cards.some((c) => c.id === CHESS_DIFF_ID)) seen++;
       }
     }

@@ -14,6 +14,8 @@
     "gen:icons": "npm run server:build && node scripts/gen-card-icons.mjs",
     "gen:house-pfps": "node scripts/gen-house-pfps.mjs",
     "audit:house-bots": "node scripts/gen-house-pfps.mjs --check && npx -y tsx scripts/audit-house-bots.ts",
+    "test:house-snap": "npx -y tsx scripts/test-house-snap.ts",
+    "test:house-sim": "npx -y tsx scripts/sim-house-bots.ts",
     "test:san": "npx -y tsx scripts/test-san.ts",
     "test:card-impact": "npx -y tsx scripts/test-card-impact.ts",
     "test:arena-seat": "npx -y tsx scripts/test-arena-seat.ts",

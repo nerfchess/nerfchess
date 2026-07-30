@@ -53,11 +53,14 @@ import {
   houseSeedRatingForMode,
   houseStyle,
   houseThinkMs,
+  houseSnapReplyMs,
+  snapContext,
   isHouseUserId,
   pickHouseBotByDifficulty,
   activeHouseRoster,
   onlineHouseRoster,
-  HOUSE_ONLINE_COUNT,
+  HOUSE_PRESENCE_LIST_MAX,
+  houseOnlineCount,
   clampHouseCount,
   clampHouseGames,
   dailyHouseCount,
@@ -552,7 +555,11 @@ const houseSeeksKey = "hp:seeks";
 // before the wave ever shipped. New names mean new hp_ ids: re-run
 // ensureHouseUsers to create the renamed accounts; the v6 accounts (if any
 // deployment seeded them) stay orphaned in the DB, harmless as ever.
-const houseSeededKey = "hp:seeded:v7";
+// v8: 2026-07 wave 3 — 390 further personas (roster ~900), needed because the
+// shown population now breathes up to HOUSE_ONLINE_MAX and the presence window
+// is bounded by the roster length. New handles mean new hp_ ids: re-run
+// ensureHouseUsers to create their accounts.
+const houseSeededKey = "hp:seeded:v8";
 // One-time-per-revision sync of every house account's rating AND identity
 // (avatar, location bio) to the current roster values (see syncHouseRatings).
 // Bump the suffix whenever the roster's ratings or identity change so existing
@@ -600,7 +607,15 @@ const houseSeededKey = "hp:seeded:v7";
 // identity-7: the expansion-wave rename (see houseSeededKey v7). The renamed
 // personas carry new name-hashed avatars and the same index-based bios, so
 // circulate identity once more onto the freshly seeded accounts.
-const houseRatingsSyncedKey = "hp:ratings-synced:identity-7";
+// rating-v9: the legacy uplift stack was retired and the whole roster was
+// re-tiered onto HOUSE_SKILL_WEIGHTS, so a persona now advertises its own tier
+// (+-40) instead of a three-layer shifted number. Almost every existing account
+// therefore has the wrong seeded rating on file. Bump so syncHouseRatings
+// rewrites users.rating and both per-mode buckets on the next cold start.
+// identity-8: the generated-pfp catalog grew from 560 to 1000 images to cover
+// the ~900-persona roster, which reshuffles every name-hashed avatar
+// assignment; circulate so users.avatar carries the new ids everywhere.
+const houseRatingsSyncedKey = "hp:ratings-synced:identity-8";
 // Seed of the "OG NERFCHESS USERS" club (a big veteran club whose membership is
 // ~65% of the house roster). SELF-HEALING: gated below by a live membership
 // COUNT (countOgClubMembers), not a one-shot key — a one-shot key that got set
@@ -4285,13 +4300,24 @@ export class GameServer extends DurableObject<Env> {
     // Persona tempo: each bot paces its thinks with a stable personal lean
     // (houseStyle), so the roster never moves in lockstep after one delay.
     const turnPersona = housePersona(match.bots[turn] ?? "");
-    const think = houseThinkMs(
-      randomInt,
-      clocks[turn] + grace,
-      match.setup.timeSec,
-      this.isBotOnlyMatch(match) ? houseFillerThinkMultiplier : 1,
-      turnPersona ? houseStyle(turnPersona).tempo : 1,
-    );
+    // The premove tell: when the human just traded, or the bot has only one
+    // legal move, a real player answers instantly. Only possible when the caller
+    // handed us the live position (the move-commit paths do); other callers pace
+    // normally, so no bot path pays a legal-move generation it did not already
+    // have. Never applied to filler, where pacing is deliberately decimated.
+    const snap =
+      game && turnPersona && !this.isBotOnlyMatch(match)
+        ? houseSnapReplyMs(turnPersona, randomInt, snapContext(game, turn))
+        : null;
+    const think =
+      snap ??
+      houseThinkMs(
+        randomInt,
+        clocks[turn] + grace,
+        match.setup.timeSec,
+        this.isBotOnlyMatch(match) ? houseFillerThinkMultiplier : 1,
+        turnPersona ? houseStyle(turnPersona).tempo : 1,
+      );
     match.botActAt = now + think;
   }
 
@@ -8183,14 +8209,16 @@ export class GameServer extends DurableObject<Env> {
       } catch {}
     }
 
-    // Cap high enough to never clip the full ONLINE-presence set (up to
-    // HOUSE_ONLINE_COUNT ~150 personas, added above) plus the humans online
+    // Cap high enough to never clip the full ONLINE-presence LIST (up to
+    // HOUSE_PRESENCE_LIST_MAX personas, added above) plus the humans online
     // alongside them; a lower cap would hide part of the presence set behind the
-    // slice and make the shown count read low. Sorted by rating so the strongest
-    // personas and humans lead the list.
+    // slice. Sorted by rating so the strongest personas and humans lead the list.
+    // Note this bounds the LIST, not the shown COUNT: the count comes from
+    // houseOnlineCount() via the padding below, which is what lets the site read
+    // several hundred online without shipping several hundred rows per poll.
     const players = [...seen.values()]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-      .slice(0, HOUSE_ONLINE_COUNT + 60);
+      .slice(0, HOUSE_PRESENCE_LIST_MAX + 60);
     // ---- Online-count baseline: HONEST to the coded bot-presence model ----
     // Every surface derives its player count as players.length + anonymous
     // (home strip, lobby header), so the baseline is applied here, once, and
@@ -8200,23 +8228,21 @@ export class GameServer extends DurableObject<Env> {
     // the shown total normally already reflects that whole set plus any real
     // humans; with dozens of live house games running it reads well past 80.
     //
-    // This baseline is NOT an arbitrary floor: it is derived from the same
-    // presence model (HOUSE_ONLINE_COUNT) so the number stays in step with the
-    // set the site actually models. It only bites on the rare poll whose
-    // presence pass under-fills `seen` (e.g. a transient read that hit the catch
-    // above), keeping the site from briefly reading as dead. A small
-    // hour-bucketed jitter (±6) keeps it breathing organically — identical
-    // within a bucket, at most a small step at the boundary, identical for every
-    // viewer. Padding only ever ADDS to the anonymous count, so the shown total
-    // can never fall below the real humans plus seated bots counted above.
-    // The house-presence baseline applies ONLY while the bots are enabled; with
-    // them off the shown count reflects just real humans + anonymous (no padding),
-    // so the off switch actually empties the lobby count too.
+    // This baseline is NOT an arbitrary floor: it is the coded presence model
+    // (houseOnlineCount) so the shown number stays in step with the population
+    // the site actually claims. It replaced a flat 280 plus a +-6 jitter, which
+    // read the same at 04:00 and 20:00; the curve now troughs at
+    // HOUSE_ONLINE_MIN in the small hours and peaks at HOUSE_ONLINE_MAX in the
+    // evening, with a per-day scale so no two days peak identically. It is a
+    // pure function of `now`, so every viewer polling at the same moment agrees
+    // and nothing needs storing. Padding only ever ADDS to the anonymous count,
+    // so the shown total can never fall below the real humans plus seated bots
+    // counted above. It applies ONLY while the bots are enabled: with them off
+    // the count reflects just real humans, so the off switch really does empty
+    // the lobby.
     if (houseOn) {
       const shownReal = players.length + anonymous;
-      const bucket = Math.floor(now / (10 * 60 * 1000)); // hour + 10-min bucket
-      const jitter = ((Math.imul(bucket, 2654435761) >>> 0) % 13) - 6; // -6..+6
-      const baseline = HOUSE_ONLINE_COUNT + jitter;
+      const baseline = houseOnlineCount(now);
       if (shownReal < baseline) anonymous += baseline - shownReal;
     }
     const payload = {

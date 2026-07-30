@@ -113,7 +113,7 @@ export class Arena {
     const { pool, mode } = pickHouseSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
-    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs, this.config.thinkMult);
+    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs, this.config.thinkMult, this.config.searchCeilingMs);
     this.games.set(game.id, game);
     this.busy.add(white.userId);
     this.busy.add(black.userId);
