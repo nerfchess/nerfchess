@@ -346,7 +346,14 @@ function main(): void {
   let measured = 0;
   let unmeasurable = 0;
 
-  for (const mod of pluginModules()) {
+  // --file=<module> grades a module that is NOT yet registered in
+  // sigPluginsMerged.tsx. Authoring agents need this: without it they had to
+  // wire themselves into that shared file to be discovered, and concurrent
+  // batches doing so raced each other's reverts, twice silently dropping a
+  // module another batch had just added.
+  const only = process.argv.find((a) => a.startsWith("--file="))?.slice(7);
+  const modules = only ? [only] : pluginModules();
+  for (const mod of modules) {
     const src = read(`${mod}.tsx`);
     // The module's stylesheet, so geometry applied in CSS (where transforms
     // normally live) counts. Missing is fine: some modules ride shared CSS.
@@ -395,13 +402,13 @@ function main(): void {
 
   const below = findings.length;
 
-  const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
-  if (only) {
-    for (const f of findings.filter((x) => x.module.includes(only))) {
+  const filter = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
+  if (filter) {
+    for (const f of findings.filter((x) => x.module.includes(filter))) {
       console.log(`  [t${f.tier}] ${f.module}.${f.scene} (${f.id})`);
       for (const r of f.reasons) console.log(`      - ${r}`);
     }
-    console.log(`(${findings.filter((x) => x.module.includes(only)).length} failing in ${only})`);
+    console.log(`(${findings.filter((x) => x.module.includes(filter)).length} failing in ${filter})`);
   }
 
   if (REPORT) {
