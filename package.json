@@ -37,6 +37,7 @@
     "gen:card-categories": "npx -y tsx scripts/gen-card-categories.ts",
     "test:card-categories": "npx -y tsx scripts/gen-card-categories.ts --check",
     "test:card-similarity": "npx -y tsx scripts/audit-card-similarity.ts",
+    "test:passive-motifs": "npx -y tsx scripts/audit-passive-motifs.ts",
     "test:draft-fairness": "npx -y tsx scripts/test-draft-fairness.ts",
     "test:draft-sequence": "npx -y tsx scripts/test-draft-sequence.ts",
     "test:draft-timeout": "npx -y tsx scripts/test-draft-timeout.ts",

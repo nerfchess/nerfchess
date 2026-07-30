@@ -157,6 +157,12 @@ jobs:
       - name: Card similarity
         run: npm run test:card-similarity
 
+      # A passive has no cast moment, so its persistent piece icon is the only
+      # thing telling a player the rule is still in force. Shrink-only ratchet
+      # on passives that mark pieces but show nothing.
+      - name: Passive piece icons
+        run: npm run test:passive-motifs
+
       # Standing house rule: no em dashes in user-visible text.
       - name: Em dash guard
         run: npm run test:emdash
