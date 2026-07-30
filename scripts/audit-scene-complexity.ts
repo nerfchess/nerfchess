@@ -132,7 +132,13 @@ function entryChunks(block: string): Map<string, string> {
  *  and the terse per-module helpers (`S(Scene, {...})`, `B(Template, ...)`). */
 function sceneNameOf(chunk: string): string | null {
   return (
-    chunk.match(/Render:\s*([A-Z]\w*)/)?.[1] ?? chunk.match(/:\s*[A-Z]\(\s*([A-Z]\w*)/)?.[1] ?? null
+    chunk.match(/Render:\s*([A-Z]\w*)/)?.[1] ??
+    // An inline arrow that forwards to a shared scene:
+    //   Render: ({ lead, delayMs }) => <AthleteScene id="muscle_up" ... />
+    // Two cards used this form and were the last pair the gate could not see.
+    chunk.match(/Render:\s*\([^)]*\)\s*=>\s*<([A-Z]\w*)/)?.[1] ??
+    chunk.match(/:\s*[A-Z]\(\s*([A-Z]\w*)/)?.[1] ??
+    null
   );
 }
 
@@ -324,6 +330,40 @@ function usesGeometry(body: string, css: string, src: string): boolean {
   return false;
 }
 
+
+// --- Core SIGNATURES art ----------------------------------------------------
+//
+// The plugin path is card id -> PLAYS entry -> Render component, all in one
+// module. The core path has one more hop: a card's SignatureConfig names a
+// SigVisual KEY, and sigVisuals.tsx switches on that key to a component. Same
+// measures apply once the key is resolved, so these 303 cards were never
+// unmeasurable - only unreached.
+
+/** card id -> { visual key, the entry chunk (for the anchor check) }. */
+function coreSignatures(): Map<string, { visual: string; chunk: string }> {
+  const src = read("BoardEffects.tsx");
+  const m = /export const SIGNATURES[^=]*=\s*{/.exec(src);
+  if (!m) throw new Error("BoardEffects.tsx: no SIGNATURES table");
+  const start = m.index + m[0].length;
+  const end = src.indexOf("\n};", start);
+  const block = src.slice(start, end);
+  const out = new Map<string, { visual: string; chunk: string }>();
+  for (const [id, chunk] of entryChunks(block)) {
+    const visual = chunk.match(/visual:\s*"([^"]+)"/)?.[1];
+    if (visual) out.set(id, { visual, chunk });
+  }
+  return out;
+}
+
+/** SigVisual key -> the component sigVisuals.tsx renders for it. */
+function visualComponents(src: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const m of src.matchAll(/case\s+"([^"]+)":\s*\n?\s*return\s*<([A-Z]\w*)/g)) {
+    out.set(m[1], m[2]);
+  }
+  return out;
+}
+
 // --- Run --------------------------------------------------------------------
 
 function cardTiers(): Map<string, number> {
@@ -338,6 +378,9 @@ function main(): void {
   const findings: Finding[] = [];
   let measured = 0;
   let unmeasurable = 0;
+  // Which card ids this gate actually graded, for the coverage accounting.
+  const gradedPlugin = new Set<string>();
+  const gradedCore = new Set<string>();
 
   // --file=<module> grades a module that is NOT yet registered in
   // sigPluginsMerged.tsx. Authoring agents need this: without it they had to
@@ -364,6 +407,7 @@ function main(): void {
         continue;
       }
       measured++;
+      gradedPlugin.add(id);
       const tier = tiers.get(id) ?? 1;
       const reasons: string[] = [];
 
@@ -390,6 +434,56 @@ function main(): void {
       if (!/anchor:\s*"(cast|aim|board)"/.test(chunk)) reasons.push("no declared anchor");
 
       if (reasons.length) findings.push({ id, module: mod, tier, scene, reasons });
+    }
+  }
+
+  // Core SIGNATURES scenes, unless a single module was named with --file.
+  let coreMeasured = 0;
+  if (!only) {
+    const sigSrc = read("sigVisuals.tsx");
+    const byKey = visualComponents(sigSrc);
+    // Core art draws on the shared vocabulary, not a per-module sheet, so the
+    // geometry lookup gets the shared stylesheets.
+    const coreCss = ["effects.css", "godPlays.css"]
+      .map((f) => {
+        try {
+          return read(f);
+        } catch {
+          return "";
+        }
+      })
+      .join("\n");
+    for (const [id, { visual, chunk }] of coreSignatures()) {
+      const comp = byKey.get(visual);
+      const body = comp ? componentBody(sigSrc, comp) : null;
+      if (!comp || !body) {
+        unmeasurable++;
+        continue;
+      }
+      coreMeasured++;
+      measured++;
+      gradedCore.add(id);
+      const tier = tiers.get(id) ?? 1;
+      const reasons: string[] = [];
+      const delays = delaysOf(body);
+      const span = Math.max(...delays);
+      const bands = new Set(delays).size;
+      const hasTell = span > 0 && delays.some((d) => d > 0 && d <= span * TELL_FRACTION);
+      const hasSettle = span > 0 && delays.some((d) => d >= span * SETTLE_FRACTION);
+      if (bands < 3) reasons.push(`only ${bands} delay band(s): no tell -> strike -> settle`);
+      else if (!hasTell) reasons.push("no anticipation beat before the strike");
+      else if (!hasSettle) reasons.push("no settle beat after the strike");
+      const layers = layersOf(
+        body + helpersOf(body).map((h) => componentBody(sigSrc, h) ?? "").join("\n"),
+      );
+      const floor = layerFloor(tier);
+      if (layers < floor) reasons.push(`${layers} animated layers, tier ${tier} floor is ${floor}`);
+      if (hasPureWhite(body)) reasons.push("pure white in the palette (whites must be warm)");
+      if (!usesGeometry(body, coreCss, sigSrc)) {
+        reasons.push("no layer driven by the directional geometry vars");
+      }
+      if (!/anchor:\s*"(cast|aim|board)"/.test(chunk)) reasons.push("no declared anchor");
+      if (reasons.length) findings.push({ id, module: "core", tier, scene: comp, reasons });
     }
   }
 
@@ -424,16 +518,45 @@ function main(): void {
     `[scene-complexity] measured ${measured} scenes (${unmeasurable} not measurable from source), ` +
       `${below} below the floor; baseline ${baseline.belowComplexityFloor}`,
   );
-  // Say what this gate does NOT cover, so the number above is not read as
-  // whole-library coverage. It walks the plugin modules only: core SIGNATURES
-  // art lives in the sigVisuals switch (a different shape entirely), passive
-  // nerf compositions are policed by test:passive-registry, and a card still on
-  // the generated fallback has no authored scene to measure - that one is F5's
-  // job in test:animations.
+
+  // Full accounting, by CARD ID rather than by scene, so it cannot drift.
+  // Every registry entry is attributed to the gate that actually checks it and
+  // anything left over is NAMED, because a coverage number that quietly
+  // excludes a population is worse than no number: it invites the conclusion
+  // that the library has been checked when a quarter of it has not.
+  //
+  // Card counts and scene counts differ on purpose - the tables carry tier
+  // 9/10 cards the tier-1-8 registry does not, and one scene can serve
+  // several ids - so this counts ids, not scenes.
+  const reg = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "docs", "animation-registry.json"), "utf8"),
+  ) as { entries: { id: string; animId: string }[] };
+  let herePlugin = 0;
+  let hereCore = 0;
+  let passive = 0;
+  let genLeft = 0;
+  const unattributed: string[] = [];
+  for (const e of reg.entries) {
+    if (e.animId.startsWith("passive:")) passive++;
+    else if (e.animId.startsWith("gen:")) genLeft++;
+    else if (gradedCore.has(e.id)) hereCore++;
+    else if (gradedPlugin.has(e.id)) herePlugin++;
+    else unattributed.push(e.id);
+  }
   console.log(
-    "[scene-complexity] plugin modules only; core SIGNATURES art, passive " +
-      "compositions and generated-fallback cards are out of scope here",
+    `[scene-complexity] coverage of ${reg.entries.length} registry cards: ` +
+      `${herePlugin} plugin + ${hereCore} core graded here, ` +
+      `${passive} passive compositions graded by test:passive-registry, ` +
+      `${genLeft} on the generated fallback (F5 in test:animations), ` +
+      `${unattributed.length} unattributed`,
   );
+  if (unattributed.length) {
+    console.log(
+      `[scene-complexity] UNATTRIBUTED (no gate checks these): ${unattributed
+        .slice(0, 12)
+        .join(", ")}${unattributed.length > 12 ? ` +${unattributed.length - 12} more` : ""}`,
+    );
+  }
 
   if (WRITE) {
     if (below > baseline.belowComplexityFloor && !process.argv.includes("--allow-raise")) {
