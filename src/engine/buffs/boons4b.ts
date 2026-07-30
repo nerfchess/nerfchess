@@ -1715,7 +1715,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_glacier_calving", name: "Glacier Calving", tier: 6, category: "tempo", icon: "MountainSnow",
+    { id: "bn4_glacier_calving", name: "Glacier Calving", tier: 5, category: "tempo", icon: "MountainSnow",
       description: "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
       flavor: "The ice decides when. The ice decided now." },
     activated(

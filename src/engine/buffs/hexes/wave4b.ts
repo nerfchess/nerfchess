@@ -38,6 +38,8 @@ import {
   inBoard,
 } from "./shared";
 
+// hx4_undertow was retiered out of this file's T5 band into T4.
+const H4 = tierHexes(4);
 const H5 = tierHexes(5);
 const H6 = tierHexes(6);
 const H7 = tierHexes(7);
@@ -475,7 +477,7 @@ const T5: Buff[] = [
     { id: "hx4_no_homecoming", name: "No Homecoming", description: "For your opponent's next 4 turns, none of their pieces may stop on their own back rank. Their king is exempt. The first piece the ban would turn away may return home once, then it binds fully.", flavor: "The doors of the keep are shut from inside.", icon: "DoorClosed", fx: { motif: "blindfold", pieces: "all" } },
     escapeCurse(4, (moves, api) => moves.filter((m) => m.piece === "k" || relRank(api.opp, m.to) !== 1)),
   ),
-  H5(
+  H4(
     { id: "hx4_undertow", name: "Undertow", description: "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.", flavor: "The current only pulls one way.", icon: "ArrowDownToLine", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(2, (move, api) => {
       if (move.piece !== "k" && relRank(api.opp, move.to) < relRank(api.opp, move.from)) sting(api, move.to, 1, "quicksand");
@@ -1225,7 +1227,7 @@ const T6: Buff[] = [
       api.theirs.flags.noDraftCards = (api.theirs.flags.noDraftCards ?? 0) + 1;
     }),
   ),
-  H6(
+  H5(
     { id: "hx4_iron_maiden", name: "Iron Maiden", description: "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.", flavor: "A snug fit, by design.", icon: "Box", fx: { motif: "jail", pieces: ["r", "q"] } },
     {
       kind: "activated",
@@ -1622,7 +1624,7 @@ const T7: Buff[] = [
     }),
   ),
   hex(
-    { id: "hx4_glass_prison", name: "Glass Prison", description: "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.", flavor: "Museum quality containment.", icon: "GlassWater", fx: { motif: "jail", pieces: ["r", "q"] }, tier: 8 },
+    { id: "hx4_glass_prison", name: "Glass Prison", description: "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.", flavor: "Museum quality containment.", icon: "GlassWater", fx: { motif: "jail", pieces: ["r", "q"] }, tier: 6 },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -2016,7 +2018,7 @@ const T8: Buff[] = [
     },
   ),
   hex(
-    { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" }, tier: 6 },
+    { id: "hx4_hundred_year_nap", name: "Hundred Year Nap", description: "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.", flavor: "The briars grew before anyone thought to argue.", icon: "Bed", fx: { motif: "jail" }, tier: 5 },
     {
       kind: "activated",
       spendOnUse: false,
@@ -2525,7 +2527,7 @@ const T8: Buff[] = [
       for (const sq of drawRandom(api, pool, 5)) nutNow(api, sq, 1);
     }),
   ),
-  H8(
+  H6(
     { id: "hx4_tolling_thirds", name: "The Tolling Thirds", description: "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
       tip: "Two known freezes on a known schedule: line your own threats up with the tolls.", flavor: "It knows exactly whom it tolls for.", icon: "Bell", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(6, (_move, api, inst) => {

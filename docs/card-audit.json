@@ -2208,6 +2208,24 @@
    "action": "keep: relief-on-capture ladder T1 (2 procs)"
   },
   {
+   "id": "snap_freeze",
+   "name": "Snap Freeze",
+   "kind": "boon",
+   "tier": 2,
+   "effect": "Freeze the piece that last moved for 1 of its turns.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "unstated",
+   "signature": "tempo|instant|effect|unstated|unstated|freeze,move,n:1",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "touch_grass",
    "name": "Touch Grass",
    "kind": "boon",
@@ -3340,24 +3358,6 @@
     "near-duplicate(bn4_quilted_armor:0.82)"
    ],
    "action": "keep: the clean T2 baseline of the single-piece shield family"
-  },
-  {
-   "id": "snap_freeze",
-   "name": "Snap Freeze",
-   "kind": "boon",
-   "tier": 3,
-   "effect": "Freeze the piece that last moved for 1 of its turns.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "unstated",
-   "signature": "tempo|instant|effect|unstated|unstated|freeze,move,n:1",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "underdogs_grit",
@@ -4690,6 +4690,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "bn4_glacier_calving",
+   "name": "Glacier Calving",
+   "kind": "boon",
+   "tier": 5,
+   "effect": "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
+   "trigger": "activated",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "tempo|activated|effect+targets|next-turn|enemy|draft,king,skip",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+  },
+  {
    "id": "bn4_glass_case",
    "name": "Glass Case",
    "kind": "boon",
@@ -5791,24 +5809,6 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "bn4_glacier_calving",
-   "name": "Glacier Calving",
-   "kind": "boon",
-   "tier": 6,
-   "effect": "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
-   "trigger": "activated",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "tempo|activated|effect+targets|next-turn|enemy|draft,king,skip",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
    "id": "bn4_gryphon_rider",
@@ -18056,24 +18056,6 @@
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
   {
-   "id": "sugar_rush",
-   "name": "Sugar Rush",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn.",
-   "trigger": "activated/free",
-   "duration": "next-turn",
-   "targets": "self",
-   "signature": "tempo|activated|effect|next-turn|self|extra,move,skip",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/funny/tradeoffs.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: bigger burst with a real cost; White Monster now trades size for safety"
-  },
-  {
    "id": "summon_knight",
    "name": "Summon Knight",
    "kind": "buff",
@@ -21367,24 +21349,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "white_monster",
-   "name": "White Monster",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
-   "trigger": "activated/free",
-   "duration": "one-shot",
-   "targets": "unstated",
-   "signature": "tempo|activated|effect|one-shot|unstated|extra,move,n:2",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "REBALANCED: crash removed (2 extra moves, no self-skip); was strictly worse than Sugar Rush at the same tier"
-  },
-  {
    "id": "ww_bayonet_charge",
    "name": "Bayonet Charge",
    "kind": "buff",
@@ -23137,6 +23101,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "sugar_rush",
+   "name": "Sugar Rush",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn.",
+   "trigger": "activated/free",
+   "duration": "next-turn",
+   "targets": "self",
+   "signature": "tempo|activated|effect|next-turn|self|extra,move,skip",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/funny/tradeoffs.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: bigger burst with a real cost; White Monster now trades size for safety"
+  },
+  {
    "id": "threads_of_fate",
    "name": "Threads of Fate",
    "kind": "buff",
@@ -23726,6 +23708,24 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "white_monster",
+   "name": "White Monster",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
+   "trigger": "activated/free",
+   "duration": "one-shot",
+   "targets": "unstated",
+   "signature": "tempo|activated|effect|one-shot|unstated|extra,move,n:2",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "REBALANCED: crash removed (2 extra moves, no self-skip); was strictly worse than Sugar Rush at the same tier"
   },
   {
    "id": "ww_bridgehead",
@@ -28301,6 +28301,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hx4_the_ides",
+   "name": "The Ides",
+   "kind": "hex",
+   "tier": 2,
+   "effect": "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.",
+   "trigger": "passive",
+   "duration": "1-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+onMove|1-turns|enemy|king,move,n:1",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_tilted_crown",
    "name": "Tilted Crown",
    "kind": "hex",
@@ -29069,6 +29088,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hx4_caught_mid_stride",
+   "name": "Caught Mid Stride",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.",
+   "trigger": "instant",
+   "duration": "1-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|1-turns|enemy|king,move,n:1,time",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_cobweb_corners",
    "name": "Cobweb Corners",
    "kind": "hex",
@@ -29177,6 +29215,25 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|3-turns|enemy|file,n:3,pawn,rook",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_glass_ceiling",
+   "name": "Glass Ceiling",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.",
+   "trigger": "passive",
+   "duration": "5-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|5-turns|enemy|n:5,pawn,promote",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -29509,25 +29566,6 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|4-turns|enemy|capture,move,n:4,recaptur,square",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_the_ides",
-   "name": "The Ides",
-   "kind": "hex",
-   "tier": 3,
-   "effect": "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.",
-   "trigger": "passive",
-   "duration": "1-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+onMove|1-turns|enemy|king,move,n:1",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -30450,25 +30488,6 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
-   "id": "hx4_caught_mid_stride",
-   "name": "Caught Mid Stride",
-   "kind": "hex",
-   "tier": 4,
-   "effect": "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.",
-   "trigger": "instant",
-   "duration": "1-turns",
-   "targets": "enemy",
-   "signature": "hex|instant|effect|1-turns|enemy|king,move,n:1,time",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hx4_censors_ink",
    "name": "Censor's Ink",
    "kind": "hex",
@@ -30699,25 +30718,6 @@
     "duplicate-signature(hx4_elbow_room,hx4_court_in_session)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
-  },
-  {
-   "id": "hx4_glass_ceiling",
-   "name": "Glass Ceiling",
-   "kind": "hex",
-   "tier": 4,
-   "effect": "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.",
-   "trigger": "passive",
-   "duration": "5-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|5-turns|enemy|n:5,pawn,promote",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "hx4_iron_quota",
@@ -31145,6 +31145,25 @@
    "signature": "hex|passive|init+filter+onMove|4-turns|enemy|bishop,block,king,knight,move,n:4,pawn,queen,rook",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_undertow",
+   "name": "Undertow",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+onMove|2-turns|enemy|freeze,king,move,n:1,n:2,rank",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -32317,6 +32336,44 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hx4_hundred_year_nap",
+   "name": "Hundred Year Nap",
+   "kind": "hex",
+   "tier": 5,
+   "effect": "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.",
+   "trigger": "activated/lingering",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|king,n:3,sleep",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_iron_maiden",
+   "name": "Iron Maiden",
+   "kind": "hex",
+   "tier": 5,
+   "effect": "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.",
+   "trigger": "activated/lingering",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|2-turns|enemy|move,n:2,queen,rook",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_ironglass_mirror",
    "name": "Ironglass Mirror",
    "kind": "hex",
@@ -32718,25 +32775,6 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|next-turn|enemy|knight,move,n:1,square",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_undertow",
-   "name": "Undertow",
-   "kind": "hex",
-   "tier": 5,
-   "effect": "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+onMove|2-turns|enemy|freeze,king,move,n:1,n:2,rank",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -33911,6 +33949,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hx4_glass_prison",
+   "name": "Glass Prison",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.",
+   "trigger": "activated",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|3-turns|enemy|n:3,queen,rook",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_grave_chill",
    "name": "Grave Chill",
    "kind": "hex",
@@ -33940,44 +33997,6 @@
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|3-turns|enemy|king,knight,leap,move,n:3,square",
    "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_hundred_year_nap",
-   "name": "Hundred Year Nap",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|king,n:3,sleep",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_iron_maiden",
-   "name": "Iron Maiden",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.",
-   "trigger": "activated/lingering",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|2-turns|enemy|move,n:2,queen,rook",
-   "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
@@ -34314,6 +34333,25 @@
    "duration": "1-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+onMove|1-turns|enemy|adjacent,king,n:1,n:1",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_tolling_thirds",
+   "name": "The Tolling Thirds",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
+   "trigger": "passive",
+   "duration": "1-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+onMove|1-turns|enemy|immune,king,n:1",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -36275,25 +36313,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hx4_glass_prison",
-   "name": "Glass Prison",
-   "kind": "hex",
-   "tier": 8,
-   "effect": "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.",
-   "trigger": "activated",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets|3-turns|enemy|n:3,queen,rook",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hx4_gorgons_court",
    "name": "Gorgon's Court",
    "kind": "hex",
@@ -36733,25 +36752,6 @@
    "duration": "6-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+onMove|6-turns|enemy|check,king,move,n:2,n:6,skip",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_tolling_thirds",
-   "name": "The Tolling Thirds",
-   "kind": "hex",
-   "tier": 8,
-   "effect": "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
-   "trigger": "passive",
-   "duration": "1-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+onMove|1-turns|enemy|immune,king,n:1",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -39268,24 +39268,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "coffee",
-   "name": "Coffee",
-   "kind": "item",
-   "tier": 4,
-   "effect": "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.",
-   "trigger": "activated/free",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "item|activated|effect|one-shot|enemy|extra,move",
-   "animation": "canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "firecracker",
    "name": "Firecracker",
    "kind": "item",
@@ -39333,6 +39315,24 @@
    "signature": "item|instant|effect|permanent|enemy|capture,king,n:2",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "coffee",
+   "name": "Coffee",
+   "kind": "item",
+   "tier": 5,
+   "effect": "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.",
+   "trigger": "activated/free",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "item|activated|effect|one-shot|enemy|extra,move",
+   "animation": "canvas",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],

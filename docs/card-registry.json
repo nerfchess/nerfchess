@@ -62,12 +62,12 @@
       "draft-denial": 29,
       "board-geometry-warp": 2,
       "multi-piece-freeze": 6,
+      "promotion-denial": 2,
       "mass-removal": 48,
       "extra-turn-theft": 5,
       "turn-skip-enemy": 17,
       "instant-piece-removal": 9,
       "mass-army-spawn": 16,
-      "promotion-denial": 2,
       "zone-buff": 2,
       "check-rule-change": 2,
       "info-denial": 1,
@@ -9877,6 +9877,30 @@
       "target": "pieceClass"
     },
     {
+      "id": "hx4_the_ides",
+      "name": "The Ides",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 2,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 179,
+      "description": "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "weightDrop"
+        ],
+        "sigil": "CalendarX"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "hx4_tilted_crown",
       "name": "Tilted Crown",
       "kind": "buff",
@@ -12471,6 +12495,23 @@
       "target": "piece"
     },
     {
+      "id": "snap_freeze",
+      "name": "Snap Freeze",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "single-piece-freeze",
+      "tier": 2,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 52,
+      "description": "Freeze the piece that last moved for 1 of its turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "snowball",
       "name": "Snowball",
       "kind": "buff",
@@ -14923,6 +14964,23 @@
       "target": "zone"
     },
     {
+      "id": "hx4_caught_mid_stride",
+      "name": "Caught Mid Stride",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 3,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 143,
+      "description": "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hx4_cobweb_corners",
       "name": "Cobweb Corners",
       "kind": "buff",
@@ -15065,6 +15123,30 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "file"
+    },
+    {
+      "id": "hx4_glass_ceiling",
+      "name": "Glass Ceiling",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "promotion-denial",
+      "tier": 3,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 98,
+      "description": "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "fracture",
+        "primitives": [
+          "crystallize",
+          "crackLines"
+        ],
+        "sigil": "PanelTop"
+      },
+      "soundCue": "passive/fracture",
+      "soundFamily": "fracture",
+      "target": "piece"
     },
     {
       "id": "hx4_guild_insurance",
@@ -15451,30 +15533,6 @@
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "hx4_the_ides",
-      "name": "The Ides",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 3,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 179,
-      "description": "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "weightDrop"
-        ],
-        "sigil": "CalendarX"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
       "target": "pieceClass"
     },
     {
@@ -16876,23 +16934,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "piece"
-    },
-    {
-      "id": "snap_freeze",
-      "name": "Snap Freeze",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "single-piece-freeze",
-      "tier": 3,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 52,
-      "description": "Freeze the piece that last moved for 1 of its turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "sown_salt",
@@ -19355,23 +19396,6 @@
       "target": null
     },
     {
-      "id": "coffee",
-      "name": "Coffee",
-      "kind": "buff",
-      "category": "item",
-      "effectCategory": "extra-move",
-      "tier": 4,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 112,
-      "description": "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "collapse",
       "name": "Collapse",
       "kind": "buff",
@@ -20411,23 +20435,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "hx4_caught_mid_stride",
-      "name": "Caught Mid Stride",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 4,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 143,
-      "description": "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "hx4_censors_ink",
       "name": "Censor's Ink",
       "kind": "buff",
@@ -20714,30 +20721,6 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "pieceClass"
-    },
-    {
-      "id": "hx4_glass_ceiling",
-      "name": "Glass Ceiling",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "promotion-denial",
-      "tier": 4,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 98,
-      "description": "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "fracture",
-        "primitives": [
-          "crystallize",
-          "crackLines"
-        ],
-        "sigil": "PanelTop"
-      },
-      "soundCue": "passive/fracture",
-      "soundFamily": "fracture",
-      "target": "piece"
     },
     {
       "id": "hx4_iron_quota",
@@ -21252,6 +21235,30 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "pieceClass"
+    },
+    {
+      "id": "hx4_undertow",
+      "name": "Undertow",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 163,
+      "description": "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "beamHorizontal"
+        ],
+        "sigil": "ArrowDownToLine"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "hx4_wet_powder",
@@ -22754,23 +22761,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "piece"
-    },
-    {
-      "id": "sugar_rush",
-      "name": "Sugar Rush",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "extra-move",
-      "tier": 4,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 108,
-      "description": "Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "summon_knight",
@@ -24285,6 +24275,23 @@
       "target": null
     },
     {
+      "id": "bn4_glacier_calving",
+      "name": "Glacier Calving",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "single-piece-freeze",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 136,
+      "description": "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "bn4_glass_case",
       "name": "Glass Case",
       "kind": "buff",
@@ -25283,6 +25290,23 @@
       "implemented": true,
       "descriptionLength": 119,
       "description": "Four photocopier flashes in a row: four new pawns land in your pocket, ready to drop onto empty squares on later turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "coffee",
+      "name": "Coffee",
+      "kind": "buff",
+      "category": "item",
+      "effectCategory": "extra-move",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 112,
+      "description": "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -26435,6 +26459,40 @@
       "target": null
     },
     {
+      "id": "hx4_hundred_year_nap",
+      "name": "Hundred Year Nap",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 180,
+      "description": "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "hx4_iron_maiden",
+      "name": "Iron Maiden",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 117,
+      "description": "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hx4_ironglass_mirror",
       "name": "Ironglass Mirror",
       "kind": "buff",
@@ -26907,30 +26965,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
-    },
-    {
-      "id": "hx4_undertow",
-      "name": "Undertow",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 5,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 163,
-      "description": "For your opponent's next 2 turns, any piece of theirs that moves backward, toward its own back rank, is frozen for 1 of their turns on arrival. Kings never freeze.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
-        ],
-        "sigil": "ArrowDownToLine"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
     },
     {
       "id": "hx4_wagon_ruts",
@@ -29197,23 +29231,6 @@
       "target": null
     },
     {
-      "id": "white_monster",
-      "name": "White Monster",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "extra-move",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 102,
-      "description": "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "withering_touch",
       "name": "Withering Touch",
       "kind": "buff",
@@ -29827,23 +29844,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "piece"
-    },
-    {
-      "id": "bn4_glacier_calving",
-      "name": "Glacier Calving",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "single-piece-freeze",
-      "tier": 6,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 136,
-      "description": "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "bn4_gryphon_rider",
@@ -31783,6 +31783,23 @@
       "target": null
     },
     {
+      "id": "hx4_glass_prison",
+      "name": "Glass Prison",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 129,
+      "description": "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hx4_grave_chill",
       "name": "Grave Chill",
       "kind": "buff",
@@ -31822,40 +31839,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
-    },
-    {
-      "id": "hx4_hundred_year_nap",
-      "name": "Hundred Year Nap",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 6,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 180,
-      "description": "Put one enemy piece you target into an enchanted sleep: it is frozen for 3 of their turns, but it thaws at once if any of your pieces comes to attack it. Kings cannot be enchanted.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "hx4_iron_maiden",
-      "name": "Iron Maiden",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 6,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 117,
-      "description": "Clamp one enemy rook or queen you target in iron. After your opponent's next move, it is frozen for 2 of their turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "hx4_ivory_tower",
@@ -32228,6 +32211,31 @@
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
+      "id": "hx4_tolling_thirds",
+      "name": "The Tolling Thirds",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 6,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 243,
+      "description": "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "weightDrop",
+          "gateSlam"
+        ],
+        "sigil": "Bell"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
       "target": "pieceClass"
     },
     {
@@ -33551,6 +33559,23 @@
       "target": "piece"
     },
     {
+      "id": "sugar_rush",
+      "name": "Sugar Rush",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "extra-move",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 108,
+      "description": "Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "the_big_chill",
       "name": "The Big Chill",
       "kind": "buff",
@@ -34247,6 +34272,23 @@
       "implemented": true,
       "descriptionLength": 249,
       "description": "Curse one of your pawns with lycanthropy: every 5 of your turns it transforms into a knight, and 5 turns later back into a pawn, for the game. The first transformation holds until your opponent replies. If it promotes or is captured the curse lifts.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "white_monster",
+      "name": "White Monster",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "extra-move",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 102,
+      "description": "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -40120,23 +40162,6 @@
       "target": null
     },
     {
-      "id": "hx4_glass_prison",
-      "name": "Glass Prison",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 8,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 129,
-      "description": "Seal one enemy rook or queen you target inside a glass bubble: it is frozen for 3 of their turns, in full view and utterly stuck.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "hx4_gorgons_court",
       "name": "Gorgon's Court",
       "kind": "buff",
@@ -40635,31 +40660,6 @@
       },
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
-      "target": "pieceClass"
-    },
-    {
-      "id": "hx4_tolling_thirds",
-      "name": "The Tolling Thirds",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 243,
-      "description": "A funeral bell counts your opponent's turns: on their 3rd and 6th turns from now, a piece of theirs is frozen for 1 of their turns. Their single most valuable piece is immune, never the king, so the bell takes their next most valuable instead.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "weightDrop",
-          "gateSlam"
-        ],
-        "sigil": "Bell"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
       "target": "pieceClass"
     },
     {
