@@ -1267,7 +1267,7 @@ const T3: Buff[] = [
     }),
   ),
   hex(
-    { id: "hx4_glass_ceiling", name: "Glass Ceiling", description: "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.", flavor: "You can see the crown from here. That is the cruelty.", icon: "PanelTop", fx: { motif: "anchor", pieces: ["p"] }, tier: 4 },
+    { id: "hx4_glass_ceiling", name: "Glass Ceiling", description: "For your opponent's next 5 turns, their pawns may not promote. The final step simply is not there.", flavor: "You can see the crown from here. That is the cruelty.", icon: "PanelTop", fx: { motif: "anchor", pieces: ["p"] }, tier: 3 },
     curse(5, (moves) => moves.filter((m) => !m.promotion)),
   ),
   H3(
@@ -1280,7 +1280,7 @@ const T3: Buff[] = [
         (FILE(m.to) >= 2 && FILE(m.to) <= 5),
     ),
   ),
-  H3(
+  H2(
     { id: "hx4_the_ides", name: "The Ides", description: "A dreadful date circled on their calendar: on your opponent's 4th turn from now, whichever piece they move is frozen for 1 of their turns immediately after. Kings shrug off omens.", flavor: "Beware. You know the rest.", icon: "CalendarX", fx: { motif: "slow", pieces: "all" } },
     onTheirMove(4, (move, api, inst) => {
       if (turnsLeft(inst) === 1 && move.piece !== "k") sting(api, move.to, 1, "stun");
@@ -1596,7 +1596,7 @@ const T3: Buff[] = [
     },
   ),
   hex(
-    { id: "hx4_caught_mid_stride", name: "Caught Mid Stride", description: "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.", flavor: "The world blinked and one soldier forgot to.", icon: "Camera", fx: { motif: "jail" }, tier: 4 },
+    { id: "hx4_caught_mid_stride", name: "Caught Mid Stride", description: "Time hiccups: the piece your opponent moved on their last turn is frozen for 1 of their turns, exactly where it stands. Kings are never caught.", flavor: "The world blinked and one soldier forgot to.", icon: "Camera", fx: { motif: "jail" }, tier: 3 },
     instant((_inst, api) => {
       const hist = api.board.history;
       for (let i = hist.length - 1; i >= 0; i--) {

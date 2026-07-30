@@ -132,7 +132,63 @@ function nerfWave(n: Nerf): WaveId {
 /** Hand-written balance notes, key "buff:<id>" | "nerf:<id>". Append here when
  * a card is retiered, reworked, or reworded in code, with the changelog date
  * and PR. Keep each note one sentence; the page renders them as a timeline. */
-export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {};
+const D_2026_07_30 = "2026-07-30";
+
+export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
+  // 2026-07-30 effect-category pass. Tier is the only power dial (draft.ts:
+  // "one uniform seeded pick, no weights"), so a family is buffed by making its
+  // weak members cheaper to reach and flattened by making its outliers cost
+  // more. Every move below is justified against a same-family comparison, not
+  // against an absolute scale.
+
+  // Freeze family: the single-piece ladder is 1 turn ~ T2/T3, 2 turns ~ T5,
+  // 3 turns ~ T6 (wa_arrest_time is the benchmark). These sat above it.
+  "buff:hx4_glass_prison": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 8 to 6: freezing one rook or queen for 3 turns is exactly wa_arrest_time, which has always been tier 6." },
+  ],
+  "buff:hx4_tolling_thirds": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 8 to 6: two staggered one-turn freezes on their second most valuable piece is mid-ladder value, not flagship value." },
+  ],
+  "buff:hx4_iron_maiden": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 6 to 5: two turns, and delayed a move, against wa_arrest_time's three immediate turns at the same tier." },
+  ],
+  "buff:hx4_hundred_year_nap": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 6 to 5: three turns like wa_arrest_time, but it thaws the moment you attack the sleeper." },
+  ],
+  "buff:bn4_glacier_calving": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 6 to 5: three one-turn freezes, paid for with your next draft." },
+  ],
+  "buff:hx4_undertow": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 5 to 4: one turn, and only on pieces that choose to move backward." },
+  ],
+  "buff:hx4_caught_mid_stride": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 4 to 3: freezing the last-moved piece for one turn is snap_freeze, which sat a tier lower." },
+  ],
+  "buff:snap_freeze": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 3 to 2: the shortest freeze in the game, on a piece you do not choose." },
+  ],
+  "buff:hx4_the_ides": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 3 to 2: one turn, four turns away, on whichever piece they happen to move." },
+  ],
+
+  // Extra-move family flattened the other way: a bonus move is the strongest
+  // tempo effect in the game, so the cards handing out two and three of them
+  // now cost what they are worth.
+  "buff:sugar_rush": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 4 to 6: three extra moves at once, for one skipped turn, was the cheapest triple-move in the library." },
+  ],
+  "buff:white_monster": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 5 to 6: two extra moves with no crash at all, where every other multi-move card pays a price." },
+  ],
+  "buff:coffee": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 4 to 5: two extra moves, against one given back to your opponent." },
+  ],
+
+  // Promotion denial: two cards in the whole library, one of them draftable.
+  "buff:hx4_glass_ceiling": [
+    { date: D_2026_07_30, kind: "retier", note: "Tier 4 to 3: shutting promotion off for five turns is a narrow window on a slow plan, and it is the only draftable card of its kind." },
+  ],
+};
 
 // --- Lookup ---------------------------------------------------------------------
 

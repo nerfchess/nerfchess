@@ -2670,7 +2670,7 @@ const TIER4: Buff[] = [
     }, 2),
   ),
   def(
-    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 1 of its turns.", tier: 3, category: "tempo", boon: true },
+    { id: "snap_freeze", name: "Snap Freeze", description: "Freeze the piece that last moved for 1 of its turns.", tier: 2, category: "tempo", boon: true },
     instant((_inst, api) => {
       const last = [...api.board.history].reverse().find((m) => m.color === api.opp);
       if (!last) return;
@@ -6282,7 +6282,7 @@ const ITEMS: Buff[] = [
     ),
   ),
   def(
-    { id: "coffee", name: "Coffee", description: "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.", tier: 4, category: "item", flavor: "Triple shot. No regrets until move three." },
+    { id: "coffee", name: "Coffee", description: "Knock it back: take two extra moves right now, but the jitters hand your opponent one extra move on their reply.", tier: 5, category: "item", flavor: "Triple shot. No regrets until move three." },
     {
       ...activatedSimple((_inst, api) => {
         api.bs.extraMoves[api.me] += 2;

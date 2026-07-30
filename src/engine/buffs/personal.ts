@@ -659,7 +659,7 @@ const FOCUS: Buff[] = [
       name: "White Monster",
       description:
         "Crack the can: take 2 extra moves right now for a triple-move turn. Zero sugar means zero crash. Once.",
-      tier: 5,
+      tier: 6,
       category: "tempo",
       icon: "Zap",
       flavor: "Zero sugar. All consequences.",
