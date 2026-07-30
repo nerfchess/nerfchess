@@ -10,6 +10,11 @@
 import { ALL_NERFS } from "../src/engine/nerfs/library";
 import { ALL_BUFFS } from "../src/engine/buffs/library";
 import { PASSIVE_COMPOSITIONS } from "../src/components/effects/passive/compositions";
+import {
+  classifyCardEffect,
+  buffToClassifiable,
+  nerfToClassifiable,
+} from "../src/lib/cardEffectCategories";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -22,6 +27,8 @@ type Row = {
   name: string;
   kind: "nerf" | "buff";
   category: string;
+  /** Fine-grained mechanical bucket; see src/lib/cardEffectCategories.ts. */
+  effectCategory: string;
   tier: number;
   mechanic: string;
   implemented: boolean;
@@ -53,6 +60,7 @@ for (const n of ALL_NERFS) {
     name: n.name,
     kind: "nerf",
     category: "nerf",
+    effectCategory: classifyCardEffect(nerfToClassifiable(n)),
     tier: n.tier,
     mechanic: "passive-rule",
     implemented: !!n.implemented,
@@ -71,6 +79,7 @@ for (const b of ALL_BUFFS) {
     name: b.name,
     kind: "buff",
     category: (b.category as string) ?? "buff",
+    effectCategory: classifyCardEffect(buffToClassifiable(b)),
     tier: b.tier,
     mechanic: b.kind,
     implemented: true,
@@ -98,6 +107,10 @@ const summary = {
     shortDescriptions: rows.filter((r) => r.descriptionLength > 0 && r.descriptionLength < 40).length,
     emptyDescriptions: rows.filter((r) => r.descriptionLength === 0).length,
   },
+  effectCategoryCounts: rows.reduce<Record<string, number>>((acc, r) => {
+    acc[r.effectCategory] = (acc[r.effectCategory] ?? 0) + 1;
+    return acc;
+  }, {}),
   soundByFamily: rows.reduce<Record<string, number>>((acc, r) => {
     if (r.soundFamily) acc[r.soundFamily] = (acc[r.soundFamily] ?? 0) + 1;
     return acc;

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -104,7 +105,61 @@ export function MobileNavMenu({
 
   // Static class strings (Tailwind cannot see interpolated class names).
   const hideClass = hideAt === "none" ? "" : hideAt === "md" ? "md:hidden" : "sm:hidden";
-  const anchorClass = align === "left" ? "left-0" : "right-0";
+
+  // The panel is PORTALLED to document.body and positioned from the trigger's
+  // rect, rather than absolutely positioned inside the header.
+  //
+  // Why: an ancestor with a z-index traps the whole subtree in its stacking
+  // context, and `!z-50` on the panel only orders it WITHIN that context. Two
+  // places broke on this. In-game the nav is `sticky top-0 z-20`, below the
+  // z-40 drawer bars — so the bottom of a tall menu (and its backdrop) rendered
+  // underneath them, and tapping down there hit the drawer instead of the menu
+  // item. On the lobby the header sits inside `main`, which globals.css pins at
+  // z-index 2, while QuickMatch's sticky CTA is itself portalled to the body at
+  // z-40 — so "Find game" covered the lower menu entries and a tap there
+  // started matchmaking. Escaping to the body removes the whole class of bug.
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left?: number; right?: number } | null>(
+    null,
+  );
+  const measure = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    // 8px gap below the trigger, matching the old `mt-2`.
+    const top = r.bottom + 8;
+    setPanelPos(
+      align === "left"
+        ? { top, left: Math.max(12, r.left) }
+        : { top, right: Math.max(12, window.innerWidth - r.right) },
+    );
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    // Deferred a microtask so the first measurement is not a synchronous
+    // setState in the effect body (same pattern as the rest of the codebase);
+    // a microtask still lands before paint, so there is no visible jump.
+    queueMicrotask(measure);
+    window.addEventListener("resize", measure);
+    // `true`: catch scrolls in any ancestor, not just the page, so a sticky
+    // header that moves under the menu keeps it anchored.
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [open, measure]);
+
+  // Escape closes, matching every other dismissible surface.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   // Empty groups (all items conditional and absent) render nothing, not a
   // stray header. Each group also carries a running item offset so the
@@ -119,6 +174,7 @@ export function MobileNavMenu({
   return (
     <div className={"relative " + hideClass}>
       <button
+        ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
@@ -127,22 +183,26 @@ export function MobileNavMenu({
       >
         {open ? <X size={18} /> : <Menu size={18} />}
       </button>
-      {open && (
-        <>
-          <button
-            type="button"
-            aria-hidden
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 cursor-default bg-black/40"
-          />
-          {/* !absolute / !z-50: the .plate helper hard-codes position:relative
-              and z-index:2 later in the cascade, so plain utilities lose.
-              `dropdown` lifts the panel onto the opaque raised surface so the
-              page content underneath can never bleed through the menu. */}
-          {/* max-h + internal scroll so a short landscape viewport (height <
-              480px) never traps the lower destinations off-screen. */}
-          <div className={"!absolute " + anchorClass + " top-full !z-50 mt-2 max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown dgn-menu border border-white/10 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"}>
+      {open && panelPos &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              aria-hidden
+              tabIndex={-1}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-[60] cursor-default bg-black/40"
+            />
+            {/* !fixed / !z-[61]: the .plate helper hard-codes position:relative
+                and z-index:2 later in the cascade, so plain utilities lose.
+                `dropdown` lifts the panel onto the opaque raised surface so the
+                page content underneath can never bleed through the menu. */}
+            {/* max-h + internal scroll so a short landscape viewport (height <
+                480px) never traps the lower destinations off-screen. */}
+            <div
+              style={{ top: panelPos.top, left: panelPos.left, right: panelPos.right }}
+              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown dgn-menu border border-white/10 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
+            >
             {/* Ember sparks drifting up the slab. Decorative, deterministic. */}
             {Array.from({ length: 6 }).map((_, i) => (
               <i
@@ -200,10 +260,11 @@ export function MobileNavMenu({
                   );
                 })}
               </div>
-            ))}
-          </div>
-        </>
-      )}
+              ))}
+            </div>
+          </>,
+          document.body,
+        )}
     </div>
   );
 }

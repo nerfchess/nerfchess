@@ -102,6 +102,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   bombardiro_croc: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#7c8a4a", "#ff9d3d", "#3a3526"], source: "sky", shake: true },
   // A meteor flattens a 3x3 area.
   cataclysmic_meteor: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#ff7a29", "#e6432c", "#3a1c12"], source: "sky", shake: true },
+  // Going live to the squad: a broadcast wave washes out and the frozen
+  // targets keep a phone-screen glow.
+  check_out_our_socials: { travel: "wave", impact: "sparkle", aftermath: "sparkle", palette: ["#5aa0e8", "#f2778f", "#fff1f6"], source: "caster", shake: true },
   // A cathedral ward blooms out from your king over your whole half.
   divine_fortress: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#ffd76a", "#e8fff7", "#5fc9b0"], source: "caster", shake: true },
   // The enemy court is flash-frozen into statues.
@@ -114,6 +117,11 @@ export const CARD_VFX: Record<string, CardVfx> = {
   grand_reset: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#6fe3ff", "#ffffff"], source: "caster", shake: true },
   // Three bolts of wrath split the sky and smite named pieces.
   heavens_wrath: { travel: "bolt", impact: "burst", aftermath: "scorch", palette: ["#ffffff", "#ffd76a", "#7fb5ff"], source: "sky", shake: true },
+  // The shield closes over your own half: a warm rose ward, glitter that stays.
+  i_love_my_gf: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#e8506e", "#ffb3c1", "#fff0f4"], source: "caster", shake: true },
+  // Everything comes down at once and only the two kings are left standing.
+  // The wreckage keeps burning: the heaviest aftermath in the vocabulary.
+  ihatemyex: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#d6234f", "#2b2320", "#ff7a29"], source: "center", shake: true },
   // A permanent shade settles over your king. Quiet and absolute.
   immortal_king: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#ffd76a", "#2c3e6b", "#dfe8ff"], source: "caster", shake: true },
   // The basilisk's gaze lances out and turns its victim to stone.
@@ -157,12 +165,18 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // Glacial cold radiates outward and locks the whole enemy army.
   deep_freeze: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#4f8fd1", "#bfe6ff", "#ffffff"], source: "center", shake: true },
   eternal_reign: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#ffffff", "#c9a84c"], source: "caster", shake: true },
+  // On the beat: the piece dashes its lane and smashes through what stands in
+  // it. Neon rhythm-game colors, hard landing, no residue left behind.
+  geometry_dash: { travel: "beam", impact: "shatter", aftermath: "none", palette: ["#3fdf6f", "#4fe3ff", "#ffffff"], source: "mover", shake: true },
   // One knight is consecrated as a godslayer on its square.
   godslayer_knight: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8f6bff", "#dfe3ff", "#ffd76a"], source: "lead", shake: true },
   // Queen and minor rise together in soft grave-light.
   grand_resurrection: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#fff2c9", "#7fd8a8", "#ffffff"], source: "lead", shake: true },
   // A grey hex rolls off your king and hardens the enemy flanks to stone.
   hex_of_stone: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#7fae5a", "#3a3a40"], source: "caster", shake: true },
+  // She comes home shielded: a warm rose arrival on her square, ward glitter
+  // hanging over it for as long as the shield lasts.
+  ilovemysister: { travel: "arc", impact: "burst", aftermath: "sparkle", palette: ["#f2778f", "#ffd7e0", "#c96a8e"], source: "lead", shake: true },
   // The golden payout wheel spins down at your king and pays out in coins.
   jackpot: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#f4c430", "#ffffff"], source: "caster", shake: true },
   // A warband musters into your pocket beside your king.
@@ -210,6 +224,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   all_in: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#e6432c", "#1c7a4a"], source: "caster" },
   // Four dead pawns claw into your pocket on grave smoke.
   army_of_the_dead: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#5fae7f", "#2a2a30", "#c9ffd8"], source: "caster" },
+  // Detention lands on the 3x3: a chalk-dust slam over the chosen square and
+  // the class stays put. Institutional green, nothing burns.
+  bayview_secondary_school: { travel: "none", impact: "smoke", aftermath: "none", palette: ["#4a7a52", "#d9d2c0", "#2b3a2e"], source: "lead" },
   // A war-rage wave rolls over your whole army.
   berserker: { travel: "wave", impact: "shock", aftermath: "none", palette: ["#e6432c", "#ff9d3d", "#7a1a10"], source: "center" },
   // A sudden cold snap freezes the enemy army solid.
@@ -238,6 +255,12 @@ export const CARD_VFX: Record<string, CardVfx> = {
   guardian_angel: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffffff", "#ffd76a", "#9fc9ff"], source: "caster" },
   // One long brass note fills your pocket.
   horn_of_summoning: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#c9a84c", "#8a6a3a", "#fff2c9"], source: "caster" },
+  // Harmony spreads piece to piece across your whole formation: a soft blue
+  // wave from the middle of your host, glitter left on the linked ranks.
+  i_love_newjeans: { travel: "wave", impact: "sparkle", aftermath: "sparkle", palette: ["#7fb5ff", "#c9b0e8", "#fff1f6"], source: "center" },
+  // The signature goes on the board: gold ink strikes the bound piece and the
+  // ward glitter sits on it while the shield holds.
+  joseph_leung: { travel: "beam", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#c9a84c", "#fff7de"], source: "lead" },
   // A pillar of holy light smites, then petrifies the bystanders.
   judgment_day: { travel: "bolt", impact: "burst", aftermath: "scorch", palette: ["#ffffff", "#ffd76a", "#8d8d94"], source: "sky" },
   // The kraken surfaces in a burst of black water.
@@ -310,6 +333,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   annihilate: { travel: "arc", impact: "burst", aftermath: "frost", palette: ["#8f2bbf", "#bfe6ff", "#e3d0ff"], source: "caster" },
   // A pawn ascends into godhood on the spot.
   apotheosis: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#ffffff", "#b98cff"], source: "lead" },
+  // The hive opens over the center ranks: an amber swarm drifts down and the
+  // buzzing stays on the squares it settles on.
+  bee_swarm_simulator: { travel: "rain", impact: "sparkle", aftermath: "sparkle", palette: ["#f4c430", "#3a3526", "#fff2c9"], source: "sky" },
   // The bomber-goose lobs a stun grenade onto the zone.
   bombombini_gusini: { travel: "arc", impact: "shock", aftermath: "none", palette: ["#c9b45a", "#ffcf4d", "#7c8a4a"], source: "caster" },
   // Dusk-amber ward on the queen: her time is borrowed.
@@ -337,6 +363,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   excalibur: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#dfe8ff", "#ffd76a", "#5a8fc0"], source: "lead" },
   // A wall of blue ice erupts along the whole file.
   frost_wall: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#7fb5e8", "#e8f8ff", "#3f6f9f"], source: "lead" },
+  // Fingers run down the keys: the bishop glides its diagonal and sweeps the
+  // line clear. Ivory and lacquer-black, struck notes hanging in the air.
+  fur_elise: { travel: "beam", impact: "burst", aftermath: "sparkle", palette: ["#f5efe0", "#2b2320", "#c9a84c"], source: "mover" },
   god_knight: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#8f6bff", "#fff7de"], source: "lead" },
   // Ancient masonry grinds up along the whole rank.
   great_wall: { travel: "wave", impact: "debris", aftermath: "none", palette: ["#c9b89a", "#8a7a63", "#5c5348"], source: "lead" },
@@ -383,6 +412,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // A spotlight snaps onto the understudy waiting in the wings.
   understudy: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#ffffff", "#8f2bbf"], source: "caster" },
   union_rules: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#c94a3a", "#eef1f7", "#ffd76a"], source: "caster" },
+  // Suiting up in the daily fit: a clean retail-red ward snaps onto the chosen
+  // pieces and the shield glint stays while it holds.
+  uniqlo_warrior: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#e6432c", "#ffffff", "#3a3a40"], source: "lead" },
   // A cold dart arrests one heavy piece in ice.
   wa_arrest_time: { travel: "arc", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff", "#ffffff", "#4f8fd1"], source: "caster" },
   // A warded frontier lights up across the middle of the board.
@@ -402,6 +434,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   walnut_queen: { travel: "arc", impact: "debris", aftermath: "smolder", palette: ["#8a6a4a", "#8f2bbf", "#c9b89a"], source: "caster" },
   // Warp light flickers over three shifted pieces.
   warp_legion: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#dfe3ff"], source: "center" },
+  // Cracking the can: a cold silver-blue jolt off your king and three moves
+  // back to back. Zero sugar, so nothing lingers.
+  white_monster: { travel: "none", impact: "shock", aftermath: "none", palette: ["#eef1f7", "#7fd8f2", "#3a3a40"], source: "caster" },
   // The attack goose flaps in over the lines, feathers everywhere.
   wc_attack_goose: { travel: "arc", impact: "sparkle", aftermath: "none", palette: ["#eef1f7", "#e8963a", "#8a94a8"], source: "caster" },
   // One pawn snaps into a red frenzy.
@@ -432,6 +467,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   we_petrify_ranks: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#c9c9cf", "#5c5c63"], source: "center" },
   // A withering violet touch: frozen first, walnut forever.
   withering_touch: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#6b4a8f", "#8a6a4a", "#c9b0e8"], source: "caster" },
+  // Two shells come down on the named pawns: field-drab ordnance from above,
+  // debris and a burnt crater where each one stood.
+  ww_bombardment: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#7c8a4a", "#ff9d3d", "#3a3526"], source: "sky" },
   // Two claymores are staked out under drifting cordite.
   ww_claymore_line: { travel: "none", impact: "smoke", aftermath: "none", palette: ["#7c8a4a", "#c94a3a", "#3a3526"], source: "lead" },
   // A counter-battery shell drops the named gun.
@@ -449,8 +487,14 @@ export const CARD_VFX: Record<string, CardVfx> = {
 
   // ---- Tier 4 ----
   amazon_knight: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#8f6bff", "#fff7de"], source: "lead" },
+  // The banner goes up over your cavalry and the whole line surges: a martial
+  // gold-and-crimson pulse from your king, ward glint left on the knights.
+  banner_of_war: { travel: "wave", impact: "sparkle", aftermath: "sparkle", palette: ["#c9a84c", "#a3122e", "#fff2c9"], source: "caster" },
   // Iron jaws snap shut on the target square.
   bear_trap: { travel: "none", impact: "shock", aftermath: "none", palette: ["#8a94a8", "#c94a3a", "#3a3a40"], source: "lead" },
+  // The tire-frog drags the whole enemy army down: a heavy rubber-and-swamp
+  // wave off the center, weight left sitting on them.
+  boneca_ambalabu: { travel: "wave", impact: "shock", aftermath: "smolder", palette: ["#4a5a3a", "#2b2320", "#7fae5a"], source: "center" },
   buzzer_beater: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#6fe3ff", "#e6432c"], source: "caster" },
   // Matrix-green corruption crawls into the enemy clock.
   computer_virus: { travel: "arc", impact: "sparkle", aftermath: "none", palette: ["#3fdf6f", "#0a1f0f", "#a8ffc9"], source: "caster" },
@@ -472,8 +516,16 @@ export const CARD_VFX: Record<string, CardVfx> = {
   gamble: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#c65a4a", "#ffd76a", "#fff7de"], source: "caster" },
   // A glass dome settles over the greenhouse file.
   greenhouse: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#a8e07f", "#dff7ff", "#3f8f3f"], source: "lead" },
+  // Something gets into the rook works: a sickly green gremlin-spark jitters
+  // over the enemy rooks and the grime stays on them.
+  gremlins: { travel: "arc", impact: "sparkle", aftermath: "smolder", palette: ["#7fae5a", "#3a3a40", "#c9ff8a"], source: "caster" },
+  // The prayer is answered exactly: soft grave-light on the starting square
+  // the piece is restored to.
+  hallowed_return: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#fff2c9", "#7fd8a8", "#ffffff"], source: "lead" },
   // The cursed spud sizzles in someone's hands.
   hot_potato: { travel: "arc", impact: "embers", aftermath: "none", palette: ["#e8963a", "#8a6a3a", "#ffd166"], source: "caster" },
+  // Bracing the core: a tight ward snaps over the central sixteen and holds.
+  i_love_abs: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#e8963a", "#ffd76a", "#3a3a40"], source: "center" },
   insurance: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#4fa3d1", "#eef1f7", "#ffd76a"], source: "caster" },
   // The hill glows under the king's claim.
   king_of_the_hill: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#5faf5f", "#ffd76a", "#1c7a4a"], source: "center" },
@@ -496,7 +548,13 @@ export const CARD_VFX: Record<string, CardVfx> = {
   pinocchio: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#b58a5a", "#4fa3d1", "#f5efe0"], source: "lead" },
   // Scooter exhaust and a hot delivery into the pocket.
   pizza_delivery: { travel: "none", impact: "smoke", aftermath: "none", palette: ["#e6432c", "#ffd23f", "#f5efe0"], source: "caster" },
+  // One pawn is unmade and the rest of the line locks up: a purge-violet dart
+  // from your king, frost holding the survivors in place.
+  purge_two: { travel: "arc", impact: "burst", aftermath: "frost", palette: ["#8f2bbf", "#e3d0ff", "#bfe6ff"], source: "caster" },
   reinforcements: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#7c8a4a", "#eef1f7", "#c9a84c"], source: "caster" },
+  // Every key lights up at once: an RGB wash rolls over your minor pieces and
+  // the backlight stays on for the rest of the game.
+  rgb_keyboard: { travel: "wave", impact: "sparkle", aftermath: "sparkle", palette: ["#ff4fd8", "#4fe3ff", "#3fdf6f"], source: "caster" },
   // Just add water: four splashes and the little pawns hatch.
   sea_monkeys: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#5fc9b0", "#e8963a", "#dff7ff"], source: "lead" },
   second_army: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8a94a8", "#ffd76a", "#eef1f7"], source: "caster" },
@@ -559,6 +617,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // The bishop lunges point-first down its diagonal.
   ww_bayonet_charge: { travel: "bolt", impact: "shock", aftermath: "none", palette: ["#c9cdd6", "#7c8a4a", "#eef1f7"], source: "mover" },
   ww_command_tent: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#7c8a4a", "#c9a84c", "#e8dcc0"], source: "caster" },
+  // The knight drills the vault until it sticks: a field-drab training glint
+  // on the piece, and the mark stays on it for the game.
+  ww_dragoons: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7c8a4a", "#c9a84c", "#eef1f7"], source: "lead" },
   ww_flanking_knights: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#7c8a4a", "#8a94a8", "#eef1f7"], source: "center" },
   // Covering fire rakes the enemy knights' positions.
   ww_suppressive_fire: { travel: "rain", impact: "smoke", aftermath: "none", palette: ["#7c8a4a", "#8a94a8", "#3a3526"], source: "sky" },
@@ -1339,49 +1400,52 @@ export function resolveCardVfx(id: string, tier: number, genFamily?: string): Ca
 // and the buff library are imported lazily (dynamic import) so this module never
 // participates in an import cycle with BoardEffects at load time; the whole block
 // is compiled away in production builds.
+//
+// The AUTHORITATIVE gate is scripts/check-vfx-coverage.cjs, wired into
+// `test:rules` — this in-page warning is stripped from production and scrolls
+// past in dev, which is exactly how 21 uncovered cards accumulated unnoticed.
+// Keep the two in agreement: coverage accepts an entry in EITHER table (that is
+// what resolveCardVfx reads), and orphan detection spans ALL plugin modules via
+// PLUGIN_ID_SET rather than just the three imported here.
 
 export function runVfxSelfCheck(): void {
   if (process.env.NODE_ENV === "production") return;
   void Promise.all([
     import("./BoardEffects"),
     import("@/engine/buffs/library"),
-    // The plugin registries also anchor CARD_VFX entries (the tier 7+
-    // generated cards play bespoke godPlays leads, the tier 5-6 set plays
-    // greatPlays leads); dynamic for the same cycle-safety reason as
-    // BoardEffects.
-    import("./godPlays"),
-    import("./greatPlays"),
-    // The tier 1-4 "basic" plugin set also anchors CARD_VFX entries (its
-    // tier-4 cards carry palette-matched specs); dynamic for the same
-    // cycle-safety reason as BoardEffects.
-    import("./basicPlays"),
+    // Every plugin module's cards anchor VFX entries too. PLUGIN_ID_SET is the
+    // eager, drift-guarded union of all 13 modules' PLAYS keys (see
+    // sigPlugins.tsx + scripts/check-sig-plugins.cjs), so one small import
+    // covers them all — importing the modules themselves would pull ~9k lines
+    // of render art out of the lazy signature-visuals chunk.
+    import("./sigPlugins"),
   ])
-    .then(([fx, lib, god, great, basic]) => {
+    .then(([fx, lib, plugins]) => {
       const signatures = (fx as { SIGNATURES?: Record<string, unknown> }).SIGNATURES;
       const buffById = (lib as { BUFF_BY_ID?: Record<string, { tier?: number }> }).BUFF_BY_ID;
-      const plays = {
-        ...((god as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
-        ...((great as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
-        ...((basic as { PLAYS?: Record<string, unknown> }).PLAYS ?? {}),
-      };
-      if (!signatures || !buffById) return;
+      const pluginIds = (plugins as { PLUGIN_ID_SET?: ReadonlySet<string> }).PLUGIN_ID_SET;
+      if (!signatures || !buffById || !pluginIds) return;
+      // Coverage mirrors resolveCardVfx: either table counts.
+      const covered = (id: string) => !!CARD_VFX[id] || !!EXTRA_CARD_VFX[id];
       const missing: string[] = [];
       for (const id of Object.keys(signatures)) {
         const tier = buffById[id]?.tier ?? 0;
-        if (tier >= 4 && !CARD_VFX[id]) missing.push(`${id} (tier ${tier})`);
+        if (tier >= 4 && !covered(id)) missing.push(`${id} (tier ${tier})`);
       }
       if (missing.length > 0) {
-         
+
         console.warn(
           `[vfxSpecs] ${missing.length} tier>=4 bespoke card(s) missing a CARD_VFX entry:`,
           missing,
         );
       }
-      const orphaned = Object.keys(CARD_VFX).filter((id) => !(id in signatures) && !(id in plays));
+      const orphaned = [...Object.keys(CARD_VFX), ...Object.keys(EXTRA_CARD_VFX)].filter(
+        (id) => !(id in signatures) && !pluginIds.has(id),
+      );
       if (orphaned.length > 0) {
-         
+
         console.warn(
-          `[vfxSpecs] CARD_VFX entries with no SIGNATURES / plugin-PLAYS counterpart:`,
+          `[vfxSpecs] VFX entries with no SIGNATURES / plugin-PLAYS counterpart:`,
           orphaned,
         );
       }

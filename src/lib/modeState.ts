@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { DraftMode } from "@/engine/buff";
 
 // The one source of truth for "which NerfChess mode is selected" across the
@@ -45,14 +46,33 @@ export function savePreferredMode(mode: DraftMode) {
  */
 export function useSharedMode(): [DraftMode, (mode: DraftMode) => void] {
   const [mode, setMode] = useState<DraftMode>(DEFAULT_MODE);
+  // Reactive, unlike reading window.location.search once on mount. A link to
+  // /lobby?mode=nerf clicked while ALREADY on /lobby is a same-segment App
+  // Router navigation: the component re-renders but never remounts, so a
+  // mount-only effect never re-ran and the URL said one mode while the UI
+  // showed another. The homepage links to exactly that.
+  const params = useSearchParams();
+  const fromQuery = parseMode(params.get("mode"));
+  // Only re-apply when the QUERY changes, never on an unrelated re-render, so
+  // a manual pick is not clobbered by a stale param still sitting in the URL.
+  const appliedQueryRef = useRef<DraftMode | null | undefined>(undefined);
   useEffect(() => {
     // Deferred a microtask so the preselect doesn't set state synchronously
     // in the effect body (same pattern as the rest of the codebase).
     queueMicrotask(() => {
-      const preferred = resolvePreferredMode();
-      if (preferred !== DEFAULT_MODE) setMode(preferred);
+      const first = appliedQueryRef.current === undefined;
+      if (!first && appliedQueryRef.current === fromQuery) return;
+      appliedQueryRef.current = fromQuery;
+      // An explicit param always wins; otherwise fall back to the saved
+      // preference, but only on the first pass (a later param removal should
+      // not yank the mode out from under a manual pick).
+      if (fromQuery) setMode(fromQuery);
+      else if (first) {
+        const preferred = resolvePreferredMode();
+        if (preferred !== DEFAULT_MODE) setMode(preferred);
+      }
     });
-  }, []);
+  }, [fromQuery]);
   const pick = useCallback((next: DraftMode) => {
     setMode(next);
     savePreferredMode(next);

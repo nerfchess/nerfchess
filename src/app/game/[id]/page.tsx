@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
@@ -125,6 +125,7 @@ const REDIRECT_SECONDS = 6;
 // else watches live, or gets the stored replay once the game has been archived.
 export default function OnlineGamePage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const gameId = String(params.id ?? "").toUpperCase();
   const [mode, setMode] = useState<Mode>({ kind: "loading" });
   // Bumped whenever a reconnect replays the spectator state, so the viewer
@@ -339,18 +340,24 @@ export default function OnlineGamePage() {
 
   useEffect(() => {
     if (mode.kind !== "missing") return;
+    // The countdown state and the navigation are kept SEPARATE. Driving the
+    // redirect from inside a setState updater made the updater impure — React
+    // may invoke it twice (StrictMode, or a render discarded before commit),
+    // which fires the navigation twice. The updater now only decrements; the
+    // effect below owns the one-shot navigation.
     const tick = window.setInterval(() => {
-      setRedirectIn((s) => {
-        if (s <= 1) {
-          window.clearInterval(tick);
-          window.location.href = "/lobby";
-          return 0;
-        }
-        return s - 1;
-      });
+      setRedirectIn((s) => (s <= 0 ? 0 : s - 1));
     }, 1000);
     return () => window.clearInterval(tick);
   }, [mode.kind]);
+
+  useEffect(() => {
+    if (mode.kind !== "missing" || redirectIn > 0) return;
+    // router.replace, not window.location.href: this keeps the SPA alive (no
+    // full document reload) and does not push a history entry the viewer would
+    // have to click Back through twice.
+    router.replace("/lobby");
+  }, [mode.kind, redirectIn, router]);
 
   if (mode.kind === "player" && liveSession) {
     return (

@@ -314,7 +314,11 @@ html, body {
      scroll` fix on master — both target the same scroll-jank, and keeping the
      body gradient too would double-paint over the pseudo-element. */
   color: var(--paper);
-  min-height: 100vh;
+  /* dvh, not vh: on iOS Safari `100vh` is the LARGE viewport, so with the URL
+     bar showing every short page was ~90-115px taller than the screen and
+     rubber-banded with no content to scroll to. The game surfaces already use
+     dvh throughout; this was the odd one out. */
+  min-height: 100dvh;
 }
 /* The page gradient rides a fixed pseudo-element instead of
    `background-attachment: fixed` on the body. Both pin the gradient to the
@@ -2523,7 +2527,14 @@ html[data-anim="off"] .sq-pickable {
   40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
   100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
 }
-.sq-locked { animation: locked-in 0.55s ease-out; }
+.sq-locked {
+  /* `both`, like every comparable rule (.sq-shield-in, .walnut-root, the fx-*
+     set in effects.css). Without a fill mode the 100% keyframe's inset shadow
+     was dropped the moment the 550ms run ended, so the "calm persistent pall"
+     the comment above promises evaporated and only a flat grey wash remained
+     for the rest of the lockdown. */
+  animation: locked-in 0.55s ease-out both;
+}
 @keyframes locked-chain-in {
   0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
   100% { opacity: 0.85; transform: scale(1) rotate(0deg); }

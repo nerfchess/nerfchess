@@ -94,13 +94,16 @@ const isIdentChar = (c) => /[A-Za-z0-9_$]/.test(c);
  * neither the JSX render art nor nested config objects can be mistaken for a
  * card key. Keys are read only at object depth 1, and only in "expect key"
  * position (right after the opening `{` or a top-level `,`).
+ *
+ * `marker` is the declaration to scan from, so the same scanner also reads
+ * other big keyed tables in JSX modules that cannot be imported headlessly —
+ * scripts/check-vfx-coverage.cjs uses it for BoardEffects' `SIGNATURES`.
  */
-function extractPlayKeys(src, file) {
-  const marker = "export const PLAYS";
+function extractPlayKeys(src, file, marker = "export const PLAYS") {
   const mi = src.indexOf(marker);
-  if (mi < 0) throw new Error(`${file}: no "export const PLAYS" found`);
+  if (mi < 0) throw new Error(`${file}: no "${marker}" found`);
   let i = src.indexOf("{", mi);
-  if (i < 0) throw new Error(`${file}: no opening brace after PLAYS`);
+  if (i < 0) throw new Error(`${file}: no opening brace after ${marker}`);
 
   const keys = [];
   let depth = 0; // {} () [] combined nesting depth, relative to the object
@@ -215,7 +218,7 @@ function extractPlayKeys(src, file) {
       }
     }
   }
-  if (depth !== 0) throw new Error(`${file}: unbalanced braces while scanning PLAYS`);
+  if (depth !== 0) throw new Error(`${file}: unbalanced braces while scanning ${marker}`);
   return keys;
 }
 

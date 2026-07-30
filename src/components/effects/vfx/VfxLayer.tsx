@@ -49,9 +49,29 @@ export function VfxLayer({ onShake }: { onShake?: () => void } = {}) {
     observer.observe(canvas.parentElement ?? canvas);
     engine.resize();
 
+    // devicePixelRatio can change WITHOUT the CSS box changing: drag the window
+    // to a retina monitor, or zoom in a way that leaves the board's computed
+    // size the same. engine.resize() re-reads DPR, but a ResizeObserver alone
+    // never fired for those, so the backing store stayed at the old ratio and
+    // every particle, beam and shockwave rendered at half resolution until the
+    // board happened to resize. A resolution media query is the only signal;
+    // it has to be re-armed each time because the threshold moves with DPR.
+    let dprQuery: MediaQueryList | null = null;
+    const watchDpr = () => {
+      dprQuery?.removeEventListener("change", onDprChange);
+      dprQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+      dprQuery.addEventListener("change", onDprChange);
+    };
+    function onDprChange() {
+      engine.resize();
+      watchDpr();
+    }
+    watchDpr();
+
     return () => {
       unsubscribe();
       observer.disconnect();
+      dprQuery?.removeEventListener("change", onDprChange);
       engine.destroy();
     };
   }, []);

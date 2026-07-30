@@ -1,8 +1,9 @@
 "use client";
 
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { playDecisionStart, playDraftChime, playDraftUrgent } from "@/lib/sounds";
 import { pushUiHold } from "@/lib/uiInterrupts";
@@ -1860,16 +1861,23 @@ export function DraftOverlay({
                 }
                 animate={
                   chosen === i
-                    ? {
-                        // Into the pocket: the confirmed card arcs toward the
-                        // dock (measured at confirm time), shrinking as it
-                        // goes, and fades just before it lands.
-                        x: pocket?.dx ?? -180,
-                        y: pocket?.dy ?? 220,
-                        scale: 0.18,
-                        rotate: -5,
-                        opacity: [1, 1, 0.85, 0],
-                      }
+                    ? // Into the pocket: the confirmed card arcs toward the
+                      // dock (measured at confirm time), shrinking as it goes,
+                      // and fades just before it lands. Under reduced motion it
+                      // simply fades: this and the bank flight below are the
+                      // LARGEST movements in the app (a full cross-viewport
+                      // arc) and were the only two branches here with no
+                      // reduced-motion check, while their immediate siblings
+                      // all had one.
+                      reduceMotion
+                      ? { opacity: 0 }
+                      : {
+                          x: pocket?.dx ?? -180,
+                          y: pocket?.dy ?? 220,
+                          scale: 0.18,
+                          rotate: -5,
+                          opacity: [1, 1, 0.85, 0],
+                        }
                     : chosen != null
                     ? // The unpicked card bows out: it sinks and fades while
                       // the chosen one lifts away (fade only, reduced motion).
@@ -1877,15 +1885,18 @@ export function DraftOverlay({
                       ? { opacity: 0.12 }
                       : { opacity: 0.1, y: 26, scale: 0.94, rotate: 1.2 }
                     : banking
-                    ? {
-                        // Into the bank: face-down again (the inner flip) and
-                        // off toward the vault over the Skip button as a stack.
-                        x: bankDeltas?.[i]?.dx ?? 0,
-                        y: bankDeltas?.[i]?.dy ?? 240,
-                        scale: 0.22,
-                        rotate: 4,
-                        opacity: [1, 1, 0.9, 0],
-                      }
+                    ? // Into the bank: face-down again (the inner flip) and off
+                      // toward the vault over the Skip button as a stack. Fade
+                      // only under reduced motion.
+                      reduceMotion
+                      ? { opacity: 0 }
+                      : {
+                          x: bankDeltas?.[i]?.dx ?? 0,
+                          y: bankDeltas?.[i]?.dy ?? 240,
+                          scale: 0.22,
+                          rotate: 4,
+                          opacity: [1, 1, 0.9, 0],
+                        }
                     : rerolling && !reduceMotion
                     ? {
                         // Reroll: the rejected cards flip face-down (inner

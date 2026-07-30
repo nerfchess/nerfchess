@@ -52,6 +52,7 @@ import { draftZones } from "@/lib/draftOnline";
 import { computeFxVisual } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { bottomChromePadClass } from "@/components/mobileChrome";
 import { DraftNotice } from "@/components/DraftNotice";
 import {
   DraftOverlay,
@@ -366,7 +367,14 @@ function GamePage() {
   useEffect(() => {
     if (!clockEnabled) return;
     if (diffActive && !diffSavedClocksRef.current) {
-      diffSavedClocksRef.current = { w: whiteMs, b: blackMs };
+      // Stash the LIVE remaining time, not the banked value. whiteMs/blackMs
+      // are only banked when a move commits, and a diff is started by a buff
+      // ACTIVATION — commitClock never ran — so the mover can have been
+      // thinking for a while. Saving the banked figure handed all of that time
+      // back when the diff resolved. remainingClock is the same helper the
+      // display uses, and the server does the equivalent (applyDiffTransitions
+      // banks via currentClocks before swapping).
+      diffSavedClocksRef.current = { w: remainingClock("w"), b: remainingClock("b") };
       turnStartedAtRef.current = Date.now();
       setWhiteMs(60_000);
       setBlackMs(60_000);
@@ -377,7 +385,7 @@ function GamePage() {
       setWhiteMs(saved.w);
       setBlackMs(saved.b);
     }
-  }, [diffActive, clockEnabled, whiteMs, blackMs]);
+  }, [diffActive, clockEnabled, whiteMs, blackMs, remainingClock]);
 
   useEffect(() => {
     return () => {
@@ -1895,7 +1903,12 @@ function GamePage() {
         </div>
       </nav>
 
-      <div className="mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div
+        className={
+          "mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 sm:px-6 xl:max-w-[1680px] " +
+          bottomChromePadClass(!!game.buffs)
+        }
+      >
         {hint && (
           <div
             role="status"

@@ -33,6 +33,11 @@ type Match = {
   clients: Partial<Record<Color, Client>>;
   tokens: Record<Color, string>;
   disconnectedAt: Partial<Record<Color, number>>;
+  /** Seats already told their opponent is gone, so the one-shot notice is not
+   * re-sent every 5s sweep. Latched here instead of by DELETING disconnectedAt:
+   * that timestamp is also what the 30-minute abandonment GC below measures
+   * from, so clearing it made the `?? 0` fallback win and skewed the sweep. */
+  opponentGoneNotified: Partial<Record<Color, boolean>>;
   game: NerfGame | null;
   clocks: Record<Color, number>;
   runningSince: number | null;
@@ -135,6 +140,7 @@ function attachClient(match: Match, client: Client, color: Color) {
   client.token = match.tokens[color];
   match.clients[color] = client;
   delete match.disconnectedAt[color];
+  delete match.opponentGoneNotified[color];
 }
 
 function startPayload(match: Match, color: Color) {
@@ -300,6 +306,7 @@ function startQuickMatch(first: Client, second: Client, poolName: string, pool: 
     clients: {},
     tokens: { w: newToken(), b: newToken() },
     disconnectedAt: {},
+    opponentGoneNotified: {},
     game: null,
     clocks: { w: pool.timeSec * 1000, b: pool.timeSec * 1000 },
     runningSince: null,
@@ -508,6 +515,7 @@ function createMatch(client: Client, data: unknown) {
     clients: { w: client },
     tokens: { w: newToken(), b: newToken() },
     disconnectedAt: {},
+    opponentGoneNotified: {},
     game: null,
     clocks: { w: timeSec * 1000, b: timeSec * 1000 },
     runningSince: null,
@@ -854,9 +862,14 @@ const maintenance = setInterval(() => {
     for (const color of ["w", "b"] as Color[]) {
       const disconnectedAt = match.disconnectedAt[color];
       const opponent = color === "w" ? match.clients.b : match.clients.w;
-      if (disconnectedAt && opponent && now - disconnectedAt > disconnectGraceMs) {
+      if (
+        disconnectedAt &&
+        opponent &&
+        !match.opponentGoneNotified[color] &&
+        now - disconnectedAt > disconnectGraceMs
+      ) {
         send(opponent, "opponentGone");
-        delete match.disconnectedAt[color];
+        match.opponentGoneNotified[color] = true;
       }
     }
     const expiry = match.completedAt ?? match.createdAt;

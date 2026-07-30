@@ -180,5 +180,11 @@ export function saveAiGame(input: {
 
 export function clearSavedAiGame() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(ACTIVE_AI_GAME_KEY);
+  // Guarded like every other storage access here: `removeItem` still throws in
+  // private-mode Safari (and when storage is disabled entirely), and this runs
+  // on the game-over path where an exception would take the result screen with
+  // it. Clearing is best-effort by definition.
+  try {
+    window.localStorage.removeItem(ACTIVE_AI_GAME_KEY);
+  } catch {}
 }

@@ -145,6 +145,12 @@ jobs:
       - name: Card audit
         run: npm run test:card-audit
 
+      # Every card lands in exactly one mechanical effect bucket: no card
+      # unclassified, no dead bucket, no stale override, and no card in one of
+      # draft.ts's exclusive COMBO_TAGS families filed as an incidental rider.
+      - name: Card categories
+        run: npm run test:card-categories
+
       # Standing house rule: no em dashes in user-visible text.
       - name: Em dash guard
         run: npm run test:emdash

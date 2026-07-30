@@ -86,7 +86,9 @@ import {
 } from "./src/lib/server/bots";
 import { resolveArenaSeat } from "./src/lib/server/arenaSeat";
 import {
+  awaySeat,
   chargePauseBudget,
+  clearPause,
   pauseGrantMs,
   releaseExpiredPause,
 } from "./src/lib/server/clockPause";
@@ -225,6 +227,10 @@ type StoredMatch = {
   disconnectedAt: Partial<Record<Color, number>>;
   opponentGoneNotified: Partial<Record<Color, boolean>>;
   moves: string[];
+  /** Moves committed per seat. Tracked rather than derived from move-count
+   * parity because draft games hand out extra moves, which puts the turn (and
+   * so the per-seat totals) off parity. See movesByColor. */
+  movedBy?: Partial<Record<Color, number>>;
   result: Result;
   clocks: Record<Color, number>;
   runningSince: number | null;
@@ -232,9 +238,22 @@ type StoredMatch = {
    * (ms epoch). The clock resumes on its own at this point so an absent player
    * can still flag; absent while the game is not paused for absence. */
   pauseUntil?: number | null;
+  /** When the current disconnect-pause began (ms epoch). Billing measures from
+   * here, not from `disconnectedAt`, which the reconnect path clears before the
+   * charge runs (see chargePauseBudget). Null whenever no pause is active. */
+  pausedSince?: number | null;
   /** Total disconnect-paused time already granted to each seat this game, so
    * repeated background/foreground cycles cannot chain unlimited free pauses. */
   pausedTotalMs?: Partial<Record<Color, number>>;
+  /** First-move grace already consumed per seat. The grace is a BUDGET, not a
+   * window: deriving it from `now - runningSince` handed the full allowance
+   * back every time a path re-anchored runningSince (reconnect, draft settle,
+   * takeback, courtesy time), so a seat could farm it. See movesByColor. */
+  graceUsedMs?: Partial<Record<Color, number>>;
+  /** When the current draft free lock-in window opened (ms epoch), paired with
+   * dtDeadline. Kept so the window's elapsed time can be excluded from billing
+   * even after it closes — see currentClocks. */
+  dtWindowFrom?: number | null;
   drawOfferBy: Color | null;
   // Seat that aborted the game (result.winner null, reason "aborted"), kept so
   // the archived row can attribute the abort for abuse tracking.
@@ -915,6 +934,19 @@ type SpectatorEnvelopeType =
   | "clock"
   | "takeback"
   | "snapshot";
+/** Frame types the client applies IN ORDER, each consuming one revision.
+ * Must mirror SEQUENCED_TYPES in src/lib/spectate/spectatorSync.ts — the
+ * spectator-sync harness asserts the two agree. Everything else (clock, the
+ * join snapshot) is applied out of band and must not consume a revision. */
+const SEQUENCED_ENVELOPE_TYPES: ReadonlySet<SpectatorEnvelopeType> = new Set([
+  "move",
+  "draftUsed",
+  "draftResolved",
+  "draftState",
+  "draftDiff",
+  "end",
+  "takeback",
+]);
 type SpectatorEnvelope = {
   gameId: string;
   schemaVersion: number;
@@ -2173,9 +2205,12 @@ export class GameServer extends DurableObject<Env> {
       // Budget exhausted: no pause at all, the clock simply keeps running.
       if (grant > 0) {
         const now = Date.now();
-        match.clocks = this.currentClocks(match, now);
+        this.bankClocks(match, now);
         match.runningSince = null;
         match.pauseUntil = now + grant;
+        // Stamp the start so chargePauseBudget can bill this absence no matter
+        // which path ends it; the reconnect path wipes disconnectedAt first.
+        match.pausedSince = now;
         await this.armAlarmBy(match.pauseUntil);
       }
     }
@@ -2382,6 +2417,16 @@ export class GameServer extends DurableObject<Env> {
           : {}),
       };
     }
+    // Is the OTHER seat currently away, and since when? The opponentGone frame
+    // is a one-shot (opponentGoneNotified latches so it is not re-sent every
+    // alarm tick), and the client resets its own opponentGone flag on every
+    // start frame — so before this field existed, a player who refreshed during
+    // an abandonment window lost the claim-win UI for good even though claimWin
+    // would still have been accepted. Shipping the raw timestamp lets the
+    // client rebuild the countdown from where it actually stands.
+    const oppSeat: Color = color === "w" ? "b" : "w";
+    const oppGoneSince =
+      !match.result && match.startedAt ? (match.disconnectedAt[oppSeat] ?? null) : null;
     return {
       id: match.id,
       color,
@@ -2396,6 +2441,7 @@ export class GameServer extends DurableObject<Env> {
       players: this.playersPayload(match),
       rated: !!match.rated,
       chat: match.chat ?? [],
+      ...(oppGoneSince != null ? { oppGoneSince } : {}),
       ...(Object.keys(revealed).length ? { revealed } : {}),
       ...(preview ? { preview } : {}),
       ...(draftExtras ?? {}),
@@ -2693,7 +2739,15 @@ export class GameServer extends DurableObject<Env> {
     let timerState: PublicTimerState = "paused";
     if (match.result) {
       timerState = /time/i.test(match.result.reason) ? "flagged" : "paused";
-    } else if (match.startedAt && match.runningSince !== null) {
+    } else if (
+      match.startedAt &&
+      match.runningSince !== null &&
+      // Same condition currentClocks bills on. Without it a spectator was told
+      // "running" through a draft free window that the server is NOT charging
+      // (the backstop path leaves runningSince set), so the watcher's local
+      // tick drifted down and then snapped back on the next frame.
+      !this.draftWindowHolds(match, Date.now())
+    ) {
       timerState = this.chargedColor(match) === "w" ? "running-w" : "running-b";
     }
     const clocks = this.currentClocks(match);
@@ -2741,17 +2795,22 @@ export class GameServer extends DurableObject<Env> {
     };
   }
 
-  // Bump the monotonic public revision and, when warranted, rebuild the
+  // Refresh the public parity hash and, when warranted, rebuild the
   // authoritative public spectator snapshot. Called on every commit path right
-  // before saveMatch so the seq bump and the (possibly rebuilt) pubSnap persist
-  // atomically in the same write. `force` rebuilds regardless of cadence: pass
-  // it when a board-mutating card resolves and on result, so a resyncing
-  // spectator can never land on a stale board. Reuses the passed-in game; it
-  // never replays. Absent-startedAt (pre-game) is a no-op.
+  // before saveMatch so the refreshed projection persists in the same write.
+  // `force` rebuilds regardless of cadence: pass it when a board-mutating card
+  // resolves and on result, so a resyncing spectator can never land on a stale
+  // board. Reuses the passed-in game; it never replays. Absent-startedAt
+  // (pre-game) is a no-op.
+  //
+  // It does NOT advance match.seq. The revision counter is allocated per
+  // EMITTED FRAME by spectatorEnvelope (see there) — one bump followed by
+  // three fanned frames must produce three distinct, consecutive seqs, not
+  // three copies of one. The snapshot is stamped with the seq the next frame
+  // will carry, which is the frame that delivers this board.
   private bumpPublicSnapshot(match: StoredMatch, game: NerfGame, opts?: { force?: boolean }) {
     if (!match.startedAt) return;
     const seq = (match.seq ?? match.moves.length) + 1;
-    match.seq = seq;
     // Build the (cheap, replay-free) projection every event so the spectator
     // envelope carries the exact post-event parity hash. Reuses the already
     // reconstructed game, never a fresh replay, so this stays O(pieces) per
@@ -2770,11 +2829,27 @@ export class GameServer extends DurableObject<Env> {
     }
   }
 
-  // Build the SpectatorEnvelope header for a fanned watcher frame. seq and hash
-  // come from match state that the commit path already advanced (persist then
-  // publish), so the emitted seq always agrees with the persisted pubSnap.seq.
+  // Build the SpectatorEnvelope header for a fanned watcher frame, ALLOCATING
+  // this frame's revision.
+  //
+  // The client reducer applies a sequenced frame only at exactly
+  // lastAppliedSeq + 1 and drops anything at or below it. Reading a shared
+  // match.seq here meant every frame emitted after a single bump carried the
+  // same number, so only the first survived: the dtUsed after a dtResolved,
+  // and the dtState that follows a draft resolution, were silently dropped for
+  // every ordered spectator — and the pre-move reveal frames, which are sent
+  // BEFORE the commit's bump, carried an already-applied seq and were dropped
+  // too. Allocating per frame makes each one land, and keeps the sequence
+  // gapless (a gap would stall the reducer until a resync).
   private spectatorEnvelope(match: StoredMatch, type: SpectatorEnvelopeType): SpectatorEnvelope {
-    const seq = match.seq ?? match.moves.length;
+    // Out-of-band types (clock, and the join snapshot) are applied by the
+    // client WITHOUT advancing its lastAppliedSeq, so allocating for them here
+    // would open a gap the reducer can never fill. They ride the current
+    // revision instead. Mirrors SEQUENCED_TYPES in spectatorSync.ts.
+    const seq = SEQUENCED_ENVELOPE_TYPES.has(type)
+      ? (match.seq ?? match.moves.length) + 1
+      : (match.seq ?? match.moves.length);
+    match.seq = seq;
     return {
       gameId: match.id,
       schemaVersion: PUBLIC_SNAPSHOT_VERSION,
@@ -2829,7 +2904,7 @@ export class GameServer extends DurableObject<Env> {
       match.replayVersion != null && match.replayVersion !== REPLAY_VERSION && !match.result;
     const game = stale ? null : this.gameFromCheckpoint(match);
     if (!game && match.startedAt && !match.result) {
-      match.clocks = this.currentClocks(match);
+      this.bankClocks(match);
       match.runningSince = null;
       match.result = { winner: "draw", reason: "server update interrupted this game" };
       match.completedAt = Date.now();
@@ -2889,9 +2964,31 @@ export class GameServer extends DurableObject<Env> {
     }
   }
 
-  // Moves the given color has already played (moves alternate w, b, w, …).
+  // Moves the given color has already played.
+  //
+  // Counted as moves commit (movedBy), NOT derived from move-count parity: in
+  // a draft game an extra-move card lets one side move twice in a row, and
+  // `activeColor` below already documents that turns leave parity for exactly
+  // that reason. Parity credited the wrong seat — after White plays, takes an
+  // extra move, and plays again, `moves.length === 2` read as "Black has moved
+  // once", so Black lost the first-move grace on a move they had not made and
+  // White lost the rest of theirs. That fed the grace check, the flag alarm,
+  // the bot think budget and the turn-heal rebank.
+  //
+  // Falls back to parity for matches persisted before `movedBy` existed, which
+  // is exactly as right (and as wrong) as it was for them before.
   private movesByColor(match: StoredMatch, color: Color): number {
+    const tracked = match.movedBy?.[color];
+    if (tracked != null) return tracked;
     return color === "w" ? Math.ceil(match.moves.length / 2) : Math.floor(match.moves.length / 2);
+  }
+
+  /** Record a committed move against its mover, for movesByColor. Call BEFORE
+   * pushing onto match.moves: the legacy seed reads the pre-push length. */
+  private countMove(match: StoredMatch, mover: Color) {
+    const w = match.movedBy?.w ?? Math.ceil(match.moves.length / 2);
+    const b = match.movedBy?.b ?? Math.floor(match.moves.length / 2);
+    match.movedBy = { w, b, [mover]: (mover === "w" ? w : b) + 1 };
   }
 
   // Whose turn it is. Classic turns always alternate w, b, w, … so this is
@@ -2951,9 +3048,19 @@ export class GameServer extends DurableObject<Env> {
     if (!game?.buffs) return;
     if (!game.buffs.players.w.offer && !game.buffs.players.b.offer) return;
     match.dtDeadline = now + draftPrepMs + draftLockInMs;
+    match.dtWindowFrom = now;
     // Both clocks pause for the shared free window; enforceDraftDeadlines
     // resumes them if the window expires with an offer still open.
+    this.bankClocks(match, now);
     match.runningSince = null;
+    // Any disconnect-pause is subsumed by this window: bill what it actually
+    // used now, rather than leaving an orphaned pauseUntil behind a clock this
+    // window owns (the alarm would later drop it as stale, billing nothing).
+    if (match.pauseUntil != null) {
+      const away = awaySeat(match);
+      if (away) chargePauseBudget(match, away, now);
+      else clearPause(match);
+    }
     this.syncOfferSeats(match, game);
     // House seats resolve their opener inside the window: re-arm with the
     // game in hand so the offer branch schedules a draft think instead of
@@ -2962,6 +3069,38 @@ export class GameServer extends DurableObject<Env> {
       match.botActAt = null;
       this.armBotAction(match, game, now);
     }
+  }
+
+  /** First-move grace this seat has left, in ms. A per-seat budget, so paths
+   * that re-anchor runningSince cannot hand it back (see graceUsedMs). */
+  private graceLeftMs(match: StoredMatch, color: Color): number {
+    if (this.movesByColor(match, color) > 0) return 0;
+    return Math.max(0, firstMoveGraceMs - (match.graceUsedMs?.[color] ?? 0));
+  }
+
+  /** True while a draft free lock-in window is actually open right now. */
+  private draftWindowHolds(match: StoredMatch, now: number): boolean {
+    return (
+      !!match.draft &&
+      !match.diff &&
+      match.dtDeadline != null &&
+      now < match.dtDeadline &&
+      !!(match.offerSeats?.w || match.offerSeats?.b)
+    );
+  }
+
+  /** Milliseconds of [runningSince, now] that fell inside a draft free window
+   * and so must never be billed — including a window that has since closed.
+   * Without this the backstop below only DEFERRED the charge: runningSince was
+   * left untouched, so the instant the window expired the very next read billed
+   * the whole window in one jump (an instant flag in a 1+0 game). */
+  private draftWindowMs(match: StoredMatch, now: number): number {
+    if (!match.draft || match.diff) return 0;
+    if (match.runningSince === null) return 0;
+    if (match.dtWindowFrom == null || match.dtDeadline == null) return 0;
+    const from = Math.max(match.runningSince, match.dtWindowFrom);
+    const to = Math.min(now, match.dtDeadline);
+    return to > from ? to - from : 0;
   }
 
   private currentClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
@@ -2973,26 +3112,51 @@ export class GameServer extends DurableObject<Env> {
     // guard above catches them; this is the belt-and-braces backstop for any
     // start or reconnect path that failed to pause (see openStartDraftWindow) —
     // it makes an opening draft physically unable to burn clock, matching what
-    // recurring rounds already do. Once the window ends (now >= dtDeadline) or
-    // the offers resolve (offerSeats cleared) normal charging — including the
-    // straggler rule in chargedColor — resumes.
-    if (
-      match.draft &&
-      !match.diff &&
-      match.dtDeadline != null &&
-      now < match.dtDeadline &&
-      (match.offerSeats?.w || match.offerSeats?.b)
-    ) {
-      return clocks;
-    }
+    // recurring rounds already do.
+    if (this.draftWindowHolds(match, now)) return clocks;
     const active = this.chargedColor(match);
-    let elapsed = now - match.runningSince;
-    // Start-of-game grace: the first move of each side gets 10 free seconds.
-    if (this.movesByColor(match, active) === 0) {
-      elapsed = Math.max(0, elapsed - firstMoveGraceMs);
-    }
+    // Bill wall time, minus any of it that fell inside a draft window (even a
+    // closed one) and minus whatever first-move grace the seat still has.
+    let elapsed = now - match.runningSince - this.draftWindowMs(match, now);
+    elapsed = Math.max(0, elapsed - this.graceLeftMs(match, active));
     clocks[active] = Math.max(0, clocks[active] - elapsed);
     return clocks;
+  }
+
+  /**
+   * Bank the running clock into match.clocks and consume whatever first-move
+   * grace the active seat actually used in that interval.
+   *
+   * EVERY path that re-anchors or clears runningSince must bank through here.
+   * That is the whole fix for the grace exploit: the allowance is a budget held
+   * on the match, and it is spent exactly once no matter how many times the
+   * clock is re-anchored (reconnect, draft settle, takeback, courtesy time).
+   */
+  private bankClocks(match: StoredMatch, now = Date.now()): Record<Color, number> {
+    const banked = this.currentClocks(match, now);
+    // Compute the spend against the pre-bank state, then store.
+    if (
+      match.setup.timeSec &&
+      !match.result &&
+      match.startedAt &&
+      match.runningSince !== null &&
+      !this.draftWindowHolds(match, now)
+    ) {
+      const active = this.chargedColor(match);
+      const left = this.graceLeftMs(match, active);
+      if (left > 0) {
+        const billable = Math.max(0, now - match.runningSince - this.draftWindowMs(match, now));
+        const used = Math.min(left, billable);
+        if (used > 0) {
+          match.graceUsedMs = {
+            ...match.graceUsedMs,
+            [active]: (match.graceUsedMs?.[active] ?? 0) + used,
+          };
+        }
+      }
+    }
+    match.clocks = banked;
+    return banked;
   }
 
   private async finishOnFlag(match: StoredMatch, now = Date.now(), schedule = true): Promise<boolean> {
@@ -3118,7 +3282,7 @@ export class GameServer extends DurableObject<Env> {
   private applyDiffTransitions(match: StoredMatch, game: NerfGame, now = Date.now()): boolean {
     const engineDiff = !!game.buffs?.diff;
     if (engineDiff && !match.diff) {
-      match.clocks = this.currentClocks(match, now);
+      this.bankClocks(match, now);
       match.diff = { savedClocks: { ...match.clocks } };
       if (match.runningSince !== null) match.runningSince = now;
       if (match.setup.timeSec) {
@@ -3455,7 +3619,7 @@ export class GameServer extends DurableObject<Env> {
       } catch (err) {
         console.error("reconnect replay threw, ending game", match.id, "moves=", match.moves.length, "draftActions=", JSON.stringify(match.draftActions ?? []), err);
         if (!match.result) {
-          match.clocks = this.currentClocks(match);
+          this.bankClocks(match);
           match.runningSince = null;
           match.result = { winner: "draw", reason: "game interrupted" };
           match.completedAt = Date.now();
@@ -3553,7 +3717,7 @@ export class GameServer extends DurableObject<Env> {
   // identical to a human game's.
   private async commitMove(match: StoredMatch, game: NerfGame, mover: Color, move: Move, uci: string) {
     const now = Date.now();
-    match.clocks = this.currentClocks(match, now);
+    this.bankClocks(match, now);
     if (match.drawOfferBy && match.drawOfferBy !== mover) {
       match.drawOfferBy = null;
       this.broadcast(match, "drawDeclined", { color: mover });
@@ -3600,6 +3764,7 @@ export class GameServer extends DurableObject<Env> {
       this.sendDraftState(match, preGame);
       this.sendWatcherDraftState(match, preGame);
     }
+    this.countMove(match, mover);
     match.moves.push(uci);
     // Draft games: extra moves and skips can leave the turn off parity.
     if (match.draft) match.turnColor = nextGame.board.turn;
@@ -3619,8 +3784,13 @@ export class GameServer extends DurableObject<Env> {
       // reveal the countdown only once the cards are dealt and interactive,
       // so the player still receives the complete decision window after the
       // chest and deal animations.
-      if (rolledNow && !nextGame.result) match.dtDeadline = now + draftPrepMs + draftLockInMs;
-      else if (!offersPending) match.dtDeadline = null;
+      if (rolledNow && !nextGame.result) {
+        match.dtDeadline = now + draftPrepMs + draftLockInMs;
+        match.dtWindowFrom = now;
+      } else if (!offersPending) {
+        match.dtDeadline = null;
+        match.dtWindowFrom = null;
+      }
       // Keep the charged-seat mirror current: past the free window the seat
       // still holding its offer pays (see chargedColor), never the waiter.
       this.syncOfferSeats(match, nextGame);
@@ -3699,7 +3869,7 @@ export class GameServer extends DurableObject<Env> {
     const game = await this.gameForPlay(match);
     if (!game) return match.result ? undefined : error(ws, "no_game", "Join a game before resigning.");
 
-    match.clocks = this.currentClocks(match);
+    this.bankClocks(match);
     match.runningSince = null;
     match.result = resign(game, session.color).result;
     match.completedAt = Date.now();
@@ -3738,7 +3908,7 @@ export class GameServer extends DurableObject<Env> {
       } catch {}
     }
 
-    match.clocks = this.currentClocks(match);
+    this.bankClocks(match);
     match.runningSince = null;
     match.drawOfferBy = null;
     match.abortedBy = session.color;
@@ -3819,7 +3989,7 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "no_claim", "Your opponent has not been gone long enough to claim.");
     }
 
-    match.clocks = this.currentClocks(match);
+    this.bankClocks(match);
     match.runningSince = null;
     match.result = draw
       ? { winner: "draw", reason: "abandonment" }
@@ -3852,7 +4022,7 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "no_draw_offer", "There is no opponent draw offer to accept.");
     }
 
-    match.clocks = this.currentClocks(match);
+    this.bankClocks(match);
     match.runningSince = null;
     match.drawOfferBy = null;
     match.result = { winner: "draw", reason: "draw by agreement" };
@@ -3928,7 +4098,7 @@ export class GameServer extends DurableObject<Env> {
     }
 
     const now = Date.now();
-    match.clocks = this.currentClocks(match, now);
+    this.bankClocks(match, now);
     match.moves = match.moves.slice(0, match.moves.length - remove);
     // The rewind drops the move list below the checkpoint; clear it so the play
     // path rebuilds a fresh one instead of falling back to full replay until the
@@ -3936,11 +4106,14 @@ export class GameServer extends DurableObject<Env> {
     match.checkpoint = null;
     match.takebackOfferBy = null;
     match.runningSince = match.startedAt ? now : null;
-    // A takeback rewinds the board: advance the public revision and rebuild the
-    // snapshot from the rewound game so the takeback envelope carries a new seq
-    // (a spectator applies it as the next in-order event) and the exact
-    // post-rewind parity hash. If the rewound game cannot be rebuilt, still
-    // advance the seq so a spectator sees the change and can resync.
+    // A takeback rewinds the board: rebuild the snapshot from the rewound game
+    // so the takeback envelope carries the exact post-rewind parity hash. The
+    // revision itself is allocated by the "takeback" envelope emitted below (a
+    // spectator applies it as the next in-order event) — bumping it here too
+    // would leave a hole in the sequence that the client's reducer can never
+    // fill, stalling every later frame until a resync. If the rewound game
+    // cannot be rebuilt the frame still advances the revision on its own, so a
+    // spectator sees the change and can resync.
     let rewound: NerfGame | null = null;
     try {
       rewound = this.gameFromMatch(match);
@@ -3948,7 +4121,6 @@ export class GameServer extends DurableObject<Env> {
       rewound = null;
     }
     if (rewound) this.bumpPublicSnapshot(match, rewound, { force: true });
-    else match.seq = (match.seq ?? match.moves.length) + 1;
     await this.saveMatch(match);
 
     const payload = {
@@ -4396,7 +4568,7 @@ export class GameServer extends DurableObject<Env> {
       const humanSeat = (["w", "b"] as Color[]).find((c) => !match.bots?.[c]);
       if (humanSeat) {
         if (!match.result) {
-          match.clocks = this.currentClocks(match);
+          this.bankClocks(match);
           match.runningSince = null;
           match.result = { winner: "draw", reason: "game interrupted" };
           match.completedAt = Date.now();
@@ -4429,7 +4601,7 @@ export class GameServer extends DurableObject<Env> {
       if (seeks.length) await this.ctx.storage.put(houseSeeksKey, []);
       for (const match of await this.loadLiveMatches()) {
         if (match.result || !(match.bots?.w || match.bots?.b)) continue;
-        match.clocks = this.currentClocks(match);
+        this.bankClocks(match);
         match.runningSince = null;
         match.result = { winner: "draw", reason: "House players are paused for maintenance" };
         match.completedAt = Date.now();
@@ -5074,7 +5246,7 @@ export class GameServer extends DurableObject<Env> {
     }
     if (game.result) {
       // Derived but unrecorded result (should not happen): settle it.
-      match.clocks = this.currentClocks(match, now);
+      this.bankClocks(match, now);
       match.runningSince = null;
       match.result = game.result;
       match.completedAt = now;
@@ -6315,6 +6487,10 @@ export class GameServer extends DurableObject<Env> {
     try {
       game = this.syncExternalGame(match);
     } catch {}
+    // Whose move this is, read off the PRE-move replica (game is reassigned to
+    // the post-move state below). Null when the replica could not be rebuilt,
+    // in which case movesByColor keeps its legacy parity estimate.
+    const mover: Color | null = game && !game.result ? game.board.turn : null;
     if (game && !game.result) {
       const move = moveByUci(game, uci);
       if (move && match.draft && game.buffs) {
@@ -6333,6 +6509,7 @@ export class GameServer extends DurableObject<Env> {
         game = move ? playMove(game, move) : null;
       }
     }
+    if (mover) this.countMove(match, mover);
     match.moves.push(uci);
     if (clocks && typeof clocks.w === "number" && typeof clocks.b === "number") {
       match.clocks = { w: clocks.w, b: clocks.b };
@@ -6423,7 +6600,20 @@ export class GameServer extends DurableObject<Env> {
     // reconstructed; a migration stage turns that into a structured notice
     // rather than a false starting board. The moves array stays for older
     // clients that ignore `pub`.
+    //
+    // The BASELINE (seq + publicHash) must describe what this payload actually
+    // carries, which is the LIVE state: `moves` / `dtActions` are current, and
+    // that is what the client rebuilds its board from. `pubSnap` is only
+    // rebuilt on the checkpoint cadence (every checkpointEveryPlies events) or
+    // on force, so `pub.seq` can trail `match.seq` by up to that many plies.
+    // Baselining on the trailing value made the very next live frame look like
+    // a GAP: the client buffered it, the 1.5s sweep re-issued watch(), the
+    // server handed back the same stale snapshot, and the spectator view
+    // remounted in a loop until the next checkpoint. `match.seqHash` is
+    // refreshed on every event (bumpPublicSnapshot), so it is the hash that
+    // matches the live board for parity too.
     const pub = this.ensurePubSnap(match);
+    const baselineSeq = match.seq ?? pub?.seq ?? match.moves.length;
     send(ws, "wstart", {
       id,
       timeSec: match.setup.timeSec,
@@ -6443,10 +6633,10 @@ export class GameServer extends DurableObject<Env> {
       ...(pub
         ? {
             pub: pub.snap,
-            seq: pub.seq,
+            seq: baselineSeq,
             schemaVersion: pub.schemaVersion,
             replayVersion: pub.replayVersion,
-            publicHash: pub.hash,
+            publicHash: match.seqHash ?? pub.hash,
           }
         : {}),
     });
@@ -6929,7 +7119,13 @@ export class GameServer extends DurableObject<Env> {
       // The live shared lock-in deadline rides every dtState frame, so a
       // reroll's restarted window (and any other server-side deadline change)
       // reaches clients without needing its own frame type.
-      ...(match.dtDeadline ? { deadline: match.dtDeadline } : {}),
+      //
+      // ALWAYS present, null included. Omitting it when the window closes left
+      // the client holding the previous, still-FUTURE deadline: when both seats
+      // resolve early (settleDraftAction nulls dtDeadline before it expires),
+      // draftGraceOver stayed false and LockInCountdown kept counting a window
+      // that no longer existed.
+      deadline: match.dtDeadline ?? null,
     };
   }
 
@@ -7055,12 +7251,12 @@ export class GameServer extends DurableObject<Env> {
     // charged seat can change the moment offerSeats is re-synced below.
     if (!match.result && match.draft && match.runningSince !== null) {
       const now = Date.now();
-      match.clocks = this.currentClocks(match, now);
+      this.bankClocks(match, now);
       match.runningSince = now;
     }
     if (game.result && !match.result) {
       const now = Date.now();
-      match.clocks = this.currentClocks(match, now);
+      this.bankClocks(match, now);
       match.runningSince = null;
       match.result = game.result;
       match.completedAt = now;
@@ -7068,7 +7264,7 @@ export class GameServer extends DurableObject<Env> {
       // A buff use consumed the activator's turn: bank their elapsed time
       // and start charging the new mover, exactly like a played move.
       const now = Date.now();
-      match.clocks = this.currentClocks(match, now);
+      this.bankClocks(match, now);
       if (match.runningSince !== null) match.runningSince = now;
       match.turnColor = game.board.turn;
     }
@@ -7077,7 +7273,10 @@ export class GameServer extends DurableObject<Env> {
     // paused during the window itself).
     const bs = game.buffs;
     const offersPending = !!bs?.players.w.offer || !!bs?.players.b.offer;
-    if (!offersPending) match.dtDeadline = null;
+    if (!offersPending) {
+      match.dtDeadline = null;
+      match.dtWindowFrom = null;
+    }
     this.syncOfferSeats(match, game);
     if (
       (!offersPending || !match.dtDeadline) &&
@@ -7085,7 +7284,21 @@ export class GameServer extends DurableObject<Env> {
       !match.result &&
       match.runningSince === null
     ) {
-      match.runningSince = Date.now();
+      const resumeAt = Date.now();
+      // A disconnect-pause outranks the draft resume: restarting the clock
+      // here would silently end an absent player's protection early (and the
+      // orphaned pauseUntil would later be swept as stale, billing nothing).
+      // Leave the clock paused and let the pause's own deadline resume it.
+      if (match.pauseUntil != null && resumeAt < match.pauseUntil) {
+        // nothing to do — releaseExpiredPause owns the resume
+      } else {
+        if (match.pauseUntil != null) {
+          const away = awaySeat(match);
+          if (away) chargePauseBudget(match, away, resumeAt);
+          else clearPause(match);
+        }
+        match.runningSince = resumeAt;
+      }
     }
     // A pick that cast Chess Diff swaps both clocks for the diff's 1+0 minute
     // (the paused game's clocks are stashed on the match until it is decided).
@@ -7223,6 +7436,7 @@ export class GameServer extends DurableObject<Env> {
     const now = Date.now();
     if (match.dtDeadline && now < match.dtDeadline) {
       match.dtDeadline = now + draftPrepMs + draftLockInMs;
+      match.dtWindowFrom = now;
     }
     // A house seat can hold the offer; a reroll leaves whose-turn-it-is
     // untouched, so just refresh any pending house action off the new state.
@@ -7281,7 +7495,7 @@ export class GameServer extends DurableObject<Env> {
     session.lastClockAdjustAt = now;
     // Bank the live clocks first so the delta lands on up-to-date values, and
     // keep charging the active player from now (mirrors a played move).
-    match.clocks = this.currentClocks(match, now);
+    this.bankClocks(match, now);
     if (match.runningSince !== null) match.runningSince = now;
     const opp: Color = session.color === "w" ? "b" : "w";
     const deltaMs = subtract ? -15000 : 15000;
@@ -7697,7 +7911,17 @@ export class GameServer extends DurableObject<Env> {
     }
     if (!match.startedAt || !match.dtDeadline || now < match.dtDeadline) return false;
     const expiredAt = match.dtDeadline;
+    // If some path left the clock RUNNING through the window (the backstop
+    // case currentClocks guards), bank it before dropping dtWindowFrom: the
+    // banked value still excludes the window, and re-anchoring runningSince to
+    // the deadline means the window is never billed afterwards either. Dropping
+    // the marker first would hand the whole window straight back onto the bill.
+    if (!match.result && match.runningSince !== null) {
+      this.bankClocks(match, expiredAt);
+      match.runningSince = expiredAt;
+    }
     match.dtDeadline = null;
+    match.dtWindowFrom = null;
     // House games resume the clock from the moment the free window EXPIRED,
     // not from whenever this enforcement happened to run: under alarm backlog
     // the gap between the two is exactly the "bot got its time back" window —

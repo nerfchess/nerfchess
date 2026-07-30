@@ -98,6 +98,12 @@ export interface SpectatorSyncState {
   gapSince: number | null;
   /** publicHash of the last applied envelope (for the parity check). */
   lastHash: string | null;
+  /** The server is emitting a PUBLIC_SNAPSHOT_VERSION this bundle cannot read.
+   * Unlike a replayVersion drift, re-watching cannot fix this: the fresh
+   * wstart fails the identical check, so asking for a resync just loops on
+   * every frame. Latched here so the caller stops re-watching and can prompt a
+   * reload instead. Cleared only by switching game or ending the watch. */
+  protocolStalled: boolean;
 }
 
 export interface SpectatorSyncConfig {
@@ -134,6 +140,7 @@ export function createSpectatorSync(): SpectatorSyncState {
     pending: new Map(),
     gapSince: null,
     lastHash: null,
+    protocolStalled: false,
   };
 }
 
@@ -146,6 +153,7 @@ function hardReset(state: SpectatorSyncState) {
   state.pending.clear();
   state.gapSince = null;
   state.lastHash = null;
+  state.protocolStalled = false;
 }
 
 /**
@@ -165,6 +173,13 @@ export function beginWatch(state: SpectatorSyncState, gameId: string): boolean {
  *  caller separately clears its board/clocks/timers. */
 export function endWatch(state: SpectatorSyncState) {
   hardReset(state);
+}
+
+/** True when the server's snapshot schema is newer than this bundle can read.
+ *  Terminal for the session: no rewatch can clear it, so a consumer should stop
+ *  re-watching and prompt the viewer to reload rather than spin. */
+export function isProtocolStalled(state: SpectatorSyncState): boolean {
+  return state.protocolStalled;
 }
 
 /** True once we hold an authoritative baseline (a snapshot has been adopted).
@@ -202,6 +217,12 @@ export function applySpectatorSnapshot(
     };
   }
   if (env.schemaVersion !== PUBLIC_SNAPSHOT_VERSION) {
+    // Latch it: a rewatch cannot clear this. spectatorBaselineEnvelope applies
+    // the same check to the fresh wstart and returns null, so no new baseline
+    // is ever adopted — without the latch the caller re-watched on every single
+    // frame for as long as the tab stayed open after a deploy that bumped
+    // PUBLIC_SNAPSHOT_VERSION.
+    state.protocolStalled = true;
     return {
       signal: "incompatible_version",
       apply: [],
@@ -263,6 +284,12 @@ export function applySpectatorEnvelope(
   // INCOMPATIBLE VERSION: reject and ask for a fresh snapshot rather than
   // rendering a board we may misinterpret.
   if (env.schemaVersion !== PUBLIC_SNAPSHOT_VERSION) {
+    // Latch it: a rewatch cannot clear this. spectatorBaselineEnvelope applies
+    // the same check to the fresh wstart and returns null, so no new baseline
+    // is ever adopted — without the latch the caller re-watched on every single
+    // frame for as long as the tab stayed open after a deploy that bumped
+    // PUBLIC_SNAPSHOT_VERSION.
+    state.protocolStalled = true;
     return {
       signal: "incompatible_version",
       apply: [],
@@ -430,7 +457,10 @@ export function routeSpectatorLiveFrame(
   if (!env) return { apply: [payload], resync: false };
   const r = applySpectatorEnvelope(state, { env, payload }, config, now);
   if (r.signal === "resync" || r.signal === "incompatible_version") {
-    return { apply: [], resync: true };
+    // A stalled protocol is not resyncable — asking would loop forever (see
+    // protocolStalled). Report the frame as unapplied and let the caller
+    // surface a reload prompt via isProtocolStalled().
+    return { apply: [], resync: !state.protocolStalled };
   }
   return { apply: r.apply.map((f) => f.payload), resync: false };
 }
