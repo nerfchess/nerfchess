@@ -1146,10 +1146,10 @@ function CrowdParts({ role, delayMs }: SceneProps) {
       <span className={ROOT}>
         <span className="g08-ent2 absolute block" style={st({ ...d(delayMs, 60), left: "42%", top: "16%", height: "68%", width: "16%", background: "#fff4d6" })} />
         <svg viewBox="0 0 24 24" className="g08-ent absolute block" style={st({ ...d(delayMs, 200), left: "6%", top: "22%", width: "34%", height: "60%" })}>
-          <path d={BACKFIG} fill="#c8b48a" />
+          <path d={BACKFIG} fill="#c8b48a" stroke="#2a2318" strokeWidth="1.1" />
         </svg>
         <svg viewBox="0 0 24 24" className="g08-ent3 absolute block" style={st({ ...d(delayMs, 430), left: "60%", top: "22%", width: "34%", height: "60%" })}>
-          <path d={BACKFIG} fill="#c8b48a" />
+          <path d={BACKFIG} fill="#c8b48a" stroke="#2a2318" strokeWidth="1.1" />
         </svg>
       </span>
     );
@@ -1173,7 +1173,7 @@ function CrowdParts({ role, delayMs }: SceneProps) {
         <span className="g08-tell absolute block" style={st({ ...d(delayMs, 120), ...box(6.4, 2.4), background: "rgba(42,35,24,0.72)" })} />
         {/* strike: one half is pressed clear, from one end to the other */}
         <Row cls="g08-part-a" n={5} base={delayMs} off={250} step={60} w={1} h={1.6} gap={1.16} dy={-0.85}>
-          <path d={BACKFIG} fill="#c8b48a" />
+          <path d={BACKFIG} fill="#c8b48a" stroke="#2a2318" strokeWidth="1.1" />
         </Row>
         {/* the other half goes the other way, on the same count */}
         <Row cls="g08-part-b" n={5} base={delayMs} off={300} step={60} w={1} h={1.6} gap={1.16} dy={0.85}>
