@@ -95,8 +95,56 @@ count of cards with no hand-made art at all (F5) toward zero.
   never pure `#fff`.
 - **At least one layer driven by a geometry var** from §0. This is what makes a
   scene point at what it is doing.
-- **A declared anchor.**
+- **A declared anchor, and one the card can justify.** See §0d.
+- **An `entrance` role**, so the card arrives with art of its own rather than a
+  shared category arrival. Checked at module granularity, because several
+  modules route the entrance through their scene factory once instead of
+  repeating it per scene (`godPlays`'s `G` is the reference); the check cannot
+  tell a thin entrance from a good one, only a present one from an absent one.
 - <= 16 animated nodes; transform/opacity only; no new sound keys.
+
+## 0d. The anchor is derived, not chosen
+
+The rule is: **a general effect is centralized; an effect landing on a few
+pieces lasers them down.** With ~2,448 cards, applying that by eye does not
+finish and does not stay decided, so it is derived mechanically in
+`scripts/lib/anchor-rule.ts` and enforced by the complexity gate.
+
+The derivation returns the **set** of anchors that are defensible for a card,
+not a single verdict. The 58-category taxonomy is mechanical but not infinitely
+fine: `capture-denial` holds "your queen cannot be captured" and "no piece may
+capture this turn" alike, and forcing one answer there would overrule correct
+art. So the category sets a base, the rule text resolves what the category left
+open, and the gate fails a card only when its declared anchor is **outside** the
+set.
+
+Two asymmetries in it are deliberate:
+
+- **Scope beats kind.** The taxonomy files a card by its most distinctive hook,
+  not by how many pieces it touches, and the two come apart. Shield Wall ("any
+  of your pawns beside another cannot be captured") is filed
+  `single-piece-shield` and is army-wide. A card whose text names an open set,
+  or whose payload is a clock or a draft, re-admits `"board"` whatever its
+  category thought.
+- **Widening is loose, narrowing is strict.** The widening rule can only ever
+  add an option, so a loose match costs a missed catch. The narrowing rule
+  takes an option away, so it only resolves categories that were left open.
+
+**If the rule demands an anchor that is wrong for a card, fix the rule, not the
+art.** Four separate authoring passes pushed back with cards the derivation was
+getting wrong, and every one was a genuine bug; the last round of fixes cleared
+81 cards library-wide. A forced anchor is worse than a reported one.
+
+### When you re-anchor an existing scene
+
+A scene that stops being board-anchored plays off the board centre, and any
+layer that means "the whole board" (washes, horizons, edge rings, vignettes)
+must move inside `<BoardFrame>` or it will be drawn relative to the cast square
+instead. This is the single most common way to break one of these.
+
+The reverse also bites: a `"board"`-anchored lead has **already** been slid to
+the board centre, so applying `BoardFrame`'s offsets on top of that shifts it
+again, by up to 3.5 cells. Modules that support both anchors branch on it.
 
 ## 0c. The three roles
 
