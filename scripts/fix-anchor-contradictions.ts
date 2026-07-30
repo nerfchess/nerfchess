@@ -123,6 +123,20 @@ function main(): void {
         const f = facts.get(sp.id);
         if (!f) continue;
         const allowed = allowedAnchors(f.cat, f.rule);
+        // Membership only, deliberately.
+        //
+        // There was a --preferred mode here that also swept cards whose
+        // declared anchor was legal but was not the derivation's FIRST choice,
+        // on the theory that those are staged wrong even though they pass. It
+        // selected 180 cards and hand-checking a sample killed it: "collapse a
+        // 2x2 block of squares you choose", "pick any two squares" and "turn
+        // one enemy piece you target" were all going to be dragged to board.
+        //
+        // The bug was treating the ORDER of an allowed set as a strength of
+        // opinion it never encoded. Zone and terrain categories list "board"
+        // first only because both readings are fine for them. Order is
+        // meaningful for authoring a new card (preferredAnchor has to answer
+        // something) and meaningless as a verdict on art that already exists.
         if (allowed.includes(declared)) continue;
 
         const hit: Hit = {

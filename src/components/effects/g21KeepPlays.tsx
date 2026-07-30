@@ -1604,7 +1604,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   hx4_squeaky_wheel: S(KitchenSpit, {
-    ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "cast",
+    ordering: "radial", staggerMs: 55, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "board",
   }),
   op_change_of_address: S(NameBoard, {
     ordering: "radial", staggerMs: 55, victims: ["k", "r"], hasLead: true, sound: "wall", anchor: "board",

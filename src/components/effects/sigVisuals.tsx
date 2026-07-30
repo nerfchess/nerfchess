@@ -277,11 +277,11 @@ function StrikeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </span>
         ))}
         <BoardBoom delayMs={delayMs + 320} color="rgba(230,240,255,0.85)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 520} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 520} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -1339,11 +1339,11 @@ function WallBuildBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         ].map((m, i) => (
           <span key={i} className="fx-sig-brick absolute bottom-[44%] block h-[5%] w-[7%] rounded-[1px]" style={{ left: m.l, background: "rgba(132,96,64,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + m.d}ms` }} />
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 620} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 620} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -1552,11 +1552,12 @@ function SigTell({ delayMs, color, size = 26 }: { delayMs: number; color: string
   );
 }
 
-/** Where the settle's motes start and how far sideways they carry. */
+/** Where the settle's motes start and how far sideways they carry.
+ *  Two, not a handful: this settle is added to art that already has its own
+ *  strike, and the node budget per scene is 16. */
 const SETTLE_MOTES = [
-  { l: "37%", w: "4.5%", dx: "-150%", d: 0 },
-  { l: "49%", w: "3.5%", dx: "45%", d: 95 },
-  { l: "59%", w: "4.5%", dx: "180%", d: 50 },
+  { l: "38%", w: "4.5%", dx: "-150%", d: 0 },
+  { l: "58%", w: "4%", dx: "170%", d: 60 },
 ];
 
 /** The SETTLE: an afterglow sinking back into the square, and three motes
@@ -1858,11 +1859,11 @@ function SnapFrostBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span key={i} className="fx-sig-frost absolute block rounded-[2px]" style={{ left: p.l, top: p.t, width: p.w, height: p.h, background: "rgba(198,234,255,0.45)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs + p.d}ms` }} />
         ))}
         <BoardBoom delayMs={delayMs + 300} color="rgba(224,246,255,0.9)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e6f6ff" />
-      <SigSettle delayMs={delayMs + 520} color="#e6f6ff" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e6f6ff" />
+        <SigSettle delayMs={delayMs + 520} color="#e6f6ff" />
       </BoardWideStage>
     );
   }
@@ -2293,11 +2294,11 @@ function StoneChainBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             </svg>
           </span>
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#141e2b" />
-      <SigSettle delayMs={delayMs + 520} color="#141e2b" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#141e2b" />
+        <SigSettle delayMs={delayMs + 520} color="#141e2b" />
       </BoardWideStage>
     );
   }
@@ -2408,11 +2409,11 @@ function GreatWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         ].map((m, i) => (
           <span key={i} className="fx-sig-brick absolute bottom-[47%] block h-[5%] w-[6%] rounded-[1px]" style={{ left: m.l, background: "rgba(132,96,64,0.92)", border: "1px solid rgba(60,40,24,0.85)", animationDelay: `${delayMs + m.d}ms` }} />
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 660} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 660} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -2767,11 +2768,11 @@ function IceWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span key={i} className="fx-sig-brick absolute bottom-[34%] block h-[14%] w-[9%] rounded-[2px]" style={{ left: b.l, background: "rgba(176,220,245,0.55)", border: "1px solid rgba(224,246,255,0.85)", animationDelay: `${delayMs + b.d}ms` }} />
         ))}
         <BoardBoom delayMs={delayMs + 420} color="rgba(224,246,255,0.9)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 600} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 600} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -2813,11 +2814,11 @@ function ThornWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           </svg>
         </span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#4a6b3a" />
-      <SigSettle delayMs={delayMs + 520} color="#4a6b3a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#4a6b3a" />
+        <SigSettle delayMs={delayMs + 520} color="#4a6b3a" />
       </BoardWideStage>
     );
   }
@@ -3053,11 +3054,11 @@ function ArcLightBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <ShardBurst vectors={BURST_MED} fill="#ffe98a" stroke="#8a6414" delayMs={delayMs + 220} sizePct={5} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff6c8" />
-      <SigSettle delayMs={delayMs + 520} color="#fff6c8" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff6c8" />
+        <SigSettle delayMs={delayMs + 520} color="#fff6c8" />
       </BoardWideStage>
     );
   }
@@ -3260,11 +3261,11 @@ function InfernoBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </span>
         ))}
         <BoardBoom delayMs={delayMs + 340} color="rgba(255,168,80,0.85)" thickness={4} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7a3a12" />
-      <SigSettle delayMs={delayMs + 520} color="#7a3a12" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7a3a12" />
+        <SigSettle delayMs={delayMs + 520} color="#7a3a12" />
       </BoardWideStage>
     );
   }
@@ -3443,11 +3444,11 @@ function MountainWallBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
           </svg>
         </span>
         <span className="fx-sig-ash absolute left-[30%] bottom-[26%] block h-[7%] w-[40%] rounded-full" style={{ background: "rgba(120,112,102,0.5)", animationDelay: `${delayMs + 260}ms` }} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#4a443c" />
-      <SigSettle delayMs={delayMs + 520} color="#4a443c" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#4a443c" />
+        <SigSettle delayMs={delayMs + 520} color="#4a443c" />
       </BoardWideStage>
     );
   }
@@ -3623,11 +3624,11 @@ function SpearChargeBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         <BoardWash color="rgba(226,196,106,0.22)" delayMs={delayMs} />
         <span className="fx-sig-muzzle absolute left-[22%] top-[45%] block h-[10%] w-[56%] rounded-full" style={{ background: "rgba(226,196,106,0.9)", animationDelay: `${delayMs}ms` }} />
         <BoardBoom delayMs={delayMs + 220} color="rgba(226,196,106,0.85)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#c9d2dc" />
-      <SigSettle delayMs={delayMs + 520} color="#c9d2dc" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#c9d2dc" />
+        <SigSettle delayMs={delayMs + 520} color="#c9d2dc" />
       </BoardWideStage>
     );
   }
@@ -3762,11 +3763,11 @@ function ReinforceBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </span>
         ))}
         <span className="fx-sig-ash absolute left-[30%] bottom-[26%] block h-[7%] w-[40%] rounded-full" style={{ background: "rgba(120,116,110,0.45)", animationDelay: `${delayMs + 340}ms` }} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5a4a2a" />
-      <SigSettle delayMs={delayMs + 520} color="#5a4a2a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5a4a2a" />
+        <SigSettle delayMs={delayMs + 520} color="#5a4a2a" />
       </BoardWideStage>
     );
   }
@@ -3806,11 +3807,11 @@ function ParadropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#2f4a3c" />
-      <SigSettle delayMs={delayMs + 520} color="#2f4a3c" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#2f4a3c" />
+        <SigSettle delayMs={delayMs + 520} color="#2f4a3c" />
       </BoardWideStage>
     );
   }
@@ -3872,11 +3873,11 @@ function TrenchBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </g>
           </svg>
         </span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a8478" />
-      <SigSettle delayMs={delayMs + 520} color="#8a8478" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a8478" />
+        <SigSettle delayMs={delayMs + 520} color="#8a8478" />
       </BoardWideStage>
     );
   }
@@ -4546,11 +4547,11 @@ function PortalBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         ].map((s, i) => (
           <span key={i} className="fx-sig-rise absolute bottom-[28%] block h-[32%] w-[4.5%] rounded-[1px]" style={{ left: s.l, background: "rgba(240,176,166,0.5)", animationDelay: `${delayMs + s.d}ms` }} />
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e0776b" />
-      <SigSettle delayMs={delayMs + 620} color="#e0776b" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e0776b" />
+        <SigSettle delayMs={delayMs + 620} color="#e0776b" />
       </BoardWideStage>
     );
   }
@@ -4600,11 +4601,11 @@ function BorderWardBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             </svg>
           </span>
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 600} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 600} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -4761,11 +4762,11 @@ function VortexBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <SigShard fill="#a48cc4" stroke="#463357" variant={i} />
           </span>
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#a48cc4" />
-      <SigSettle delayMs={delayMs + 520} color="#a48cc4" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#a48cc4" />
+        <SigSettle delayMs={delayMs + 520} color="#a48cc4" />
       </BoardWideStage>
     );
   }
@@ -5145,11 +5146,11 @@ function FloodBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <ShardBurst vectors={BURST_MED} fill="#e6f6ff" stroke="#7fb8dd" delayMs={delayMs + 260} sizePct={4} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e6f6ff" />
-      <SigSettle delayMs={delayMs + 520} color="#e6f6ff" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e6f6ff" />
+        <SigSettle delayMs={delayMs + 520} color="#e6f6ff" />
       </BoardWideStage>
     );
   }
@@ -5447,11 +5448,11 @@ function PurgeStormBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           <span key={i} className="fx-sig-frost absolute left-[24%] block h-[3%] w-[52%] rounded-[1px]" style={{ top: f.t, background: "rgba(198,234,255,0.6)", animationDelay: `${delayMs + f.d}ms` }} />
         ))}
         <ShardBurst vectors={BURST_MED} fill="#dbe7f2" stroke="#8aa0b4" delayMs={delayMs + 200} sizePct={5} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#dbe7f2" />
-      <SigSettle delayMs={delayMs + 520} color="#dbe7f2" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#dbe7f2" />
+        <SigSettle delayMs={delayMs + 520} color="#dbe7f2" />
       </BoardWideStage>
     );
   }
@@ -5532,11 +5533,11 @@ function PurgeLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span key={i} className="fx-sig-sweepbar absolute left-[-30%] block h-[3%] w-[160%] rounded-[1px]" style={{ top: b.t, background: "rgba(255,244,200,0.7)", animationDelay: `${delayMs + b.d}ms` }} />
         ))}
         <ShardBurst vectors={BURST_MED} fill="#f0e2b0" stroke="#a88a3a" delayMs={delayMs + 240} sizePct={4} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#f0e2b0" />
-      <SigSettle delayMs={delayMs + 520} color="#f0e2b0" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#f0e2b0" />
+        <SigSettle delayMs={delayMs + 520} color="#f0e2b0" />
       </BoardWideStage>
     );
   }
@@ -6054,11 +6055,11 @@ function RustLockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span key={i} className="fx-sig-frost absolute block rounded-[2px]" style={{ left: p.l, top: p.t, width: p.w, height: p.h, background: "rgba(150,90,50,0.5)", border: "1px solid rgba(120,70,40,0.8)", animationDelay: `${delayMs + p.d}ms` }} />
         ))}
         <ShardBurst vectors={BURST_MED} fill="#a86a3a" stroke="#5a3418" delayMs={delayMs + 300} sizePct={5} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#a86a3a" />
-      <SigSettle delayMs={delayMs + 560} color="#a86a3a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#a86a3a" />
+        <SigSettle delayMs={delayMs + 560} color="#a86a3a" />
       </BoardWideStage>
     );
   }
@@ -6935,11 +6936,11 @@ function LavaFloorBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <BoardBoom delayMs={delayMs + 320} color="rgba(255,214,120,0.8)" thickness={4} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7a3a12" />
-      <SigSettle delayMs={delayMs + 520} color="#7a3a12" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7a3a12" />
+        <SigSettle delayMs={delayMs + 520} color="#7a3a12" />
       </BoardWideStage>
     );
   }
@@ -7210,11 +7211,11 @@ function GooseBombBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           )}
         />
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 260} sizePct={6} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#ffd95e" />
-      <SigSettle delayMs={delayMs + 540} color="#ffd95e" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#ffd95e" />
+        <SigSettle delayMs={delayMs + 540} color="#ffd95e" />
       </BoardWideStage>
     );
   }
@@ -7394,11 +7395,11 @@ function TireFrogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         {[{ l: "12%" }, { l: "82%" }].map((s, i) => (
           <span key={i} className="fx-sig-ash absolute top-[58%] block h-[9%] w-[9%] rounded-full" style={{ left: s.l, background: "rgba(120,116,110,0.6)", animationDelay: `${delayMs + 320}ms` }} />
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#141416" />
-      <SigSettle delayMs={delayMs + 520} color="#141416" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#141416" />
+        <SigSettle delayMs={delayMs + 520} color="#141416" />
       </BoardWideStage>
     );
   }
@@ -8155,11 +8156,11 @@ function MortgageBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6414" />
-      <SigSettle delayMs={delayMs + 520} color="#8a6414" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6414" />
+        <SigSettle delayMs={delayMs + 520} color="#8a6414" />
       </BoardWideStage>
     );
   }
@@ -8249,11 +8250,11 @@ function MusicalChairsBurst({ lead, delayMs }: { lead: boolean; delayMs: number 
           </svg>
         </span>
         <BoardBoom delayMs={delayMs + 300} color="rgba(224,119,107,0.8)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
-      <SigSettle delayMs={delayMs + 520} color="#8a6a4a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
+        <SigSettle delayMs={delayMs + 520} color="#8a6a4a" />
       </BoardWideStage>
     );
   }
@@ -8425,11 +8426,11 @@ function OppositeDayBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <path d="M14 1 L2 7 L14 13 Z" fill="#7eb59a" stroke="#2f4a3c" strokeWidth="1" strokeLinejoin="round" />
           </svg>
         </span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e0776b" />
-      <SigSettle delayMs={delayMs + 520} color="#e0776b" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e0776b" />
+        <SigSettle delayMs={delayMs + 520} color="#e0776b" />
       </BoardWideStage>
     );
   }
@@ -9250,11 +9251,11 @@ function RakeBonkBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </span>
         <BoardBoom delayMs={delayMs + 420} color="rgba(230,191,106,0.85)" thickness={4} />
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 460} sizePct={6} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#6b4a34" />
-      <SigSettle delayMs={delayMs + 640} color="#6b4a34" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#6b4a34" />
+        <SigSettle delayMs={delayMs + 640} color="#6b4a34" />
       </BoardWideStage>
     );
   }
@@ -9421,11 +9422,11 @@ function BoxingGloveBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         </span>
         <BoardBoom delayMs={delayMs + 340} color="rgba(224,119,107,0.85)" thickness={4} />
         <ShardBurst vectors={PIN_STARS} fill="#ffd95e" stroke="#8a6414" delayMs={delayMs + 380} sizePct={6} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7a2f28" />
-      <SigSettle delayMs={delayMs + 560} color="#7a2f28" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7a2f28" />
+        <SigSettle delayMs={delayMs + 560} color="#7a2f28" />
       </BoardWideStage>
     );
   }
@@ -9563,11 +9564,11 @@ function HomesickBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           )}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7a2f28" />
-      <SigSettle delayMs={delayMs + 520} color="#7a2f28" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7a2f28" />
+        <SigSettle delayMs={delayMs + 520} color="#7a2f28" />
       </BoardWideStage>
     );
   }
@@ -10193,11 +10194,11 @@ function WhistleBurst({ lead, delayMs, flag }: { lead: boolean; delayMs: number;
             </svg>
           </span>
         )}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6414" />
-      <SigSettle delayMs={delayMs + 520} color="#8a6414" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6414" />
+        <SigSettle delayMs={delayMs + 520} color="#8a6414" />
       </BoardWideStage>
     );
   }
@@ -10233,11 +10234,11 @@ function CashClockBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <BoardRain delayMs={delayMs + 160} render={() => COIN_GLYPH} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5d3a1e" />
-      <SigSettle delayMs={delayMs + 520} color="#5d3a1e" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5d3a1e" />
+        <SigSettle delayMs={delayMs + 520} color="#5d3a1e" />
       </BoardWideStage>
     );
   }
@@ -10341,11 +10342,11 @@ function AllInBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <BoardRain delayMs={delayMs + 240} render={() => chip} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e0776b" />
-      <SigSettle delayMs={delayMs + 520} color="#e0776b" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e0776b" />
+        <SigSettle delayMs={delayMs + 520} color="#e0776b" />
       </BoardWideStage>
     );
   }
@@ -10383,11 +10384,11 @@ function MysteryBoxBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
         </span>
         <ShardBurst vectors={BURST_BIG} fill="#a877d8" stroke="#4a3070" delayMs={delayMs + 480} sizePct={5} />
         <BoardBoom delayMs={delayMs + 520} color="rgba(168,119,216,0.8)" thickness={3} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5d3a1e" />
-      <SigSettle delayMs={delayMs + 700} color="#5d3a1e" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5d3a1e" />
+        <SigSettle delayMs={delayMs + 700} color="#5d3a1e" />
       </BoardWideStage>
     );
   }
@@ -10460,11 +10461,11 @@ function GoldenTouchBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             </svg>
           ))}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6414" />
-      <SigSettle delayMs={delayMs + 520} color="#8a6414" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6414" />
+        <SigSettle delayMs={delayMs + 520} color="#8a6414" />
       </BoardWideStage>
     );
   }
@@ -10526,11 +10527,11 @@ function SneezeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <BoardBoom delayMs={delayMs + 560} color="rgba(163,209,150,0.8)" thickness={3} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5f927a" />
-      <SigSettle delayMs={delayMs + 740} color="#5f927a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5f927a" />
+        <SigSettle delayMs={delayMs + 740} color="#5f927a" />
       </BoardWideStage>
     );
   }
@@ -10616,11 +10617,11 @@ function GreenhouseBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             <path d="M30 9 V30 M14 13 C13 20 12 25 12 30 M46 13 C47 20 48 25 48 30" stroke="#7fb8dd" strokeWidth="1" fill="none" />
           </svg>
         </span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7fb8dd" />
-      <SigSettle delayMs={delayMs + 520} color="#7fb8dd" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7fb8dd" />
+        <SigSettle delayMs={delayMs + 520} color="#7fb8dd" />
       </BoardWideStage>
     );
   }
@@ -10662,11 +10663,11 @@ function GroundhogBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <span key={i} className="fx-sig-sweepbar absolute left-[20%] block h-[2.6%] w-[60%]" style={{ top: b.t, background: "rgba(201,201,212,0.5)", animationDelay: `${delayMs + b.d}ms` }} />
         ))}
         <span className="fx-sig-glitch absolute left-[40%] top-[42%] block h-[14%] w-[18%]" style={{ animationDelay: `${delayMs + 240}ms` }}>{rewindGlyph}</span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#c9c9d4" />
-      <SigSettle delayMs={delayMs + 540} color="#c9c9d4" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#c9c9d4" />
+        <SigSettle delayMs={delayMs + 540} color="#c9c9d4" />
       </BoardWideStage>
     );
   }
@@ -10736,11 +10737,11 @@ function PinocchioBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           </span>
         </span>
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#3a2a1a" />
-      <SigSettle delayMs={delayMs + 520} color="#3a2a1a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#3a2a1a" />
+        <SigSettle delayMs={delayMs + 520} color="#3a2a1a" />
       </BoardWideStage>
     );
   }
@@ -10814,11 +10815,11 @@ function SnailBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <BoardWash color="rgba(126,181,154,0.12)" delayMs={delayMs} />
         <span className="fx-sig-cross absolute left-[38%] top-[42%] block h-[12%] w-[16%]" style={{ animationDelay: `${delayMs}ms`, animationDuration: "1.6s" }}>{snail}</span>
         <span className="fx-sig-frost absolute left-[26%] top-[52%] block h-[2.5%] w-[44%] rounded-full" style={{ background: "rgba(198,234,216,0.6)", animationDelay: `${delayMs + 200}ms`, animationDuration: "1.4s" }} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5f927a" />
-      <SigSettle delayMs={delayMs + 520} color="#5f927a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5f927a" />
+        <SigSettle delayMs={delayMs + 520} color="#5f927a" />
       </BoardWideStage>
     );
   }
@@ -10860,11 +10861,11 @@ function SnoozeButtonBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
             </svg>
           )}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#4a5560" />
-      <SigSettle delayMs={delayMs + 560} color="#4a5560" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#4a5560" />
+        <SigSettle delayMs={delayMs + 560} color="#4a5560" />
       </BoardWideStage>
     );
   }
@@ -10948,11 +10949,11 @@ function WhoopeeBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <BoardBoom key={i} delayMs={delayMs + 220 + i * 200} color="rgba(224,122,184,0.8)" thickness={4} />
         ))}
         <ShardBurst vectors={BURST_MED} fill="#e07ab8" stroke="#8a3a6a" delayMs={delayMs + 300} sizePct={5} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a3a6a" />
-      <SigSettle delayMs={delayMs + 520} color="#8a3a6a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a3a6a" />
+        <SigSettle delayMs={delayMs + 520} color="#8a3a6a" />
       </BoardWideStage>
     );
   }
@@ -11074,11 +11075,11 @@ function FanClubBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           )}
         />
         <BoardBoom delayMs={delayMs + 340} color="rgba(244,196,48,0.75)" thickness={3} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e0776b" />
-      <SigSettle delayMs={delayMs + 520} color="#e0776b" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e0776b" />
+        <SigSettle delayMs={delayMs + 520} color="#e0776b" />
       </BoardWideStage>
     );
   }
@@ -11109,11 +11110,11 @@ function GravityWellBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
             <SigShard fill="#c9b8e8" stroke="#4a3070" variant={i} />
           </span>
         ))}
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#a877d8" />
-      <SigSettle delayMs={delayMs + 520} color="#a877d8" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#a877d8" />
+        <SigSettle delayMs={delayMs + 520} color="#a877d8" />
       </BoardWideStage>
     );
   }
@@ -11193,11 +11194,11 @@ function PhotosynthesisBurst({ lead, delayMs }: { lead: boolean; delayMs: number
           </svg>
         </span>
         <BoardRain delayMs={delayMs + 240} render={() => leaf} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5f927a" />
-      <SigSettle delayMs={delayMs + 520} color="#5f927a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5f927a" />
+        <SigSettle delayMs={delayMs + 520} color="#5f927a" />
       </BoardWideStage>
     );
   }
@@ -11237,11 +11238,11 @@ function TermitesBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </svg>
         </span>
         <BoardRain delayMs={delayMs} render={() => bug} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
-      <SigSettle delayMs={delayMs + 520} color="#8a6a4a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
+        <SigSettle delayMs={delayMs + 520} color="#8a6a4a" />
       </BoardWideStage>
     );
   }
@@ -11284,11 +11285,11 @@ function PicketLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           <span key={i} className="fx-sig-brick absolute block h-[18%] w-[9%]" style={{ left: s.l, top: s.t, animationDelay: `${delayMs + s.d}ms` }}>{sign}</span>
         ))}
         <BoardBoom delayMs={delayMs + 520} color="rgba(194,64,58,0.7)" thickness={3} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
-      <SigSettle delayMs={delayMs + 700} color="#8a6a4a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#8a6a4a" />
+        <SigSettle delayMs={delayMs + 700} color="#8a6a4a" />
       </BoardWideStage>
     );
   }
@@ -11320,11 +11321,11 @@ function CreamPieBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <span className="fx-sig-dart absolute left-[30%] top-[42%] block h-[8%] w-[18%]" style={{ animationDelay: `${delayMs}ms` }}>{pie}</span>
         <span className="fx-sig-splat absolute left-[52%] top-[40%] block h-[12%] w-[14%] rounded-full" style={{ background: "rgba(247,242,230,0.85)", animationDelay: `${delayMs + 420}ms` }} />
         <BoardBoom delayMs={delayMs + 460} color="rgba(247,242,230,0.85)" thickness={4} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#d8a86a" />
-      <SigSettle delayMs={delayMs + 640} color="#d8a86a" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#d8a86a" />
+        <SigSettle delayMs={delayMs + 640} color="#d8a86a" />
       </BoardWideStage>
     );
   }
@@ -11470,11 +11471,11 @@ function CrateDropBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         <BoardWash color="rgba(139,169,196,0.1)" delayMs={delayMs} />
         <BoardRain delayMs={delayMs} render={() => chuteCrate} />
         <BoardBoom delayMs={delayMs + 620} color="rgba(150,110,66,0.7)" thickness={3} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#7a2f28" />
-      <SigSettle delayMs={delayMs + 800} color="#7a2f28" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#7a2f28" />
+        <SigSettle delayMs={delayMs + 800} color="#7a2f28" />
       </BoardWideStage>
     );
   }
@@ -11542,11 +11543,11 @@ function PizzaRunBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </span>
         <span className="fx-sig-zzz absolute left-[30%] top-[46%] block h-[6%] w-[5%] rounded-full" style={{ background: "rgba(220,220,228,0.6)", animationDelay: `${delayMs + 240}ms` }} />
         <span className="fx-sig-zzz absolute left-[26%] top-[50%] block h-[5%] w-[4%] rounded-full" style={{ background: "rgba(220,220,228,0.5)", animationDelay: `${delayMs + 380}ms` }} />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#e05252" />
-      <SigSettle delayMs={delayMs + 560} color="#e05252" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#e05252" />
+        <SigSettle delayMs={delayMs + 560} color="#e05252" />
       </BoardWideStage>
     );
   }
@@ -12537,11 +12538,11 @@ function ColdFrontBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         {/* the border itself flares: the line the cold cannot cross */}
         <span className="fx-sig-muzzle absolute left-[21.5%] top-[49.4%] block h-[1.6%] w-[57%] rounded-full" style={{ background: "linear-gradient(90deg, rgba(235,250,255,0.95), rgba(130,188,223,0.85))", animationDelay: `${delayMs + 1020}ms` }} />
         <BoardBoom delayMs={delayMs + 1120} color="rgba(224,246,255,0.8)" />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 1300} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 1300} color="#fff4d6" />
       </BoardWideStage>
     );
   }
@@ -14870,10 +14871,10 @@ function HauntedRoomsBurst({ lead, delayMs }: { lead: boolean; delayMs: number }
           className="fx-sig-lean absolute left-[46%] top-[52%] block h-[7%] w-[7%] rounded-full"
           style={{ background: P_HAUNT.glow, animationDelay: `${delayMs + 680}ms` }}
         />
-      {/* the missing first and third beats: a ring tightens ahead of the
-          strike above, and the tail drifts off away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#d9a441" />
-      <SigSettle delayMs={delayMs + 800} color="#d9a441" />
+        {/* the missing first and third beats: a ring tightens ahead of the
+            strike above, and the tail drifts off away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#d9a441" />
+        <SigSettle delayMs={delayMs + 800} color="#d9a441" />
       </SplitLead>
     );
   }
@@ -15298,10 +15299,10 @@ function StatueRankBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) 
             style={{ left: s.l, top: s.t, background: P_STATUE.glow, animationDelay: `${delayMs + s.d}ms` }}
           />
         ))}
-      {/* the missing first and third beats: a ring tightens ahead of the
-          strike above, and the tail drifts off away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#9d9a90" />
-      <SigSettle delayMs={delayMs + 700} color="#9d9a90" />
+        {/* the missing first and third beats: a ring tightens ahead of the
+            strike above, and the tail drifts off away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#9d9a90" />
+        <SigSettle delayMs={delayMs + 700} color="#9d9a90" />
       </SplitLead>
     );
   }
@@ -15536,11 +15537,11 @@ function TarPitBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           className="fx-sig-lean absolute left-[44%] top-[56%] block h-[7%] w-[7%] rounded-full"
           style={{ background: P_TAR.deep, animationDelay: `${delayMs + 700}ms` }}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 880} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 880} color="#fff4d6" />
       </SplitLead>
     );
   }
@@ -15681,10 +15682,10 @@ function DepotGateBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             style={{ left: s.l, top: s.t, background: P_DEPOT.glow, animationDelay: `${delayMs + s.d}ms` }}
           />
         ))}
-      {/* the missing first and third beats: a ring tightens ahead of the
-          strike above, and the tail drifts off away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#5c7a52" />
-      <SigSettle delayMs={delayMs + 720} color="#5c7a52" />
+        {/* the missing first and third beats: a ring tightens ahead of the
+            strike above, and the tail drifts off away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#5c7a52" />
+        <SigSettle delayMs={delayMs + 720} color="#5c7a52" />
       </SplitLead>
     );
   }
@@ -15765,10 +15766,10 @@ function CongaLineBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             </svg>
           </span>
         ))}
-      {/* the missing first and third beats: a ring tightens ahead of the
-          strike above, and the tail drifts off away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#d4568c" />
-      <SigSettle delayMs={delayMs + 780} color="#d4568c" />
+        {/* the missing first and third beats: a ring tightens ahead of the
+            strike above, and the tail drifts off away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#d4568c" />
+        <SigSettle delayMs={delayMs + 780} color="#d4568c" />
       </SplitLead>
     );
   }
@@ -16712,11 +16713,11 @@ function GlyphFileBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           className="fx-sig-lean absolute left-[46%] top-[50%] block h-[6%] w-[6%] rounded-full"
           style={{ background: P_GLYPH.core, animationDelay: `${delayMs + 680}ms` }}
         />
-      {/* tell -> settle: this scene was one beat. The strike above is
-          untouched; a ring snaps in ahead of it and the tail drifts off
-          the square away from the caster. */}
-      <SigTell delayMs={delayMs + 70} color="#fff4d6" />
-      <SigSettle delayMs={delayMs + 860} color="#fff4d6" />
+        {/* tell -> settle: this scene was one beat. The strike above is
+            untouched; a ring snaps in ahead of it and the tail drifts off
+            the square away from the caster. */}
+        <SigTell delayMs={delayMs + 70} color="#fff4d6" />
+        <SigSettle delayMs={delayMs + 860} color="#fff4d6" />
       </SplitLead>
     );
   }

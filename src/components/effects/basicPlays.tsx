@@ -1799,7 +1799,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Cold Feet (t1 hex)
   cold_feet: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "cold_feet", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast" }, "mask"),
   // Crossed Wires (t1 hex)
-  crossed_wires: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "crossed_wires", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades", anchor: "cast" }, "inkpot"),
+  crossed_wires: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "crossed_wires", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades", anchor: "board" }, "inkpot"),
   // Foggy Glasses (t1 hex)
   foggy_glasses: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "foggy_glasses", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", anchor: "cast" }, "thorn"),
   // Royal Restraint (t1 hex)
@@ -1811,7 +1811,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Lame Horses (t2 hex)
   lame_horses: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "lame_horses", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades", anchor: "board" }, "ledger"),
   // Rusted Hinges (t2 hex)
-  rusted_hinges: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "rusted_hinges", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "shades", anchor: "cast" }, "dice"),
+  rusted_hinges: B(RuneStamp, ["#a07fd1","#ffd76a","#2a1a3a"], "rusted_hinges", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "shades", anchor: "board" }, "dice"),
   // Safe Passage (t2 hex)
   safe_passage: B(RuneStamp, ["#7a9440","#e3d0ff","#28301c"], "safe_passage", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "board" }, "mirror"),
   // Timid King (t2 hex)

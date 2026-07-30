@@ -163,7 +163,15 @@ const OPEN_SET_MARKERS = [
   /\beach of (?:your|their)\b/,
   /\bnone of (?:your|their)\b/,
   /\bno (?:piece|pieces) (?:may|can)\b/,
-  /\bboth (?:players|armies|sides)\b/,
+  // "visible to both players" is an AUDIENCE, not a scope: a card that shows
+  // something to everyone is not thereby board-wide.
+  /(?<!visible to )\bboth (?:players|armies|sides)\b/,
+  // Real card text writes the possessive, and the apostrophe-s sits exactly
+  // where the plural-class pattern below expects the noun. Without this,
+  // "Your opponent's pawns are rooted in salted ground" -- an army-wide freeze
+  // -- resolved to cast/aim with NO board option, so the gate would have
+  // actively failed the correct staging.
+  /\b(?:your |the )?opponent's (?:pieces|pawns|knights|bishops|rooks|queens)\b/,
   // Clause material can sit between the subject and its verb: Eternal Keep
   // says "your pieces standing on your first rank cannot be captured", and
   // warding a whole rank of the army is not a single square.
@@ -204,6 +212,7 @@ const GLOBAL_MARKERS = [
   /\b(?:the )?(?:whole|entire) (?:board|game)\b/,
   /\byour (?:pieces|pawns|knights|bishops|rooks|queens)\b/,
   /\benemy (?:pieces|pawns|knights|bishops|rooks|queens)\b/,
+  /\b(?:your |the )?opponent's (?:pieces|pawns|knights|bishops|rooks|queens)\b/,
   /\bfor the rest of the game\b/,
   /\bno (?:piece|pieces|one) (?:may|can)\b/,
   /\bboard\b/,
@@ -257,8 +266,25 @@ export function allowedAnchors(category: string, rule: string): readonly Anchor[
   // a clock or a draft, is board-scale even when its category says
   // single-target, so "board" is re-admitted rather than the card being told
   // its own art is wrong.
-  if (!base.includes("board") && (openSet || meta)) {
-    return [...base, "board"];
+  //
+  // Order matters here, and it carries the difference between the two ways a
+  // card can reach "board". allowedAnchors is read twice: the gate asks
+  // whether a declared anchor is a MEMBER (order irrelevant), and
+  // preferredAnchor asks what to AUTHOR (order decides).
+  //
+  // An open set means the card IS army-wide, so "board" goes first and becomes
+  // what gets authored. Appending it instead was a real bug: a card the
+  // derivation had just concluded was army-wide still got authored as "cast",
+  // which is the exact staging failure this rule exists to prevent.
+  //
+  // A meta payload is weaker evidence and only ever PERMITS "board". Such a
+  // card often has a board-side trigger and an off-board payload at once --
+  // "one knight may make a longer leap, and you gain a draft reroll" -- and
+  // both stagings are truthful, so the art keeps the choice. Making it
+  // preferred here would have thrown one-square effects across the board.
+  if (!base.includes("board")) {
+    if (openSet) return ["board", ...base];
+    if (meta) return [...base, "board"];
   }
 
   // Narrowing, unlike the widening above, resolves only what the category left

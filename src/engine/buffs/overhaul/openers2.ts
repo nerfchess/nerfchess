@@ -160,19 +160,24 @@ function armedGuard(
 // six are most of the opener set's whole time budget, kept deliberately tiny.
 // ---------------------------------------------------------------------------
 
-const WEATHER_OMENS: Array<OpenerMeta & { squares: (api: BuffApi) => Square[]; where: string }> = [
+// `desc` overrides the family sentence for the two omens that read as one card
+// twice (the king's square, yours or theirs); each now names its own weather.
+const WEATHER_OMENS: Array<
+  OpenerMeta & { squares: (api: BuffApi) => Square[]; where: string; desc?: string }
+> = [
   { id: "red_sky_morning", name: "Red Sky at Morning", flavor: "Sailors take warning. Everyone else takes the center.", icon: "Sunrise", where: "the four center squares", squares: () => [...CENTER4] },
-  { id: "first_frost", name: "First Frost", flavor: "The king's window is the prettiest and the coldest.", icon: "Snowflake", where: "your king's square", squares: (api) => { const k = kingSquare(api.board, api.me); return k == null ? [] : [k]; } },
+  { id: "first_frost", name: "First Frost", flavor: "The king's window is the prettiest and the coldest.", icon: "Snowflake", where: "your king's square", squares: (api) => { const k = kingSquare(api.board, api.me); const sleeping = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); return k == null ? sleeping : [k, ...sleeping]; }, desc: "Frost settles on your king's square and on every pawn still in its bed until your opponent replies, and you gain 3 seconds on your clock." },
   { id: "four_winds", name: "Four Winds", flavor: "Each corner of the board reports a different forecast.", icon: "Wind", where: "the four corners", squares: () => [0, 7, 56, 63] },
   { id: "halo_moon", name: "Halo Round the Moon", flavor: "A ring of weather about her majesty means rain, or glory.", icon: "Moon", where: "your queen's square", squares: (api) => { const q = crownSquare(api); return q == null ? [] : [q]; } },
-  { id: "distant_thunder", name: "Distant Thunder", flavor: "It is always rumbling over somebody else's palace.", icon: "CloudLightning", where: "the enemy king's square", squares: (api) => { const k = kingSquare(api.board, api.opp); return k == null ? [] : [k]; } },
+  { id: "distant_thunder", name: "Distant Thunder", flavor: "It is always rumbling over somebody else's palace.", icon: "CloudLightning", where: "the enemy king's square", squares: (api) => { const k = kingSquare(api.board, api.opp); if (k == null) return []; return [k, ...ringAround(k).filter((sq) => api.board.pieces[sq]?.color === api.opp)]; }, desc: "Thunder rolls over the enemy king's square and over every enemy piece standing beside him until your opponent replies, and you gain 3 seconds on your clock." },
   { id: "barometer_falling", name: "Barometer Falling", flavor: "The towers feel the pressure change first.", icon: "Gauge", where: "your rooks", squares: (api) => mySquares(api.board, api.me, "r") },
 ];
 
 function weatherOmen(entry: (typeof WEATHER_OMENS)[number]): Buff {
   return opener(
     entry,
-    `An omen flashes over ${entry.where} until your opponent replies, and you gain 3 seconds on your clock.`,
+    entry.desc ??
+      `An omen flashes over ${entry.where} until your opponent replies, and you gain 3 seconds on your clock.`,
     instant((_inst, api) => {
       flashSquares(api, entry.squares(api), true);
       api.adjustClock({ addSelfSec: 3 });
@@ -227,7 +232,7 @@ function luckyCharm(entry: (typeof LUCKY_CHARMS)[number]): Buff {
 
 const FIELD_REPORTS: Array<OpenerMeta & { what: string; squares: (api: BuffApi) => Square[] }> = [
   { id: "margin_notes", name: "Margin Notes", flavor: "Someone before you penciled in every loose piece.", icon: "BookOpen", what: "every currently undefended enemy piece", squares: (api) => undefendedPieces(api.board, api.opp) },
-  { id: "siege_survey", name: "Siege Survey", flavor: "Mark the big engines first. The rest is carpentry.", icon: "Binoculars", what: "every enemy queen and rook", squares: (api) => [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")] },
+  { id: "siege_survey", name: "Siege Survey", flavor: "Mark the big engines first. The rest is carpentry.", icon: "Binoculars", what: "every enemy queen and rook", squares: (api) => { const engines = [...mySquares(api.board, api.opp, "q"), ...mySquares(api.board, api.opp, "r")]; const struck = mySquares(api.board, api.me).filter((t) => engines.some((e) => attacksSquare(api.board, e, t))); return [...engines, ...struck]; }, desc: "Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies, along with each of your pieces they are aimed at." },
   { id: "field_sketch", name: "Field Sketch", flavor: "Quick charcoal lines: horses here, clergy there.", icon: "Pencil", what: "every enemy knight and bishop", squares: (api) => [...mySquares(api.board, api.opp, "n"), ...mySquares(api.board, api.opp, "b")] },
   { id: "portrait_of_a_lady", name: "Portrait of a Lady", flavor: "One subject, one sitting, one very bright frame.", icon: "Frame", what: "the enemy queen", squares: (api) => mySquares(api.board, api.opp, "q") },
   { id: "palace_floor_plan", name: "Palace Floor Plan", flavor: "The interesting rooms are always next to the throne.", icon: "Map", what: "every enemy piece adjacent to the enemy king", squares: (api) => { const k = kingSquare(api.board, api.opp); return k == null ? [] : ringAround(k).filter((sq) => api.board.pieces[sq]?.color === api.opp); } },

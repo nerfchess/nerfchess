@@ -1736,7 +1736,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_no_trampling: S(CattleGridScene, { ordering: "octagon", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrify", anchor: "cast" }),
   hx4_pawn_snob: S(FlaggedWayScene, { ordering: "file", staggerMs: 70, victims: ["p"], hasLead: true, sound: "slots", anchor: "cast" }),
   hx4_vegetarian_vows: S(WindrowScene, { ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "snooze", anchor: "cast" }),
-  hx4_wet_matches: S(WetStubbleScene, { ordering: "file", staggerMs: 65, victims: ["p"], hasLead: true, sound: "bust", anchor: "cast" }),
+  hx4_wet_matches: S(WetStubbleScene, { ordering: "file", staggerMs: 65, victims: ["p"], hasLead: true, sound: "bust", anchor: "board" }),
   op_back_to_barracks: S(StileScene, { ordering: "file", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", anchor: "cast" }),
   op_chapel_warden: S(HolyWellScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "cast" }),
   op_corduroy_road: S(CorduroyScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim" }),

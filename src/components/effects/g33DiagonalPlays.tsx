@@ -1319,7 +1319,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: SootFall,
   },
   hx4_left_glove: {
-    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 55, victims: ["b"], hasLead: true, sound: "blitz", anchor: "board" },
     Render: CaughtBlade,
   },
   hx4_narrow_lane: {

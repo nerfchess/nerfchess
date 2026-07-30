@@ -2730,7 +2730,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: SandTable,
   },
   hx4_velvet_rope: {
-    config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: VelvetRope,
   },
   bn4_worldgate: {

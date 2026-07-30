@@ -661,6 +661,121 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
       },
     );
   }
+  // Five roads used to be the same sentence with one letter swapped, so each
+  // now carries a condition drawn from its own name. The two-square advance is
+  // untouched in every case; only the terms of the ride change.
+  if (entry.id === "bridle_path") {
+    // A bridleway is the horse's road first: the pawn borrows it once a knight
+    // of yours has ridden out. Still lossy (balance pass), reworded.
+    return opener(
+      entry,
+      "Once, your b-file pawn may canter two squares from wherever it stands, if both squares are empty and one of your knights has already moved. The charge is spent if the canter is on offer and you play something else.",
+      {
+        ...lossyAugment((moves, inst, api) => (inst.state.rode ? gen(moves, inst, api) : [])),
+        onMovePlayed: (inst, move, api) => {
+          if (move.color === api.me && move.piece === "n") inst.state.rode = true;
+          if (((inst.state.charges as number) ?? 0) <= 0 || move.color !== api.me) return;
+          if (move.via === inst.id) {
+            inst.state.charges = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.armed = false;
+            if (((inst.state.charges as number) ?? 0) <= 0) inst.spent = true;
+            return;
+          }
+          if (inst.state.armed) {
+            inst.state.charges = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.armed = false;
+            if (((inst.state.charges as number) ?? 0) <= 0) inst.spent = true;
+          }
+        },
+        status: (inst) =>
+          !inst.state.rode
+            ? "waiting on a knight"
+            : ((inst.state.charges as number) ?? 0) > 0
+              ? "one canter left"
+              : null,
+      },
+    );
+  }
+  if (entry.id === "old_post_road") {
+    // The mail coach keeps a timetable: the run is only on offer during your
+    // first seven moves. Still lossy (balance pass), reworded.
+    return opener(
+      entry,
+      "Once, on one of your first 7 moves, your d-file pawn may cover two squares from wherever it stands. Both squares must be empty. The coach never waits: the charge is spent if you leave the run on offer.",
+      {
+        ...lossyAugment((moves, inst, api) =>
+          ((inst.state.moves as number) ?? 0) < 7 ? gen(moves, inst, api) : [],
+        ),
+        onMovePlayed: (inst, move, api) => {
+          if (move.color !== api.me) return;
+          inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          if (move.via === inst.id || inst.state.armed) {
+            inst.state.charges = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.armed = false;
+            if (((inst.state.charges as number) ?? 0) <= 0) inst.spent = true;
+          }
+        },
+        status: (inst) => {
+          const left = 7 - ((inst.state.moves as number) ?? 0);
+          return ((inst.state.charges as number) ?? 0) > 0 && left > 0
+            ? `${left} of your moves left to run it`
+            : null;
+        },
+      },
+    );
+  }
+  if (entry.id === "pilgrim_road") {
+    // Pilgrims keep to safe roads: the far square must not be covered.
+    return opener(
+      entry,
+      "Once, your e-file pawn may stride two squares from wherever it stands. Both squares must be empty, and no enemy piece may be attacking the far one.",
+      augment((moves, inst, api) =>
+        gen(moves, inst, api).filter((m) => attackersOf(api.board, api.opp, m.to).length === 0),
+      ),
+    );
+  }
+  if (entry.id === "ferry_crossing") {
+    // The ferryman keeps the change: the crossing costs your next reroll.
+    return opener(
+      entry,
+      "Once, your f-file pawn may cross two squares from wherever it stands. Both squares must be empty. The ferryman takes his fare: the crossing consumes your next unused reroll, if any.",
+      {
+        ...augment(gen),
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id || move.color !== api.me) return;
+          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        },
+      },
+    );
+  }
+  if (entry.id === "goat_track") {
+    // A goat track runs both ways down the mountain, so the climb may be taken
+    // backward as well as forward.
+    return opener(
+      entry,
+      "Once, your g-file pawn may climb two squares from wherever it stands, forward or backward, if both squares are empty.",
+      augment((_moves, inst, api) => {
+        const out: Move[] = [];
+        const fwd = fwdOf(api.me);
+        for (const sq of mySquares(api.board, api.me, "p")) {
+          if (FILE(sq) !== entry.file) continue;
+          for (const step of [fwd, -fwd]) {
+            const mid = sq + step, to = sq + step * 2;
+            if (to < 0 || to > 63 || mid < 0 || mid > 63) continue;
+            if (!pawnRankOk(to)) continue;
+            if (!api.board.pieces[mid] && !api.board.pieces[to]) {
+              out.push(...teleportMoves(api.board, sq, [to], inst.id));
+            }
+          }
+        }
+        return out.filter((m) => !m.captured);
+      }),
+    );
+  }
   return opener(
     entry,
     `Once, your ${fileName}-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.${
@@ -845,6 +960,38 @@ function leapfrog(entry: (typeof LEAPFROGS)[number]): Buff {
         !inst.state.ready ? "ready after the reply" : ((inst.state.charges as number) ?? 0) > 0 ? "one hop ready" : null,
     });
   }
+  if (entry.id === "sandbag_hurdle") {
+    // Sappers stack them: the sandbag the tower cleared keeps its head down
+    // for one enemy turn.
+    return opener(
+      entry,
+      `${entry.what}, landing on the empty square directly beyond, once. The sandbags hold: that pawn cannot be captured during your opponent's next turn.`,
+      {
+        ...augment(gen),
+        onMovePlayed: (inst, move, api) => {
+          if (move.via !== inst.id || move.color !== api.me) return;
+          const cleared = (move.from + move.to) / 2;
+          if (Number.isInteger(cleared) && api.board.pieces[cleared]?.color === api.me) {
+            addEffect(api, { kind: "shield", owner: api.me, squares: [cleared], turns: 1 });
+          }
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        },
+      },
+    );
+  }
+  if (entry.id === "stable_gate") {
+    // A stable gate only swings while the horse is still in the stable.
+    return opener(
+      entry,
+      `${entry.what}, landing on the empty square directly beyond, once. The gate only opens while that knight still stands on your back rank.`,
+      augment((moves, inst, api) => {
+        const home = ownRank(api.me, 0);
+        return gen(moves, inst, api).filter((m) => RANK((m.from + m.to) / 2) === home);
+      }),
+    );
+  }
   if (entry.id === "vaulting_horse") {
     // Preserve the hop; taking it consumes your next unused reroll, if any.
     return opener(entry, `${baseDesc} Taking this hop consumes your next unused reroll, if any.`, {
@@ -903,7 +1050,68 @@ function backstagePass(entry: (typeof BACKSTAGE)[number]): Buff {
       augment(gen),
     );
   }
-  if (entry.id === "green_room" || entry.id === "set_change" || entry.id === "star_dressing_room") {
+  if (entry.id === "set_change") {
+    // Scenery moves between acts, and on this stage an act ends when someone is
+    // taken: the hop waits for the game's first capture.
+    return opener(
+      entry,
+      `${baseDesc} Scenery shifts between acts, so the hop waits for the first capture of the game.`,
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+          inst.state.ready = false;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+          addNovel(moves, gen(moves, inst, api));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.ready && captureSquare(move) != null) inst.state.ready = true;
+          if (move.via === inst.id && move.color === api.me) {
+            const left = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.charges = left;
+            if (left <= 0) inst.spent = true;
+          }
+        },
+        status: (inst) =>
+          !inst.state.ready
+            ? "waiting for the first capture"
+            : ((inst.state.charges as number) ?? 0) > 0
+              ? "one hop ready"
+              : null,
+      },
+    );
+  }
+  if (entry.id === "star_dressing_room") {
+    // The star waits for her call: same delayed hop, told in her own words.
+    return opener(
+      entry,
+      "Once, your queen may cross exactly 2 squares sideways along your back rank onto an empty square, ignoring whatever stands between. She waits for her cue: the walk is on offer only after your opponent's next move.",
+      {
+        kind: "passive",
+        init: (inst) => {
+          inst.state.charges = 1;
+          inst.state.ready = false;
+        },
+        augmentMoves: (moves, inst, api) => {
+          if (!inst.state.ready || ((inst.state.charges as number) ?? 0) <= 0) return;
+          addNovel(moves, gen(moves, inst, api));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (!inst.state.ready && move.color === api.opp) inst.state.ready = true;
+          if (move.via === inst.id && move.color === api.me) {
+            const left = ((inst.state.charges as number) ?? 1) - 1;
+            inst.state.charges = left;
+            if (left <= 0) inst.spent = true;
+          }
+        },
+        status: (inst) =>
+          !inst.state.ready ? "waiting on her cue" : ((inst.state.charges as number) ?? 0) > 0 ? "one walk ready" : null,
+      },
+    );
+  }
+  if (entry.id === "green_room") {
     // Preserve the payoff, but delay its first trigger: the hop is not offered
     // until after the opponent's next move.
     return opener(entry, `${baseDesc} The hop becomes available only after your opponent's next move.`, {
@@ -1007,8 +1215,20 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
   };
   if (entry.id === "quickstep" || entry.id === "waltz_left") {
     // Preserve the narrow king-dash identity; if unused by the owner's 12th
-    // move, the charge converts into one draft reroll.
-    return opener(entry, `${desc} If unused by your 12th move, the charge becomes one draft reroll.`, {
+    // move, the charge converts into one draft reroll. The two dashes were the
+    // same sentence mirrored, so each now dances to its own rule: the quickstep
+    // needs its partner (the h-file rook at home), the waltz counts three
+    // before it starts.
+    const quick = entry.id === "quickstep";
+    const partnered = (api: BuffApi) => {
+      const corner = SQ(7, ownRank(api.me, 0));
+      const p = api.board.pieces[corner];
+      return !!p && p.color === api.me && p.type === "r";
+    };
+    const bespoke = quick
+      ? "Once, your king may move two squares sideways toward the h-file. Both squares must be empty, and your h-file rook must still stand in its corner. If unused by your 12th move, the charge becomes one draft reroll."
+      : "Once, your king may glide two squares sideways toward the a-file across empty squares. The figure takes three counts: the glide waits until after your 3rd move. If unused by your 12th move, the charge becomes one draft reroll.";
+    return opener(entry, bespoke, {
       kind: "passive",
       init: (inst) => {
         inst.state.charges = 1;
@@ -1016,6 +1236,7 @@ function ballroomStep(entry: (typeof BALLROOM)[number]): Buff {
       },
       augmentMoves: (moves, inst, api) => {
         if (((inst.state.charges as number) ?? 0) <= 0) return;
+        if (quick ? !partnered(api) : ((inst.state.moves as number) ?? 0) < 3) return;
         addNovel(moves, gen(moves, inst, api));
       },
       onMovePlayed: (inst, move, api) => {
@@ -1116,11 +1337,35 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
   // move filter that reliably survives into the opponent's turn instead.
   // `delay` postpones the guard until after the opponent's next move;
   // `exceptPawns` lets enemy pawn captures through.
-  const filterGuard = (opts: { delay?: boolean; exceptPawns?: boolean; endOnCapture?: boolean }): Parameters<typeof card>[1] => ({
+  //
+  // The file-pawn guardians used to be one sentence with the file letter
+  // swapped, so each watcher now keeps watch in its own way, drawn from its
+  // own name: `flashAttacker` (a bell that names the intruder), `fromMove`
+  // (a lamp lit only after dusk), `kingHome` (a marshal who only takes post
+  // while the king is on his square), `staysOnFile` (a gull that will not
+  // follow the pawn inland) and `needsNeighbour` (a dog that guards a stall
+  // somebody is minding).
+  const filterGuard = (opts: {
+    delay?: boolean;
+    exceptPawns?: boolean;
+    endOnCapture?: boolean;
+    flashAttacker?: boolean;
+    fromMove?: number;
+    kingHome?: boolean;
+    staysOnFile?: boolean;
+    needsNeighbour?: boolean;
+  }): Parameters<typeof card>[1] => ({
     kind: "passive",
     onMovePlayed: (inst, move, api) => {
       if (inst.spent) return;
+      if (move.color === api.me) inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
       if (inst.state.armed) {
+        // The gull keeps to the harbor: if the guarded pawn leaves its own
+        // file (only a capture can do that), the watch lapses.
+        if (opts.staysOnFile && move.from === (inst.state.sq as number) && FILE(move.to) !== entry.file) {
+          inst.spent = true;
+          return;
+        }
         // The guarded square follows the piece if I reposition it, and the
         // guard ends the moment that piece is captured or the turn passes.
         if (opts.endOnCapture && move.from === (inst.state.sq as number) && captureSquare(move) != null) {
@@ -1153,12 +1398,29 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
         else inst.state.pending = false;
         return;
       }
+      // The lamp is not lit before its hour, and the marshal only takes post
+      // while the king is on his own square.
+      if (opts.fromMove != null && ((inst.state.moves as number) ?? 0) < opts.fromMove) return;
+      if (opts.kingHome) {
+        const k = mySquares(api.board, api.me, "k")[0];
+        if (k == null || k !== SQ(4, ownRank(api.me, 0))) return;
+      }
       const hit = getTargets(api).find((sq) => attackersOf(api.board, api.opp, sq).length > 0);
       if (hit == null) return;
+      // The market dog only guards a stall somebody is minding.
+      if (opts.needsNeighbour) {
+        const beside = ALL8.some(([df, dr]) => {
+          const f = FILE(hit) + df, r = RANK(hit) + dr;
+          return inBoard(f, r) && api.board.pieces[SQ(f, r)]?.color === api.me;
+        });
+        if (!beside) return;
+      }
       if (opts.delay) {
         inst.state.pending = true;
         return;
       }
+      // One toll, and everyone knows who came over the wall.
+      if (opts.flashAttacker) flashSquares(api, attackersOf(api.board, api.opp, hit));
       arm(hit);
     },
     filterOpponentMoves: (moves, inst) => {
@@ -1190,30 +1452,39 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
   }
 
   if (entry.id === "cloister_bell") {
-    // Retier + "ends after preventing one capture": the one-turn guard lasts
-    // through the opponent's single reply, turning that capture aside, then ends.
+    // The one-turn guard, plus the toll itself: the intruder is named aloud.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
-      filterGuard({}),
+      `The first time an enemy piece attacks ${what}, the bell tolls: that pawn cannot be captured during your opponent's next turn, and the attacker flashes until they reply. One use.`,
+      filterGuard({ flashAttacker: true }),
     );
   }
 
   if (entry.id === "gallery_docent") {
-    // Retier + the protection ends the moment the guarded pawn makes a capture.
+    // The exhibit stays behind the rope: striking out ends the tour.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.`,
+      `The first time an enemy piece attacks ${what}, the ropes go up and it cannot be captured during your opponent's next turn. The exhibit must touch nothing: the guard drops the moment that pawn captures. One use.`,
       filterGuard({ endOnCapture: true }),
     );
   }
 
-  if (entry.id === "garden_scarecrow" || entry.id === "harbor_gull") {
-    // Retier + the shield does not stop pawn captures.
+  if (entry.id === "garden_scarecrow") {
+    // Straw frightens the mounted and the tall. Enemy pawns walk right past.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
+      `The first time an enemy piece attacks ${what}, the straw figure spooks it: that pawn cannot be captured during your opponent's next turn. Enemy pawns are not fooled and may still take it. One use.`,
       filterGuard({ exceptPawns: true }),
+    );
+  }
+
+  if (entry.id === "harbor_gull") {
+    // The gull mobs anything over the quay, but it will not follow the pawn
+    // inland: leaving the a-file (only a capture can) ends the watch.
+    return opener(
+      entry,
+      `The first time an enemy piece attacks ${what}, the gull mobs it: that pawn cannot be captured during your opponent's next turn, except by a pawn. The gull will not fly inland, so the watch lapses if that pawn leaves the a-file. One use.`,
+      filterGuard({ exceptPawns: true, staysOnFile: true }),
     );
   }
 
@@ -1228,30 +1499,31 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
   }
 
   if (entry.id === "lighthouse_keeper") {
-    // Retier + "ends after preventing one capture": the one-turn guard lasts
-    // through the opponent's single reply, turning that capture aside, then ends.
+    // The lamp is lit at dusk, not at dawn: nothing before the owner's 6th move.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.`,
-      filterGuard({}),
+      `The lamp is lit from your 6th move on. Before then the keeper sleeps, and after it, the first attack on ${what} leaves that pawn safe from capture for one enemy turn. One use.`,
+      filterGuard({ fromMove: 6 }),
     );
   }
 
   if (entry.id === "market_dog") {
-    // Retier + the shield does not stop pawn captures.
+    // A market dog guards a stall somebody is minding: it needs a friendly
+    // piece standing beside the pawn when the trouble starts.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.`,
-      filterGuard({ exceptPawns: true }),
+      `The first time an enemy piece attacks ${what}, the dog barks: that pawn cannot be captured during your opponent's next turn, except by a pawn. The dog needs a stallholder, so one of your pieces must stand beside that pawn. One use.`,
+      filterGuard({ exceptPawns: true, needsNeighbour: true }),
     );
   }
 
   if (entry.id === "parade_marshal") {
-    // Retier + the protection ends the moment the guarded pawn makes a capture.
+    // The marshal escorts the royal route: he only takes post while the king
+    // is still on his own square.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.`,
-      filterGuard({ endOnCapture: true }),
+      `While your king still stands on his home square, the first enemy piece to attack ${what} is waved off: that pawn cannot be captured during your opponent's next turn. One use.`,
+      filterGuard({ kingHome: true }),
     );
   }
 
@@ -1446,6 +1718,44 @@ function orderlyRetreat(entry: (typeof RETREATS)[number]): Buff {
         status: (inst) => {
           const c = (inst.state.charges as number) ?? uses;
           return c > 0 ? `${c} left, reroll at your 12th move` : null;
+        },
+      },
+    );
+  }
+  if (entry.id === "tactical_withdrawal") {
+    // You only withdraw from something: the step is offered to a pawn that is
+    // actually under fire, which is also the only way it stays a withdrawal
+    // rather than a stroll.
+    return opener(
+      entry,
+      "Once, a pawn of yours that an enemy piece is attacking may fall back one square onto the empty square behind it.",
+      augment((moves, inst, api) =>
+        gen(moves, inst, api).filter((m) => attackersOf(api.board, api.opp, m.from).length > 0),
+      ),
+    );
+  }
+  if (entry.id === "second_thoughts") {
+    // Second thoughts arrive late: nothing before the middlegame is in view.
+    return opener(
+      entry,
+      `Once, after your 6th move, one of your pawns ${who}may step ${how} onto an empty square.`,
+      {
+        ...augment(gen, uses),
+        augmentMoves: (moves, inst, api) => {
+          if (((inst.state.charges as number) ?? 0) <= 0) return;
+          if (((inst.state.moves as number) ?? 0) < 6) return;
+          addNovel(moves, gen(moves, inst, api));
+        },
+        onMovePlayed: (inst, move, api) => {
+          if (move.color === api.me) inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
+          if (move.via !== inst.id || move.color !== api.me) return;
+          const left = ((inst.state.charges as number) ?? 1) - 1;
+          inst.state.charges = left;
+          if (left <= 0) inst.spent = true;
+        },
+        status: (inst) => {
+          const late = 6 - ((inst.state.moves as number) ?? 0);
+          return late > 0 ? `reconsiders in ${late} of your moves` : "one step back left";
         },
       },
     );
@@ -1864,23 +2174,60 @@ function kitchenErrand(entry: (typeof KITCHEN_ERRANDS)[number]): Buff {
     entry.files.length === 2
       ? `a ${FILE_NAMES[entry.files[0]]}- or ${FILE_NAMES[entry.files[1]]}-file pawn`
       : `a pawn on files ${entry.files.map((f) => FILE_NAMES[f]).join(", ")}`;
+  // The three two-file errands were one sentence with the files swapped, so
+  // each now carries what it is actually carrying: the loaves go carefully (no
+  // walking into an attacked square), the salt barrel comes from the far coast
+  // (nothing before your 4th move), and the good paprika is kept in the back of
+  // the stall (only a pawn still at home may fetch it).
+  const careful = entry.id === "bread_for_the_table";
+  const heavy = entry.id === "salt_from_the_coast";
+  const fromStock = entry.id === "spice_run";
+  const desc = careful
+    ? "Use once as a free action: a d- or e-file pawn carries the loaves one square forward. The square ahead must be empty, and no enemy piece may be attacking it."
+    : heavy
+      ? "Use once as a free action, from your 4th move on: an a- or h-file pawn hauls the barrel one square forward. The square ahead must be empty. The coast road is long."
+      : fromStock
+        ? "Use once as a free action: a b- or g-file pawn still on its home square steps one square forward. The square ahead must be empty."
+        : `Use once as a free action: ${who} advances one square immediately. The square ahead must be empty.`;
   return opener(
     entry,
-    `Use once as a free action: ${who} advances one square immediately. The square ahead must be empty.`,
-    activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose the pawn running the errand",
-              squares: advanceablePawns(api).filter((sq) => entry.files.includes(FILE(sq))),
+    desc,
+    {
+      ...activated(
+        (inst, api, picks) =>
+          picks.length > 0
+            ? null
+            : {
+                kind: "square",
+                label: "Choose the pawn running the errand",
+                squares:
+                  heavy && ((inst.state.moves as number) ?? 0) < 4
+                    ? []
+                    : advanceablePawns(api)
+                        .filter((sq) => entry.files.includes(FILE(sq)))
+                        .filter(
+                          (sq) =>
+                            !careful || attackersOf(api.board, api.opp, sq + fwdOf(api.me)).length === 0,
+                        )
+                        .filter((sq) => !fromStock || RANK(sq) === ownRank(api.me, 1)),
+              },
+        (_inst, api, picks) => {
+          if (picks[0]?.square != null) advancePawn(api, picks[0].square);
+        },
+        { freeAction: true },
+      ),
+      ...(heavy
+        ? {
+            onMovePlayed: (inst, move, api) => {
+              if (move.color === api.me) inst.state.moves = ((inst.state.moves as number) ?? 0) + 1;
             },
-      (_inst, api, picks) => {
-        if (picks[0]?.square != null) advancePawn(api, picks[0].square);
-      },
-      { freeAction: true },
-    ),
+            status: (inst) => {
+              const away = 4 - ((inst.state.moves as number) ?? 0);
+              return away > 0 ? `back from the coast in ${away} of your moves` : "the barrel is here";
+            },
+          }
+        : {}),
+    },
   );
 }
 
