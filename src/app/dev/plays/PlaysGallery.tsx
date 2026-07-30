@@ -177,10 +177,12 @@ export function PlaysGallery() {
   const [mode, setMode] = React.useState<Mode>("anchors");
   const [ready, setReady] = React.useState(false);
   React.useEffect(() => {
+    // The gallery reviews the WHOLE library, so unlike a game board it wants
+    // every play module, not just the ones in a hand.
     prefetchSignatureVisuals();
-    // The lazy chunk lands quickly; a short delay is enough for a dev page.
-    const t = window.setTimeout(() => setReady(true), 400);
-    return () => window.clearTimeout(t);
+    void import("@/components/effects/sigPluginsMerged").then((m) =>
+      m.loadAllPluginModules().then(() => setReady(true)),
+    );
   }, []);
   const shown = all.filter(
     (r) =>

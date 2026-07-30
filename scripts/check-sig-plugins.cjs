@@ -27,6 +27,11 @@ const EFFECTS = path.join(__dirname, "..", "src", "components", "effects");
 const SIG_PLUGINS = path.join(EFFECTS, "sigPlugins.tsx");
 const SIG_MERGED = path.join(EFFECTS, "sigPluginsMerged.tsx");
 
+const MOD_BEGIN = "// <plugin-modules:generated>";
+const MOD_END = "// </plugin-modules:generated>";
+const CARDMOD_BEGIN = "// <card-modules:generated>";
+const CARDMOD_END = "// </card-modules:generated>";
+
 // The set AND order of plugin modules is itself a single source of truth: the
 // `MERGED` spread in sigPluginsMerged.tsx. Deriving it from there (rather than
 // a second hardcoded list) means a newly-added plugin module is picked up
@@ -35,28 +40,43 @@ const SIG_MERGED = path.join(EFFECTS, "sigPluginsMerged.tsx");
 // the same precedence the registry resolves with.
 function discoverModules() {
   const src = fs.readFileSync(SIG_MERGED, "utf8");
-  // alias -> module file, from: import { PLAYS as GOD_PLAYS } from "./godPlays";
-  const aliasToFile = new Map();
-  const importRe = /import\s*{\s*PLAYS\s+as\s+(\w+)\s*}\s*from\s*["']\.\/(\w+)["']/g;
-  let m;
-  while ((m = importRe.exec(src))) aliasToFile.set(m[1], m[2]);
-
-  // Spread order, from: const MERGED ... = { ...BASIC_PLAYS, ...GOD_PLAYS, ... }
-  const mi = src.indexOf("const MERGED");
-  if (mi < 0) throw new Error("sigPluginsMerged.tsx: no `const MERGED` found");
-  const open = src.indexOf("{", mi);
-  const close = src.indexOf("}", open);
-  const body = src.slice(open, close);
-  const modules = [];
-  const spreadRe = /\.\.\.(\w+)/g;
-  while ((m = spreadRe.exec(body))) {
-    const alias = m[1];
-    const file = aliasToFile.get(alias);
-    if (!file) throw new Error(`sigPluginsMerged.tsx: MERGED spreads ${alias} with no matching PLAYS import`);
-    modules.push({ file: `${file}.tsx`, label: `${file}.tsx` });
+  // The generated MODULE_LOADERS map is the single source of truth for which
+  // modules exist and in what precedence order. It replaced a static import
+  // list + MERGED spread when the registry moved to per-module dynamic
+  // imports; deriving from it (rather than a second hardcoded list) means a
+  // newly added module is picked up the moment it is registered.
+  const b = src.indexOf(MOD_BEGIN);
+  const e = src.indexOf(MOD_END);
+  if (b < 0 || e < 0 || e < b) {
+    throw new Error(
+      `sigPluginsMerged.tsx: missing generated markers ${MOD_BEGIN} / ${MOD_END}. ` +
+        `Run: node scripts/check-sig-plugins.cjs --write`,
+    );
   }
-  if (!modules.length) throw new Error("sigPluginsMerged.tsx: no plugin modules found in MERGED");
+  const block = src.slice(b + MOD_BEGIN.length, e);
+  const modules = [];
+  const re = /^\s*(\w+):\s*\(\)\s*=>\s*import\("\.\/(\w+)"\)/gm;
+  let m;
+  while ((m = re.exec(block))) {
+    if (m[1] !== m[2]) {
+      throw new Error(`sigPluginsMerged.tsx: loader key "${m[1]}" does not match module "${m[2]}"`);
+    }
+    modules.push({ file: `${m[2]}.tsx`, label: `${m[2]}.tsx`, name: m[2] });
+  }
+  if (!modules.length) throw new Error("sigPluginsMerged.tsx: no plugin modules in MODULE_LOADERS");
   return modules;
+}
+
+/** Every *Plays.tsx on disk that has a matching .css, in a stable order. The
+ *  --write path uses this so a newly authored module registers itself without
+ *  anyone hand-editing the loader map. */
+function modulesOnDisk() {
+  return fs
+    .readdirSync(EFFECTS)
+    .filter((f) => /Plays\.tsx$/.test(f))
+    .map((f) => f.replace(/\.tsx$/, ""))
+    .filter((n) => fs.existsSync(path.join(EFFECTS, `${n}.css`)))
+    .sort();
 }
 
 const MODULES = discoverModules();
@@ -233,8 +253,63 @@ function renderBlock(groups) {
   return lines.join("\n");
 }
 
+/** Rewrite a marked generated block in a file, in place. */
+function replaceBlock(src, begin, end, body, file) {
+  const b = src.indexOf(begin);
+  const e = src.indexOf(end);
+  if (b < 0 || e < 0 || e < b) {
+    throw new Error(`${file}: missing generated markers ${begin} / ${end}`);
+  }
+  return src.slice(0, b + begin.length) + "\n" + body + "\n" + src.slice(e);
+}
+
+/** The MODULE_LOADERS body: every module on disk, legacy ones first (their
+ *  merge precedence is load-independent now, but a stable order keeps diffs
+ *  readable), then the bespoke-coverage wave modules in name order. */
+function renderLoaders(names) {
+  const legacyOrder = [
+    "basicPlays", "godPlays", "greatPlays", "funnyPlays", "personalPlays", "memePlays",
+    "stubPlays", "prankPlays", "casinoPlays", "gamblingPlays", "boonPlays", "cursePlays",
+    "creatorPlays",
+  ];
+  const legacy = legacyOrder.filter((n) => names.includes(n));
+  const waves = names.filter((n) => !legacyOrder.includes(n)).sort();
+  const lines = [
+    "export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string, SigPlugin> }>> = {",
+  ];
+  for (const n of [...legacy, ...waves]) lines.push(`  ${n}: () => import("./${n}"),`);
+  lines.push("};");
+  return lines.join("\n");
+}
+
+/** The CARD_TO_MODULE body. */
+function renderCardModules(groups) {
+  const lines = ["export const CARD_TO_MODULE: Record<string, string> = {"];
+  for (const g of groups) {
+    const name = g.label.replace(/\.tsx$/, "");
+    lines.push(`  // ${g.label} (${g.ids.length})`);
+    for (const id of g.ids) lines.push(`  ${JSON.stringify(id)}: ${JSON.stringify(name)},`);
+  }
+  lines.push("};");
+  return lines.join("\n");
+}
+
 function main() {
   const write = process.argv.includes("--write");
+
+  // --write first re-registers every module on disk, so a newly authored one
+  // is picked up without anyone hand-editing the shared registry (which is
+  // what earlier concurrent batches raced over).
+  if (write) {
+    const disk = modulesOnDisk();
+    const mergedSrc = fs.readFileSync(SIG_MERGED, "utf8");
+    fs.writeFileSync(
+      SIG_MERGED,
+      replaceBlock(mergedSrc, MOD_BEGIN, MOD_END, renderLoaders(disk), "sigPluginsMerged.tsx"),
+    );
+    MODULES.length = 0;
+    for (const m of discoverModules()) MODULES.push(m);
+  }
 
   const groups = MODULES.map((mod) => {
     const src = fs.readFileSync(path.join(EFFECTS, mod.file), "utf8");
@@ -262,10 +337,22 @@ function main() {
       console.error(`sigPlugins.tsx: missing generated markers; add ${BEGIN} ... ${END} around PLUGIN_IDS.`);
       process.exit(1);
     }
-    const next =
+    let next =
       sigSrc.slice(0, b + BEGIN.length) + "\n" + renderBlock(groups) + "\n" + sigSrc.slice(e);
+    // CARD_TO_MODULE is what lets Board warm only the modules holding cards
+    // that can appear this game, so it is regenerated in the same pass and
+    // can never drift from PLUGIN_IDS.
+    next = replaceBlock(
+      next,
+      CARDMOD_BEGIN,
+      CARDMOD_END,
+      renderCardModules(groups),
+      "sigPlugins.tsx",
+    );
     fs.writeFileSync(SIG_PLUGINS, next);
-    console.log(`sig-plugins: wrote ${derived.length} ids across ${groups.length} modules to sigPlugins.tsx`);
+    console.log(
+      `sig-plugins: wrote ${derived.length} ids + card->module map across ${groups.length} modules`,
+    );
     if (dupes.length) {
       console.error(`\nsig-plugins: duplicate ids across modules:\n  - ${dupes.join("\n  - ")}`);
       process.exit(1);

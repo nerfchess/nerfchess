@@ -2512,7 +2512,13 @@ export function whenSignatureVisualsReady(timeoutMs = 500): Promise<void> {
  * repeatedly. On success it flips the readiness flag; on failure it logs ONCE
  * (no longer swallowed silently) and releases any waiters so they fall back to
  * the generated burst rather than hanging. */
-export function prefetchSignatureVisuals(): void {
+export function prefetchSignatureVisuals(cardIds?: Iterable<string>): void {
+  // The plugin art is split per module. Warm exactly the ones holding cards
+  // that can appear this game rather than the whole library: Board knows both
+  // hands, and at full coverage the library is ~9.6MB of source.
+  if (cardIds) {
+    void import("./sigPluginsMerged").then((m) => m.loadPluginModulesForCards(cardIds));
+  }
   if (signaturesReady) return;
   void import("./sigVisuals")
     .then((m) => {

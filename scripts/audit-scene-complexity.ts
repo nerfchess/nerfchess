@@ -92,23 +92,16 @@ function read(rel: string): string {
 }
 
 /** Every plugin module, discovered the way check-sig-plugins.cjs does it: from
- *  the MERGED spread, so a newly added module is picked up for free. */
+ *  the generated MODULE_LOADERS map, so a newly registered module is picked up
+ *  for free. (It used to read the static MERGED spread, which no longer exists:
+ *  the registry moved to per-module dynamic imports so the art is not one
+ *  ~9.6MB chunk.) */
 function pluginModules(): string[] {
   const src = read("sigPluginsMerged.tsx");
-  const aliasToFile = new Map<string, string>();
-  const importRe = /import\s*{\s*PLAYS\s+as\s+(\w+)\s*}\s*from\s*["']\.\/(\w+)["']/g;
-  let m: RegExpExecArray | null;
-  while ((m = importRe.exec(src))) aliasToFile.set(m[1], m[2]);
-  const mi = src.indexOf("const MERGED");
-  const open = src.indexOf("{", mi);
-  const close = src.indexOf("}", open);
-  const body = src.slice(open, close);
   const out: string[] = [];
-  const spreadRe = /\.\.\.(\w+)/g;
-  while ((m = spreadRe.exec(body))) {
-    const f = aliasToFile.get(m[1]);
-    if (f) out.push(f);
-  }
+  const re = /^\s*(\w+):\s*\(\)\s*=>\s*import\("\.\/(\w+)"\)/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src))) out.push(m[2]);
   return out;
 }
 

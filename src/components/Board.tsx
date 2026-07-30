@@ -2280,17 +2280,30 @@ export function Board({
   // analysis board, neither of which can ever play a signature. Deferred to
   // idle either way so it never races the critical path right after mount.
   const canPlayCards = buffs != null;
+  // Which cards can actually fire on this board: both hands. The plugin art is
+  // split per module, so this is what decides which modules get fetched. It is
+  // a stable string so the effect re-runs when a hand really changes (a draft
+  // pick, a steal) and not on every unrelated render.
+  const inPlayIds = useMemo(() => {
+    if (!buffs) return "";
+    const ids = new Set<string>();
+    for (const color of ["w", "b"] as const) {
+      for (const inst of buffs.players[color].buffs) ids.add(inst.id);
+    }
+    return [...ids].sort().join(",");
+  }, [buffs]);
   useEffect(() => {
     if (!canPlayCards) return;
+    const warm = () => prefetchSignatureVisuals(inPlayIds ? inPlayIds.split(",") : undefined);
     const idle = (
       window as Window & { requestIdleCallback?: (cb: () => void) => number }
     ).requestIdleCallback;
     if (!idle) {
-      const t = window.setTimeout(prefetchSignatureVisuals, 0);
+      const t = window.setTimeout(warm, 0);
       return () => window.clearTimeout(t);
     }
-    idle(prefetchSignatureVisuals);
-  }, [canPlayCards]);
+    idle(warm);
+  }, [canPlayCards, inPlayIds]);
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
   const pendingVfxRef = useRef<VfxPlay[]>([]);

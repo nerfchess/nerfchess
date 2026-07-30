@@ -1,94 +1,155 @@
 "use client";
 
-// The MERGED plug-in registry — the heavy half of sigPlugins.tsx (code
-// split). This module statically imports all six plugin modules (~9k lines of
-// render art), so it must only ever be reached through the lazy
-// signature-visuals chunk (sigVisuals.tsx imports it; Board prefetches that
-// chunk on mount via prefetchSignatureVisuals). Evaluating it publishes every
-// plugin's config into the eager PLUGIN_SIGNATURES registry as a load-time
-// side effect, after which Board resolves plugin cards exactly as before the
-// split.
-
-import { PLUGIN_IDS, PLUGIN_SIGNATURES, type SigPlugin, type SigRole } from "./sigPlugins";
-import { PLAYS as GOD_PLAYS } from "./godPlays";
-import { PLAYS as FUNNY_PLAYS } from "./funnyPlays";
-import { PLAYS as GREAT_PLAYS } from "./greatPlays";
-import { PLAYS as BASIC_PLAYS } from "./basicPlays";
-import { PLAYS as PERSONAL_PLAYS } from "./personalPlays";
-import { PLAYS as MEME_PLAYS } from "./memePlays";
-import { PLAYS as STUB_PLAYS } from "./stubPlays";
-import { PLAYS as PRANK_PLAYS } from "./prankPlays";
-import { PLAYS as CASINO_PLAYS } from "./casinoPlays";
-import { PLAYS as GAMBLING_PLAYS } from "./gamblingPlays";
-import { PLAYS as BOON_PLAYS } from "./boonPlays";
-import { PLAYS as CURSE_PLAYS } from "./cursePlays";
-import { PLAYS as CREATOR_PLAYS } from "./creatorPlays";
-// Bespoke-coverage waves: modules replacing the generated-signature
-// fallback. Kept in one sorted block so concurrent batches land
-// predictably; regenerate PLUGIN_IDS after any change here.
-import { PLAYS as G01_HOURGLASS_PLAYS } from "./g01HourglassPlays";
-import { PLAYS as G05_PAWNTIDE_PLAYS } from "./g05PawnTidePlays";
-import { PLAYS as G09_FROST_PLAYS } from "./g09FrostPlays";
-import { PLAYS as G12_CLOCKWORK_PLAYS } from "./g12ClockworkPlays";
-import { PLAYS as G20_RAMPART_PLAYS } from "./g20RampartPlays";
-import { PLAYS as G22_VEIL_PLAYS } from "./g22VeilPlays";
-import { PLAYS as G26_SHIELD_PLAYS } from "./g26ShieldPlays";
-import { PLAYS as G27_THORN_PLAYS } from "./g27ThornPlays";
-import { PLAYS as G29_RALLY_PLAYS } from "./g29RallyPlays";
-import { PLAYS as G31_CHANCE_PLAYS } from "./g31ChancePlays";
-
-// Later spreads win within plugins; core SIGNATURES always beat plugins at
-// the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set,
-// personal set, meme (brainrot batch 2) set, then the revived-stub, prank,
-// and casino sets.
-const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS, ...GAMBLING_PLAYS, ...BOON_PLAYS, ...CURSE_PLAYS, ...CREATOR_PLAYS, ...G01_HOURGLASS_PLAYS, ...G05_PAWNTIDE_PLAYS, ...G09_FROST_PLAYS, ...G12_CLOCKWORK_PLAYS, ...G20_RAMPART_PLAYS, ...G22_VEIL_PLAYS, ...G26_SHIELD_PLAYS, ...G27_THORN_PLAYS, ...G29_RALLY_PLAYS, ...G31_CHANCE_PLAYS };
-
-// Publish the full SignatureConfig per plugin card id into the eager
-// registry, visual keyed back to this module. Deterministic: same inputs,
-// same merge order, same entries as the pre-split eager build.
-for (const [id, p] of Object.entries(MERGED)) {
-  PLUGIN_SIGNATURES[id] = { ...p.config, visual: `x:${id}` as const };
-}
-
-// Dev-mode invariant: the eager PLUGIN_IDS list (sigPlugins.tsx) must match
-// the real merged keys exactly. The list is what suppresses the generated
-// fallback before this chunk loads, so drift means either wrong art plays
-// pre-load (id missing from the list) or a card renders no art forever (id
-// listed but no longer covered).
+// The plug-in play registry, loaded ONE MODULE AT A TIME.
 //
-// The AUTHORITATIVE, ship-blocking guard is the build-time check in
-// `test:rules` (scripts/check-sig-plugins.cjs), which regenerates PLUGIN_IDS
-// from these same PLAYS keys and FAILS CI on any drift. This runtime check is
-// the fast local mirror of it: it THROWS in dev/test (not just warns, which
-// production stripped and shipped silently) so a drifted registry can never be
-// exercised without someone noticing immediately.
-if (process.env.NODE_ENV !== "production") {
-  const listed = new Set(PLUGIN_IDS);
-  const merged = new Set(Object.keys(MERGED));
-  const missing = [...merged].filter((id) => !listed.has(id));
-  const stale = [...listed].filter((id) => !merged.has(id));
-  if (missing.length || stale.length) {
-    throw new Error(
-      "[sigPlugins] PLUGIN_IDS drifted from the merged plugin registry." +
-        (missing.length ? ` Missing from PLUGIN_IDS: ${missing.join(", ")}.` : "") +
-        (stale.length ? ` Stale in PLUGIN_IDS: ${stale.join(", ")}.` : "") +
-        " Regenerate: node scripts/check-sig-plugins.cjs --write",
-    );
+// This file used to statically import every plugin module, so evaluating it
+// pulled the whole art library into one chunk. That was fine at thirteen
+// modules and ~2.6MB of source. It is not fine at the coverage this branch is
+// heading for: bespoke art for every card projects to ~9.6MB of source in a
+// single blob that Board prefetches on mount, which on a phone is a worse
+// experience than the generated fallback it replaces.
+//
+// So the modules sit behind dynamic imports now, and Board loads only the ones
+// holding cards that can actually be played this game (it knows both hands).
+// The rest are never fetched.
+//
+// WHAT DID NOT CHANGE, deliberately: the resolution contract. A card whose
+// module has not loaded resolves to no bespoke entry, and Board's
+// PLUGIN_ID_SET check turns that into "no art rather than wrong art" — exactly
+// the behaviour that already existed for the window before the single chunk
+// landed. The window is now shorter and per-module rather than global.
+//
+// GENERATED: the MODULE_LOADERS map below is machine-written by
+// scripts/check-sig-plugins.cjs from the modules on disk. Do not hand-edit it;
+// regenerate with `node scripts/check-sig-plugins.cjs --write`.
+
+import * as React from "react";
+import { CARD_TO_MODULE, PLUGIN_SIGNATURES, type SigPlugin, type SigRole } from "./sigPlugins";
+
+// <plugin-modules:generated>
+export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string, SigPlugin> }>> = {
+  basicPlays: () => import("./basicPlays"),
+  godPlays: () => import("./godPlays"),
+  greatPlays: () => import("./greatPlays"),
+  funnyPlays: () => import("./funnyPlays"),
+  personalPlays: () => import("./personalPlays"),
+  memePlays: () => import("./memePlays"),
+  stubPlays: () => import("./stubPlays"),
+  prankPlays: () => import("./prankPlays"),
+  casinoPlays: () => import("./casinoPlays"),
+  gamblingPlays: () => import("./gamblingPlays"),
+  boonPlays: () => import("./boonPlays"),
+  cursePlays: () => import("./cursePlays"),
+  creatorPlays: () => import("./creatorPlays"),
+  g01HourglassPlays: () => import("./g01HourglassPlays"),
+  g05PawnTidePlays: () => import("./g05PawnTidePlays"),
+  g09FrostPlays: () => import("./g09FrostPlays"),
+  g12ClockworkPlays: () => import("./g12ClockworkPlays"),
+  g20RampartPlays: () => import("./g20RampartPlays"),
+  g22VeilPlays: () => import("./g22VeilPlays"),
+  g26ShieldPlays: () => import("./g26ShieldPlays"),
+  g27ThornPlays: () => import("./g27ThornPlays"),
+  g29RallyPlays: () => import("./g29RallyPlays"),
+  g31ChancePlays: () => import("./g31ChancePlays"),
+};
+// </plugin-modules:generated>
+
+/** Every play whose module has been loaded so far. */
+const MERGED: Record<string, SigPlugin> = {};
+
+/** In-flight / settled loads, so N cards in one module cause ONE import. */
+const loads = new Map<string, Promise<void>>();
+
+/** Bumped whenever a module lands, so mounted visuals waiting on one re-render. */
+let generation = 0;
+const listeners = new Set<() => void>();
+
+function publish(plays: Record<string, SigPlugin>): void {
+  for (const [id, p] of Object.entries(plays)) {
+    MERGED[id] = p;
+    // The same shape the eager build published: the visual key routes back here.
+    PLUGIN_SIGNATURES[id] = { ...p.config, visual: `x:${id}` as const };
   }
+  generation++;
+  for (const l of listeners) l();
 }
 
-/** SignatureOverlay's default-case hook: render an `x:<key>` plugin visual.
- *  `lead` is passed alongside `role` as a derived alias so scenes written
- *  before entrances existed keep working untouched. */
+/** Load one module by name. Safe and cheap to call repeatedly. */
+export function loadPluginModule(name: string): Promise<void> {
+  const existing = loads.get(name);
+  if (existing) return existing;
+  const loader = MODULE_LOADERS[name];
+  if (!loader) return Promise.resolve();
+  const p = loader()
+    .then((m) => publish(m.PLAYS))
+    .catch((err: unknown) => {
+      // A failed module means those cards fall back to the generated burst,
+      // which is the same outcome as never having had bespoke art. Logged once
+      // per module rather than swallowed.
+      console.warn(`[nerfchess] play module "${name}" failed to load`, err);
+    });
+  loads.set(name, p);
+  return p;
+}
+
+/**
+ * Load exactly the modules holding these card ids.
+ *
+ * This is the point of the split: Board knows both hands, so it can warm the
+ * handful of modules whose art can actually appear this game instead of the
+ * whole library.
+ */
+export function loadPluginModulesForCards(ids: Iterable<string>): Promise<void> {
+  const names = new Set<string>();
+  for (const id of ids) {
+    const mod = CARD_TO_MODULE[id];
+    if (mod && !loads.has(mod)) names.add(mod);
+  }
+  if (names.size === 0) return Promise.resolve();
+  return Promise.all([...names].map(loadPluginModule)).then(() => undefined);
+}
+
+/** Load everything. For the dev galleries, which review the whole library. */
+export function loadAllPluginModules(): Promise<void> {
+  return Promise.all(Object.keys(MODULE_LOADERS).map(loadPluginModule)).then(() => undefined);
+}
+
+/** True when this card's art is resolvable right now. */
+export function hasPluginVisual(key: string): boolean {
+  return MERGED[key] != null;
+}
+
+/**
+ * SignatureOverlay's default-case hook: render an `x:<key>` plugin visual.
+ *
+ * If the card's module is not loaded yet this kicks the load off and renders
+ * nothing until it lands. A one-shot scene that starts a beat late still
+ * plays; the alternative (falling through to the generated burst) would be the
+ * wrong art, which the pre-load suppression exists specifically to avoid.
+ */
 export function renderPluginVisual(key: string, role: SigRole, delayMs: number) {
-  const p = MERGED[key];
+  return <PluginVisual pkey={key} role={role} delayMs={delayMs} />;
+}
+
+function PluginVisual({ pkey, role, delayMs }: { pkey: string; role: SigRole; delayMs: number }) {
+  // Subscribe to module arrivals rather than polling: `generation` changes only
+  // when a module publishes, so a mounted scene waiting on its own module
+  // re-renders exactly once, when it can finally draw.
+  const gen = React.useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => generation,
+    () => generation,
+  );
+  const p = MERGED[pkey];
+  React.useEffect(() => {
+    if (!p) void loadPluginModule(CARD_TO_MODULE[pkey] ?? "");
+    // `gen` is a dependency on purpose: a re-render after another module lands
+    // re-checks whether this one is now resolvable.
+  }, [pkey, p, gen]);
   if (!p) return null;
   const R = p.Render;
   return <R lead={role === "lead"} role={role} delayMs={delayMs} />;
-}
-
-/** True when a card has hand-made art at all — the entrance layer asks before
- *  falling back to its category arrival. */
-export function hasPluginVisual(key: string): boolean {
-  return MERGED[key] != null;
 }

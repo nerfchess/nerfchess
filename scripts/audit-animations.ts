@@ -196,20 +196,17 @@ function parsePlaysModule(fileBase: string): Map<string, PlayInfo> {
   return out;
 }
 
-/** Module list + precedence from sigPluginsMerged.tsx (same as the drift check). */
+/** Module list + precedence from sigPluginsMerged.tsx (same as the drift check).
+ *  Read from the generated MODULE_LOADERS map: the registry moved to
+ *  per-module dynamic imports so the plugin art is not one ~9.6MB chunk, and
+ *  the static MERGED spread this used to parse no longer exists. */
 function pluginModules(): string[] {
   const src = read("sigPluginsMerged.tsx");
-  const aliasToFile = new Map<string, string>();
-  for (const m of src.matchAll(/import\s*\{\s*PLAYS\s+as\s+(\w+)\s*\}\s*from\s*["']\.\/(\w+)["']/g))
-    aliasToFile.set(m[1], m[2]);
-  const mi = src.indexOf("const MERGED");
-  const body = src.slice(src.indexOf("{", mi), src.indexOf("}", src.indexOf("{", mi)));
   const files: string[] = [];
-  for (const m of body.matchAll(/\.\.\.(\w+)/g)) {
-    const f = aliasToFile.get(m[1]);
-    if (!f) throw new Error(`sigPluginsMerged.tsx: spread ${m[1]} has no PLAYS import`);
-    files.push(f);
+  for (const m of src.matchAll(/^\s*(\w+):\s*\(\)\s*=>\s*import\("\.\/(\w+)"\)/gm)) {
+    files.push(m[2]);
   }
+  if (!files.length) throw new Error("sigPluginsMerged.tsx: no modules in MODULE_LOADERS");
   return files;
 }
 
