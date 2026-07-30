@@ -1,0 +1,1279 @@
+/* ============================================================================
+   g10ThawPlays.css — motion for the 29 freeze / winter plays
+   (src/components/effects/g10ThawPlays.tsx).
+
+   House discipline, same as g26ShieldPlays.css / boonPlays.css:
+   - keyframes animate ONLY transform and opacity (a static drop-shadow filter
+     is fine, animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (stagger + beat) land cleanly;
+   - every duration is scaled by --fx-dur (Settings animation-speed);
+   - every track ENDS at opacity 0, so a play never lingers: persistent state
+     is carried by the card's own zone overlay, never by the play;
+   - border-radius is only ever 0 / 1px / 2px / 50% / 999px (house rule,
+     scripts/check-rounded.ts);
+   - the whole g10- family is parked when animations are off (guard at the
+     bottom of this file).
+
+   MODULE FICTION: heat losing. Most tracks here are a warm thing FAILING:
+   a flame pinching to a bead (g10-gw-bead, g10-bl-pinch, g10-fw-douse), a
+   plume snapping off at its source (g10-gg-cut, g10-nc-thin, g10-sn-pinch,
+   g10-tb-cut), a glow retreating to a dot (g10-wo-eye, g10-bc-fade,
+   g10-ch-eye, g10-sc-glow), a liquid setting mid-run (g10-bl-wax,
+   g10-tb-drip), a crust closing (g10-nc-crust, g10-gg-lid, g10-hn-crust).
+   Ease curves are deliberately decelerating: warmth never snaps off, it runs
+   out.
+
+   GEOMETRY-DRIVEN TRACKS. Five keyframes read the scene geometry custom
+   properties published by Board (see effects/geometry.ts) so the art is
+   directional rather than decorative, and every scene in the module uses at
+   least one of them:
+     .g10-drawdown   the last of the warmth is drawn off toward the CASTER
+                     (--fx-side)
+     .g10-leanshadow the prop's shadow throws away from board centre
+                     (--fx-ox/--fx-oy)
+     .g10-runout     a run extends along the source -> target leg   (--fx-len)
+     .g10-creep      a rime line spreads away from board centre     (--fx-ox)
+     .g10-hitside    the per-square hit arrives from the caster's side
+                     (--fx-side)
+   ========================================================================= */
+
+/* --- Board-scale atmosphere (always inside <BoardFrame>) ------------------- */
+
+@keyframes g10-wash {
+  0% { opacity: 0; }
+  26% { opacity: 1; }
+  70% { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+.g10-wash { animation: g10-wash calc(1.7s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-rim {
+  0% { opacity: 0; transform: scale(0.95); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g10-rim { animation: g10-rim calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Geometry-driven tracks ----------------------------------------------- */
+
+/* The last of the warmth peeled off the prop and drawn away toward the caster's
+   own end of the board. This is the module's signature move. */
+@keyframes g10-drawdown {
+  0% { opacity: 0; transform: translateY(0) scaleY(0.3); }
+  30% { opacity: 0.9; transform: translateY(0) scaleY(1); }
+  72% { opacity: 0.5; transform: translateY(calc(var(--fx-side, 1) * -46%)) scaleY(0.7); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -84%)) scaleY(0.4); }
+}
+.g10-drawdown { animation: g10-drawdown calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+/* The prop's shadow, thrown away from the board centre on both axes. */
+@keyframes g10-leanshadow {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.3); }
+  36% { opacity: 0.9; transform: translate(calc(var(--fx-ox, 0) * 2.2%), calc(var(--fx-oy, 0) * 1.4%)) scaleX(1); }
+  82% { opacity: 0.55; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+}
+.g10-leanshadow { animation: g10-leanshadow calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* A line that runs the length of the play's own leg. The 0.55 floor keeps the
+   run visible on a cast lead, where there is no travel to measure. */
+@keyframes g10-runout {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  34% { opacity: 1; transform: scaleX(calc(0.55 + var(--fx-len, 0) * 0.09)); }
+  80% { opacity: 0.75; transform: scaleX(calc(0.55 + var(--fx-len, 0) * 0.09)); }
+  100% { opacity: 0; transform: scaleX(calc(0.6 + var(--fx-len, 0) * 0.09)); }
+}
+.g10-runout { animation: g10-runout calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A rime line spreading, pushed away from the middle of the board. */
+@keyframes g10-creep {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.1); }
+  38% { opacity: 1; transform: translateX(calc(var(--fx-ox, 0) * 1.6%)) scaleX(1); }
+  80% { opacity: 0.7; transform: translateX(calc(var(--fx-ox, 0) * 2.4%)) scaleX(1.08); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-ox, 0) * 2.8%)) scaleX(1.12); }
+}
+.g10-creep { animation: g10-creep calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.35, 1) both; }
+
+/* --- Per-square target cut ------------------------------------------------ */
+
+@keyframes g10-hit {
+  0% { opacity: 0; transform: scale(0.4); }
+  36% { opacity: 1; transform: scale(1.09); }
+  54% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g10-hit { animation: g10-hit calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-hit2 {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g10-hit2 { animation: g10-hit2 calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+
+/* The hit's arrival leans in from the caster's side of the board. */
+@keyframes g10-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 86%)) scale(0.72); }
+  40% { opacity: 1; transform: translateY(0) scale(1.05); }
+  58% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -12%)) scale(1); }
+}
+.g10-hitside { animation: g10-hitside calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- Entrance beats (the card arriving in a hand, ~56% crop) --------------- */
+
+@keyframes g10-ent-rise {
+  0% { opacity: 0; transform: translateY(32%) scale(0.8); }
+  34% { opacity: 1; transform: translateY(0) scale(1.05); }
+  48% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+}
+.g10-ent-rise { animation: g10-ent-rise calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-ent-drop {
+  0% { opacity: 0; transform: translateY(-62%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(5%) scale(1); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g10-ent-drop { animation: g10-ent-drop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g10-ent-pop {
+  0% { opacity: 0; transform: scale(0.32); }
+  34% { opacity: 1; transform: scale(1.15); }
+  52% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g10-ent-pop { animation: g10-ent-pop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-ent-mote {
+  0% { opacity: 0; transform: translateY(22%) scale(0.7); }
+  38% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-30%) scale(0.9); }
+}
+.g10-ent-mote { animation: g10-ent-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* The entrance's cooling beat: it arrives bright and settles dim. */
+@keyframes g10-ent-dim {
+  0% { opacity: 0; transform: scale(1.35); }
+  30% { opacity: 1; transform: scale(1.1); }
+  64% { opacity: 0.55; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(0.86); }
+}
+.g10-ent-dim { animation: g10-ent-dim calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* --- Shared seasoning ------------------------------------------------------ */
+
+/* Warm vapour lifting and thinning out. */
+@keyframes g10-mote {
+  0% { opacity: 0; transform: translateY(20%) scale(0.5); }
+  34% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-110%) scale(0.55); }
+}
+.g10-mote { animation: g10-mote calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* Cold grit falling: the settle beat of most of the module. */
+@keyframes g10-grit {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(120%) scale(0.6); }
+}
+.g10-grit { animation: g10-grit calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g10-glint {
+  0% { opacity: 0; transform: scale(0.2); }
+  42% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+.g10-glint { animation: g10-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 1. Winter Orders — the orders brazier -------------------------------- */
+
+@keyframes g10-wo-slip {
+  0% { opacity: 0; transform: translateY(-70%) rotate(-8deg); }
+  38% { opacity: 1; transform: translateY(4%) rotate(2deg); }
+  56% { transform: translateY(0) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(-1.5deg); }
+}
+.g10-wo-slip { animation: g10-wo-slip calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-wo-bowl {
+  0% { opacity: 0; transform: translateY(26%) scale(0.78); }
+  40% { opacity: 1; transform: translateY(0) scale(1.03); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-wo-bowl { animation: g10-wo-bowl calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The coal bed shrinking away from its own edges. */
+@keyframes g10-wo-coal {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  26% { opacity: 1; transform: scaleX(1); }
+  62% { opacity: 0.7; transform: scaleX(0.55); }
+  100% { opacity: 0; transform: scaleX(0.16); }
+}
+.g10-wo-coal { animation: g10-wo-coal calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* One red eye left, and then not. */
+@keyframes g10-wo-eye {
+  0% { opacity: 0; transform: scale(1.6); }
+  22% { opacity: 1; transform: scale(1); }
+  58% { opacity: 0.9; transform: scale(0.72); }
+  84% { opacity: 0.4; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(0.2); }
+}
+.g10-wo-eye { animation: g10-wo-eye calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+/* --- 2. Winter Palace (buff) — frost flowers on the inside of the glass --- */
+
+@keyframes g10-wp-glow {
+  0% { opacity: 0; transform: scaleY(0.5); }
+  28% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 0.5; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.94); }
+}
+.g10-wp-glow { animation: g10-wp-glow calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-wp-pane {
+  0% { opacity: 0; transform: scale(0.86); }
+  38% { opacity: 1; transform: scale(1.02); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-wp-pane { animation: g10-wp-pane calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* A frost fern opening from its root across the glass. */
+@keyframes g10-wp-fern {
+  0% { opacity: 0; transform: scale(0.14) rotate(-10deg); }
+  44% { opacity: 1; transform: scale(1.05) rotate(2deg); }
+  62% { transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.03) rotate(0deg); }
+}
+.g10-wp-fern { animation: g10-wp-fern calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-wp-seal {
+  0% { opacity: 0; transform: scale(1.2); }
+  44% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+.g10-wp-seal { animation: g10-wp-seal calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 3. Avalanche Pass — the road fire smothered -------------------------- */
+
+@keyframes g10-ap-slump {
+  0% { opacity: 0; transform: translateY(-90%) skewX(6deg); }
+  40% { opacity: 1; transform: translateY(6%) skewX(-3deg); }
+  58% { transform: translateY(0) skewX(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) skewX(0deg); }
+}
+.g10-ap-slump { animation: g10-ap-slump calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+/* The smoke column bending, then breaking off at the fold. */
+@keyframes g10-ap-smoke {
+  0% { opacity: 0; transform: translateY(20%) scaleY(0.4); }
+  30% { opacity: 1; transform: translateY(0) scaleY(1) skewX(0deg); }
+  62% { opacity: 0.8; transform: translateY(-14%) scaleY(0.9) skewX(16deg); }
+  100% { opacity: 0; transform: translateY(-40%) scaleY(0.3) skewX(30deg); }
+}
+.g10-ap-smoke { animation: g10-ap-smoke calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-ap-fire {
+  0% { opacity: 0; transform: scale(0.5); }
+  24% { opacity: 1; transform: scale(1.08); }
+  62% { opacity: 0.6; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(0.24); }
+}
+.g10-ap-fire { animation: g10-ap-fire calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-ap-hiss {
+  0% { opacity: 0; transform: scale(0.3, 0.4); }
+  36% { opacity: 1; transform: scale(1.2, 1.1); }
+  100% { opacity: 0; transform: scale(1.7, 0.5) translateY(-30%); }
+}
+.g10-ap-hiss { animation: g10-ap-hiss calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-ap-stake {
+  0% { opacity: 0; transform: translateY(-40%) rotate(0deg); }
+  42% { opacity: 1; transform: translateY(0) rotate(-13deg); }
+  62% { transform: rotate(-9deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-9deg); }
+}
+.g10-ap-stake { animation: g10-ap-stake calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 4. Beartrap Cache — two ember pots buried ---------------------------- */
+
+@keyframes g10-bc-dig {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.15); }
+}
+.g10-bc-dig { animation: g10-bc-dig calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* Pressed down into the snow and held there. */
+@keyframes g10-bc-press {
+  0% { opacity: 0; transform: translateY(-56%) scale(1.1); }
+  38% { opacity: 1; transform: translateY(6%) scale(0.98); }
+  56% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(2%) scale(1); }
+}
+.g10-bc-press { animation: g10-bc-press calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.82, 0.35, 1) both; }
+
+/* The glow behind the vent holes retreating to a dot. */
+@keyframes g10-bc-fade {
+  0% { opacity: 0; transform: scaleX(1.3); }
+  26% { opacity: 1; transform: scaleX(1); }
+  68% { opacity: 0.6; transform: scaleX(0.44); }
+  100% { opacity: 0; transform: scaleX(0.12); }
+}
+.g10-bc-fade { animation: g10-bc-fade calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* --- 5. Black Lotus — the five-wick candelabra ---------------------------- */
+
+@keyframes g10-bl-bloom {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(0.5); }
+  42% { opacity: 1; transform: scaleX(1.04) scaleY(1); }
+  58% { transform: scaleX(1) scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g10-bl-bloom { animation: g10-bl-bloom calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-bl-candle {
+  0% { opacity: 0; transform: translateY(30%) scaleY(0.6); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g10-bl-candle { animation: g10-bl-candle calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* A wick pinched between two fingers: squeeze flat, then nothing. */
+@keyframes g10-bl-pinch {
+  0% { opacity: 0; transform: scale(0.6, 0.5); }
+  24% { opacity: 1; transform: scale(1, 1.08); }
+  52% { opacity: 1; transform: scale(0.9, 0.94); }
+  76% { opacity: 0.7; transform: scale(0.34, 0.5); }
+  100% { opacity: 0; transform: scale(0.1, 0.16); }
+}
+.g10-bl-pinch { animation: g10-bl-pinch calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+/* The wax run that stops halfway down the candle and sets there. */
+@keyframes g10-bl-wax {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  40% { opacity: 1; transform: scaleY(0.72); }
+  60% { transform: scaleY(0.86); }
+  76% { transform: scaleY(0.9); }
+  100% { opacity: 0; transform: scaleY(0.9); }
+}
+.g10-bl-wax { animation: g10-bl-wax calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+
+/* --- 6. Gale Warning — the storm lantern at the rim ----------------------- */
+
+@keyframes g10-gw-gust {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.2); }
+  38% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(36%) scaleX(1.2); }
+}
+.g10-gw-gust { animation: g10-gw-gust calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-gw-swing {
+  0% { opacity: 0; transform: rotate(0deg); }
+  28% { opacity: 1; transform: rotate(15deg); }
+  50% { transform: rotate(-11deg); }
+  70% { transform: rotate(6deg); }
+  88% { opacity: 1; transform: rotate(-2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g10-gw-swing { animation: g10-gw-swing calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.75, 0.35, 1) both; }
+
+/* The wind lays the flame over flat before it takes it. */
+@keyframes g10-gw-flat {
+  0% { opacity: 0; transform: scale(0.6) skewX(0deg); }
+  26% { opacity: 1; transform: scale(1) skewX(-28deg); }
+  56% { opacity: 1; transform: scale(0.8, 0.7) skewX(34deg); }
+  100% { opacity: 0; transform: scale(0.2, 0.3) skewX(10deg); }
+}
+.g10-gw-flat { animation: g10-gw-flat calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-gw-bead {
+  0% { opacity: 0; transform: scale(1.4); }
+  30% { opacity: 1; transform: scale(0.9); }
+  70% { opacity: 0.7; transform: scale(0.42); }
+  100% { opacity: 0; transform: scale(0.12); }
+}
+.g10-gw-bead { animation: g10-gw-bead calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* --- 7. Glacier Gate — the four grates stop breathing --------------------- */
+
+@keyframes g10-gg-grate {
+  0% { opacity: 0; transform: scale(0.6) translateY(20%); }
+  40% { opacity: 1; transform: scale(1.04) translateY(0); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-gg-grate { animation: g10-gg-grate calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* A plume that thins, then snaps off at the grate and drifts. */
+@keyframes g10-gg-cut {
+  0% { opacity: 0; transform: translateY(24%) scaleY(0.4); }
+  28% { opacity: 1; transform: translateY(0) scaleY(1); }
+  58% { opacity: 0.85; transform: translateY(-8%) scaleY(0.72) scaleX(0.7); }
+  100% { opacity: 0; transform: translateY(-52%) scaleY(0.24) scaleX(0.4); }
+}
+.g10-gg-cut { animation: g10-gg-cut calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-gg-lid {
+  0% { opacity: 0; transform: scale(1.28); }
+  46% { opacity: 1; transform: scale(1); }
+  80% { opacity: 0.75; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g10-gg-lid { animation: g10-gg-lid calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 8. Grave Chill — breath out of the slab ------------------------------ */
+
+@keyframes g10-gc-slab {
+  0% { opacity: 0; transform: translateY(18%) scale(0.86); }
+  40% { opacity: 1; transform: translateY(0) scale(1.02); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-gc-slab { animation: g10-gc-slab calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-gc-crack {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g10-gc-crack { animation: g10-gc-crack calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* Warm breath, lifted and then held still in the air. */
+@keyframes g10-gc-breath {
+  0% { opacity: 0; transform: translateY(30%) scale(0.5); }
+  32% { opacity: 1; transform: translateY(0) scale(1); }
+  66% { opacity: 0.8; transform: translateY(-16%) scale(1.06); }
+  100% { opacity: 0; transform: translateY(-24%) scale(1.06); }
+}
+.g10-gc-breath { animation: g10-gc-breath calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* The breath, now a hanging crystal, comes apart downward. */
+@keyframes g10-gc-shard {
+  0% { opacity: 0; transform: translateY(-12%) scale(0.3) rotate(-14deg); }
+  40% { opacity: 1; transform: translateY(0) scale(1.06) rotate(2deg); }
+  58% { transform: scale(1) rotate(0deg); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(26%) scale(0.9) rotate(6deg); }
+}
+.g10-gc-shard { animation: g10-gc-shard calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- 9. Hundred Year Nap — the kettle stops singing ----------------------- */
+
+@keyframes g10-hn-hob {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  30% { opacity: 1; transform: scaleX(1); }
+  72% { opacity: 0.55; transform: scaleX(0.8); }
+  100% { opacity: 0; transform: scaleX(0.5); }
+}
+.g10-hn-hob { animation: g10-hn-hob calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-hn-kettle {
+  0% { opacity: 0; transform: translateY(24%) scale(0.82); }
+  36% { opacity: 1; transform: translateY(-3%) scale(1.03); }
+  50% { transform: translateY(0) scale(1); }
+  64% { transform: translateY(-1.5%); }
+  86% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g10-hn-kettle { animation: g10-hn-kettle calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* One arc of the whistle: it rises, sags in pitch and dies short. */
+@keyframes g10-hn-arc {
+  0% { opacity: 0; transform: translateY(16%) scale(0.4); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  62% { opacity: 0.7; transform: translateY(9%) scale(0.78); }
+  100% { opacity: 0; transform: translateY(20%) scale(0.42); }
+}
+.g10-hn-arc { animation: g10-hn-arc calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-hn-crust {
+  0% { opacity: 0; transform: scale(0.16); }
+  46% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g10-hn-crust { animation: g10-hn-crust calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 10. Iron Maiden — the quench ----------------------------------------- */
+
+@keyframes g10-im-glow {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.14); }
+  62% { opacity: 0.7; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(0.34); }
+}
+.g10-im-glow { animation: g10-im-glow calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-im-trough {
+  0% { opacity: 0; transform: translateY(30%) scaleX(0.7); }
+  40% { opacity: 1; transform: translateY(0) scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleX(1); }
+}
+.g10-im-trough { animation: g10-im-trough calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* Down into the water, hard, and it stays down. */
+@keyframes g10-im-plunge {
+  0% { opacity: 0; transform: translateY(-84%) scale(1.06); }
+  34% { opacity: 1; transform: translateY(16%) scale(0.96); }
+  46% { transform: translateY(9%) scale(1); }
+  60% { transform: translateY(12%); }
+  86% { opacity: 1; transform: translateY(12%); }
+  100% { opacity: 0; transform: translateY(12%); }
+}
+.g10-im-plunge { animation: g10-im-plunge calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.85, 0.3, 1) both; }
+
+@keyframes g10-im-hiss {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(1.6); }
+  30% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.3) scaleY(0.4); }
+}
+.g10-im-hiss { animation: g10-im-hiss calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-im-burst {
+  0% { opacity: 0; transform: scale(0.2, 0.3); }
+  30% { opacity: 1; transform: scale(1.25, 1.1); }
+  100% { opacity: 0; transform: scale(1.8, 1.5) translateY(-38%); }
+}
+.g10-im-burst { animation: g10-im-burst calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 11. Narcolepsy — the hot spring crusts over -------------------------- */
+
+@keyframes g10-nc-pool {
+  0% { opacity: 0; transform: scale(0.8); }
+  38% { opacity: 1; transform: scale(1.03); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-nc-pool { animation: g10-nc-pool calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* Steam that thins to a thread rather than blowing away. */
+@keyframes g10-nc-thin {
+  0% { opacity: 0; transform: translateY(28%) scaleX(1.2) scaleY(0.4); }
+  30% { opacity: 1; transform: translateY(0) scaleX(1) scaleY(1); }
+  66% { opacity: 0.7; transform: translateY(-14%) scaleX(0.5) scaleY(0.9); }
+  100% { opacity: 0; transform: translateY(-30%) scaleX(0.2) scaleY(0.7); }
+}
+.g10-nc-thin { animation: g10-nc-thin calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* Two ripple rings running out and stopping short. */
+@keyframes g10-nc-ring {
+  0% { opacity: 0; transform: scale(0.3); }
+  36% { opacity: 1; transform: scale(0.86); }
+  72% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g10-nc-ring { animation: g10-nc-ring calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.25, 1) both; }
+
+/* The crust closing in from the rim. */
+@keyframes g10-nc-crust {
+  0% { opacity: 0; transform: scale(1.24); }
+  48% { opacity: 1; transform: scale(1.02); }
+  66% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-nc-crust { animation: g10-nc-crust calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 12. Pillory — the stocks and the fruit that never landed wet --------- */
+
+@keyframes g10-pl-slam {
+  0% { opacity: 0; transform: rotate(-34deg) translateY(-20%); }
+  32% { opacity: 1; transform: rotate(4deg) translateY(0); }
+  46% { transform: rotate(-2deg); }
+  60% { transform: rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g10-pl-slam { animation: g10-pl-slam calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g10-pl-caught {
+  0% { opacity: 0; transform: translateY(24%) scale(0.8); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  58% { transform: translateY(-3%); }
+  70% { transform: translateY(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g10-pl-caught { animation: g10-pl-caught calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The lob comes in on an arc and does not squash on landing. */
+@keyframes g10-pl-lob {
+  0% { opacity: 0; transform: translate(60%, -80%) rotate(0deg) scale(0.7); }
+  40% { opacity: 1; transform: translate(20%, -40%) rotate(120deg) scale(1); }
+  74% { opacity: 1; transform: translate(0, 0) rotate(240deg) scale(1); }
+  100% { opacity: 0; transform: translate(-6%, 4%) rotate(268deg) scale(1); }
+}
+.g10-pl-lob { animation: g10-pl-lob calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.6, 1) both; }
+
+@keyframes g10-pl-shatter {
+  0% { opacity: 0; transform: scale(0.16); }
+  34% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(2); }
+}
+.g10-pl-shatter { animation: g10-pl-shatter calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.25, 1) both; }
+
+/* --- 13. Silken Net — the pinched plumes ---------------------------------- */
+
+@keyframes g10-sn-cast {
+  0% { opacity: 0; transform: scale(0.2) rotate(-24deg); }
+  40% { opacity: 1; transform: scale(1.08) rotate(4deg); }
+  58% { transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.01) rotate(0deg); }
+}
+.g10-sn-cast { animation: g10-sn-cast calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* Warm air rising through the mesh, pinched off at the cord. */
+@keyframes g10-sn-pinch {
+  0% { opacity: 0; transform: translateY(26%) scaleY(0.4); }
+  30% { opacity: 1; transform: translateY(0) scaleY(1); }
+  60% { opacity: 0.85; transform: translateY(-10%) scaleY(0.8) scaleX(0.44); }
+  100% { opacity: 0; transform: translateY(-26%) scaleY(0.3) scaleX(0.12); }
+}
+.g10-sn-pinch { animation: g10-sn-pinch calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-sn-bead {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.5); }
+  62% { transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g10-sn-bead { animation: g10-sn-bead calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 14. Thunderhead — the cold bolt -------------------------------------- */
+
+@keyframes g10-th-gather {
+  0% { opacity: 0; transform: translateY(-30%) scaleX(0.6); }
+  38% { opacity: 1; transform: translateY(0) scaleX(1.04); }
+  54% { transform: scaleX(1); }
+  70% { transform: translateY(2%) scaleX(1.02); }
+  86% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g10-th-gather { animation: g10-th-gather calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-th-king {
+  0% { opacity: 0; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+  62% { transform: translateY(-3%); }
+  74% { transform: translateY(0); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-th-king { animation: g10-th-king calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-th-bolt {
+  0% { opacity: 0; transform: translateY(-46%) scaleY(0.2); }
+  18% { opacity: 1; transform: translateY(0) scaleY(1); }
+  34% { opacity: 0.4; }
+  46% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g10-th-bolt { animation: g10-th-bolt calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+/* Where the fire should be: one shock of steam that goes to grit. */
+@keyframes g10-th-steam {
+  0% { opacity: 0; transform: scale(0.2, 0.3); }
+  26% { opacity: 1; transform: scale(1.3, 1.15); }
+  62% { opacity: 0.6; transform: scale(1.5, 0.9) translateY(-18%); }
+  100% { opacity: 0; transform: scale(1.7, 0.5) translateY(-34%); }
+}
+.g10-th-steam { animation: g10-th-steam calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-th-scar {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  36% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g10-th-scar { animation: g10-th-scar calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 15. Frost Wyrm — the wyrm quenches the watchfires -------------------- */
+
+@keyframes g10-fw-run {
+  0% { opacity: 0; transform: translateX(-90%) scaleX(0.7); }
+  32% { opacity: 1; transform: translateX(-6%) scaleX(1.04); }
+  52% { transform: translateX(0) scaleX(1); }
+  80% { opacity: 1; transform: translateX(14%); }
+  100% { opacity: 0; transform: translateX(30%); }
+}
+.g10-fw-run { animation: g10-fw-run calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+/* Each watchfire is snuffed as the wyrm passes over it. */
+@keyframes g10-fw-douse {
+  0% { opacity: 0; transform: scale(0.6, 0.5); }
+  22% { opacity: 1; transform: scale(1, 1.1); }
+  48% { opacity: 1; transform: scale(0.86, 0.8) skewX(-18deg); }
+  100% { opacity: 0; transform: scale(0.14, 0.2) skewX(-6deg); }
+}
+.g10-fw-douse { animation: g10-fw-douse calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-fw-wake {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g10-fw-wake { animation: g10-fw-wake calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 16. Flash Frost — the flung pail ------------------------------------- */
+
+@keyframes g10-ff-throw {
+  0% { opacity: 0; transform: rotate(28deg) scale(0.8); }
+  30% { opacity: 1; transform: rotate(-52deg) scale(1.02); }
+  52% { transform: rotate(-38deg) scale(1); }
+  84% { opacity: 1; transform: rotate(-42deg); }
+  100% { opacity: 0; transform: rotate(-42deg); }
+}
+.g10-ff-throw { animation: g10-ff-throw calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* The arc goes to a comb of white teeth in one frame and holds. */
+@keyframes g10-ff-comb {
+  0% { opacity: 0; transform: translateX(-30%) scaleX(0.2) scaleY(0.6); }
+  26% { opacity: 1; transform: translateX(0) scaleX(1.06) scaleY(1.1); }
+  40% { transform: scaleX(1) scaleY(1); }
+  70% { opacity: 1; transform: translateY(6%); }
+  100% { opacity: 0; transform: translateY(18%) scaleY(0.94); }
+}
+.g10-ff-comb { animation: g10-ff-comb calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.95, 0.25, 1) both; }
+
+@keyframes g10-ff-break {
+  0% { opacity: 0; transform: scale(0.2, 0.4); }
+  34% { opacity: 1; transform: scale(1.2, 1); }
+  100% { opacity: 0; transform: scale(1.8, 0.5) translateY(24%); }
+}
+.g10-ff-break { animation: g10-ff-break calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 17. Grandma's Cookies — the oven door opens (warmth wins) ------------ */
+
+@keyframes g10-gk-oven {
+  0% { opacity: 0; transform: translateY(22%) scale(0.84); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-gk-oven { animation: g10-gk-oven calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-gk-door {
+  0% { opacity: 0; transform: rotateX(0deg) scaleY(0.1); }
+  40% { opacity: 1; transform: rotateX(0deg) scaleY(1.08); }
+  56% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g10-gk-door { animation: g10-gk-door calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* A slab of hot air rolling out over the boards. */
+@keyframes g10-gk-waft {
+  0% { opacity: 0; transform: scale(0.3, 0.5); }
+  30% { opacity: 1; transform: scale(1.15, 1.05); }
+  70% { opacity: 0.65; transform: scale(1.4, 1.1) translateY(-12%); }
+  100% { opacity: 0; transform: scale(1.7, 1.1) translateY(-26%); }
+}
+.g10-gk-waft { animation: g10-gk-waft calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-gk-tray {
+  0% { opacity: 0; transform: translateX(-40%) scale(0.86); }
+  40% { opacity: 1; transform: translateX(4%) scale(1.02); }
+  56% { transform: translateX(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g10-gk-tray { animation: g10-gk-tray calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The rime coming OFF the piece for once. */
+@keyframes g10-gk-thaw {
+  0% { opacity: 0; transform: scale(1.3); }
+  38% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.g10-gk-thaw { animation: g10-gk-thaw calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+/* --- 18. Prison Break — the hot bar on the frozen lock -------------------- */
+
+@keyframes g10-pb-lock {
+  0% { opacity: 0; transform: scale(0.8) translateY(18%); }
+  38% { opacity: 1; transform: scale(1.03) translateY(0); }
+  54% { transform: scale(1); }
+  72% { transform: rotate(4deg); }
+  86% { opacity: 1; transform: rotate(-6deg); }
+  100% { opacity: 0; transform: rotate(-9deg) translateY(10%); }
+}
+.g10-pb-lock { animation: g10-pb-lock calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-pb-crust {
+  0% { opacity: 0; transform: scaleY(0.3); }
+  32% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 0.5; transform: scaleY(0.6); }
+  100% { opacity: 0; transform: scaleY(0.15); }
+}
+.g10-pb-crust { animation: g10-pb-crust calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-pb-bar {
+  0% { opacity: 0; transform: translateX(-56%) rotate(-8deg); }
+  36% { opacity: 1; transform: translateX(4%) rotate(2deg); }
+  52% { transform: translateX(0) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-10%); }
+}
+.g10-pb-bar { animation: g10-pb-bar calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g10-pb-hiss {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(1.8); }
+  32% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.25) scaleY(0.3); }
+}
+.g10-pb-hiss { animation: g10-pb-hiss calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-pb-lift {
+  0% { opacity: 0; transform: scale(0.3, 0.4) translateY(20%); }
+  32% { opacity: 1; transform: scale(1.15, 1.05) translateY(0); }
+  100% { opacity: 0; transform: scale(1.5, 1.2) translateY(-44%); }
+}
+.g10-pb-lift { animation: g10-pb-lift calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 19. Ashen Bread — the loaf goes grey --------------------------------- */
+
+@keyframes g10-ab-loaf {
+  0% { opacity: 0; transform: translateY(22%) scale(0.84); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-ab-loaf { animation: g10-ab-loaf calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-ab-tear {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  40% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.06); }
+}
+.g10-ab-tear { animation: g10-ab-tear calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.25, 1) both; }
+
+/* Steam that rises, stalls and sinks back into the crumb. */
+@keyframes g10-ab-steam {
+  0% { opacity: 0; transform: translateY(24%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(-8%) scale(1); }
+  56% { opacity: 0.8; transform: translateY(-14%) scale(1.02); }
+  80% { opacity: 0.45; transform: translateY(2%) scale(0.8); }
+  100% { opacity: 0; transform: translateY(14%) scale(0.6); }
+}
+.g10-ab-steam { animation: g10-ab-steam calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+/* The grey running out from the tear. */
+@keyframes g10-ab-grey {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 1; transform: scaleX(1); }
+  78% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1.08); }
+}
+.g10-ab-grey { animation: g10-ab-grey calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 20. Clay Hooves — the kiln eye closes -------------------------------- */
+
+@keyframes g10-ch-shelf {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  38% { opacity: 1; transform: scaleX(1); }
+  86% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g10-ch-shelf { animation: g10-ch-shelf calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-ch-knight {
+  0% { opacity: 0; transform: translateY(20%) scale(0.84); }
+  38% { opacity: 1; transform: translateY(0) scale(1.02); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-ch-knight { animation: g10-ch-knight calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The clay setting: one last sag, then rigid. */
+@keyframes g10-ch-set {
+  0% { opacity: 0; transform: scale(0.86) skewX(6deg); }
+  36% { opacity: 1; transform: scale(1.04) skewX(-3deg); }
+  52% { transform: scale(1) skewX(0deg); }
+  66% { transform: scaleY(0.97); }
+  86% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g10-ch-set { animation: g10-ch-set calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-ch-eye {
+  0% { opacity: 0; transform: scale(1.5); }
+  26% { opacity: 1; transform: scale(1.05); }
+  66% { opacity: 0.6; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(0.16); }
+}
+.g10-ch-eye { animation: g10-ch-eye calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-ch-craze {
+  0% { opacity: 0; transform: scale(0.5); }
+  42% { opacity: 1; transform: scale(1.04); }
+  58% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g10-ch-craze { animation: g10-ch-craze calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.25, 1) both; }
+
+/* --- 21. Cold Reception — the door with no fire --------------------------- */
+
+@keyframes g10-cr-swing {
+  0% { opacity: 0; transform: rotateY(0deg) scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1.04); }
+  56% { transform: scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g10-cr-swing { animation: g10-cr-swing calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The wedge of light thrown across the sill, then taken back. */
+@keyframes g10-cr-wedge {
+  0% { opacity: 0; transform: scaleX(0.06) skewY(0deg); }
+  30% { opacity: 1; transform: scaleX(1) skewY(-6deg); }
+  62% { opacity: 0.7; transform: scaleX(0.66) skewY(-6deg); }
+  100% { opacity: 0; transform: scaleX(0.14) skewY(-6deg); }
+}
+.g10-cr-wedge { animation: g10-cr-wedge calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-cr-cool {
+  0% { opacity: 0; transform: scaleX(0.2) skewY(-6deg); }
+  44% { opacity: 0.85; transform: scaleX(0.8) skewY(-6deg); }
+  100% { opacity: 0; transform: scaleX(0.2) skewY(-6deg); }
+}
+.g10-cr-cool { animation: g10-cr-cool calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+
+@keyframes g10-cr-pawn {
+  0% { opacity: 0; transform: translateX(40%) scale(0.86); }
+  42% { opacity: 1; transform: translateX(0) scale(1); }
+  64% { transform: translateX(-4%); }
+  86% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g10-cr-pawn { animation: g10-cr-pawn calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-cr-spill {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(-30%); }
+  40% { opacity: 1; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1.3) translateY(24%); }
+}
+.g10-cr-spill { animation: g10-cr-spill calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 22. Frost Heave — the ground exhales once ---------------------------- */
+
+@keyframes g10-fh-crack {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  38% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.08); }
+}
+.g10-fh-crack { animation: g10-fh-crack calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.25, 1) both; }
+
+@keyframes g10-fh-lift {
+  0% { opacity: 0; transform: rotate(0deg) translateY(10%); }
+  40% { opacity: 1; transform: rotate(-9deg) translateY(-8%); }
+  58% { transform: rotate(-7deg) translateY(-6%); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-7deg) translateY(-6%); }
+}
+.g10-fh-lift { animation: g10-fh-lift calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* One puff out of the crack, and then the ground has none left. */
+@keyframes g10-fh-puff {
+  0% { opacity: 0; transform: scale(0.2, 0.3); }
+  28% { opacity: 1; transform: scale(1.1, 1.05); }
+  62% { opacity: 0.55; transform: scale(1.3, 0.8) translateY(-22%); }
+  100% { opacity: 0; transform: scale(1.4, 0.4) translateY(-40%); }
+}
+.g10-fh-puff { animation: g10-fh-puff calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-fh-needle {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  44% { opacity: 1; transform: scaleY(1.06); }
+  60% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g10-fh-needle { animation: g10-fh-needle calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 23. Grasping Ivy — the glasshouse stove dies ------------------------- */
+
+@keyframes g10-gi-pipe {
+  0% { opacity: 0; transform: translateY(20%) scale(0.86); }
+  32% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g10-gi-pipe { animation: g10-gi-pipe calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-gi-king {
+  0% { opacity: 0; transform: scale(0.84); }
+  38% { opacity: 1; transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-gi-king { animation: g10-gi-king calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* Loose vine, then rigid vine: it stops mid-reach. */
+@keyframes g10-gi-curl {
+  0% { opacity: 0; transform: scaleY(0.1) rotate(-14deg); }
+  36% { opacity: 1; transform: scaleY(1.08) rotate(6deg); }
+  52% { transform: scaleY(1) rotate(-3deg); }
+  66% { transform: rotate(1deg); }
+  86% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g10-gi-curl { animation: g10-gi-curl calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g10-gi-silver {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.08); }
+}
+.g10-gi-silver { animation: g10-gi-silver calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 24. Haunted Gallery — the dust sheets go stiff ----------------------- */
+
+@keyframes g10-hg-draught {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.2); }
+  36% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(38%) scaleX(1.2); }
+}
+.g10-hg-draught { animation: g10-hg-draught calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* Cloth still behaving like cloth. */
+@keyframes g10-hg-drape {
+  0% { opacity: 0; transform: translateY(20%) skewX(0deg) scale(0.86); }
+  36% { opacity: 1; transform: translateY(0) skewX(4deg) scale(1.02); }
+  56% { transform: skewX(-3deg) scale(1); }
+  74% { transform: skewX(2deg); }
+  90% { opacity: 1; transform: skewX(0deg); }
+  100% { opacity: 0; transform: skewX(0deg); }
+}
+.g10-hg-drape { animation: g10-hg-drape calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+/* And cloth that has stopped. */
+@keyframes g10-hg-stiff {
+  0% { opacity: 0; transform: scaleY(0.9) skewX(5deg); }
+  40% { opacity: 1; transform: scaleY(1.03) skewX(0deg); }
+  56% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g10-hg-stiff { animation: g10-hg-stiff calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.95, 0.2, 1) both; }
+
+/* --- 25. Silk Cocoon — the spindle and the dying glow --------------------- */
+
+@keyframes g10-sc-spin {
+  0% { opacity: 0; transform: rotate(-60deg) scale(0.8); }
+  34% { opacity: 1; transform: rotate(120deg) scale(1.02); }
+  62% { transform: rotate(280deg) scale(1); }
+  86% { opacity: 1; transform: rotate(360deg); }
+  100% { opacity: 0; transform: rotate(392deg); }
+}
+.g10-sc-spin { animation: g10-sc-spin calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+@keyframes g10-sc-piece {
+  0% { opacity: 0; transform: scale(0.82); }
+  38% { opacity: 1; transform: scale(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g10-sc-piece { animation: g10-sc-piece calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-sc-wrap {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(-12deg); }
+  40% { opacity: 1; transform: scaleX(1.06) rotate(4deg); }
+  58% { transform: scaleX(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+}
+.g10-sc-wrap { animation: g10-sc-wrap calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The little heat inside the wrap, thinning to nothing. */
+@keyframes g10-sc-glow {
+  0% { opacity: 0; transform: scale(1.5); }
+  26% { opacity: 1; transform: scale(1.1); }
+  64% { opacity: 0.55; transform: scale(0.66); }
+  100% { opacity: 0; transform: scale(0.2); }
+}
+.g10-sc-glow { animation: g10-sc-glow calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-sc-shell {
+  0% { opacity: 0; transform: scale(1.22); }
+  46% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g10-sc-shell { animation: g10-sc-shell calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 26. Tithe of Blood — the drip that never landed ---------------------- */
+
+@keyframes g10-tb-blade {
+  0% { opacity: 0; transform: translateY(-30%) rotate(-10deg) scale(0.88); }
+  38% { opacity: 1; transform: translateY(0) rotate(3deg) scale(1.02); }
+  54% { transform: rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g10-tb-blade { animation: g10-tb-blade calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g10-tb-steam {
+  0% { opacity: 0; transform: translateY(26%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  60% { opacity: 0.7; transform: translateY(-16%) scale(0.9); }
+  100% { opacity: 0; transform: translateY(-34%) scale(0.6); }
+}
+.g10-tb-steam { animation: g10-tb-steam calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-tb-cut {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  36% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.15); }
+}
+.g10-tb-cut { animation: g10-tb-cut calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+
+/* The drip leaves the tip, gets halfway, and stays there. */
+@keyframes g10-tb-drip {
+  0% { opacity: 0; transform: translateY(-140%) scale(0.6); }
+  30% { opacity: 1; transform: translateY(-40%) scale(1); }
+  50% { transform: translateY(0) scale(1); }
+  60% { transform: translateY(2%) scaleY(1.1); }
+  88% { opacity: 1; transform: translateY(2%) scaleY(1); }
+  100% { opacity: 0; transform: translateY(2%) scaleY(1); }
+}
+.g10-tb-drip { animation: g10-tb-drip calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.25, 1) both; }
+
+/* --- 27. Undertow — the wet trail goes white ------------------------------ */
+
+@keyframes g10-ut-pull {
+  0% { opacity: 0; transform: translateX(34%) scaleX(0.7); }
+  34% { opacity: 1; transform: translateX(0) scaleX(1); }
+  76% { opacity: 0.8; transform: translateX(calc(var(--fx-side, 1) * 22%)); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-side, 1) * 40%)); }
+}
+.g10-ut-pull { animation: g10-ut-pull calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+@keyframes g10-ut-wet {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  36% { opacity: 1; transform: scaleX(1); }
+  76% { opacity: 0.6; }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g10-ut-wet { animation: g10-ut-wet calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g10-ut-steam {
+  0% { opacity: 0; transform: translateY(20%) scaleY(0.4); }
+  32% { opacity: 1; transform: translateY(0) scaleY(1); }
+  64% { opacity: 0.6; transform: translateY(-12%) scaleY(0.6); }
+  100% { opacity: 0; transform: translateY(-24%) scaleY(0.16); }
+}
+.g10-ut-steam { animation: g10-ut-steam calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+@keyframes g10-ut-white {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  46% { opacity: 1; transform: scaleX(1.04); }
+  62% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g10-ut-white { animation: g10-ut-white calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 28. Ghost Ship — the cold lantern at the mast ------------------------ */
+
+@keyframes g10-gs-sail {
+  0% { opacity: 0; transform: translateX(-80%) scale(0.86); }
+  32% { opacity: 1; transform: translateX(-8%) scale(1.02); }
+  52% { transform: translateX(0) scale(1); }
+  70% { transform: translateY(-2%) rotate(1.5deg); }
+  88% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(16%); }
+}
+.g10-gs-sail { animation: g10-gs-sail calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+/* The mast lamp: never bright, never quite out. */
+@keyframes g10-gs-lamp {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; transform: scale(1.2); }
+  52% { opacity: 0.55; transform: scale(0.86); }
+  74% { opacity: 0.9; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(0.4); }
+}
+.g10-gs-lamp { animation: g10-gs-lamp calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.6, 0.4, 1) both; }
+
+/* Fog off the stack that falls instead of rising. */
+@keyframes g10-gs-fog {
+  0% { opacity: 0; transform: translateY(-24%) scaleX(0.4); }
+  34% { opacity: 1; transform: translateY(0) scaleX(1); }
+  100% { opacity: 0; transform: translateY(52%) scaleX(1.4); }
+}
+.g10-gs-fog { animation: g10-gs-fog calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g10-gs-wake {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  42% { opacity: 1; transform: scaleX(1); }
+  86% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g10-gs-wake { animation: g10-gs-wake calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 29. Winter Palace (overhaul) — the light withdraws up the stairs ----- */
+
+@keyframes g10-ow-stair {
+  0% { opacity: 0; transform: translateY(20%) scale(0.86); }
+  38% { opacity: 1; transform: translateY(0) scale(1.02); }
+  54% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g10-ow-stair { animation: g10-ow-stair calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The warm rectangle shortening and climbing away from the treads. */
+@keyframes g10-ow-light {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(0); }
+  30% { opacity: 1; transform: scaleX(1) translateY(0); }
+  66% { opacity: 0.7; transform: scaleX(0.56) translateY(-16%); }
+  100% { opacity: 0; transform: scaleX(0.12) translateY(-34%); }
+}
+.g10-ow-light { animation: g10-ow-light calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+@keyframes g10-ow-rime {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  44% { opacity: 1; transform: scaleX(1.06); }
+  60% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g10-ow-rime { animation: g10-ow-rime calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g10-ow-guard {
+  0% { opacity: 0; transform: translateY(24%) scale(0.84); }
+  42% { opacity: 1; transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+}
+.g10-ow-guard { animation: g10-ow-guard calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- Global kill switch ----------------------------------------------------
+   Settings animations-off parks every g10 play outright. */
+html[data-anim="off"] [class^="g10-"], html[data-anim="off"] [class*=" g10-"] { animation: none !important; opacity: 0 !important; }

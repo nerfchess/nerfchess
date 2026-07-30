@@ -1,0 +1,1079 @@
+/* ============================================================================
+   g08CrowdPlays.css — motion for the 27 pawn plays in
+   src/components/effects/g08CrowdPlays.tsx.
+
+   MODULE FICTION: THE CROWD TURNS. Every track in this file is some part of a
+   mass of people changing its mind, and the thing that matters about all of
+   them is ORDER: the change starts somewhere and arrives everywhere else late.
+
+   House discipline, same as g20RampartPlays.css / g26ShieldPlays.css:
+   - keyframes animate ONLY transform and opacity (a static filter is fine,
+     animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (caller stagger + beat + place in the rank) land
+     cleanly;
+   - every duration rides --fx-dur (Settings animation speed);
+   - every track ENDS at opacity 0: a play never leaves paint on the board;
+   - border-radius is only ever 0 / 1px / 2px / 50% / 999px (house rule,
+     scripts/check-rounded.ts) and is only ever set inline;
+   - class + keyframe prefix `g08-`, so nothing can collide with another module.
+
+   GEOMETRY-DRIVEN TRACKS. The per-square cuts all carry --fx-index into their
+   inline delay (see `dseq` in the module), so a hit lands later the further
+   along the real victim order it is. On top of that these keyframes read the
+   geometry directly:
+
+     --fx-side   every arrival, recoil, kneel, flush, thrown cap and drifting
+                 settle moves relative to the CASTER's own side of the screen.
+     --fx-index  the later a square is in the victim order the further the
+                 crowd's lean, flinch, tilt and fold carry it: a wave passing
+                 through people, not a row of identical pops.
+     --fx-n      the crest, the lane and the take-up are scaled by how much of
+                 the line the play actually touches.
+     --fx-ox     dust and pooled shadow throw away from the board centre.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. Shared vocabulary: tells
+   ------------------------------------------------------------------------ */
+
+/* A shadow pooling under a crowd that is about to do something, thrown away
+   from the middle of the board. */
+@keyframes g08-tell {
+  0% { opacity: 0; transform: scale(0.4, 0.6); }
+  50% { opacity: 0.85; transform: scale(1, 1) translateX(calc(var(--fx-ox, 0) * 0.6%)); }
+  100% { opacity: 0; transform: scale(1.1, 1) translateX(calc(var(--fx-ox, 0) * 0.9%)); }
+}
+.g08-tell { animation: g08-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* A hairline of attention drawn along the stretch of line the play touches,
+   arriving from the caster's own side. */
+@keyframes g08-tellrun {
+  0% { opacity: 0; transform: scaleX(0.05) translateY(calc(var(--fx-side, 1) * 34%)); }
+  44% { opacity: 1; transform: scaleX(1) translateY(0); }
+  78% { opacity: 0.8; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1) translateY(0); }
+}
+.g08-tellrun { animation: g08-tellrun calc(0.36s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 0 50%; }
+
+/* ---------------------------------------------------------------------------
+   2. Shared vocabulary: board-scale atmosphere (always inside <BoardFrame>)
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-wash {
+  0% { opacity: 0; }
+  26% { opacity: 1; }
+  66% { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+.g08-wash { animation: g08-wash calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   3. Shared vocabulary: settles
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-dust {
+  0% { opacity: 0; transform: scale(0.5, 0.35); }
+  40% { opacity: 0.85; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.24, 1.1); }
+}
+.g08-dust { animation: g08-dust calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+
+/* Motes hanging in the air and sliding away from the middle of the board. */
+@keyframes g08-motes {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  38% { opacity: 0.8; transform: translate(calc(var(--fx-ox, 0) * 1.4%), calc(var(--fx-oy, 0) * 1%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.4%), calc(var(--fx-oy, 0) * 1.8%)) scale(1.2); }
+}
+.g08-motes { animation: g08-motes calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* What the crowd kicked loose, blowing off the caster's own side. */
+@keyframes g08-drift {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 16%)) scaleX(0.5); }
+  36% { opacity: 0.85; transform: translateY(0) scaleX(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -32%)) scaleX(1.18); }
+}
+.g08-drift { animation: g08-drift calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g08-ripple {
+  0% { opacity: 0; transform: scale(0.24); }
+  30% { opacity: 0.9; transform: scale(0.62); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.g08-ripple { animation: g08-ripple calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   4. Shared vocabulary: the per-square cuts.
+
+   Each of these is a different way for ONE person to change their mind, and
+   each carries --fx-index so the change arrives later the further down the
+   real victim order the square is.
+   ------------------------------------------------------------------------ */
+
+/* The ground mark under the hit, pushed from the caster's side. */
+@keyframes g08-hitmark {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(calc(var(--fx-side, 1) * 40%)); }
+  44% { opacity: 1; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1.1) translateY(0); }
+}
+.g08-hitmark { animation: g08-hitmark calc(0.42s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* A body turning round: squashed through the turn, over-rotating further the
+   later in the order it happens. */
+@keyframes g08-hitturn {
+  0% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+  26% { opacity: 1; transform: scaleX(0.18) rotate(calc(var(--fx-index, 0) * 1.5deg)); }
+  62% { opacity: 1; transform: scaleX(-1) rotate(calc(var(--fx-index, 0) * -1.5deg)); }
+  100% { opacity: 0; transform: scaleX(-1) rotate(0deg); }
+}
+.g08-hitturn { animation: g08-hitturn calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 70%; }
+
+/* Someone stepping in from the caster's own side. */
+@keyframes g08-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 62%)) scaleY(0.8); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1.06); }
+  62% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -12%)) scaleY(1); }
+}
+.g08-hitside { animation: g08-hitside calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* A crest passing through one body: it leans further the later it is reached. */
+@keyframes g08-hitwave {
+  0% { opacity: 0; transform: translateX(-24%) skewX(0deg); }
+  36% { opacity: 1; transform: translateX(0) skewX(calc(var(--fx-index, 0) * -1.4deg - 6deg)); }
+  74% { opacity: 1; transform: translateX(16%) skewX(0deg); }
+  100% { opacity: 0; transform: translateX(30%) skewX(0deg); }
+}
+.g08-hitwave { animation: g08-hitwave calc(0.58s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-hitpop {
+  0% { opacity: 0; transform: scale(0.35, 0.7); }
+  38% { opacity: 1; transform: scale(1.08, 1.04); }
+  60% { transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.06, 1); }
+}
+.g08-hitpop { animation: g08-hitpop calc(0.56s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Going down: knees, tools, heads. Drops toward the caster's own side. */
+@keyframes g08-hitdrop {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -46%)) scaleY(1); }
+  44% { opacity: 1; transform: translateY(0) scaleY(0.9); }
+  64% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g08-hitdrop { animation: g08-hitdrop calc(0.58s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.25, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-hitspin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  40% { opacity: 1; transform: rotate(calc(90deg + var(--fx-index, 0) * 8deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(184deg + var(--fx-index, 0) * 8deg)) scale(1); }
+}
+.g08-hitspin { animation: g08-hitspin calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.25, 1) both; transform-origin: 50% 50%; }
+
+/* Rocking onto the heels: forward, then a change of mind backward. */
+@keyframes g08-hitrock {
+  0% { opacity: 0; transform: rotate(0deg); }
+  30% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * -9deg)); }
+  66% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * 13deg)); }
+  86% { transform: rotate(calc(var(--fx-side, 1) * 4deg)); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g08-hitrock { animation: g08-hitrock calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Pressed apart, wider the later in the order it happens. */
+@keyframes g08-hitpart {
+  0% { opacity: 0; transform: scaleX(0.24); }
+  40% { opacity: 1; transform: scaleX(1); }
+  76% { opacity: 1; transform: scaleX(calc(1.1 + var(--fx-index, 0) * 0.03)); }
+  100% { opacity: 0; transform: scaleX(calc(1.16 + var(--fx-index, 0) * 0.03)); }
+}
+.g08-hitpart { animation: g08-hitpart calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+@keyframes g08-hitbow {
+  0% { opacity: 0; transform: rotate(0deg) translateY(calc(var(--fx-side, 1) * -18%)); }
+  42% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * -14deg)) translateY(0); }
+  72% { transform: rotate(calc(var(--fx-side, 1) * -6deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(0deg) translateY(0); }
+}
+.g08-hitbow { animation: g08-hitbow calc(0.64s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Sound going flat. */
+@keyframes g08-hitflat {
+  0% { opacity: 0; transform: scaleY(0.3); }
+  28% { opacity: 1; transform: scaleY(1.1); }
+  58% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.06); }
+}
+.g08-hitflat { animation: g08-hitflat calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 50% 100%; }
+
+/* One clap, snapping onto the beat. */
+@keyframes g08-hitclap {
+  0% { opacity: 0; transform: scale(0.5) rotate(calc(var(--fx-index, 0) * -3deg)); }
+  30% { opacity: 1; transform: scale(1.12) rotate(0deg); }
+  52% { transform: scale(0.94) rotate(0deg); }
+  74% { transform: scale(1.04) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.g08-hitclap { animation: g08-hitclap calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Folding away from the caster: the rout's per-square cut. */
+@keyframes g08-hitfold {
+  0% { opacity: 0; transform: rotate(0deg) translateY(0); }
+  30% { opacity: 1; transform: rotate(calc(var(--fx-index, 0) * -2deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * 64deg)) translateY(calc(var(--fx-side, 1) * -22%)); }
+}
+.g08-hitfold { animation: g08-hitfold calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Leaning into a rope, harder the later in the order. */
+@keyframes g08-hitlean {
+  0% { opacity: 0; transform: rotate(0deg) scaleX(0.8); }
+  40% { opacity: 1; transform: rotate(calc(-10deg - var(--fx-index, 0) * 1.4deg)) scaleX(1); }
+  74% { opacity: 1; transform: rotate(calc(-16deg - var(--fx-index, 0) * 1.4deg)) scaleX(1); }
+  100% { opacity: 0; transform: rotate(-12deg) scaleX(1); }
+}
+.g08-hitlean { animation: g08-hitlean calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* A head tipping back to look at something absurd. */
+@keyframes g08-hittilt {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  40% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * 26deg)) scale(1); }
+  76% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * 32deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * 20deg)) scale(1); }
+}
+.g08-hittilt { animation: g08-hittilt calc(0.64s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* A flinch: a hard recoil away from the caster, then a sheepish recovery. */
+@keyframes g08-hitflinch {
+  0% { opacity: 0; transform: translateY(0) scale(1, 1); }
+  22% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -18%)) scale(0.86, 1.14); }
+  50% { transform: translateY(0) scale(1.08, 0.9); }
+  76% { transform: translateY(0) scale(1, 1); }
+  100% { opacity: 0; transform: translateY(0) scale(1, 1); }
+}
+.g08-hitflinch { animation: g08-hitflinch calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Palms going out under something being passed along. */
+@keyframes g08-hitpalm {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 44%)) scaleY(0.5); }
+  38% { opacity: 1; transform: translateY(0) scaleY(1.1); }
+  60% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 20%)) scaleY(0.9); }
+}
+.g08-hitpalm { animation: g08-hitpalm calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   5. Shared vocabulary: the entrance cut (card arriving in a hand)
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-ent {
+  0% { opacity: 0; transform: translateY(16%) scale(0.62) rotate(-6deg); }
+  46% { opacity: 1; transform: translateY(0) scale(1.06) rotate(0deg); }
+  68% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.g08-ent { animation: g08-ent calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-ent2 {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g08-ent2 { animation: g08-ent2 calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes g08-ent3 {
+  0% { opacity: 0; transform: scale(0.4) rotate(8deg); }
+  44% { opacity: 1; transform: scale(1.04) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.1) rotate(0deg); }
+}
+.g08-ent3 { animation: g08-ent3 calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   6. Card 1 — Fetch the Flour: word down the line
+   ------------------------------------------------------------------------ */
+
+/* Each man turns to the one behind him and shouts it on. */
+@keyframes g08-flour-relay {
+  0% { opacity: 0; transform: scaleX(1) translateY(10%); }
+  30% { opacity: 1; transform: scaleX(1) translateY(0); }
+  56% { transform: scaleX(-1) translateY(-6%); }
+  100% { opacity: 0; transform: scaleX(-1) translateY(0); }
+}
+.g08-flour-relay { animation: g08-flour-relay calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The word itself, hopping the lane one puff at a time. */
+@keyframes g08-flour-word {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  50% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) translateX(6%); }
+}
+.g08-flour-word { animation: g08-flour-word calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes g08-flour-burst {
+  0% { opacity: 0; transform: scale(0.16); }
+  34% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g08-flour-burst { animation: g08-flour-burst calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   7. Card 2 — Fresh Footprints: the look back
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-look-print {
+  0% { opacity: 0; transform: scale(0.4); }
+  36% { opacity: 1; transform: scale(1); }
+  72% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g08-look-print { animation: g08-look-print calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* Every head snaps round to look at what is behind them. */
+@keyframes g08-look-head {
+  0% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+  24% { opacity: 1; transform: scaleX(0.2) rotate(0deg); }
+  52% { transform: scaleX(-1) rotate(calc(var(--fx-side, 1) * -8deg)); }
+  100% { opacity: 0; transform: scaleX(-1) rotate(0deg); }
+}
+.g08-look-head { animation: g08-look-head calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.2, 1) both; transform-origin: 50% 80%; }
+
+@keyframes g08-look-line {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  46% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g08-look-line { animation: g08-look-line calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   8. Card 3 — Gallery Row: the ovation
+   ------------------------------------------------------------------------ */
+
+/* A tip-up seat flipping shut as its occupant stands. */
+@keyframes g08-gal-seat {
+  0% { opacity: 0; transform: scaleY(1) rotate(0deg); }
+  34% { opacity: 1; transform: scaleY(1) rotate(0deg); }
+  62% { transform: scaleY(0.28) rotate(calc(var(--fx-side, 1) * 6deg)); }
+  100% { opacity: 0; transform: scaleY(0.24) rotate(0deg); }
+}
+.g08-gal-seat { animation: g08-gal-seat calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-gal-stand {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 46%)) scaleY(0.7); }
+  44% { opacity: 1; transform: translateY(0) scaleY(1.06); }
+  66% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -8%)) scaleY(1); }
+}
+.g08-gal-stand { animation: g08-gal-stand calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-gal-clap {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(0.6); }
+  32% { opacity: 1; transform: scaleX(1) scaleY(1.15); }
+  56% { transform: scaleX(1) scaleY(0.85); }
+  78% { transform: scaleX(1) scaleY(1.05); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g08-gal-clap { animation: g08-gal-clap calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   9. Card 4 — Goat Track: the dust front
+   ------------------------------------------------------------------------ */
+
+/* The wall of dust arrives before the herd does, and it travels the REAL
+   length of the run. */
+@keyframes g08-goat-front {
+  0% { opacity: 0; transform: translateX(-30%) scale(0.4, 0.5); }
+  26% { opacity: 1; transform: translateX(0) scale(0.9, 1); }
+  78% { opacity: 0.9; transform: translateX(calc(var(--fx-len, 3) * 84%)) scale(1.25, 1.15); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 100%)) scale(1.4, 1.2); }
+}
+.g08-goat-front { animation: g08-goat-front calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.7, 0.3, 1) both; }
+
+@keyframes g08-goat-bolt {
+  0% { opacity: 0; transform: translateX(-40%) scaleY(0.9); }
+  34% { opacity: 1; transform: translateX(0) scaleY(1.06); }
+  70% { transform: translateX(calc(var(--fx-len, 3) * 22%)) scaleY(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 40%)) scaleY(1); }
+}
+.g08-goat-bolt { animation: g08-goat-bolt calc(0.76s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-goat-stone {
+  0% { opacity: 0; transform: translateY(0) scaleX(0.3); }
+  36% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -14%)) scaleX(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -34%)) scaleX(1.1); }
+}
+.g08-goat-stone { animation: g08-goat-stone calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 0 50%; }
+
+/* ---------------------------------------------------------------------------
+   10. Card 5 — Harbor Pilot: arms linked
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-link-fig {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 30%)) scale(0.8); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g08-link-fig { animation: g08-link-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Elbow hooks elbow: the link snaps shut from both ends at once. */
+@keyframes g08-link-arm {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.5); }
+  38% { opacity: 1; transform: scaleX(1.08) scaleY(1.1); }
+  58% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g08-link-arm { animation: g08-link-arm calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 50%; }
+
+@keyframes g08-link-lamp {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) rotate(-10deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  66% { transform: translateY(0) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g08-link-lamp { animation: g08-link-lamp calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 0; }
+
+/* ---------------------------------------------------------------------------
+   11. Card 6 — Lighthouse Walk: the lamps come on
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-lamp-fig {
+  0% { opacity: 0; transform: scaleY(0.86); }
+  40% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g08-lamp-fig { animation: g08-lamp-fig calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* One flame lit from the one before it. */
+@keyframes g08-lamp-flame {
+  0% { opacity: 0; transform: scale(0.1, 0.3); }
+  30% { opacity: 1; transform: scale(1.16, 1.2); }
+  52% { transform: scale(0.94, 1); }
+  76% { transform: scale(1.04, 1.06); }
+  100% { opacity: 0; transform: scale(1, 1); }
+}
+.g08-lamp-flame { animation: g08-lamp-flame calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The beam swings out from wherever on the board the walk actually is. */
+@keyframes g08-lamp-beam {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(calc(var(--fx-ox, 0) * -1.4deg)); }
+  40% { opacity: 0.95; transform: scaleX(1) rotate(calc(var(--fx-ox, 0) * -0.6deg)); }
+  100% { opacity: 0; transform: scaleX(1.1) rotate(calc(var(--fx-ox, 0) * 0.8deg)); }
+}
+.g08-lamp-beam { animation: g08-lamp-beam calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   12. Card 7 — Harborside Rider: the gap closes
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-gap-fig {
+  0% { opacity: 0; transform: translateX(-26%) scaleY(0.9); }
+  44% { opacity: 1; transform: translateX(0) scaleY(1); }
+  100% { opacity: 0; transform: translateX(0) scaleY(1); }
+}
+.g08-gap-fig { animation: g08-gap-fig calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The opening between two shoulders, snapping shut. */
+@keyframes g08-gap-shut {
+  0% { opacity: 0; transform: scaleX(1); }
+  26% { opacity: 1; transform: scaleX(1); }
+  70% { opacity: 1; transform: scaleX(0.06); }
+  100% { opacity: 0; transform: scaleX(0.04); }
+}
+.g08-gap-shut { animation: g08-gap-shut calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 50% 50%; }
+
+@keyframes g08-gap-bar {
+  0% { opacity: 0; transform: scaleX(0.06) translateY(calc(var(--fx-side, 1) * 30%)); }
+  46% { opacity: 1; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1) translateY(0); }
+}
+.g08-gap-bar { animation: g08-gap-bar calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   13. Card 8 — Homesick Private: the ranks break
+   ------------------------------------------------------------------------ */
+
+/* The cap goes into the air away from the caster's own side and does not come
+   back into frame. */
+@keyframes g08-break-cap {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.7); }
+  30% { opacity: 1; transform: translate(-18%, calc(var(--fx-side, 1) * -80%)) rotate(-60deg) scale(1); }
+  100% { opacity: 0; transform: translate(-40%, calc(var(--fx-side, 1) * -190%)) rotate(-170deg) scale(1); }
+}
+.g08-break-cap { animation: g08-break-cap calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.7, 0.4, 1) both; }
+
+/* Each man peels out of the line, further out the longer he waited. */
+@keyframes g08-break-rank {
+  0% { opacity: 0; transform: translateX(0) rotate(0deg); }
+  28% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(26%) rotate(calc(var(--fx-side, 1) * 22deg)) translateY(calc(var(--fx-side, 1) * 26%)); }
+}
+.g08-break-rank { animation: g08-break-rank calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-break-line {
+  0% { opacity: 0; transform: scaleX(1); }
+  30% { opacity: 1; transform: scaleX(1); }
+  62% { opacity: 1; transform: scaleX(0.44) skewX(-14deg); }
+  100% { opacity: 0; transform: scaleX(0.2) skewX(-24deg); }
+}
+.g08-break-line { animation: g08-break-line calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 0 50%; }
+
+/* ---------------------------------------------------------------------------
+   14. Card 9 — Homing Pigeon: the flock lifts
+   ------------------------------------------------------------------------ */
+
+/* Birds flush away from the caster's own side, section by section. */
+@keyframes g08-flock-bird {
+  0% { opacity: 0; transform: translateY(0) scale(0.7, 0.5); }
+  30% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -30%)) scale(1, 1.1); }
+  62% { transform: translateY(calc(var(--fx-side, 1) * -80%)) scale(1, 0.8); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -150%)) scale(0.9, 1); }
+}
+.g08-flock-bird { animation: g08-flock-bird calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.75, 0.35, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-flock-wheel {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(0deg); }
+  44% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  78% { opacity: 0.85; transform: scaleX(1) rotate(calc(var(--fx-side, 1) * -5deg)); }
+  100% { opacity: 0; transform: scaleX(1.06) rotate(calc(var(--fx-side, 1) * -8deg)); }
+}
+.g08-flock-wheel { animation: g08-flock-wheel calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes g08-flock-feather {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -60%)) rotate(20deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(-14deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 40%)) rotate(16deg); }
+}
+.g08-flock-feather { animation: g08-flock-feather calc(0.92s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* ---------------------------------------------------------------------------
+   15. Card 10 — Parade Route: the wave
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-wave-fig {
+  0% { opacity: 0; transform: scaleY(0.8); }
+  36% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g08-wave-fig { animation: g08-wave-fig calc(0.86s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* Arms into the air, on the caster's side of the line, one after another. */
+@keyframes g08-wave-arm {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 70%)) scaleY(0.4); }
+  36% { opacity: 1; transform: translateY(0) scaleY(1.12); }
+  58% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 40%)) scaleY(0.7); }
+}
+.g08-wave-arm { animation: g08-wave-arm calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The crest, as wide as the play actually reaches. */
+@keyframes g08-wave-crest {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(0.4); }
+  44% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  80% { opacity: 0.8; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.7); }
+}
+.g08-wave-crest { animation: g08-wave-crest calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 0 100%; }
+
+/* ---------------------------------------------------------------------------
+   16. Card 11 — Piggyback: the queue becomes a scrum
+   ------------------------------------------------------------------------ */
+
+/* The neat line loses its shape and packs inward. */
+@keyframes g08-scrum-fig {
+  0% { opacity: 0; transform: translateX(26%) scaleY(1); }
+  34% { opacity: 1; transform: translateX(0) scaleY(1); }
+  74% { transform: translateX(-16%) scaleY(0.9) rotate(6deg); }
+  100% { opacity: 0; transform: translateX(-22%) scaleY(0.86) rotate(9deg); }
+}
+.g08-scrum-fig { animation: g08-scrum-fig calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-scrum-heap {
+  0% { opacity: 0; transform: scale(0.3, 0.4); }
+  40% { opacity: 0.95; transform: scale(1.06, 1.1); }
+  66% { transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.14, 0.9); }
+}
+.g08-scrum-heap { animation: g08-scrum-heap calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* One man squeezed clean over the top, out along the real leg. */
+@keyframes g08-scrum-pop {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(-10deg); }
+  34% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 16%), -50%) scale(1) rotate(6deg); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 42%), -14%) scale(1) rotate(22deg); }
+}
+.g08-scrum-pop { animation: g08-scrum-pop calc(0.84s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.75, 0.35, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   17. Card 12 — Pilgrim Road: the wave of kneeling
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-kneel-road {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  40% { opacity: 0.95; transform: scaleX(1); }
+  84% { opacity: 0.7; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g08-kneel-road { animation: g08-kneel-road calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes g08-kneel-staff {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(0.8); }
+  38% { opacity: 1; transform: rotate(-16deg) scaleY(1); }
+  74% { transform: rotate(-24deg) scaleY(1); }
+  100% { opacity: 0; transform: rotate(-20deg) scaleY(1); }
+}
+.g08-kneel-staff { animation: g08-kneel-staff calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The knee comes down toward the caster's own side of the road. */
+@keyframes g08-kneel-fig {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -40%)) scaleY(1.1); }
+  44% { opacity: 1; transform: translateY(0) scaleY(0.92); }
+  66% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g08-kneel-fig { animation: g08-kneel-fig calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.9, 0.25, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   18. Card 13 — Regroup at Camp: the tools go down
+   ------------------------------------------------------------------------ */
+
+/* A tool swung, then laid flat on the ground and left there. */
+@keyframes g08-tool-drop {
+  0% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * -26deg)); }
+  30% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * -14deg)); }
+  70% { opacity: 1; transform: rotate(84deg) translateY(6%); }
+  100% { opacity: 0; transform: rotate(90deg) translateY(8%); }
+}
+.g08-tool-drop { animation: g08-tool-drop calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.25, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-tool-fig {
+  0% { opacity: 0; transform: scaleY(0.88) scaleX(0.94); }
+  40% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  76% { transform: scaleY(0.97) scaleX(1.05); }
+  100% { opacity: 0; transform: scaleY(0.97) scaleX(1.05); }
+}
+.g08-tool-fig { animation: g08-tool-fig calc(0.84s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+@keyframes g08-tool-arm {
+  0% { opacity: 0; transform: scaleX(0.08); }
+  46% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g08-tool-arm { animation: g08-tool-arm calc(0.76s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   19. Card 14 — Revolving Door: the turnstile
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-rev-drum {
+  0% { opacity: 0; transform: scale(0.7); }
+  36% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.g08-rev-drum { animation: g08-rev-drum calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* A quarter-turn per body, four bodies, and a coast to a stop. */
+@keyframes g08-rev-vane {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  22% { opacity: 1; transform: rotate(0deg) scale(1); }
+  40% { transform: rotate(90deg) scale(1); }
+  58% { transform: rotate(180deg) scale(1); }
+  76% { transform: rotate(270deg) scale(1); }
+  92% { opacity: 1; transform: rotate(356deg) scale(1); }
+  100% { opacity: 0; transform: rotate(360deg) scale(1); }
+}
+.g08-rev-vane { animation: g08-rev-vane calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.2, 1) both; transform-origin: 50% 50%; }
+
+/* The queue is carried round with it, arriving from the caster's own side. */
+@keyframes g08-rev-fig {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 60%)) rotate(0deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(calc(var(--fx-side, 1) * 8deg)); }
+  72% { transform: translateY(calc(var(--fx-side, 1) * -20%)) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -46%)) rotate(0deg); }
+}
+.g08-rev-fig { animation: g08-rev-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   20. Card 15 — Run for Eggs: the scramble
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-scr-fig {
+  0% { opacity: 0; transform: translateX(-20%) scaleX(1); }
+  26% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 34%)) scaleX(1.1) skewX(-8deg); }
+}
+.g08-scr-fig { animation: g08-scr-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-scr-streak {
+  0% { opacity: 0; transform: scaleX(0.04) translateX(-6%); }
+  40% { opacity: 1; transform: scaleX(1) translateX(0); }
+  100% { opacity: 0; transform: scaleX(1) translateX(14%); }
+}
+.g08-scr-streak { animation: g08-scr-streak calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes g08-scr-egg {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -40%)) scale(0.6) rotate(-14deg); }
+  38% { opacity: 1; transform: translateY(0) scale(1) rotate(6deg); }
+  62% { transform: translateY(calc(var(--fx-side, 1) * -14%)) scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: translateY(0) scale(1.06) rotate(10deg); }
+}
+.g08-scr-egg { animation: g08-scr-egg calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   21. Card 16 — Salt from the Coast: backs to the spray
+   ------------------------------------------------------------------------ */
+
+/* The sheet comes over from the caster's own side of the wall. */
+@keyframes g08-salt-spray {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 60%)) scaleY(0.3); }
+  34% { opacity: 1; transform: translateY(0) scaleY(1.1); }
+  68% { opacity: 0.9; transform: translateY(calc(var(--fx-side, 1) * -22%)) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -44%)) scaleY(0.9); }
+}
+.g08-salt-spray { animation: g08-salt-spray calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* A back turned to it, one shoulder at a time. */
+@keyframes g08-salt-turn {
+  0% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+  28% { opacity: 1; transform: scaleX(0.24) rotate(0deg); }
+  58% { transform: scaleX(-1) rotate(calc(var(--fx-side, 1) * 7deg)); }
+  100% { opacity: 0; transform: scaleX(-1) rotate(0deg); }
+}
+.g08-salt-turn { animation: g08-salt-turn calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.25, 1) both; transform-origin: 50% 90%; }
+
+@keyframes g08-salt-crust {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  44% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.1); }
+}
+.g08-salt-crust { animation: g08-salt-crust calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   22. Card 17 — Second Thoughts: the line rocks back
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-2nd-mark {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 30%)) scale(0.4); }
+  46% { opacity: 1; transform: translateY(0) scale(1.06); }
+  70% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -20%)) scale(1); }
+}
+.g08-2nd-mark { animation: g08-2nd-mark calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Leaning into the advance, then thinking better of it. */
+@keyframes g08-2nd-fig {
+  0% { opacity: 0; transform: rotate(0deg); }
+  24% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * -12deg)); }
+  60% { transform: rotate(calc(var(--fx-side, 1) * 15deg)); }
+  84% { transform: rotate(calc(var(--fx-side, 1) * 5deg)); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g08-2nd-fig { animation: g08-2nd-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-2nd-track {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.9; transform: scale(1); }
+  76% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.g08-2nd-track { animation: g08-2nd-track calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   23. Card 18 — Servants' Entrance: the crowd parts
+   ------------------------------------------------------------------------ */
+
+/* Two halves of the same press, going opposite ways on the same count. */
+@keyframes g08-part-a {
+  0% { opacity: 0; transform: translateY(50%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-34%) scale(1); }
+}
+.g08-part-a { animation: g08-part-a calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+@keyframes g08-part-b {
+  0% { opacity: 0; transform: translateY(-50%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(34%) scale(1); }
+}
+.g08-part-b { animation: g08-part-b calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* The clean lane between them, as long as the play actually reaches. */
+@keyframes g08-part-lane {
+  0% { opacity: 0; transform: scaleX(0.05) scaleY(0.2); }
+  44% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  80% { opacity: 0.8; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1.2); }
+}
+.g08-part-lane { animation: g08-part-lane calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   24. Card 19 — Sidestep and Bow: the wave of bows
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-bow-hat {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  34% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -34%)) rotate(-28deg); }
+  70% { transform: translateY(calc(var(--fx-side, 1) * -10%)) rotate(-58deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 20%)) rotate(-74deg); }
+}
+.g08-bow-hat { animation: g08-bow-hat calc(0.76s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-bow-fig {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(1); }
+  40% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * -16deg)) scaleY(0.96); }
+  72% { transform: rotate(calc(var(--fx-side, 1) * -7deg)) scaleY(1); }
+  100% { opacity: 0; transform: rotate(0deg) scaleY(1); }
+}
+.g08-bow-fig { animation: g08-bow-fig calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-bow-plume {
+  0% { opacity: 0; transform: rotate(12deg) scale(0.7); }
+  38% { opacity: 1; transform: rotate(-34deg) scale(1); }
+  72% { transform: rotate(-58deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-46deg) scale(1); }
+}
+.g08-bow-plume { animation: g08-bow-plume calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   25. Card 20 — Smugglers' Lane: the hush
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-hush-fin {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 26%)) scale(0.6); }
+  50% { opacity: 1; transform: translateY(0) scale(1.04); }
+  76% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g08-hush-fin { animation: g08-hush-fin calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* The noise of one square, flattened. */
+@keyframes g08-hush-bar {
+  0% { opacity: 0; transform: scaleY(0.4); }
+  22% { opacity: 1; transform: scaleY(1.1); }
+  46% { opacity: 1; transform: scaleY(0.86); }
+  100% { opacity: 0; transform: scaleY(0.05); }
+}
+.g08-hush-bar { animation: g08-hush-bar calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.2, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-hush-shut {
+  0% { opacity: 0; transform: scaleY(0.06) translateY(calc(var(--fx-side, 1) * -30%)); }
+  46% { opacity: 1; transform: scaleY(1) translateY(0); }
+  100% { opacity: 0; transform: scaleY(1) translateY(0); }
+}
+.g08-hush-shut { animation: g08-hush-shut calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.2, 1) both; transform-origin: 50% 0; }
+
+@keyframes g08-hush-lane {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  44% { opacity: 0.95; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g08-hush-lane { animation: g08-hush-lane calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 0 50%; }
+
+/* ---------------------------------------------------------------------------
+   26. Card 21 — Soup's On: the bell and the turn
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-bell-body {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
+  26% { opacity: 1; transform: rotate(-28deg) scale(1); }
+  48% { transform: rotate(24deg) scale(1); }
+  68% { transform: rotate(-14deg) scale(1); }
+  86% { transform: rotate(7deg) scale(1); }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g08-bell-body { animation: g08-bell-body calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 0; }
+
+@keyframes g08-bell-ring {
+  0% { opacity: 0; transform: scale(0.2); }
+  32% { opacity: 0.95; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g08-bell-ring { animation: g08-bell-ring calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+/* Every body in the yard pivots to face it. */
+@keyframes g08-bell-turn {
+  0% { opacity: 0; transform: scaleX(-1) rotate(0deg); }
+  26% { opacity: 1; transform: scaleX(-0.2) rotate(0deg); }
+  56% { transform: scaleX(1) rotate(calc(var(--fx-side, 1) * -6deg)); }
+  78% { transform: scaleX(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+}
+.g08-bell-turn { animation: g08-bell-turn calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.25, 1) both; transform-origin: 50% 90%; }
+
+/* ---------------------------------------------------------------------------
+   27. Card 22 — Spice Run: the chant finds its beat
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-chant-mouth {
+  0% { opacity: 0; transform: scale(0.3, 0.5); }
+  30% { opacity: 1; transform: scale(1, 1.2); }
+  56% { transform: scale(0.8, 0.7); }
+  80% { transform: scale(1, 1.1); }
+  100% { opacity: 0; transform: scale(0.9, 1); }
+}
+.g08-chant-mouth { animation: g08-chant-mouth calc(0.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+
+/* Ragged, then on the beat: the last shudder lines them all up. */
+@keyframes g08-chant-hand {
+  0% { opacity: 0; transform: scale(0.6) rotate(-12deg); }
+  26% { opacity: 1; transform: scale(1.14) rotate(6deg); }
+  46% { transform: scale(0.9) rotate(-4deg); }
+  66% { transform: scale(1.1) rotate(2deg); }
+  86% { transform: scale(0.96) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.06) rotate(0deg); }
+}
+.g08-chant-hand { animation: g08-chant-hand calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-chant-beat {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.5); }
+  30% { opacity: 1; transform: scaleX(1) scaleY(1.2); }
+  52% { transform: scaleX(1) scaleY(0.8); }
+  74% { transform: scaleX(1) scaleY(1.15); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g08-chant-beat { animation: g08-chant-beat calc(0.84s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 50%; }
+
+/* ---------------------------------------------------------------------------
+   28. Card 23 — Tactical Withdrawal: the rout
+   ------------------------------------------------------------------------ */
+
+/* Each man folds away from the caster's own side, and stays folded. */
+@keyframes g08-rout-fig {
+  0% { opacity: 0; transform: rotate(0deg) translateY(0); }
+  22% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  62% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * 42deg)) translateY(calc(var(--fx-side, 1) * -14%)); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * 74deg)) translateY(calc(var(--fx-side, 1) * -30%)); }
+}
+.g08-rout-fig { animation: g08-rout-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-rout-banner {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  30% { opacity: 1; transform: rotate(-6deg) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * 88deg)) translateY(calc(var(--fx-side, 1) * -24%)) scale(1); }
+}
+.g08-rout-banner { animation: g08-rout-banner calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.3, 1) both; transform-origin: 20% 100%; }
+
+@keyframes g08-rout-gap {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  46% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+.g08-rout-gap { animation: g08-rout-gap calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   29. Card 24 — Towpath: the rope takes up
+   ------------------------------------------------------------------------ */
+
+/* Slack to taut along the real length of the haul. */
+@keyframes g08-tow-rope {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(1.4); }
+  36% { opacity: 1; transform: scaleX(1) scaleY(1.3); }
+  74% { opacity: 1; transform: scaleX(1) scaleY(0.24); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.2); }
+}
+.g08-tow-rope { animation: g08-tow-rope calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both; transform-origin: 0 0; }
+
+@keyframes g08-tow-fig {
+  0% { opacity: 0; transform: rotate(0deg) translateX(0); }
+  36% { opacity: 1; transform: rotate(-14deg) translateX(-4%); }
+  74% { transform: rotate(-22deg) translateX(-9%); }
+  100% { opacity: 0; transform: rotate(-18deg) translateX(-12%); }
+}
+.g08-tow-fig { animation: g08-tow-fig calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-tow-boat {
+  0% { opacity: 0; transform: translateX(-8%) rotate(-3deg); }
+  40% { opacity: 1; transform: translateX(0) rotate(1deg); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 9%)) rotate(0deg); }
+}
+.g08-tow-boat { animation: g08-tow-boat calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   30. Card 25 — Growth Spurt: the crowd looks
+   ------------------------------------------------------------------------ */
+
+@keyframes g08-huge-fig {
+  0% { opacity: 0; transform: scale(0.16) translateY(calc(var(--fx-side, 1) * 30%)); }
+  34% { opacity: 1; transform: scale(1.1) translateY(0); }
+  54% { transform: scale(0.96) translateY(0); }
+  74% { transform: scale(1.03) translateY(0); }
+  100% { opacity: 0; transform: scale(1) translateY(0); }
+}
+.g08-huge-fig { animation: g08-huge-fig calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Heads tipping back toward whichever side the caster is on. */
+@keyframes g08-huge-head {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  40% { opacity: 1; transform: rotate(calc(var(--fx-side, 1) * 30deg)) scale(1); }
+  78% { transform: rotate(calc(var(--fx-side, 1) * 38deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-side, 1) * 24deg)) scale(1); }
+}
+.g08-huge-head { animation: g08-huge-head calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g08-huge-jaw {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  40% { opacity: 1; transform: scaleY(1.15); }
+  70% { transform: scaleY(0.95); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g08-huge-jaw { animation: g08-huge-jaw calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 0; }
+
+/* ---------------------------------------------------------------------------
+   31. Card 26 — Pebble Toss: the flinch runs
+   ------------------------------------------------------------------------ */
+
+/* The stone travels the real distance of the toss and drops short. */
+@keyframes g08-peb-stone {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(0deg); }
+  22% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 22%), -70%) scale(1) rotate(120deg); }
+  62% { transform: translate(calc(var(--fx-len, 3) * 66%), -90%) scale(1) rotate(300deg); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 20%) scale(1) rotate(420deg); }
+}
+.g08-peb-stone { animation: g08-peb-stone calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.2, 0.5, 1) both; }
+
+/* And the flinch runs the rank faster than the stone ever did. */
+@keyframes g08-peb-flinch {
+  0% { opacity: 0; transform: translateY(0) scale(1, 1); }
+  20% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -20%)) scale(0.84, 1.16); }
+  48% { transform: translateY(0) scale(1.1, 0.88); }
+  76% { transform: translateY(0) scale(1, 1); }
+  100% { opacity: 0; transform: translateY(0) scale(1, 1); }
+}
+.g08-peb-flinch { animation: g08-peb-flinch calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   32. Card 27 — Tiny Trebuchet: passed on palms
+   ------------------------------------------------------------------------ */
+
+/* Hands out, in order, making a road of palms. */
+@keyframes g08-palm-hand {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 50%)) scaleY(0.4); }
+  34% { opacity: 1; transform: translateY(0) scaleY(1.12); }
+  58% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 30%)) scaleY(0.8); }
+}
+.g08-palm-hand { animation: g08-palm-hand calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* One body carried the real length of the run along the top of them. */
+@keyframes g08-palm-body {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-8deg) scale(0.8); }
+  26% { opacity: 1; transform: translate(0, -14%) rotate(0deg) scale(1); }
+  76% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 74%), -34%) rotate(12deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), -70%) rotate(26deg) scale(1); }
+}
+.g08-palm-body { animation: g08-palm-body calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.55, 0.3, 1) both; }
+
+@keyframes g08-palm-toss {
+  0% { opacity: 0; transform: scale(0.14); }
+  36% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+.g08-palm-toss { animation: g08-palm-toss calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   Animations off: the host already fades and hides the scene wrapper, but a
+   local guard keeps the module honest if it is ever mounted on its own (the
+   dev galleries do exactly that).
+   ------------------------------------------------------------------------ */
+html[data-anim="off"] [class^="g08-"],
+html[data-anim="off"] [class*=" g08-"] {
+  animation: none !important;
+  opacity: 0 !important;
+}

@@ -9,7 +9,7 @@
 // crackling, an icicle snapping with the stump left clear, a frozen rope going
 // like a glass rod, a lens fogging then starring, a bell cracking on its own
 // note. Stasis is shown as the crack ARRIVING and then holding still, which is
-// what a freeze is: the thing is intact and unusable at the same time.
+// exactly what a freeze is: the thing intact and unusable at the same time.
 //
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g11BrittlePlays.css), transform/opacity animations only, no imports from
@@ -19,8 +19,8 @@
 // the square the card was played on. Board-scale layers (the cold wash, the
 // edge frost) live inside <BoardFrame>, never at a fixed percentage of the
 // stage. Cards whose fiction runs along a line — dew beads on a wire, a
-// glazier's score, jam smeared down a rank, a horseshoe mid gallop — use
-// <AimStage> and author their art pointing RIGHT.
+// glazier's score, jam smeared down a rank, a horseshoe caught mid gallop —
+// use <AimStage> and author their art pointing RIGHT.
 //
 // Every scene runs three beats — tell, strike, settle — in all three roles
 // ("lead", "target", "entrance"): a hairline or a ring or a bead of tension
@@ -160,17 +160,19 @@ const PAWN = "M12 4.4a2.7 2.7 0 0 1 1.6 4.9l1.8 6.4H8.6l1.8-6.4A2.7 2.7 0 0 1 12
 const KING = "M11.1 2.4h1.8v1.5h1.5v1.8h-1.5v1.6h-1.8V5.7H9.6V3.9h1.5zM8 9.2h8l-1.1 7.4H9.1zM7.2 17.6h9.6V20H7.2z";
 const KNIGHT = "M8.2 19V13c0-3.8 2.5-5.9 4.6-6.5L12 4.2l3 1.2c2 .9 2.9 2.9 2.9 5.9V19z";
 const ROOK = "M7 4.8h2.3v1.6h1.6V4.8h2.2v1.6h1.6V4.8H17v3.6h-1.2v6.8H17V19H7v-3.8h1.2V8.4H7z";
+const BISHOP = "M12 3.2c2.6 3 4.4 6.2 4.4 9.6V17H7.6v-4.2C7.6 9.4 9.4 6.2 12 3.2zM7 18.4h10V20.8H7z";
 
-/* A hairline that grows out of a point. Reused, but every card scores it into
-   a different surface at a different angle, which is the whole card. */
+/* A hairline and a three-way fork. Reused, but every card scores them into a
+   different surface at a different angle, which is the whole card. */
 const HAIRLINE = "M1 12h22";
 const FORK = "M1 12h9l5-4M10 12l5 4M15 8h7M15 16h6";
+const STAR5 = "M12 12L4 5M12 12l8-6M12 12l-7 8M12 12l7 7M12 12l-8 2";
 
 /* =============================================================================
    1. Cold Snap (t4) — THE WINE GLASS RINGING ITSELF APART
-   A wet fingertip rides the rim, the note climbs until the bowl cannot hold
-   it, and the glass bursts into a ring of shards that hang where they stop.
-   Palette: #a8dced / #fff3dd / #10222e.
+   A wet fingertip rides the rim, the note climbs until the bowl cannot hold it
+   any more, and the glass bursts into a ring of shards that stop where they
+   stop. Palette: #a8dced / #fff3dd / #10222e.
    ========================================================================== */
 const CS_BOWL = "M6.4 2.6h11.2l-1.1 6.6a4.8 4.8 0 0 1-9 0zM12 13.6v6M8.6 19.8h6.8";
 
@@ -181,14 +183,13 @@ function ColdSnapScene({ role, delayMs }: SceneProps) {
       <path d="M7.6 6.2h8.8" stroke="#fff3dd" strokeWidth="0.9" />
     </g>
   );
+  const shard = <path d="M12 2l4 7-4 5-4-5z" fill="#a8dced" />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-ent-rise" l={26} t={12} w={48} h={70} d={40}>{goblet}</V>
         <L c="g11-cs-tone" l={16} t={16} w={68} h={68} d={240} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
-        <V c="g11-ent-pop" l={54} t={22} w={26} h={26} d={430}>
-          <path d="M12 3l6 8-4 9-7-6z" fill="#a8dced" />
-        </V>
+        <V c="g11-ent-pop" l={54} t={22} w={26} h={26} d={430}>{shard}</V>
       </Cut>
     );
   }
@@ -197,7 +198,7 @@ function ColdSnapScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g11-hitside" l={28} t={10} w={44} h={72} d={0}>{goblet}</V>
         <L c="g11-hit2" l={22} t={22} w={56} h={56} d={130} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
-        <V c="g11-hit" l={38} t={34} w={24} h={24} d={250}><path d="M12 3l6 8-4 9-7-6z" fill="#a8dced" /></V>
+        <V c="g11-hit" l={38} t={34} w={24} h={24} d={250}>{shard}</V>
       </Cut>
     );
   }
@@ -211,13 +212,13 @@ function ColdSnapScene({ role, delayMs }: SceneProps) {
         </>
       }
     >
-      <V c="g11-cs-sing" l={43} t={36} w={14} h={24} d={200}>{goblet}</V>
       <L c="g11-cs-wet" l={45.4} t={37} w={2.2} h={2.2} d={90} st={{ borderRadius: "50%", background: "#fff3dd" }} />
+      <V c="g11-cs-sing" l={43} t={36} w={14} h={24} d={200}>{goblet}</V>
       <L c="g11-cs-tone" l={40} t={33} w={20} h={20} d={380} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
       <L c="g11-cs-tone" l={37} t={30} w={26} h={26} d={470} st={{ borderRadius: "50%", border: "1px solid #a8dced" }} />
       {[0, 1, 2, 3].map((i) => (
         <P key={i} l={44} t={35} w={12} h={12} rot={`${i * 90 + 24}deg`}>
-          <V c="g11-shard" w={100} h={100} d={560 + i * 60}><path d="M12 2l4 7-4 5-4-5z" fill="#a8dced" /></V>
+          <V c="g11-shard" w={100} h={100} d={560 + i * 60}>{shard}</V>
         </P>
       ))}
       <L c="g11-lean" l={43} t={56} w={14} h={3} d={620} st={{ borderRadius: "999px", background: "rgba(16,34,46,0.7)" }} />
@@ -231,8 +232,8 @@ function ColdSnapScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    2. Bounty Posted (t4) — THE TALLY PLATE AND THE CRACK THAT JUMPS
    A coin is driven into an etched glass tally plate; the plate stars around
-   the strike, and the crack LEAPS the gap to a second plate, which is what a
-   bounty does. Palette: #e8c07a / #fff4d6 / #2c2011.
+   the strike, and then the crack LEAPS the gap to the next plate along, which
+   is what a posted bounty does. Palette: #e8c07a / #fff4d6 / #2c2011.
    ========================================================================== */
 function BountyPostedScene({ role, delayMs }: SceneProps) {
   const plate = (
@@ -242,14 +243,13 @@ function BountyPostedScene({ role, delayMs }: SceneProps) {
     </g>
   );
   const coin = <circle cx="12" cy="12" r="6.4" fill="#e8c07a" stroke="#2c2011" strokeWidth="1.4" />;
+  const star = <path d={STAR5} stroke="#fff4d6" strokeWidth="1.4" fill="none" {...SJ} />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-ent-drop" l={12} t={16} w={54} h={60} d={40}>{plate}</V>
         <V c="g11-bp-coin" l={48} t={26} w={30} h={30} d={240}>{coin}</V>
-        <V c="g11-ent-pop" l={30} t={30} w={44} h={44} d={430}>
-          <path d="M12 12L4 5M12 12l8-6M12 12l-7 8M12 12l7 7" stroke="#fff4d6" strokeWidth="1.5" fill="none" {...SJ} />
-        </V>
+        <V c="g11-ent-pop" l={30} t={30} w={44} h={44} d={430}>{star}</V>
       </Cut>
     );
   }
@@ -258,9 +258,7 @@ function BountyPostedScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g11-hitside" l={14} t={16} w={56} h={56} d={0}>{plate}</V>
         <V c="g11-hit" l={44} t={34} w={30} h={30} d={130}>{coin}</V>
-        <V c="g11-hit2" l={24} t={24} w={52} h={52} d={250}>
-          <path d="M12 12L5 6M12 12l7-5M12 12l-6 7M12 12l6 6" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
-        </V>
+        <V c="g11-hit2" l={24} t={24} w={52} h={52} d={250}>{star}</V>
       </Cut>
     );
   }
@@ -268,9 +266,7 @@ function BountyPostedScene({ role, delayMs }: SceneProps) {
     <Lead d={delayMs} frame={<Wash tone="rgba(232,192,122,0.26)" />}>
       <V c="g11-bp-plate" l={36} t={38} w={16} h={16} d={90}>{plate}</V>
       <V c="g11-bp-coin" l={40.5} t={41} w={7} h={7} d={240}>{coin}</V>
-      <V c="g11-bp-star" l={35} t={37} w={18} h={18} d={400}>
-        <path d="M12 12L4 5M12 12l8-6M12 12l-7 8M12 12l7 7M12 12l-8 2" stroke="#fff4d6" strokeWidth="1.3" fill="none" {...SJ} />
-      </V>
+      <V c="g11-bp-star" l={35} t={37} w={18} h={18} d={400}>{star}</V>
       <L c="g11-runout" l={51} t={45.4} w={12} h={1.6} d={520} st={{ transformOrigin: "0% 50%", background: "linear-gradient(90deg, #fff4d6, rgba(232,192,122,0))" }} />
       <V c="g11-bp-jump" l={57} t={40} w={11} h={11} d={640}>{plate}</V>
       <L c="g11-lean" l={38} t={54} w={16} h={3} d={680} st={{ borderRadius: "999px", background: "rgba(44,32,17,0.66)" }} />
@@ -283,9 +279,9 @@ function BountyPostedScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    3. Caught Mid Stride (t4) — THE WINDSCREEN CRAZING FROM ONE CHIP
-   A stone pit appears, sits there for a moment doing nothing, then the craze
-   runs out in three forks and stops dead mid-run. Aim-staged: the chip lands
-   from the direction of the play. Palette: #b9c8de / #fff3dc / #141c28.
+   A stone pit appears and does nothing at all for a moment, then the craze
+   runs out in forks and stops dead halfway. Aim-staged: the chip arrives from
+   the direction of the play. Palette: #b9c8de / #fff3dc / #141c28.
    ========================================================================== */
 function CaughtMidStrideScene({ role, delayMs }: SceneProps) {
   const pit = (
@@ -329,9 +325,9 @@ function CaughtMidStrideScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   4. Creaking Gallows (t4) — THE FROZEN ROPE THAT SNAPS LIKE A ROD
-   The rope hangs stiff and glassy, creaks twice through a small swing, and on
-   the third it does not stretch: it snaps clean, both ends ringing.
+   4. Creaking Gallows (t4) — THE FROZEN ROPE GOES LIKE A GLASS ROD
+   The rope hangs stiff and glassy and creaks through a small swing twice; on
+   the third it does not stretch, it snaps, and both ends ring.
    Palette: #cfd6c2 / #fff3d8 / #241f14.
    ========================================================================== */
 function CreakingGallowsScene({ role, delayMs }: SceneProps) {
@@ -342,12 +338,13 @@ function CreakingGallowsScene({ role, delayMs }: SceneProps) {
       <path d="M9.4 5.4h5.2M9.4 9h5.2" stroke="#fff3d8" strokeWidth="0.9" />
     </g>
   );
+  const stub = <path d="M12 2l5 9-5 11-5-11z" fill="#cfd6c2" />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-cg-creak" l={30} t={6} w={40} h={80} d={40} st={{ transformOrigin: "50% 0%" }}>{rope}</V>
-        <L c="g11-cg-hair" l={26} t={44} w={48} h={2} d={240} st={{ background: "#fff3d8" }} />
-        <V c="g11-ent-pop" l={20} t={56} w={26} h={26} d={430}><path d="M12 2l5 9-5 11-5-11z" fill="#cfd6c2" /></V>
+        <L c="g11-cg-hair" l={26} t={44} w={48} h={2} d={240} st={{ background: "#fff3d8", transformOrigin: "0% 50%" }} />
+        <V c="g11-ent-pop" l={20} t={56} w={26} h={26} d={430}>{stub}</V>
       </Cut>
     );
   }
@@ -355,8 +352,8 @@ function CreakingGallowsScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g11-hitside" l={30} t={4} w={40} h={80} d={0}>{rope}</V>
-        <L c="g11-hit2" l={22} t={46} w={56} h={2.4} d={130} st={{ background: "#fff3d8" }} />
-        <V c="g11-hit" l={36} t={52} w={28} h={28} d={250}><path d="M12 2l5 9-5 11-5-11z" fill="#cfd6c2" /></V>
+        <L c="g11-hit2" l={22} t={46} w={56} h={2.4} d={130} st={{ background: "#fff3d8", transformOrigin: "0% 50%" }} />
+        <V c="g11-hit" l={36} t={52} w={28} h={28} d={250}>{stub}</V>
       </Cut>
     );
   }
@@ -374,7 +371,7 @@ function CreakingGallowsScene({ role, delayMs }: SceneProps) {
         <path d="M1 3h38" stroke="#cfd6c2" strokeWidth="3" {...SJ} />
       </V>
       <V c="g11-cg-creak" l={44} t={33} w={12} h={22} d={210} st={{ transformOrigin: "50% 0%" }}>{rope}</V>
-      <L c="g11-cg-hair" l={45} t={42.6} w={10} h={1.2} d={400} st={{ background: "#fff3d8" }} />
+      <L c="g11-cg-hair" l={45} t={42.6} w={10} h={1.2} d={400} st={{ background: "#fff3d8", transformOrigin: "0% 50%" }} />
       <V c="g11-cg-snap" l={44} t={43} w={12} h={13} d={540}>
         <path d="M12 1v9M12 12.4a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" fill="none" stroke="#cfd6c2" strokeWidth="1.5" {...SJ} />
       </V>
@@ -388,9 +385,9 @@ function CreakingGallowsScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    5. Pawnbroker's Lien (t4) — THE DISPLAY CASE LATCHES OVER THE COLLATERAL
-   A pawnshop case drops around the pawn, the latch throws, a brass ticket
-   swings on its wire, and the front pane goes to crackled opal so the piece is
-   visible and gone. Palette: #d8b98a / #fff4d6 / #2a1e10.
+   A pawnshop case drops around the pawn, the latch throws, a ticket swings on
+   its wire, and the front pane goes to crackled opal, so the piece is visible
+   and gone at once. Palette: #d8b98a / #fff4d6 / #2a1e10.
    ========================================================================== */
 function PawnbrokersLienScene({ role, delayMs }: SceneProps) {
   const glassCase = (
@@ -442,10 +439,10 @@ function PawnbrokersLienScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   6. Sagging Shelves (t4) — THE GLASS SHELF THAT BOWS, THEN STARS
-   A long glass shelf with two officers still on it sags under its own weight,
-   a hairline runs the whole length, and it stars at the middle without ever
-   coming down. Palette: #96d8c4 / #fff3da / #10302a.
+   6. Sagging Shelves (t4) — THE GLASS SHELF BOWS, THEN STARS
+   A long glass shelf with two officers still standing on it sags under its own
+   weight, a hairline walks the whole length, and it stars at the middle
+   without ever coming down. Palette: #96d8c4 / #fff3da / #10302a.
    ========================================================================== */
 function SaggingShelvesScene({ role, delayMs }: SceneProps) {
   const shelf = (
@@ -454,6 +451,7 @@ function SaggingShelvesScene({ role, delayMs }: SceneProps) {
       <path d="M4 7v3M36 7v3" stroke="#96d8c4" strokeWidth="1" />
     </g>
   );
+  const star = <path d="M12 12L4 6M12 12l8-5M12 12l-6 8M12 12l7 7" stroke="#fff3da" strokeWidth="1.5" fill="none" {...SJ} />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
@@ -468,9 +466,7 @@ function SaggingShelvesScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g11-hitside" l={22} t={12} w={40} h={52} d={0}><path d={KNIGHT} fill="#96d8c4" /></V>
         <L c="g11-hit2" l={8} t={62} w={84} h={3} d={130} st={{ background: "#fff3da" }} />
-        <V c="g11-hit" l={38} t={54} w={26} h={26} d={250}>
-          <path d="M12 12L5 6M12 12l7-4M12 12l-5 7" stroke="#fff3da" strokeWidth="1.6" fill="none" {...SJ} />
-        </V>
+        <V c="g11-hit" l={38} t={54} w={26} h={26} d={250}>{star}</V>
       </Cut>
     );
   }
@@ -478,13 +474,9 @@ function SaggingShelvesScene({ role, delayMs }: SceneProps) {
     <Lead d={delayMs} frame={<Wash tone="rgba(150,216,196,0.26)" />}>
       <V c="g11-ss-bow" l={32} t={46} w={36} h={9} d={90} par="none" vb="0 0 40 12">{shelf}</V>
       <V c="g11-ss-load" l={38} t={38} w={8} h={10} d={230}><path d={KNIGHT} fill="none" stroke="#fff3da" strokeWidth="1.4" {...SJ} /></V>
-      <V c="g11-ss-load" l={53} t={38} w={8} h={10} d={330}>
-        <path d="M12 3.2c2.6 3 4.4 6.2 4.4 9.6V20H7.6v-7.2C7.6 9.4 9.4 6.2 12 3.2z" fill="none" stroke="#fff3da" strokeWidth="1.4" {...SJ} />
-      </V>
+      <V c="g11-ss-load" l={53} t={38} w={8} h={10} d={330}><path d={BISHOP} fill="none" stroke="#fff3da" strokeWidth="1.4" {...SJ} /></V>
       <L c="g11-ss-hair" l={33} t={49.4} w={34} h={1.2} d={470} st={{ background: "#fff3da", transformOrigin: "0% 50%" }} />
-      <V c="g11-ss-star" l={44} t={44} w={13} h={13} d={620}>
-        <path d="M12 12L4 6M12 12l8-5M12 12l-6 8M12 12l7 7" stroke="#fff3da" strokeWidth="1.4" fill="none" {...SJ} />
-      </V>
+      <V c="g11-ss-star" l={44} t={44} w={13} h={13} d={620}>{star}</V>
       <L c="g11-lean" l={40} t={57} w={20} h={3} d={680} st={{ borderRadius: "999px", background: "rgba(16,48,42,0.7)" }} />
       {[0, 1, 2].map((i) => (
         <L key={i} c="g11-dust" l={44 + i * 6} t={53} w={1.4} h={1.4} d={740 + i * 90} st={{ borderRadius: "50%", background: "#96d8c4" }} />
@@ -495,9 +487,9 @@ function SaggingShelvesScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    7. Second Frost (t4) — THE GEODE SPLIT OPEN
-   A dull grey ball takes a chisel, the halves part, and a SECOND generation of
-   crystal blooms inside the first: the cold doubling down where it already
-   was. Palette: #b9a8e4 / #fff2e2 / #1e1832.
+   A dull grey ball takes the chisel, the halves part, and a SECOND generation
+   of crystal blooms inside the first: the cold doubling down exactly where it
+   already was. Palette: #b9a8e4 / #fff2e2 / #1e1832.
    ========================================================================== */
 function SecondFrostScene({ role, delayMs }: SceneProps) {
   const half = (flip: boolean) => (
@@ -558,7 +550,7 @@ function SecondFrostScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    8. Glass of Water (t3) — THE TUMBLER RIGHTED, THE CRACK RETREATING
    The one card here where the brittle thing UN-breaks: a crack retreats back
-   down the tumbler, the water line climbs, and a single bubble goes up and
+   down the tumbler, the water line climbs after it, and one bubble goes up and
    lets go. Palette: #a6dbe8 / #fff3dd / #123038.
    ========================================================================== */
 function GlassOfWaterScene({ role, delayMs }: SceneProps) {
@@ -603,8 +595,8 @@ function GlassOfWaterScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    9. Kettle On (t3) — THE FROSTED PADLOCK SHATTERS OFF ITS CHAIN
-   Everything held at once lets go: a padlock gone white with frost takes one
-   knock, its shackle parts, and the chain it was holding drops link by link.
+   Everything being held lets go at once: a padlock gone white with frost takes
+   one knock, its shackle parts like sugar, and the chain drops link by link.
    Palette: #cfe4ee / #fff4d6 / #16262e.
    ========================================================================== */
 function KettleOnScene({ role, delayMs }: SceneProps) {
@@ -667,7 +659,7 @@ function KettleOnScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    10. Puddle Freeze (t3) — THE MIRROR'S SILVER CRACKLING
    A hand mirror; the silvering behind the glass blooms black crackle from two
-   points, two hairlines run to meet, and the reflection locks half a beat
+   points, two hairlines run out to meet, and the reflection locks half a beat
    after the face does. Palette: #b7c6e0 / #fff2de / #171b2a.
    ========================================================================== */
 function PuddleFreezeScene({ role, delayMs }: SceneProps) {
@@ -678,14 +670,13 @@ function PuddleFreezeScene({ role, delayMs }: SceneProps) {
       <path d="M8.6 6.4c1.4-1.6 3-2.4 4.8-2.4" fill="none" stroke="#fff2de" strokeWidth="1" />
     </g>
   );
+  const hair = <path d={HAIRLINE} stroke="#fff2de" strokeWidth="1.4" fill="none" {...SJ} />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-ent-rise" l={22} t={8} w={56} h={78} d={40}>{mirror}</V>
         <L c="g11-pf-tarnish" l={34} t={20} w={20} h={20} d={240} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(23,27,42,0.9), transparent 70%)" }} />
-        <V c="g11-pf-hair" l={26} t={22} w={48} h={34} d={430}>
-          <path d={HAIRLINE} stroke="#fff2de" strokeWidth="1.3" fill="none" {...SJ} />
-        </V>
+        <V c="g11-pf-hair" l={26} t={22} w={48} h={34} d={430}>{hair}</V>
       </Cut>
     );
   }
@@ -694,7 +685,7 @@ function PuddleFreezeScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g11-hitside" l={24} t={8} w={52} h={76} d={0}>{mirror}</V>
         <L c="g11-hit2" l={34} t={18} w={26} h={26} d={130} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(23,27,42,0.9), transparent 68%)" }} />
-        <V c="g11-hit" l={22} t={22} w={56} h={30} d={250}><path d={HAIRLINE} stroke="#fff2de" strokeWidth="1.4" fill="none" {...SJ} /></V>
+        <V c="g11-hit" l={22} t={22} w={56} h={30} d={250}>{hair}</V>
       </Cut>
     );
   }
@@ -704,12 +695,8 @@ function PuddleFreezeScene({ role, delayMs }: SceneProps) {
       {[0, 1].map((i) => (
         <L key={i} c="g11-pf-tarnish" l={45 + i * 6} t={39 + i * 3} w={5} h={5} d={230 + i * 120} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(23,27,42,0.92), transparent 70%)" }} />
       ))}
-      <V c="g11-pf-hair" l={43} t={40} w={14} h={6} d={450}>
-        <path d={HAIRLINE} stroke="#fff2de" strokeWidth="1.4" fill="none" {...SJ} />
-      </V>
-      <V c="g11-pf-hair" l={43} t={44} w={14} h={6} d={540} st={{ rotate: "18deg" }}>
-        <path d={HAIRLINE} stroke="#fff2de" strokeWidth="1.2" fill="none" {...SJ} />
-      </V>
+      <V c="g11-pf-hair" l={43} t={40} w={14} h={6} d={450}>{hair}</V>
+      <V c="g11-pf-hair" l={43} t={44} w={14} h={6} d={540} st={{ rotate: "18deg" }}>{hair}</V>
       <L c="g11-tiltin" l={44} t={38} w={12} h={12} d={640} st={{ background: "linear-gradient(120deg, transparent, rgba(255,242,222,0.7), transparent)" }} />
       <L c="g11-lean" l={43} t={58} w={14} h={3} d={690} st={{ borderRadius: "999px", background: "rgba(23,27,42,0.7)" }} />
       {[0, 1, 2].map((i) => (
@@ -721,9 +708,9 @@ function PuddleFreezeScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    11. Carrion Crows (t3) — THE LEADED BIRD-PANE BURSTS INWARD
-   A church window of glass crows takes a strike from OUTSIDE: the lead cames
-   buckle, the birds break loose in one piece each and hang in the air where
-   the flock would be. Palette: #8c9bb0 / #fff3dc / #121722.
+   A window of glass crows takes a strike from OUTSIDE: the lead cames buckle,
+   the birds break loose one whole piece each and hang in the air where the
+   flock would be. Palette: #8c9bb0 / #fff3dc / #121722.
    ========================================================================== */
 const CC_BIRD = "M2 13.6c4.4 1.4 7.6-.8 9.6-5.2 1.2 3.6 4.4 5.2 9.6 4.2-3.2 4.4-8.4 7.2-13.4 6-3.2-.8-5.6-2.4-5.8-5z";
 
@@ -782,8 +769,8 @@ function CarrionCrowsScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    12. Heavy Dew (t3) — THE BEADS ON THE WIRE GO SOLID
-   A wire pulled taut across the forward camp beads with dew, each bead sets to
-   glass in turn along the run, and the wire stops moving. Aim-staged so the
+   A wire pulled taut across the forward camp beads with dew; each bead sets to
+   glass in turn along the run and the wire stops moving. Aim-staged, so the
    run is the play's own leg. Palette: #a9d9d0 / #fff3da / #10302c.
    ========================================================================== */
 function HeavyDewScene({ role, delayMs }: SceneProps) {
@@ -872,7 +859,7 @@ function JamOnTheRowScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    14. The Ides (t3) — THE BELL CRACKS ON ITS OWN NOTE
    The bell swings, tolls, swings again, and on the appointed stroke the crack
-   opens up its lip from the rim and the note dies flat mid-air.
+   opens up its lip from the rim and the note dies flat in the air.
    Palette: #d2b463 / #fff4d6 / #2a2110.
    ========================================================================== */
 function TheIdesScene({ role, delayMs }: SceneProps) {
@@ -882,14 +869,13 @@ function TheIdesScene({ role, delayMs }: SceneProps) {
       <path d="M12 19.4v2.4" stroke="#d2b463" strokeWidth="1.4" />
     </g>
   );
+  const lipCrack = <path d="M12 22V15l-3-4 3-4V2" stroke="#fff4d6" strokeWidth="1.7" fill="none" {...SJ} />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-id-swing" l={24} t={10} w={52} h={64} d={40} st={{ transformOrigin: "50% 0%" }}>{bell}</V>
         <L c="g11-id-toll" l={18} t={22} w={64} h={64} d={240} st={{ borderRadius: "50%", border: "2px solid #fff4d6" }} />
-        <V c="g11-id-crack" l={36} t={36} w={30} h={44} d={470}>
-          <path d="M12 22V15l-3-4 3-4V2" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
-        </V>
+        <V c="g11-id-crack" l={36} t={36} w={30} h={44} d={470}>{lipCrack}</V>
       </Cut>
     );
   }
@@ -898,9 +884,7 @@ function TheIdesScene({ role, delayMs }: SceneProps) {
       <Cut d={delayMs}>
         <V c="g11-hitside" l={26} t={12} w={48} h={62} d={0}>{bell}</V>
         <L c="g11-hit2" l={22} t={24} w={56} h={56} d={130} st={{ borderRadius: "50%", border: "2px solid #fff4d6" }} />
-        <V c="g11-hit" l={38} t={38} w={26} h={40} d={250}>
-          <path d="M12 22V15l-3-4 3-4V2" stroke="#fff4d6" strokeWidth="1.7" fill="none" {...SJ} />
-        </V>
+        <V c="g11-hit" l={38} t={38} w={26} h={40} d={250}>{lipCrack}</V>
       </Cut>
     );
   }
@@ -920,9 +904,7 @@ function TheIdesScene({ role, delayMs }: SceneProps) {
       <V c="g11-id-swing" l={44} t={34} w={12} h={17} d={220} st={{ transformOrigin: "50% 0%" }}>{bell}</V>
       <L c="g11-id-toll" l={40} t={35} w={20} h={20} d={400} st={{ borderRadius: "50%", border: "2px solid #fff4d6" }} />
       <L c="g11-id-toll" l={37} t={32} w={26} h={26} d={480} st={{ borderRadius: "50%", border: "1px solid #d2b463" }} />
-      <V c="g11-id-crack" l={46} t={38} w={8} h={13} d={620}>
-        <path d="M12 22V15l-3-4 3-4V2" stroke="#fff4d6" strokeWidth="1.7" fill="none" {...SJ} />
-      </V>
+      <V c="g11-id-crack" l={46} t={38} w={8} h={13} d={620}>{lipCrack}</V>
       <L c="g11-lean" l={43} t={57} w={14} h={3} d={680} st={{ borderRadius: "999px", background: "rgba(42,33,16,0.7)" }} />
       {[0, 1, 2].map((i) => (
         <L key={i} c="g11-dust" l={44 + i * 6} t={52} w={1.4} h={1.4} d={740 + i * 90} st={{ borderRadius: "50%", background: "#d2b463" }} />
@@ -934,7 +916,7 @@ function TheIdesScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    15. Winded Destrier (t3) — THE GLASS HORSESHOE FLOODS WITH WEB
    The shoe strikes the boards mid gallop, rings once, and the web crack floods
-   it heel to heel before the stride finishes. Aim-staged along the charge.
+   it heel to heel before the stride can finish. Aim-staged along the charge.
    Palette: #9fb6cc / #fff3dc / #16202c.
    ========================================================================== */
 function WindedDestrierScene({ role, delayMs }: SceneProps) {
@@ -984,8 +966,9 @@ function WindedDestrierScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    16. Warm Soup (t2) — THE ICICLE SNAPS FREE
-   One hairline crosses the shaft, the icicle lets go and falls away, and the
-   stump left on the beam is clear again. Palette: #b6e0ea / #fff3dd / #123240.
+   One hairline crosses the shaft, the icicle lets go and drops away, and the
+   stump left on the beam is clear glass again.
+   Palette: #b6e0ea / #fff3dd / #123240.
    ========================================================================== */
 function WarmSoupScene({ role, delayMs }: SceneProps) {
   const spike = <path d="M12 1l3.4 6-1.6 15L12 23l-1.8-1-1.6-15z" fill="rgba(182,224,234,0.7)" stroke="#b6e0ea" strokeWidth="1.1" {...SJ} />;
@@ -1028,8 +1011,8 @@ function WarmSoupScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    17. Cold Start (t2) — THE PORCELAIN INSULATOR CRACKS THROUGH ITS SKIRTS
-   Cold and load at once: the ribbed white insulator on its post takes the
-   first pull, and the crack walks straight down through every skirt.
+   Cold and load in the same instant: the ribbed insulator on its post takes
+   the first pull and the crack walks straight down through every skirt.
    Palette: #dfe4ea / #fff4d6 / #1a2028.
    ========================================================================== */
 function ColdStartScene({ role, delayMs }: SceneProps) {
@@ -1079,8 +1062,8 @@ function ColdStartScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    18. Frost Footprints (t2) — THE GLAZIER'S DIAMOND SCORES THE SHEET
    The wheel runs a score across the sheet with that dry singing noise, the
-   glazier taps under it, and the sheet parts along the line: everything past
-   the score is somebody else's problem. Aim-staged along the score.
+   glazier taps underneath, and the sheet parts along the line: everything past
+   the score belongs to nobody. Aim-staged along the score.
    Palette: #c3d4e2 / #fff3dc / #182430.
    ========================================================================== */
 function FrostFootprintsScene({ role, delayMs }: SceneProps) {
@@ -1174,9 +1157,9 @@ function HandCrampScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    20. Pebble in the Shoe (t2) — THE SPALL POPS OUT OF THE PLATE
-   One small flint lands on a glass plate, does nothing, then a shallow cone of
-   glass pops clean out from underneath it and the plate is a plate with a hole
-   in it. Palette: #c8bfa6 / #fff3dc / #2a2618.
+   One small flint lands on a glass plate and does nothing at all, then a
+   shallow cone of glass pops clean out from underneath it and the plate is a
+   plate with a hole in it. Palette: #c8bfa6 / #fff3dc / #2a2618.
    ========================================================================== */
 function PebbleInTheShoeScene({ role, delayMs }: SceneProps) {
   const pebble = <path d="M6 14c-1-4 2-7 6-7s7 3 6 7-4 5-6 5-5-1-6-5z" fill="#c8bfa6" stroke="#2a2618" strokeWidth="1.1" {...SJ} />;
@@ -1217,13 +1200,13 @@ function PebbleInTheShoeScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    21. Court Jester (t1) — THE CHANDELIER'S DROPS CHIME, THEN STILL
    Cut-glass drops on a little frame swing against each other, all bells and
-   nonsense, and then every one of them stops at the same instant mid-bow.
+   nonsense, and then every one of them stops at the same instant, mid bow.
    Palette: #e6c8f0 / #fff2e4 / #241634.
    ========================================================================== */
 const CJ_DROP = "M12 2l4 6-4 14-4-14z";
 
 function CourtJesterScene({ role, delayMs }: SceneProps) {
-  const frame = (
+  const rail = (
     <g fill="none" stroke="#e6c8f0" strokeWidth="1.4" {...SJ}>
       <path d="M12 1v4M3 5h18" />
       <path d="M5 5v3M12 5v3M19 5v3" strokeWidth="1" />
@@ -1232,7 +1215,7 @@ function CourtJesterScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
-        <V c="g11-ent-drop" l={14} t={8} w={72} h={40} d={40}>{frame}</V>
+        <V c="g11-ent-drop" l={14} t={8} w={72} h={40} d={40}>{rail}</V>
         {[0, 1, 2].map((i) => (
           <V key={i} c="g11-cj-chime" l={20 + i * 24} t={38} w={16} h={44} d={240 + i * 110} st={{ transformOrigin: "50% 0%" }}>
             <path d={CJ_DROP} fill="#e6c8f0" />
@@ -1245,7 +1228,7 @@ function CourtJesterScene({ role, delayMs }: SceneProps) {
   if (role === "target") {
     return (
       <Cut d={delayMs}>
-        <V c="g11-hitside" l={24} t={16} w={52} h={30} d={0}>{frame}</V>
+        <V c="g11-hitside" l={24} t={16} w={52} h={30} d={0}>{rail}</V>
         <V c="g11-hit" l={38} t={38} w={24} h={44} d={130}><path d={CJ_DROP} fill="#e6c8f0" /></V>
         <L c="g11-hit2" l={34} t={46} w={32} h={26} d={250} st={{ background: "radial-gradient(circle, rgba(255,242,228,0.7), transparent 70%)" }} />
       </Cut>
@@ -1253,7 +1236,7 @@ function CourtJesterScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(230,200,240,0.26)" />}>
-      <V c="g11-cj-frame" l={41} t={33} w={18} h={9} d={90}>{frame}</V>
+      <V c="g11-cj-rail" l={41} t={33} w={18} h={9} d={90}>{rail}</V>
       {[0, 1, 2, 3].map((i) => (
         <V key={i} c="g11-cj-chime" l={42.5 + i * 4.4} t={39} w={3.6} h={9} d={240 + i * 90} st={{ transformOrigin: "50% 0%" }}>
           <path d={CJ_DROP} fill="#e6c8f0" />
@@ -1272,7 +1255,7 @@ function CourtJesterScene({ role, delayMs }: SceneProps) {
 /* =============================================================================
    22. Dunce Detail (t1) — THE GLASS CONE COMES DOWN
    A tall clear cone drops over the officer, its tip stars against the boards,
-   and one hairline spirals down the outside. Nothing gets out and everyone can
+   and one hairline turns down the outside. Nothing gets out and everybody can
    see in. Palette: #f0c98a / #fff4d6 / #2e2211.
    ========================================================================== */
 function DunceDetailScene({ role, delayMs }: SceneProps) {
@@ -1282,13 +1265,12 @@ function DunceDetailScene({ role, delayMs }: SceneProps) {
       <path d="M9 13.6h6" stroke="#f0c98a" strokeWidth="0.9" />
     </g>
   );
+  const tipStar = <path d="M12 12l-6-5M12 12l7-4M12 12l-4 7" stroke="#fff4d6" strokeWidth="1.7" fill="none" {...SJ} />;
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
         <V c="g11-ent-drop" l={22} t={8} w={56} h={72} d={40}>{cone}</V>
-        <V c="g11-dd-tip" l={40} t={4} w={20} h={20} d={280}>
-          <path d="M12 12l-6-5M12 12l7-4M12 12l-4 7" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
-        </V>
+        <V c="g11-dd-tip" l={40} t={4} w={20} h={20} d={280}>{tipStar}</V>
         <L c="g11-dd-spiral" l={30} t={50} w={40} h={26} d={470} st={{ border: "1px solid #fff4d6" }} />
       </Cut>
     );
@@ -1297,18 +1279,16 @@ function DunceDetailScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g11-hitside" l={24} t={8} w={52} h={70} d={0}>{cone}</V>
-        <V c="g11-hit" l={34} t={40} w={32} h={40} d={130}><path d={KNIGHT} fill="#f0c98a" /></V>
+        <V c="g11-hit" l={34} t={40} w={32} h={40} d={130}><path d={BISHOP} fill="#f0c98a" /></V>
         <L c="g11-hit2" l={28} t={70} w={44} h={5} d={250} st={{ borderRadius: "999px", background: "#fff4d6" }} />
       </Cut>
     );
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(240,201,138,0.26)" />}>
-      <V c="g11-dd-piece" l={45.5} t={44} w={9} h={12} d={90}><path d={KNIGHT} fill="none" stroke="#fff4d6" strokeWidth="1.3" {...SJ} /></V>
+      <V c="g11-dd-piece" l={45.5} t={44} w={9} h={12} d={90}><path d={BISHOP} fill="none" stroke="#fff4d6" strokeWidth="1.3" {...SJ} /></V>
       <V c="g11-dd-cone" l={43} t={36} w={14} h={21} d={240}>{cone}</V>
-      <V c="g11-dd-tip" l={46} t={33} w={8} h={8} d={430}>
-        <path d="M12 12l-6-5M12 12l7-4M12 12l-4 7" stroke="#fff4d6" strokeWidth="1.7" fill="none" {...SJ} />
-      </V>
+      <V c="g11-dd-tip" l={46} t={33} w={8} h={8} d={430}>{tipStar}</V>
       <L c="g11-dd-spiral" l={44} t={44} w={12} h={11} d={560} st={{ border: "1px solid #fff4d6" }} />
       <L c="g11-lean" l={42} t={57} w={16} h={3} d={660} st={{ borderRadius: "999px", background: "rgba(46,34,17,0.68)" }} />
       {[0, 1, 2].map((i) => (
@@ -1320,12 +1300,12 @@ function DunceDetailScene({ role, delayMs }: SceneProps) {
 
 /* =============================================================================
    23. Early Frost (t1) — THE PANE WITH ONE HOLE PUNCHED IN IT
-   A sheet is laid over the furrow with a single clean round hole in it; one
-   pawn goes through, then the hole grows shut with crystal and the sheet is
-   solid. Palette: #a7cfe0 / #fff3dd / #12252f.
+   A sheet is laid over the furrow with a single clean round hole; one pawn
+   goes through, and then the hole grows shut with crystal and the sheet is
+   solid all the way across. Palette: #a7cfe0 / #fff3dd / #12252f.
    ========================================================================== */
 function EarlyFrostScene({ role, delayMs }: SceneProps) {
-  const holed = (
+  const holedPane = (
     <g {...SJ}>
       <rect x="2" y="5" width="20" height="14" fill="rgba(167,207,224,0.28)" stroke="#a7cfe0" strokeWidth="1.2" />
       <circle cx="12" cy="12" r="4.4" fill="rgba(18,37,47,0.85)" stroke="#fff3dd" strokeWidth="1.1" />
@@ -1334,20 +1314,433 @@ function EarlyFrostScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     return (
       <Cut d={delayMs}>
-        <V c="g11-ent-drop" l={8" as unknown as number} t={0} w={0} h={0} d={0} />
+        <V c="g11-ent-drop" l={8} t={22} w={84} h={54} d={40}>{holedPane}</V>
+        <V c="g11-ef-slip" l={38} t={26} w={24} h={44} d={240}><path d={PAWN} fill="#fff3dd" /></V>
+        <L c="g11-ef-seal" l={38} t={38} w={24} h={24} d={470} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(167,207,224,0.9), transparent 72%)" }} />
       </Cut>
     );
   }
-  return null;
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={10} t={24} w={80} h={50} d={0}>{holedPane}</V>
+        <V c="g11-hit" l={38} t={30} w={24} h={40} d={130}><path d={PAWN} fill="#fff3dd" /></V>
+        <L c="g11-hit2" l={38} t={38} w={24} h={24} d={250} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(167,207,224,0.9), transparent 72%)" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead
+      d={delayMs}
+      frame={
+        <>
+          <Wash tone="rgba(167,207,224,0.28)" />
+          <Rim tone="rgba(255,243,221,0.28)" />
+        </>
+      }
+    >
+      <V c="g11-ef-lay" l={39} t={41} w={22} h={14} d={90}>{holedPane}</V>
+      <V c="g11-ef-slip" l={46} t={38} w={8} h={11} d={250}><path d={PAWN} fill="none" stroke="#fff3dd" strokeWidth="1.4" {...SJ} /></V>
+      <L c="g11-sidein" l={44} t={44} w={12} h={2} d={400} st={{ background: "linear-gradient(90deg, transparent, rgba(255,243,221,0.9), transparent)" }} />
+      <L c="g11-ef-seal" l={47} t={45} w={6} h={6} d={540} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(167,207,224,0.92), transparent 72%)" }} />
+      <V c="g11-ef-knit" l={45} t={43} w={10} h={10} d={660}>
+        <path d="M12 3v18M4 8l16 8M20 8L4 16" stroke="#fff3dd" strokeWidth="1.2" fill="none" {...SJ} />
+      </V>
+      <L c="g11-lean" l={42} t={56} w={16} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(18,37,47,0.66)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-mote" l={44 + i * 6} t={51} w={1.3} h={1.3} d={760 + i * 90} st={{ borderRadius: "50%", background: "#a7cfe0" }} />
+      ))}
+    </Lead>
+  );
 }
 
 /* =============================================================================
-   PLAYS
+   24. Mild Sting (t1) — THE WASP UNDER THE UPTURNED TUMBLER
+   A tumbler comes down over the wasp, it does two furious laps of the inside,
+   and where it finally hits the glass a small star blooms and stays.
+   Palette: #edc860 / #fff4d6 / #2c2210.
+   ========================================================================== */
+function MildStingScene({ role, delayMs }: SceneProps) {
+  const dome = (
+    <g fill="none" stroke="#edc860" strokeWidth="1.4" {...SJ}>
+      <path d="M5.4 21V9.4a6.6 6.6 0 0 1 13.2 0V21z" />
+      <path d="M4 21h16" strokeWidth="1.2" />
+    </g>
+  );
+  const wasp = (
+    <g {...SJ}>
+      <ellipse cx="12" cy="13" rx="3.4" ry="5" fill="#edc860" stroke="#2c2210" strokeWidth="1" />
+      <path d="M9 11.4h6M9 14h6" stroke="#2c2210" strokeWidth="1" />
+      <path d="M9.4 8.6L5 5M14.6 8.6L19 5" stroke="#fff4d6" strokeWidth="1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-ent-drop" l={18} t={12} w={64} h={68} d={40}>{dome}</V>
+        <V c="g11-ms-lap" l={34} t={34} w={32} h={40} d={240}>{wasp}</V>
+        <V c="g11-ms-star" l={44} t={26} w={26} h={26} d={470}>
+          <path d="M12 12l-6-4M12 12l6-3M12 12l-3 7M12 12l4 6" stroke="#fff4d6" strokeWidth="1.5" fill="none" {...SJ} />
+        </V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={20} t={14} w={60} h={64} d={0}>{dome}</V>
+        <V c="g11-hit" l={36} t={36} w={28} h={36} d={130}>{wasp}</V>
+        <V c="g11-hit2" l={44} t={26} w={26} h={26} d={250}>
+          <path d="M12 12l-6-4M12 12l6-3M12 12l-3 7" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
+        </V>
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<Wash tone="rgba(237,200,96,0.26)" />}>
+      <V c="g11-ms-buzz" l={49} t={35} w={7} h={9} d={90}>{wasp}</V>
+      <V c="g11-ms-dome" l={43} t={37} w={14} h={20} d={230}>{dome}</V>
+      <V c="g11-ms-lap" l={46} t={42} w={7} h={9} d={410}>{wasp}</V>
+      <V c="g11-ms-star" l={49} t={39} w={8} h={8} d={560}>
+        <path d="M12 12l-6-4M12 12l6-3M12 12l-3 7M12 12l4 6" stroke="#fff4d6" strokeWidth="1.6" fill="none" {...SJ} />
+      </V>
+      <L c="g11-tiltin" l={43} t={40} w={14} h={12} d={660} st={{ background: "linear-gradient(120deg, transparent, rgba(255,244,214,0.6), transparent)" }} />
+      <L c="g11-lean" l={43} t={57} w={14} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(44,34,16,0.66)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-dust" l={45 + i * 5} t={52} w={1.3} h={1.3} d={760 + i * 90} st={{ borderRadius: "50%", background: "#edc860" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* =============================================================================
+   25. Sleepy Sentry (t1) — THE LENS FOGS, THEN STARS
+   The watch glass over the post clouds slowly from the edge inward, the view
+   goes soft, and then a star-crack blooms dead centre and everything behind it
+   holds still. Palette: #9fb0c8 / #fff3dc / #151c28.
+   ========================================================================== */
+function SleepySentryScene({ role, delayMs }: SceneProps) {
+  const lens = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="9.2" fill="rgba(159,176,200,0.22)" stroke="#9fb0c8" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="6.4" fill="none" stroke="#9fb0c8" strokeWidth="0.8" />
+    </g>
+  );
+  const starCrack = <path d={STAR5} stroke="#fff3dc" strokeWidth="1.4" fill="none" {...SJ} />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-ent-rise" l={16} t={16} w={68} h={68} d={40}>{lens}</V>
+        <L c="g11-sy-fog" l={20} t={20} w={60} h={60} d={240} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,220,0.16), rgba(159,176,200,0.6) 76%)" }} />
+        <V c="g11-sy-star" l={28} t={28} w={44} h={44} d={470}>{starCrack}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={18} t={18} w={64} h={64} d={0}>{lens}</V>
+        <L c="g11-hit2" l={22} t={22} w={56} h={56} d={130} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,220,0.14), rgba(159,176,200,0.58) 76%)" }} />
+        <V c="g11-hit" l={30} t={30} w={40} h={40} d={250}>{starCrack}</V>
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<Wash tone="rgba(159,176,200,0.26)" />}>
+      <V c="g11-sy-glass" l={43} t={38} w={14} h={19} d={90}>{lens}</V>
+      <V c="g11-sy-post" l={46} t={41} w={8} h={11} d={230}><path d={PAWN} fill="none" stroke="#fff3dc" strokeWidth="1.3" {...SJ} /></V>
+      <L c="g11-sy-fog" l={43.5} t={39} w={13} h={17} d={400} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,220,0.16), rgba(159,176,200,0.62) 76%)" }} />
+      <V c="g11-sy-star" l={45} t={41} w={10} h={13} d={560}>{starCrack}</V>
+      <L c="g11-sidein" l={43} t={45} w={14} h={2} d={660} st={{ background: "linear-gradient(90deg, transparent, rgba(255,243,220,0.85), transparent)" }} />
+      <L c="g11-lean" l={43} t={57} w={14} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(21,28,40,0.68)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-mote" l={45 + i * 5} t={52} w={1.3} h={1.3} d={760 + i * 90} st={{ borderRadius: "50%", background: "#9fb0c8" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* =============================================================================
+   26. Thin Ice Patch (t1) — TWO PANES, AND THE HAIRLINES MEET
+   Two square panes are set down side by side at the entry squares; each takes
+   a hairline of its own, and the two lines walk toward the seam until they
+   touch. Listen for it. Palette: #bcd8e4 / #fff3dd / #142832.
+   ========================================================================== */
+function ThinIcePatchScene({ role, delayMs }: SceneProps) {
+  const slab = (
+    <g {...SJ}>
+      <rect x="2.5" y="2.5" width="19" height="19" fill="rgba(188,216,228,0.26)" stroke="#bcd8e4" strokeWidth="1.4" />
+      <path d="M5 6.4h8" stroke="rgba(255,243,221,0.5)" strokeWidth="0.9" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-ent-drop" l={6} t={22} w={42} h={52} d={40}>{slab}</V>
+        <V c="g11-ent-drop" l={52} t={22} w={42} h={52} d={190}>{slab}</V>
+        <L c="g11-ti-run" l={12} t={48} w={34} h={2} d={430} st={{ background: "#fff3dd", transformOrigin: "0% 50%" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={16} t={16} w={68} h={68} d={0}>{slab}</V>
+        <L c="g11-hit2" l={18} t={50} w={64} h={2.4} d={130} st={{ background: "#fff3dd", transformOrigin: "0% 50%" }} />
+        <L c="g11-hit" l={44} t={44} w={12} h={12} d={250} st={{ borderRadius: "50%", background: "rgba(255,243,221,0.9)" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<Wash tone="rgba(188,216,228,0.26)" />}>
+      <V c="g11-ti-set" l={39} t={41} w={11} h={11} d={90}>{slab}</V>
+      <V c="g11-ti-set" l={50} t={41} w={11} h={11} d={220}>{slab}</V>
+      <L c="g11-ti-run" l={40} t={46} w={9} h={1.2} d={400} st={{ background: "#fff3dd", transformOrigin: "0% 50%" }} />
+      <L c="g11-ti-run" l={51} t={47.4} w={9} h={1.2} d={490} st={{ background: "#fff3dd", transformOrigin: "100% 50%" }} />
+      <L c="g11-ti-meet" l={48} t={44} w={4} h={6} d={640} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,221,0.95), transparent 70%)" }} />
+      <L c="g11-lean" l={42} t={56} w={16} h={3} d={690} st={{ borderRadius: "999px", background: "rgba(20,40,50,0.66)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-dust" l={44 + i * 6} t={52} w={1.3} h={1.3} d={750 + i * 90} st={{ borderRadius: "50%", background: "#bcd8e4" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* =============================================================================
+   27. First Frost (t1) — THE OMEN STAR ETCHES ITSELF ON THE PANE
+   A pane stands over the king's square and a six-armed crystal star writes
+   itself onto it arm by arm, then the pane rings once and holds until it is
+   answered. Palette: #b0d8ea / #fff3dd / #13293a.
+   ========================================================================== */
+const FF_ARMS = [0, 60, 120, 180, 240, 300];
+
+function FirstFrostScene({ role, delayMs }: SceneProps) {
+  const arm = (
+    <g fill="none" stroke="#b0d8ea" strokeWidth="1.5" {...SJ}>
+      <path d="M12 12V2" />
+      <path d="M12 6.4l3 2M12 6.4l-3 2" strokeWidth="1.1" />
+    </g>
+  );
+  const pane = <rect x="2.5" y="2.5" width="19" height="19" fill="rgba(176,216,234,0.2)" stroke="#b0d8ea" strokeWidth="1.4" />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-ent-rise" l={14} t={14} w={72} h={72} d={40}>{pane}</V>
+        {[0, 1, 2].map((i) => (
+          <P key={i} l={22} t={22} w={56} h={56} rot={`${i * 120}deg`}>
+            <V c="g11-om-arm" w={100} h={100} d={240 + i * 110}>{arm}</V>
+          </P>
+        ))}
+        <L c="g11-om-ring" l={26} t={26} w={48} h={48} d={580} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={18} t={18} w={64} h={64} d={0}>{pane}</V>
+        <V c="g11-hit" l={30} t={30} w={40} h={40} d={130}>{arm}</V>
+        <L c="g11-hit2" l={28} t={28} w={44} h={44} d={250} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead
+      d={delayMs}
+      frame={
+        <>
+          <Wash tone="rgba(176,216,234,0.28)" />
+          <Rim tone="rgba(255,243,221,0.3)" />
+        </>
+      }
+    >
+      <V c="g11-om-king" l={45.5} t={44} w={9} h={12} d={90}><path d={KING} fill="none" stroke="#fff3dd" strokeWidth="1.3" {...SJ} /></V>
+      <V c="g11-om-pane" l={42} t={38} w={16} h={18} d={230}>{pane}</V>
+      {FF_ARMS.map((a, i) => (
+        <P key={a} l={44} t={40} w={12} h={12} rot={`${a}deg`}>
+          <V c="g11-om-arm" w={100} h={100} d={380 + i * 60}>{arm}</V>
+        </P>
+      ))}
+      <L c="g11-om-ring" l={43} t={39} w={14} h={14} d={660} st={{ borderRadius: "50%", border: "2px solid #fff3dd" }} />
+      <L c="g11-lean" l={43} t={57} w={14} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(19,41,58,0.66)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-mote" l={45 + i * 5} t={51} w={1.3} h={1.3} d={760 + i * 90} st={{ borderRadius: "50%", background: "#fff3dd" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* =============================================================================
+   28. Snowdrop (t1) — THE BLOWN-GLASS FLOWER OPENS
+   A glass snowdrop straightens on its stem and opens its bell one petal at a
+   time, and the pawn under it takes the square in front. The stem leans away
+   from the caster's own edge, which is the direction a pawn goes.
+   Palette: #cfe8d8 / #fff3dd / #14301f.
+   ========================================================================== */
+function SnowdropScene({ role, delayMs }: SceneProps) {
+  const petal = <path d="M12 3c3 3.4 4.4 7 4.4 10.4S14.4 20 12 20s-4.4-3.2-4.4-6.6S9 6.4 12 3z" fill="rgba(207,232,216,0.7)" stroke="#cfe8d8" strokeWidth="1.1" {...SJ} />;
+  const stem = (
+    <g fill="none" stroke="#cfe8d8" strokeWidth="1.5" {...SJ}>
+      <path d="M12 22V6" />
+      <path d="M12 13c-2.6-1-4-3-4-5.6" strokeWidth="1.1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-ent-rise" l={30} t={26} w={40} h={62} d={40}>{stem}</V>
+        {[0, 1, 2].map((i) => (
+          <P key={i} l={28} t={6} w={44} h={44} rot={`${-30 + i * 30}deg`}>
+            <V c="g11-sd-open" w={100} h={100} d={260 + i * 110}>{petal}</V>
+          </P>
+        ))}
+        <L c="g11-glint" l={40} t={16} w={20} h={20} d={600} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,221,0.8), transparent 68%)" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g11-hitside" l={32} t={26} w={36} h={60} d={0}>{stem}</V>
+        <V c="g11-hit" l={30} t={10} w={40} h={44} d={130}>{petal}</V>
+        <L c="g11-hit2" l={40} t={16} w={20} h={20} d={250} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,221,0.8), transparent 68%)" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<Wash tone="rgba(207,232,216,0.26)" />}>
+      <V c="g11-sd-stem" l={46} t={42} w={8} h={16} d={90}>{stem}</V>
+      {[0, 1, 2].map((i) => (
+        <P key={i} l={44} t={35} w={12} h={12} rot={`${-28 + i * 28}deg`}>
+          <V c="g11-sd-open" w={100} h={100} d={260 + i * 100}>{petal}</V>
+        </P>
+      ))}
+      <L c="g11-sd-chime" l={44} t={35} w={12} h={12} d={580} st={{ borderRadius: "50%", border: "1px solid #fff3dd" }} />
+      <V c="g11-sidein" l={46} t={46} w={8} h={11} d={660}><path d={PAWN} fill="none" stroke="#fff3dd" strokeWidth="1.4" {...SJ} /></V>
+      <L c="g11-lean" l={44} t={58} w={12} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(20,48,31,0.66)" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g11-mote" l={45 + i * 5} t={40} w={1.3} h={1.3} d={760 + i * 90} st={{ borderRadius: "50%", background: "#cfe8d8" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* =============================================================================
+   The table. Keys sit at exactly two spaces of indent: the animation audit and
+   check-sig-plugins.cjs parse this block as TEXT.
    ========================================================================== */
 
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_cold_snap: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 90, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
     Render: ColdSnapScene,
+  },
+  hx4_bounty_posted: {
+    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: BountyPostedScene,
+  },
+  hx4_caught_mid_stride: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "aim" },
+    Render: CaughtMidStrideScene,
+  },
+  hx4_creaking_gallows: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
+    Render: CreakingGallowsScene,
+  },
+  hx4_pawnbrokers_lien: {
+    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: PawnbrokersLienScene,
+  },
+  hx4_sagging_shelves: {
+    config: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
+    Render: SaggingShelvesScene,
+  },
+  hx4_second_frost: {
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" },
+    Render: SecondFrostScene,
+  },
+  bn4_glass_of_water: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" },
+    Render: GlassOfWaterScene,
+  },
+  bn4_kettle_on: {
+    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    Render: KettleOnScene,
+  },
+  bn4_puddle_freeze: {
+    config: { ordering: "radial", staggerMs: 90, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    Render: PuddleFreezeScene,
+  },
+  hx4_carrion_crows: {
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
+    Render: CarrionCrowsScene,
+  },
+  hx4_heavy_dew: {
+    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
+    Render: HeavyDewScene,
+  },
+  hx4_jam_on_the_row: {
+    config: { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "aim" },
+    Render: JamOnTheRowScene,
+  },
+  hx4_the_ides: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: TheIdesScene,
+  },
+  hx4_winded_destrier: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "petrify", source: "frozen", anchor: "aim" },
+    Render: WindedDestrierScene,
+  },
+  bn4_warm_soup: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" },
+    Render: WarmSoupScene,
+  },
+  hx4_cold_start: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
+    Render: ColdStartScene,
+  },
+  hx4_frost_footprints: {
+    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "aim" },
+    Render: FrostFootprintsScene,
+  },
+  hx4_hand_cramp: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "petrifiedforest", source: "frozen", anchor: "cast" },
+    Render: HandCrampScene,
+  },
+  hx4_pebble_in_the_shoe: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: PebbleInTheShoeScene,
+  },
+  hx4_court_jester: {
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" },
+    Render: CourtJesterScene,
+  },
+  hx4_dunce_detail: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: DunceDetailScene,
+  },
+  hx4_early_frost: {
+    config: { ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" },
+    Render: EarlyFrostScene,
+  },
+  hx4_mild_sting: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
+    Render: MildStingScene,
+  },
+  hx4_sleepy_sentry: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" },
+    Render: SleepySentryScene,
+  },
+  hx4_thin_ice_patch: {
+    config: { ordering: "file", staggerMs: 90, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    Render: ThinIcePatchScene,
+  },
+  op_first_frost: {
+    config: { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockice", anchor: "cast" },
+    Render: FirstFrostScene,
+  },
+  op_snowdrop: {
+    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" },
+    Render: SnowdropScene,
   },
 };

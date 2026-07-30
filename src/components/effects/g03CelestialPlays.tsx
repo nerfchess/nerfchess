@@ -689,7 +689,7 @@ function PoleStarScene({ role, delayMs }: SceneProps) {
       <V c="g03-pp-wheel" l={38} t={38} w={24} h={24} d={280}>{ring("#fff4d6")}</V>
       <L c="g03-pp-pin" l={49.4} t={38} w={1.2} h={16} d={440} st={{ borderRadius: "999px", background: "#cfe3ff" }} />
       <V c="g03-pp-star" l={46.5} t={42.5} w={7} h={7} d={540}><path d={STAR} fill="#fff4d6" /></V>
-      <V c="g03-skyshaft" l={46} t={46} w={8} h={10} d={620} st={{ transformOrigin: "50% 0%" }}><path d={KING} fill="none" stroke="#cfe3ff" strokeWidth="1.4" {...SJ} /></V>
+      <V c="g03-riseside" l={46} t={46} w={8} h={10} d={620}><path d={KING} fill="none" stroke="#cfe3ff" strokeWidth="1.4" {...SJ} /></V>
       <L c="g03-glint" l={49} t={44} w={2.6} h={2.6} d={700} st={{ borderRadius: "50%", background: "#fff4d6" }} />
       {[0, 1, 2].map((i) => (
         <L key={i} c="g03-twinkle" l={40 + i * 10} t={38 + (i % 2) * 16} w={1.8} h={1.8} d={740 + i * 90} st={{ borderRadius: "50%", background: "#cfe3ff" }} />
@@ -1025,7 +1025,7 @@ function OccultationScene({ role, delayMs }: SceneProps) {
       <V c="g03-oc-star" l={51} t={43} w={8} h={8} d={90}><path d={STAR} fill="#fff2dc" /></V>
       <V c="g03-oc-limb" l={34} t={38} w={20} h={20} d={280}>{limb}</V>
       <L c="g03-oc-snuff" l={49} t={42} w={12} h={10} d={520} st={{ background: "radial-gradient(circle, rgba(255,242,220,0.85), transparent 70%)" }} />
-      <V c="g03-skyshaft" l={44} t={46} w={10} h={12} d={560} st={{ transformOrigin: "50% 100%" }}><path d={KNIGHT} fill="none" stroke="#b9a8f0" strokeWidth="1.3" {...SJ} /></V>
+      <V c="g03-riseside" l={44} t={46} w={10} h={12} d={560}><path d={KNIGHT} fill="none" stroke="#b9a8f0" strokeWidth="1.3" {...SJ} /></V>
       <L c="g03-oc-zzz" l={54} t={38} w={7} h={7} d={660} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(185,168,240,0.8), transparent 70%)" }} />
       {[0, 1, 2].map((i) => (
         <L key={i} c="g03-mote" l={50 + i * 4} t={40} w={1.4} h={1.4} d={720 + i * 110} st={{ borderRadius: "50%", background: "#b9a8f0" }} />

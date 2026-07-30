@@ -1002,10 +1002,10 @@ function ChalkBoardScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         {HS_CELLS.slice(0, 3).map((i) => (
-          <L key={i} c="g07-cb-cell" l={10 + i * 28} t={40} w={22} h={26} d={40 + i * 110} st={{ border: "2px solid #cfd6de" }} />
+          <L key={i} c="g07-hs-cell" l={10 + i * 28} t={40} w={22} h={26} d={40 + i * 110} st={{ border: "2px solid #cfd6de" }} />
         ))}
-        <V c="g07-cb-stub" l={38} t={8} w={24} h={30} d={400}>{stub}</V>
-        <V c="g07-cb-wipe" l={12} t={70} w={44} h={22} d={540}>{duster}</V>
+        <V c="g07-hs-stub" l={38} t={8} w={24} h={30} d={400}>{stub}</V>
+        <V c="g07-hs-wipe" l={12} t={70} w={44} h={22} d={540}>{duster}</V>
       </Cut>
     );
   }
@@ -1021,11 +1021,11 @@ function ChalkBoardScene({ role, delayMs }: SceneProps) {
   return (
     <Lead d={delayMs} frame={<><L c="g07-veil" st={{ background: "rgba(12,16,22,0.34)" }} /><Wash tone="rgba(207,214,222,0.24)" d={130} /></>}>
       {HS_CELLS.map((i) => (
-        <L key={i} c="g07-cb-cell" l={41 + i * 5} t={41 + (i % 2) * 5} w={4.4} h={4.4} d={110 + i * 90} st={{ border: "1.6px solid #cfd6de" }} />
+        <L key={i} c="g07-hs-cell" l={41 + i * 5} t={41 + (i % 2) * 5} w={4.4} h={4.4} d={110 + i * 90} st={{ border: "1.6px solid #cfd6de" }} />
       ))}
       <V c="g07-place" l={43} t={40} w={4} h={5.4} d={470}>{stub}</V>
-      <V c="g07-cb-stub" l={50} t={45} w={4} h={5.4} d={560}>{stub}</V>
-      <V c="g07-cb-wipe" l={39} t={45} w={7} h={3.4} d={660}>{duster}</V>
+      <V c="g07-hs-stub" l={50} t={45} w={4} h={5.4} d={560}>{stub}</V>
+      <V c="g07-hs-wipe" l={39} t={45} w={7} h={3.4} d={660}>{duster}</V>
       {[0, 1, 2].map((i) => (
         <L key={i} c="g07-drift" l={42 + i * 5} t={52} w={1.3} h={1.3} d={700 + i * 95} st={{ borderRadius: "50%", background: "#fff2d6" }} />
       ))}
