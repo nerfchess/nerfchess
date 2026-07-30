@@ -75,6 +75,9 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   g32FairnessPlays: () => import("./g32FairnessPlays"),
   g33DiagonalPlays: () => import("./g33DiagonalPlays"),
   g34ExchangePlays: () => import("./g34ExchangePlays"),
+  g41PrismPlays: () => import("./g41PrismPlays"),
+  g42ChainPlays: () => import("./g42ChainPlays"),
+  g43WaterPlays: () => import("./g43WaterPlays"),
 };
 // </plugin-modules:generated>
 

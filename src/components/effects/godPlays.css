@@ -525,24 +525,92 @@
 }
 .gp-gather { animation: gp-gather calc(0.5s * var(--fx-dur, 1)) ease-in both; }
 
-/* Per-square tell: a focus ring converges onto the target square. */
+/* Per-square tell: a focus ring converges onto the target square, wound
+   tighter the deeper into the victim order this square falls (--gp-wind is set
+   from --fx-index by TargetHit; the default is the original 45deg). */
 @keyframes gp-focus {
   0% { opacity: 0; transform: scale(1.7) rotate(0deg); }
   30% { opacity: 0.95; }
-  100% { opacity: 0; transform: scale(0.55) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0.55) rotate(var(--gp-wind, 45deg)); }
 }
 .gp-focus { animation: gp-focus calc(0.32s * var(--fx-dur, 1)) ease-in both; }
+
+/* --- Directional (the geometry contract, §0 of the design brief) ----------- */
+
+/* RAKE — the shadow an off-centre landing throws. The god-light hangs over the
+   middle of the board, so the scene's ground shadow stretches AWAY from the
+   centre by however far out the cast square is; --gp-lean / --gp-tip arrive
+   from --fx-ox / --fx-oy, and a board-anchored marquee scene (which sits at
+   the centre by construction) simply rakes to nothing. */
+@keyframes gp-rake {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.4); }
+  26% { opacity: 0.85; transform: translate(calc(var(--gp-lean, 0%) * 0.5), calc(var(--gp-tip, 0%) * 0.5)) scaleX(0.9); }
+  62% { opacity: 0.7; transform: translate(var(--gp-lean, 0%), var(--gp-tip, 0%)) scaleX(1.12); }
+  100% { opacity: 0; transform: translate(calc(var(--gp-lean, 0%) * 1.4), calc(var(--gp-tip, 0%) * 1.4)) scaleX(1.2); }
+}
+.gp-rake { animation: gp-rake calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+
+/* LANCE — the strike arriving down this square's own leg. Length comes from
+   --fx-len and the heading from --fx-ang (both applied inline), so a sweep
+   genuinely travels victim to victim instead of popping in place. */
+@keyframes gp-lance {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  34% { opacity: 0.9; transform: scaleX(1); }
+  62% { opacity: 0.5; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.gp-lance { animation: gp-lance calc(0.42s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* --- Entrance (the card arriving in a hand) -------------------------------- */
+
+/* The god-light opens into a slot before the card is there. */
+@keyframes gp-entglow {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  40% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.gp-entglow { animation: gp-entglow calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+
+/* The halo ring opens around it. */
+@keyframes gp-entring {
+  0% { opacity: 0; transform: scale(0.4) rotate(-30deg); }
+  46% { opacity: 0.95; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.14) rotate(10deg); }
+}
+.gp-entring { animation: gp-entring calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The glyph is set into the halo. */
+@keyframes gp-entrise {
+  0% { opacity: 0; transform: translateY(26%) scale(0.6); }
+  44% { opacity: 1; transform: translateY(0) scale(1.04); }
+  58% { transform: translateY(0) scale(1); }
+  84% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-6%) scale(1.02); }
+}
+.gp-entrise { animation: gp-entrise calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* ...and the light closes over it again. */
+@keyframes gp-entseal {
+  0% { opacity: 0; transform: scale(1.35); }
+  40% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.86); }
+}
+.gp-entseal { animation: gp-entseal calc(0.7s * var(--fx-dur, 1)) ease-out both; }
 
 /* --- Settle ------------------------------------------------------------------ */
 
 /* Afterglow hanging at the impact point: blooms low, holds LONG, breathes out
-   (flagship pass: the gods leave a wound in the light, not a blink). */
+   (flagship pass: the gods leave a wound in the light, not a blink).
+
+   The struck square's glow also slides toward whichever edge the caster is
+   sitting at (--gp-drift, set from --fx-side by TargetHit); the board-scale
+   Settle leaves it unset and the glow simply blooms in place. */
 @keyframes gp-afterglow {
-  0% { opacity: 0; transform: scale(0.7); }
-  20% { opacity: 0.9; transform: scale(1); }
-  58% { opacity: 0.6; transform: scale(1.05); }
-  82% { opacity: 0.3; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(1.2); }
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  20% { opacity: 0.9; transform: translateY(calc(var(--gp-drift, 0%) * 0.2)) scale(1); }
+  58% { opacity: 0.6; transform: translateY(calc(var(--gp-drift, 0%) * 0.6)) scale(1.05); }
+  82% { opacity: 0.3; transform: translateY(calc(var(--gp-drift, 0%) * 0.85)) scale(1.1); }
+  100% { opacity: 0; transform: translateY(var(--gp-drift, 0%)) scale(1.2); }
 }
 .gp-afterglow { animation: gp-afterglow calc(1.7s * var(--fx-dur, 1)) ease-out both; }
 

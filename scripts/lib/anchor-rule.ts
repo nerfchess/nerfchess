@@ -135,6 +135,35 @@ const BY_CATEGORY: Record<string, readonly Anchor[]> = {
 
 };
 
+/**
+ * Text that says the effect touches an OPEN set, whatever kind of effect the
+ * category says it is.
+ *
+ * This exists because the taxonomy files a card by its most distinctive hook,
+ * not by its scope, and the two genuinely come apart. Shield Wall ("any of
+ * your pawns that stands beside another cannot be captured") is filed
+ * single-piece-shield and is army-wide. Great Return ("every captured piece of
+ * both sides returns at once") is filed single-piece-freeze, for its one
+ * trailing clause about the biggest returner. Demanding "cast" from either
+ * would be the derivation overruling the card.
+ *
+ * So a category says what KIND of effect this is, and the text says HOW MANY
+ * it touches. When the text says "an open set", "board" is re-admitted no
+ * matter what the category thought. Deliberately narrower than the markers
+ * used for narrowing below: this one can only ever add an option, but it is
+ * the one that has to survive contact with 2,448 hand-written rules.
+ */
+const OPEN_SET_MARKERS = [
+  /\bany of (?:your|their|the)\b/,
+  /\ball (?:your|their|enemy|friendly)\b/,
+  /\bevery\b/,
+  /\beach of (?:your|their)\b/,
+  /\bnone of (?:your|their)\b/,
+  /\bno (?:piece|pieces) (?:may|can)\b/,
+  /\bboth (?:players|armies|sides)\b/,
+  /\byour (?:pieces|pawns) (?:cannot|can't|are)\b/,
+];
+
 /** "all your knights", "every piece", "each enemy pawn", "the whole board". */
 const GLOBAL_MARKERS = [
   /\ball (?:your|their|enemy|friendly|of)\b/,
@@ -179,14 +208,21 @@ function matchesAny(text: string, res: RegExp[]): boolean {
  */
 export function allowedAnchors(category: string, rule: string): readonly Anchor[] {
   const base = BY_CATEGORY[category] ?? ALL;
-  // Text refinement resolves only what the category left OPEN. Where the
-  // category already gave a narrowed answer, that answer stands: a zone card
-  // saying "no piece may enter" trips the global markers, but a zone is still
-  // a region on the board rather than the whole of it, and letting the text
-  // override would replace a considered answer with a keyword match.
-  if (base !== ALL) return base;
-
   const text = rule.toLowerCase();
+
+  // Scope beats kind. A card whose text names an open set is board-scale even
+  // when its category says single-target, so "board" is re-admitted rather
+  // than the card being told its own art is wrong.
+  if (!base.includes("board") && matchesAny(text, OPEN_SET_MARKERS)) {
+    return [...base, "board"];
+  }
+
+  // Narrowing, unlike the widening above, resolves only what the category left
+  // OPEN. Where the category already gave a narrowed answer, that answer
+  // stands: a zone card saying "no piece may enter" trips the global markers,
+  // but a zone is still a region rather than the whole board, and letting the
+  // text override would replace a considered answer with a keyword match.
+  if (base !== ALL) return base;
   const few = matchesAny(text, FEW_MARKERS);
   const single = matchesAny(text, SINGLE_MARKERS);
   // A count beats a bare plural: "freeze two of their knights" is aimed at two

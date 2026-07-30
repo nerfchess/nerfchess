@@ -69,13 +69,25 @@ function discoverModules() {
 
 /** Every *Plays.tsx on disk that has a matching .css, in a stable order. The
  *  --write path uses this so a newly authored module registers itself without
- *  anyone hand-editing the loader map. */
+ *  anyone hand-editing the loader map.
+ *
+ *  `--skip=a,b` holds a module OUT by name substring. Discovery from disk is
+ *  what makes authoring self-service, but it also means a module that is still
+ *  being written registers itself the moment its two files exist, and a
+ *  half-written module in MODULE_LOADERS is a broken build rather than a
+ *  missing scene. Skip it, and re-run once it compiles. */
 function modulesOnDisk() {
+  const skipArg = process.argv.find((a) => a.startsWith("--skip="));
+  const skip = (skipArg ? skipArg.slice(7) : "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   return fs
     .readdirSync(EFFECTS)
     .filter((f) => /Plays\.tsx$/.test(f))
     .map((f) => f.replace(/\.tsx$/, ""))
     .filter((n) => fs.existsSync(path.join(EFFECTS, `${n}.css`)))
+    .filter((n) => !skip.some((s) => n.includes(s)))
     .sort();
 }
 

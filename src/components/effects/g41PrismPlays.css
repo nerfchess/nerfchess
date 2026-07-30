@@ -1,0 +1,1660 @@
+/* ============================================================================
+   g41PrismPlays.css — motion for the 42 optical plays
+   (src/components/effects/g41PrismPlays.tsx).
+
+   House discipline, same as g26ShieldPlays.css:
+   - keyframes animate ONLY transform and opacity (a static drop-shadow filter
+     is fine, animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (stagger + beat) land cleanly;
+   - every duration is scaled by --fx-dur (Settings animation-speed);
+   - every track ENDS at opacity 0, so a play never lingers: persistent state
+     is carried by the card's own zone overlay, never by the play;
+   - no border-radius is declared here at all (every radius the art needs is an
+     inline 50% / 999px on the element itself), so scripts/check-rounded.ts has
+     nothing to object to;
+   - the whole g41- family is parked when animations are off (guard at the
+     bottom of this file).
+
+   GEOMETRY-DRIVEN TRACKS. Six keyframes read the scene geometry custom
+   properties published by Board (see effects/geometry.ts) so the optics are
+   directional rather than decorative, and every scene in the module uses at
+   least one of them:
+     .g41-ray        a light shaft tips away from the board centre  (--fx-ox)
+     .g41-throw      a beam runs the source -> target leg           (--fx-len)
+     .g41-castshadow the instrument's shadow falls away from centre (--fx-ox/oy)
+     .g41-hitside    the per-square hit arrives from the caster     (--fx-side)
+     .g41-halfband   a half-board layer lands on the caster's half  (--fx-side)
+     .g41-midband    the two central ranks build from the caster    (--fx-side)
+   ========================================================================= */
+
+/* --- Board-scale atmosphere (always inside <BoardFrame>) ------------------- */
+
+@keyframes g41-wash {
+  0% { opacity: 0; }
+  22% { opacity: 1; }
+  66% { opacity: 0.42; }
+  100% { opacity: 0; }
+}
+.g41-wash { animation: g41-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-rim {
+  0% { opacity: 0; transform: scale(0.95); }
+  38% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g41-rim { animation: g41-rim calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* The caster's own half of the board. side +1 keeps it low, side -1 flips it
+   to the far half, so neither player ever sees it land on the wrong side. */
+@keyframes g41-halfband {
+  0% { opacity: 0; transform: translateY(calc((var(--fx-side, 1) - 1) * 50%)) scaleY(0.2); }
+  32% { opacity: 1; transform: translateY(calc((var(--fx-side, 1) - 1) * 50%)) scaleY(1); }
+  74% { opacity: 0.6; transform: translateY(calc((var(--fx-side, 1) - 1) * 50%)) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc((var(--fx-side, 1) - 1) * 50%)) scaleY(1); }
+}
+.g41-halfband { animation: g41-halfband calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* The two central ranks, built from the caster's edge inward. */
+@keyframes g41-midband {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 24%)) scaleY(0.24); }
+  34% { opacity: 1; transform: translateY(0) scaleY(1); }
+  76% { opacity: 0.62; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -4%)) scaleY(1); }
+}
+.g41-midband { animation: g41-midband calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Geometry-driven tracks ----------------------------------------------- */
+
+/* A shaft of light leaving the instrument, tipped away from the board centre
+   so a corner cast is lit from the middle of the board. */
+@keyframes g41-ray {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-ox, 0) * 0.6%)) scaleX(0.06); }
+  30% { opacity: 0.95; transform: translateY(calc(var(--fx-ox, 0) * 0.6%)) scaleX(1); }
+  72% { opacity: 0.6; transform: translateY(calc(var(--fx-ox, 0) * 1%)) scaleX(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-ox, 0) * 1.2%)) scaleX(1.04); }
+}
+.g41-ray { animation: g41-ray calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+/* A beam that runs the length of the play's own leg. The 0.5 floor keeps it
+   visible on a cast lead, where there is no travel to measure. */
+@keyframes g41-throw {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  32% { opacity: 1; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.095)); }
+  78% { opacity: 0.78; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.095)); }
+  100% { opacity: 0; transform: scaleX(calc(0.56 + var(--fx-len, 0) * 0.095)); }
+}
+.g41-throw { animation: g41-throw calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The instrument's shadow, thrown away from the board centre on both axes. */
+@keyframes g41-castshadow {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.28); }
+  36% { opacity: 0.85; transform: translate(calc(var(--fx-ox, 0) * 2.2%), calc(var(--fx-oy, 0) * 1.4%)) scaleX(1); }
+  82% { opacity: 0.55; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+}
+.g41-castshadow { animation: g41-castshadow calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Per-square target cut ------------------------------------------------ */
+
+/* The hit arrives from the caster's own side of the board. */
+@keyframes g41-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 86%)) scale(0.7); }
+  40% { opacity: 1; transform: translateY(0) scale(1.06); }
+  58% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -12%)) scale(1); }
+}
+.g41-hitside { animation: g41-hitside calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+@keyframes g41-hit2 {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g41-hit2 { animation: g41-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* One specular twinkle. The module's only ring-and-spark seasoning. */
+@keyframes g41-glint {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  40% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+  60% { transform: scale(0.9) rotate(60deg); }
+  100% { opacity: 0; transform: scale(1.2) rotate(90deg); }
+}
+.g41-glint { animation: g41-glint calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Entrance beats (the card arriving in a hand, ~56% crop) --------------- */
+
+@keyframes g41-ent-rise {
+  0% { opacity: 0; transform: translateY(32%) scale(0.78); }
+  34% { opacity: 1; transform: translateY(0) scale(1.05); }
+  48% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+}
+.g41-ent-rise { animation: g41-ent-rise calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ent-drop {
+  0% { opacity: 0; transform: translateY(-62%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(5%) scale(1); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-ent-drop { animation: g41-ent-drop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ent-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  42% { opacity: 1; transform: scale(1.1) rotate(3deg); }
+  60% { transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04) rotate(0deg); }
+}
+.g41-ent-pop { animation: g41-ent-pop calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ent-mote {
+  0% { opacity: 0; transform: translate(0, 18%) scale(0.5); }
+  40% { opacity: 1; transform: translate(4%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(10%, -24%) scale(0.9); }
+}
+.g41-ent-mote { animation: g41-ent-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 1. Loading Screen Tip: the slide projector ---------------------------- */
+
+@keyframes g41-slp-drum {
+  0% { opacity: 0; transform: rotate(-24deg) scale(0.86); }
+  30% { opacity: 1; transform: rotate(0deg) scale(1); }
+  56% { transform: rotate(45deg) scale(1); }
+  100% { opacity: 0; transform: rotate(52deg) scale(1); }
+}
+.g41-slp-drum { animation: g41-slp-drum calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.2, 1) both; }
+
+@keyframes g41-slp-slide {
+  0% { opacity: 0; transform: translateY(-160%); }
+  34% { opacity: 1; transform: translateY(6%); }
+  46% { transform: translateY(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g41-slp-slide { animation: g41-slp-slide calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.35, 1.1, 0.4, 1) both; }
+
+@keyframes g41-slp-body {
+  0% { opacity: 0; transform: translateX(-16%) scale(0.9); }
+  38% { opacity: 1; transform: translateX(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g41-slp-body { animation: g41-slp-body calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-slp-cap {
+  0% { opacity: 0; transform: scaleX(0.05) scaleY(0.4); }
+  36% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  80% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1.06) scaleY(1); }
+}
+.g41-slp-cap { animation: g41-slp-cap calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-slp-mote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  40% { opacity: 0.95; transform: translate(-14%, -30%) scale(1); }
+  100% { opacity: 0; transform: translate(-34%, -78%) scale(0.7); }
+}
+.g41-slp-mote { animation: g41-slp-mote calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 2. Second Opinion: the jeweller's loupe ------------------------------- */
+
+@keyframes g41-lpe-swing {
+  0% { opacity: 0; transform: rotate(-72deg); }
+  40% { opacity: 1; transform: rotate(8deg); }
+  58% { transform: rotate(-3deg); }
+  70% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g41-lpe-swing { animation: g41-lpe-swing calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lpe-focus {
+  0% { opacity: 0; transform: scale(1.5); }
+  44% { opacity: 1; transform: scale(1); }
+  78% { opacity: 0.8; transform: scale(0.98); }
+  100% { opacity: 0; transform: scale(0.94); }
+}
+.g41-lpe-focus { animation: g41-lpe-focus calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lpe-cross {
+  0% { opacity: 0; transform: scale(0.3) rotate(-16deg); }
+  46% { opacity: 1; transform: scale(1) rotate(0deg); }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1.05) rotate(0deg); }
+}
+.g41-lpe-cross { animation: g41-lpe-cross calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-lpe-mark {
+  0% { opacity: 0; transform: scale(0.6); }
+  44% { opacity: 1; transform: scale(1.08); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g41-lpe-mark { animation: g41-lpe-mark calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lpe-fog {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g41-lpe-fog { animation: g41-lpe-fog calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 3. Border Survey: the theodolite -------------------------------------- */
+
+@keyframes g41-thd-plant {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.86); }
+  36% { opacity: 1; transform: translateY(4%) scale(1.02); }
+  50% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-thd-plant { animation: g41-thd-plant calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-thd-bubble {
+  0% { opacity: 0; transform: translateX(-34%); }
+  38% { opacity: 1; transform: translateX(12%); }
+  56% { transform: translateX(-5%); }
+  72% { transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g41-thd-bubble { animation: g41-thd-bubble calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g41-thd-peg {
+  0% { opacity: 0; transform: translateY(-56%) scaleY(0.3); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-thd-peg { animation: g41-thd-peg calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.4, 1) both; }
+
+/* --- 4. Wallhack Goggles: the polarized visor ------------------------------ */
+
+@keyframes g41-ggl-snap {
+  0% { opacity: 0; transform: translateY(-40%) scaleX(0.6); }
+  34% { opacity: 1; transform: translateY(3%) scaleX(1.04); }
+  50% { transform: translateY(0) scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleX(1); }
+}
+.g41-ggl-snap { animation: g41-ggl-snap calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-ggl-clear {
+  0% { opacity: 0.95; transform: scaleX(1); }
+  40% { opacity: 0.55; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g41-ggl-clear { animation: g41-ggl-clear calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-ggl-rail {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  38% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g41-ggl-rail { animation: g41-ggl-rail calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ggl-ghost {
+  0% { opacity: 0; transform: scale(0.7); }
+  44% { opacity: 0.9; transform: scale(1.05); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g41-ggl-ghost { animation: g41-ggl-ghost calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 5. Weather Balloon: the ice halo -------------------------------------- */
+
+@keyframes g41-hlo-lift {
+  0% { opacity: 0; transform: translateY(34%) scale(0.7); }
+  36% { opacity: 1; transform: translateY(6%) scale(1); }
+  100% { opacity: 0; transform: translateY(-26%) scale(1.04); }
+}
+.g41-hlo-lift { animation: g41-hlo-lift calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.75, 0.35, 1) both; }
+
+@keyframes g41-hlo-ring {
+  0% { opacity: 0; transform: scale(0.35); }
+  42% { opacity: 1; transform: scale(1); }
+  80% { opacity: 0.6; transform: scale(1.03); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.g41-hlo-ring { animation: g41-hlo-ring calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-hlo-dog {
+  0% { opacity: 0; transform: scale(0.3); }
+  46% { opacity: 1; transform: scale(1.2); }
+  64% { transform: scale(0.95); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g41-hlo-dog { animation: g41-hlo-dog calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-hlo-arc {
+  0% { opacity: 0; transform: scaleX(0.3) translateY(20%); }
+  46% { opacity: 0.9; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1.1) translateY(-8%); }
+}
+.g41-hlo-arc { animation: g41-hlo-arc calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 6. Circling Vultures: the wheeling shadows ---------------------------- */
+
+@keyframes g41-vlt-dim {
+  0% { opacity: 0; transform: scale(1.3); }
+  34% { opacity: 1; transform: scale(1); }
+  76% { opacity: 0.7; transform: scale(0.96); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.g41-vlt-dim { animation: g41-vlt-dim calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-vlt-wheel {
+  0% { opacity: 0; transform: rotate(-40deg) translateX(40%) scale(0.7); }
+  36% { opacity: 0.95; transform: rotate(60deg) translateX(16%) scale(1); }
+  76% { opacity: 0.7; transform: rotate(150deg) translateX(6%) scale(0.92); }
+  100% { opacity: 0; transform: rotate(200deg) translateX(0) scale(0.84); }
+}
+.g41-vlt-wheel { animation: g41-vlt-wheel calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-vlt-close {
+  0% { opacity: 0; transform: scale(1.7) rotate(-20deg); }
+  46% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(0.72) rotate(24deg); }
+}
+.g41-vlt-close { animation: g41-vlt-close calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-vlt-perch {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.6); }
+  48% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(0.94); }
+}
+.g41-vlt-perch { animation: g41-vlt-perch calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 7. Lighthouse Beam: the dioptric belts -------------------------------- */
+
+@keyframes g41-lgh-tower {
+  0% { opacity: 0; transform: translateY(24%) scaleY(0.7); }
+  36% { opacity: 1; transform: translateY(0) scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-lgh-tower { animation: g41-lgh-tower calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lgh-belt {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  40% { opacity: 1; transform: scaleX(1.06); }
+  56% { transform: scaleX(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-lgh-belt { animation: g41-lgh-belt calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lgh-lamp {
+  0% { opacity: 0; transform: scale(0.2); }
+  38% { opacity: 1; transform: scale(1.3); }
+  56% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.15); }
+}
+.g41-lgh-lamp { animation: g41-lgh-lamp calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-lgh-sweep {
+  0% { opacity: 0; transform: rotate(-26deg) scaleX(0.1); }
+  34% { opacity: 0.95; transform: rotate(-8deg) scaleX(1); }
+  74% { opacity: 0.7; transform: rotate(10deg) scaleX(1); }
+  100% { opacity: 0; transform: rotate(22deg) scaleX(1); }
+}
+.g41-lgh-sweep { animation: g41-lgh-sweep calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.6, 0.4, 1) both; }
+
+/* --- 8. Queen's Gambol: the strobe exposure -------------------------------- */
+
+@keyframes g41-stb-charge {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 0.5; transform: scale(0.86); }
+  62% { opacity: 1; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g41-stb-charge { animation: g41-stb-charge calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; }
+
+@keyframes g41-stb-head {
+  0% { opacity: 0; transform: translateY(18%) scale(0.86); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-stb-head { animation: g41-stb-head calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-stb-freeze {
+  0% { opacity: 0; transform: scale(0.6) translateY(16%); }
+  18% { opacity: 1; transform: scale(1.05) translateY(0); }
+  30% { transform: scale(1) translateY(0); }
+  70% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1) translateY(-6%); }
+}
+.g41-stb-freeze { animation: g41-stb-freeze calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+@keyframes g41-stb-plate {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  40% { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.15); }
+}
+.g41-stb-plate { animation: g41-stb-plate calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 9. Raven Parliament: the catchlights ---------------------------------- */
+
+@keyframes g41-rvn-rail {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  34% { opacity: 1; transform: scaleX(1); }
+  86% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-rvn-rail { animation: g41-rvn-rail calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-rvn-land {
+  0% { opacity: 0; transform: translate(-30%, -50%) rotate(-16deg) scale(0.8); }
+  40% { opacity: 1; transform: translate(0, 4%) rotate(4deg) scale(1.04); }
+  56% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(1); }
+}
+.g41-rvn-land { animation: g41-rvn-land calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-rvn-eye {
+  0% { opacity: 0; transform: scale(0.1); }
+  36% { opacity: 1; transform: scale(1.3); }
+  52% { transform: scale(0.9); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g41-rvn-eye { animation: g41-rvn-eye calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-rvn-caw {
+  0% { opacity: 0; transform: translateY(24%) scale(0.6); }
+  44% { opacity: 1; transform: translateY(0) scale(1.06); }
+  100% { opacity: 0; transform: translateY(-22%) scale(1); }
+}
+.g41-rvn-caw { animation: g41-rvn-caw calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 10. Auditor's Ledger: the light table --------------------------------- */
+
+@keyframes g41-ltb-warm {
+  0% { opacity: 0; transform: scaleY(0.4); }
+  32% { opacity: 1; transform: scaleY(1); }
+  78% { opacity: 0.6; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-ltb-warm { animation: g41-ltb-warm calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-ltb-lay {
+  0% { opacity: 0; transform: rotate(-16deg) translateY(-30%); }
+  40% { opacity: 1; transform: rotate(3deg) translateY(2%); }
+  56% { transform: rotate(0deg) translateY(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) translateY(0); }
+}
+.g41-ltb-lay { animation: g41-ltb-lay calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ltb-line {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  44% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-ltb-line { animation: g41-ltb-line calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ltb-tick {
+  0% { opacity: 0; transform: scale(0.2) rotate(-30deg); }
+  44% { opacity: 1; transform: scale(1.15) rotate(6deg); }
+  62% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.06) rotate(0deg); }
+}
+.g41-ltb-tick { animation: g41-ltb-tick calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 11. Court Procession: the index-matched panes ------------------------- */
+
+@keyframes g41-gpn-stand {
+  0% { opacity: 0; transform: translateY(26%) scaleY(0.6); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-gpn-stand { animation: g41-gpn-stand calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-gpn-vanish {
+  0% { opacity: 0.95; transform: scaleX(1); }
+  36% { opacity: 0.65; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g41-gpn-vanish { animation: g41-gpn-vanish calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-gpn-pass {
+  0% { opacity: 0; transform: translateX(-42%) scaleX(0.2); }
+  40% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(34%) scaleX(1); }
+}
+.g41-gpn-pass { animation: g41-gpn-pass calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g41-gpn-queen {
+  0% { opacity: 0; transform: translateX(-60%) scale(0.86); }
+  44% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(26%) scale(1); }
+}
+.g41-gpn-queen { animation: g41-gpn-queen calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 12. Shepherd's Watch: the cat's eyes ---------------------------------- */
+
+@keyframes g41-cye-verge {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  36% { opacity: 1; transform: scaleX(1); }
+  86% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-cye-verge { animation: g41-cye-verge calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-cye-press {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.7); }
+  36% { opacity: 1; transform: translateY(6%) scale(1.06); }
+  50% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-cye-press { animation: g41-cye-press calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-cye-back {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  30% { opacity: 1; transform: scaleX(1); }
+  62% { opacity: 0.7; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.6); }
+}
+.g41-cye-back { animation: g41-cye-back calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-cye-flock {
+  0% { opacity: 0; transform: scale(0.7); }
+  46% { opacity: 1; transform: scale(1.05); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g41-cye-flock { animation: g41-cye-flock calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 13. King's Leap Year: the gnomon and the analemma --------------------- */
+
+@keyframes g41-gno-set {
+  0% { opacity: 0; transform: translateY(-26%) rotate(-8deg); }
+  38% { opacity: 1; transform: translateY(3%) rotate(2deg); }
+  52% { transform: translateY(0) rotate(0deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g41-gno-set { animation: g41-gno-set calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-gno-spot {
+  0% { opacity: 0; transform: scale(0.2); }
+  40% { opacity: 1; transform: scale(1.2); }
+  58% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.g41-gno-spot { animation: g41-gno-spot calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-gno-cut {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  44% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-gno-cut { animation: g41-gno-cut calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-gno-king {
+  0% { opacity: 0; transform: translateY(-24%) scale(0.7); }
+  44% { opacity: 1; transform: translateY(0) scale(1.06); }
+  60% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-gno-king { animation: g41-gno-king calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+/* --- 14. Borrowed Boots: the crossed polarizers ---------------------------- */
+
+@keyframes g41-pol-slide {
+  0% { opacity: 0; transform: translateX(-40%) scale(0.86); }
+  40% { opacity: 1; transform: translateX(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g41-pol-slide { animation: g41-pol-slide calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-pol-turn {
+  0% { opacity: 0; transform: translateX(34%) rotate(0deg); }
+  34% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  66% { transform: translateX(0) rotate(45deg); }
+  100% { opacity: 0; transform: translateX(0) rotate(48deg); }
+}
+.g41-pol-turn { animation: g41-pol-turn calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.25, 1) both; }
+
+@keyframes g41-pol-black {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 1; transform: scale(1); }
+  82% { opacity: 0.85; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g41-pol-black { animation: g41-pol-black calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-pol-boot {
+  0% { opacity: 0; transform: translateX(-16%) scale(0.8); }
+  44% { opacity: 1; transform: translateX(0) scale(1.04); }
+  60% { transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g41-pol-boot { animation: g41-pol-boot calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+/* --- 15. The Puddle: the still water mirror -------------------------------- */
+
+@keyframes g41-pud-drop {
+  0% { opacity: 0; transform: translateY(-140%) scaleY(1.4); }
+  46% { opacity: 1; transform: translateY(0) scaleY(1); }
+  60% { opacity: 1; transform: translateY(10%) scaleY(0.3); }
+  100% { opacity: 0; transform: translateY(10%) scaleY(0.2); }
+}
+.g41-pud-drop { animation: g41-pud-drop calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.7, 1) both; }
+
+@keyframes g41-pud-spread {
+  0% { opacity: 0; transform: scale(0.2); }
+  40% { opacity: 1; transform: scale(1.05); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g41-pud-spread { animation: g41-pud-spread calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-pud-flip {
+  0% { opacity: 0; transform: scaleY(-0.2); }
+  44% { opacity: 0.9; transform: scaleY(-1); }
+  78% { opacity: 0.7; transform: scaleY(-0.94); }
+  100% { opacity: 0; transform: scaleY(-0.8); }
+}
+.g41-pud-flip { animation: g41-pud-flip calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-pud-ring {
+  0% { opacity: 0; transform: scale(0.14); }
+  38% { opacity: 1; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g41-pud-ring { animation: g41-pud-ring calc(1s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.8, 0.3, 1) both; }
+
+/* --- 16. Flinching Blades: the dazzle glint -------------------------------- */
+
+@keyframes g41-gln-tip {
+  0% { opacity: 0; transform: rotate(-14deg) scale(0.9); }
+  34% { opacity: 1; transform: rotate(4deg) scale(1); }
+  52% { transform: rotate(-2deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-2deg) scale(1); }
+}
+.g41-gln-tip { animation: g41-gln-tip calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g41-gln-star {
+  0% { opacity: 0; transform: scale(0.06) rotate(-24deg); }
+  26% { opacity: 1; transform: scale(1.3) rotate(0deg); }
+  44% { transform: scale(0.9) rotate(6deg); }
+  100% { opacity: 0; transform: scale(1.5) rotate(14deg); }
+}
+.g41-gln-star { animation: g41-gln-star calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+@keyframes g41-gln-after {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.g41-gln-after { animation: g41-gln-after calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-gln-flinch {
+  0% { opacity: 0; transform: translateX(0) scale(0.9); }
+  30% { opacity: 1; transform: translateX(12%) scale(1); }
+  52% { transform: translateX(-4%) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g41-gln-flinch { animation: g41-gln-flinch calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 17. Cold Shoulder: the mirror turns its back -------------------------- */
+
+@keyframes g41-mbk-stand {
+  0% { opacity: 0; transform: translateY(22%) scaleY(0.7); }
+  38% { opacity: 1; transform: translateY(0) scaleY(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-mbk-stand { animation: g41-mbk-stand calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-mbk-echo {
+  0% { opacity: 0; transform: scaleX(-0.4); }
+  40% { opacity: 0.85; transform: scaleX(-1); }
+  100% { opacity: 0; transform: scaleX(-1); }
+}
+.g41-mbk-echo { animation: g41-mbk-echo calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-mbk-pivot {
+  0% { opacity: 0; transform: rotateY(0deg) scaleX(0.06); }
+  36% { opacity: 1; transform: scaleX(0.5); }
+  62% { transform: scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-mbk-pivot { animation: g41-mbk-pivot calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g41-mbk-cold {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  40% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.2); }
+}
+.g41-mbk-cold { animation: g41-mbk-cold calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-mbk-turn {
+  0% { opacity: 0; transform: translateX(20%) scale(0.9); }
+  42% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-14%) scale(0.96); }
+}
+.g41-mbk-turn { animation: g41-mbk-turn calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 18. Shifting Floor: the pool caustics --------------------------------- */
+
+@keyframes g41-cau-flood {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  34% { opacity: 1; transform: scaleY(1); }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-cau-flood { animation: g41-cau-flood calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-cau-crawl {
+  0% { opacity: 0; transform: translateX(-10%) scaleY(0.5); }
+  30% { opacity: 1; transform: translateX(-2%) scaleY(1); }
+  62% { transform: translateX(6%) scaleY(0.9); }
+  100% { opacity: 0; transform: translateX(12%) scaleY(1); }
+}
+.g41-cau-crawl { animation: g41-cau-crawl calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.2, 0.5, 1) both; }
+
+@keyframes g41-cau-seam {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  40% { opacity: 1; transform: scaleX(1); }
+  82% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-cau-seam { animation: g41-cau-seam calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-cau-slip {
+  0% { opacity: 0; transform: translateY(-14%) rotate(0deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  64% { transform: translateY(6%) rotate(-8deg); }
+  100% { opacity: 0; transform: translateY(14%) rotate(-14deg); }
+}
+.g41-cau-slip { animation: g41-cau-slip calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-cau-glim {
+  0% { opacity: 0; transform: scale(0.2); }
+  46% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.g41-cau-glim { animation: g41-cau-glim calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 19. Broken Compass: the kaleidoscope ---------------------------------- */
+
+@keyframes g41-kal-tube {
+  0% { opacity: 0; transform: scale(0.5) rotate(-18deg); }
+  40% { opacity: 1; transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02) rotate(0deg); }
+}
+.g41-kal-tube { animation: g41-kal-tube calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-kal-turn {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  32% { opacity: 1; transform: rotate(0deg) scale(1); }
+  70% { transform: rotate(90deg) scale(1); }
+  100% { opacity: 0; transform: rotate(96deg) scale(1.04); }
+}
+.g41-kal-turn { animation: g41-kal-turn calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.75, 0.25, 1) both; }
+
+@keyframes g41-kal-shuffle {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  38% { opacity: 0.9; transform: scale(1) rotate(45deg); }
+  100% { opacity: 0; transform: scale(1.25) rotate(90deg); }
+}
+.g41-kal-shuffle { animation: g41-kal-shuffle calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-kal-lost {
+  0% { opacity: 0; transform: translate(-24%, 14%) scale(0.7); }
+  46% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(20%, -10%) scale(0.94); }
+}
+.g41-kal-lost { animation: g41-kal-lost calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* --- 20. Moth Plague: the bare filament ------------------------------------ */
+
+@keyframes g41-blb-flex {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  36% { opacity: 1; transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-blb-flex { animation: g41-blb-flex calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-blb-drop {
+  0% { opacity: 0; transform: translateY(-70%) rotate(-10deg); }
+  38% { opacity: 1; transform: translateY(4%) rotate(6deg); }
+  56% { transform: translateY(0) rotate(-3deg); }
+  74% { transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g41-blb-drop { animation: g41-blb-drop calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-blb-fil {
+  0% { opacity: 0; transform: scale(0.3); }
+  32% { opacity: 0.6; transform: scale(0.9); }
+  56% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.g41-blb-fil { animation: g41-blb-fil calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; }
+
+@keyframes g41-blb-orbit {
+  0% { opacity: 0; transform: rotate(-30deg) translateX(60%) scale(0.6); }
+  36% { opacity: 1; transform: rotate(60deg) translateX(24%) scale(1); }
+  74% { opacity: 0.85; transform: rotate(170deg) translateX(10%) scale(0.9); }
+  100% { opacity: 0; transform: rotate(240deg) translateX(4%) scale(0.7); }
+}
+.g41-blb-orbit { animation: g41-blb-orbit calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+
+@keyframes g41-blb-tick {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.g41-blb-tick { animation: g41-blb-tick calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 21. Waste Not: the iris diaphragm ------------------------------------- */
+
+@keyframes g41-irs-needle {
+  0% { opacity: 0; transform: rotate(-46deg); }
+  36% { opacity: 1; transform: rotate(28deg); }
+  56% { transform: rotate(-12deg); }
+  72% { transform: rotate(6deg); }
+  86% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g41-irs-needle { animation: g41-irs-needle calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+@keyframes g41-irs-close {
+  0% { opacity: 0; transform: rotate(0deg) translateX(46%) scale(0.8); }
+  36% { opacity: 1; transform: rotate(0deg) translateX(22%) scale(1); }
+  72% { transform: rotate(22deg) translateX(2%) scale(1); }
+  100% { opacity: 0; transform: rotate(28deg) translateX(0) scale(1); }
+}
+.g41-irs-close { animation: g41-irs-close calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g41-irs-stop {
+  0% { opacity: 0; transform: scale(2.2); }
+  44% { opacity: 1; transform: scale(1); }
+  74% { opacity: 0.9; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+.g41-irs-stop { animation: g41-irs-stop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-irs-cheap {
+  0% { opacity: 0; transform: translateY(20%) scale(0.6); }
+  46% { opacity: 1; transform: translateY(0) scale(1.05); }
+  62% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-irs-cheap { animation: g41-irs-cheap calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+/* --- 22. Quagmire March: the mirage layer ---------------------------------- */
+
+@keyframes g41-mrg-slab {
+  0% { opacity: 0; transform: scaleY(0.14) scaleX(0.8); }
+  34% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  74% { opacity: 0.66; transform: scaleY(1.04) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(1.08) scaleX(1); }
+}
+.g41-mrg-slab { animation: g41-mrg-slab calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-mrg-peel {
+  0% { opacity: 0; transform: translateY(60%) scaleY(0.1); }
+  40% { opacity: 0.95; transform: translateY(0) scaleY(1); }
+  72% { opacity: 0.7; transform: translateY(-10%) scaleY(1.1); }
+  100% { opacity: 0; transform: translateY(-22%) scaleY(1.2); }
+}
+.g41-mrg-peel { animation: g41-mrg-peel calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+
+@keyframes g41-mrg-wade {
+  0% { opacity: 0; transform: translateY(-16%) scaleY(1.1); }
+  40% { opacity: 1; transform: translateY(6%) scaleY(0.92); }
+  68% { transform: translateY(10%) scaleY(0.86); }
+  100% { opacity: 0; transform: translateY(12%) scaleY(0.84); }
+}
+.g41-mrg-wade { animation: g41-mrg-wade calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-mrg-drag {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  46% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+.g41-mrg-drag { animation: g41-mrg-drag calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 23. Veil of Moths: the soap film -------------------------------------- */
+
+@keyframes g41-sfm-loop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-14deg); }
+  40% { opacity: 1; transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02) rotate(0deg); }
+}
+.g41-sfm-loop { animation: g41-sfm-loop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-sfm-band {
+  0% { opacity: 0; transform: scale(0.5) translateY(-8%); }
+  32% { opacity: 0.95; transform: scale(1) translateY(0); }
+  70% { opacity: 0.8; transform: scale(1) translateY(6%); }
+  100% { opacity: 0; transform: scale(1.02) translateY(10%); }
+}
+.g41-sfm-band { animation: g41-sfm-band calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.6, 0.4, 1) both; }
+
+@keyframes g41-sfm-black {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.3); }
+  46% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.3) scaleY(1.4); }
+}
+.g41-sfm-black { animation: g41-sfm-black calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-sfm-moth {
+  0% { opacity: 0; transform: translate(-20%, 16%) scale(0.6); }
+  44% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(14%, -18%) scale(0.9); }
+}
+.g41-sfm-moth { animation: g41-sfm-moth calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-sfm-pop {
+  0% { opacity: 0; transform: scale(0.9); }
+  20% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+.g41-sfm-pop { animation: g41-sfm-pop calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.8, 0.2, 1) both; }
+
+@keyframes g41-sfm-drop {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  36% { opacity: 1; transform: translate(-6%, 30%) scale(1); }
+  100% { opacity: 0; transform: translate(-12%, 90%) scale(0.7); }
+}
+.g41-sfm-drop { animation: g41-sfm-drop calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* --- 24. Sated Blades: the burning lens ------------------------------------ */
+
+@keyframes g41-brn-rack {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.86); }
+  36% { opacity: 1; transform: translateY(4%) scale(1); }
+  56% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; transform: translateY(-2%) scale(1); }
+  100% { opacity: 0; transform: translateY(-16%) scale(1); }
+}
+.g41-brn-rack { animation: g41-brn-rack calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g41-brn-cone {
+  0% { opacity: 0; transform: scaleY(0.2) scaleX(1.3); }
+  36% { opacity: 0.95; transform: scaleY(1) scaleX(1); }
+  76% { opacity: 0.8; transform: scaleY(1) scaleX(0.9); }
+  100% { opacity: 0; transform: scaleY(1) scaleX(0.8); }
+}
+.g41-brn-cone { animation: g41-brn-cone calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g41-brn-point {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.5); }
+  52% { transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+.g41-brn-point { animation: g41-brn-point calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-brn-char {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  44% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.85; }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g41-brn-char { animation: g41-brn-char calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-brn-smoke {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  36% { opacity: 0.9; transform: translate(-8%, -60%) scale(1); }
+  100% { opacity: 0; transform: translate(-22%, -170%) scale(1.6); }
+}
+.g41-brn-smoke { animation: g41-brn-smoke calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-brn-spent {
+  0% { opacity: 0; transform: scale(0.8) rotate(-6deg); }
+  44% { opacity: 1; transform: scale(1) rotate(2deg); }
+  100% { opacity: 0; transform: scale(0.94) rotate(0deg); }
+}
+.g41-brn-spent { animation: g41-brn-spent calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 25. Severed Lines: the cut fibre bundle ------------------------------- */
+
+@keyframes g41-fbr-pipe {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  32% { opacity: 1; transform: scaleX(1); }
+  62% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-fbr-pipe { animation: g41-fbr-pipe calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-fbr-shear {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-24deg) scale(0.8); }
+  38% { opacity: 1; transform: translateY(0) rotate(6deg) scale(1); }
+  56% { transform: translateY(0) rotate(-4deg) scale(1); }
+  86% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translateY(-10%) rotate(0deg) scale(1); }
+}
+.g41-fbr-shear { animation: g41-fbr-shear calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.3, 1) both; }
+
+@keyframes g41-fbr-spray {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+.g41-fbr-spray { animation: g41-fbr-spray calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.8, 0.2, 1) both; }
+
+@keyframes g41-fbr-bleed {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+.g41-fbr-bleed { animation: g41-fbr-bleed calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-fbr-dark {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  44% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g41-fbr-dark { animation: g41-fbr-dark calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 26. Carbon Copy: Pepper's ghost --------------------------------------- */
+
+@keyframes g41-ppr-pane {
+  0% { opacity: 0; transform: rotateX(0deg) scaleY(0.1); }
+  40% { opacity: 1; transform: scaleY(1); }
+  86% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-ppr-pane { animation: g41-ppr-pane calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-ppr-hidden {
+  0% { opacity: 0; transform: translateY(30%) scale(0.8); }
+  42% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-ppr-hidden { animation: g41-ppr-hidden calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-ppr-ghost {
+  0% { opacity: 0; transform: scaleX(-0.3) translateY(20%); }
+  44% { opacity: 0.85; transform: scaleX(-1) translateY(0); }
+  78% { opacity: 0.7; transform: scaleX(-1) translateY(-4%); }
+  100% { opacity: 0; transform: scaleX(-1) translateY(-10%); }
+}
+.g41-ppr-ghost { animation: g41-ppr-ghost calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 27. Mirror Shield: the beam round the corner -------------------------- */
+
+@keyframes g41-msh-set {
+  0% { opacity: 0; transform: rotate(-30deg) scale(0.7); }
+  38% { opacity: 1; transform: rotate(6deg) scale(1.04); }
+  54% { transform: rotate(0deg) scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g41-msh-set { animation: g41-msh-set calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g41-msh-in {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  44% { opacity: 1; transform: scaleX(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-msh-in { animation: g41-msh-in calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-msh-flash {
+  0% { opacity: 0; transform: scale(0.2); }
+  32% { opacity: 1; transform: scale(1.6); }
+  100% { opacity: 0; transform: scale(2); }
+}
+.g41-msh-flash { animation: g41-msh-flash calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.8, 0.2, 1) both; }
+
+@keyframes g41-msh-out {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  40% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g41-msh-out { animation: g41-msh-out calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+/* --- 28. Mirror Manners: the hand mirror ----------------------------------- */
+
+@keyframes g41-hmr-raise {
+  0% { opacity: 0; transform: translateY(46%) rotate(-16deg); }
+  38% { opacity: 1; transform: translateY(0) rotate(4deg); }
+  54% { transform: translateY(0) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g41-hmr-raise { animation: g41-hmr-raise calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-hmr-real {
+  0% { opacity: 0; transform: translateY(16%) scale(0.8); }
+  44% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-hmr-real { animation: g41-hmr-real calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-hmr-copy {
+  0% { opacity: 0; transform: scaleX(-0.4) translateY(14%); }
+  44% { opacity: 1; transform: scaleX(-1) translateY(0); }
+  76% { opacity: 0.85; }
+  100% { opacity: 0; transform: scaleX(-1) translateY(0); }
+}
+.g41-hmr-copy { animation: g41-hmr-copy calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-hmr-refuse {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  44% { opacity: 1; transform: scaleX(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g41-hmr-refuse { animation: g41-hmr-refuse calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+/* --- 29. Twin Buttons: the beamsplitter cube ------------------------------- */
+
+@keyframes g41-bsp-cube {
+  0% { opacity: 0; transform: rotate(-24deg) scale(0.6); }
+  40% { opacity: 1; transform: rotate(4deg) scale(1.05); }
+  56% { transform: rotate(0deg) scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g41-bsp-cube { animation: g41-bsp-cube calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g41-bsp-split {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  38% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 0.75; }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g41-bsp-split { animation: g41-bsp-split calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-bsp-pawn {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.5); }
+  44% { opacity: 1; transform: translateY(4%) scale(1.06); }
+  60% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-bsp-pawn { animation: g41-bsp-pawn calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+/* --- 30. Hall of Mirrors (buff): the infinite corridor --------------------- */
+
+@keyframes g41-inf-wall {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  36% { opacity: 1; transform: scaleY(1); }
+  86% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-inf-wall { animation: g41-inf-wall calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-inf-recede {
+  0% { opacity: 0; transform: scale(1.25); }
+  36% { opacity: 1; transform: scale(1); }
+  74% { opacity: 0.7; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(0.62); }
+}
+.g41-inf-recede { animation: g41-inf-recede calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-inf-emerge {
+  0% { opacity: 0; transform: translateX(-40%) scale(0.6); }
+  46% { opacity: 1; transform: translateX(0) scale(1.05); }
+  62% { transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(10%) scale(1); }
+}
+.g41-inf-emerge { animation: g41-inf-emerge calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* --- 31. Duplicate Glitch: the chromatic fringe ---------------------------- */
+
+@keyframes g41-chr-lens {
+  0% { opacity: 0; transform: scale(0.5); }
+  38% { opacity: 1; transform: scale(1); }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.g41-chr-lens { animation: g41-chr-lens calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-chr-core {
+  0% { opacity: 0; transform: scale(0.6); }
+  42% { opacity: 1; transform: scale(1.04); }
+  58% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g41-chr-core { animation: g41-chr-core calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-chr-red {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  40% { opacity: 1; transform: translate(-14%, 4%) scale(1); }
+  76% { opacity: 0.8; transform: translate(-20%, 6%) scale(1); }
+  100% { opacity: 0; transform: translate(-26%, 8%) scale(1); }
+}
+.g41-chr-red { animation: g41-chr-red calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-chr-blue {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  40% { opacity: 1; transform: translate(16%, -4%) scale(1); }
+  76% { opacity: 0.8; transform: translate(22%, -6%) scale(1); }
+  100% { opacity: 0; transform: translate(30%, -10%) scale(1); }
+}
+.g41-chr-blue { animation: g41-chr-blue calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-chr-fringe {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  46% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+.g41-chr-fringe { animation: g41-chr-fringe calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 32. Ironglass Mirror: the stress fringes ------------------------------ */
+
+@keyframes g41-pht-polar {
+  0% { opacity: 0; transform: scale(0.6) rotate(-12deg); }
+  36% { opacity: 1; transform: scale(1) rotate(0deg); }
+  82% { opacity: 0.7; }
+  100% { opacity: 0; transform: scale(1.04) rotate(0deg); }
+}
+.g41-pht-polar { animation: g41-pht-polar calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-pht-cast {
+  0% { opacity: 0; transform: translateY(-24%) scaleY(0.5); }
+  40% { opacity: 1; transform: translateY(3%) scaleY(1.03); }
+  56% { transform: translateY(0) scaleY(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-pht-cast { animation: g41-pht-cast calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-pht-fringe {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  40% { opacity: 0.95; transform: scale(1) rotate(60deg); }
+  78% { opacity: 0.7; transform: scale(1.06) rotate(120deg); }
+  100% { opacity: 0; transform: scale(1.12) rotate(160deg); }
+}
+.g41-pht-fringe { animation: g41-pht-fringe calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-pht-lock {
+  0% { opacity: 0; transform: scale(0.7); }
+  44% { opacity: 1; transform: scale(1.04); }
+  60% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g41-pht-lock { animation: g41-pht-lock calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* --- 33. Hall of Mirrors (hex): the shattered glass ------------------------ */
+
+@keyframes g41-shd-plate {
+  0% { opacity: 0; transform: scale(0.7); }
+  38% { opacity: 1; transform: scale(1); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g41-shd-plate { animation: g41-shd-plate calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-shd-crack {
+  0% { opacity: 0; transform: scaleX(0.04) skewX(-8deg); }
+  26% { opacity: 1; transform: scaleX(1) skewX(0deg); }
+  60% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleX(1.05) skewX(0deg); }
+}
+.g41-shd-crack { animation: g41-shd-crack calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+@keyframes g41-shd-fly {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.5); }
+  34% { opacity: 1; transform: translate(6%, -10%) rotate(14deg) scale(1); }
+  72% { opacity: 0.85; transform: translate(14%, 6%) rotate(-10deg) scale(1); }
+  100% { opacity: 0; transform: translate(22%, 24%) rotate(-26deg) scale(0.9); }
+}
+.g41-shd-fly { animation: g41-shd-fly calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.35, 1) both; }
+
+@keyframes g41-shd-stuck {
+  0% { opacity: 0; transform: translateX(-10%) scale(0.8); }
+  40% { opacity: 1; transform: translateX(6%) scale(1); }
+  58% { transform: translateX(-4%) scale(1); }
+  74% { transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+.g41-shd-stuck { animation: g41-shd-stuck calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* --- 34. Third Wind: the heliograph ---------------------------------------- */
+
+@keyframes g41-hgr-rig {
+  0% { opacity: 0; transform: translateY(22%) scale(0.82); }
+  38% { opacity: 1; transform: translateY(0) scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-hgr-rig { animation: g41-hgr-rig calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-hgr-shutter {
+  0% { opacity: 0; transform: rotate(0deg); }
+  22% { opacity: 1; transform: rotate(0deg); }
+  42% { transform: rotate(-64deg); }
+  60% { transform: rotate(0deg); }
+  78% { transform: rotate(-64deg); }
+  92% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g41-hgr-shutter { animation: g41-hgr-shutter calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.3, 1) both; }
+
+@keyframes g41-hgr-flash {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  26% { opacity: 1; transform: scaleX(1); }
+  58% { opacity: 0.2; transform: scaleX(1); }
+  76% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g41-hgr-flash { animation: g41-hgr-flash calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+/* --- 35. Tornado: the dust column in the shaft ----------------------------- */
+
+@keyframes g41-dst-shaft {
+  0% { opacity: 0; transform: scaleY(0.1) scaleX(0.6); }
+  34% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  78% { opacity: 0.7; transform: scaleY(1) scaleX(1.05); }
+  100% { opacity: 0; transform: scaleY(1) scaleX(1.1); }
+}
+.g41-dst-shaft { animation: g41-dst-shaft calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g41-dst-whirl {
+  0% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  38% { opacity: 1; transform: scale(1) rotate(200deg); }
+  76% { opacity: 0.75; transform: scale(1.1) rotate(420deg); }
+  100% { opacity: 0; transform: scale(1.2) rotate(560deg); }
+}
+.g41-dst-whirl { animation: g41-dst-whirl calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+
+@keyframes g41-dst-lift {
+  0% { opacity: 0; transform: translateY(20%) rotate(0deg) scale(0.86); }
+  36% { opacity: 1; transform: translateY(-4%) rotate(20deg) scale(1); }
+  100% { opacity: 0; transform: translateY(-46%) rotate(90deg) scale(0.8); }
+}
+.g41-dst-lift { animation: g41-dst-lift calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g41-dst-grit {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  40% { opacity: 1; transform: translate(14%, -26%) scale(1); }
+  100% { opacity: 0; transform: translate(38%, -62%) scale(0.7); }
+}
+.g41-dst-grit { animation: g41-dst-grit calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-dst-tail {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.3); }
+}
+.g41-dst-tail { animation: g41-dst-tail calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 36. Wind-Up Knight: the zoetrope -------------------------------------- */
+
+@keyframes g41-zoe-drum {
+  0% { opacity: 0; transform: translateY(-34%) scale(0.84); }
+  36% { opacity: 1; transform: translateY(4%) scale(1.02); }
+  52% { transform: translateY(0) scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-zoe-drum { animation: g41-zoe-drum calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-zoe-key {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  32% { opacity: 1; transform: rotate(90deg) scale(1); }
+  64% { transform: rotate(260deg) scale(1); }
+  100% { opacity: 0; transform: rotate(380deg) scale(1); }
+}
+.g41-zoe-key { animation: g41-zoe-key calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.65, 0.35, 1) both; }
+
+@keyframes g41-zoe-slit {
+  0% { opacity: 0; transform: translateX(-8%); }
+  30% { opacity: 1; transform: translateX(0); }
+  72% { opacity: 0.9; transform: translateX(10%); }
+  100% { opacity: 0; transform: translateX(16%); }
+}
+.g41-zoe-slit { animation: g41-zoe-slit calc(1.2s * var(--fx-dur, 1)) linear both; }
+
+@keyframes g41-zoe-gallop {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  26% { opacity: 1; transform: translateY(-10%) scale(1); }
+  44% { transform: translateY(4%) scale(1); }
+  62% { transform: translateY(-8%) scale(1); }
+  80% { transform: translateY(2%) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-zoe-gallop { animation: g41-zoe-gallop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.2, 0.6, 1) both; }
+
+/* --- 37. Feng Shui Plot: the lattice window -------------------------------- */
+
+@keyframes g41-shj-open {
+  0% { opacity: 0; transform: scaleX(0.08) rotate(-4deg); }
+  40% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+}
+.g41-shj-open { animation: g41-shj-open calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g41-shj-quad {
+  0% { opacity: 0; transform: scale(0.2) skewX(-14deg); }
+  40% { opacity: 1; transform: scale(1) skewX(0deg); }
+  82% { opacity: 0.72; }
+  100% { opacity: 0; transform: scale(1.04) skewX(0deg); }
+}
+.g41-shj-quad { animation: g41-shj-quad calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-shj-bar {
+  0% { opacity: 0; transform: scale(0.1); }
+  44% { opacity: 1; transform: scale(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g41-shj-bar { animation: g41-shj-bar calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-shj-step {
+  0% { opacity: 0; transform: translateX(-18%) scale(0.8); }
+  46% { opacity: 1; transform: translateX(0) scale(1.04); }
+  62% { transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(8%) scale(1); }
+}
+.g41-shj-step { animation: g41-shj-step calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.3, 1) both; }
+
+/* --- 38. Hostile Takeover: the periscope ----------------------------------- */
+
+@keyframes g41-per-rise {
+  0% { opacity: 0; transform: translateY(66%) scaleY(0.4); }
+  40% { opacity: 1; transform: translateY(-3%) scaleY(1.02); }
+  56% { transform: translateY(0) scaleY(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-per-rise { animation: g41-per-rise calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g41-per-swivel {
+  0% { opacity: 0; transform: rotate(-64deg); }
+  36% { opacity: 1; transform: rotate(24deg); }
+  62% { transform: rotate(-8deg); }
+  80% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g41-per-swivel { animation: g41-per-swivel calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g41-per-look {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  40% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.75; }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g41-per-look { animation: g41-per-look calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-per-mark {
+  0% { opacity: 0; transform: scale(2); }
+  46% { opacity: 1; transform: scale(1); }
+  76% { opacity: 0.9; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(0.86); }
+}
+.g41-per-mark { animation: g41-per-mark calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 39. Dead Calm: the lamp chimney --------------------------------------- */
+
+@keyframes g41-lmp-set {
+  0% { opacity: 0; transform: translateY(-28%) scale(0.86); }
+  38% { opacity: 1; transform: translateY(4%) scale(1.02); }
+  54% { transform: translateY(0) scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g41-lmp-set { animation: g41-lmp-set calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-lmp-flame {
+  0% { opacity: 0; transform: scaleY(0.3) skewX(-16deg); }
+  30% { opacity: 1; transform: scaleY(1) skewX(10deg); }
+  50% { transform: scaleY(1.1) skewX(-6deg); }
+  70% { transform: scaleY(1) skewX(0deg); }
+  100% { opacity: 0; transform: scaleY(0.96) skewX(0deg); }
+}
+.g41-lmp-flame { animation: g41-lmp-flame calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.35, 1) both; }
+
+@keyframes g41-lmp-stop {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  44% { opacity: 1; transform: scaleY(1); }
+  82% { opacity: 0.85; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g41-lmp-stop { animation: g41-lmp-stop calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-lmp-still {
+  0% { opacity: 0; transform: translateY(0) scale(0.3); }
+  46% { opacity: 1; transform: translateY(-8%) scale(1); }
+  100% { opacity: 0; transform: translateY(-14%) scale(0.8); }
+}
+.g41-lmp-still { animation: g41-lmp-still calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 40. Living Board: the anamorphic cylinder ----------------------------- */
+
+@keyframes g41-anm-smear {
+  0% { opacity: 0; transform: scaleX(1.4) skewX(-18deg); }
+  36% { opacity: 1; transform: scaleX(1) skewX(-8deg); }
+  74% { opacity: 0.75; transform: scaleX(0.94) skewX(0deg); }
+  100% { opacity: 0; transform: scaleX(0.9) skewX(0deg); }
+}
+.g41-anm-smear { animation: g41-anm-smear calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g41-anm-cyl {
+  0% { opacity: 0; transform: translateY(50%) scaleY(0.3); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g41-anm-cyl { animation: g41-anm-cyl calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g41-anm-tile {
+  0% { opacity: 0; transform: translateX(0) scale(0.5); }
+  44% { opacity: 1; transform: translateX(0) scale(1); }
+  76% { opacity: 0.9; transform: translateX(14%) scale(1); }
+  100% { opacity: 0; transform: translateX(24%) scale(1); }
+}
+.g41-anm-tile { animation: g41-anm-tile calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+@keyframes g41-anm-swap {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g41-anm-swap { animation: g41-anm-swap calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g41-anm-step {
+  0% { opacity: 0; transform: translate(-16%, 12%) scale(0.7); }
+  46% { opacity: 1; transform: translate(0, 0) scale(1.04); }
+  62% { transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(8%, -4%) scale(1); }
+}
+.g41-anm-step { animation: g41-anm-step calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.3, 1) both; }
+
+/* --- 41. Tidal Wall: Snell's window ---------------------------------------- */
+
+@keyframes g41-snl-surface {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  36% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-snl-surface { animation: g41-snl-surface calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-snl-window {
+  0% { opacity: 0; transform: scale(1.8); }
+  40% { opacity: 1; transform: scale(1); }
+  80% { opacity: 0.85; transform: scale(0.96); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.g41-snl-window { animation: g41-snl-window calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-snl-silver {
+  0% { opacity: 0; transform: scaleY(0.14); }
+  38% { opacity: 1; transform: scaleY(1); }
+  80% { opacity: 0.72; }
+  100% { opacity: 0; transform: scaleY(1.04); }
+}
+.g41-snl-silver { animation: g41-snl-silver calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g41-snl-bounce {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  44% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.15); }
+}
+.g41-snl-bounce { animation: g41-snl-bounce calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-snl-bridge {
+  0% { opacity: 0; transform: translateY(18%) scale(0.7); }
+  46% { opacity: 1; transform: translateY(0) scale(1.05); }
+  62% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-6%) scale(1); }
+}
+.g41-snl-bridge { animation: g41-snl-bridge calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.3, 1) both; }
+
+/* --- 42. The Ninth Rank: the prism ----------------------------------------- */
+
+@keyframes g41-prs-set {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-14deg) scale(0.8); }
+  38% { opacity: 1; transform: translateY(4%) rotate(4deg) scale(1.03); }
+  54% { transform: translateY(0) rotate(0deg) scale(1); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg) scale(1); }
+}
+.g41-prs-set { animation: g41-prs-set calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 1, 0.35, 1) both; }
+
+@keyframes g41-prs-in {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  42% { opacity: 1; transform: scaleX(1); }
+  76% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g41-prs-in { animation: g41-prs-in calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.3, 1) both; }
+
+@keyframes g41-prs-fan {
+  0% { opacity: 0; transform: scaleX(0.03) rotate(0deg); }
+  36% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  76% { opacity: 0.85; transform: scaleX(1) rotate(2deg); }
+  100% { opacity: 0; transform: scaleX(1.06) rotate(3deg); }
+}
+.g41-prs-fan { animation: g41-prs-fan calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g41-prs-ninth {
+  0% { opacity: 0; transform: scaleX(0.02) scaleY(0.4); }
+  40% { opacity: 1; transform: scaleX(1) scaleY(1.6); }
+  62% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.1) scaleY(1); }
+}
+.g41-prs-ninth { animation: g41-prs-ninth calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+/* --- Global kill switch ----------------------------------------------------
+   Settings animations-off parks every g41 play outright. */
+html[data-anim="off"] [class^="g41-"], html[data-anim="off"] [class*=" g41-"] { animation: none !important; opacity: 0 !important; }

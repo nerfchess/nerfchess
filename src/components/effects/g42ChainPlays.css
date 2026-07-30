@@ -1,0 +1,1489 @@
+/* ============================================================================
+   g42ChainPlays.css — motion for the 41 runaway-reaction plays
+   (src/components/effects/g42ChainPlays.tsx).
+
+   House discipline, same as g26ShieldPlays.css / g20RampartPlays.css:
+   - keyframes animate ONLY transform and opacity (a static drop-shadow filter
+     is fine, animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (stagger + beat) land cleanly;
+   - every duration is scaled by --fx-dur (Settings animation-speed);
+   - every track ENDS at opacity 0, so a play never lingers;
+   - no border-radius is set here at all (house rule, scripts/check-rounded.ts):
+     the scenes carry their own 0 / 1px / 2px / 50% / 999px inline;
+   - the whole g42- family is parked when animations are off (guard at the
+     bottom of this file).
+
+   GEOMETRY-DRIVEN TRACKS. A runaway reaction is inherently SEQUENTIAL, so six
+   shared keyframes read the scene geometry custom properties published by
+   Board (see effects/geometry.ts), and every scene in the module uses at least
+   one of them:
+     .g42-relay    the per-square hit gets BIGGER and later the further along
+                   the victim order the reaction has already run (--fx-index)
+     .g42-hitside  the hit arrives from the CASTER's own side     (--fx-side)
+     .g42-runup    the burnt/run length is the real leg length    (--fx-len)
+     .g42-jump     the reaction hops along the real attack vector (--fx-aim-x/y)
+     .g42-updraft  what the reaction lifts goes away from the caster (--fx-side)
+     .g42-lean     the cast shadow throws away from board centre  (--fx-ox/oy)
+   ========================================================================= */
+
+/* --- Board-scale atmosphere (always inside <BoardFrame>) ------------------- */
+
+@keyframes g42-wash {
+  0% { opacity: 0; }
+  22% { opacity: 1; }
+  66% { opacity: 0.42; }
+  100% { opacity: 0; }
+}
+.g42-wash { animation: g42-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-rim {
+  0% { opacity: 0; transform: scale(0.95); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g42-rim { animation: g42-rim calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Geometry-driven shared tracks ---------------------------------------- */
+
+/* The chain has already run N squares by the time it gets here, so it arrives
+   bigger and kicks harder. This is the whole module in one keyframe. */
+@keyframes g42-relay {
+  0% { opacity: 0; transform: scale(0.32) rotate(calc(var(--fx-index, 0) * -2deg)); }
+  36% { opacity: 1; transform: scale(calc(0.92 + var(--fx-index, 0) * 0.05)) rotate(0deg); }
+  56% { transform: scale(calc(0.86 + var(--fx-index, 0) * 0.05)) rotate(0deg); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(calc(0.98 + var(--fx-index, 0) * 0.06)) rotate(calc(var(--fx-index, 0) * 1.5deg)); }
+}
+.g42-relay { animation: g42-relay calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The hit reaches this square from the caster's own end of the board. */
+@keyframes g42-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 86%)) scale(0.72); }
+  40% { opacity: 1; transform: translateY(0) scale(1.05); }
+  58% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -14%)) scale(1); }
+}
+.g42-hitside { animation: g42-hitside calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A run that extends the real length of the play's own leg. The 0.5 floor
+   keeps it readable on a cast lead, which has no travel to measure. */
+@keyframes g42-runup {
+  0% { opacity: 0; transform: scaleX(0.03); }
+  34% { opacity: 1; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.1)); }
+  78% { opacity: 0.85; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.1)); }
+  100% { opacity: 0; transform: scaleX(calc(0.56 + var(--fx-len, 0) * 0.1)); }
+}
+.g42-runup { animation: g42-runup calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* The reaction jumps the gap, along the real source -> target vector, and each
+   hop is longer than the one before it. */
+@keyframes g42-jump {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 60%), calc(var(--fx-aim-y, 0) * 60%)) scale(1); }
+  68% { opacity: 0.9; transform: translate(calc(var(--fx-aim-x, 1) * 190%), calc(var(--fx-aim-y, 0) * 190%)) scale(1.16); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 320%), calc(var(--fx-aim-y, 0) * 320%)) scale(1.3); }
+}
+.g42-jump { animation: g42-jump calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.7, 0.35, 1) both; }
+
+/* Whatever the reaction lifts leaves away from the caster's own side. */
+@keyframes g42-updraft {
+  0% { opacity: 0; transform: translateY(0) scale(0.55); }
+  32% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -42%)) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -160%)) scale(1.28); }
+}
+.g42-updraft { animation: g42-updraft calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+
+/* The prop's shadow, thrown away from the board centre on both axes. */
+@keyframes g42-lean {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.3); }
+  36% { opacity: 0.9; transform: translate(calc(var(--fx-ox, 0) * 2.2%), calc(var(--fx-oy, 0) * 1.4%)) scaleX(1); }
+  82% { opacity: 0.55; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+}
+.g42-lean { animation: g42-lean calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Per-square target cut ------------------------------------------------ */
+
+@keyframes g42-hit {
+  0% { opacity: 0; transform: scale(0.38); }
+  36% { opacity: 1; transform: scale(1.1); }
+  54% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g42-hit { animation: g42-hit calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-hit2 {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.08); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.g42-hit2 { animation: g42-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Entrance cut (the card arriving in a hand) ---------------------------- */
+
+@keyframes g42-ent-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  46% { opacity: 1; transform: scale(1.12); }
+  64% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g42-ent-pop { animation: g42-ent-pop calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ent-rise {
+  0% { opacity: 0; transform: translateY(26%) scale(0.86); }
+  44% { opacity: 1; transform: translateY(0) scale(1.03); }
+  62% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scale(1); }
+}
+.g42-ent-rise { animation: g42-ent-rise calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g42-ent-drop {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.9); }
+  42% { opacity: 1; transform: translateY(4%) scale(1.05); }
+  60% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g42-ent-drop { animation: g42-ent-drop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ent-swing {
+  0% { opacity: 0; transform: rotate(-52deg) scale(0.9); }
+  44% { opacity: 1; transform: rotate(8deg) scale(1.03); }
+  62% { transform: rotate(0deg) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(2deg) scale(1); }
+}
+.g42-ent-swing { animation: g42-ent-swing calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* --- Settle vocabulary ---------------------------------------------------- */
+
+@keyframes g42-sift {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.5); }
+  38% { opacity: 0.95; transform: translateY(10%) scale(1); }
+  100% { opacity: 0; transform: translateY(80%) scale(0.7); }
+}
+.g42-sift { animation: g42-sift calc(1s * var(--fx-dur, 1)) ease-in both; }
+
+@keyframes g42-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  34% { opacity: 1; transform: translate(6%, -34%) scale(1); }
+  100% { opacity: 0; transform: translate(14%, -120%) scale(0.5); }
+}
+.g42-ember { animation: g42-ember calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-spit {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  30% { opacity: 1; transform: translate(40%, -26%) scale(1); }
+  100% { opacity: 0; transform: translate(120%, 34%) scale(0.5); }
+}
+.g42-spit { animation: g42-spit calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.4, 1) both; }
+
+@keyframes g42-glint {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  40% { opacity: 1; transform: scale(1.2) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0.6) rotate(90deg); }
+}
+.g42-glint { animation: g42-glint calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 1. Border Report — the beacon chain ---------------------------------- */
+
+@keyframes g42-br-light {
+  0% { opacity: 0; transform: translateY(20%) scaleY(0.2); }
+  30% { opacity: 1; transform: translateY(0) scaleY(1.18); }
+  48% { transform: translateY(0) scaleY(0.94); }
+  66% { transform: translateY(0) scaleY(1.06); }
+  86% { opacity: 1; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-6%) scaleY(1.1); }
+}
+.g42-br-light { animation: g42-br-light calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-br-smoke {
+  0% { opacity: 0; transform: scaleY(0.1) translateY(20%); }
+  40% { opacity: 0.85; transform: scaleY(1) translateY(0); }
+  100% { opacity: 0; transform: scaleY(1.5) translateY(-30%); }
+}
+.g42-br-smoke { animation: g42-br-smoke calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 2. Day Census — the tally gets away from the clerk -------------------- */
+
+@keyframes g42-dc-slate {
+  0% { opacity: 0; transform: translateY(-16%) rotate(-6deg) scale(0.9); }
+  40% { opacity: 1; transform: translateY(2%) rotate(1deg) scale(1.03); }
+  58% { transform: translateY(0) rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg) scale(1); }
+}
+.g42-dc-slate { animation: g42-dc-slate calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dc-mark {
+  0% { opacity: 0; transform: scaleY(0.04) skewX(-14deg); }
+  26% { opacity: 1; transform: scaleY(1.08) skewX(-6deg); }
+  44% { transform: scaleY(1) skewX(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1) skewX(0deg); }
+}
+.g42-dc-mark { animation: g42-dc-mark calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dc-slash {
+  0% { opacity: 0; transform: scaleX(0.05) translateX(-20%); }
+  38% { opacity: 1; transform: scaleX(1.1) translateX(0); }
+  56% { transform: scaleX(1) translateX(0); }
+  100% { opacity: 0; transform: scaleX(1.06) translateX(4%); }
+}
+.g42-dc-slash { animation: g42-dc-slash calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dc-spill {
+  0% { opacity: 0; transform: translateX(-40%) scale(0.6); }
+  40% { opacity: 1; transform: translateX(10%) scale(1); }
+  100% { opacity: 0; transform: translateX(70%) scale(1.1); }
+}
+.g42-dc-spill { animation: g42-dc-spill calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 3. Left Bank Atlas — the ink takes the river -------------------------- */
+
+@keyframes g42-lb-page {
+  0% { opacity: 0; transform: scaleX(0.2) rotate(-3deg); }
+  40% { opacity: 1; transform: scaleX(1.04) rotate(0deg); }
+  58% { transform: scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g42-lb-page { animation: g42-lb-page calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lb-drop {
+  0% { opacity: 0; transform: translateY(-160%) scale(0.5); }
+  32% { opacity: 1; transform: translateY(0) scale(1.3); }
+  48% { transform: translateY(0) scale(0.9); }
+  100% { opacity: 0; transform: translateY(0) scale(1.6); }
+}
+.g42-lb-drop { animation: g42-lb-drop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+@keyframes g42-lb-branch {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  44% { opacity: 1; transform: scaleX(1.06); }
+  60% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g42-lb-branch { animation: g42-lb-branch calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+@keyframes g42-lb-flood {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.5); }
+  46% { opacity: 0.9; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.3) scaleY(1.2); }
+}
+.g42-lb-flood { animation: g42-lb-flood calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 4. Palace Floor Plan — the house of cards goes room by room ----------- */
+
+@keyframes g42-pf-plan {
+  0% { opacity: 0; transform: scale(0.86); }
+  36% { opacity: 0.9; transform: scale(1); }
+  78% { opacity: 0.5; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g42-pf-plan { animation: g42-pf-plan calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-pf-card {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  24% { opacity: 1; transform: rotate(-4deg) scale(1); }
+  56% { transform: rotate(46deg); }
+  78% { transform: rotate(76deg); }
+  100% { opacity: 0; transform: rotate(84deg); }
+}
+.g42-pf-card { animation: g42-pf-card calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.7, 1) both; }
+
+@keyframes g42-pf-fall {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-20deg); }
+  44% { opacity: 1; transform: translateY(0) rotate(4deg); }
+  62% { transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(6%) rotate(0deg); }
+}
+.g42-pf-fall { animation: g42-pf-fall calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* --- 5. Pep Talk — the kettle boils over ---------------------------------- */
+
+@keyframes g42-pt-kettle {
+  0% { opacity: 0; transform: scale(0.9, 1.06); }
+  24% { opacity: 1; transform: scale(1.06, 0.94) rotate(-2deg); }
+  44% { transform: scale(0.97, 1.03) rotate(2deg); }
+  64% { transform: scale(1.03, 0.98) rotate(-1.4deg); }
+  86% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.g42-pt-kettle { animation: g42-pt-kettle calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-pt-bubble {
+  0% { opacity: 0; transform: translateY(30%) scale(0.3); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60%) scale(1.3); }
+}
+.g42-pt-bubble { animation: g42-pt-bubble calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-pt-lid {
+  0% { opacity: 0; transform: translateY(20%) rotate(0deg); }
+  30% { opacity: 1; transform: translateY(-30%) rotate(-14deg); }
+  52% { transform: translateY(-10%) rotate(10deg); }
+  74% { transform: translateY(-46%) rotate(-22deg); }
+  100% { opacity: 0; transform: translateY(-90%) rotate(-40deg); }
+}
+.g42-pt-lid { animation: g42-pt-lid calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.35, 1) both; }
+
+@keyframes g42-pt-king {
+  0% { opacity: 0; transform: scale(0.9); }
+  40% { opacity: 1; transform: scale(1.06); }
+  60% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g42-pt-king { animation: g42-pt-king calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 6. Threat Ledger — the red string pulls itself taut ------------------- */
+
+@keyframes g42-tl-card {
+  0% { opacity: 0; transform: translateY(18%) rotate(-8deg) scale(0.85); }
+  40% { opacity: 1; transform: translateY(0) rotate(2deg) scale(1.04); }
+  58% { transform: rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g42-tl-card { animation: g42-tl-card calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-tl-taut {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(2.6); }
+  36% { opacity: 1; transform: scaleX(1) scaleY(1.6); }
+  56% { transform: scaleX(1) scaleY(1); }
+  80% { opacity: 1; transform: scaleX(1.02) scaleY(0.7); }
+  100% { opacity: 0; transform: scaleX(1.04) scaleY(0.5); }
+}
+.g42-tl-taut { animation: g42-tl-taut calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-tl-pin {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.7); }
+  30% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(60%, -70%) rotate(140deg) scale(0.8); }
+}
+.g42-tl-pin { animation: g42-tl-pin calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.4, 1) both; }
+
+/* --- 7. Ticker Tape — the reel runs away with itself ----------------------- */
+
+@keyframes g42-tt-dome {
+  0% { opacity: 0; transform: scale(0.8); }
+  38% { opacity: 1; transform: scale(1.05); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g42-tt-dome { animation: g42-tt-dome calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-tt-reel {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  26% { opacity: 1; transform: rotate(60deg) scale(1); }
+  60% { transform: rotate(420deg); }
+  100% { opacity: 0; transform: rotate(1080deg); }
+}
+.g42-tt-reel { animation: g42-tt-reel calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g42-tt-tape {
+  0% { opacity: 0; transform: scaleX(0.05) translateY(0); }
+  40% { opacity: 1; transform: scaleX(1) translateY(0); }
+  74% { opacity: 0.9; transform: scaleX(1) translateY(20%); }
+  100% { opacity: 0; transform: scaleX(1) translateY(50%); }
+}
+.g42-tt-tape { animation: g42-tt-tape calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+@keyframes g42-tt-pile {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  46% { opacity: 1; transform: scaleY(1.1); }
+  64% { transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.2); }
+}
+.g42-tt-pile { animation: g42-tt-pile calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* --- 8. Sugar Glider — the caramel comes over the rim ---------------------- */
+
+@keyframes g42-sg-pan {
+  0% { opacity: 0; transform: translateY(14%) scale(0.9); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  56% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-sg-pan { animation: g42-sg-pan calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-sg-cube {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-16deg) scale(1); }
+  36% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  72% { opacity: 0.8; transform: translateY(10%) rotate(6deg) scale(0.5, 0.4); }
+  100% { opacity: 0; transform: translateY(14%) scale(0.2, 0.2); }
+}
+.g42-sg-cube { animation: g42-sg-cube calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+
+@keyframes g42-sg-foam {
+  0% { opacity: 0; transform: scaleY(0.06) scaleX(0.7); }
+  34% { opacity: 1; transform: scaleY(1.3) scaleX(1.04); }
+  56% { transform: scaleY(1.7) scaleX(1.1); }
+  100% { opacity: 0; transform: scaleY(2.1) scaleX(1.16) translateY(-14%); }
+}
+.g42-sg-foam { animation: g42-sg-foam calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+@keyframes g42-sg-run {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  44% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.9) translateY(20%); }
+}
+.g42-sg-run { animation: g42-sg-run calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* --- 9. Do-Si-Do — the swing goes over the bar ----------------------------- */
+
+@keyframes g42-ds-frame {
+  0% { opacity: 0; transform: translateY(16%) scale(0.9); }
+  38% { opacity: 1; transform: translateY(0) scale(1.02); }
+  56% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-ds-frame { animation: g42-ds-frame calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ds-swing {
+  0% { opacity: 0; transform: rotate(0deg); }
+  18% { opacity: 1; transform: rotate(-22deg); }
+  38% { transform: rotate(34deg); }
+  58% { transform: rotate(-56deg); }
+  78% { transform: rotate(96deg); }
+  100% { opacity: 0; transform: rotate(180deg); }
+}
+.g42-ds-swing { animation: g42-ds-swing calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g42-ds-slack {
+  0% { opacity: 0; transform: scaleX(0.2) rotate(-30deg); }
+  44% { opacity: 1; transform: scaleX(1) rotate(6deg); }
+  66% { transform: scaleX(1) rotate(-4deg); }
+  100% { opacity: 0; transform: scaleX(1.1) rotate(14deg); }
+}
+.g42-ds-slack { animation: g42-ds-slack calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 10. Party Hat — the trick candle will not go out ---------------------- */
+
+@keyframes g42-ph-hat {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-14deg) scale(0.9); }
+  40% { opacity: 1; transform: translateY(3%) rotate(3deg) scale(1.04); }
+  58% { transform: translateY(0) rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg) scale(1); }
+}
+.g42-ph-hat { animation: g42-ph-hat calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ph-flame {
+  0% { opacity: 0; transform: scaleY(0.1) scaleX(0.6); }
+  20% { opacity: 1; transform: scaleY(1.25) scaleX(1.05); }
+  40% { transform: scaleY(0.85) scaleX(0.95); }
+  62% { transform: scaleY(1.35) scaleX(1.08); }
+  84% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(1.5) scaleX(0.9) translateY(-16%); }
+}
+.g42-ph-flame { animation: g42-ph-flame calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g42-ph-wax {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  46% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.8) translateY(24%); }
+}
+.g42-ph-wax { animation: g42-ph-wax calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g42-ph-puff {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.7) translateY(-24%); }
+}
+.g42-ph-puff { animation: g42-ph-puff calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 11. Gryphon Rider — the feather lights its own updraft ---------------- */
+
+@keyframes g42-gr-feather {
+  0% { opacity: 0; transform: rotate(-16deg) scale(0.82); }
+  36% { opacity: 1; transform: rotate(2deg) scale(1.04); }
+  56% { transform: rotate(0deg) scale(1); }
+  82% { opacity: 0.9; transform: rotate(-4deg) scale(0.98); }
+  100% { opacity: 0; transform: rotate(-12deg) scale(0.9); }
+}
+.g42-gr-feather { animation: g42-gr-feather calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-gr-barb {
+  0% { opacity: 0; transform: scaleY(0.12) rotate(-8deg); }
+  32% { opacity: 1; transform: scaleY(1.3) rotate(4deg); }
+  52% { transform: scaleY(0.95) rotate(-3deg); }
+  78% { opacity: 1; transform: scaleY(1.15) rotate(2deg); }
+  100% { opacity: 0; transform: scaleY(1.5) rotate(0deg) translateY(-20%); }
+}
+.g42-gr-barb { animation: g42-gr-barb calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+/* --- 12. Puppeteer's Gala — the strings take each other -------------------- */
+
+@keyframes g42-pg-bar {
+  0% { opacity: 0; transform: rotate(0deg) translateY(-14%); }
+  30% { opacity: 1; transform: rotate(-10deg) translateY(0); }
+  54% { transform: rotate(14deg); }
+  76% { transform: rotate(-20deg); }
+  100% { opacity: 0; transform: rotate(26deg); }
+}
+.g42-pg-bar { animation: g42-pg-bar calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.8, 0.35, 1) both; }
+
+@keyframes g42-pg-string {
+  0% { opacity: 0; transform: scaleY(0.2) skewX(10deg); }
+  34% { opacity: 1; transform: scaleY(1.14) skewX(-8deg); }
+  56% { transform: scaleY(0.96) skewX(4deg); }
+  82% { opacity: 1; transform: scaleY(1) skewX(0deg); }
+  100% { opacity: 0; transform: scaleY(1.1) skewX(-6deg); }
+}
+.g42-pg-string { animation: g42-pg-string calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-pg-puppet {
+  0% { opacity: 0; transform: translateY(16%) rotate(-10deg) scale(0.86); }
+  30% { opacity: 1; transform: translateY(-14%) rotate(8deg) scale(1.05); }
+  52% { transform: translateY(4%) rotate(-6deg) scale(0.98); }
+  76% { transform: translateY(-8%) rotate(4deg) scale(1.02); }
+  100% { opacity: 0; transform: translateY(2%) rotate(0deg) scale(1); }
+}
+.g42-pg-puppet { animation: g42-pg-puppet calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+/* --- 13. Hall of Doors — the dominoes find a fork -------------------------- */
+
+@keyframes g42-hd-set {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  34% { opacity: 0.95; transform: scaleX(1); }
+  80% { opacity: 0.5; }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g42-hd-set { animation: g42-hd-set calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-hd-fall {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.94); }
+  22% { opacity: 1; transform: rotate(-3deg) scale(1); }
+  50% { transform: rotate(42deg); }
+  74% { transform: rotate(70deg); }
+  100% { opacity: 0; transform: rotate(82deg); }
+}
+.g42-hd-fall { animation: g42-hd-fall calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.75, 1) both; }
+
+@keyframes g42-hd-fork {
+  0% { opacity: 0; transform: rotate(0deg) scale(1.1); }
+  30% { opacity: 1; transform: rotate(-6deg) scale(1.14); }
+  62% { transform: rotate(30deg) scale(1.1); }
+  100% { opacity: 0; transform: rotate(64deg) scale(1.06); }
+}
+.g42-hd-fork { animation: g42-hd-fork calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-hd-branch {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  44% { opacity: 1; transform: scaleX(1.05); }
+  62% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+.g42-hd-branch { animation: g42-hd-branch calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 14. Distant Thunder — the anvil head lights from inside --------------- */
+
+@keyframes g42-dt-cloud {
+  0% { opacity: 0; transform: translateY(-12%) scale(0.86); }
+  38% { opacity: 1; transform: translateY(0) scale(1.05); }
+  58% { transform: scale(1); }
+  84% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g42-dt-cloud { animation: g42-dt-cloud calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dt-flash {
+  0% { opacity: 0; transform: scale(0.4); }
+  16% { opacity: 1; transform: scale(1.1); }
+  34% { opacity: 0.3; transform: scale(0.95); }
+  52% { opacity: 0.95; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g42-dt-flash { animation: g42-dt-flash calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-dt-rumble {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.85; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+.g42-dt-rumble { animation: g42-dt-rumble calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* --- 15. Static Cling — the arc climbs the ladder -------------------------- */
+
+@keyframes g42-sc-rail {
+  0% { opacity: 0; transform: scaleY(0.6) scaleX(0.8); }
+  36% { opacity: 1; transform: scaleY(1.04) scaleX(1); }
+  56% { transform: scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g42-sc-rail { animation: g42-sc-rail calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-sc-arc {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4); }
+  24% { opacity: 1; transform: scaleX(1.1) scaleY(1.4); }
+  44% { opacity: 0.7; transform: scaleX(1) scaleY(0.9); }
+  64% { opacity: 1; transform: scaleX(1.06) scaleY(1.2); }
+  100% { opacity: 0; transform: scaleX(1.2) scaleY(0.6) translateY(-40%); }
+}
+.g42-sc-arc { animation: g42-sc-arc calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 16. Storm Door — the wind sock tears off ------------------------------ */
+
+@keyframes g42-sd-pole {
+  0% { opacity: 0; transform: scaleY(0.2) rotate(0deg); }
+  34% { opacity: 1; transform: scaleY(1.04) rotate(-2deg); }
+  56% { transform: scaleY(1) rotate(2deg); }
+  84% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(-3deg); }
+}
+.g42-sd-pole { animation: g42-sd-pole calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-sd-gust {
+  0% { opacity: 0; transform: scaleX(0.3) scaleY(0.5) rotate(6deg); }
+  30% { opacity: 1; transform: scaleX(1.06) scaleY(1.1) rotate(-6deg); }
+  54% { transform: scaleX(0.98) scaleY(0.92) rotate(3deg); }
+  80% { opacity: 1; transform: scaleX(1.04) scaleY(1.04) rotate(-4deg); }
+  100% { opacity: 0; transform: scaleX(1.1) scaleY(1) rotate(0deg); }
+}
+.g42-sd-gust { animation: g42-sd-gust calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g42-sd-tear {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(0deg); }
+  40% { opacity: 1; transform: scaleX(1.2) rotate(-10deg); }
+  100% { opacity: 0; transform: scaleX(1.4) rotate(-24deg) translateX(30%); }
+}
+.g42-sd-tear { animation: g42-sd-tear calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 17. Thunderstorm — one stone, then the barrage ------------------------ */
+
+@keyframes g42-ts-roof {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  34% { opacity: 1; transform: scaleX(1); }
+  54% { transform: scaleX(1) translateY(8%); }
+  70% { transform: scaleX(1) translateY(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g42-ts-roof { animation: g42-ts-roof calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ts-first {
+  0% { opacity: 0; transform: translateY(-90%) scale(0.7); }
+  46% { opacity: 1; transform: translateY(70%) scale(1); }
+  62% { transform: translateY(50%) scale(1.1); }
+  100% { opacity: 0; transform: translateY(90%) scale(0.8); }
+}
+.g42-ts-first { animation: g42-ts-first calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-ts-hail {
+  0% { opacity: 0; transform: translateY(-120%) scale(0.6); }
+  40% { opacity: 1; transform: translateY(80%) scale(1); }
+  58% { transform: translateY(56%) scale(1.06); }
+  100% { opacity: 0; transform: translate(24%, 110%) scale(0.7); }
+}
+.g42-ts-hail { animation: g42-ts-hail calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-ts-split {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.6) translateY(10%); }
+}
+.g42-ts-split { animation: g42-ts-split calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 18. Lightning Rod (t4) — the strap starts crawling -------------------- */
+
+@keyframes g42-lr-rod {
+  0% { opacity: 0; transform: translateY(-34%) scale(0.9); }
+  38% { opacity: 1; transform: translateY(3%) scale(1.04); }
+  56% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g42-lr-rod { animation: g42-lr-rod calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lr-strap {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  42% { opacity: 1; transform: scaleY(1.04); }
+  58% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g42-lr-strap { animation: g42-lr-strap calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lr-crawl {
+  0% { opacity: 0; transform: translateY(-70%) scaleX(0.4); }
+  30% { opacity: 1; transform: translateY(0) scaleX(1.2); }
+  56% { opacity: 0.6; transform: translateY(40%) scaleX(0.9); }
+  100% { opacity: 0; transform: translateY(120%) scaleX(1.4); }
+}
+.g42-lr-crawl { animation: g42-lr-crawl calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g42-lr-earth {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(0.4); }
+  36% { opacity: 1; transform: scaleX(1.3) scaleY(1.4); }
+  100% { opacity: 0; transform: scaleX(2) scaleY(0.8); }
+}
+.g42-lr-earth { animation: g42-lr-earth calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 19. Blood Moon — the umbra gets greedy -------------------------------- */
+
+@keyframes g42-bm-moon {
+  0% { opacity: 0; transform: translateY(20%) scale(0.8); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  56% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g42-bm-moon { animation: g42-bm-moon calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-bm-umbra {
+  0% { opacity: 0; transform: translateX(-96%) scale(1); }
+  30% { opacity: 0.95; transform: translateX(-58%) scale(1); }
+  62% { transform: translateX(-16%) scale(1); }
+  84% { transform: translateX(4%) scale(1.02); }
+  100% { opacity: 0; transform: translateX(20%) scale(1.04); }
+}
+.g42-bm-umbra { animation: g42-bm-umbra calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.7, 1) both; }
+
+@keyframes g42-bm-flush {
+  0% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; transform: scale(1.06); }
+  74% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.g42-bm-flush { animation: g42-bm-flush calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-bm-halo {
+  0% { opacity: 0; transform: scale(0.5); }
+  44% { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+.g42-bm-halo { animation: g42-bm-halo calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* --- 20. Sandstorm — grain dust down the granary --------------------------- */
+
+@keyframes g42-ss-chute {
+  0% { opacity: 0; transform: translateY(-20%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(0) scale(1.03); }
+  58% { transform: scale(1); }
+  84% { opacity: 1; transform: translateY(2%); }
+  100% { opacity: 0; transform: translateY(4%); }
+}
+.g42-ss-chute { animation: g42-ss-chute calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-ss-dust {
+  0% { opacity: 0; transform: scale(0.3, 0.4); }
+  40% { opacity: 0.9; transform: scale(1.1, 1); }
+  74% { opacity: 0.7; transform: scale(1.4, 1.1); }
+  100% { opacity: 0; transform: scale(1.9, 1.2); }
+}
+.g42-ss-dust { animation: g42-ss-dust calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-ss-flash {
+  0% { opacity: 0; transform: scale(0.2); }
+  22% { opacity: 1; transform: scale(1.25); }
+  46% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+.g42-ss-flash { animation: g42-ss-flash calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 21. Lightning Rod (t7) — the jar bank gives it back ------------------- */
+
+@keyframes g42-lj-bench {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  36% { opacity: 1; transform: scaleX(1); }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleX(1.02); }
+}
+.g42-lj-bench { animation: g42-lj-bench calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-lj-jar {
+  0% { opacity: 0; transform: translateY(16%) scaleY(0.8); }
+  30% { opacity: 1; transform: translateY(0) scaleY(1.06); }
+  52% { transform: scaleY(0.98); }
+  72% { transform: scaleY(1.04) scaleX(1.02); }
+  88% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g42-lj-jar { animation: g42-lj-jar calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lj-knob {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.15); }
+  60% { transform: scale(0.95); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g42-lj-knob { animation: g42-lj-knob calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lj-back {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(2.4); }
+  18% { opacity: 1; transform: scaleX(1.06) scaleY(1.6); }
+  36% { opacity: 0.4; transform: scaleX(1) scaleY(0.8); }
+  56% { opacity: 1; transform: scaleX(1.02) scaleY(1.3); }
+  100% { opacity: 0; transform: scaleX(1.06) scaleY(0.6); }
+}
+.g42-lj-back { animation: g42-lj-back calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 22. Stormcrossing — St Elmo's fire runs the rigging ------------------- */
+
+@keyframes g42-se-mast {
+  0% { opacity: 0; transform: scaleY(0.7) rotate(-3deg); }
+  36% { opacity: 1; transform: scaleY(1.03) rotate(1.5deg); }
+  56% { transform: scaleY(1) rotate(0deg); }
+  78% { transform: rotate(-1.5deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g42-se-mast { animation: g42-se-mast calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-se-bead {
+  0% { opacity: 0; transform: scale(0.2); }
+  26% { opacity: 1; transform: scale(1.3); }
+  48% { opacity: 0.6; transform: scale(0.9); }
+  70% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.5) translateY(-30%); }
+}
+.g42-se-bead { animation: g42-se-bead calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-se-yard {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1.06); }
+  60% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.14); }
+}
+.g42-se-yard { animation: g42-se-yard calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-se-truck {
+  0% { opacity: 0; transform: scale(0.3); }
+  36% { opacity: 1; transform: scale(1.2); }
+  58% { transform: scale(0.96); }
+  78% { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g42-se-truck { animation: g42-se-truck calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 23. Olympus Voicemail — the tube fills up ----------------------------- */
+
+@keyframes g42-vm-horn {
+  0% { opacity: 0; transform: translateX(-16%) scale(0.88); }
+  38% { opacity: 1; transform: translateX(0) scale(1.04); }
+  56% { transform: scale(1); }
+  76% { transform: scale(1.03, 0.97); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-vm-horn { animation: g42-vm-horn calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-vm-ring {
+  0% { opacity: 0; transform: scale(0.3); }
+  36% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.9) translateX(30%); }
+}
+.g42-vm-ring { animation: g42-vm-ring calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-vm-spit {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(2.2); }
+  26% { opacity: 1; transform: scaleX(1.08) scaleY(1.3); }
+  48% { transform: scaleX(1) scaleY(0.9); }
+  74% { opacity: 1; transform: scaleX(1.04) scaleY(1.1); }
+  100% { opacity: 0; transform: scaleX(1.1) scaleY(0.6); }
+}
+.g42-vm-spit { animation: g42-vm-spit calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 24. Menagerie Stampede — the latch lets go ---------------------------- */
+
+@keyframes g42-ms-gate {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.94); }
+  26% { opacity: 1; transform: rotate(-4deg) scale(1); }
+  54% { transform: rotate(38deg); }
+  78% { transform: rotate(62deg); }
+  100% { opacity: 0; transform: rotate(74deg); }
+}
+.g42-ms-gate { animation: g42-ms-gate calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-ms-latch {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.8); }
+  28% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.1); }
+  100% { opacity: 0; transform: translate(70%, -90%) rotate(180deg) scale(0.8); }
+}
+.g42-ms-latch { animation: g42-ms-latch calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.4, 1) both; }
+
+@keyframes g42-ms-hoof {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.6); }
+  32% { opacity: 1; transform: translateY(0) scale(1.1); }
+  50% { transform: translateY(0) scale(1); }
+  78% { opacity: 0.8; transform: translateY(0) scale(0.98); }
+  100% { opacity: 0; transform: translateY(6%) scale(0.94); }
+}
+.g42-ms-hoof { animation: g42-ms-hoof calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* --- 25. Closed for Cleaning — the bucket will not stop foaming ------------ */
+
+@keyframes g42-cc-bucket {
+  0% { opacity: 0; transform: translateY(20%) scale(0.88); }
+  38% { opacity: 1; transform: translateY(0) scale(1.04); }
+  56% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-cc-bucket { animation: g42-cc-bucket calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-cc-mop {
+  0% { opacity: 0; transform: rotate(-26deg) scale(0.9); }
+  36% { opacity: 1; transform: rotate(6deg) scale(1.03); }
+  56% { transform: rotate(-3deg) scale(1); }
+  80% { opacity: 1; transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g42-cc-mop { animation: g42-cc-mop calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-cc-suds {
+  0% { opacity: 0; transform: scale(0.2); }
+  38% { opacity: 1; transform: scale(1.1) translateY(-14%); }
+  70% { opacity: 0.9; transform: scale(1.25) translateY(-30%); }
+  100% { opacity: 0; transform: scale(1.5) translateY(-52%); }
+}
+.g42-cc-suds { animation: g42-cc-suds calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-cc-spill {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 1; transform: scaleX(1.1); }
+  100% { opacity: 0; transform: scaleX(1.7) translateY(20%); }
+}
+.g42-cc-spill { animation: g42-cc-spill calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- 26. Do Not Disturb — the airlock picks up the pace -------------------- */
+
+@keyframes g42-dd-jar {
+  0% { opacity: 0; transform: translateY(14%) scale(0.9); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  58% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-dd-jar { animation: g42-dd-jar calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dd-lock {
+  0% { opacity: 0; transform: rotate(-10deg) scale(0.8); }
+  36% { opacity: 1; transform: rotate(3deg) scale(1.05); }
+  54% { transform: rotate(0deg) scale(1); }
+  72% { transform: rotate(-4deg); }
+  88% { opacity: 1; transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g42-dd-lock { animation: g42-dd-lock calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-dd-bubble {
+  0% { opacity: 0; transform: translateY(30%) scale(0.3); }
+  34% { opacity: 1; transform: translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-90%) scale(1.4); }
+}
+.g42-dd-bubble { animation: g42-dd-bubble calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g42-dd-bung {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  30% { opacity: 1; transform: translateY(-30%) rotate(-16deg); }
+  100% { opacity: 0; transform: translateY(-150%) rotate(-70deg); }
+}
+.g42-dd-bung { animation: g42-dd-bung calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.4, 1) both; }
+
+/* --- 27. Margin Notes — the tabs take the book ----------------------------- */
+
+@keyframes g42-mn-book {
+  0% { opacity: 0; transform: translateY(16%) rotate(-4deg) scale(0.9); }
+  38% { opacity: 1; transform: translateY(0) rotate(1deg) scale(1.03); }
+  56% { transform: rotate(0deg) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-mn-book { animation: g42-mn-book calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-mn-first {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.2); }
+  42% { opacity: 1; transform: translateX(0) scaleX(1.06); }
+  60% { transform: scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(6%) scaleX(1); }
+}
+.g42-mn-first { animation: g42-mn-first calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-mn-tab {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.1) rotate(-8deg); }
+  40% { opacity: 1; transform: translateX(4%) scaleX(1.08) rotate(2deg); }
+  58% { transform: translateX(0) scaleX(1) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(10%) scaleX(1.04); }
+}
+.g42-mn-tab { animation: g42-mn-tab calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-mn-scrawl {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  44% { opacity: 1; transform: scaleY(1.1); }
+  100% { opacity: 0; transform: scaleY(1.7) translateY(16%); }
+}
+.g42-mn-scrawl { animation: g42-mn-scrawl calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* --- 28. Reserved Table — the coupe tower overflows ------------------------ */
+
+@keyframes g42-rt-tower {
+  0% { opacity: 0; transform: scaleY(0.4); }
+  38% { opacity: 1; transform: scaleY(1.04); }
+  56% { transform: scaleY(1); }
+  84% { opacity: 0.7; }
+  100% { opacity: 0; transform: scaleY(1.02); }
+}
+.g42-rt-tower { animation: g42-rt-tower calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-rt-pour {
+  0% { opacity: 0; transform: scaleY(0.04); }
+  34% { opacity: 1; transform: scaleY(1.1); }
+  70% { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.2); }
+}
+.g42-rt-pour { animation: g42-rt-pour calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g42-rt-tier {
+  0% { opacity: 0; transform: scale(0.7) translateY(-10%); }
+  36% { opacity: 1; transform: scale(1.08) translateY(0); }
+  56% { transform: scale(1); }
+  78% { opacity: 1; transform: scale(1.03) translateY(3%); }
+  100% { opacity: 0; transform: scale(1.06) translateY(8%); }
+}
+.g42-rt-tier { animation: g42-rt-tier calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-rt-flood {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4); }
+  46% { opacity: 1; transform: scaleX(1.1) scaleY(1.2); }
+  100% { opacity: 0; transform: scaleX(1.7) scaleY(0.9); }
+}
+.g42-rt-flood { animation: g42-rt-flood calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 29. Ribbon Cutting — the cut runs the whole ribbon -------------------- */
+
+@keyframes g42-rc-ribbon {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4); }
+  34% { opacity: 1; transform: scaleX(1.02) scaleY(1); }
+  54% { transform: scaleX(1); }
+  74% { opacity: 1; transform: scaleY(0.8); }
+  100% { opacity: 0; transform: scaleY(0.5); }
+}
+.g42-rc-ribbon { animation: g42-rc-ribbon calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-rc-shear {
+  0% { opacity: 0; transform: rotate(-24deg) scale(0.86); }
+  40% { opacity: 1; transform: rotate(6deg) scale(1.08); }
+  58% { transform: rotate(0deg) scale(1); }
+  82% { opacity: 1; transform: rotate(-4deg); }
+  100% { opacity: 0; transform: rotate(-14deg) scale(0.96); }
+}
+.g42-rc-shear { animation: g42-rc-shear calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-rc-whip {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(0deg); }
+  38% { opacity: 1; transform: scaleX(1.06) rotate(6deg); }
+  66% { transform: scaleX(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scaleX(1.2) rotate(16deg) translateX(20%); }
+}
+.g42-rc-whip { animation: g42-rc-whip calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- 30. The Management — the engraving will not stop ---------------------- */
+
+@keyframes g42-mg-plate {
+  0% { opacity: 0; transform: translateY(-20%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(2%) scale(1.04); }
+  54% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-mg-plate { animation: g42-mg-plate calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-mg-burin {
+  0% { opacity: 0; transform: translate(-30%, -20%) rotate(-14deg); }
+  30% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  70% { transform: translate(110%, 10%) rotate(6deg); }
+  100% { opacity: 0; transform: translate(190%, 16%) rotate(10deg); }
+}
+.g42-mg-burin { animation: g42-mg-burin calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.8, 0.4, 1) both; }
+
+@keyframes g42-mg-cut {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  40% { opacity: 1; transform: scaleX(0.7); }
+  74% { transform: scaleX(1.14); }
+  100% { opacity: 0; transform: scaleX(1.4); }
+}
+.g42-mg-cut { animation: g42-mg-cut calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g42-mg-swarf {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+  36% { opacity: 1; transform: translate(10%, -40%) rotate(140deg) scale(1); }
+  100% { opacity: 0; transform: translate(30%, 40%) rotate(320deg) scale(0.7); }
+}
+.g42-mg-swarf { animation: g42-mg-swarf calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 31. Kazoo Fanfare — the cork leaves first ----------------------------- */
+
+@keyframes g42-kf-bottle {
+  0% { opacity: 0; transform: rotate(-18deg) scale(0.9); }
+  28% { opacity: 1; transform: rotate(8deg) scale(1.04); }
+  46% { transform: rotate(-6deg) scale(0.99); }
+  66% { transform: rotate(4deg) scale(1.02); }
+  86% { opacity: 1; transform: rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g42-kf-bottle { animation: g42-kf-bottle calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-kf-cork {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.8); }
+  22% { opacity: 1; transform: translateY(-40%) rotate(60deg) scale(1); }
+  100% { opacity: 0; transform: translateY(-260%) rotate(420deg) scale(0.8); }
+}
+.g42-kf-cork { animation: g42-kf-cork calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.8, 0.4, 1) both; }
+
+@keyframes g42-kf-plume {
+  0% { opacity: 0; transform: scaleY(0.06) scaleX(0.5); }
+  34% { opacity: 1; transform: scaleY(1.2) scaleX(1); }
+  64% { transform: scaleY(1.7) scaleX(1.1); }
+  100% { opacity: 0; transform: scaleY(2.2) scaleX(1.25); }
+}
+.g42-kf-plume { animation: g42-kf-plume calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.35, 1) both; }
+
+@keyframes g42-kf-bit {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.4); }
+  32% { opacity: 1; transform: translate(20%, -70%) rotate(120deg) scale(1); }
+  100% { opacity: 0; transform: translate(50%, 60%) rotate(400deg) scale(0.8); }
+}
+.g42-kf-bit { animation: g42-kf-bit calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.7, 0.4, 1) both; }
+
+/* --- 32. Left on Read — the dots multiply ---------------------------------- */
+
+@keyframes g42-lo-bubble {
+  0% { opacity: 0; transform: translateY(18%) scale(0.8); }
+  40% { opacity: 1; transform: translateY(0) scale(1.05); }
+  58% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g42-lo-bubble { animation: g42-lo-bubble calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lo-dot {
+  0% { opacity: 0; transform: translateY(0) scale(0.4); }
+  30% { opacity: 1; transform: translateY(-40%) scale(1.1); }
+  54% { transform: translateY(0) scale(1); }
+  78% { transform: translateY(-26%) scale(1.05); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g42-lo-dot { animation: g42-lo-dot calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g42-lo-row {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(-20%); }
+  42% { opacity: 1; transform: scaleX(1.06) translateY(0); }
+  60% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2) translateY(26%); }
+}
+.g42-lo-row { animation: g42-lo-row calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-lo-burst {
+  0% { opacity: 0; transform: scale(0.9); }
+  40% { opacity: 1; transform: scale(1.06); }
+  70% { transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g42-lo-burst { animation: g42-lo-burst calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 33. Growth Potion — one seed sets the whole flask --------------------- */
+
+@keyframes g42-gp-flask {
+  0% { opacity: 0; transform: translateY(14%) scale(0.9); }
+  38% { opacity: 1; transform: translateY(0) scale(1.03); }
+  56% { transform: scale(1); }
+  80% { opacity: 1; transform: scale(1.04, 0.98); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g42-gp-flask { animation: g42-gp-flask calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-gp-seed {
+  0% { opacity: 0; transform: translateY(-180%) scale(0.5); }
+  36% { opacity: 1; transform: translateY(0) scale(1.2); }
+  56% { transform: translateY(0) scale(0.9); }
+  100% { opacity: 0; transform: translateY(0) scale(1.6); }
+}
+.g42-gp-seed { animation: g42-gp-seed calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+@keyframes g42-gp-spike {
+  0% { opacity: 0; transform: scaleY(0.04) scaleX(0.5); }
+  34% { opacity: 1; transform: scaleY(1.15) scaleX(1); }
+  54% { transform: scaleY(1) scaleX(0.95); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1.1) scaleX(1); }
+}
+.g42-gp-spike { animation: g42-gp-spike calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.95, 0.3, 1) both; }
+
+@keyframes g42-gp-solid {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  30% { opacity: 1; transform: scaleY(1.06); }
+  48% { transform: scaleY(1) scaleX(1.04); }
+  76% { opacity: 1; transform: scaleY(1) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(1.02); }
+}
+.g42-gp-solid { animation: g42-gp-solid calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.95, 0.3, 1) both; }
+
+/* --- 34. Fire Escape — the ladder keeps unfolding -------------------------- */
+
+@keyframes g42-fe-rail {
+  0% { opacity: 0; transform: scale(0.5); }
+  36% { opacity: 1; transform: scale(1.1); }
+  54% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g42-fe-rail { animation: g42-fe-rail calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-fe-rung {
+  0% { opacity: 0; transform: scaleX(0.06) rotate(-6deg); }
+  32% { opacity: 1; transform: scaleX(1.12) rotate(3deg); }
+  50% { transform: scaleX(1) rotate(0deg); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1.04) rotate(1deg); }
+}
+.g42-fe-rung { animation: g42-fe-rung calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; }
+
+@keyframes g42-fe-slam {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(2.4); }
+  36% { opacity: 1; transform: scaleX(1.3) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(2) scaleY(0.5); }
+}
+.g42-fe-slam { animation: g42-fe-slam calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 35. Beneath Her Dignity — the dropped glove smoulders ----------------- */
+
+@keyframes g42-bd-glove {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-18deg) scale(0.92); }
+  36% { opacity: 1; transform: translateY(2%) rotate(4deg) scale(1.03); }
+  54% { transform: translateY(0) rotate(0deg) scale(1); }
+  82% { opacity: 1; transform: rotate(-2deg); }
+  100% { opacity: 0; transform: rotate(-6deg) scale(0.98); }
+}
+.g42-bd-glove { animation: g42-bd-glove calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-bd-curl {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.2); }
+  56% { opacity: 0.8; transform: scale(0.95) translateY(-14%); }
+  100% { opacity: 0; transform: scale(1.4) translateY(-46%); }
+}
+.g42-bd-curl { animation: g42-bd-curl calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-bd-char {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 1; transform: scaleX(1.1); }
+  100% { opacity: 0; transform: scaleX(1.5); }
+}
+.g42-bd-char { animation: g42-bd-char calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* --- 36. Royal Name Tag — the tag burns through ---------------------------- */
+
+@keyframes g42-nt-tag {
+  0% { opacity: 0; transform: translateY(-24%) rotate(-8deg) scale(0.9); }
+  38% { opacity: 1; transform: translateY(2%) rotate(2deg) scale(1.04); }
+  56% { transform: translateY(0) rotate(0deg) scale(1); }
+  84% { opacity: 1; transform: rotate(-1deg); }
+  100% { opacity: 0; transform: rotate(-4deg); }
+}
+.g42-nt-tag { animation: g42-nt-tag calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g42-nt-word {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  40% { opacity: 1; transform: scaleX(1.04); }
+  70% { opacity: 0.6; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.9); }
+}
+.g42-nt-word { animation: g42-nt-word calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-nt-scorch {
+  0% { opacity: 0; transform: scale(0.15); }
+  40% { opacity: 1; transform: scale(1.15); }
+  74% { opacity: 0.9; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+.g42-nt-scorch { animation: g42-nt-scorch calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-nt-clip {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  36% { opacity: 1; transform: rotate(-6deg) scale(1); }
+  70% { transform: rotate(28deg); }
+  100% { opacity: 0; transform: rotate(52deg) translateY(20%); }
+}
+.g42-nt-clip { animation: g42-nt-clip calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* --- 37. Slow Burn — the fuse spits all the way ---------------------------- */
+
+@keyframes g42-sb-cord {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  36% { opacity: 1; transform: scaleX(1.02); }
+  54% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g42-sb-cord { animation: g42-sb-cord calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-sb-spark {
+  0% { opacity: 0; transform: translateX(0) scale(0.4); }
+  22% { opacity: 1; transform: translateX(30%) scale(1); }
+  52% { transform: translateX(130%) scale(1.1); }
+  76% { transform: translateX(300%) scale(1.3); }
+  100% { opacity: 0; transform: translateX(520%) scale(1.5); }
+}
+.g42-sb-spark { animation: g42-sb-spark calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.75, 1) both; }
+
+@keyframes g42-sb-spit {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  30% { opacity: 1; transform: translate(20%, -60%) scale(1.1); }
+  100% { opacity: 0; transform: translate(60%, -140%) scale(0.6); }
+}
+.g42-sb-spit { animation: g42-sb-spit calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 38. Fire Drill — the heads go off in order ---------------------------- */
+
+@keyframes g42-fd-pipe {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  34% { opacity: 1; transform: scaleX(1.02); }
+  52% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g42-fd-pipe { animation: g42-fd-pipe calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-fd-head {
+  0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+  26% { opacity: 1; transform: scale(1.2) rotate(-6deg); }
+  46% { transform: scale(0.95) rotate(4deg); }
+  72% { opacity: 1; transform: scale(1.05) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.1) translateY(10%); }
+}
+.g42-fd-head { animation: g42-fd-head calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g42-fd-spray {
+  0% { opacity: 0; transform: scaleY(0.06) scaleX(0.4); }
+  40% { opacity: 1; transform: scaleY(1.1) scaleX(1.1); }
+  100% { opacity: 0; transform: scaleY(1.6) scaleX(1.5); }
+}
+.g42-fd-spray { animation: g42-fd-spray calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* --- 39. Scorched Diagonal — the flare outruns the hand -------------------- */
+
+@keyframes g42-sx-strip {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  32% { opacity: 1; transform: scaleX(1.02); }
+  52% { transform: scaleX(1); }
+  84% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g42-sx-strip { animation: g42-sx-strip calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-sx-scratch {
+  0% { opacity: 0; transform: scaleX(0.04) translateX(0); }
+  30% { opacity: 1; transform: scaleX(1.2) translateX(20%); }
+  100% { opacity: 0; transform: scaleX(1.5) translateX(60%); }
+}
+.g42-sx-scratch { animation: g42-sx-scratch calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-sx-head {
+  0% { opacity: 0; transform: scale(0.2) rotate(-10deg); }
+  24% { opacity: 1; transform: scale(1.4) rotate(4deg); }
+  46% { transform: scale(0.9) rotate(-2deg); }
+  72% { opacity: 1; transform: scale(1.2) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.5) translateY(-14%); }
+}
+.g42-sx-head { animation: g42-sx-head calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; }
+
+@keyframes g42-sx-flare {
+  0% { opacity: 0; transform: scale(0.2); }
+  26% { opacity: 1; transform: scale(1.3); }
+  56% { opacity: 0.8; transform: scale(1.1) translateX(20%); }
+  100% { opacity: 0; transform: scale(1.8) translateX(60%); }
+}
+.g42-sx-flare { animation: g42-sx-flare calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g42-sx-hand {
+  0% { opacity: 0; transform: translateX(20%) scale(0.9); }
+  34% { opacity: 1; transform: translateX(0) scale(1); }
+  62% { transform: translateX(-40%) rotate(-10deg); }
+  100% { opacity: 0; transform: translateX(-90%) rotate(-18deg); }
+}
+.g42-sx-hand { animation: g42-sx-hand calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* --- 40. Barn Door — the slam shakes the loft down ------------------------- */
+
+@keyframes g42-bn-door {
+  0% { opacity: 0; transform: rotate(-64deg) scale(0.96); }
+  34% { opacity: 1; transform: rotate(6deg) scale(1.02); }
+  50% { transform: rotate(-3deg) scale(1); }
+  68% { transform: rotate(1deg); }
+  86% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g42-bn-door { animation: g42-bn-door calc(1s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.6, 1) both; }
+
+@keyframes g42-bn-bar {
+  0% { opacity: 0; transform: translateY(-160%) rotate(-8deg); }
+  40% { opacity: 1; transform: translateY(6%) rotate(2deg); }
+  56% { transform: translateY(0) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g42-bn-bar { animation: g42-bn-bar calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g42-bn-dust {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.4, 0.5); }
+  36% { opacity: 1; transform: translateY(0) scale(1.1, 1); }
+  100% { opacity: 0; transform: translateY(40%) scale(1.6, 1.2); }
+}
+.g42-bn-dust { animation: g42-bn-dust calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g42-bn-boom {
+  0% { opacity: 0; transform: scale(0.3); }
+  38% { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(2); }
+}
+.g42-bn-boom { animation: g42-bn-boom calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* --- 41. Split the Timeline — one trap, then two, then four ---------------- */
+
+@keyframes g42-st-trap {
+  0% { opacity: 0; transform: rotate(-8deg) scale(0.88); }
+  36% { opacity: 1; transform: rotate(2deg) scale(1.04); }
+  54% { transform: rotate(0deg) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-30deg) scale(1); }
+}
+.g42-st-trap { animation: g42-st-trap calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g42-st-ball {
+  0% { opacity: 0; transform: translateY(-200%) scale(0.6); }
+  36% { opacity: 1; transform: translateY(0) scale(1.1); }
+  52% { transform: translateY(-30%) scale(1); }
+  100% { opacity: 0; transform: translateY(30%) scale(0.9); }
+}
+.g42-st-ball { animation: g42-st-ball calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+@keyframes g42-st-throw {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  20% { opacity: 1; transform: rotate(-4deg) scale(1); }
+  44% { transform: rotate(-52deg) scale(1.05); }
+  70% { transform: rotate(-84deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-96deg) scale(0.98); }
+}
+.g42-st-throw { animation: g42-st-throw calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.95, 0.3, 1) both; }
+
+@keyframes g42-st-arc {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  34% { opacity: 1; transform: translate(60%, -80%) scale(1); }
+  100% { opacity: 0; transform: translate(160%, 40%) scale(0.7); }
+}
+.g42-st-arc { animation: g42-st-arc calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.7, 0.4, 1) both; }
+
+/* --- Global kill switch ----------------------------------------------------
+   Settings animations-off parks every g42 play outright. */
+html[data-anim="off"] [class^="g42-"], html[data-anim="off"] [class*=" g42-"] { animation: none !important; opacity: 0 !important; }
