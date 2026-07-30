@@ -515,7 +515,7 @@ function LaundryChute({ role, delayMs }: SceneProps) {
           <span key={i} className="g21-tick absolute block" style={st({ ...dq(delayMs, 330, i * 60), ...box(0.24, 1.6, i * 1.3 + 1, 0), background: "#cfd8e0" })} />
         ))}
         {/* the bundle falls the whole real distance */}
-        <svg viewBox="0 0 24 24" className="g21-run absolute block" style={st({ ...d(delayMs, 420), ...box(1.2, 1.2, 0.3, 0) })}>
+        <svg viewBox="0 0 24 24" className="g21-run absolute block" style={st({ ...d(delayMs, 420), ...box(1, 1, 0.3, 0) })}>
           <path d="M3 9a9 7 0 0 1 18 0c0 4.6-2.4 7-9 7S3 13.6 3 9z" fill="#fff4d6" stroke="#23282e" strokeWidth="1.4" {...SJ} />
           <path d="M6.4 9.4c3 2.2 8.2 2.2 11.2 0" stroke="#23282e" strokeWidth="1.2" fill="none" {...SJ} />
         </svg>
@@ -1410,7 +1410,7 @@ function ClothesLine({ role, delayMs }: SceneProps) {
         {/* the line itself, sagging under what is hung on it */}
         <span className="g21-sag absolute block" style={st({ ...d(delayMs, 340), ...lane(0.16, -0.85), background: "#fff4d6" })} />
         {/* the pulley basket runs the whole real distance across */}
-        <svg viewBox="0 0 24 24" className="g21-run absolute block" style={st({ ...d(delayMs, 430), ...box(1.3, 1.3, 0.2, -0.2) })}>
+        <svg viewBox="0 0 24 24" className="g21-run absolute block" style={st({ ...d(delayMs, 430), ...box(1, 1, 0.2, -0.2) })}>
           <circle cx="12" cy="3.6" r="2.4" fill="none" stroke="#fff4d6" strokeWidth="1.8" />
           <path d="M12 6v3.2" stroke="#fff4d6" strokeWidth="1.6" {...SJ} />
           <path d="M4.4 9.2h15.2l-2.2 11.4H6.6z" fill="#222831" stroke="#cfd6dd" strokeWidth="1.5" {...SJ} />

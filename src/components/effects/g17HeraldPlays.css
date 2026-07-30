@@ -1,0 +1,1000 @@
+/* ============================================================================
+   g17HeraldPlays.css — motion for the 24 rule / edict plays
+   (src/components/effects/g17HeraldPlays.tsx).
+
+   House discipline, same as g26ShieldPlays.css / g29RallyPlays.css:
+   - keyframes animate ONLY transform and opacity (a static drop-shadow filter
+     is fine, animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (stagger + beat) land cleanly;
+   - every duration is scaled by --fx-dur (Settings animation-speed);
+   - every track ENDS at opacity 0, so a play never lingers: an announcement
+     leaves no decoration behind it;
+   - no border-radius is set in this file at all (the scenes carry their own
+     inline 50% / 999px dots and capsules, house rule scripts/check-rounded.ts);
+   - the whole g17- family is parked when animations are off (guard at the
+     bottom of this file).
+
+   GEOMETRY-DRIVEN TRACKS. This module is about a message REACHING people, so
+   eight keyframes read the geometry custom properties published by Board (see
+   effects/geometry.ts), and every scene uses at least one of them:
+     .g17-cry        the cry front runs out to the real distance   (--fx-len)
+     .g17-runlane    the lane opens to the real distance           (--fx-len)
+     .g17-carryfar   a courier / chit / rider covers the whole leg (--fx-len)
+     .g17-relayfar   the far respondent answers AT the far end     (--fx-len)
+     .g17-heardfar   a cast scene is heard as far as it must carry (--fx-len)
+     .g17-sideturn   a listener steps in from the CASTER's side    (--fx-side)
+     .g17-hitside    the per-square hit arrives from that side     (--fx-side)
+     .g17-hitorder   a later square is reached from further back   (--fx-index)
+     .g17-leanshadow the prop's shadow throws off the board centre (--fx-ox/oy)
+
+   The aim-staged cards keep their crier UPRIGHT (a plain BoardWideStage layer,
+   see CryLead in the module) and put only the travelling parts on the aim
+   stage, so a herald never lies on his side to point at a victim.
+   ========================================================================= */
+
+/* --- Board-scale atmosphere (always inside <BoardFrame>) ------------------- */
+
+@keyframes g17-wash {
+  0% { opacity: 0; transform: translateX(calc(var(--fx-ox, 0) * -0.5%)); }
+  24% { opacity: 1; transform: translateX(calc(var(--fx-ox, 0) * -0.9%)); }
+  68% { opacity: 0.44; transform: translateX(calc(var(--fx-ox, 0) * -1.2%)); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-ox, 0) * -1.4%)); }
+}
+.g17-wash { animation: g17-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-rim {
+  0% { opacity: 0; transform: scale(0.94); }
+  38% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g17-rim { animation: g17-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-veil {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  72% { opacity: 0.78; }
+  100% { opacity: 0; }
+}
+.g17-veil { animation: g17-veil calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Geometry-driven tracks ----------------------------------------------- */
+
+/* The cry front. Authored on the aim stage pointing right, scaled to the real
+   leg. The 0.5 floor keeps it readable on a play with no travel to measure. */
+@keyframes g17-cry {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  30% { opacity: 1; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.1)); }
+  78% { opacity: 0.8; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.1)); }
+  100% { opacity: 0; transform: scaleX(calc(0.58 + var(--fx-len, 0) * 0.1)); }
+}
+.g17-cry { animation: g17-cry calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The same run, but opening as a LANE: it widens as well as reaching. */
+@keyframes g17-runlane {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(0.3); }
+  34% { opacity: 1; transform: scaleX(calc(0.45 + var(--fx-len, 0) * 0.11)) scaleY(1); }
+  80% { opacity: 0.72; transform: scaleX(calc(0.45 + var(--fx-len, 0) * 0.11)) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.11)) scaleY(0.8); }
+}
+.g17-runlane { animation: g17-runlane calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* Something that CARRIES the words: a rider, a chit passed along, a dash of
+   speech crossing the field. It covers the play's own leg. One cell is about
+   100% of a seven-percent-wide layer on the fourteen-cell stage. */
+@keyframes g17-carryfar {
+  0% { opacity: 0; transform: translateX(-24%) scale(0.82); }
+  18% { opacity: 1; transform: translateX(0) scale(1); }
+  70% { transform: translateX(calc(var(--fx-len, 1) * 96%)) scale(1); }
+  88% { opacity: 1; transform: translateX(calc(var(--fx-len, 1) * 100%)) scale(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 1) * 104%)) scale(0.96); }
+}
+.g17-carryfar { animation: g17-carryfar calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.75, 0.35, 1) both; }
+
+/* The rider that travels with the reading: the same leg, with a saddle bob. */
+@keyframes g17-pp-ride {
+  0% { opacity: 0; transform: translate(-24%, 0) scale(0.82); }
+  18% { opacity: 1; transform: translate(0, -4%) scale(1); }
+  44% { transform: translate(calc(var(--fx-len, 1) * 52%), 3%) scale(1); }
+  70% { transform: translate(calc(var(--fx-len, 1) * 96%), -4%) scale(1); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-len, 1) * 100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 1) * 104%), 0) scale(0.96); }
+}
+.g17-pp-ride { animation: g17-pp-ride calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.75, 0.35, 1) both; }
+
+/* The answer at the FAR end: it lands late, and it lands at the real distance
+   the announcement had to cover. */
+@keyframes g17-relayfar {
+  0% { opacity: 0; transform: translateX(calc(90% + var(--fx-len, 1) * 96%)) scale(0.24); }
+  36% { opacity: 1; transform: translateX(calc(90% + var(--fx-len, 1) * 96%)) scale(1.14); }
+  52% { transform: translateX(calc(90% + var(--fx-len, 1) * 96%)) scale(1); }
+  84% { opacity: 0.92; }
+  100% { opacity: 0; transform: translateX(calc(98% + var(--fx-len, 1) * 96%)) scale(1.03); }
+}
+.g17-relayfar { animation: g17-relayfar calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A cast-staged announcement is heard as far as it has to carry: the ring
+   settles at the real distance instead of at a decorative fixed radius. */
+@keyframes g17-heardfar {
+  0% { opacity: 0; transform: scale(0.12); }
+  32% { opacity: 0.9; transform: scale(calc(0.5 + var(--fx-len, 0) * 0.17)); }
+  74% { opacity: 0.4; transform: scale(calc(0.58 + var(--fx-len, 0) * 0.19)); }
+  100% { opacity: 0; transform: scale(calc(0.66 + var(--fx-len, 0) * 0.21)); }
+}
+.g17-heardfar { animation: g17-heardfar calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* A listener drawn in from behind the caster's own back rank. */
+@keyframes g17-sideturn {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 120%)) scale(0.84); }
+  34% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1.06); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -10%)) scale(1); }
+}
+.g17-sideturn { animation: g17-sideturn calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The prop's shadow, thrown away from the board centre on both axes. */
+@keyframes g17-leanshadow {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.3); }
+  36% { opacity: 0.9; transform: translate(calc(var(--fx-ox, 0) * 2.2%), calc(var(--fx-oy, 0) * 1.4%)) scaleX(1); }
+  82% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+}
+.g17-leanshadow { animation: g17-leanshadow calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Per-square target cut ------------------------------------------------ */
+
+@keyframes g17-hit {
+  0% { opacity: 0; transform: scale(0.38); }
+  36% { opacity: 1; transform: scale(1.1); }
+  54% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g17-hit { animation: g17-hit calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-hit2 {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.g17-hit2 { animation: g17-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* The word reaches a later square from FURTHER BACK: --fx-index is this
+   square's place in the victim order, so the sixth name called visibly travels
+   more ground than the first. */
+@keyframes g17-hitorder {
+  0% { opacity: 0; transform: translateX(calc(-26% - var(--fx-index, 0) * 9%)) scale(0.6); }
+  38% { opacity: 1; transform: translateX(0) scale(1.08); }
+  56% { transform: translateX(0) scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-index, 0) * 3%)) scale(1.02); }
+}
+.g17-hitorder { animation: g17-hitorder calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* The hit arrives from the caster's side: the announcement came from there. */
+@keyframes g17-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 88%)) scale(0.7); }
+  40% { opacity: 1; transform: translateY(0) scale(1.06); }
+  58% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -12%)) scale(1); }
+}
+.g17-hitside { animation: g17-hitside calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- Entrance beats (the card arriving in a hand, ~56% crop) --------------- */
+
+@keyframes g17-ent-rise {
+  0% { opacity: 0; transform: translateY(36%) scale(0.78); }
+  34% { opacity: 1; transform: translateY(0) scale(1.05); }
+  48% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-5%) scale(1); }
+}
+.g17-ent-rise { animation: g17-ent-rise calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ent-drop {
+  0% { opacity: 0; transform: translateY(-66%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(6%) scale(1); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g17-ent-drop { animation: g17-ent-drop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g17-ent-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  34% { opacity: 1; transform: scale(1.16); }
+  52% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g17-ent-pop { animation: g17-ent-pop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ent-slide {
+  0% { opacity: 0; transform: translateX(-56%) scale(0.86); }
+  32% { opacity: 1; transform: translateX(6%) scale(1.03); }
+  48% { transform: translateX(0) scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(18%) scale(1); }
+}
+.g17-ent-slide { animation: g17-ent-slide calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- Shared seasoning ------------------------------------------------------ */
+
+@keyframes g17-sift {
+  0% { opacity: 0; transform: translateY(-34%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(100%) scale(0.6); }
+}
+.g17-sift { animation: g17-sift calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g17-glint {
+  0% { opacity: 0; transform: scale(0.2); }
+  42% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+.g17-glint { animation: g17-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-mote {
+  0% { opacity: 0; transform: translateY(18%) scale(0.5); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-42%) scale(0.72); }
+}
+.g17-mote { animation: g17-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 1. Market Lane — the measure called at the market cross ---------------- */
+
+@keyframes g17-ml-cross {
+  0% { opacity: 0; transform: translateY(26%) scale(0.72); }
+  32% { opacity: 1; transform: translateY(0) scale(1.06); }
+  46% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.01); }
+}
+.g17-ml-cross { animation: g17-ml-cross calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ml-rod {
+  0% { opacity: 0; transform: rotate(-26deg) translateY(-40%); }
+  28% { opacity: 1; transform: rotate(4deg) translateY(0); }
+  40% { transform: rotate(-3deg); }
+  56% { transform: rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg) translateY(4%); }
+}
+.g17-ml-rod { animation: g17-ml-rod calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-ml-board {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(0.9); }
+  34% { opacity: 1; transform: scaleX(1.12) scaleY(1.02); }
+  52% { transform: scaleX(1) scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.98); }
+}
+.g17-ml-board { animation: g17-ml-board calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 2. Meet Kevin — oyez, and a name -------------------------------------- */
+
+@keyframes g17-mk-bell {
+  0% { opacity: 0; transform: rotate(-30deg) scale(0.86); }
+  22% { opacity: 1; transform: rotate(20deg) scale(1.04); }
+  40% { transform: rotate(-16deg) scale(1); }
+  58% { transform: rotate(10deg); }
+  74% { transform: rotate(-4deg); }
+  88% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g17-mk-bell { animation: g17-mk-bell calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+@keyframes g17-mk-oyez {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(30%); }
+  38% { opacity: 1; transform: scaleX(1.1) translateY(0); }
+  54% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) translateY(-24%); }
+}
+.g17-mk-oyez { animation: g17-mk-oyez calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-mk-name {
+  0% { opacity: 0; transform: translateY(52%) scale(0.7); }
+  36% { opacity: 1; transform: translateY(-4%) scale(1.06); }
+  52% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8%) scale(1); }
+}
+.g17-mk-name { animation: g17-mk-name calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 3. Nesting Doll — the cry repeated, smaller and further ---------------- */
+
+@keyframes g17-nd-near {
+  0% { opacity: 0; transform: scale(0.7) translateY(20%); }
+  30% { opacity: 1; transform: scale(1.08) translateY(0); }
+  44% { transform: scale(1); }
+  62% { transform: scale(1.04); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-nd-near { animation: g17-nd-near calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-nd-mid {
+  0% { opacity: 0; transform: translateX(-16%) scale(0.4); }
+  38% { opacity: 1; transform: translateX(0) scale(1.1); }
+  54% { transform: scale(1); }
+  70% { transform: scale(1.05); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-nd-mid { animation: g17-nd-mid calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 4. Opposition Research — the ear trumpet at the back ------------------- */
+
+@keyframes g17-er-hood {
+  0% { opacity: 0; transform: translateY(22%) scale(0.82); }
+  34% { opacity: 1; transform: translateY(0) scale(1.03); }
+  50% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+}
+.g17-er-hood { animation: g17-er-hood calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-er-ear {
+  0% { opacity: 0; transform: rotate(26deg) scale(0.7); }
+  32% { opacity: 1; transform: rotate(-14deg) scale(1.06); }
+  50% { transform: rotate(-6deg) scale(1); }
+  70% { transform: rotate(-10deg); }
+  86% { opacity: 1; transform: rotate(-6deg); }
+  100% { opacity: 0; transform: rotate(-2deg) scale(1); }
+}
+.g17-er-ear { animation: g17-er-ear calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-er-book {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(-12deg); }
+  40% { opacity: 1; transform: scaleX(1.08) rotate(2deg); }
+  56% { transform: scaleX(1) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+}
+.g17-er-book { animation: g17-er-book calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 5. Penny Slots — the hawker's rattle ----------------------------------- */
+
+@keyframes g17-ra-whirl {
+  0% { opacity: 0; transform: rotate(-40deg) scale(0.74); }
+  26% { opacity: 1; transform: rotate(140deg) scale(1.05); }
+  48% { transform: rotate(300deg) scale(1); }
+  68% { transform: rotate(420deg); }
+  86% { opacity: 1; transform: rotate(470deg); }
+  100% { opacity: 0; transform: rotate(486deg); }
+}
+.g17-ra-whirl { animation: g17-ra-whirl calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes g17-ra-blade {
+  0% { opacity: 0; transform: rotate(22deg) scaleX(0.6); }
+  26% { opacity: 1; transform: rotate(-16deg) scaleX(1.04); }
+  44% { transform: rotate(12deg) scaleX(1); }
+  62% { transform: rotate(-8deg); }
+  80% { transform: rotate(4deg); }
+  92% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g17-ra-blade { animation: g17-ra-blade calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+@keyframes g17-ra-call {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.5); }
+  40% { opacity: 1; transform: scaleX(1.12) scaleY(1); }
+  58% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) translateX(24%); }
+}
+.g17-ra-call { animation: g17-ra-call calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 6. Plush Pony — read from horseback, and the horse turns --------------- */
+
+@keyframes g17-pp-horse {
+  0% { opacity: 0; transform: translateX(-30%) scale(0.86); }
+  30% { opacity: 1; transform: translateX(0) scale(1.02); }
+  46% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(10%) scale(1); }
+}
+.g17-pp-horse { animation: g17-pp-horse calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-pp-dust {
+  0% { opacity: 0; transform: scaleX(0.24) scaleY(0.4); }
+  26% { opacity: 0.9; transform: scaleX(1.1) scaleY(1); }
+  46% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.3) scaleY(0.7); }
+}
+.g17-pp-dust { animation: g17-pp-dust calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-pp-scroll {
+  0% { opacity: 0; transform: scaleX(0.08) rotate(-6deg); }
+  36% { opacity: 1; transform: scaleX(1.08) rotate(2deg); }
+  54% { transform: scaleX(1) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) rotate(0deg); }
+}
+.g17-pp-scroll { animation: g17-pp-scroll calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 7. Price Check — the slate hoisted over the heads ---------------------- */
+
+@keyframes g17-pc-pole {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  32% { opacity: 1; transform: scaleY(1.06); }
+  46% { transform: scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g17-pc-pole { animation: g17-pc-pole calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-pc-slate {
+  0% { opacity: 0; transform: translateY(70%) rotate(-8deg) scale(0.8); }
+  34% { opacity: 1; transform: translateY(-5%) rotate(3deg) scale(1.04); }
+  50% { transform: translateY(0) rotate(0deg) scale(1); }
+  66% { transform: translateY(-3%); }
+  86% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g17-pc-slate { animation: g17-pc-slate calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-pc-fig {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  44% { opacity: 1; transform: scaleX(1.04); }
+  60% { transform: scaleX(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-pc-fig { animation: g17-pc-fig calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-pc-tip {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
+  36% { opacity: 1; transform: rotate(-22deg) scale(1.04); }
+  56% { transform: rotate(-16deg) scale(1); }
+  82% { opacity: 1; transform: rotate(-18deg); }
+  100% { opacity: 0; transform: rotate(-6deg) scale(1); }
+}
+.g17-pc-tip { animation: g17-pc-tip calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 8. Prophecy Fulfilled — three notes off the balcony -------------------- */
+
+@keyframes g17-pf-rail {
+  0% { opacity: 0; transform: scaleX(0.3) translateY(20%); }
+  32% { opacity: 1; transform: scaleX(1.04) translateY(0); }
+  48% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-pf-rail { animation: g17-pf-rail calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-pf-horn {
+  0% { opacity: 0; transform: rotate(24deg) scale(0.8); }
+  30% { opacity: 1; transform: rotate(-12deg) scale(1.06); }
+  48% { transform: rotate(-6deg) scale(1); }
+  66% { transform: rotate(-9deg); }
+  86% { opacity: 1; transform: rotate(-6deg); }
+  100% { opacity: 0; transform: rotate(-2deg) scale(1); }
+}
+.g17-pf-horn { animation: g17-pf-horn calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-pf-note {
+  0% { opacity: 0; transform: translateX(0) scale(0.3); }
+  30% { opacity: 1; transform: translateX(calc(var(--fx-len, 1) * 22%)) scale(1.2); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 1) * 96%)) scale(0.6); }
+}
+.g17-pf-note { animation: g17-pf-note calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.75, 0.35, 1) both; }
+
+/* --- 9. Regina Dossier — the name called at the door ------------------------ */
+
+@keyframes g17-rd-door {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  30% { opacity: 1; transform: scaleX(1.06); }
+  46% { transform: scaleX(1); }
+  70% { transform: scaleX(0.86); }
+  88% { opacity: 1; transform: scaleX(0.8); }
+  100% { opacity: 0; transform: scaleX(0.78); }
+}
+.g17-rd-door { animation: g17-rd-door calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-rd-name {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  38% { opacity: 1; transform: scaleX(1.08); }
+  54% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-rd-name { animation: g17-rd-name calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-rd-crown {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.4); }
+  38% { opacity: 1; transform: translateY(0) scale(1.14); }
+  56% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8%) scale(1.02); }
+}
+.g17-rd-crown { animation: g17-rd-crown calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-rd-turn {
+  0% { opacity: 0; transform: rotate(0deg) scaleX(1) scale(0.72); }
+  36% { opacity: 1; transform: rotate(16deg) scaleX(0.7) scale(1.04); }
+  56% { transform: rotate(12deg) scaleX(0.74) scale(1); }
+  84% { opacity: 1; transform: rotate(14deg) scaleX(0.72); }
+  100% { opacity: 0; transform: rotate(6deg) scaleX(0.9) scale(1); }
+}
+.g17-rd-turn { animation: g17-rd-turn calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 10. Roof Pigeon — the cry off the rooftop ------------------------------ */
+
+@keyframes g17-rp-roof {
+  0% { opacity: 0; transform: translateY(40%) scale(0.8); }
+  32% { opacity: 1; transform: translateY(0) scale(1.03); }
+  48% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-rp-roof { animation: g17-rp-roof calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-rp-crier {
+  0% { opacity: 0; transform: translateY(34%) scale(0.7); }
+  34% { opacity: 1; transform: translateY(0) scale(1.08); }
+  50% { transform: scale(1); }
+  66% { transform: scale(1.05); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-rp-crier { animation: g17-rp-crier calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-rp-bird {
+  0% { opacity: 0; transform: translate(0, 20%) scale(0.5) rotate(8deg); }
+  34% { opacity: 1; transform: translate(-10%, -18%) scale(1.06) rotate(-8deg); }
+  60% { transform: translate(-22%, -46%) scale(1) rotate(6deg); }
+  100% { opacity: 0; transform: translate(-40%, -96%) scale(0.86) rotate(-4deg); }
+}
+.g17-rp-bird { animation: g17-rp-bird calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.35, 1) both; }
+
+/* --- 11. Sampler Platter — the fair glove goes up --------------------------- */
+
+@keyframes g17-fg-pole {
+  0% { opacity: 0; transform: scaleY(0.08); }
+  30% { opacity: 1; transform: scaleY(1.05); }
+  44% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g17-fg-pole { animation: g17-fg-pole calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-fg-glove {
+  0% { opacity: 0; transform: translateY(120%) scale(0.7); }
+  38% { opacity: 1; transform: translateY(-6%) scale(1.08); }
+  54% { transform: translateY(0) scale(1); }
+  70% { transform: translateY(-4%); }
+  88% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6%) scale(1); }
+}
+.g17-fg-glove { animation: g17-fg-glove calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-fg-awn {
+  0% { opacity: 0; transform: scaleY(0.06) scaleX(0.6); }
+  34% { opacity: 1; transform: scaleY(1.12) scaleX(1.04); }
+  52% { transform: scaleY(1) scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1) scaleX(1); }
+}
+.g17-fg-awn { animation: g17-fg-awn calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 12. Second Harvest — the last sheaf, and hats off ---------------------- */
+
+@keyframes g17-sh-fork {
+  0% { opacity: 0; transform: rotate(-30deg) translateY(24%); }
+  32% { opacity: 1; transform: rotate(6deg) translateY(0); }
+  48% { transform: rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-3deg); }
+}
+.g17-sh-fork { animation: g17-sh-fork calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-sh-sheaf {
+  0% { opacity: 0; transform: translateY(60%) scale(0.72) rotate(-10deg); }
+  36% { opacity: 1; transform: translateY(-4%) scale(1.06) rotate(3deg); }
+  54% { transform: translateY(0) scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scale(1); }
+}
+.g17-sh-sheaf { animation: g17-sh-sheaf calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-sh-hat {
+  0% { opacity: 0; transform: translateY(30%) scale(0.6); }
+  34% { opacity: 1; transform: translateY(0) scale(1.04); }
+  52% { transform: translateY(0) scale(1); }
+  74% { transform: translateY(-46%) rotate(-14deg); }
+  100% { opacity: 0; transform: translateY(-72%) rotate(-24deg) scale(0.94); }
+}
+.g17-sh-hat { animation: g17-sh-hat calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 13. Special Order — the tabard shaken out ------------------------------ */
+
+@keyframes g17-hb-tabard {
+  0% { opacity: 0; transform: scaleX(0.24) scaleY(0.9); }
+  24% { opacity: 1; transform: scaleX(1.18) scaleY(1.04); }
+  40% { transform: scaleX(0.94) scaleY(1); }
+  56% { transform: scaleX(1.04); }
+  72% { transform: scaleX(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-hb-tabard { animation: g17-hb-tabard calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-hb-sleeve {
+  0% { opacity: 0; transform: rotate(-40deg) scale(0.7); }
+  32% { opacity: 1; transform: rotate(10deg) scale(1.05); }
+  50% { transform: rotate(-4deg) scale(1); }
+  68% { transform: rotate(2deg); }
+  88% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g17-hb-sleeve { animation: g17-hb-sleeve calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-hb-blazon {
+  0% { opacity: 0; transform: scale(0.34) rotate(-10deg); }
+  38% { opacity: 1; transform: scale(1.14) rotate(2deg); }
+  56% { transform: scale(1) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g17-hb-blazon { animation: g17-hb-blazon calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-hb-breath {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1.1); }
+  58% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.5) translateX(18%); }
+}
+.g17-hb-breath { animation: g17-hb-breath calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 14. Store Credit — the chit passed hand to hand ------------------------ */
+
+@keyframes g17-sc-hand {
+  0% { opacity: 0; transform: translateY(58%) scale(0.7); }
+  36% { opacity: 1; transform: translateY(-6%) scale(1.06); }
+  52% { transform: translateY(0) scale(1); }
+  78% { opacity: 1; transform: translateY(-4%); }
+  100% { opacity: 0; transform: translateY(24%) scale(0.94); }
+}
+.g17-sc-hand { animation: g17-sc-hand calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 15. Tango Dip — the crowd opens a lane --------------------------------- */
+
+@keyframes g17-td-call {
+  0% { opacity: 0; transform: scale(0.72) translateY(16%); }
+  32% { opacity: 1; transform: scale(1.08) translateY(0); }
+  48% { transform: scale(1); }
+  64% { transform: scale(1.05); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-td-call { animation: g17-td-call calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-td-up {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  34% { opacity: 1; transform: translateY(-30%) scale(1.04); }
+  54% { transform: translateY(-40%) scale(1); }
+  84% { opacity: 1; transform: translateY(-44%); }
+  100% { opacity: 0; transform: translateY(-52%) scale(1); }
+}
+.g17-td-up { animation: g17-td-up calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-td-down {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  34% { opacity: 1; transform: translateY(30%) scale(1.04); }
+  54% { transform: translateY(40%) scale(1); }
+  84% { opacity: 1; transform: translateY(44%); }
+  100% { opacity: 0; transform: translateY(52%) scale(1); }
+}
+.g17-td-down { animation: g17-td-down calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 16. Transfer Window — the moot horn, and the shutters ------------------ */
+
+@keyframes g17-hn-horn {
+  0% { opacity: 0; transform: rotate(-22deg) scale(0.78); }
+  28% { opacity: 1; transform: rotate(6deg) scale(1.08); }
+  46% { transform: rotate(0deg) scale(1); }
+  64% { transform: rotate(3deg) scale(1.03); }
+  86% { opacity: 1; transform: rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: rotate(0deg) scale(1); }
+}
+.g17-hn-horn { animation: g17-hn-horn calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-hn-blast {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4); }
+  34% { opacity: 0.95; transform: scaleX(1.3) scaleY(1.1); }
+  58% { transform: scaleX(1.7) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(2.4) scaleY(0.9); }
+}
+.g17-hn-blast { animation: g17-hn-blast calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-hn-shut {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  30% { opacity: 1; transform: scaleY(1.14); }
+  46% { transform: scaleY(0.94); }
+  62% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g17-hn-shut { animation: g17-hn-shut calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.35, 1) both; }
+
+/* --- 17. Tripwire Bell — the rope, the yoke, the far end -------------------- */
+
+@keyframes g17-tb-rope {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  22% { opacity: 1; transform: scaleY(1.24); }
+  40% { transform: scaleY(0.9); }
+  58% { transform: scaleY(1.08); }
+  76% { transform: scaleY(1); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g17-tb-rope { animation: g17-tb-rope calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-tb-yoke {
+  0% { opacity: 0; transform: rotate(-14deg) scale(0.8); }
+  32% { opacity: 1; transform: rotate(8deg) scale(1.04); }
+  52% { transform: rotate(-4deg) scale(1); }
+  74% { transform: rotate(2deg); }
+  90% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g17-tb-yoke { animation: g17-tb-yoke calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-tb-swing {
+  0% { opacity: 0; transform: rotate(-34deg) scale(0.86); }
+  24% { opacity: 1; transform: rotate(26deg) scale(1.04); }
+  44% { transform: rotate(-20deg) scale(1); }
+  62% { transform: rotate(13deg); }
+  80% { transform: rotate(-6deg); }
+  92% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g17-tb-swing { animation: g17-tb-swing calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+/* --- 18. Understudy List — the call board at the stage door ----------------- */
+
+@keyframes g17-ul-board {
+  0% { opacity: 0; transform: translateY(28%) scale(0.78); }
+  32% { opacity: 1; transform: translateY(0) scale(1.04); }
+  48% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-ul-board { animation: g17-ul-board calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ul-read {
+  0% { opacity: 0; transform: translateY(-30%) scaleX(0.4); }
+  30% { opacity: 0.95; transform: translateY(0) scaleX(1); }
+  70% { opacity: 0.7; transform: translateY(200%) scaleX(1); }
+  100% { opacity: 0; transform: translateY(320%) scaleX(1); }
+}
+.g17-ul-read { animation: g17-ul-read calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.4, 1) both; }
+
+@keyframes g17-ul-slip {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  36% { opacity: 1; transform: scaleX(1.1); }
+  54% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-ul-slip { animation: g17-ul-slip calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ul-empty {
+  0% { opacity: 0; transform: scale(0.86); }
+  34% { opacity: 1; transform: scale(1.06); }
+  52% { transform: scale(1); }
+  70% { opacity: 0.5; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g17-ul-empty { animation: g17-ul-empty calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 19. Coupon — largesse thrown to the crowd ------------------------------ */
+
+@keyframes g17-cp-fling {
+  0% { opacity: 0; transform: rotate(-48deg) scale(0.8); }
+  26% { opacity: 1; transform: rotate(26deg) scale(1.06); }
+  46% { transform: rotate(6deg) scale(1); }
+  66% { transform: rotate(14deg); }
+  88% { opacity: 1; transform: rotate(8deg); }
+  100% { opacity: 0; transform: rotate(4deg) scale(1); }
+}
+.g17-cp-fling { animation: g17-cp-fling calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g17-cp-token {
+  0% { opacity: 0; transform: translate(-40%, 30%) scale(0.3) rotate(0deg); }
+  34% { opacity: 1; transform: translate(0, -20%) scale(1.08) rotate(160deg); }
+  62% { transform: translate(14%, 0) scale(1) rotate(300deg); }
+  100% { opacity: 0; transform: translate(26%, 40%) scale(0.86) rotate(420deg); }
+}
+.g17-cp-token { animation: g17-cp-token calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.7, 0.4, 1) both; }
+
+@keyframes g17-cp-hands {
+  0% { opacity: 0; transform: translateY(70%) scale(0.72); }
+  36% { opacity: 1; transform: translateY(-6%) scale(1.08); }
+  54% { transform: translateY(0) scale(1); }
+  76% { transform: translateY(-8%); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6%) scale(1); }
+}
+.g17-cp-hands { animation: g17-cp-hands calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 20. Group Photo — the drum roll cut off dead --------------------------- */
+
+@keyframes g17-gp-drum {
+  0% { opacity: 0; transform: translateY(26%) scale(0.8); }
+  30% { opacity: 1; transform: translateY(0) scale(1.05); }
+  44% { transform: scale(1); }
+  58% { transform: scale(1.03); }
+  72% { transform: scale(1); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-gp-drum { animation: g17-gp-drum calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-gp-stick {
+  0% { opacity: 0; transform: rotate(-16deg) scale(0.86); }
+  16% { opacity: 1; transform: rotate(9deg); }
+  26% { transform: rotate(-7deg); }
+  36% { transform: rotate(8deg); }
+  46% { transform: rotate(-6deg); }
+  54% { transform: rotate(4deg); }
+  60% { transform: rotate(-14deg); }
+  64% { transform: rotate(-14deg); }
+  88% { opacity: 1; transform: rotate(-14deg); }
+  100% { opacity: 0; transform: rotate(-13deg); }
+}
+.g17-gp-stick { animation: g17-gp-stick calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.3, 1) both; }
+
+@keyframes g17-gp-buzz {
+  0% { opacity: 0; transform: scaleX(0.2) translateY(20%); }
+  30% { opacity: 1; transform: scaleX(1.14) translateY(0); }
+  48% { transform: scaleX(0.9); }
+  62% { transform: scaleX(1.06); }
+  70% { opacity: 0; transform: scaleX(0.2); }
+  100% { opacity: 0; transform: scaleX(0.2); }
+}
+.g17-gp-buzz { animation: g17-gp-buzz calc(0.9s * var(--fx-dur, 1)) linear both; }
+
+@keyframes g17-gp-still {
+  0% { opacity: 0; transform: translateY(22%) scale(0.8) rotate(-6deg); }
+  30% { opacity: 1; transform: translateY(0) scale(1.04) rotate(3deg); }
+  44% { transform: scale(1) rotate(0deg); }
+  90% { opacity: 1; transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.g17-gp-still { animation: g17-gp-still calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.25, 1) both; }
+
+/* --- 21. Left Foot First — the word of command ------------------------------ */
+
+@keyframes g17-lf-shout {
+  0% { opacity: 0; transform: scale(0.74) translateX(-16%); }
+  28% { opacity: 1; transform: scale(1.1) translateX(0); }
+  46% { transform: scale(1); }
+  62% { transform: scale(1.06); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-lf-shout { animation: g17-lf-shout calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-lf-line {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  34% { opacity: 1; transform: scaleX(1.06); }
+  50% { transform: scaleX(1); }
+  84% { opacity: 0.85; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g17-lf-line { animation: g17-lf-line calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-lf-boot {
+  0% { opacity: 0; transform: translate(-40%, -26%) rotate(-16deg) scale(0.8); }
+  36% { opacity: 1; transform: translate(0, 4%) rotate(4deg) scale(1.04); }
+  52% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translate(10%, 0) rotate(0deg) scale(1); }
+}
+.g17-lf-boot { animation: g17-lf-boot calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* --- 22. Squeaky Shoes — the bellman's lantern at each corner --------------- */
+
+@keyframes g17-sq-lift {
+  0% { opacity: 0; transform: translateY(46%) scale(0.66); }
+  32% { opacity: 1; transform: translateY(-8%) scale(1.08); }
+  50% { transform: translateY(0) scale(1); }
+  72% { transform: translateY(-5%); }
+  88% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(10%) scale(0.96); }
+}
+.g17-sq-lift { animation: g17-sq-lift calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-sq-pool {
+  0% { opacity: 0; transform: scale(0.3); }
+  38% { opacity: 0.95; transform: scale(1.1); }
+  58% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.24); }
+}
+.g17-sq-pool { animation: g17-sq-pool calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-sq-print {
+  0% { opacity: 0; transform: scale(0.5) rotate(-14deg); }
+  34% { opacity: 1; transform: scale(1.12) rotate(4deg); }
+  52% { transform: scale(1) rotate(0deg); }
+  70% { opacity: 0.55; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g17-sq-print { animation: g17-sq-print calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 23. Warm-Up Stretch — the call to the lists ---------------------------- */
+
+@keyframes g17-ws-crier {
+  0% { opacity: 0; transform: translateY(26%) scale(0.76); }
+  32% { opacity: 1; transform: translateY(0) scale(1.08); }
+  48% { transform: scale(1); }
+  66% { transform: scale(1.04); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g17-ws-crier { animation: g17-ws-crier calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ws-cord {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(0.6); }
+  36% { opacity: 1; transform: scaleX(calc(0.45 + var(--fx-len, 0) * 0.1)) scaleY(1); }
+  80% { opacity: 0.85; transform: scaleX(calc(0.45 + var(--fx-len, 0) * 0.1)) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(calc(0.5 + var(--fx-len, 0) * 0.1)) scaleY(1); }
+}
+.g17-ws-cord { animation: g17-ws-cord calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g17-ws-knot {
+  0% { opacity: 0; transform: scale(0.2); }
+  40% { opacity: 1; transform: scale(1.3); }
+  58% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g17-ws-knot { animation: g17-ws-knot calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 24. Window Shopping — "what d'ye lack?" -------------------------------- */
+
+@keyframes g17-wn-awn {
+  0% { opacity: 0; transform: scaleY(0.06) scaleX(0.7); }
+  32% { opacity: 1; transform: scaleY(1.12) scaleX(1.04); }
+  50% { transform: scaleY(1) scaleX(1); }
+  66% { transform: scaleY(1.04); }
+  88% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g17-wn-awn { animation: g17-wn-awn calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-wn-cry {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1.12); }
+  58% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.6) translateX(16%); }
+}
+.g17-wn-cry { animation: g17-wn-cry calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g17-wn-tray {
+  0% { opacity: 0; transform: translateY(48%) scale(0.78) rotate(-6deg); }
+  36% { opacity: 1; transform: translateY(-4%) scale(1.05) rotate(2deg); }
+  54% { transform: translateY(0) scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(4%) scale(1); }
+}
+.g17-wn-tray { animation: g17-wn-tray calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g17-wn-good {
+  0% { opacity: 0; transform: translateY(40%) scale(0.4); }
+  38% { opacity: 1; transform: translateY(-10%) scale(1.14); }
+  56% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-16%) scale(0.96); }
+}
+.g17-wn-good { animation: g17-wn-good calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- Global kill switch ----------------------------------------------------
+   Settings animations-off parks every g17 play outright. */
+html[data-anim="off"] [class^="g17-"], html[data-anim="off"] [class*=" g17-"] { animation: none !important; opacity: 0 !important; }
