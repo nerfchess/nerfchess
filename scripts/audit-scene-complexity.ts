@@ -418,6 +418,25 @@ function anchorReason(
   );
 }
 
+/**
+ * Does this scene answer the `entrance` role?
+ *
+ * A card's arrival in a hand should be a cut of its OWN art, not one of ten
+ * shared category arrivals, and nothing was checking that: every plugin module
+ * grew an entrance branch because its author chose to, while core's 303 scenes
+ * had none at all.
+ *
+ * Deliberately module-level with a per-scene fast path. Several modules route
+ * the entrance through their scene factory once rather than repeating it in
+ * every scene body - godPlays does this for 25 scenes through `G` - so a
+ * strictly per-body check would fail correct work. Module granularity is the
+ * honest resolution here: it cannot tell a thin entrance from a good one, only
+ * a present one from an absent one.
+ */
+function handlesEntrance(body: string, moduleSrc: string): boolean {
+  return /entrance/.test(body) || /entrance/.test(moduleSrc);
+}
+
 function cardTiers(): Map<string, number> {
   const reg = JSON.parse(
     fs.readFileSync(path.join(ROOT, "docs", "animation-registry.json"), "utf8"),
@@ -483,6 +502,7 @@ function main(): void {
       if (layers < floor) reasons.push(`${layers} animated layers, tier ${tier} floor is ${floor}`);
 
       if (hasPureWhite(body)) reasons.push("pure white in the palette (whites must be warm)");
+      if (!handlesEntrance(body, src)) reasons.push("no entrance role: the card arrives with no art of its own");
       if (!usesGeometry(body, css, src)) reasons.push("no layer driven by the directional geometry vars");
       const anchorBad = anchorReason(chunk, facts.get(id));
       if (anchorBad) reasons.push(anchorBad);
@@ -533,6 +553,9 @@ function main(): void {
       const floor = layerFloor(tier);
       if (layers < floor) reasons.push(`${layers} animated layers, tier ${tier} floor is ${floor}`);
       if (hasPureWhite(body)) reasons.push("pure white in the palette (whites must be warm)");
+      if (!handlesEntrance(body, sigSrc)) {
+        reasons.push("no entrance role: the card arrives with no art of its own");
+      }
       if (!usesGeometry(body, coreCss, sigSrc)) {
         reasons.push("no layer driven by the directional geometry vars");
       }

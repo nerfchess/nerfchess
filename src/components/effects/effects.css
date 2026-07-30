@@ -1138,6 +1138,101 @@
 }
 .fx-sig-bwash { animation: fx-sig-bwash 1.15s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
 
+/* The wash POOL: the same tint, deepest over the square the card was played on
+   and thinning outward. The wash above says "the whole board just changed"; the
+   pool says WHERE it changed from, which is the thing a board-centred wash
+   could never say. Positioned from --fx-ox/--fx-oy inside the board frame (see
+   BoardWash in sigVisuals.tsx), so it swells a beat after the flood and holds
+   fractionally longer, reading as the tint soaking outward from the cast. */
+@keyframes fx-sig-bpool {
+  0% { opacity: 0; transform: scale(0.35); }
+  22% { opacity: 1; transform: scale(1); }
+  64% { opacity: 0.7; transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.fx-sig-bpool { animation: fx-sig-bpool 1.3s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* The ground shadow a colossal board-wide motif drops on the boards. Grounds
+   the figure instead of letting it float, and slides with --fx-side so the
+   light always comes from behind the caster rather than from a fixed corner of
+   the screen (which would be wrong for one of the two players). */
+@keyframes fx-sig-bshade {
+  0% { opacity: 0; transform: scaleX(0.4) scaleY(0.6); }
+  30% { opacity: 0.85; transform: scaleX(1) scaleY(1); }
+  72% { opacity: 0.6; transform: scaleX(1.06) scaleY(0.94); }
+  100% { opacity: 0; transform: scaleX(1.12) scaleY(0.9); }
+}
+.fx-sig-bshade { animation: fx-sig-bshade 1.25s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* --- The entrance role --------------------------------------------------------
+   The card arriving in a hand, staged once for all of core (see EntranceCut in
+   sigVisuals.tsx). Three beats, ~56% of the crop, no board takeover: the light
+   gathers, the card's own art rises into the slot off the caster's own edge,
+   the seal closes and one ember hangs behind. */
+@keyframes fx-sig-entglow {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.12); }
+}
+.fx-sig-entglow { animation: fx-sig-entglow calc(0.62s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes fx-sig-entrise {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 22%)) scale(0.68); }
+  34% { opacity: 1; transform: translateY(0) scale(1.06); }
+  50% { transform: translateY(0) scale(0.98); }
+  78% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -7%)) scale(1.02); }
+}
+.fx-sig-entrise { animation: fx-sig-entrise calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes fx-sig-entseal {
+  0% { opacity: 0; transform: scale(1.35); }
+  45% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.92); }
+}
+.fx-sig-entseal { animation: fx-sig-entseal calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes fx-sig-entmote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(60%, calc(var(--fx-side, 1) * -220%)) scale(0.5); }
+}
+.fx-sig-entmote { animation: fx-sig-entmote calc(0.95s * var(--fx-dur, 1)) linear both; }
+
+/* --- The two missing beats ---------------------------------------------------
+   A lot of the core signature art was written as one beat: the strike, and
+   nothing either side of it. These three classes are the tell and the settle
+   the design brief asks every play for, shaped so they can be dropped into art
+   that already works without competing with it.
+
+   The TELL: a hairline ring snaps INWARD onto the square, so the eye is already
+   there when the strike lands. Short (~0.42s) and gone before the hit. */
+@keyframes fx-sig-tellring {
+  0% { opacity: 0; transform: scale(1.55); }
+  38% { opacity: 0.9; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(0.66); }
+}
+.fx-sig-tellring { animation: fx-sig-tellring 0.42s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* The SETTLE, part one: the afterglow left in the square, sinking away. */
+@keyframes fx-sig-settleglow {
+  0% { opacity: 0; transform: scale(0.68); }
+  28% { opacity: 0.72; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.32); }
+}
+.fx-sig-settleglow { animation: fx-sig-settleglow 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+
+/* The SETTLE, part two: motes drifting off the square. --dy is driven by
+   --fx-side at the call site so the drift always carries AWAY from whoever
+   played the card; a fixed direction is right for one player and backwards for
+   the other. */
+@keyframes fx-sig-settlemote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  24% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(0.55); }
+}
+.fx-sig-settlemote { animation: fx-sig-settlemote 1s linear both; }
+
 /* A giant character / object charging the full width of the board and off it,
    with a little vertical bob so it never reads as a flat slide. */
 @keyframes fx-sig-cross {
@@ -1305,6 +1400,15 @@ html[data-anim="off"] .fx-sig-chomp,
    board-wide rain, and the colossal shockwave. Transient, hidden like the
    rest (the per-square end state is enough). */
 html[data-anim="off"] .fx-sig-bwash,
+html[data-anim="off"] .fx-sig-entglow,
+html[data-anim="off"] .fx-sig-entrise,
+html[data-anim="off"] .fx-sig-entseal,
+html[data-anim="off"] .fx-sig-entmote,
+html[data-anim="off"] .fx-sig-bpool,
+html[data-anim="off"] .fx-sig-bshade,
+html[data-anim="off"] .fx-sig-tellring,
+html[data-anim="off"] .fx-sig-settleglow,
+html[data-anim="off"] .fx-sig-settlemote,
 html[data-anim="off"] .fx-sig-cross,
 html[data-anim="off"] .fx-sig-rain,
 html[data-anim="off"] .fx-sig-boom,
