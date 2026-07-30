@@ -130,6 +130,7 @@ import { resolveCardVfx } from "./effects/vfxSpecs";
 import { resolveVfxSource } from "./effects/vfxSource";
 import type { SigPlaySlot } from "./effects/useSignatureQueue";
 import {
+  boardAnchoredGeo,
   boardCentreShift,
   casterSide,
   cellDelta,
@@ -1977,7 +1978,16 @@ const BoardSquare = React.memo(function BoardSquare({
                         className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
                         style={{
                           animationDelay: `${delay}ms`,
-                          ...geoVars(boardFx.sigGeo ?? neutralGeo(sq, orientation)),
+                          // A board-anchored LEAD has already been slid to the
+                          // board centre by leadShift, so its board frame needs
+                          // the fixed offset rather than the cast square's.
+                          // Targets are never shifted, so they keep theirs.
+                          ...geoVars(
+                            (() => {
+                              const g = boardFx.sigGeo ?? neutralGeo(sq, orientation);
+                              return leadShift ? boardAnchoredGeo(g) : g;
+                            })(),
+                          ),
                         } as CSSProperties}
                       >
                         <span className="absolute inset-0 z-30 block" style={leadShift}>
@@ -2014,7 +2024,15 @@ const BoardSquare = React.memo(function BoardSquare({
                         // hand-enumerated off-list stays on screen forever for
                         // reduced-motion players.
                         className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
-                        style={{ ...zShift, ...geoVars(zoneSig.geo) } as CSSProperties}
+                        style={
+                          {
+                            ...zShift,
+                            // Same correction as the removal lead above: once
+                            // zShift has centred this on the board, the frame
+                            // offset is fixed rather than the cast square's.
+                            ...geoVars(zShift ? boardAnchoredGeo(zoneSig.geo) : zoneSig.geo),
+                          } as CSSProperties
+                        }
                       >
                         <SignatureOverlay
                           visual={sigOf(zoneSig.sig)!.visual}

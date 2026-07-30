@@ -1631,7 +1631,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- the big machines: a raffle drum and a spinner ---
   ov_pandemonium_carnival: S(PandemoniumCarnivalScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "gacha", anchor: "cast",
+    sound: "gacha", anchor: "board",
   }),
   ov_the_fool: S(TheFoolScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
@@ -1669,7 +1669,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   ov_demolition_derby: S(DemolitionDerbyScene, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "dice", anchor: "cast",
+    sound: "dice", anchor: "board",
   }),
   ov_flash_mob: S(FlashMobScene, {
     ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true,

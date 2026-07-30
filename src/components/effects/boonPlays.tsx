@@ -2690,7 +2690,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "coronet"),
   bw2_standard_bearer: G(AstralAnvil, ["#c94ad1", "#e3d0ff", "#5b2b8f"], GLYPH.bw2_standard_bearer, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall",
-    anchor: "cast",
+    anchor: "board",
   }, "standard"),
 
   /* --- PactScroll (bargains / vows / court rules) ------------------------- */

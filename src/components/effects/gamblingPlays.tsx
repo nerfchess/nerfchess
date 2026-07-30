@@ -3095,7 +3095,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: PieceRoulettePlay,
   },
   gm_jackpot_pawn: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "board" },
     Render: JackpotPawnPlay,
   },
   gm_double_down_draft: {

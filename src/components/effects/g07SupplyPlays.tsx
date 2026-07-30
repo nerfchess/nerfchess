@@ -1746,5 +1746,5 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_dead_letter_office: S(PigeonholeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast" }),
   op_doorman: S(PadlockScene, { ordering: "octagon", staggerMs: 55, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" }),
   op_express_courier: S(RemountScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
-  op_ferry_crossing: S(CapstanScene, { ordering: "line", staggerMs: 65, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim" }),
+  op_ferry_crossing: S(CapstanScene, { ordering: "line", staggerMs: 65, victims: ["p"], hasLead: true, sound: "siege", anchor: "board" }),
 };

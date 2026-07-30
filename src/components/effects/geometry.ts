@@ -148,7 +148,50 @@ function clampAxis(centre: number): number {
  */
 export function boardFrameOffset(sq: Square, orientation: Color): { bx: number; by: number } {
   const { col, row } = cellPos(sq, orientation);
-  return { bx: -col, by: -row };
+  // Subtracting the clamp is load-bearing, and its absence made this function
+  // false in exactly the case it exists for. The stage does not sit on the
+  // cast square: near an edge it slides itself back by up to half a cell so
+  // the 14-cell canvas still covers the board. The frame is drawn INSIDE that
+  // stage, so it inherits the slide, and offsetting it by -col alone left it
+  // displaced by the clamp -- measured in Chromium as exactly 0.5 cells at
+  // every corner and 0 at e4, which is the clamp's own signature.
+  const { sx, sy } = clampAnchor(sq, orientation);
+  return { bx: -(col + sx), by: -(row + sy) };
+}
+
+/**
+ * `--fx-board-dx/dy` for a scene that has ALREADY been slid to the board
+ * centre by `boardCentreShift`.
+ *
+ * `boardFrameOffset` returns `-col`, which is correct only while the stage
+ * still sits on the cast square. A board-anchored lead does not: its wrapper
+ * is translated by `3.5 - col` cells first, so the stage's left edge lands at
+ * a fixed -3 cells and the frame needs a fixed offset too. Feeding it `-col`
+ * put the board frame `3.5 - col` cells off the board -- up to three and a
+ * half cells at the a- and h-files, and exactly right only near the centre
+ * files, which is why it read as "slightly wrong" rather than obviously
+ * broken. Every board-anchored scene's wash, rain and vignette was displaced.
+ *
+ * The number is the same one stage.css already carries as its fallback, for
+ * exactly this case.
+ */
+export const BOARD_ANCHORED_FRAME_OFFSET = -(STAGE_HALF_EXTENT - BOARD_CELLS / 2 + 0.5);
+
+/** A scene's geometry with the board frame corrected for a board-anchored
+ *  lead. Everything else -- aim, index, side, the cast offset -- is unchanged,
+ *  because those still describe the real cast square and the art should still
+ *  lean the right way even while playing centred. */
+export function boardAnchoredGeo(g: SceneGeo): SceneGeo {
+  // Minus the clamp, because a board-anchored lead gets BOTH shifts: the
+  // wrapper re-centres it on the board, and the stage inside still clamps
+  // itself off `--fx-anchor-dx/dy`. Correcting for only the first left the
+  // frame displaced by the clamp -- half a cell at every corner, which is the
+  // same residual the anchored path had, arriving by a different route.
+  return {
+    ...g,
+    bx: BOARD_ANCHORED_FRAME_OFFSET - g.ax,
+    by: BOARD_ANCHORED_FRAME_OFFSET - g.ay,
+  };
 }
 
 /**

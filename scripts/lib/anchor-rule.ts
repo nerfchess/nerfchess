@@ -224,17 +224,32 @@ const SINGLE_MARKERS = [
   // that substring made three whole-army tableaux read as single-target, and
   // the rule went on to demand they be staged on one square.
   /(?<!every )\bone of (?:your|their|the)\b/,
-  /\ba single\b/,
+  // "a single PIECE", not "a single move": the bare form vetoed the "none of
+  // their pieces" open-set marker in the very same sentence.
+  /\ba single (?:piece|pawn|knight|bishop|rook|queen|king|square)\b/,
   /\bchoose (?:a|an|one)\b/,
   /\bthe (?:enemy|opposing) (?:king|queen|rook|bishop|knight|pawn)\b/,
   /\bthat (?:piece|pawn|square)\b/,
   /(?<!every )\bone (?:enemy|friendly|of)\b/,
 ];
 
-/** "two of", "three enemy", "up to four", "the 3 nearest". */
+/**
+ * "two of your knights", "up to four enemy pawns", "the 3 nearest".
+ *
+ * A count only names a few TARGETS when a piece noun follows it. Counting
+ * anything else and calling it a target list is how "turn every enemy knight,
+ * bishop, rook and queen to stone **for 3 of their turns**" came to be filed
+ * as a few-target card: the duration clause matched, vetoed the open-set
+ * widening the first clause had earned, and the rule then demanded that a
+ * whole-army petrification stage itself on one square. "May slide diagonally
+ * **up to two squares**" (a movement range) and "**up to five in all**" (a
+ * pocket count) failed the same way.
+ */
+const COUNT = "(?:two|three|four|five|2|3|4|5)";
+const PIECE_NOUN = "(?:pieces|pawns|knights|bishops|rooks|queens|minors|majors)";
 const FEW_MARKERS = [
-  /\b(?:two|three|four|five|2|3|4|5) (?:of|enemy|friendly|your|their|random)\b/,
-  /\bup to (?:two|three|four|five|2|3|4|5)\b/,
+  new RegExp(`\\b${COUNT} (?:of (?:your|their|the) )?(?:enemy |friendly |random )?${PIECE_NOUN}\\b`),
+  new RegExp(`\\bup to ${COUNT} (?:of (?:your|their|the) )?(?:enemy |friendly |random )?${PIECE_NOUN}\\b`),
   /\bthe (?:two|three|four|2|3|4) (?:nearest|closest|weakest|strongest)\b/,
 ];
 
@@ -257,9 +272,36 @@ export function allowedAnchors(category: string, rule: string): readonly Anchor[
   // both are settled first so nothing below can widen past them. "Choose one
   // of your knights" must not read as a whole class just because it contains
   // the words "your knights".
-  const few = matchesAny(text, FEW_MARKERS);
-  const single = matchesAny(text, SINGLE_MARKERS);
-  const openSet = !few && !single && matchesAny(text, OPEN_SET_MARKERS);
+  // Scope is declared in the FIRST sentence; later sentences qualify it.
+  //
+  // Verdant Shield reads "all of your pawns cannot be captured... Any enemy
+  // pawn directly in front of one of your pawns is rooted." Scanning the whole
+  // text at once let the subordinate "one of your pawns" veto the "all of
+  // your pawns" that opens the card, and the rule then demanded a one-square
+  // staging for an army-wide ward. An open set stated up front wins outright.
+  // The first sentence resolves with the SAME precedence as the whole text, or
+  // it would smuggle past the guard the plural-class marker needs: "freeze two
+  // of their knights" contains "their knights", and only the count standing in
+  // front of it says that is two targets rather than a class.
+  const head = text.split(/(?<=\.)\s/)[0] ?? text;
+  // An explicit quantifier outranks a later back-reference. Gravebloom says
+  // "EVERY square where they capture becomes a grave-garden ... no enemy piece
+  // may move onto THAT square": the "that square" is anaphora pointing back at
+  // the set the sentence just quantified, not a second, singular target. Left
+  // to the ordinary precedence it vetoed the quantifier and turned a standing
+  // board rule into a one-square effect.
+  //
+  // The time exclusion matters: "every 3 turns" and "every time" quantify a
+  // CADENCE, not a set of pieces.
+  const decisive = /\bevery (?!turn|time|other|second|third|fourth|\d)/.test(head);
+  const headOpen =
+    decisive ||
+    (!matchesAny(head, FEW_MARKERS) &&
+      !matchesAny(head, SINGLE_MARKERS) &&
+      matchesAny(head, OPEN_SET_MARKERS));
+  const few = !headOpen && matchesAny(text, FEW_MARKERS);
+  const single = !headOpen && matchesAny(text, SINGLE_MARKERS);
+  const openSet = headOpen || (!few && !single && matchesAny(text, OPEN_SET_MARKERS));
   const meta = matchesAny(text, META_PAYLOAD_MARKERS);
 
   // Scope beats kind. A card whose text names an open set, or whose payload is

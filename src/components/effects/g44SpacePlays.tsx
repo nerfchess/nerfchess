@@ -2678,7 +2678,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: BentOar,
   },
   hx4_crime_scene: {
-    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: TapeCordon,
   },
   hx4_tangled_marionettes: {
@@ -2782,7 +2782,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: FieldGlasses,
   },
   op_star_dressing_room: {
-    config: { ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "coronation", anchor: "aim" },
+    config: { ordering: "line", staggerMs: 50, victims: ["q"], hasLead: true, sound: "coronation", anchor: "board" },
     Render: CostumeRail,
   },
   bn4_scouts_report: {

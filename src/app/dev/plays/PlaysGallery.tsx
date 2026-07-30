@@ -20,6 +20,7 @@ import {
 } from "@/components/effects/BoardEffects";
 import { PLUGIN_ID_SET, PLUGIN_SIGNATURES } from "@/components/effects/sigPlugins";
 import {
+  boardAnchoredGeo,
   boardCentreShift,
   cellPos,
   geoVars,
@@ -131,10 +132,14 @@ function BoardProbe({ row, sq, runKey }: { row: Row; sq: number; runKey: number 
     }
     base.n = 3;
   }
-  const geo = geoVars(base);
   const anchored = row.anchor !== "board";
   // Board's own placement rule, mirrored: an anchored scene stays on its cell
-  // and the stage clamps itself; a board-anchored one re-centres.
+  // and the stage clamps itself; a board-anchored one re-centres, and once it
+  // has, its board frame takes the fixed offset rather than the cast square's.
+  // Getting that second half wrong here is worse than getting it wrong in
+  // Board, because this gallery is what a reviewer trusts to tell them Board
+  // is right.
+  const geo = geoVars(anchored ? base : boardAnchoredGeo(base));
   const shift = anchored
     ? undefined
     : (() => {

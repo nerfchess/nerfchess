@@ -2179,7 +2179,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_mirror_shield: S(MirrorShieldScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "aegis", anchor: "aim" }),
   hx4_mirror_manners: S(MirrorMannersScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "coinflip", anchor: "cast" }),
   bn4_twin_buttons: S(TwinButtonsScene, { ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "chips", anchor: "board" }),
-  ov_hall_of_mirrors: S(HallOfMirrorsBuffScene, { ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "vault", anchor: "cast" }),
+  ov_hall_of_mirrors: S(HallOfMirrorsBuffScene, { ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "vault", anchor: "board" }),
   ov_duplicate_glitch: S(DuplicateGlitchScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "bust", anchor: "board" }),
   hx4_ironglass_mirror: S(IronglassMirrorScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", anchor: "cast" }),
   hx4_hall_of_mirrors: S(HallOfMirrorsHexScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "board" }),

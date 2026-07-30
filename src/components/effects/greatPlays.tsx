@@ -5299,13 +5299,18 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "doublequeen"),
   twin_queens: G(CrownForge, ["#ffd76a", "#ffe9b0", "#7a5b23"], GLYPH.twin_queens, {
-    ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board",
+    // Two named pawns, so the forge reaches for them rather than crowning the
+    // whole board: the card promotes exactly two, and CrownForge's anchored
+    // branch already frames its board-scale layers and carries the Reach leg.
+    ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim",
   }, "twincrowns"),
   promotion_storm: G(CrownForge, ["#c9cdd6", "#ffd76a", "#5a6b8f"], GLYPH.promotion_storm, {
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board",
   }, "helmrain"),
   mass_promote_minor: G(CrownForge, ["#b58a5a", "#ffd76a", "#5a4a36"], GLYPH.mass_promote_minor, {
-    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation", anchor: "board",
+    // Two pawns again, and the sweep ordering already walks them in order, so
+    // the leg has a real vector to run along.
+    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim",
   }),
   resurrect_queen: G(CrownForge, ["#6b1a2a", "#ffd76a", "#3a0e1a"], GLYPH.resurrect_queen, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", source: "summon", anchor: "cast",

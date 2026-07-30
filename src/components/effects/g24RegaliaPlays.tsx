@@ -1270,7 +1270,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_grim_procession: S(GrimProcessionScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   hx4_royal_quarantine: S(RoyalQuarantineScene, { ordering: "octagon", staggerMs: 60, victims: ["k"], hasLead: true, sound: "wall", anchor: "board" }),
   ov_coup_detat: S(CoupDetatScene, { ordering: "radial", staggerMs: 0, victims: ["k", "q"], hasLead: true, sound: "coronation", anchor: "cast" }),
-  ov_promotion_jubilee: S(PromotionJubileeScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "cast" }),
+  ov_promotion_jubilee: S(PromotionJubileeScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board" }),
   ov_puppet_coronation: S(PuppetCoronationScene, { ordering: "line", staggerMs: 60, victims: ["q"], hasLead: true, sound: "coronation", anchor: "aim" }),
   bn4_crowned_strider: S(CrownedStriderScene, { ordering: "line", staggerMs: 70, victims: ["k"], hasLead: true, sound: "colossus", anchor: "aim" }),
   bn4_royal_banquet: S(RoyalBanquetScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),

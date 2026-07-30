@@ -664,6 +664,13 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
   // Five roads used to be the same sentence with one letter swapped, so each
   // now carries a condition drawn from its own name. The two-square advance is
   // untouched in every case; only the terms of the ride change.
+  //
+  // The two lossy roads only count an offer that is actually theirs: from the
+  // pawn's starting rank the two-square advance IS the ordinary double push,
+  // so counting it would forfeit the charge on move one for a grant that added
+  // nothing.
+  const ownRoad: Parameters<typeof augment>[0] = (moves, inst, api) =>
+    gen(moves, inst, api).filter((m) => RANK(m.from) !== ownRank(api.me, 1));
   if (entry.id === "bridle_path") {
     // A bridleway is the horse's road first: the pawn borrows it once a knight
     // of yours has ridden out. Still lossy (balance pass), reworded.
@@ -671,7 +678,7 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
       entry,
       "Once, your b-file pawn may canter two squares from wherever it stands, if both squares are empty and one of your knights has already moved. The charge is spent if the canter is on offer and you play something else.",
       {
-        ...lossyAugment((moves, inst, api) => (inst.state.rode ? gen(moves, inst, api) : [])),
+        ...lossyAugment((moves, inst, api) => (inst.state.rode ? ownRoad(moves, inst, api) : [])),
         onMovePlayed: (inst, move, api) => {
           if (move.color === api.me && move.piece === "n") inst.state.rode = true;
           if (((inst.state.charges as number) ?? 0) <= 0 || move.color !== api.me) return;
@@ -704,7 +711,7 @@ function countryRoad(entry: (typeof COUNTRY_ROADS)[number]): Buff {
       "Once, on one of your first 7 moves, your d-file pawn may cover two squares from wherever it stands. Both squares must be empty. The coach never waits: the charge is spent if you leave the run on offer.",
       {
         ...lossyAugment((moves, inst, api) =>
-          ((inst.state.moves as number) ?? 0) < 7 ? gen(moves, inst, api) : [],
+          ((inst.state.moves as number) ?? 0) < 7 ? ownRoad(moves, inst, api) : [],
         ),
         onMovePlayed: (inst, move, api) => {
           if (move.color !== api.me) return;
@@ -1419,8 +1426,15 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
         inst.state.pending = true;
         return;
       }
-      // One toll, and everyone knows who came over the wall.
-      if (opts.flashAttacker) flashSquares(api, attackersOf(api.board, api.opp, hit));
+      // One toll, and everyone knows who came over the wall. The mark is added
+      // on the opponent's move, whose own tick would prune a 1-turn effect
+      // immediately, so it is laid down for 2 and clears on their reply.
+      if (opts.flashAttacker) {
+        const seen = attackersOf(api.board, api.opp, hit);
+        if (seen.length > 0) {
+          addEffect(api, { kind: "strike", owner: api.me, squares: seen, turns: 2 });
+        }
+      }
       arm(hit);
     },
     filterOpponentMoves: (moves, inst) => {
@@ -1455,7 +1469,7 @@ function guardian(entry: (typeof GUARDIANS)[number]): Buff {
     // The one-turn guard, plus the toll itself: the intruder is named aloud.
     return opener(
       entry,
-      `The first time an enemy piece attacks ${what}, the bell tolls: that pawn cannot be captured during your opponent's next turn, and the attacker flashes until they reply. One use.`,
+      `The first time an enemy piece attacks ${what}, the bell tolls: that pawn cannot be captured during your opponent's next turn, and the attacker is marked until you reply. One use.`,
       filterGuard({ flashAttacker: true }),
     );
   }

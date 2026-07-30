@@ -1880,7 +1880,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // key matched to the card's actual effect so every one reads distinctly. ---
 
   // Beasts / attack line sweeps + smites (removal diff, the default source).
-  dragons_breath: { ordering: "line", staggerMs: 80, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic", anchor: "cast" },
+  dragons_breath: { ordering: "line", staggerMs: 80, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic", anchor: "board" },
   wyverns_dive: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage", anchor: "cast" },
   soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: true, sound: "rampage", anchor: "board" },
   chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning", anchor: "cast" },
@@ -1966,7 +1966,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
   ww_bayonet_charge: { ordering: "line", staggerMs: 85, victims: "all", mover: "b", visual: "bayonetrush", hasLead: true, sound: "rampage", anchor: "board" },
   ww_spearhead: { ordering: "line", staggerMs: 90, victims: "all", mover: "r", visual: "spearcharge", hasLead: true, sound: "siege", anchor: "board" },
-  ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage", anchor: "cast" },
+  ww_armored_breakthrough: { ordering: "line", staggerMs: 80, victims: "all", mover: "q", visual: "tankroll", hasLead: true, sound: "rampage", anchor: "board" },
   ww_bombardment: { ordering: "sweep", staggerMs: 110, victims: ["p"], visual: "artillery", hasLead: false, sound: "siege", anchor: "board" },
   ww_counter_battery: { ordering: "radial", staggerMs: 0, victims: ["r", "b"], visual: "counterbattery", hasLead: true, sound: "siege", anchor: "aim" },
   ww_combined_arms: { ordering: "sweep", staggerMs: 90, victims: "all", visual: "combinedpush", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },

@@ -2791,7 +2791,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // centre, so it travels to a corner cast intact.
   hw2_tarnished_crown: G(HexBrand, ["#4a3a22", "#e8b04b", "#2a2a30"], GLYPH.hw2_tarnished_crown, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice",
-    anchor: "cast",
+    anchor: "board",
   }, "tarnish"),
   hw2_war_rations: G(HexBrand, ["#8a7a63", "#e8dcc0", "#3a3026"], GLYPH.hw2_war_rations, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",

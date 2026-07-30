@@ -1514,7 +1514,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_chess_boxing: S(ChessBoxingScene, { ordering: "octagon", staggerMs: 60, victims: ["k"], hasLead: true, sound: "siege", anchor: "cast" }),
   ov_mod_powers: S(ModPowersScene, { ordering: "file", staggerMs: 90, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
   bn4_relay_baton: S(RelayBatonScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
-  ov_democracy: S(DemocracyScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  ov_democracy: S(DemocracyScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
   ov_dev_console: S(DevConsoleScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
   ov_nerfchess_the_musical: S(MusicalScene, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
   ov_standing_ovation: S(StandingOvationScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
