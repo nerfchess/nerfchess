@@ -26,6 +26,11 @@ import {
 // publishes their configs into the eager sigPlugins registry as a side
 // effect of loading).
 import { renderPluginVisual } from "./sigPluginsMerged";
+// The shared staging primitives. BoardWideStage moved out of this file so
+// every plugin module stages identically (and so anchoring is implemented
+// once); BoardFrame is what a layer uses to mean "the whole board" now that
+// the stage is centred on the cast square rather than on the board.
+import { BoardFrame, BoardWideStage } from "./stage";
 import "./effects.css";
 import "./godPlays.css";
 
@@ -1347,42 +1352,52 @@ function WallBuildBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 // Children lay out in the canvas's 0..100% space (its centre is the caster
 // square), so a full-canvas wash covers the board and a central-band particle
 // field / sweeping character reads as board-wide.
-function BoardWideStage({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
-    </span>
-  );
-}
+//
+// The stage itself now lives in ./stage.tsx, shared with every plugin module,
+// because ANCHORING changed what "centre of the canvas" means: the stage is
+// centred on the square the card was cast on rather than on the board. Layers
+// that mean "the whole board" must say so with <BoardFrame> instead of
+// assuming a fixed percentage of the canvas — see the helpers just below.
 
 // A full-board colour wash (freeze glaze, time-grey, banana-gold, honk-flash).
+// Wrapped in BoardFrame: `inset-0` here means the BOARD, not the canvas, so the
+// wash covers exactly the playing area from any anchor. Before anchoring these
+// happened to coincide; they no longer do.
 function BoardWash({ color, delayMs }: { color: string; delayMs: number }) {
   return (
-    <span
-      className="fx-sig-bwash absolute inset-0 block"
-      style={{ background: color, animationDelay: `${delayMs}ms` }}
-    />
+    <BoardFrame>
+      <span
+        className="fx-sig-bwash absolute inset-0 block"
+        style={{ background: color, animationDelay: `${delayMs}ms` }}
+      />
+    </BoardFrame>
   );
 }
 
-// A scatter of objects raining down the central board band, each tumbling from
-// above the board through it and out the bottom, staggered and spinning.
-// `render(i)` draws one faller (sized to its column). Left values sit in the
-// canvas's central ~40% so they concentrate over the board, not the wide margin.
+// A scatter of objects raining down over the board, each tumbling from above it
+// through it and out the bottom, staggered and spinning. `render(i)` draws one
+// faller (sized to its column).
+//
+// Column positions are BOARD fractions (0..100% of the playing area) and the
+// whole field renders inside BoardFrame. They used to be canvas fractions
+// hand-calibrated to the central ~40% — the band where the board happened to
+// sit while every scene was board-centred. Anchoring moves the board within the
+// canvas, so that calibration would rain on the margin instead; expressing them
+// against the board makes them correct from any anchor.
 const RAIN_COLS = [
-  { l: "31%", d: 0, s: "300deg", sz: 8 }, { l: "37%", d: 150, s: "-260deg", sz: 6 },
-  { l: "43%", d: 60, s: "340deg", sz: 9 }, { l: "49%", d: 210, s: "-300deg", sz: 7 },
-  { l: "55%", d: 30, s: "280deg", sz: 8 }, { l: "61%", d: 175, s: "-330deg", sz: 6 },
-  { l: "67%", d: 95, s: "310deg", sz: 9 }, { l: "34%", d: 250, s: "-280deg", sz: 6 },
-  { l: "64%", d: 320, s: "360deg", sz: 8 }, { l: "50%", d: 380, s: "-320deg", sz: 7 },
+  { l: "9%", d: 0, s: "300deg", sz: 14 }, { l: "19%", d: 150, s: "-260deg", sz: 11 },
+  { l: "29%", d: 60, s: "340deg", sz: 16 }, { l: "39%", d: 210, s: "-300deg", sz: 12 },
+  { l: "50%", d: 30, s: "280deg", sz: 14 }, { l: "60%", d: 175, s: "-330deg", sz: 11 },
+  { l: "71%", d: 95, s: "310deg", sz: 16 }, { l: "14%", d: 250, s: "-280deg", sz: 11 },
+  { l: "66%", d: 320, s: "360deg", sz: 14 }, { l: "42%", d: 380, s: "-320deg", sz: 12 },
 ];
 function BoardRain({ delayMs, render }: { delayMs: number; render: (i: number) => React.ReactNode }) {
   return (
-    <>
+    <BoardFrame>
       {RAIN_COLS.map((c, i) => (
         <span
           key={i}
-          className="fx-sig-rain absolute top-[30%] block"
+          className="fx-sig-rain absolute top-[-6%] block"
           style={
             { left: c.l, height: `${c.sz}%`, width: `${c.sz}%`, "--spin": c.s, animationDelay: `${delayMs + c.d}ms` } as React.CSSProperties
           }
@@ -1390,7 +1405,7 @@ function BoardRain({ delayMs, render }: { delayMs: number; render: (i: number) =
           {render(i)}
         </span>
       ))}
-    </>
+    </BoardFrame>
   );
 }
 

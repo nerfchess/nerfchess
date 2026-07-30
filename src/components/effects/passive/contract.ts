@@ -15,6 +15,9 @@
 //     coordinate space (the stacking context BoardEffects documents), so the
 //     components can be absolutely positioned without knowing page layout.
 
+import type { Square } from "@/engine/types";
+import { cellPos } from "../geometry";
+
 export type Side = "white" | "black";
 
 /** Geometry of the rendered board, supplied by the wiring layer. */
@@ -34,12 +37,11 @@ export interface Point {
   y: number;
 }
 
-/** Center pixel of a square (0..63, rank-major) for the current orientation. */
+/** Center pixel of a square (0..63, rank-major) for the current orientation.
+ *  The orientation flip itself lives in effects/geometry.ts, shared with the
+ *  canvas VFX layer and the DOM scene layer so all three cannot drift apart. */
 export function squareCenter(sq: number, m: BoardMetrics): Point {
-  const file = sq % 8; // 0 = a
-  const rank = Math.floor(sq / 8); // 0 = rank 1
-  const col = m.orientation === "white" ? file : 7 - file;
-  const row = m.orientation === "white" ? 7 - rank : rank; // row 0 = top
+  const { col, row } = cellPos(sq as Square, m.orientation === "white" ? "w" : "b");
   return {
     x: m.originX + col * m.squarePx + m.squarePx / 2,
     y: m.originY + row * m.squarePx + m.squarePx / 2,

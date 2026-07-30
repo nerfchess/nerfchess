@@ -1705,7 +1705,31 @@ export interface SignatureConfig {
   /** Target-square source. Omitted / "removal" = the detonation diff (Batch 1).
    * Any other value routes Board to the named fx-effect zone (Batch 2). */
   source?: SigZone;
+  /**
+   * Where the LEAD scene plays.
+   *
+   *   "cast"   anchored on the square the card was cast on, slid by the
+   *            half-cell at most that keeps its canvas over the board (see
+   *            clampAnchor in effects/geometry.ts). A card cast on a1 visibly
+   *            happens in the corner. Layers that mean "the whole board" — a
+   *            wash, a rain band, a horizon — go inside <BoardFrame>, which
+   *            stays exact at any anchor.
+   *   "aim"    as "cast", and the stage is rotated by the source -> target
+   *            angle, so art authored pointing right aims itself.
+   *   "board"  the canvas is centred on the board wherever the card was cast.
+   *            For scenes that genuinely depict something happening to the
+   *            whole board (the tier 9/10 marquee set).
+   *
+   * DEFAULTS TO "board", which is the behaviour every scene had before
+   * anchoring existed. Art composed symmetrically about the board centre would
+   * look wrong anchored, so a scene opts in only once its own art has been
+   * checked against a corner cast. New scenes should declare "cast" or "aim".
+   */
+  anchor?: SigAnchor;
 }
+
+/** See SignatureConfig.anchor. */
+export type SigAnchor = "cast" | "aim" | "board";
 
 /** The shipped Batch 1 signatures. Every one derives its target squares purely
  * from the board diff AND is played through a surfaced play event (an activated

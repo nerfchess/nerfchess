@@ -14,6 +14,34 @@
 // the surface calls notifyGateOpen() when the overlay dismisses.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Color, Square } from "@/engine/types";
+
+/** What a surface can tell the board about a play beyond the card id. Today
+ *  that is who cast it: the effect geometry aims and leans away from the
+ *  caster, and every surface already knows the answer, so it no longer has to
+ *  be guessed from which side lost more pieces. Optional throughout — a
+ *  surface that has not been widened yet still fires with just an id. */
+export interface SigPlayMeta {
+  caster?: Color;
+  /** The square the card was played on, when the surface knows it. Cards that
+   *  remove pieces or touch a zone give Board squares to work from already;
+   *  this is what lets a DIFF-LESS play (a clock steal, a draft trick, an info
+   *  peek) still happen somewhere rather than dead centre. */
+  sq?: Square;
+}
+
+interface QueuedPlay {
+  id: string;
+  meta?: SigPlayMeta;
+}
+
+/** The play slot Board reads. */
+export interface SigPlaySlot {
+  id: string;
+  key: number;
+  caster?: Color;
+  sq?: Square;
+}
 
 /** How long one cast spectacle owns the board before the next queued play
  *  steps out (the historic hold-and-replay spacing). */
@@ -22,9 +50,9 @@ const SPACING_MS = 2600;
 const MAX_QUEUED = 6;
 
 export function useSignatureQueue(gateRef?: { current: boolean }) {
-  const [signatureCard, setSignatureCard] = useState<{ id: string; key: number } | null>(null);
+  const [signatureCard, setSignatureCard] = useState<SigPlaySlot | null>(null);
   const keyRef = useRef(0);
-  const queueRef = useRef<string[]>([]);
+  const queueRef = useRef<QueuedPlay[]>([]);
   const busyUntilRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   // Live "a spectacle is playing (or queued to play)" signal for the draft
@@ -58,9 +86,14 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
   }, [scheduleBusyClear]);
 
   const playNow = useCallback(
-    (id: string) => {
+    (play: QueuedPlay) => {
       busyUntilRef.current = Date.now() + SPACING_MS;
-      setSignatureCard({ id, key: ++keyRef.current });
+      setSignatureCard({
+        id: play.id,
+        key: ++keyRef.current,
+        caster: play.meta?.caster,
+        sq: play.meta?.sq,
+      });
       setBusy(true);
       scheduleBusyClear();
     },
@@ -76,9 +109,9 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
     drainRef.current = () => {
       timerRef.current = null;
       if (gateRef?.current) return; // resumes via notifyGateOpen
-      const id = queueRef.current.shift();
-      if (id == null) return;
-      playNow(id);
+      const play = queueRef.current.shift();
+      if (play == null) return;
+      playNow(play);
       if (queueRef.current.length > 0)
         timerRef.current = window.setTimeout(() => drainRef.current(), SPACING_MS);
     };
@@ -87,9 +120,9 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
   /** Fire a card's signature: immediately when the board is free, queued when
    *  another spectacle is mid-play or the draft overlay covers the board. */
   const fire = useCallback(
-    (id: string) => {
+    (id: string, meta?: SigPlayMeta) => {
       if (gateRef?.current || timerRef.current != null || Date.now() < busyUntilRef.current) {
-        queueRef.current = [...queueRef.current, id].slice(-MAX_QUEUED);
+        queueRef.current = [...queueRef.current, { id, meta }].slice(-MAX_QUEUED);
         if (!gateRef?.current && timerRef.current == null) {
           timerRef.current = window.setTimeout(
             () => drainRef.current(),
@@ -98,7 +131,7 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
         }
         return;
       }
-      playNow(id);
+      playNow({ id, meta });
     },
     [gateRef, playNow],
   );

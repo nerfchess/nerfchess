@@ -42,6 +42,8 @@ import {
   whenSignatureVisualsReady,
   ShieldMark,
   SIGNATURES,
+  type SigAnchor,
+  type SigOrdering,
   type SignatureConfig,
   SignatureOverlay,
   RootClaws,
@@ -125,18 +127,30 @@ import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
 import { resolveCardVfx } from "./effects/vfxSpecs";
+import type { SigPlaySlot } from "./effects/useSignatureQueue";
+import {
+  boardCentreShift,
+  casterSide,
+  cellDelta,
+  cellPos,
+  centreOffset,
+  centreGeo,
+  frac,
+  geoVars,
+  neutralGeo,
+  type SceneGeo,
+} from "./effects/geometry";
 import { findKing } from "@/engine/board";
 import { PassiveLayer } from "./effects/passive/PassiveLayer";
 import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
 import type { PassiveAuraEntry, NerfAuraInput } from "./effects/passive/derive";
 
 // Rendered board-fraction center of a square (orientation-resolved), the
-// coordinate space the canvas VFX layer draws in.
-function sqToFrac(sq: Square, orientation: Color): VfxPoint {
-  const col = orientation === "w" ? FILE(sq) : 7 - FILE(sq);
-  const rowFromTop = orientation === "w" ? 7 - RANK(sq) : RANK(sq);
-  return { x: (col + 0.5) / 8, y: (rowFromTop + 0.5) / 8 };
-}
+// coordinate space the canvas VFX layer draws in. The math lives in
+// effects/geometry.ts so the canvas layer, the DOM scene layer and the passive
+// layer all resolve orientation the same way; this alias keeps the many call
+// sites below reading as they always have.
+const sqToFrac: (sq: Square, orientation: Color) => VfxPoint = frac;
 import type { BuffCategory, BuffMatchState } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { TIER_ROMAN } from "@/lib/tiers";
@@ -386,8 +400,7 @@ function NerfRevealSplash({
       {/* hostile-aura pulse on every affected square */}
       {squares.map((sq) => {
         if (sq < 0 || sq > 63) return null;
-        const col = orientation === "w" ? FILE(sq) : 7 - FILE(sq);
-        const row = orientation === "w" ? 7 - RANK(sq) : RANK(sq);
+        const { col, row } = cellPos(sq as Square, orientation);
         return (
           <div
             key={sq}
@@ -589,7 +602,10 @@ interface Props {
   // signature choreography (derived entirely from which enemy squares cleared)
   // instead of plain detonation bursts. Keyed so re-renders never replay it,
   // and absent on the initial mount / a rejoined game (so nothing fires then).
-  signatureCard?: { id: string; key: number } | null;
+  // `caster` (when the surface knows it, which all of them do) is what the
+  // effect geometry aims and leans away from; without it Board falls back to
+  // inferring the caster from which side lost more pieces.
+  signatureCard?: SigPlaySlot | null;
   /** The COMMITTED position for the removal-FX diff. When the rendered
    * `board` is an optimistic overlay (premove preview, move-confirm preview,
    * history review), pass the real game board here so detonation art, canvas
@@ -963,6 +979,19 @@ interface BoardFx {
   sig?: string;
   sigOrder?: number;
   sigRole?: "lead" | "target";
+  /** Where this square sits and which way its leg of the choreography points,
+   * published to the scene art as CSS custom properties. See
+   * effects/geometry.ts. */
+  sigGeo?: SceneGeo;
+}
+
+/** One leg of a play's travel: a scene beat moving from one square to another.
+ * `file`/`line`/`sweep` orderings chain (lead -> t0 -> t1 -> ...), radial and
+ * octagon fan out from the lead to each victim at once. */
+interface SigLeg {
+  from: Square;
+  to: Square;
+  delayMs: number;
 }
 
 // Order the squares an attack signature just cleared into a staggered
@@ -979,17 +1008,28 @@ function orderSignature(
   movedFrom: Set<Square>,
   capturedSquare: Square | null,
   orientation: Color,
-): { targets: { sq: Square; order: number; role: "lead" | "target" }[]; leadSq: Square | null } {
+  casterHint?: Color | null,
+): {
+  targets: { sq: Square; order: number; role: "lead" | "target" }[];
+  leadSq: Square | null;
+  legs: SigLeg[];
+  casterColor: Color | null;
+} {
   const cfg = resolveSignature(id);
-  if (!cfg) return { targets: [], leadSq: null };
+  if (!cfg) return { targets: [], leadSq: null, legs: [], casterColor: casterHint ?? null };
   // Claim only the victim types this signature owns; anything else stays a
   // plain detonation (handled by the caller).
   const victims =
     cfg.victims === "all" ? dets.slice() : dets.filter((sq) => prev[sq] && cfg.victims.includes(prev[sq]!.type));
-  if (victims.length === 0) return { targets: [], leadSq: null };
-  // The enemy is whichever colour was removed most (Nova also sacrifices the
-  // caster's own pawn, so the first square is not reliable). The caster is the
-  // opposite; its home rank sets the direction the wave rolls.
+  if (victims.length === 0)
+    return { targets: [], leadSq: null, legs: [], casterColor: casterHint ?? null };
+  // Who cast this. The surfaces that fire the signature know the answer and
+  // pass it as casterHint; the fallback below is the original inference, kept
+  // so a call site that has not been widened yet degrades rather than breaks.
+  // Inference: the enemy is whichever colour was removed most (Nova also
+  // sacrifices the caster's own pawn, so the first square is not reliable),
+  // and the caster is the opposite. Its home rank sets the direction the wave
+  // rolls.
   let wCleared = 0;
   let bCleared = 0;
   for (const sq of victims) {
@@ -997,7 +1037,7 @@ function orderSignature(
     else bCleared++;
   }
   const victimColor: Color = bCleared >= wCleared ? "b" : "w";
-  const casterColor: Color = victimColor === "w" ? "b" : "w";
+  const casterColor: Color = casterHint ?? (victimColor === "w" ? "b" : "w");
   // White pushes toward rank 8, black toward rank 1: the wave rolls away from
   // the caster's home rank.
   const casterUp = casterColor === "w";
@@ -1052,7 +1092,107 @@ function orderSignature(
     // a separate square (leadSq) or have no lead at all.
     role: (cfg.hasLead && leadSq == null && i === 0 ? "lead" : "target") as "lead" | "target",
   }));
-  return { targets, leadSq };
+  return {
+    targets,
+    leadSq,
+    legs: buildLegs(cfg.ordering, ordered, leadSq, cfg.staggerMs),
+    casterColor,
+  };
+}
+
+/**
+ * Turn an ordered victim list into the travel legs the scene animates along.
+ *
+ * This is what stops a multi-target play from being one burst in the middle
+ * plus a row of identical pops: a sweep genuinely rolls square to square, a
+ * chain hops victim to victim, and a radial burst fans from its origin to each
+ * victim at once. Each leg carries the same delay its target square already
+ * uses, so the DOM art and the canvas layer stay in lockstep.
+ */
+function buildLegs(
+  ordering: SigOrdering,
+  ordered: Square[],
+  leadSq: Square | null,
+  staggerMs: number,
+): SigLeg[] {
+  if (ordered.length === 0) return [];
+  const chained = ordering === "line" || ordering === "file" || ordering === "sweep";
+  const legs: SigLeg[] = [];
+  // The origin: an explicit lead square when the signature has one, otherwise
+  // the first victim (which is itself the lead flourish in that case).
+  const origin = leadSq ?? ordered[0];
+  for (let i = 0; i < ordered.length; i++) {
+    const to = ordered[i];
+    const from = chained ? (i === 0 ? origin : ordered[i - 1]) : origin;
+    if (from === to) continue;
+    legs.push({ from, to, delayMs: i * staggerMs });
+  }
+  return legs;
+}
+
+/**
+ * The per-square geometry for one square in a play: where it sits, and which
+ * way its own leg points. A square with no leg (the origin of a radial fan, or
+ * a play with a single target) still reports its position and the caster's
+ * push direction, so art always has something to lean on.
+ */
+function geoForSquare(
+  sq: Square,
+  legs: SigLeg[],
+  targetCount: number,
+  index: number,
+  orientation: Color,
+  caster: Color | null,
+): SceneGeo {
+  const base = neutralGeo(sq, orientation);
+  base.n = targetCount;
+  base.index = index;
+  base.side = caster ? casterSide(caster, orientation) : 1;
+  // Prefer the leg that LANDS here (this square is being hit by something);
+  // fall back to the leg that leaves here (this square is the origin of a fan).
+  const leg = legs.find((l) => l.to === sq) ?? legs.find((l) => l.from === sq);
+  if (!leg) return base;
+  const d = cellDelta(leg.from, leg.to, orientation);
+  base.angDeg = d.angDeg;
+  base.len = d.dist;
+  if (d.dist > 0) {
+    base.aimX = d.dx / d.dist;
+    base.aimY = d.dy / d.dist;
+  }
+  return base;
+}
+
+/**
+ * Where a lead scene's oversized canvas sits.
+ *
+ * `anchor: "cast" | "aim"` keeps the scene on the square the card was played
+ * on, sliding it by the half-cell at most that keeps its 14-cell canvas over
+ * the board. `anchor: "board"` (the default, and every scene's behaviour
+ * before anchoring existed) re-centres the canvas on the board instead, for
+ * scenes that genuinely depict something happening to the whole board.
+ *
+ * Per-square target pops carry no shift at all and stay on their own squares,
+ * exactly as before. Covers bespoke (SignatureOverlay -> BoardWideStage) and
+ * generated (GenBurst -> GenLead) leads alike, so neither renderer needs to
+ * know about any of this.
+ */
+function leadAnchorStyle(
+  role: "lead" | "target",
+  cfg: SignatureConfig | GenConfig,
+  sq: Square,
+  orientation: Color,
+): CSSProperties | undefined {
+  if (role !== "lead") return undefined;
+  if (anchorOf(cfg) !== "board") return undefined; // the stage clamps itself
+  const { sx, sy } = boardCentreShift(sq, orientation);
+  return { transform: `translate(${sx * 100}%, ${sy * 100}%)` };
+}
+
+/** A config's declared anchor. Generated signatures have no field of their own
+ *  and stay board-centred: they are the fallback renderer, and their art is
+ *  composed symmetrically about the board. */
+function anchorOf(cfg: SignatureConfig | GenConfig): SigAnchor {
+  return isGenConfig(cfg) ? "board" : cfg.anchor ?? "board";
 }
 
 // Order a ZONE-sourced signature's target squares (source !== "removal") into
@@ -1067,7 +1207,8 @@ function orderZoneSignature(
   cfg: SignatureConfig,
   squares: number[],
   orientation: Color,
-): { sq: Square; order: number; role: "lead" | "target" }[] {
+  caster: Color | null,
+): { sq: Square; order: number; role: "lead" | "target"; geo: SceneGeo }[] {
   if (squares.length === 0) return [];
   let ordered: number[];
   if (cfg.ordering === "radial") {
@@ -1096,10 +1237,17 @@ function orderZoneSignature(
         : FILE(b as Square) - FILE(a as Square);
     });
   }
-  return ordered.map((sq, i) => ({
-    sq: sq as Square,
+  // Zone plays have no separate origin square: the lead IS the first square in
+  // the order, so the legs run from it out through the rest of the group. That
+  // makes a zone sweep read as travelling across the affected squares instead
+  // of every square popping identically.
+  const seq = ordered.map((sq) => sq as Square);
+  const legs = buildLegs(cfg.ordering, seq, null, cfg.staggerMs);
+  return seq.map((sq, i) => ({
+    sq,
     order: i,
     role: (cfg.hasLead && i === 0 ? "lead" : "target") as "lead" | "target",
+    geo: geoForSquare(sq, legs, seq.length, i, orientation, caster),
   }));
 }
 
@@ -1113,6 +1261,7 @@ function computeBoardFx(
   seq: { current: number },
   signatureId: string | null,
   orientation: Color,
+  casterHint: Color | null,
 ): Map<Square, BoardFx> {
   const fx = new Map<Square, BoardFx>();
   const sig = signatureId ? resolveSignature(signatureId) ?? null : null;
@@ -1226,13 +1375,14 @@ function computeBoardFx(
   // freak clear never floods the board).
   const claimed = new Set<Square>();
   if (sig) {
-    const { targets, leadSq } = orderSignature(
+    const { targets, leadSq, legs, casterColor } = orderSignature(
       signatureId!,
       detSquares,
       prev,
       movedFrom,
       capturedSquare,
       orientation,
+      casterHint,
     );
     for (const t of targets) {
       claimed.add(t.sq);
@@ -1242,6 +1392,7 @@ function computeBoardFx(
         sig: signatureId!,
         sigOrder: t.order,
         sigRole: t.role,
+        sigGeo: geoForSquare(t.sq, legs, targets.length, t.order, orientation, casterColor),
       });
     }
     if (leadSq != null && !fx.has(leadSq)) {
@@ -1251,6 +1402,7 @@ function computeBoardFx(
         sig: signatureId!,
         sigOrder: 0,
         sigRole: "lead",
+        sigGeo: geoForSquare(leadSq, legs, targets.length, 0, orientation, casterColor),
       });
     }
   }
@@ -1342,7 +1494,9 @@ interface BoardSquareProps {
   hasEffectInfo: boolean;
   rightClickMark: RightClickMark | undefined;
   boardFx: BoardFx | undefined;
-  zoneSig: { sig: string; order: number; role: "lead" | "target"; key: number } | undefined;
+  zoneSig:
+    | { sig: string; order: number; role: "lead" | "target"; key: number; geo: SceneGeo }
+    | undefined;
   env: SquareEnv;
 }
 
@@ -1800,28 +1954,7 @@ const BoardSquare = React.memo(function BoardSquare({
                       );
                     const delay = (boardFx.sigOrder ?? 0) * sigCfg.staggerMs;
                     const sigRole = fxCalmClock ? "target" : boardFx.sigRole ?? "target";
-                    // A board-wide LEAD flourish is painted in an oversized
-                    // canvas centred on THIS square. When the lead square sits
-                    // off-centre (an edge or corner cast) that canvas clips to a
-                    // fraction, which is the "only 1/4 of the animation shows"
-                    // report. Slide the lead so its canvas re-centres on the
-                    // board: sqToFrac gives the square centre as a 0..1 board
-                    // fraction (orientation-resolved), and 800% is one board
-                    // width (8 cells) of this one-cell wrapper, so the shift
-                    // lands the canvas centre on the board centre wherever it
-                    // was cast. Per-square target pops carry no shift and stay
-                    // on their own squares. Covers bespoke (SignatureOverlay ->
-                    // BoardWideStage) and generated (GenBurst -> GenLead) leads
-                    // alike, so neither renderer needs to know about centring.
-                    const leadShift =
-                      sigRole === "lead"
-                        ? (() => {
-                            const f = sqToFrac(sq, orientation);
-                            return {
-                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
-                            };
-                          })()
-                        : undefined;
+                    const leadShift = leadAnchorStyle(sigRole, sigCfg, sq, orientation);
                     // Generated configs carry their own renderer; bespoke ones
                     // go through the classic SignatureOverlay switch.
                     // The z-30 on BOTH wrappers below is LOAD-BEARING: the
@@ -1833,11 +1966,18 @@ const BoardSquare = React.memo(function BoardSquare({
                     // the overflowing board-wide scene — the "animation cut
                     // off by an invisible wall" bug. Lifting the wrappers
                     // keeps the whole stage above sibling squares.
+                    //
+                    // The geometry vars go on the OUTER span: custom properties
+                    // inherit, so the art still sees them, and the transform
+                    // wrapper's style stays exactly as narrow as it was.
                     return (
                       <span
                         key={`fx-${boardFx.key}`}
                         className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
-                        style={{ animationDelay: `${delay}ms` }}
+                        style={{
+                          animationDelay: `${delay}ms`,
+                          ...geoVars(boardFx.sigGeo ?? neutralGeo(sq, orientation)),
+                        } as CSSProperties}
                       >
                         <span className="absolute inset-0 z-30 block" style={leadShift}>
                           {isGenConfig(sigCfg) ? (
@@ -1854,19 +1994,10 @@ const BoardSquare = React.memo(function BoardSquare({
                     /* Zone-sourced signature (source !== "removal"): the same
                        SignatureOverlay art, but staged over a piece that STAYS
                        on the board and sourced from the fx-effect zone the card
-                       names, not the removal diff. Its board-wide lead clips the
-                       same way an off-centre removal lead does, so re-centre it
-                       on the board with the identical shift. */
+                       names, not the removal diff. Its lead is placed by the
+                       identical anchor rule as a removal lead. */
                     const zRole = fxCalmClock ? "target" : zoneSig.role;
-                    const zShift =
-                      zRole === "lead"
-                        ? (() => {
-                            const f = sqToFrac(sq, orientation);
-                            return {
-                              transform: `translate(${(0.5 - f.x) * 800}%, ${(0.5 - f.y) * 800}%)`,
-                            };
-                          })()
-                        : undefined;
+                    const zShift = leadAnchorStyle(zRole, sigOf(zoneSig.sig)!, sq, orientation);
                     // Same load-bearing z-30 as the removal path above: the
                     // shift transform creates a stacking context, so without
                     // its own z-index the lead scene is painted over by every
@@ -1882,7 +2013,7 @@ const BoardSquare = React.memo(function BoardSquare({
                         // hand-enumerated off-list stays on screen forever for
                         // reduced-motion players.
                         className="fx-one-shot pointer-events-none absolute inset-0 z-30 block"
-                        style={zShift}
+                        style={{ ...zShift, ...geoVars(zoneSig.geo) } as CSSProperties}
                       >
                         <SignatureOverlay
                           visual={sigOf(zoneSig.sig)!.visual}
@@ -2234,7 +2365,7 @@ export function Board({
   const extraBannerRef = useRef<{ color: Color; gained: number; total: number; key: number } | null>(null);
   const extraBannerKeyRef = useRef(0);
   const zoneSigRef = useRef<
-    Map<number, { sig: string; order: number; role: "lead" | "target"; key: number }>
+    Map<number, { sig: string; order: number; role: "lead" | "target"; key: number; geo: SceneGeo }>
   >(new Map());
   // --- Cast spectacles: EVERY played card gets a board-level themed read ----
   // The category fallback layer (see CastSpectacle in BoardEffects): one
@@ -2253,6 +2384,9 @@ export function Board({
      * short result line in their instance state; the announcement banner shows
      * it after the play so "what did I get?" is answered on the board. */
     outcome?: string;
+    /** The square the card was played on, when the surface knew it. Anchors
+     * the diff-less lead; absent means "no square", not "the centre". */
+    sq?: Square;
   } | null>(null);
   // Latest buffs, read inside the cast effect (which only deps on
   // signatureCard) to pull the just-played card's outcome without re-running
@@ -2398,7 +2532,14 @@ export function Board({
       }
     }
     const doSetCast = () =>
-      setCast({ key: signatureCard.key, id: signatureCard.id, category: def.category, tier: def.tier, outcome });
+      setCast({
+        key: signatureCard.key,
+        id: signatureCard.id,
+        category: def.category,
+        tier: def.tier,
+        outcome,
+        sq: signatureCard.sq,
+      });
     // X1: a plugin card whose bespoke art lives in the not-yet-loaded chunk
     // (no core sig, PLUGIN_ID) waits up to 500ms for readiness on the FIRST
     // cast so it lands bespoke instead of GenBurst; later casts resolve per
@@ -2528,6 +2669,7 @@ export function Board({
       fxSeqRef,
       activeSig,
       orientation,
+      signatureCard?.caster ?? null,
     );
     // Suppress the board-wide diff-less cast lead ONLY when the removal diff
     // actually staged a bespoke LEAD flourish on its own square (otherwise the
@@ -3198,7 +3340,7 @@ export function Board({
     const cfg = sigOf(signatureCard.id);
     const marks = new Map<
       number,
-      { sig: string; order: number; role: "lead" | "target"; key: number }
+      { sig: string; order: number; role: "lead" | "target"; key: number; geo: SceneGeo }
     >();
     if (cfg && cfg.source && cfg.source !== "removal") {
       let squares: number[] = [];
@@ -3232,12 +3374,13 @@ export function Board({
           for (const [sq, fx] of fxRef.current) if (fx.kind === "summon") squares.push(sq);
           break;
       }
-      for (const t of orderZoneSignature(cfg, squares, orientation)) {
+      for (const t of orderZoneSignature(cfg, squares, orientation, signatureCard.caster ?? null)) {
         marks.set(t.sq, {
           sig: signatureCard.id,
           order: t.order,
           role: t.role,
           key: signatureCard.key,
+          geo: t.geo,
         });
       }
       if (marks.size > 0) zoneLeadClaimKeyRef.current = signatureCard.key;
@@ -4387,15 +4530,26 @@ export function Board({
             // parent: its 1400% canvas equals ~14 cells, blanketing the 8x8
             // board with margin. Mounting it on the full crop (inset-0)
             // multiplied every dimension by 8 — the "way too zoomed in"
-            // fragment bug — so both branches stage inside a single centered
-            // cell (12.5% = 1/8 of the board; already centered, no leadShift
-            // needed). This keeps board-wide effects the same real size on
-            // every screen the board itself renders on.
-            const cellStage =
-              "fx-one-shot pointer-events-none absolute left-[43.75%] top-[43.75%] h-[12.5%] w-[12.5%] z-30";
+            // fragment bug — so both branches stage inside a single cell. This
+            // keeps board-wide effects the same real size on every screen the
+            // board itself renders on.
+            //
+            // Which cell: the square the card was played on when the surface
+            // told us (signatureCard.sq), otherwise the board centre. A
+            // diff-less play removes nothing and touches no zone, so without
+            // that hint there is genuinely no square to point at.
+            const leadSq = cast.sq ?? null;
+            const anchored = leadSq != null && anchorOf(cfg) !== "board";
+            const cell = anchored ? cellPos(leadSq, orientation) : { col: 3.5, row: 3.5 };
+            const cellStage = "fx-one-shot pointer-events-none absolute h-[12.5%] w-[12.5%] z-30";
+            const cellStyle = {
+              left: `${cell.col * 12.5}%`,
+              top: `${cell.row * 12.5}%`,
+              ...geoVars(anchored ? neutralGeo(leadSq!, orientation) : centreGeo()),
+            } as CSSProperties;
             if (isGenConfig(cfg)) {
               return (
-                <div key={`genlead-${cast.key}`} aria-hidden className={cellStage}>
+                <div key={`genlead-${cast.key}`} aria-hidden className={cellStage} style={cellStyle}>
                   <GenBurst config={cfg} role="lead" delayMs={0} />
                 </div>
               );
@@ -4408,7 +4562,7 @@ export function Board({
               return null; // the zone path is playing this card's art
             }
             return (
-              <div key={`siglead-${cast.key}`} aria-hidden className={cellStage}>
+              <div key={`siglead-${cast.key}`} aria-hidden className={cellStage} style={cellStyle}>
                 <SignatureOverlay visual={cfg.visual} role="lead" delayMs={0} />
               </div>
             );
