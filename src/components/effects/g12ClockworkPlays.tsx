@@ -879,6 +879,619 @@ function ColiseumScene({ role, delayMs }: SceneProps) {
     </Lead>
   );
 }
-/* CARDS_15_TO_27 */
+/* --- 15. Fourth Wall Repair Crew (t5) — THE CONVEYOR CARRIES IT OFF ---------
+   The belt starts up along the play's own leg, the rollers under it turn, the
+   pusher arm sweeps the crate onto the belt and it rides off past the marker
+   posts. Aim-staged. Palette: #9fb0c8 / #fff2d8 / #1a2028. */
+function FourthWallCrewScene({ role, delayMs }: SceneProps) {
+  const crate = (
+    <g {...SJ}>
+      <rect x="3" y="5" width="18" height="14" rx="1" fill="#1a2028" stroke="#9fb0c8" strokeWidth="1.3" />
+      <path d="M3 9.4h18M12 5v14" stroke="#9fb0c8" strokeWidth="1" />
+    </g>
+  );
+  const pusher = (
+    <g {...SJ} stroke="#9fb0c8" strokeWidth="2.4">
+      <path d="M3 3v18" />
+      <path d="M3 12h13" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-fw-belt" l={4} t={62} w={88} h={7} d={50} st={{ background: "repeating-linear-gradient(90deg, #9fb0c8 0 5px, rgba(159,176,200,0.2) 5px 10px)", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        <V c="g12-fw-push" l={4} t={20} w={40} h={44} d={280} st={{ transformOrigin: "8% 60%" }}>{pusher}</V>
+        <V c="g12-fw-crate" l={38} t={26} w={40} h={38} d={470}>{crate}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-hit" l={4} t={62} w={88} h={7} d={0} st={{ background: "repeating-linear-gradient(90deg, #9fb0c8 0 5px, rgba(159,176,200,0.2) 5px 10px)", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        <V c="g12-hitside" l={10} t={22} w={42} h={44} d={150} st={{ transformOrigin: "8% 60%" }}>{pusher}</V>
+        <V c="g12-hit2" l={48} t={28} w={40} h={38} d={280}>{crate}</V>
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<><Wash tone="rgba(159,176,200,0.24)" /><Rail tone="rgba(255,242,216,0.28)" /></>}>
+      <L c="g12-drive" l={44} t={49.6} w={30} h={2} d={90} st={{ background: "repeating-linear-gradient(90deg, #9fb0c8 0 4px, rgba(159,176,200,0.18) 4px 8px)", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+      {[0, 1].map((i) => (
+        <V key={i} c="g12-fw-roller" l={46 + i * 11} t={50} w={4} h={4} d={260 + i * 110}>
+          <circle cx="12" cy="12" r="8.6" fill="#1a2028" stroke="#9fb0c8" strokeWidth="2" strokeDasharray="3 3" />
+        </V>
+      ))}
+      <V c="g12-fw-push" l={40} t={43} w={7} h={9} d={330} st={{ transformOrigin: "8% 60%" }}>{pusher}</V>
+      <V c="g12-fw-crate" l={48} t={44} w={8} h={7} d={500}>{crate}</V>
+      <L c="g12-fw-post" l={58} t={44} w={1.4} h={7} d={640} st={{ background: "#fff2d8", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      <Grit tone="#9fb0c8" at={[47, 54, 61]} top={54} d={720} />
+    </AimLead>
+  );
+}
+
+/* --- 16. Insider Trading (t5) — THE TICKER PRINTS BEFORE THE BELL -----------
+   The glass dome lifts, the type wheel snaps round to the quote, the hammer
+   strikes the tape against it, and the printed run pays out along the leg
+   toward the mark. Aim-staged. Palette: #e8d08a / #fff4d6 / #241d10. */
+function InsiderTradingScene({ role, delayMs }: SceneProps) {
+  const wheel = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="8" fill="#241d10" stroke="#e8d08a" strokeWidth="1.4" />
+      <path d="M12 4v2.6M20 12h-2.6M12 20v-2.6M4 12h2.6M17.6 6.4l-1.8 1.8M17.6 17.6l-1.8-1.8M6.4 17.6l1.8-1.8M6.4 6.4l1.8 1.8" stroke="#e8d08a" strokeWidth="1.4" />
+    </g>
+  );
+  const dome = <path d="M2.4 21a9.6 9.6 0 0 1 19.2 0z" fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-it-dome" l={12} t={20} w={76} h={60} d={50} st={{ transformOrigin: "50% 100%" }}>{dome}</V>
+        <V c="g12-it-wheel" l={30} t={28} w={40} h={40} d={290}>{wheel}</V>
+        <L c="g12-it-tape" l={30} t={70} w={58} h={5} d={470} st={{ background: "#fff4d6", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={26} t={24} w={46} h={46} d={0}>{wheel}</V>
+        <L c="g12-hitside" l={22} t={70} w={62} h={5} d={150} st={{ background: "#fff4d6", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        <L c="g12-hit2" l={44} t={68} w={5} h={5} d={280} st={{ background: "#241d10", borderRadius: "1px" }} />
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<><Wash tone="rgba(232,208,138,0.26)" /><Rail tone="rgba(255,244,214,0.3)" /></>}>
+      <V c="g12-it-dome" l={40} t={39} w={16} h={16} d={110} st={{ transformOrigin: "50% 100%" }}>{dome}</V>
+      <V c="g12-it-wheel" l={43} t={42} w={10} h={10} d={300}>{wheel}</V>
+      <L c="g12-it-hammer" l={40} t={45} w={5} h={1.8} d={430} st={{ background: "#fff4d6", borderRadius: "999px", transformOrigin: "0% 50%" }} />
+      <L c="g12-drive" l={46} t={49.4} w={28} h={1.6} d={500} st={{ background: "linear-gradient(90deg, #fff4d6, rgba(232,208,138,0))", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g12-it-mark" l={50 + i * 5} t={49} w={1.8} h={2.2} d={600 + i * 110} st={{ background: "#241d10", borderRadius: "1px" }} />
+      ))}
+      <Grit tone="#e8d08a" at={[45, 52, 59]} top={53} d={760} />
+    </AimLead>
+  );
+}
+
+/* --- 17. Prophecy Engine (t5) — THE CARRY LEVER TRIPS -----------------------
+   Three digit wheels step over, the carry lever is tripped by the tens and
+   swings, the sector arm rakes the column, and the answer plate flips up
+   facing the mark. Aim-staged. Palette: #b49ae8 / #fff2dc / #1c1630. */
+function ProphecyEngineScene({ role, delayMs }: SceneProps) {
+  const digit = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="7.6" fill="#1c1630" stroke="#b49ae8" strokeWidth="1.3" />
+      <path d="M12 4.4v3M19.6 12h-3M12 19.6v-3M4.4 12h3" stroke="#b49ae8" strokeWidth="1.4" />
+    </g>
+  );
+  const carry = (
+    <g {...SJ}>
+      <path d="M3.4 19L18 6" stroke="#b49ae8" strokeWidth="2.4" />
+      <circle cx="3.4" cy="19" r="2" fill="#fff2dc" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        {[0, 1, 2].map((i) => (
+          <V key={i} c="g12-pe-wheel" l={8 + i * 28} t={16} w={30} h={30} d={60 + i * 90}>{digit}</V>
+        ))}
+        <V c="g12-pe-carry" l={22} t={44} w={56} h={44} d={330} st={{ transformOrigin: "14% 84%" }}>{carry}</V>
+        <L c="g12-pe-plate" l={30} t={72} w={40} h={12} d={500} st={{ background: "#fff2dc", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={26} t={12} w={48} h={48} d={0}>{digit}</V>
+        <V c="g12-hitside" l={20} t={42} w={58} h={46} d={150} st={{ transformOrigin: "14% 84%" }}>{carry}</V>
+        <L c="g12-hit2" l={32} t={74} w={36} h={10} d={280} st={{ background: "#fff2dc", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<><Wash tone="rgba(180,154,232,0.26)" /><Rail tone="rgba(255,242,220,0.28)" /></>}>
+      {[0, 1, 2].map((i) => (
+        <V key={i} c="g12-pe-wheel" l={39 + i * 6} t={41} w={6} h={6} d={110 + i * 100}>{digit}</V>
+      ))}
+      <V c="g12-pe-carry" l={42} t={44} w={11} h={10} d={420} st={{ transformOrigin: "14% 84%" }}>{carry}</V>
+      <L c="g12-pe-sector" l={41} t={48} w={13} h={1.6} d={470} st={{ background: "#b49ae8", borderRadius: "999px", transformOrigin: "0% 50%" }} />
+      <L c="g12-drive" l={46} t={45} w={28} h={1.4} d={560} st={{ background: "linear-gradient(90deg, #fff2dc, rgba(180,154,232,0))", borderRadius: "999px", transformOrigin: "0% 50%" }} />
+      <L c="g12-pe-plate" l={54} t={41} w={7} h={5} d={660} st={{ background: "#fff2dc", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      <Grit tone="#b49ae8" at={[44, 51, 58]} top={53} d={740} />
+    </AimLead>
+  );
+}
+
+/* --- 18. Speedhack (t5) — THE MAINSPRING GOES PAST ITS STOP -----------------
+   The winding key is turned, the coil inside the barrel tightens turn by
+   turn, the click pawl chatters faster and faster, and the stop-work finger
+   is driven past its own stop. Palette: #a6f04c / #fff4d6 / #1c2a10. */
+function SpeedhackScene({ role, delayMs }: SceneProps) {
+  const coil = (
+    <path
+      d="M12 12.4a3.2 3.2 0 0 1 3.2-3.2 5.6 5.6 0 0 1 5.6 5.6 8 8 0 0 1-8 8 10.4 10.4 0 0 1-10.4-10.4A12.8 12.8 0 0 1 15.2 0"
+      fill="none"
+      stroke="#a6f04c"
+      strokeWidth="1.6"
+      {...SJ}
+    />
+  );
+  const key = (
+    <g {...SJ}>
+      <path d="M12 21V8" stroke="#a6f04c" strokeWidth="2.4" />
+      <path d="M6 4.4h12v4H6z" fill="#fff4d6" stroke="#1c2a10" strokeWidth="1.1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-sh-barrel" l={12} t={20} w={62} h={62} d={50}>
+          <circle cx="12" cy="12" r="10" fill="#1c2a10" stroke="#a6f04c" strokeWidth="1.4" />
+        </V>
+        <V c="g12-sh-coil" l={16} t={24} w={54} h={54} d={290}>{coil}</V>
+        <V c="g12-sh-key" l={56} t={14} w={34} h={54} d={470} st={{ transformOrigin: "50% 84%" }}>{key}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={14} t={14} w={62} h={62} d={0}>{coil}</V>
+        <V c="g12-hitside" l={52} t={12} w={38} h={58} d={150} st={{ transformOrigin: "50% 84%" }}>{key}</V>
+        <L c="g12-hit2" l={40} t={40} w={12} h={12} d={280} st={{ borderRadius: "50%", background: "#fff4d6" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(166,240,76,0.26)" /><Rail tone="rgba(255,244,214,0.3)" /></>}>
+      <V c="g12-sh-barrel" l={40} t={39} w={16} h={16} d={110}>
+        <circle cx="12" cy="12" r="10" fill="#1c2a10" stroke="#a6f04c" strokeWidth="1.4" />
+      </V>
+      <V c="g12-sh-coil" l={41} t={40} w={14} h={14} d={280}>{coil}</V>
+      <V c="g12-sh-key" l={54} t={38} w={7} h={12} d={380} st={{ transformOrigin: "50% 84%" }}>{key}</V>
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g12-sh-click" l={44 + i * 4} t={54} w={1.6} h={1.6} d={480 + i * 90} st={{ borderRadius: "50%", background: "#fff4d6" }} />
+      ))}
+      <L c="g12-sh-stop" l={45} t={35} w={7} h={1.6} d={660} st={{ background: "#a6f04c", borderRadius: "999px", transformOrigin: "0% 50%" }} />
+      <L c="g12-leanshadow" l={41} t={56} w={16} h={2.6} d={620} st={{ borderRadius: "999px", background: "rgba(28,42,16,0.72)" }} />
+    </Lead>
+  );
+}
+
+/* --- 19. Grandfather Clock (t4) — THE WEIGHT PULLS THE TRAIN ----------------
+   The driving weight is let go, the cable pays off the barrel, the count wheel
+   lets the hammer off and the gong rod is struck; the rod goes on humming
+   after the case is quiet. Palette: #d8a860 / #fff2cf / #241708. */
+function GrandfatherClockScene({ role, delayMs }: SceneProps) {
+  const weight = (
+    <g {...SJ}>
+      <path d="M8 3h8v13.4l-1.6 5H9.6L8 16.4z" fill="#d8a860" stroke="#241708" strokeWidth="1.2" />
+      <path d="M9.6 7h4.8" stroke="#241708" strokeWidth="1" />
+    </g>
+  );
+  const hammer = (
+    <g {...SJ}>
+      <path d="M2 6h11" stroke="#d8a860" strokeWidth="2" />
+      <circle cx="15" cy="6" r="3.4" fill="#fff2cf" stroke="#241708" strokeWidth="1.1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-gc-cable" l={30} t={6} w={2.4} h={40} d={50} st={{ background: "#d8a860", borderRadius: "999px", transformOrigin: "50% 0%" }} />
+        <V c="g12-gc-weight" l={20} t={34} w={24} h={48} d={280}>{weight}</V>
+        <V c="g12-gc-hammer" l={50} t={26} w={44} h={30} d={470} st={{ transformOrigin: "6% 40%" }}>{hammer}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hitside" l={18} t={20} w={30} h={60} d={0}>{weight}</V>
+        <V c="g12-hit" l={46} t={26} w={48} h={32} d={150} st={{ transformOrigin: "6% 40%" }}>{hammer}</V>
+        <L c="g12-hit2" l={72} t={30} w={20} h={20} d={280} st={{ borderRadius: "50%", border: "2px solid #fff2cf" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(216,168,96,0.26)" /><Rail tone="rgba(255,242,207,0.3)" /></>}>
+      <L c="g12-gc-cable" l={43.4} t={34} w={0.9} h={12} d={110} st={{ background: "#d8a860", borderRadius: "999px", transformOrigin: "50% 0%" }} />
+      <V c="g12-gc-weight" l={41} t={42} w={6} h={11} d={270}>{weight}</V>
+      <V c="g12-gc-count" l={49} t={38} w={7} h={7} d={380}>
+        <circle cx="12" cy="12" r="8.6" fill="#241708" stroke="#d8a860" strokeWidth="2.2" strokeDasharray="2.4 3" />
+      </V>
+      <V c="g12-gc-hammer" l={52} t={43} w={10} h={7} d={520} st={{ transformOrigin: "6% 40%" }}>{hammer}</V>
+      <L c="g12-gc-gong" l={57} t={38} w={1.4} h={16} d={600} st={{ background: "#fff2cf", borderRadius: "999px", transformOrigin: "50% 0%" }} />
+      <Grit tone="#d8a860" at={[44, 50, 56]} top={55} d={700} />
+    </Lead>
+  );
+}
+
+/* --- 20. Golden Goose (t4) — THE SCREW PRESS ---------------------------------
+   The square-thread screw is run down, the frame takes the strain, the platen
+   comes onto the comb and gold runs out of the spout a drop at a time.
+   Palette: #f0c541 / #fff6dc / #2b2005. */
+function GoldenGooseScene({ role, delayMs }: SceneProps) {
+  const screw = (
+    <g {...SJ} stroke="#f0c541">
+      <path d="M12 2v11" strokeWidth="2.6" />
+      <path d="M8 4.4h8M8 7h8M8 9.6h8" strokeWidth="1.5" />
+    </g>
+  );
+  const frame = (
+    <g {...SJ} stroke="#f0c541" strokeWidth="2">
+      <path d="M3 2v20M21 2v20M3 21.4h18" fill="none" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-gg-frame" l={10} t={12} w={78} h={72} d={50}>{frame}</V>
+        <V c="g12-gg-screw" l={30} t={6} w={40} h={48} d={290}>{screw}</V>
+        <L c="g12-gg-platen" l={22} t={54} w={56} h={8} d={470} st={{ background: "#f0c541", borderRadius: "1px" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={28} t={6} w={44} h={50} d={0}>{screw}</V>
+        <L c="g12-hitside" l={20} t={56} w={60} h={9} d={150} st={{ background: "#f0c541", borderRadius: "1px" }} />
+        <L c="g12-hit2" l={46} t={70} w={8} h={16} d={280} st={{ background: "#fff6dc", borderRadius: "999px", transformOrigin: "50% 0%" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(240,197,65,0.28)" /><Rail tone="rgba(255,246,220,0.3)" /></>}>
+      <V c="g12-gg-frame" l={40} t={37} w={19} h={19} d={100}>{frame}</V>
+      <V c="g12-gg-screw" l={45} t={34} w={9} h={11} d={280}>{screw}</V>
+      <L c="g12-gg-platen" l={42} t={46} w={15} h={2} d={430} st={{ background: "#f0c541", borderRadius: "1px" }} />
+      <L c="g12-gg-flow" l={48.4} t={48} w={2} h={7} d={560} st={{ background: "linear-gradient(180deg, #fff6dc, rgba(240,197,65,0))", borderRadius: "999px", transformOrigin: "50% 0%" }} />
+      <L c="g12-gg-drop" l={48.6} t={54} w={1.8} h={1.8} d={680} st={{ borderRadius: "50%", background: "#fff6dc" }} />
+      <L c="g12-leanshadow" l={42} t={56} w={16} h={2.6} d={620} st={{ borderRadius: "999px", background: "rgba(43,32,5,0.72)" }} />
+    </Lead>
+  );
+}
+
+/* --- 21. Midas Gauntlet (t4) — THE LATHE PEELS A CURL OF GOLD ---------------
+   The chuck jaws close on the bar, the work spins up, the tool post is fed in
+   along the bed and a bright curl of swarf comes off and drops away. Aim-
+   staged along the bed. Palette: #ffe08a / #fff4d6 / #33260b. */
+function MidasGauntletScene({ role, delayMs }: SceneProps) {
+  const chuck = (
+    <g {...SJ}>
+      <rect x="2" y="4" width="6" height="16" rx="1" fill="#33260b" stroke="#ffe08a" strokeWidth="1.3" />
+      <path d="M8 8h3M8 12h3M8 16h3" stroke="#ffe08a" strokeWidth="1.6" />
+    </g>
+  );
+  const tool = <path d="M12 22l4.4-9H7.6z" fill="#fff4d6" stroke="#33260b" strokeWidth="1.1" {...SJ} />;
+  const curl = (
+    <path d="M4 13c3.4-4.6 8.4-1.6 5.6 2.4-2.4 3.4-8 1.6-6.6-3" fill="none" stroke="#ffe08a" strokeWidth="1.8" {...SJ} />
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-mg-chuck" l={4} t={22} w={34} h={56} d={50}>{chuck}</V>
+        <L c="g12-mg-work" l={24} t={42} w={62} h={14} d={280} st={{ background: "linear-gradient(180deg, #ffe08a, #33260b)", borderRadius: "1px" }} />
+        <V c="g12-mg-curl" l={44} t={20} w={40} h={40} d={470}>{curl}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-hit" l={12} t={44} w={70} h={12} d={0} st={{ background: "linear-gradient(180deg, #ffe08a, #33260b)", borderRadius: "1px" }} />
+        <V c="g12-hitside" l={44} t={54} w={30} h={40} d={150}>{tool}</V>
+        <V c="g12-hit2" l={40} t={16} w={38} h={38} d={280}>{curl}</V>
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<><Wash tone="rgba(255,224,138,0.26)" /><Rail tone="rgba(255,244,214,0.3)" /></>}>
+      <V c="g12-mg-chuck" l={38} t={44} w={5} h={9} d={100}>{chuck}</V>
+      <L c="g12-drive" l={43} t={47.4} w={26} h={3} d={240} st={{ background: "linear-gradient(180deg, #ffe08a, #33260b)", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+      <V c="g12-mg-tool" l={51} t={51} w={6} h={8} d={400}>{tool}</V>
+      <V c="g12-mg-curl" l={50} t={40} w={9} h={9} d={540}>{curl}</V>
+      <L c="g12-mg-fleck" l={54} t={49} w={2} h={2} d={660} st={{ borderRadius: "50%", background: "#fff4d6" }} />
+      <Grit tone="#ffe08a" at={[52, 58, 64]} top={53} d={720} />
+    </AimLead>
+  );
+}
+
+/* --- 22. Private Gallery (t4) — THE BOLTWORK RETRACTS -----------------------
+   The handwheel is spun, the four radial bolts pull out of the jamb, the door
+   swings off its hinge and the gallery light spills onto the floor with the
+   one frame that is worth seeing. Palette: #8fb0d8 / #fff2d8 / #131b26. */
+function PrivateGalleryScene({ role, delayMs }: SceneProps) {
+  const door = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="9.4" fill="#131b26" stroke="#8fb0d8" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="4.6" fill="none" stroke="#8fb0d8" strokeWidth="1.2" />
+      <path d="M12 3.6v4M12 16.4v4M3.6 12h4M16.4 12h4" stroke="#8fb0d8" strokeWidth="1.6" />
+    </g>
+  );
+  const picture = (
+    <g {...SJ}>
+      <rect x="3" y="4" width="18" height="14" rx="1" fill="#131b26" stroke="#fff2d8" strokeWidth="1.4" />
+      <path d="M5.4 15l4.4-5.4 3 3.4 2.6-2.6 3.2 4.6z" fill="#8fb0d8" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-pg-wheel" l={16} t={16} w={68} h={68} d={50}>{door}</V>
+        <L c="g12-pg-bolt" l={50} t={46} w={38} h={5} d={290} st={{ background: "#8fb0d8", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        <V c="g12-pg-frame" l={26} t={32} w={48} h={38} d={470}>{picture}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={14} t={14} w={72} h={72} d={0}>{door}</V>
+        <L c="g12-hitside" l={50} t={46} w={40} h={5} d={150} st={{ background: "#8fb0d8", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        <V c="g12-hit2" l={28} t={32} w={44} h={36} d={280}>{picture}</V>
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(143,176,216,0.26)" /><Rail tone="rgba(255,242,216,0.28)" /></>}>
+      <V c="g12-pg-wheel" l={40} t={38} w={18} h={18} d={100}>{door}</V>
+      {[0, 90, 180, 270].map((a, i) => (
+        <P key={a} l={40} t={38} w={18} h={18} rot={`${a}deg`}>
+          <L c="g12-pg-bolt" l={50} t={47} w={16} h={2.2} d={300 + i * 90} st={{ background: "#8fb0d8", borderRadius: "1px", transformOrigin: "0% 50%" }} />
+        </P>
+      ))}
+      <V c="g12-pg-door" l={40} t={38} w={18} h={18} d={520} st={{ transformOrigin: "10% 50%" }}>{door}</V>
+      <L c="g12-shaft" l={45} t={30} w={10} h={22} d={600} st={{ transformOrigin: "50% 100%", background: "linear-gradient(0deg, rgba(143,176,216,0.6), transparent)" }} />
+      <V c="g12-pg-frame" l={45} t={42} w={9} h={7} d={680}>{picture}</V>
+      <Grit tone="#fff2d8" at={[43, 49, 56]} top={54} d={720} />
+    </Lead>
+  );
+}
+
+/* --- 23. Rage Bait (t4) — THE SPRING TRAP GOES OVER -------------------------
+   The bait pan tips under the weight, the sear slips off its notch, the bow
+   snaps over the base with the coil unwinding behind it, and the whole board
+   judders on the floor. Palette: #e8574c / #ffeccb / #24100c. */
+function RageBaitScene({ role, delayMs }: SceneProps) {
+  const bow = <path d="M3 20a9 9 0 0 1 18 0" fill="none" stroke="#e8574c" strokeWidth="2.6" {...SJ} />;
+  const pan = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="5" fill="#ffeccb" stroke="#24100c" strokeWidth="1.2" />
+      <path d="M12 17v4" stroke="#24100c" strokeWidth="1.4" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-rg-base" l={10} t={72} w={80} h={9} d={50} st={{ background: "#24100c", borderRadius: "1px" }} />
+        <V c="g12-rg-pan" l={34} t={40} w={32} h={32} d={280} st={{ transformOrigin: "50% 90%" }}>{pan}</V>
+        <V c="g12-rg-bow" l={12} t={22} w={76} h={54} d={470} st={{ transformOrigin: "50% 100%" }}>{bow}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={32} t={38} w={36} h={36} d={0} st={{ transformOrigin: "50% 90%" }}>{pan}</V>
+        <V c="g12-hitside" l={10} t={20} w={80} h={58} d={150} st={{ transformOrigin: "50% 100%" }}>{bow}</V>
+        <L c="g12-hit2" l={12} t={74} w={76} h={6} d={280} st={{ background: "#24100c", borderRadius: "1px" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(232,87,76,0.28)" /><Rail tone="rgba(255,236,203,0.3)" /></>}>
+      <L c="g12-rg-base" l={41} t={52} w={19} h={2.4} d={100} st={{ background: "#24100c", borderRadius: "1px" }} />
+      <V c="g12-rg-pan" l={46} t={45} w={7} h={7} d={250} st={{ transformOrigin: "50% 90%" }}>{pan}</V>
+      <L c="g12-rg-sear" l={56} t={44} w={1.6} h={8} d={380} st={{ background: "#ffeccb", borderRadius: "999px", transformOrigin: "50% 100%" }} />
+      <V c="g12-rg-bow" l={41} t={40} w={19} h={13} d={470} st={{ transformOrigin: "50% 100%" }}>{bow}</V>
+      <L c="g12-rg-coil" l={39} t={50} w={7} h={2.4} d={520} st={{ background: "repeating-linear-gradient(90deg, #e8574c 0 2px, transparent 2px 4px)", transformOrigin: "100% 50%" }} />
+      <L c="g12-leanshadow" l={40} t={55} w={20} h={2.8} d={600} st={{ borderRadius: "999px", background: "rgba(36,16,12,0.75)" }} />
+      <Grit tone="#e8574c" at={[42, 49, 56]} top={57} d={700} />
+    </Lead>
+  );
+}
+
+/* --- 24. Stack Overflow (t4) — THE BUCKET ELEVATOR OVERTOPS -----------------
+   The bucket chain climbs its casing, the head pulley turns, the top bucket
+   goes over full, and everything it was carrying comes back down the return
+   leg while the casing judders. Palette: #8f9ce0 / #fff2d8 / #171a2b. */
+function StackOverflowScene({ role, delayMs }: SceneProps) {
+  const bucket = (
+    <g {...SJ}>
+      <path d="M3 5h18l-2.4 12H5.4z" fill="#171a2b" stroke="#8f9ce0" strokeWidth="1.3" />
+      <path d="M5.6 9h12.8" stroke="#8f9ce0" strokeWidth="1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-sv-casing" l={30} t={6} w={40} h={80} d={50} st={{ border: "2px solid #8f9ce0", borderRadius: "1px" }} />
+        <V c="g12-sv-bucket" l={34} t={54} w={32} h={26} d={290}>{bucket}</V>
+        <L c="g12-sv-spill" l={44} t={12} w={5} h={5} d={480} st={{ borderRadius: "50%", background: "#fff2d8" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hitside" l={32} t={48} w={36} h={30} d={0}>{bucket}</V>
+        <L c="g12-hit" l={28} t={8} w={44} h={44} d={150} st={{ border: "2px solid #8f9ce0", borderRadius: "1px" }} />
+        <L c="g12-hit2" l={44} t={14} w={10} h={10} d={280} st={{ borderRadius: "50%", background: "#fff2d8" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(143,156,224,0.26)" /><Rail tone="rgba(255,242,216,0.28)" /></>}>
+      <L c="g12-sv-casing" l={45} t={34} w={10} h={22} d={100} st={{ border: "2px solid #8f9ce0", borderRadius: "1px" }} />
+      <V c="g12-sv-pulley" l={45.6} t={33} w={8} h={8} d={260}>
+        <circle cx="12" cy="12" r="8.6" fill="#171a2b" stroke="#8f9ce0" strokeWidth="2" strokeDasharray="3 3" />
+      </V>
+      {[0, 1].map((i) => (
+        <V key={i} c="g12-feedin" l={46} t={46} w={8} h={6} d={330 + i * 130}>{bucket}</V>
+      ))}
+      <L c="g12-sv-spill" l={48} t={33} w={2.2} h={2.2} d={560} st={{ borderRadius: "50%", background: "#fff2d8" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g12-sv-fall" l={51 + i * 2} t={36} w={1.6} h={1.6} d={640 + i * 100} st={{ borderRadius: "50%", background: "#8f9ce0" }} />
+      ))}
+    </Lead>
+  );
+}
+
+/* --- 25. Vampire Court (t4) — THE PISTON PUMP DRAWS ------------------------
+   The handle is rocked over, the piston goes down its barrel, the ball check
+   valve seats with a knock, the standpipe fills and the spout runs.
+   Palette: #c0405a / #ffe8cf / #1d0a12. */
+function VampireCourtScene({ role, delayMs }: SceneProps) {
+  const body = (
+    <g {...SJ}>
+      <rect x="8" y="7" width="8" height="14" rx="1" fill="#1d0a12" stroke="#c0405a" strokeWidth="1.3" />
+      <path d="M16 10.4h5l-1.4 4.6" fill="none" stroke="#c0405a" strokeWidth="1.6" />
+    </g>
+  );
+  const handle = <path d="M3 5.4l17 3.2" stroke="#c0405a" strokeWidth="2.8" {...SJ} />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-vc-body" l={26} t={26} w={48} h={58} d={50}>{body}</V>
+        <V c="g12-vc-handle" l={10} t={8} w={60} h={26} d={280} st={{ transformOrigin: "88% 50%" }}>{handle}</V>
+        <L c="g12-vc-fill" l={42} t={44} w={9} h={30} d={470} st={{ background: "#c0405a", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={26} t={24} w={50} h={60} d={0}>{body}</V>
+        <V c="g12-hitside" l={8} t={6} w={62} h={28} d={150} st={{ transformOrigin: "88% 50%" }}>{handle}</V>
+        <L c="g12-hit2" l={44} t={46} w={9} h={30} d={280} st={{ background: "#c0405a", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(192,64,90,0.28)" /><Rail tone="rgba(255,232,207,0.28)" /></>}>
+      <V c="g12-vc-body" l={43} t={39} w={13} h={15} d={110}>{body}</V>
+      <V c="g12-vc-handle" l={37} t={34} w={12} h={5} d={280} st={{ transformOrigin: "88% 50%" }}>{handle}</V>
+      <L c="g12-vc-piston" l={48.4} t={36} w={1.8} h={8} d={400} st={{ background: "#ffe8cf", borderRadius: "1px", transformOrigin: "50% 0%" }} />
+      <L c="g12-vc-ball" l={48} t={48} w={2.4} h={2.4} d={520} st={{ borderRadius: "50%", background: "#ffe8cf" }} />
+      <L c="g12-vc-fill" l={47.4} t={44} w={3.4} h={9} d={600} st={{ background: "#c0405a", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      <L c="g12-leanshadow" l={43} t={55} w={15} h={2.6} d={640} st={{ borderRadius: "999px", background: "rgba(29,10,18,0.75)" }} />
+    </Lead>
+  );
+}
+
+/* --- 26. Overtime Claim (t4 art, t3 card) — THE COIN ESCAPEMENT KICKS -------
+   The coin goes down the slot, trips the escapement, the expired flag drops
+   out of the window and the hand jumps forward on the dial.
+   Palette: #6fd0b0 / #fff2d6 / #10241e. */
+function OvertimeClaimScene({ role, delayMs }: SceneProps) {
+  const dial = (
+    <g {...SJ}>
+      <circle cx="12" cy="12" r="9" fill="#10241e" stroke="#6fd0b0" strokeWidth="1.4" />
+      <path d="M12 5.4v6.6l4.4 2.6" stroke="#fff2d6" strokeWidth="1.8" fill="none" />
+    </g>
+  );
+  const flag = (
+    <g {...SJ}>
+      <path d="M4 5h14l-3 4 3 4H4z" fill="#6fd0b0" stroke="#10241e" strokeWidth="1.2" />
+      <path d="M4 5v15" stroke="#6fd0b0" strokeWidth="1.8" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-oc-coin" l={44} t={4} w={12} h={12} d={50} st={{ borderRadius: "50%", background: "#fff2d6" }} />
+        <V c="g12-oc-dial" l={20} t={30} w={52} h={52} d={290}>{dial}</V>
+        <V c="g12-oc-flag" l={54} t={14} w={40} h={44} d={470} st={{ transformOrigin: "12% 20%" }}>{flag}</V>
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g12-hit2" l={44} t={2} w={14} h={14} d={0} st={{ borderRadius: "50%", background: "#fff2d6" }} />
+        <V c="g12-hit" l={18} t={28} w={56} h={56} d={150}>{dial}</V>
+        <V c="g12-hitside" l={52} t={12} w={44} h={46} d={280} st={{ transformOrigin: "12% 20%" }}>{flag}</V>
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(111,208,176,0.26)" /><Rail tone="rgba(255,242,214,0.28)" /></>}>
+      <L c="g12-oc-coin" l={47} t={33} w={3} h={3} d={90} st={{ borderRadius: "50%", background: "#fff2d6" }} />
+      <V c="g12-oc-kick" l={43} t={41} w={7} h={7} d={300}>
+        <circle cx="12" cy="12" r="8.6" fill="none" stroke="#6fd0b0" strokeWidth="2.6" strokeDasharray="1.8 3" />
+      </V>
+      <V c="g12-oc-dial" l={41} t={38} w={17} h={17} d={420}>{dial}</V>
+      <V c="g12-oc-flag" l={53} t={38} w={9} h={9} d={600} st={{ transformOrigin: "12% 20%" }}>{flag}</V>
+      <L c="g12-feedin" l={43} t={53} w={13} h={1.6} d={660} st={{ background: "linear-gradient(90deg, #6fd0b0, rgba(111,208,176,0))", borderRadius: "999px" }} />
+    </Lead>
+  );
+}
+
+/* --- 27. Pocket Metronome (t3) — THE INVERTED PENDULUM BEATS ----------------
+   The wedge case is opened, the arm is set going, the bob is slid down the
+   scale a notch and the beat quickens until the arm is caught.
+   Palette: #e0a878 / #fff2d6 / #2a1a10. */
+function PocketMetronomeScene({ role, delayMs }: SceneProps) {
+  const caseBody = (
+    <g {...SJ}>
+      <path d="M12 2l7.4 20H4.6z" fill="#2a1a10" stroke="#e0a878" strokeWidth="1.4" />
+      <path d="M8 18h8" stroke="#e0a878" strokeWidth="1.1" />
+    </g>
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-pm-lid" l={22} t={18} w={56} h={64} d={50} st={{ transformOrigin: "50% 100%" }}>{caseBody}</V>
+        <L c="g12-pm-arm" l={48} t={20} w={4} h={56} d={290} st={{ background: "#e0a878", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+        <L c="g12-pm-bob" l={42} t={38} w={16} h={9} d={480} st={{ background: "#fff2d6", borderRadius: "1px" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <V c="g12-hit" l={20} t={16} w={60} h={68} d={0} st={{ transformOrigin: "50% 100%" }}>{caseBody}</V>
+        <L c="g12-hitside" l={47} t={18} w={5} h={58} d={150} st={{ background: "#e0a878", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+        <L c="g12-hit2" l={41} t={36} w={18} h={10} d={280} st={{ background: "#fff2d6", borderRadius: "1px" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(224,168,120,0.26)" /><Rail tone="rgba(255,242,214,0.28)" /></>}>
+      <V c="g12-pm-lid" l={43} t={38} w={14} h={17} d={100} st={{ transformOrigin: "50% 100%" }}>{caseBody}</V>
+      <L c="g12-pm-arm" l={49.4} t={36} w={1.2} h={17} d={300} st={{ background: "#e0a878", borderRadius: "1px", transformOrigin: "50% 100%" }} />
+      <L c="g12-pm-bob" l={47.6} t={42} w={4.8} h={2.2} d={440} st={{ background: "#fff2d6", borderRadius: "1px" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g12-pm-tick" l={51} t={39 + i * 3} w={2.4} h={0.9} d={560 + i * 90} st={{ background: "#e0a878", borderRadius: "1px" }} />
+      ))}
+      <L c="g12-leanshadow" l={44} t={55} w={13} h={2.4} d={640} st={{ borderRadius: "999px", background: "rgba(42,26,16,0.72)" }} />
+    </Lead>
+  );
+}
 
 /* CARDS_REGISTRY */
