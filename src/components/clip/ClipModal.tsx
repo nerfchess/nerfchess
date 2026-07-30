@@ -11,6 +11,7 @@ import type { GameResult } from "@/engine/game";
 import { BOARD_THEMES, PIECE_THEMES, loadSettings } from "@/lib/settings";
 import { buildClipTimeline } from "./clipReplay";
 import { ClipRenderer, clipTimings, type ClipRendererHandle } from "./ClipRenderer";
+import { useModalChrome } from "@/lib/useModalChrome";
 
 const LENGTH_OPTIONS = [4, 6, 10] as const;
 
@@ -46,6 +47,8 @@ export function ClipModal({
   playerNames,
   result,
 }: Props) {
+  // Scroll lock, Escape, and the ghost-click guard on the backdrop.
+  const chrome = useModalChrome(open, onClose);
   const [plies, setPlies] = useState<number>(6);
   const [ready, setReady] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -219,11 +222,11 @@ export function ClipModal({
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
       className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-4 py-6 backdrop-blur-sm"
-      onMouseDown={onClose}
+      onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
         className="plate plate-raised gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-5 shadow-2xl sm:p-6"
-        onMouseDown={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
         <span className="card-corner tr" />

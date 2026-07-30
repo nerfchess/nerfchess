@@ -9,9 +9,10 @@
 // Strictly presentational: it renders the offer the caller passes and can only
 // close itself. It never touches either side's draft state.
 
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import type { BuffOffer } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { BuffCard } from "./BuffCard";
 

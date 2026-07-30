@@ -31,6 +31,7 @@
 //     gate additionally kills any running loop if the setting flips live.
 // ---------------------------------------------------------------------------
 
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import {
   createElement,
   useEffect,
@@ -39,7 +40,7 @@ import {
   useSyncExternalStore,
   type CSSProperties,
 } from "react";
-import { useReducedMotion } from "framer-motion";
+
 import type { LucideIcon } from "lucide-react";
 import { genSignatureConfig, type GenFamily } from "@/components/effects/genSignature";
 import { getPassiveVisual, type PassiveFamily } from "@/components/effects/passive/registry";

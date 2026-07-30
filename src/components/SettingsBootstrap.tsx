@@ -130,7 +130,11 @@ function MotionNotice() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-3 left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      // bottom honours the home indicator, like the FPS meter below: at a flat
+      // 12px this notice started inside the home-bar zone and put its buttons
+      // right where the swipe lives.
+      style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Card effects are off</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
@@ -258,7 +262,11 @@ function LagWatch() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-3 left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      // bottom honours the home indicator, like the FPS meter below: at a flat
+      // 12px this notice started inside the home-bar zone and put its buttons
+      // right where the swipe lives.
+      style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">

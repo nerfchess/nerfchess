@@ -119,10 +119,12 @@ export type MPDraftState = {
   chainKingGuard?: Color;
   historyDiverged?: boolean;
   players: Record<Color, MPDraftPlayerState>;
-  /** Current shared lock-in deadline (ms epoch), when a decision window is
-   * open. Carried on every dtState frame so a reroll's fresh window (and any
-   * server-side deadline change) reaches clients without a dedicated frame. */
-  deadline?: number;
+  /** Current shared lock-in deadline (ms epoch), or null when no decision
+   * window is open. Carried on every dtState frame so a reroll's fresh window
+   * (and any server-side deadline change) reaches clients without a dedicated
+   * frame. Explicitly nullable: a closed window MUST clear the client's copy,
+   * or it keeps counting down a deadline that no longer exists. */
+  deadline?: number | null;
 };
 
 export type MPDraftOffer = {
@@ -179,6 +181,12 @@ export type MPStart = {
   rated?: boolean;
   chat?: MPChatMessage[];
   preview?: MPRatingPreview;
+  /** When the OPPONENT's socket dropped (ms epoch), if they are away right
+   * now. Present so a reconnecting client can restore the abandonment /
+   * claim-win countdown: the `opponentGone` frame is a one-shot the server
+   * will not re-send, so without this a refresh mid-window lost the claim UI
+   * permanently. Absent whenever the opponent is connected. */
+  oppGoneSince?: number;
   // Rules already voluntarily revealed mid-game (color -> nerf id).
   revealed?: Partial<Record<Color, string>>;
   // Draft ruleset games (always casual): the public action record for exact
@@ -449,20 +457,83 @@ function saveFriendSession(session: MPSavedSession) {
 const SEAT_PREFIX = "dc:online-seat:";
 
 export type OnlineSeat = { color: Color; token: string };
+/** How long a stored seat stays reclaimable. Comfortably longer than any real
+ * game plus a reconnect window; past this the credential is dead weight. */
+const SEAT_TTL_MS = 24 * 60 * 60 * 1000;
+/** Hard cap on retained seats, so a burst of games in one day cannot pile up
+ * unbounded even inside the TTL. Oldest are dropped first. */
+const SEAT_MAX_KEPT = 40;
+
+type StoredSeat = OnlineSeat & { at?: number };
+
+/**
+ * Drop expired and surplus seats. One key is written per game and only cleared
+ * when the tab happens to be open at game end, so abandoned and closed-tab
+ * games used to leave their credential in localStorage forever (unlike the
+ * active-game key, which has always had a TTL). Swept opportunistically on
+ * write: no timers, and the cost is one pass over the app's own keys.
+ */
+function sweepOnlineSeats() {
+  try {
+    const now = Date.now();
+    const seats: { key: string; at: number }[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith(SEAT_PREFIX)) continue;
+      let raw: StoredSeat | null = null;
+      try {
+        raw = JSON.parse(window.localStorage.getItem(key) || "null") as StoredSeat | null;
+      } catch {}
+      if (!raw?.token) {
+        window.localStorage.removeItem(key);
+        continue;
+      }
+      // A seat with no timestamp predates this field. Stamp it now rather than
+      // deleting: a game in progress across the upgrade must stay reclaimable.
+      // The backlog still drains, just one TTL later instead of instantly.
+      let at = raw.at ?? 0;
+      if (!at) {
+        at = now;
+        try {
+          window.localStorage.setItem(key, JSON.stringify({ ...raw, at }));
+        } catch {}
+      }
+      if (now - at > SEAT_TTL_MS) {
+        window.localStorage.removeItem(key);
+        continue;
+      }
+      seats.push({ key, at });
+    }
+    if (seats.length > SEAT_MAX_KEPT) {
+      seats.sort((a, b) => a.at - b.at);
+      for (const s of seats.slice(0, seats.length - SEAT_MAX_KEPT)) {
+        window.localStorage.removeItem(s.key);
+      }
+    }
+  } catch {}
+}
 
 export function saveOnlineSeat(gameId: string, seat: OnlineSeat) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(SEAT_PREFIX + gameId, JSON.stringify(seat));
+    const stored: StoredSeat = { ...seat, at: Date.now() };
+    window.localStorage.setItem(SEAT_PREFIX + gameId, JSON.stringify(stored));
   } catch {}
+  sweepOnlineSeats();
 }
 
 export function loadOnlineSeat(gameId: string): OnlineSeat | null {
   if (typeof window === "undefined") return null;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(SEAT_PREFIX + gameId) || "null") as OnlineSeat | null;
+    const parsed = JSON.parse(window.localStorage.getItem(SEAT_PREFIX + gameId) || "null") as StoredSeat | null;
     if (!parsed?.token || (parsed.color !== "w" && parsed.color !== "b")) return null;
-    return parsed;
+    // Expired seats are not reclaimable; drop rather than hand back a token
+    // the server will reject anyway.
+    if (parsed.at != null && Date.now() - parsed.at > SEAT_TTL_MS) {
+      clearOnlineSeat(gameId);
+      return null;
+    }
+    return { color: parsed.color, token: parsed.token };
   } catch {
     return null;
   }
@@ -597,6 +668,9 @@ export class MPSession {
   // this keeps scheduleReconnect enabled during the search window).
   private searching = false;
   private searchQueue: { pool: string; mode?: DraftMode; target?: { userId: string } } | null = null;
+  /** Settles an in-flight queue() promise when the search is abandoned
+   * (cancelQueue / destroy). Null when no search is pending. */
+  private abandonQueue: ((reason: Error) => void) | null = null;
   private destroyed = false;
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
@@ -747,16 +821,20 @@ export class MPSession {
         // the whole session down and prevented any retry). Detach and close
         // the dead socket so a later connect() starts fresh instead of reusing
         // a still-CONNECTING one.
-        if (this.socket === socket) {
-          socket.onopen = null;
-          socket.onmessage = null;
-          socket.onerror = null;
-          socket.onclose = null;
-          try {
-            socket.close();
-          } catch {}
-          this.socket = null;
-        }
+        //
+        // Always tear the socket down, even when it is no longer this.socket:
+        // if setServerUrl()/resync() replaced it while it was still CONNECTING,
+        // the old guard left it open with its handlers attached, leaking the
+        // socket until the browser gave up on it. Only clear the shared
+        // `this.socket` slot when this attempt still owns it.
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onclose = null;
+        try {
+          socket.close();
+        } catch {}
+        if (this.socket === socket) this.socket = null;
         settleReject(new Error("Could not reach the game server."));
       }, 8000);
 
@@ -800,6 +878,16 @@ export class MPSession {
 
       socket.onclose = () => {
         window.clearTimeout(failTimer);
+        // A SUPERSEDED socket's close must not touch shared session state.
+        // Only "lost" was generation-guarded before, so a late onclose from an
+        // old socket would null out the CURRENT socket (making sendFrame
+        // return false — moves and resigns silently failed), clear and leak the
+        // current socket's heartbeat interval, and emit a spurious
+        // `disconnected` that dropped the pending local move and premove ack.
+        // Reachable whenever the server closes a seat ("Reconnected from
+        // another tab") or a mobile freeze kills the socket while onWake has
+        // already built its replacement.
+        if (gen !== this.socketGen) return;
         if (this.heartbeat) window.clearInterval(this.heartbeat);
         this.heartbeat = null;
         this.socket = null;
@@ -807,9 +895,7 @@ export class MPSession {
         // isn't blocked behind a promise the failTimer will reject.
         if (!opened) this.connecting = null;
         if (opened) {
-          // Only the current socket's close is a real drop; a superseded
-          // socket closing must not report "lost" over a healthy connection.
-          if (gen === this.socketGen) this.emitConnectionState("lost");
+          this.emitConnectionState("lost");
           this.emit({ type: "disconnected" });
           this.scheduleReconnect();
         }
@@ -1129,10 +1215,12 @@ export class MPSession {
       const off = this.on((event) => {
         if (event.type === "paired") {
           this.searching = false;
+          this.abandonQueue = null;
           off();
           resolve({ id: event.id, color: event.color, token: event.token });
         } else if (event.type === "error") {
           this.searching = false;
+          this.abandonQueue = null;
           off();
           // Surface the authoritative "seeker left" as the same sentinel the
           // lobby's client-side timeout uses, so it shows one clear message.
@@ -1144,17 +1232,27 @@ export class MPSession {
           // auto-recover.
           if (!this.autoReconnect) {
             this.searching = false;
+            this.abandonQueue = null;
             off();
             reject(new Error("Disconnected from the game server."));
           }
         }
       });
+      // How cancelQueue() settles this promise. Without it a cancelled search
+      // left the promise pending FOREVER and its listener attached: every
+      // cancel leaked one of each, and any `await queue(...)` never returned.
+      this.abandonQueue = (reason: Error) => {
+        this.abandonQueue = null;
+        off();
+        reject(reason);
+      };
       this.sendFrame("queue", { pool, ...(mode ? { mode } : {}), ...(target ? { target } : {}) });
     });
   }
 
   cancelQueue(): boolean {
     this.searching = false;
+    this.abandonQueue?.(new Error("queue_cancelled"));
     this.searchQueue = null;
     return this.sendFrame("queueCancel");
   }
@@ -1434,6 +1532,9 @@ export class MPSession {
     this.destroyed = true;
     this.searching = false;
     this.searchQueue = null;
+    // Settle any in-flight queue() so an awaiting caller is not left hanging on
+    // a promise that can never resolve once the session is gone.
+    this.abandonQueue?.(new Error("session_destroyed"));
     if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
     this.removeWakeListeners();

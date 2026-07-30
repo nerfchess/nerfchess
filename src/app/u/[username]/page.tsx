@@ -46,6 +46,7 @@ import { LaurelBadge, useTopPlacements } from "@/components/LaurelBadge";
 import { isHouseEditor, isRatingEditor } from "@/lib/godPanel";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
+import { useModalChrome } from "@/lib/useModalChrome";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -227,13 +228,25 @@ function ProfileContent() {
 
   // Newest finished game (limit 1, no filters) for the recent-game module. Kept
   // separate from the Games tab feed so a finished live game can refetch it.
+  // Guards against a stale response landing on the wrong profile. This page
+  // deliberately does NOT remount on a profile -> profile navigation (it resets
+  // during render instead), so without the check a slow reply for the previous
+  // username could overwrite the new profile's recent-game card. Every other
+  // fetch on this page already has an equivalent `cancelled` flag; this one was
+  // the exception. The ref (not a local flag) is what lets the callback be
+  // re-run by refetchers while still binding each run to a username.
+  const newestGameReqRef = useRef(0);
   const loadNewestGame = useCallback(async () => {
+    const req = ++newestGameReqRef.current;
+    const forUser = username;
     try {
-      const res = await fetch(`/api/users/${encodeURIComponent(username)}/games?limit=1`);
+      const res = await fetch(`/api/users/${encodeURIComponent(forUser)}/games?limit=1`);
       if (!res.ok) return;
       const body = (await res.json()) as { games: RecentGameRow[] };
+      if (req !== newestGameReqRef.current) return;
       setNewestGame(body.games[0] ?? null);
     } catch {
+      if (req !== newestGameReqRef.current) return;
       setNewestGame((g) => (g === undefined ? null : g));
     }
   }, [username]);
@@ -2144,6 +2157,8 @@ const REPORT_REASONS = [
 ] as const;
 
 function ReportModal({ username, onClose }: { username: string; onClose: () => void }) {
+  // Body scroll lock, Escape, and the ghost-click guard on the backdrop.
+  const chrome = useModalChrome(true, onClose);
   const [reason, setReason] = useState<string>("cheating");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -2167,8 +2182,8 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/60 px-4 py-6"
+      onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
         className="plate w-full max-w-md max-h-[90dvh] overflow-y-auto p-5"

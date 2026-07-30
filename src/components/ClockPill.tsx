@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { formatClock } from "@/lib/clockFormat";
 import { playLowTime, playUrgentTick } from "@/lib/sounds";
 
 // Shared across every ClockPill instance so the duplicated mobile/desktop
@@ -13,15 +14,9 @@ function warnClockOnce(play: () => void) {
   play();
 }
 
-export function formatClock(ms: number): string {
-  const clamped = Math.max(0, ms);
-  // Under 10s, show 1 decimal so the user can feel the rush.
-  if (clamped < 10000) return `0:${(clamped / 1000).toFixed(1).padStart(4, "0")}`;
-  const totalSec = Math.ceil(clamped / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+// Lives in a pure module so the boundary behaviour is unit-testable without
+// React; re-exported here because this is where callers expect to find it.
+export { formatClock } from "@/lib/clockFormat";
 
 export function ClockPill({
   ms,
@@ -93,8 +88,14 @@ export function ClockPill({
 
     const tick = () => {
       update();
-      const nextDelay = ms < 10000 ? 100 : 250;
-      timer = window.setTimeout(tick, nextDelay);
+      // Cadence keys off the time LEFT, not the `ms` prop. The prop is the last
+      // authoritative value and deliberately does not change per tick (the pill
+      // self-interpolates via rAF, so the game view is not repainted every
+      // frame) — so keying on it meant a player thinking from 60s down to 2s
+      // kept the 250ms cadence the whole way, and the sub-10s tenths display
+      // advanced in visible 0.25s jumps.
+      const remaining = Math.max(0, ms - Math.max(0, performance.now() - startedAt - startDelayMs));
+      timer = window.setTimeout(tick, remaining < 10000 ? 100 : 250);
     };
 
     raf = window.requestAnimationFrame(tick);

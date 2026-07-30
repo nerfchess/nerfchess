@@ -29,15 +29,31 @@ import "./gamblingPlays.css";
 // The lead scene and the square-local flourishes of ONE play mount together,
 // but the stash is single-read. First reader takes it, later mounts of the
 // same fire (and StrictMode's double render) reuse the cached copy.
-const lastOutcome = new Map<string, Record<string, unknown>>();
+//
+// The cache is deliberately SHORT-LIVED. Keyed by card id alone and never
+// expired, it was a cross-game leak: the local bot page never stashes an
+// outcome at all (only OnlineMatch and the spectator page do), so an online
+// `gm_lootbox` that opened legendary would be replayed, frame for frame, over
+// a local roll that was something else entirely — and two plays of one card
+// inside the queue's 2.6s spacing could show each other's results. Past this
+// window the fallback returns null, which is the "neutral variant that claims
+// nothing" the card art is built to handle.
+const OUTCOME_REUSE_MS = 5_000;
+const lastOutcome = new Map<string, { at: number; value: Record<string, unknown> }>();
 
-function outcomeOf(id: string): Record<string, unknown> | null {
+function outcomeOf(id: string, now = Date.now()): Record<string, unknown> | null {
   const fresh = takeGamblingOutcome(id);
   if (fresh) {
-    lastOutcome.set(id, fresh);
+    lastOutcome.set(id, { at: now, value: fresh });
     return fresh;
   }
-  return lastOutcome.get(id) ?? null;
+  const cached = lastOutcome.get(id);
+  if (!cached) return null;
+  if (now - cached.at > OUTCOME_REUSE_MS) {
+    lastOutcome.delete(id);
+    return null;
+  }
+  return cached.value;
 }
 
 /** Read the card's true outcome once, at mount. null = play it neutral. */

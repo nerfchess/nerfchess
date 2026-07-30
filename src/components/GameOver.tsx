@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
+import { useModalChrome } from "@/lib/useModalChrome";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { fetchMe } from "@/lib/authClient";
 import { GameResult } from "@/engine/game";
@@ -511,6 +513,13 @@ export function GameOver({
     if (onDismiss) onDismiss();
     else setDismissed(true);
   }, [onDismiss]);
+  // Body scroll lock, Escape, and the ghost-click guard. The guard matters
+  // most here: the winning move commits on pointerdown and this panel mounts
+  // in the same frame, so on touch the finishing tap's trailing synthesized
+  // mouse event landed on the brand-new backdrop and dismissed the result
+  // screen instantly (Board.tsx documents the same hazard for its promotion
+  // picker).
+  const chrome = useModalChrome(!dismissed, dismiss);
   const [shared, setShared] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
   // Guests get one quiet post-game nudge to keep what they just earned; it
@@ -710,8 +719,8 @@ export function GameOver({
       aria-describedby="game-over-reason"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 grid place-items-center bg-[#0f0d0a]/68 px-4 py-6 backdrop-blur-sm"
-      onMouseDown={dismiss}
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[#0f0d0a]/68 px-4 py-6 backdrop-blur-sm"
+      onPointerDown={chrome.onBackdropPointerDown}
     >
       {/* Level-3 victory beat: one energy ring blooms behind the panel while
           sparks in the four energy hues climb and die. Winners only, one
@@ -743,7 +752,7 @@ export function GameOver({
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
         className="dgn-slab dgn-rivets gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
-        onMouseDown={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
         <span className="card-corner tr" />

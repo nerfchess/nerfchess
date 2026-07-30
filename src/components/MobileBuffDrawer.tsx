@@ -47,8 +47,14 @@ export function MobileBuffDrawer({
           className="fixed inset-0 z-30 bg-black/50"
         />
       )}
+      {/* Below sm the move drawer's bar sits underneath this one, so stack on
+          its REAL height: 44px plus the home-indicator inset it now absorbs.
+          The old hardcoded `bottom-11` assumed a flat 44px and left the two
+          bars overlapping by the inset on every notched iPhone. From sm up the
+          move drawer is hidden (`sm:hidden`), so this drops to the edge and
+          takes the inset itself. */}
       <div
-        className="fixed inset-x-0 bottom-11 z-40 plate overflow-hidden border-t border-[color:var(--edge)] sm:bottom-0"
+        className="fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-40 plate overflow-hidden border-t border-[color:var(--edge)] sm:bottom-0 sm:pb-[env(safe-area-inset-bottom)]"
         // Drawer geometry: rounded top corners, square bottom against the
         // screen edge. Inline so it reliably overrides the plate's 10px.
         style={{ borderRadius: "1px 1px 0 0" }}
@@ -93,9 +99,9 @@ export function MobileBuffDrawer({
             "overflow-hidden transition-[height] duration-200 ease-out " + (open ? "h-[46dvh]" : "h-0")
           }
         >
-          <div className="h-full overflow-y-auto px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
-            {children}
-          </div>
+          {/* The wrapper owns any safe-area inset (only from sm up, where this
+              bar is the bottom-most element); here just breathing room. */}
+          <div className="h-full overflow-y-auto px-2 pb-2">{children}</div>
         </div>
       </div>
     </div>

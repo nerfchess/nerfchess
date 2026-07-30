@@ -8,7 +8,9 @@ import { Color } from "@/engine/types";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { playCardUse } from "@/lib/sounds";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "@/lib/useReducedMotion";
+import { useModalChrome } from "@/lib/useModalChrome";
+import { motion } from "framer-motion";
 import { Ban, ChevronRight, Clock, Hourglass, Inbox, Layers, ShieldAlert, Swords, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuffCard } from "./BuffCard";
@@ -270,10 +272,14 @@ export function EnemyBuffModal({
   onCancel: () => void;
 }) {
   const { target } = targeting;
+  // Hooks must run before any early return.
+  useModalChrome(true, onCancel);
   if (target.kind !== "enemy-buff") return null;
   const inst = game.buffs?.players[myColor].buffs[targeting.buffIndex];
   const buffName = (inst && BUFF_BY_ID[inst.id]?.name) ?? "Buff";
   return (
+    // Scroll-locked while the target picker is up (see useModalChrome); it has
+    // no backdrop dismissal of its own, so only the lock and Escape apply.
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm px-4 py-6">
       <div className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto">
         <div className="smallcaps text-[12px] text-parchment-400">{buffName}</div>
@@ -833,10 +839,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const open = expanded[key] ?? false;
     return (
       <motion.div
-        key={i}
-        initial={{ opacity: 0, x: -20 }}
+        key={key}
+        // Gated like the rows further down this same file, which already did
+        // this. Ungated, every dock row slid in from x:-20 under OS reduced
+        // motion (and, before the hook swap, under Settings > Animations: Off).
+        initial={reduceMotion ? false : { opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: reduceMotion ? 0 : 0.25 }}
         className={
           "dock-card relative overflow-hidden rounded-[1px] border transition-transform duration-100 " +
           (dead
@@ -987,10 +996,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
     return (
       <motion.div
-        key={i}
-        initial={{ opacity: 0, x: -14 }}
+        key={key}
+        initial={reduceMotion ? false : { opacity: 0, x: -14 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: reduceMotion ? 0 : 0.25 }}
         className={
           "dock-card relative w-full overflow-hidden rounded-[1px] border border-[color:var(--edge)] " +
           (dead ? "bg-white/[0.012]" : "bg-white/[0.02]")
@@ -1165,9 +1174,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
-                initial={{ opacity: 0, x: -18, scale: 0.9 }}
+                initial={reduceMotion ? false : { opacity: 0, x: -18, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: reduceMotion ? 0 : 0.3 }}
                 className="flex min-w-0 flex-1"
               >
                 <LatestHoverName
@@ -1182,9 +1191,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             {lastTheirs && !lastTheirsHidden && (
               <motion.span
                 key={`t${theirs.length}`}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: reduceMotion ? 0 : 0.3 }}
                 className="flex max-w-[45%] shrink-0"
               >
                 <LatestHoverName

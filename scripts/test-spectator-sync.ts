@@ -15,6 +15,8 @@ import {
   createSpectatorSync,
   DEFAULT_SYNC_CONFIG,
   endWatch,
+  isProtocolStalled,
+  routeSpectatorLiveFrame,
   sweepSpectatorSync,
   type SpectatorFrame,
 } from "@/lib/spectate/spectatorSync";
@@ -200,6 +202,74 @@ function frame(e: SpectatorEnvelope, payload: unknown = {}): SpectatorFrame {
   ok(s.gameId === "g2" && s.lastAppliedSeq === -1 && s.pending.size === 0, "switch clears seq + buffer");
   endWatch(s);
   ok(s.gameId === null && s.lastAppliedSeq === -1, "endWatch clears everything");
+}
+
+// --- a stale join baseline must not strand the very next live frame ---
+// The server used to baseline a joining spectator on pubSnap.seq, which is only
+// rebuilt every checkpointEveryPlies events, while shipping the CURRENT move
+// list. The next live frame then looked like a gap, the 1.5s sweep re-watched,
+// the server handed back the same stale snapshot, and the view remounted in a
+// loop. The reducer contract this relies on: a baseline adopted at the live seq
+// applies the next frame immediately.
+{
+  const s = createSpectatorSync();
+  beginWatch(s, "g1");
+  // Server is at seq 21; a baseline at the LIVE seq applies frame 22 at once.
+  applySpectatorSnapshot(s, frame(env("g1", 21, "snapshot")));
+  const r = applySpectatorEnvelope(s, frame(env("g1", 22, "move")));
+  ok(r.signal === "applied", "a baseline at the live seq applies the next frame");
+  ok(s.pending.size === 0, "and buffers nothing");
+
+  // The old behaviour, for contrast: baselining on a trailing checkpoint seq
+  // gaps immediately. This documents exactly what the worker fix prevents.
+  const stale = createSpectatorSync();
+  beginWatch(stale, "g1");
+  applySpectatorSnapshot(stale, frame(env("g1", 20, "snapshot"))); // pubSnap.seq
+  const gapped = applySpectatorEnvelope(stale, frame(env("g1", 22, "move")));
+  ok(gapped.signal === "buffered", "a trailing baseline gaps on the next frame (the bug)");
+}
+
+// --- every sequenced frame needs its OWN seq ---
+// spectatorEnvelope used to read a shared match.seq, so several frames emitted
+// after one snapshot bump all carried the same number and the reducer dropped
+// all but the first (dtUsed after dtResolved; the dtState after a resolution).
+{
+  const s = createSpectatorSync();
+  beginWatch(s, "g1");
+  applySpectatorSnapshot(s, frame(env("g1", 5, "snapshot")));
+  const first = applySpectatorEnvelope(s, frame(env("g1", 6, "draftResolved")));
+  ok(first.signal === "applied", "the first frame after a bump applies");
+  const shared = applySpectatorEnvelope(s, frame(env("g1", 6, "draftUsed")));
+  ok(shared.signal === "duplicate", "a second frame reusing that seq is DROPPED (the bug)");
+  const ownSeq = applySpectatorEnvelope(s, frame(env("g1", 7, "draftUsed")));
+  ok(ownSeq.signal === "applied", "the same frame with its own seq applies");
+  const trailing = applySpectatorEnvelope(s, frame(env("g1", 8, "draftState")));
+  ok(trailing.signal === "applied", "and the trailing draft-state frame applies too");
+  ok(s.lastAppliedSeq === 8, "each sequenced frame advanced the applied seq exactly once");
+}
+
+// --- a schema-version mismatch is terminal, not a resync loop ---
+{
+  const s = createSpectatorSync();
+  beginWatch(s, "g1");
+  applySpectatorSnapshot(s, frame(env("g1", 5, "snapshot")));
+  ok(!isProtocolStalled(s), "a healthy session is not stalled");
+  const bad = env("g1", 6, "move", { schemaVersion: PUBLIC_SNAPSHOT_VERSION + 1 });
+  const r = applySpectatorEnvelope(s, frame(bad));
+  ok(r.signal === "incompatible_version", "a newer schema is rejected");
+  ok(isProtocolStalled(s), "and latches the session as protocol-stalled");
+  const route = routeSpectatorLiveFrame(s, bad, {});
+  ok(route.resync === false, "a stalled session does NOT ask for a resync (no loop)");
+  // A replayVersion drift stays recoverable — only the schema is terminal.
+  const fresh = createSpectatorSync();
+  beginWatch(fresh, "g1");
+  applySpectatorSnapshot(fresh, frame(env("g1", 5, "snapshot")));
+  const drift = env("g1", 6, "move", { replayVersion: 99 });
+  ok(routeSpectatorLiveFrame(fresh, drift, {}).resync === true, "a replay drift still resyncs");
+  ok(!isProtocolStalled(fresh), "and is not treated as terminal");
+  // Switching game clears the latch.
+  beginWatch(s, "g2");
+  ok(!isProtocolStalled(s), "switching game clears the stall");
 }
 
 console.log("");

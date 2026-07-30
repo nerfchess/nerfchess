@@ -63,7 +63,10 @@ export function ConnectionBanner({ session }: { session: MPSession }) {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center px-3"
+      // z-[65]: above the draft overlay (z-[55]), which on phones draws an opaque
+      // bg-black/70 scrim. A dropped socket DURING a timed draft decision is
+      // exactly when this banner matters most, and it was hidden behind it.
+      className="pointer-events-none fixed inset-x-0 top-2 z-[65] flex justify-center px-3"
     >
       <div
         className={

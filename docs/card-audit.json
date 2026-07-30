@@ -16541,7 +16541,7 @@
    "duration": "3-turns",
    "targets": "self",
    "signature": "movement|passive|init+aug+onMove|3-turns|self|king,knight,n:3,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/fantasy/artifacts.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17004,7 +17004,7 @@
    "duration": "one-shot",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|one-shot|self|bishop,capture,knight,rook,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/fantasy/divine.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17058,7 +17058,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "protection|instant|effect|2-turns|enemy|become,n:16,n:2,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17856,7 +17856,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "attack|activated|effect+targets|next-turn|enemy|freeze,move,pawn,remove",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17894,7 +17894,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|passive|aug|unstated|self|bishop,capture,knight,move,n:1,n:2,n:2,rook,slide,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19069,7 +19069,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets+aug+onMove|unstated|self|jump,knight,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19339,7 +19339,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets+onMove|next-turn|enemy|move,n:3,n:3,pawn,rank,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19674,7 +19674,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "attack|activated|effect+targets|unstated|enemy|bishop,draft,n:3,reroll",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -20915,7 +20915,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets|3-turns|enemy|capture,n:3",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21371,7 +21371,7 @@
    "duration": "one-shot",
    "targets": "unstated",
    "signature": "tempo|activated|effect|one-shot|unstated|extra,move,n:2",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21407,7 +21407,7 @@
    "duration": "one-shot",
    "targets": "enemy",
    "signature": "attack|activated|effect+targets|one-shot|enemy|move,pawn,remove",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21682,7 +21682,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets+onMove|3-turns|enemy|king,move,n:3,n:3,n:3,place,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22270,7 +22270,7 @@
    "duration": "unstated",
    "targets": "board",
    "signature": "movement|passive|aug|unstated|board|capture,king,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22342,7 +22342,7 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "movement|activated|effect+targets+aug+onMove|4-turns|enemy|capture,knight,move,n:4,queen",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24212,7 +24212,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "attack|activated|effect+targets|unstated|self|king,n:2",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24414,7 +24414,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets+onMove|2-turns|enemy|capture,n:2,shield,square",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25437,7 +25437,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets|next-turn|enemy|freeze,king,move,n:3",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25473,7 +25473,7 @@
    "duration": "6-turns",
    "targets": "enemy",
    "signature": "tempo|passive|init+filter+onMove|6-turns|enemy|capture,check,move,n:3,n:6,pawn,seconds",
-   "animation": "plugin",
+   "animation": "plugin+passive",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25658,7 +25658,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "protection|activated|effect|next-turn|enemy|capture,check,king,move,shield",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25676,7 +25676,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "attack|instant|effect|unstated|enemy|destroy,king",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-card-impact.ts",
@@ -29889,7 +29889,7 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|4-turns|enemy|move,n:1,n:4,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts",
@@ -30046,7 +30046,7 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|4-turns|enemy|move,n:4,rook,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/funny/curses.ts",
    "tests": [
     "lab-run-all.ts",

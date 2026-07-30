@@ -307,7 +307,7 @@
   top: var(--cpl-y, 50%);
   width: var(--cpl-w, 40%);
   height: 6px;
-  border-radius: 3px;
+  border-radius: 1px;
   background: rgb(143 168 224 / 0.85);
   opacity: 0;
   transform: translateY(60%);

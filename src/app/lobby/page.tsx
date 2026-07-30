@@ -2,8 +2,8 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Cpu, Eye, Swords, Users } from "lucide-react";
 import { QuickMatch } from "./QuickMatch";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
@@ -47,15 +47,25 @@ const WATCH_RAIL_FOLD = 4;
 // or played, the provider takes over the screen; otherwise it renders the
 // lobby below.
 export default function LobbyPage() {
+  // Suspense wraps LobbyInner because it (and QuickMatch below it, via
+  // useSharedMode) reads useSearchParams — the deep-link source of truth for
+  // ?tab= and ?mode=. Same pattern as /game and /tv.
   return (
-    <FriendGameProvider>
-      <LobbyInner />
-    </FriendGameProvider>
+    <Suspense fallback={<LobbyFallback />}>
+      <FriendGameProvider>
+        <LobbyInner />
+      </FriendGameProvider>
+    </Suspense>
   );
+}
+
+function LobbyFallback() {
+  return <main className="min-h-screen pb-16" aria-busy="true" />;
 }
 
 function LobbyInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
@@ -66,16 +76,29 @@ function LobbyInner() {
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
+  // The MPSession backing an in-flight "answer this seek" join, so unmounting
+  // mid-join tears it down instead of leaking it (see joinSeek below).
+  const joinSessionRef = useRef<MPSession | null>(null);
+  useEffect(() => {
+    return () => {
+      joinSessionRef.current?.destroy();
+      joinSessionRef.current = null;
+    };
+  }, []);
 
   // A ?tab= query param deep-links a section (e.g. /lobby?tab=watch).
+  //
+  // Read through useSearchParams, not window.location in a mount-only effect:
+  // SiteHeader and MobileNavMenu both link to /lobby?tab=friends, and clicking
+  // that WHILE ALREADY on /lobby is a same-segment App Router navigation. The
+  // component re-renders without remounting, so the old effect never re-ran —
+  // the URL said ?tab=friends while the UI stayed on Quick Play.
+  const wantedTab = searchParams.get("tab");
   useEffect(() => {
     queueMicrotask(() => {
-      try {
-        const wanted = new URLSearchParams(window.location.search).get("tab");
-        if (wanted && LOBBY_TABS.some((t) => t.id === wanted)) setTab(wanted as LobbyTab);
-      } catch {}
+      if (wantedTab && LOBBY_TABS.some((t) => t.id === wantedTab)) setTab(wantedTab as LobbyTab);
     });
-  }, []);
+  }, [wantedTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,6 +227,16 @@ function LobbyInner() {
     }
     const session = new MPSession();
     session.persistFriendSession = false;
+    // Tracked so unmounting mid-join tears it down. Without this the session
+    // lived only in this closure: navigating away inside the ~10s join window
+    // left the socket, its 10s heartbeat, the reconnect timer and five
+    // window/document wake listeners alive for the life of the tab — and
+    // because auto-reconnect re-sends the queue frame, the server could still
+    // seat the player in a game they had left, stranding an opponent on the
+    // clock. QuickMatch and QueueButton already keep this ref; the lobby's own
+    // seek-answer path was the one that did not.
+    joinSessionRef.current?.destroy();
+    joinSessionRef.current = session;
     // Answer this exact seek: the server pairs only with this person (or house
     // bot). If they already left it returns seek_gone rather than substituting
     // a random opponent. Older servers omit seek.userId, so this falls back to
@@ -217,6 +250,7 @@ function LobbyInner() {
     const enterGame = (paired: { id: string; color: "w" | "b"; token: string }) => {
       saveOnlineSeat(paired.id, { color: paired.color, token: paired.token });
       session.destroy();
+      if (joinSessionRef.current === session) joinSessionRef.current = null;
       router.push(`/game/${paired.id}`);
     };
     try {
@@ -242,6 +276,7 @@ function LobbyInner() {
       }
       session.cancelQueue();
       session.destroy();
+      if (joinSessionRef.current === session) joinSessionRef.current = null;
       setJoiningPool(null);
       setLobbyError(
         e instanceof Error && e.message === "seek_gone"

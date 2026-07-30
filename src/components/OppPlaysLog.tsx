@@ -1,10 +1,11 @@
 "use client";
 
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { Tier } from "@/engine/nerf";
 import { TIER_ROMAN } from "@/lib/tiers";
-import { useReducedMotion } from "framer-motion";
-import { ChevronRight, History } from "lucide-react";
+
+import { ChevronRight, History, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 // The feed of cards/hexes the opponent has played.
@@ -98,12 +99,38 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
       return age >= FEED_TTL_MS && age < FEED_TTL_MS + FLY_MS && flights[p.key] === undefined;
     });
     if (!missing.length) return;
+    const live = new Set(plays.map((p) => p.key));
     setFlights((prev) => {
-      const next = { ...prev };
+      // Rebuild from the LIVE plays only: keeping departed entries made this
+      // object grow for the whole match, and it is spread on every departure.
+      const next: Record<number, { dx: number; dy: number }> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        if (live.has(Number(k))) next[Number(k)] = v;
+      }
       for (const p of missing) next[p.key] = dockDelta(itemRefs.current.get(p.key) ?? null);
       return next;
     });
   });
+
+  // Prune per-play bookkeeping once an entry can never be shown again.
+  //
+  // All three collections were keyed per play and never cleaned: `itemRefs`
+  // kept the key (the unmount callback sets the value to null, it does not
+  // delete), and `flights` / `dismissed` only ever grew. Over a long match that
+  // is unbounded, and the un-dep'd effect above copies the whole `flights`
+  // object on every new departure, so the copy cost grew with it too.
+  const liveKeys = plays.map((p) => p.key).join(",");
+  useEffect(() => {
+    // Refs only — no setState, so this stays a pure external-cleanup effect.
+    // The unmount callback below sets the map VALUE to null but leaves the key,
+    // so without this the map grew for the whole match. `flights` and
+    // `dismissed` are pruned by their own writers instead (see below), which
+    // keeps every setState on a path React already expects one.
+    const keep = new Set(liveKeys ? liveKeys.split(",").map(Number) : []);
+    for (const key of itemRefs.current.keys()) {
+      if (!keep.has(key)) itemRefs.current.delete(key);
+    }
+  }, [liveKeys]);
 
   // Reduced motion skips the flight: entries simply leave at the TTL.
   const visibleFor = reduceMotion ? FEED_TTL_MS : FEED_TTL_MS + FLY_MS;
@@ -113,7 +140,11 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
     .reverse();
   if (!shown.length) return null;
   return (
-    <div className="pointer-events-none fixed right-3 top-16 z-40 flex w-[min(80vw,20rem)] flex-col gap-1">
+    // Lane below the abort notice, which owns top-16 and is rarer and more
+    // important. Both used to sit at exactly `right-3 top-16 z-40` with no
+    // offset, so an opponent card played during an abort warning rendered the
+    // two directly on top of each other and neither was readable.
+    <div className="pointer-events-none fixed right-3 top-[var(--opp-plays-top,4rem)] z-[39] flex w-[min(80vw,20rem)] flex-col gap-1">
       {shown.map((p, i) => {
         const def = BUFF_BY_ID[p.card.id];
         if (!def) return null;
@@ -129,14 +160,6 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             }}
             role={newest ? "status" : undefined}
             aria-live={newest ? "polite" : undefined}
-            // Click (or Enter) waves the toast away early; the play still
-            // lands in the dock's permanent ledger.
-            onClick={() => setDismissed((s) => new Set(s).add(p.key))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setDismissed((s) => new Set(s).add(p.key));
-            }}
-            tabIndex={0}
-            title="Dismiss"
             style={
               flight
                 ? {
@@ -148,12 +171,36 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
                   }
                 : undefined
             }
+            // NOT pointer-events-auto. This panel is up for 10s after every
+            // opponent card and, at 80vw from `right-3`, it covers the top
+            // rank-and-a-half of the board on a phone — making the whole card
+            // tappable meant those squares were dead for ten seconds, which in
+            // a bullet game is a lost move. The card is inert; only the small
+            // dismiss button below takes pointer events.
             className={
-              "pointer-events-auto cursor-pointer rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
+              "relative rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
               (newest ? "border-gold/40 py-2.5 animate-rise" : "border-[color:var(--edge)] py-1.5 opacity-85")
             }
           >
-            <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                // Prune to the live feed while adding, so this set cannot grow
+                // past the handful of plays currently on screen.
+                setDismissed((st) => {
+                  const live = new Set(plays.map((q) => q.key));
+                  const next = new Set([...st].filter((k) => live.has(k)));
+                  next.add(p.key);
+                  return next;
+                })
+              }
+              title="Dismiss"
+              aria-label={`Dismiss ${def.name}`}
+              className="pointer-events-auto absolute right-1 top-1 grid h-7 w-7 place-items-center text-parchment-400 hover:text-parchment-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+            >
+              <X size={13} aria-hidden />
+            </button>
+            <div className="flex items-center justify-between gap-3 pr-7">
               <span className={`min-w-0 truncate font-display ${newest ? "text-lg" : "text-[12px]"} font-semibold leading-tight tier-${tier}`}>
                 {def.name}
               </span>

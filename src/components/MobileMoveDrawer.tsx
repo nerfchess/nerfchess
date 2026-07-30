@@ -72,8 +72,16 @@ export function MobileMoveDrawer({
           className="fixed inset-0 z-30 bg-black/50"
         />
       )}
+      {/* The bar itself carries the home-indicator inset as PADDING, so the
+          44px tap target sits fully above it. The safe-area padding further
+          down is inside the collapsible body, which is `h-0 overflow-hidden`
+          while closed and therefore contributed nothing — on a notched iPhone
+          roughly three quarters of the closed bar sat inside the home-indicator
+          zone, colliding with the swipe gesture. --drawer-bar-h publishes the
+          real height (bar + inset) so the buff drawer can stack on top of it
+          and the match column can reserve the right amount of room. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 plate border-t border-[color:var(--edge)]"
+        className="fixed inset-x-0 bottom-0 z-40 plate border-t border-[color:var(--edge)] pb-[env(safe-area-inset-bottom)]"
         style={keyboardInset > 0 ? { bottom: keyboardInset } : undefined}
       >
         <button
@@ -103,7 +111,9 @@ export function MobileMoveDrawer({
             (open ? (keyboardInset > 0 ? "h-[30dvh]" : "h-[46dvh]") : "h-0")
           }
         >
-          <div className="h-full px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+          {/* The wrapper above now owns the safe-area inset, so this only needs
+              ordinary breathing room. */}
+          <div className="h-full px-2 pb-2">
             <MoveList
               moves={moves}
               currentPly={currentPly}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
 import { loadRating } from "@/lib/rating";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -35,6 +35,16 @@ const BOT_ELO: Record<"easy" | "medium" | "hard", number> = {
 };
 
 export default function PlayPage() {
+  // useSharedMode reads useSearchParams (the ?mode= deep link), which needs a
+  // Suspense boundary to prerender. Same pattern as /lobby, /game and /tv.
+  return (
+    <Suspense fallback={<main className="min-h-screen pb-16" aria-busy="true" />}>
+      <PlayInner />
+    </Suspense>
+  );
+}
+
+function PlayInner() {
   const router = useRouter();
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [color, setColor] = useState<"w" | "b" | "random">("random");

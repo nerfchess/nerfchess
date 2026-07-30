@@ -34,6 +34,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { bottomChromePadClass } from "@/components/mobileChrome";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { FxToggleButton } from "@/components/FxToggleButton";
 import { MoveList } from "@/components/MoveList";
@@ -109,6 +110,12 @@ const DRAFT_LOCK_IN_MS = 20_000;
 // and its opponentGone frame already arrives after a 15s grace: wait out the
 // remainder before surfacing the claim buttons.
 const CLAIM_DELAY_AFTER_GONE_MS = 15_000;
+// Mirrors `disconnectGraceMs` in worker.ts: how long after a socket drops the
+// server waits before emitting `opponentGone`. Used to reconstruct the notice
+// moment from the raw disconnect timestamp a reconnect's start frame carries
+// (start.oppGoneSince), so a refresh mid-window resumes the same countdown
+// rather than restarting it or jumping 15s ahead.
+const DISCONNECT_GRACE_MS = 15_000;
 
 // Shared draft reveal timing: the banner eases in a short beat after the
 // SECOND side resolves (so the picked card's pocket-flight and dock landing
@@ -448,6 +455,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   useEffect(() => {
     const timers = godTimersRef.current;
     return () => timers.forEach((id) => window.clearTimeout(id));
+  }, []);
+  // Short-lived timers fired from inside the websocket handler (a delayed check
+  // sound, the 2.5s "idle" resets for the draw/takeback chips). The handler's
+  // own cleanup only unsubscribes, so before this these kept running after the
+  // component unmounted: the sound still played on the next page and the
+  // setState landed on a dead tree. Same shape as godTimersRef above.
+  const transientTimersRef = useRef<number[]>([]);
+  const laterRef = useRef((fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      transientTimersRef.current = transientTimersRef.current.filter((t) => t !== id);
+      fn();
+    }, ms);
+    transientTimersRef.current.push(id);
+  });
+  const later = laterRef.current;
+  useEffect(() => {
+    const timers = transientTimersRef;
+    return () => {
+      timers.current.forEach((id) => window.clearTimeout(id));
+      timers.current = [];
+    };
   }, []);
   // Recording mode is an owner-only, god-panel-driven layout. The reflow is
   // applied only while the panel that owns the toggle is actually mounted, so a
@@ -862,7 +890,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     // movement still sounds; without game context fall back to the plain test.
     const g = gameRef.current;
     const inCheck = g ? gameInCheck({ ...g, board: after }, after.turn) : isInCheck(after, after.turn);
-    if (inCheck) setTimeout(playCheck, 80);
+    if (inCheck) later(playCheck, 80);
   };
 
   // Fire the queued premove the instant it becomes our turn. No artificial
@@ -938,7 +966,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // Reconnected: the server replayed the full game (moves, clocks,
         // chat, and a trailing `end` frame if it finished while we were away).
         setError(null);
-        setOpponentGone(false);
+        // Restore the abandonment state from the server rather than blindly
+        // clearing it: `opponentGone` is a one-shot frame the server latches
+        // and will not re-send, so a refresh mid-window used to lose the
+        // claim-win UI permanently. oppGoneSince is the real disconnect
+        // timestamp, so the "claim in Ns" countdown resumes where it stood
+        // instead of restarting.
+        if (e.setup.oppGoneSince != null) {
+          setOpponentGone(true);
+          // Normalize to the moment the notice would have fired, which is what
+          // the claim countdown below measures from.
+          setOpponentGoneAt(e.setup.oppGoneSince + DISCONNECT_GRACE_MS);
+        } else {
+          setOpponentGone(false);
+        }
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
         clearPremoves();
@@ -1108,7 +1149,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         if (!alreadySounded) {
           if (lm.captured) playCapture();
           else playMoveSfx();
-          if (gameInCheck(next, next.board.turn)) setTimeout(playCheck, 80);
+          if (gameInCheck(next, next.board.turn)) later(playCheck, 80);
         }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
@@ -1151,7 +1192,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setDrawOfferBy(null);
         setDrawOfferStatus(e.color === myColor ? "idle" : "declined");
         if (e.color !== myColor) {
-          window.setTimeout(() => setDrawOfferStatus("idle"), 2500);
+          later(() => setDrawOfferStatus("idle"), 2500);
         }
       } else if (e.type === "takeback-offer") {
         setError(null);
@@ -1161,7 +1202,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         setTakebackOfferBy(null);
         setTakebackStatus(e.color === myColor ? "idle" : "declined");
         if (e.color !== myColor) {
-          window.setTimeout(() => setTakebackStatus("idle"), 2500);
+          later(() => setTakebackStatus("idle"), 2500);
         }
       } else if (e.type === "takeback") {
         // The server rewound the move list — rebuild the whole game from it,
@@ -1224,7 +1265,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // The server's live lock-in deadline rides every dtState frame: a
         // reroll restarts the shared window (fresh prep + full decision time)
         // and this is how the fresh deadline reaches both clients.
-        if (typeof e.state.deadline === "number") setDraftDeadline(e.state.deadline);
+        // `null` is meaningful: it means the window closed (both seats resolved
+        // before it expired), so the local copy must be cleared. Only an
+        // ABSENT field is "no news" — an older server that never sends it.
+        if (e.state.deadline !== undefined) setDraftDeadline(e.state.deadline);
         if (!g?.buffs) return;
         mergeDraftState(g.buffs, e.state, myColor);
         // Server-authoritative reroll counts (not carried by mergeDraftState).
@@ -1859,13 +1903,32 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // clock-delay helper below), seeded from mount time via a lazy initializer;
   // the per-turn update is deferred a microtask so it isn't a synchronous
   // setState inside the effect body.
-  const [turnStartedAt, setTurnStartedAt] = useState(() => Date.now());
+  // null until this client has actually WATCHED a turn begin. Seeding it from
+  // mount time meant every reconnect/refresh re-granted a full grace: refresh
+  // 90s into your own first move and the pill froze showing "+10" free seconds
+  // the server had exhausted 80s earlier, and the flag nudge below was armed
+  // 10s late. The one case where mount time IS the turn start is a game that
+  // has only just begun — no moves yet and both clocks still untouched — so
+  // that seeds honestly and every other mount shows no grace at all (the
+  // server is authoritative for the clock either way; the display just stops
+  // claiming time that may already be spent).
+  const [turnStartedAt, setTurnStartedAt] = useState<number | null>(() =>
+    start.moves.length === 0 && start.wc === start.bc ? Date.now() : null,
+  );
+  const seenPlyRef = useRef<number | null>(null);
   useEffect(() => {
-    queueMicrotask(() => setTurnStartedAt(Date.now()));
+    const ply = game?.board.history.length;
+    if (ply == null) return;
+    const prev = seenPlyRef.current;
+    seenPlyRef.current = ply;
+    // Only a transition we observed marks a fresh turn; the first run after a
+    // mount just records where we came in.
+    if (prev !== null && prev !== ply) queueMicrotask(() => setTurnStartedAt(Date.now()));
   }, [game?.board.history.length]);
 
   const clockStartDelay = (color: Color) => {
     if (!game || game.result || game.board.turn !== color) return 0;
+    if (turnStartedAt === null) return 0;
     const activeMoves = game.board.history.filter((m) => m.color === color).length;
     if (activeMoves > 0) return 0;
     return Math.max(0, FIRST_MOVE_GRACE_MS - (Date.now() - turnStartedAt));
@@ -1920,12 +1983,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       queueMicrotask(() => setClaimReady(false));
       return;
     }
-    const id = window.setTimeout(() => setClaimReady(true), CLAIM_DELAY_AFTER_GONE_MS);
+    // Wait out only the time REMAINING. On a reconnect opponentGoneAt is
+    // reconstructed from the server's disconnect timestamp, so most (or all) of
+    // the delay may already have elapsed; a flat 15s here would restart it.
+    const elapsed = opponentGoneAt != null ? Date.now() - opponentGoneAt : 0;
+    const wait = Math.max(0, CLAIM_DELAY_AFTER_GONE_MS - elapsed);
+    const id = window.setTimeout(() => setClaimReady(true), wait);
     return () => {
       window.clearTimeout(id);
       setClaimReady(false);
     };
-  }, [opponentGone, game?.result]);
+  }, [opponentGone, opponentGoneAt, game?.result]);
 
   // Tick the "You can claim the win in Ns" countdown while the opponent is gone
   // but the claim window has not opened yet. Derived purely from the local
@@ -2721,6 +2789,8 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         <div
           role="status"
           aria-live="polite"
+          // Owns the top-16 lane; OppPlaysLog sits below it at z-[39] so the
+          // two can never render on top of each other.
           className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
         >
           <div className="smallcaps text-[10px] text-parchment-400">
@@ -2802,7 +2872,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         </div>
       </nav>
 
-      <div className="match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 pb-14 sm:px-6 sm:pb-6 xl:max-w-[1680px]">
+      <div
+        className={
+          "match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 sm:px-6 xl:max-w-[1680px] " +
+          bottomChromePadClass(!!(isDraft && game.buffs))
+        }
+      >
         {hint && (
           <div
             role="status"
@@ -3445,8 +3520,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         ) : (
           /* The pick is done, so this waiting card must never cover the board:
              it sits as a compact panel at the bottom edge, no dark backdrop,
-             with the whole board visible above it. */
-          <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:bottom-6">
+             with the whole board visible above it.
+             It also must not cover the DRAWER BARS. It renders after them and
+             shared their z-40, so DOM order won them: on a phone the card
+             blanketed "Moves & chat" and "Buffs", and tapping either one just
+             dismissed the card instead. Sitting above the bars (and one layer
+             below them) keeps both reachable on the first tap. */
+          <div
+            className={
+              "pointer-events-none fixed inset-x-0 z-30 flex justify-center px-4 sm:bottom-6 " +
+              (isDraft && game.buffs
+                ? "bottom-[calc(5.5rem+env(safe-area-inset-bottom)+0.5rem)]"
+                : "bottom-[calc(2.75rem+env(safe-area-inset-bottom)+0.5rem)]")
+            }
+          >
             <motion.div
               initial={{ opacity: 0, y: 12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -3559,6 +3646,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // window remains when it appears. An expired window (grace over)
           // shows regardless: the compact panel handles that state.
           deadline={countdownRevealed || draftGraceOver ? draftDeadline : null}
+          // ONLINE NEVER AUTO-PICKS. The server deliberately stopped resolving
+          // overdue buff offers (see enforceDraftDeadlines in worker.ts: "the
+          // offer stays open, the clock resumes, and the straggler pays"), and
+          // this component carries the whole apparatus for that outcome —
+          // chargedColor, the DRAFT tag on the running clock, the "on their
+          // clock now" line. The overlay's own backstop defaulted to true and
+          // was never told otherwise, so at t=deadline it confirmed a RANDOM
+          // card for a player who was still deciding, and none of the straggler
+          // path was reachable. Local/bot games keep the default: nothing
+          // server-side is there to take over for them.
+          autoResolveOnExpire={false}
           onCardsReady={draftSeq.reportCardsReady}
           minimized={draftGraceOver}
           cardNoun={draftCardNoun(start.mode)}

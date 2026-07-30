@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { createPortal } from "react-dom";
+import { useModalChrome } from "@/lib/useModalChrome";
 import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
@@ -63,6 +65,11 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
       setActiveTab(SECTIONS[0].id);
     }
   }
+
+  // Scroll lock + Escape: `aria-modal` below promised both and neither
+  // existed, so a touch drag scrolled the page behind the panel and Tab walked
+  // straight out of it. Called BEFORE the early return so hook order is stable.
+  const chrome = useModalChrome(open, onClose);
 
   if (!open) return null;
 
@@ -192,17 +199,22 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
 
   const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
 
-  return (
+  // Portalled to the body. This panel is rendered INSIDE <nav>, which
+  // globals.css pins at z-index 30, so the whole modal was trapped in that
+  // stacking context and the body-level AchievementToast (z-40) painted over
+  // it — an unlock while Settings was open put the toast and its buttons on
+  // top of the settings pane, intercepting clicks meant for it.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm"
+      onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
         className="plate plate-raised dgn-slab settings-slab relative flex max-h-[88dvh] w-full max-w-[40rem] flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         {/* Iron rivets in the slab corners, as an overlay so the carved-stone
             background layers underneath survive. Decorative only. */}
@@ -292,7 +304,8 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
