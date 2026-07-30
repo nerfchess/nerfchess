@@ -470,7 +470,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_coronation_rest", name: "Coronation Rest", tier: 4, category: "nerf", icon: "Crown",
       description: "The first time one of your pawns promotes, your nerf is suspended for your next 10 turns.",
-      flavor: "A new crown outshines every old chain.", requires: ["p"] },
+      flavor: "A new crown outshines every old chain.", requires: ["p"], fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(1, 10, (m, api) => m.color === api.me && !!m.promotion, "crownings"),
   ),
   card(
@@ -1694,7 +1694,7 @@ export const BOON_WAVE4B: Buff[] = [
     { id: "bn4_relay_baton", name: "Relay Baton", tier: 6, category: "tempo", icon: "Zap",
       description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on that bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, then the baton is dropped.",
       tip: "Hold it until a promotion is close, so the free move lands in a sharp position.",
-      flavor: "Pass the baton. Keep running anyway." },
+      flavor: "Pass the baton. Keep running anyway.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -2362,7 +2362,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_saints_procession", name: "Saint's Procession", tier: 7, category: "protection", icon: "Sparkles",
       description: "For your opponent's next 2 turns, none of your pieces can be captured and your king cannot be taken. The blessing ends the moment one of your pieces makes a capture.",
-      flavor: "The relics pass. Every blade waits its turn to kneel." },
+      flavor: "The relics pass. Every blade waits its turn to kneel.", fx: { motif: "ward", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (_inst, api) => {
@@ -2459,7 +2459,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_lightning_rod", name: "Lightning Rod", tier: 7, category: "tempo", icon: "Zap",
       description: "The next time your opponent puts your king in check, you immediately gain an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
-      flavor: "Every strike grounds itself through you, and you keep the charge." },
+      flavor: "Every strike grounds itself through you, and you keep the charge.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -2710,7 +2710,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_council_of_peace", name: "Council of Peace", tier: 8, category: "nerf", icon: "Landmark",
       description: "Suspend your nerf for your next 8 turns; for your opponent's next 2 turns each of your pieces cannot be captured and your king cannot be taken. A protected piece loses its protection once it makes a capture.",
-      flavor: "The delegates argued for years. The treaty took a minute." },
+      flavor: "The delegates argued for years. The treaty took a minute.", fx: { motif: "ward", pieces: "all", self: true } },
     {
       // Per-piece protection: a square-list shield (which follows each piece as
       // it moves) instead of a whole-army one, so the shield square of a piece
@@ -2782,7 +2782,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_meek_inherit", name: "The Meek Inherit", tier: 8, category: "nerf", icon: "Bird",
       description: "Beginning after your opponent's next move, your nerf is suspended while your opponent has at least as many pieces as you (kings aside). Pull ahead in material, and it wakes.",
-      flavor: "Blessed are the down-a-piece, for the rules shall carry them." },
+      flavor: "Blessed are the down-a-piece, for the rules shall carry them.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       // Delayed start: no init suspension, so relief begins only after the
       // opponent replies; it re-checks material on each of their moves.
@@ -3306,7 +3306,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_triumphal_arch", name: "Triumphal Arch", tier: 8, category: "tempo", icon: "Landmark",
       description: "Your next capture grants you an immediate extra move. You cannot capture the king on that bonus move: your opponent replies first. Each of the two captures after that grants you 1 draft reroll instead.",
-      flavor: "March through, wheel around, march through again." },
+      flavor: "March through, wheel around, march through again.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {

@@ -84,6 +84,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       tier: 1,
       category: "pieces",
       flavor: "They brought their own lanyard.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -173,6 +174,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       tier: 3,
       category: "pieces",
       flavor: "Batteries not included.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     // Grants a knight (plus a spare pawn) to the crazyhouse-style pocket, but
     // the airlift is delayed: the pocket is filled only after the opponent's
@@ -262,6 +264,7 @@ export const FUNNY_SUMMONS: Buff[] = [
       tier: 3,
       category: "pieces",
       flavor: "Read the fine print, they always do.",
+      fx: { motif: "ward", pieces: ["q"], self: true },
     },
     {
       kind: "passive",

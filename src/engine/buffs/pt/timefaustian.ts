@@ -88,6 +88,7 @@ export const PT_TIME_CARDS: Buff[] = [
       tier: 7,
       category: "pieces",
       flavor: "Everything you touch, and everything it costs you.",
+      fx: { motif: "empower", pieces: "all", self: true },
     },
     {
       kind: "passive",

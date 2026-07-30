@@ -356,7 +356,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_kind_omen", name: "Kind Omen", tier: 1, category: "nerf", icon: "Bird",
       description: "The first time your opponent captures one of your pieces, your nerf is suspended for your next 2 turns. If that has not happened by your twelfth turn, the unused charge becomes 1 draft reroll instead.",
-      flavor: "The sparrow watched the whole thing and disagreed." },
+      flavor: "The sparrow watched the whole thing and disagreed.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -707,7 +707,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_understudy", name: "Understudy", tier: 1, category: "pieces", icon: "Drama",
       description: "The first time one of your pawns is captured, a fresh pawn joins your pocket, ready to drop on a later turn.",
-      flavor: "Someone always knows the lines.", requires: ["p"] },
+      flavor: "Someone always knows the lines.", requires: ["p"], fx: { motif: "ward", pieces: ["p"], self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1028,7 +1028,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_trophy_rest", name: "Trophy Rest", tier: 2, category: "nerf", icon: "Trophy",
       description: "The next 2 times you capture a knight, bishop, rook or queen, your nerf is suspended for your next turn.",
-      flavor: "Big game earns a long sit by the fire." },
+      flavor: "Big game earns a long sit by the fire.", fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(
       2, 1,
       (m, api) => m.color === api.me && !!m.captured && m.captured !== "k" && m.captured !== "p",
@@ -1167,7 +1167,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_crowned_calm", name: "Crowned Calm", tier: 1, category: "nerf", icon: "Gem",
       description: "The first time one of your pawns promotes, your nerf is suspended for your next 4 turns.",
-      flavor: "Coronations put everything else on hold.", requires: ["p"] },
+      flavor: "Coronations put everything else on hold.", requires: ["p"], fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(1, 4, (m, api) => m.color === api.me && !!m.promotion, "coronations"),
   ),
   card(
@@ -1223,7 +1223,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_cold_compress", name: "Cold Compress", tier: 2, category: "nerf", icon: "Snowflake",
       description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next 2 turns, beginning after your opponent's following move.",
-      flavor: "For the swelling. There is always swelling." },
+      flavor: "For the swelling. There is always swelling.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -1424,7 +1424,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_stowaway", name: "Stowaway", tier: 3, category: "pieces", icon: "Package",
       description: "After your next 5 turns, a pawn is discovered aboard and joins your pocket, ready to drop on a later turn.",
-      flavor: "Been in the flour barrel since move two." },
+      flavor: "Been in the flour barrel since move two.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -1803,7 +1803,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_lone_crown", name: "Lone Crown", tier: 3, category: "nerf", icon: "Crown",
       description: "While no piece of yours stands beside your king, your nerf is suspended. When a piece returns to your king's side, one final turn stays suspended but applies only to movement restrictions: you may move only one square at a time.",
-      flavor: "Solitude has its privileges." },
+      flavor: "Solitude has its privileges.", fx: { motif: "rally", pieces: "all", self: true } },
     reliefWhileGrace((api) => {
       const ks = kingSquare(api.board, api.me);
       if (ks == null) return false;
@@ -1869,13 +1869,13 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_bread_and_salt", name: "Bread and Salt", tier: 4, category: "nerf", icon: "Wheat",
       description: "The next 3 times your opponent captures one of your pawns, your nerf is suspended for your next 2 turns.",
-      flavor: "Hospitality for the grieving, by ancient custom.", requires: ["p"] },
+      flavor: "Hospitality for the grieving, by ancient custom.", requires: ["p"], fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(3, 2, (m, api) => m.color === api.opp && m.captured === "p", "loaves"),
   ),
   card(
     { id: "bn4_second_skin", name: "Second Skin", tier: 4, category: "nerf", icon: "Layers",
       description: "The next 4 times your opponent captures one of your knights or bishops, your nerf is suspended for your next 2 turns.",
-      flavor: "It grows back tougher. That is the whole trick." },
+      flavor: "It grows back tougher. That is the whole trick.", fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(
       4, 2,
       (m, api) => m.color === api.opp && (m.captured === "n" || m.captured === "b"),
@@ -1937,7 +1937,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_slipped_collar", name: "Slipped Collar", tier: 2, category: "nerf", icon: "Unlink",
       description: "The first time your opponent captures your queen, your nerf is suspended for your next 8 turns.",
-      flavor: "Grief loosens every knot.", requires: ["q"] },
+      flavor: "Grief loosens every knot.", requires: ["q"], fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(1, 8, (m, api) => m.color === api.opp && m.captured === "q", "collars"),
   ),
 
@@ -2119,7 +2119,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_night_gardener", name: "Night Gardener", tier: 2, category: "pieces", icon: "Leaf",
       description: "The next 2 of your pawns that are captured each return at once to the empty square nearest your home rank.",
-      flavor: "What is buried in the evening is up by morning.", requires: ["p"] },
+      flavor: "What is buried in the evening is up by morning.", requires: ["p"], fx: { motif: "ward", pieces: ["p"], self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -2572,7 +2572,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_dragonslayer", name: "Dragonslayer", tier: 3, category: "nerf", icon: "Flame",
       description: "The first time you capture your opponent's queen, your nerf is suspended for your next 8 turns.",
-      flavor: "After the dragon, everything else is paperwork." },
+      flavor: "After the dragon, everything else is paperwork.", fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(1, 8, (m, api) => m.color === api.me && m.captured === "q", "dragons"),
   ),
   card(
@@ -2842,7 +2842,7 @@ const BOON_WAVE4A: Buff[] = [
   card(
     { id: "bn4_small_consolation", name: "Small Consolation", tier: 5, category: "pieces", icon: "Gift",
       description: "The next 2 times your opponent captures one of your rooks or queens, a pawn joins your pocket.",
-      flavor: "It is not a rook. It is trying its best." },
+      flavor: "It is not a rook. It is trying its best.", fx: { motif: "ward", pieces: ["r", "q"], self: true } },
     {
       kind: "passive",
       init: (inst) => {

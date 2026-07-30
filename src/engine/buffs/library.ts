@@ -734,7 +734,7 @@ const TIER1: Buff[] = [
     instant((_inst, api) => { api.mine.flags.seeOppCards = true; }),
   ),
   def(
-    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. The new piece cannot be captured during your opponent's next turn.", tier: 1, category: "pieces" },
+    { id: "loyal_pawn", requires: ["p"], name: "Loyal Pawn", description: "One pawn promotes on your 7th rank instead of your 8th. The new piece cannot be captured during your opponent's next turn.", tier: 1, category: "pieces", fx: { motif: "empower", pieces: ["p"], self: true } },
     augmentThenResolve(
       (_m, inst, api) => {
         const out: Move[] = [];
@@ -1211,7 +1211,7 @@ const TIER1: Buff[] = [
     },
   ),
   def(
-    { id: "small_mercies", name: "Small Mercies", description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next turn.", tier: 2, category: "nerf" },
+    { id: "small_mercies", name: "Small Mercies", description: "The next 2 times your opponent captures one of your pieces, your nerf is suspended for your next turn.", tier: 2, category: "nerf", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -2003,7 +2003,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "board_quake", name: "Board Quake", description: "After your opponent's next move, push every enemy pawn back one square where empty behind.", tier: 3, category: "attack" },
+    { id: "board_quake", name: "Board Quake", description: "After your opponent's next move, push every enemy pawn back one square where empty behind.", tier: 3, category: "attack", fx: { motif: "slow", pieces: ["p"] } },
     // Delayed: the quake is armed on acquisition and only strikes once the
     // opponent has replied.
     {
@@ -2073,7 +2073,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 4, category: "attack" },
+    { id: "hunter_knight", requires: ["n"], name: "Hunter Knight", description: "One knight captures a piece one leap away and lands a second leap beyond, once.", tier: 4, category: "attack", fx: { motif: "empower", pieces: ["n"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "n")) {
@@ -2109,7 +2109,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "warp_step", name: "Warp Step", description: "Move one piece up to three squares in a straight line to an empty square, passing over any pieces in between, once. It cannot capture.", tier: 3, category: "movement" },
+    { id: "warp_step", name: "Warp Step", description: "Move one piece up to three squares in a straight line to an empty square, passing over any pieces in between, once. It cannot capture.", tier: 3, category: "movement", fx: { motif: "empower", pieces: "all", self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me)) {
@@ -2476,7 +2476,7 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "warp_rook", requires: ["r"], name: "Warp Rook", description: "One rook teleports to any empty square on the board, once.", tier: 3, category: "movement" },
+    { id: "warp_rook", requires: ["r"], name: "Warp Rook", description: "One rook teleports to any empty square on the board, once.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me, "r").flatMap((sq) =>
         teleportMoves(api.board, sq, emptySquares(api.board), inst.id),
@@ -3308,7 +3308,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "regenerate", name: "Regenerate", description: "After your opponent's next move, revive two of your captured pawns to empty squares on your 2nd rank.", tier: 3, category: "pieces" },
+    { id: "regenerate", name: "Regenerate", description: "After your opponent's next move, revive two of your captured pawns to empty squares on your 2nd rank.", tier: 3, category: "pieces", fx: { motif: "rally", pieces: "all", self: true } },
     // Delayed: armed on acquisition, the revive fires only once the opponent
     // has replied.
     {
@@ -3612,7 +3612,7 @@ const TIER5: Buff[] = [
     }),
   ),
   def(
-    { id: "parole", name: "Parole", description: "Your nerf is removed for good after your next 10 turns.", tier: 6, category: "nerf" },
+    { id: "parole", name: "Parole", description: "Your nerf is removed for good after your next 10 turns.", tier: 6, category: "nerf", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -3714,7 +3714,7 @@ const TIER6: Buff[] = [
     }),
   ),
   def(
-    { id: "atomic_reaction", name: "Atomic Reaction", description: "Your next two captures each detonate: the two enemy pieces immediately left and right of the captured square, kings aside, are removed. The blast never chains.", tier: 6, category: "attack" },
+    { id: "atomic_reaction", name: "Atomic Reaction", description: "Your next two captures each detonate: the two enemy pieces immediately left and right of the captured square, kings aside, are removed. The blast never chains.", tier: 6, category: "attack", fx: { motif: "empower", pieces: "all", self: true } },
     captureExplosion({ beside: true, charges: 2 }),
   ),
   def(
@@ -3932,7 +3932,7 @@ const TIER6: Buff[] = [
     stealBuffs(2, undefined, notLockedIn),
   ),
   def(
-    { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each remove at most one adjacent enemy piece: the most valuable non-king beside the captured square, kings aside. The blast never chains.", tier: 6, category: "attack" },
+    { id: "detonation_field", name: "Detonation Field", description: "Your next three captures each remove at most one adjacent enemy piece: the most valuable non-king beside the captured square, kings aside. The blast never chains.", tier: 6, category: "attack", fx: { motif: "empower", pieces: "all", self: true } },
     // Balance: no longer a full-neighbourhood detonation. Each of three captures
     // removes only a single adjacent enemy non-king (the most valuable, ties
     // broken by lowest square), shielded pieces resist, and nothing chains.
@@ -4127,7 +4127,7 @@ const TIER6: Buff[] = [
     shieldZone((api) => mySquares(api.board, api.me, "p"), 2),
   ),
   def(
-    { id: "rift_walker", name: "Rift Walker", description: "One piece teleports anywhere on the board, once.", tier: 4, category: "movement" },
+    { id: "rift_walker", name: "Rift Walker", description: "One piece teleports anywhere on the board, once.", tier: 4, category: "movement", fx: { motif: "empower", pieces: "all", self: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) =>
         // Pawns may teleport, but never onto rank 1 or rank 8.
@@ -4337,7 +4337,7 @@ const TIER6: Buff[] = [
 
 const TIER7: Buff[] = [
   def(
-    { id: "chain_atomic", name: "Chain Atomic", description: "For your next 3 turns, whenever a capture involves one of your pieces the capturing piece is destroyed, along with up to one enemy piece beside it, kings aside. No chains.", tier: 7, category: "attack" },
+    { id: "chain_atomic", name: "Chain Atomic", description: "For your next 3 turns, whenever a capture involves one of your pieces the capturing piece is destroyed, along with up to one enemy piece beside it, kings aside. No chains.", tier: 7, category: "attack", fx: { motif: "empower", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -4936,7 +4936,7 @@ const TIER7: Buff[] = [
     },
   ),
   def(
-    { id: "full_pardon", name: "Full Pardon", description: "Suspend your nerf for your next 12 turns and store one bonus move: after your opponent's next move you take an extra move on your following turn.", tier: 7, category: "nerf" },
+    { id: "full_pardon", name: "Full Pardon", description: "Suspend your nerf for your next 12 turns and store one bonus move: after your opponent's next move you take an extra move on your following turn.", tier: 7, category: "nerf", fx: { motif: "rally", pieces: "all", self: true } },
     // Owner tweak: no permanent removal. The nerf is suspended for twelve turns,
     // and the extra move is stored rather than taken now: passive so the stored
     // move can be released after the opponent's reply (extraMoves granted then
@@ -5271,7 +5271,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns, but while the fortress stands those pieces cannot give check.", tier: 8, category: "protection" },
+    { id: "divine_fortress", name: "Divine Fortress", description: "Every piece on your half of the board, your king aside, is uncapturable for 3 turns, but while the fortress stands those pieces cannot give check.", tier: 8, category: "protection", fx: { motif: "ward", pieces: ["p", "n", "b", "r", "q"], self: true } },
     // Rebalance: full 3-turn duration kept, but a shielded piece may not deliver
     // check while the fortress holds. The engine has no own-move filter hook, so
     // (as Colossus does) the strip happens inside augmentMoves: any move by a
@@ -5481,7 +5481,7 @@ const TIER8: Buff[] = [
     }),
   ),
   def(
-    { id: "phoenix_rebirth", name: "Phoenix Rebirth", description: "After your opponent's next move, revive every captured piece you have to your half, once.", tier: 8, category: "pieces" },
+    { id: "phoenix_rebirth", name: "Phoenix Rebirth", description: "After your opponent's next move, revive every captured piece you have to your half, once.", tier: 8, category: "pieces", fx: { motif: "rally", pieces: "all", self: true } },
     // Rebalance: same revival, but its first (and only) trigger is delayed until
     // the opponent has replied.
     {
@@ -5536,7 +5536,7 @@ const TIER8: Buff[] = [
     // two turns literally nothing of yours can be taken. The engine's
     // invulnerable-attacker guard still bars shielded pieces from delivering
     // the king capture, so it defends without ending the game by itself.
-    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces cannot be captured for 2 full turns, and this time that includes your king. But each protected piece loses its protection once it makes a capture.", tier: 8, category: "protection", boon: true },
+    { id: "absolute_aegis", name: "Absolute Aegis", description: "Every one of your pieces cannot be captured for 2 full turns, and this time that includes your king. But each protected piece loses its protection once it makes a capture.", tier: 8, category: "protection", boon: true, fx: { motif: "ward", pieces: "all", self: true } },
     // Rebalance: keep the full 2-turn, whole-army-plus-king window, but a piece
     // that captures forfeits its own protection. The shield is now a square list
     // seeded with your current army (so individual squares can drop out); when a
@@ -5605,7 +5605,7 @@ const TIER8: Buff[] = [
     },
   ),
   def(
-    { id: "checkmate_denial", name: "Checkmate Denial", description: "Once, when your king would be captured, it survives and is moved to the nearest safe square in your own half. No timed immunity.", tier: 7, category: "protection", boon: true },
+    { id: "checkmate_denial", name: "Checkmate Denial", description: "Once, when your king would be captured, it survives and is moved to the nearest safe square in your own half. No timed immunity.", tier: 7, category: "protection", boon: true, fx: { motif: "ward", pieces: ["k"], self: true } },
     // Owner tweak: the flat five-turn immunity is gone. Instead the king survives
     // the first otherwise-legal capture exactly once. onMovePlayed runs BEFORE
     // the king-capture loss check, so reviving the king onto a safe home-half

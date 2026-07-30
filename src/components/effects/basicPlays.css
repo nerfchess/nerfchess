@@ -10,12 +10,12 @@
      state is carried by the card's own zone overlay, never by the play;
    - all bsp-* classes are hidden outright when animations are off in Settings
      (guard at the bottom of this file);
-   - this is the BASIC band, rebuilt as real scenes (owner, third pass: "so
-     many of the current ones are so basic and look like basic icons just
-     disguised as animations"): each play stages a full-crop spectacle layer
-     (bsp-x-*: directional fronts, particle bursts, shock rings, beams) under
-     an emblem that arrives on a real trajectory. Plus a compact per-square
-     target hit.
+   - every duration is scaled by --fx-dur (the Settings animation-speed);
+   - this is the BASIC band: each play stages a board tint and horizon rail in
+     the board frame, a family spectacle layer (bsp-x-*: fronts, shock rings,
+     beams, a short particle burst), an emblem arriving on a real trajectory,
+     and the card's OWN device (bsp-dv-*) at the heart of it. Plus a compact
+     per-square target hit and a hand-entrance cut (bsp-ent-*).
    - SOLE EXCEPTION: the bsp-hg-* tracks at the bottom belong to
      ww_high_ground, the one TIER 7 card in this module.
 

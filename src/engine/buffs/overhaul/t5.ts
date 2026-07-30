@@ -607,6 +607,7 @@ export const OVERHAUL_T5: Buff[] = [
       category: "tempo",
       icon: "Moon",
       flavor: "The moon turns red and patience goes out of style.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -716,6 +717,7 @@ export const OVERHAUL_T5: Buff[] = [
       icon: "Layers",
       flavor: "Matryoshka paint, applied one funeral at a time.",
       requires: ["q"],
+      fx: { motif: "ward", pieces: ["q", "r", "b"], self: true },
     },
     {
       kind: "passive",
@@ -913,6 +915,7 @@ export const OVERHAUL_T5: Buff[] = [
       category: "protection",
       icon: "Snowflake",
       flavor: "The frost crawls out from the corners to greet visitors.",
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     {
       kind: "passive",
@@ -1080,6 +1083,7 @@ export const OVERHAUL_T5: Buff[] = [
       category: "info",
       icon: "Feather",
       flavor: "They confer, they caw, they name names.",
+      fx: { motif: "blindfold", pieces: ["p", "n", "b", "r", "q"] },
     },
     {
       kind: "passive",

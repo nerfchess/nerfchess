@@ -246,6 +246,7 @@ export const HEXES_T5: Buff[] = [
       name: "Frozen Moment",
       description: "The next piece your opponent moves freezes solid the instant it lands and cannot move again for 2 of their turns.",
       flavor: "One step too many, and time closes around them.",
+      fx: { motif: "jail", pieces: "all" },
     },
     {
       kind: "passive",

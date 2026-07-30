@@ -141,6 +141,7 @@ export const FUNNY_TRANSFORMS: Buff[] = [
       tier: 4,
       category: "pieces",
       flavor: "Spotlight, and a bow.",
+      fx: { motif: "empower", pieces: ["n", "b"], moveAs: "q", self: true },
     },
     {
       kind: "passive",

@@ -1336,6 +1336,7 @@ export const WILD_ARCANE: Buff[] = [
       tier: 5,
       category: "protection",
       flavor: "A moment of the game, uncreated.",
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     {
       kind: "passive",

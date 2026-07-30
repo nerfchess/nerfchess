@@ -1168,6 +1168,7 @@ export const OVERHAUL_T4: Buff[] = [
       icon: "Shuffle",
       flavor: "Two question marks appear, and a repainting happens mid-air.",
       requires: ["n", "b"],
+      fx: { motif: "empower", pieces: ["n", "b"], self: true },
     },
     {
       kind: "passive",

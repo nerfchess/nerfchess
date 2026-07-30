@@ -4644,6 +4644,15 @@ function BananaBurst({ delayMs }: { delayMs: number }) {
           the strike below and the tail drifts off away from the caster. */}
       <SigTell delayMs={delayMs + 70} color="#f2c94c" />
       <SigSettle delayMs={delayMs + 520} color="#f2c94c" />
+      {/* the slick the trail leaves behind: a sheen wipes across the square
+          under the peels, so the square reads as unsafe afterwards */}
+      <span
+        className="fx-sig-wave absolute left-[8%] top-[58%] block h-[22%] w-[84%]"
+        style={{
+          background: "linear-gradient(90deg, rgba(242,201,76,0), rgba(242,201,76,0.55), rgba(242,201,76,0))",
+          animationDelay: `${delayMs + 260}ms`,
+        }}
+      />
       {BANANA_PEELS.map((p, i) => (
         <span
           key={i}
@@ -8331,6 +8340,15 @@ function EncaseBurst({ delayMs }: { delayMs: number }) {
           the strike below and the tail drifts off away from the caster. */}
       <SigTell delayMs={delayMs + 70} color="#8aa0b4" />
       <SigSettle delayMs={delayMs + 520} color="#8aa0b4" />
+      {/* hairline frost creeps across the boards first: the slab has somewhere
+          to land instead of appearing out of nothing */}
+      <span
+        className="fx-sig-wave absolute left-[6%] top-[64%] block h-[20%] w-[88%]"
+        style={{
+          background: "linear-gradient(90deg, rgba(198,234,255,0), rgba(198,234,255,0.6), rgba(198,234,255,0))",
+          animationDelay: `${delayMs + 40}ms`,
+        }}
+      />
       <span className="fx-sig-ice absolute inset-[16%] block" style={{ animationDelay: `${delayMs}ms` }}>
         <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden="true">
           <path d="M8 8 L30 6 L34 32 L10 34 Z" fill="rgba(198,234,255,0.5)" stroke="#8aa0b4" strokeWidth="1.4" strokeLinejoin="round" />
@@ -8488,8 +8506,21 @@ function VirusSpreadBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
               animationDelay: `${delayMs + 60}ms`,
             }}
           />
-          {/* the tell: a glitchy terminal cursor blinks awake on the board */}
-          <span className="fx-sig-cursor absolute left-[31%] top-[30.5%] block h-[4.5%] w-[2%]" style={{ animationDelay: `${delayMs}ms` }}>
+          {/* the tell: a glitchy terminal cursor blinks awake ON THE SQUARE THE
+              CARD WAS PLANTED ON. This canvas is 16 cells across and stays
+              board-centred, so one cell is 6.25% and --fx-ox / --fx-oy put the
+              cursor exactly where the virus was introduced; the crawl below
+              then spreads from there across the board. */}
+          <span
+            className="fx-sig-cursor absolute block h-[4.5%] w-[2%]"
+            style={{
+              left: "calc(50% + var(--fx-ox, 0) * 6.25%)",
+              top: "calc(50% + var(--fx-oy, 0) * 6.25%)",
+              marginLeft: "-1%",
+              marginTop: "-2.25%",
+              animationDelay: `${delayMs}ms`,
+            }}
+          >
             <svg viewBox="0 0 8 18" className="h-full w-full" aria-hidden="true">
               <rect x="1" y="1" width="6" height="16" fill="#8ff0a4" stroke="#1d3a2a" strokeWidth="0.8" />
             </svg>

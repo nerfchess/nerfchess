@@ -201,6 +201,7 @@ export const BOON_WAVE2: Buff[] = [
       icon: "Scroll",
       flavor: "Look it up. Older editions only.",
       requires: ["p"],
+      fx: { motif: "empower", pieces: ["p"], self: true },
     },
     {
       kind: "passive",
@@ -405,6 +406,7 @@ export const BOON_WAVE2: Buff[] = [
       category: "attack",
       icon: "Footprints",
       flavor: "Be somewhere else before the echo lands.",
+      fx: { motif: "empower", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -536,6 +538,7 @@ export const BOON_WAVE2: Buff[] = [
       icon: "Feather",
       flavor: "She provided for the household.",
       requires: ["q"],
+      fx: { motif: "ward", pieces: ["q"], self: true },
     },
     {
       kind: "passive",

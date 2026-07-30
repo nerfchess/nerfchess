@@ -211,6 +211,7 @@ export const BOON_WAVE3: Buff[] = [
       icon: "Baby",
       flavor: "The squire had been polishing that armor for years.",
       requires: ["p"],
+      fx: { motif: "empower", pieces: ["p"], self: true },
     },
     {
       kind: "passive",
@@ -690,6 +691,7 @@ export const BOON_WAVE3: Buff[] = [
       category: "pieces",
       icon: "Hourglass",
       flavor: "Reinforcements are always exactly this late.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -1394,6 +1396,7 @@ export const BOON_WAVE3: Buff[] = [
       category: "protection",
       icon: "ShieldPlus",
       flavor: "Hold. Hold. Hold. Worry about tomorrow tomorrow.",
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     {
       kind: "passive",

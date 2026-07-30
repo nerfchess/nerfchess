@@ -296,6 +296,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       tier: 6,
       category: "pieces",
       flavor: "Not this one. This one still has work to do.",
+      fx: { motif: "ward", pieces: ["n", "b", "r"], self: true },
     },
     {
       kind: "passive",
