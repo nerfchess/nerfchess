@@ -1338,6 +1338,23 @@ html[data-anim="off"] .fx-sig-shutr,
 html[data-anim="off"] .fx-sig-seamflash,
 html[data-anim="off"] .fx-sig-pendulum,
 html[data-anim="off"] .fx-sig-driftmote,
+/* Batch 16 core signature split: the five directional layers (lean / aimrun /
+   aimswing / ordertick / homeward) and the nine new motion verbs the split
+   scenes are built from. Transient spectacles, hidden like the rest. */
+html[data-anim="off"] .fx-sig-lean,
+html[data-anim="off"] .fx-sig-aimrun,
+html[data-anim="off"] .fx-sig-aimswing,
+html[data-anim="off"] .fx-sig-ordertick,
+html[data-anim="off"] .fx-sig-homeward,
+html[data-anim="off"] .fx-sig-slam,
+html[data-anim="off"] .fx-sig-uncoil,
+html[data-anim="off"] .fx-sig-drain,
+html[data-anim="off"] .fx-sig-swell,
+html[data-anim="off"] .fx-sig-marchstep,
+html[data-anim="off"] .fx-sig-tiltwob,
+html[data-anim="off"] .fx-sig-peel,
+html[data-anim="off"] .fx-sig-tether,
+html[data-anim="off"] .fx-sig-shimmer,
 html[data-anim="off"] .fx-cast-stamp {
   animation: none !important;
   opacity: 0 !important;
@@ -1877,3 +1894,188 @@ html[data-anim="off"] .fx-one-shot {
   100% { opacity: 0; transform: translate(var(--dx, 10%), 240%) rotate(var(--rot, 90deg)); }
 }
 .fx-sig-driftmote { animation: fx-sig-driftmote calc(1.2s * var(--fx-dur, 1)) ease-in both; }
+
+/* --- Batch 16: core signature split -----------------------------------------
+   The 33 core visuals that several cards were sharing are split so every card
+   plays its own scene. Most of those scenes compose the fx-sig-* vocabulary
+   already above; the classes below are the verbs that vocabulary was missing,
+   plus the five DIRECTIONAL layers every split scene is required to carry (one
+   layer per scene must be driven by the board geometry custom properties from
+   effects/geometry.ts, so a scene points at where it happened instead of just
+   decorating the square it landed on).
+
+   Same house laws as the rest of this file: transform / opacity only, one-shot
+   with `both` fill, every duration scaled by --fx-dur, every class listed in
+   the html[data-anim="off"] block above. */
+
+/* Directional 1 — the settle drifts AWAY from the caster's own edge.
+   --fx-side is +1 when the caster sits at the bottom of the screen, -1 at the
+   top, so this never bakes in "up the board" for one of the two players. */
+@keyframes fx-sig-lean {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  30% { opacity: 0.9; transform: translate(0, 0) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--fx-side, 1) * 26%), calc(var(--fx-side, 1) * -240%)) scale(0.9);
+  }
+}
+.fx-sig-lean { animation: fx-sig-lean calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* Directional 2 — travel down the play's OWN attack vector. The unit vector
+   arrives precomputed (--fx-aim-x/y) because CSS trig is not available
+   everywhere the game runs, and --fx-len is the leg length in cells. */
+@keyframes fx-sig-aimrun {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.55); }
+  22% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(var(--fx-aim-x, 1) * var(--fx-len, 2) * 34%),
+        calc(var(--fx-aim-y, 0) * var(--fx-len, 2) * 34%)
+      )
+      scale(0.95);
+  }
+}
+.fx-sig-aimrun { animation: fx-sig-aimrun calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.75, 0.35, 1) both; }
+
+/* Directional 3 — a bar / beam that swings onto the real attack angle before
+   it strikes. Authored pointing RIGHT; --fx-ang aims it. */
+@keyframes fx-sig-aimswing {
+  0% { opacity: 0; transform: rotate(calc(var(--fx-ang, 0) * 1deg)) scaleX(0.1); }
+  26% { opacity: 1; transform: rotate(calc(var(--fx-ang, 0) * 1deg)) scaleX(1.04); }
+  70% { opacity: 0.9; transform: rotate(calc(var(--fx-ang, 0) * 1deg)) scaleX(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--fx-ang, 0) * 1deg)) scaleX(1); }
+}
+.fx-sig-aimswing {
+  animation: fx-sig-aimswing calc(0.72s * var(--fx-dur, 1)) ease-out both;
+  transform-origin: 0% 50%;
+}
+
+/* Directional 4 — this square's place in the victim order (--fx-index) offsets
+   the layer, so a sweep reads as a rolling sequence and not a row of clones. */
+@keyframes fx-sig-ordertick {
+  0% { opacity: 0; transform: translateX(calc(var(--fx-index, 0) * -14%)) scale(0.7); }
+  34% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-index, 0) * 14%)) scale(1.06); }
+}
+.fx-sig-ordertick { animation: fx-sig-ordertick calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* Directional 5 — a layer pulled from the cast square back toward the board
+   centre. --fx-ox/--fx-oy are the cast square's offset from that centre in
+   cells; the layer this drives is sized to one cell (~7% of the stage), so
+   100% of its own box is one cell. */
+@keyframes fx-sig-homeward {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 0.95; transform: translate(0, 0) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--fx-ox, 0) * -100%), calc(var(--fx-oy, 0) * -100%)) scale(0.9);
+  }
+}
+.fx-sig-homeward { animation: fx-sig-homeward calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Verb — something HEAVY lands: a fast drop, a squash, one rebound, a set. */
+@keyframes fx-sig-slam {
+  0% { opacity: 0; transform: translateY(-150%) scaleY(1.18); }
+  34% { opacity: 1; transform: translateY(0) scaleY(0.78); }
+  48% { transform: translateY(-9%) scaleY(1.08); }
+  62% { transform: translateY(0) scaleY(0.96); }
+  78% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.fx-sig-slam {
+  animation: fx-sig-slam calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* Verb — something UNCOILS / unrolls sideways out of nothing. */
+@keyframes fx-sig-uncoil {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  20% { opacity: 1; }
+  62% { transform: scaleX(1.05); }
+  78% { transform: scaleX(0.99); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.fx-sig-uncoil {
+  animation: fx-sig-uncoil calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transform-origin: 0% 50%;
+}
+
+/* Verb — a level DRAINS away from the top (sand, time, fluid, charge). */
+@keyframes fx-sig-drain {
+  0% { opacity: 0; transform: scaleY(1); }
+  16% { opacity: 1; transform: scaleY(1); }
+  86% { opacity: 0.9; transform: scaleY(0.08); }
+  100% { opacity: 0; transform: scaleY(0.04); }
+}
+.fx-sig-drain {
+  animation: fx-sig-drain calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* Verb — a bubble SWELLS, holds, and bursts. */
+@keyframes fx-sig-swell {
+  0% { opacity: 0; transform: scale(0.16); }
+  40% { opacity: 1; transform: scale(1); }
+  66% { transform: scale(1.08); }
+  84% { opacity: 1; transform: scale(1.16); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.fx-sig-swell { animation: fx-sig-swell calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Verb — a MARCH: a stepped advance, so a rank of figures reads as boots and
+   not as a glide. */
+@keyframes fx-sig-marchstep {
+  0% { opacity: 0; transform: translateY(60%); }
+  18% { opacity: 1; transform: translateY(34%); }
+  100% { opacity: 0; transform: translateY(-52%); }
+}
+.fx-sig-marchstep { animation: fx-sig-marchstep calc(1s * var(--fx-dur, 1)) steps(6, end) both; }
+
+/* Verb — a TIP / wobble that nearly goes over and rights itself. */
+@keyframes fx-sig-tiltwob {
+  0% { opacity: 0; transform: rotate(0deg); }
+  18% { opacity: 1; transform: rotate(-13deg); }
+  44% { transform: rotate(11deg); }
+  66% { transform: rotate(-6deg); }
+  86% { opacity: 1; transform: rotate(3deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.fx-sig-tiltwob {
+  animation: fx-sig-tiltwob calc(0.95s * var(--fx-dur, 1)) ease-in-out both;
+  transform-origin: 50% 100%;
+}
+
+/* Verb — a cover PEELS back off whatever it was hiding. */
+@keyframes fx-sig-peel {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(1); }
+  24% { opacity: 1; transform: rotate(0deg) scaleY(1); }
+  70% { opacity: 1; transform: rotate(-64deg) scaleY(0.92); }
+  100% { opacity: 0; transform: rotate(-78deg) scaleY(0.9); }
+}
+.fx-sig-peel {
+  animation: fx-sig-peel calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both;
+  transform-origin: 0% 100%;
+}
+
+/* Verb — a TETHER draws taut and then lets go. */
+@keyframes fx-sig-tether {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  26% { opacity: 1; transform: scaleX(1); }
+  64% { opacity: 1; transform: scaleX(1.06); }
+  72% { opacity: 0.5; transform: scaleX(0.86); }
+  100% { opacity: 0; transform: scaleX(0.7); }
+}
+.fx-sig-tether {
+  animation: fx-sig-tether calc(0.82s * var(--fx-dur, 1)) ease-in-out both;
+  transform-origin: 0% 50%;
+}
+
+/* Verb — heat SHIMMER off something too hot to sit on. */
+@keyframes fx-sig-shimmer {
+  0% { opacity: 0; transform: translateY(0) scaleY(0.6); }
+  30% { opacity: 0.85; transform: translateY(-14%) scaleY(1.05); }
+  58% { opacity: 0.6; transform: translateY(-26%) scaleY(0.9); }
+  100% { opacity: 0; transform: translateY(-46%) scaleY(1.1); }
+}
+.fx-sig-shimmer { animation: fx-sig-shimmer calc(1.05s * var(--fx-dur, 1)) ease-out both; }
