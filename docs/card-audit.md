@@ -2,7 +2,7 @@
 
 Total cards: 2448. buffs 971, hexes 543, boons 418, items 129, apex 27, nerfs 360.
 
-Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 misleading, 0 broken, 0 without direct test references, 0 without any animation.
+Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 misleading, 0 broken, 0 without direct test references, 0 without any animation.
 
 | id | name | kind | tier | trigger | duration | targets | animation | location | tests | flags | action |
 |----|------|------|------|---------|----------|---------|-----------|----------|-------|-------|--------|
@@ -54,7 +54,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | bn4_quiet_after | The Quiet After | boon | 1 | passive | unstated | self | passive | src/engine/buffs/boons4.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_shared_silence | Shared Silence | boon | 1 | passive | next-turn | enemy | passive | src/engine/buffs/boons4.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_shoelace_knot | Shoelace Knot | boon | 1 | activated | next-turn | enemy | generated | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bn4_side_shuffle | Side Shuffle | boon | 1 | passive | one-shot | enemy | passive | src/engine/buffs/boons4.ts | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| bn4_side_shuffle | Side Shuffle | boon | 1 | passive | one-shot | enemy | passive | src/engine/buffs/boons4.ts | 1 | duplicate-signature(op_tactical_withdrawal) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | bn4_small_ritual | Small Ritual | boon | 1 | passive | unstated | enemy | passive | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_check_valve:0.83) near-duplicate(bn4_knights_vigil:0.88) near-duplicate(bn4_cold_compress:0.78) near-duplicate(bn4_sparring_rhythm:0.83) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_stutter_step | Stutter Step | boon | 1 | passive | next-turn | enemy | passive | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_tiptoe | Tiptoe | boon | 1 | passive | one-shot | self | passive | src/engine/buffs/boons4.ts | 1 | duplicate-signature(op_grand_march) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
@@ -188,7 +188,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | adrenaline | Adrenaline | boon | 4 | passive | next-turn | self | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_augurs_flight | Augur's Flight | boon | 4 | instant | unstated | enemy | generated | src/engine/buffs/boons4b.ts | 1 | duplicate-signature(bn4_field_glasses,bn4_scouts_report,bn4_war_room_map,bn4_auditors_ledger) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_beetle_shell | Beetle Shell | boon | 4 | instant | next-turn | enemy | generated | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bn4_border_survey | Border Survey | boon | 4 | instant | unstated | enemy | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bn4_border_survey | Border Survey | boon | 4 | instant | unstated | enemy | generated | src/engine/buffs/boons4b.ts | 1 | duplicate-signature(bn4_lighthouse_beam) | pending-review |
 | bn4_bread_and_salt | Bread and Salt | boon | 4 | passive | 2-turns | enemy | passive | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_second_skin:0.79) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_charm_bracelet | Charm Bracelet | boon | 4 | activated | 2-turns | enemy | generated | src/engine/buffs/boons4.ts | 1 | duplicate-signature(bn4_pocket_shield) near-duplicate(bn4_quilted_armor:0.77) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | bn4_clerical_error | Clerical Error | boon | 4 | instant | 3-turns | self | generated | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -261,7 +261,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | bn4_kings_indulgence | King's Indulgence | boon | 5 | activated/free | 4-turns | self | generated | src/engine/buffs/boons4.ts | 1 | duplicate-signature(respite,bn4_hermits_hour) near-duplicate(wardens_bribe:1.00) near-duplicate(sabbatical:0.81) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_leave_of_absence | Leave of Absence | boon | 5 | activated/free/lingering | 5-turns | self | generated | src/engine/buffs/boons4b.ts | 1 | - | keep: 5 free turns plus reroll vs Wardens Bribe's 6; a real trade |
 | bn4_letters_home | Letters Home | boon | 5 | passive | 4-turns | self | passive | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bn4_lighthouse_beam | Lighthouse Beam | boon | 5 | instant | unstated | enemy | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bn4_lighthouse_beam | Lighthouse Beam | boon | 5 | instant | unstated | enemy | generated | src/engine/buffs/boons4b.ts | 1 | duplicate-signature(bn4_border_survey) dominated-candidate(higher-tier-of-duplicate-pair) | pending-review |
 | bn4_logjam | Logjam | boon | 5 | passive | next-turn | enemy | passive | src/engine/buffs/boons4b.ts | 1 | duplicate-signature(wc_red_tape) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | bn4_old_guard | The Old Guard | boon | 5 | instant | one-shot | self | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_open_season | Open Season | boon | 5 | passive | permanent | self | passive | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_rule_of_three:0.75) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
@@ -571,7 +571,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | op_stage_left | Stage Left | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_prompt_corner:0.86) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_star_dressing_room | Star Dressing Room | buff | 1 | passive | next-turn | enemy | passive | UNKNOWN | 1 | - | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_stoppage_time | Stoppage Time | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
-| op_tactical_withdrawal | Tactical Withdrawal | buff | 1 | passive | one-shot | enemy | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_tactical_withdrawal | Tactical Withdrawal | buff | 1 | passive | one-shot | enemy | passive | UNKNOWN | 1 | duplicate-signature(bn4_side_shuffle) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_tango_dip | Tango Dip | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_ticker_tape | Ticker Tape | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | op_title_deed | Title Deed | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1456,7 +1456,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | hx4_pigeon_perch | Pigeon Perch | hex | 1 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_gnat_cloud,hx4_lockstep,hx4_broken_compass,hx4_smoke_line,hx4_broken_oars,hx4_grim_procession) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_polite_infantry | Polite Infantry | hex | 1 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_pawn_snob) | REBALANCED: 4 turns; Cold Feet (full pawn-capture ban, 3 turns) no longer strictly dominates |
 | hx4_puddle | The Puddle | hex | 1 | activated/lingering | one-shot | enemy | generated | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_red_tape | Red Tape | hex | 1 | passive | unstated | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hx4_red_tape | Red Tape | hex | 1 | passive | unstated | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_paper_orders) | pending-review |
 | hx4_royal_nametag | Royal Name Tag | hex | 1 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_second_thoughts | Second Thoughts | hex | 1 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_sleepy_sentry | Sleepy Sentry | hex | 1 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1534,7 +1534,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | timid_king | Timid King | hex | 2 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/tier2.ts | 2 | duplicate-signature(royal_summons,hx4_muster_silence,opposite_day) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | trench_line | Trench Line | hex | 2 | instant | 2-turns | enemy | generated | src/engine/buffs/hexes/tier2.ts | 2 | near-duplicate(bn4_slow_doors:0.87) near-duplicate(hx4_famine_year:0.78) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | allergies | Allergies | hex | 3 | activated/lingering | 2-turns | enemy | bespoke | src/engine/buffs/pt/curseschaos.ts | 2 | duplicate-signature(hx4_siren_song) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
-| anchored_rooks | Anchored Rooks | hex | 3 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/tier3.ts | 3 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| anchored_rooks | Anchored Rooks | hex | 3 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/tier3.ts | 4 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | basilisk_stare | Basilisk's Gaze | hex | 3 | activated/lingering | 4-turns | enemy | bespoke | src/engine/buffs/fantasy/beasts.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | blinkered_bishops | Blinkered Bishops | hex | 3 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/tier3.ts | 2 | near-duplicate(spooked_steeds:0.80) near-duplicate(hx4_left_glove:0.80) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | cream_pie | Cream Pie | hex | 3 | passive | 2-turns | enemy | bespoke+passive | src/engine/buffs/funny/curses.ts | 2 | duplicate-signature(hx4_mirror_manners,hx4_slack_bowstrings) | keep: flat 2-turn capture ban T3; White Flag Hour redesigned onto a rolling cadence |
@@ -1734,7 +1734,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | hx4_no_homecoming | No Homecoming | hex | 5 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_no_return | No Return | hex | 5 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(doom_march) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_paddock_fence | Paddock Fence | hex | 5 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
-| hx4_paper_orders | Paper Orders | hex | 5 | passive | unstated | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | REBALANCED: 4 offers; 2 duplicated Sealed Orders (T2) |
+| hx4_paper_orders | Paper Orders | hex | 5 | passive | unstated | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hx4_red_tape) dominated-candidate(higher-tier-of-duplicate-pair) | REBALANCED: 4 offers; 2 duplicated Sealed Orders (T2) |
 | hx4_quicksand_quarter | Quicksand Quarter | hex | 5 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_river_watch | River Watch | hex | 5 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_royal_escort | Royal Escort | hex | 5 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | REDESIGNED: queen chained to her rooks (was king-anchored, a semantic duplicate of Throne Bound) |
@@ -1971,7 +1971,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | gm_penny_slots | Penny Slots | item | 1 | activated | unstated | self | generated | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | op_back_to_school | Back to School | item | 1 | activated/free | unstated | self | generated | UNKNOWN | 1 | duplicate-signature(op_choir_wings) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_barometer_falling | Barometer Falling | item | 1 | instant | unstated | enemy | generated | UNKNOWN | 1 | near-duplicate(op_four_winds:0.75) near-duplicate(op_halo_moon:0.80) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
-| op_border_report | Border Report | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_margin_notes) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_day_census:0.78) near-duplicate(op_night_census:0.78) near-duplicate(op_left_bank_atlas:0.78) near-duplicate(op_starboard_chart:0.78) near-duplicate(op_threat_ledger:0.79) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
+| op_border_report | Border Report | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_margin_notes,op_threat_ledger) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_day_census:0.78) near-duplicate(op_night_census:0.78) near-duplicate(op_left_bank_atlas:0.78) near-duplicate(op_starboard_chart:0.78) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_bread_for_the_table | Bread for the Table | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | - | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_bricklayer | Bricklayer | item | 1 | activated/free | next-turn | enemy | generated | UNKNOWN | 1 | near-duplicate(op_harbor_pilot:0.88) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_carbon_copy | Carbon Copy | item | 1 | instant | unstated | enemy | generated | UNKNOWN | 1 | near-duplicate(bn4_window_shopping:0.80) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
@@ -2007,7 +2007,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | op_identical_twins | Identical Twins | item | 1 | activated/free | one-shot | self | generated | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
 | op_layaway_plan | Layaway Plan | item | 1 | instant | unstated | self | generated | UNKNOWN | 1 | duplicate-signature(op_sampler_platter) near-duplicate(bn4_deck_of_kings:1.00) | keep: guaranteed tier-up; the coin variant now carries a reroll rider |
 | op_left_bank_atlas | Left Bank Atlas | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_starboard_chart) near-duplicate(op_margin_notes:0.78) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_day_census:0.78) near-duplicate(op_night_census:0.78) near-duplicate(op_border_report:0.78) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
-| op_margin_notes | Margin Notes | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_border_report) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_day_census:0.78) near-duplicate(op_night_census:0.78) near-duplicate(op_left_bank_atlas:0.78) near-duplicate(op_starboard_chart:0.78) near-duplicate(op_threat_ledger:0.79) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
+| op_margin_notes | Margin Notes | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_threat_ledger,op_border_report) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_day_census:0.78) near-duplicate(op_night_census:0.78) near-duplicate(op_left_bank_atlas:0.78) near-duplicate(op_starboard_chart:0.78) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_meet_kevin | Meet Kevin | item | 1 | activated/free | permanent | self | generated | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
 | op_nesting_doll | Nesting Doll | item | 1 | activated/free | unstated | self | generated | UNKNOWN | 1 | duplicate-signature(ov_growth_spurt) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_night_census | Night Census | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_day_census) near-duplicate(op_margin_notes:0.78) near-duplicate(op_palace_floor_plan:0.78) near-duplicate(op_left_bank_atlas:0.78) near-duplicate(op_starboard_chart:0.78) near-duplicate(op_border_report:0.78) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
@@ -2044,7 +2044,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | op_tea_leaves | Tea Leaves | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | near-duplicate(op_crystal_ball:0.83) near-duplicate(op_wishbone:0.75) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_team_photo | Team Photo | item | 1 | instant | unstated | self | generated | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
 | op_the_management | The Management | item | 1 | instant | unstated | self | generated | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
-| op_threat_ledger | Threat Ledger | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | near-duplicate(op_margin_notes:0.79) near-duplicate(op_border_report:0.79) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
+| op_threat_ledger | Threat Ledger | item | 1 | activated/free | one-shot | enemy | generated | UNKNOWN | 1 | duplicate-signature(op_margin_notes,op_border_report) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_wet_floor_sign | Wet Floor Sign | item | 1 | activated/free | next-turn | enemy | generated | UNKNOWN | 1 | near-duplicate(op_chairs_on_tables:0.78) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_wishbone | Wishbone | item | 1 | activated/free | one-shot | self | generated | UNKNOWN | 1 | near-duplicate(op_tea_leaves:0.75) | keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs |
 | op_wrong_game_night | Wrong Game Night | item | 1 | activated/free | unstated | self | generated | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2105,7 +2105,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | battle_fatigue | Battle Fatigue | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cess | Cess | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | columnar_rooks | Columnar Rooks | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| crossing_the_rubicon | Crossing the Rubicon | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| crossing_the_rubicon | Crossing the Rubicon | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | flat_footed | Flat Footed | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | homebody_king | Homebody King | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | just_passing_through | Just Passing Through | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2113,10 +2113,10 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | knights_abroad | Knights Abroad | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | knights_off_the_rail | Knights Off the Rail | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | level_headed | Level Headed | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| lucky | Lucky | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 3 | - | keep (auto: no flags, harness-executed) |
+| lucky | Lucky | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 4 | - | keep (auto: no flags, harness-executed) |
 | merciful_queen | Merciful Queen | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | monastic_vows | Monastic Vows | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_drawbridge | No Drawbridge | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_drawbridge | No Drawbridge | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | no_first_blood_pawn | Squeamish | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_stone_cutting | No Stone Cutting | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_clean_hands | Clean Hands | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2138,7 +2138,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | wn_sabbath | Sabbath | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_wallflower | Wallflower | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | advancing_faith | Advancing Faith | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| blinded_by_sun | Blinded by the Sun | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| blinded_by_sun | Blinded by the Sun | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | cautious_cavalry | Cautious Cavalry | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cavalry_charge | Cavalry Charge | nerf | 3 | passive-rule | match | self | passive+bespoke+canvas | src/engine/buffs/funny/summons.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | clergy | Clergy | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2200,7 +2200,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | horse_tranquilizer | Horse Tranquilizer | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hungry_pawns | Hungry Pawns | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | kingfisher | Kingfisher | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| knight_parade | Knight Parade | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| knight_parade | Knight Parade | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | lethal_attraction | Lethal Attraction | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | moving_day | Moving Day | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_retreat | No Retreat | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2249,7 +2249,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | wn_tax_season | Tax Season | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_weigh_station | Weigh Station | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | alternator | Alternator | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| anchored_rooks | Anchored Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier3.ts | 3 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| anchored_rooks | Anchored Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier3.ts | 4 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | armory | Armory | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bipartisanship | Bipartisanship | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bishop_fan_club | Bishop Fan Club | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2267,7 +2267,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | doctor_octopus | Doctor Octopus | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | eat_your_vegetables | Eat Your Vegetables | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | even_keeled | Even Keeled | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| fair_fight | Fair Fight | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| fair_fight | Fair Fight | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | frozen_cavalry | Frozen Cavalry | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | get_down_mr_president | Get Down Mr. President | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hobbled_queen | Hobbled Queen | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2294,13 +2294,13 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | retreating_bishops | Retreating Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | retrograde_knights | Retrograde Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | rook_fan_club | Rook Fan Club | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| rook_on_seventh | Rook on the Seventh | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rook_on_seventh | Rook on the Seventh | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | rooks_charge | Rooks Charge | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | scholarship | Scholarship | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | secret_garden | Secret Garden | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | short_leash_knights | Short Leash Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | simp | Simp | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| stay_at_home_mom | Stay-at-Home Mom | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| stay_at_home_mom | Stay-at-Home Mom | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | sunrise | Sunrise | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | switchback | Switchback | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | theocracy | Theocracy | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2309,7 +2309,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | timid_bishops | Timid Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | toothless_pawns | Toothless Pawns | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | triple_play | Triple Play | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| turn_other_cheek | Turn the Other Cheek | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| turn_other_cheek | Turn the Other Cheek | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | war_of_attrition | War of Attrition | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | windup_toys | Windup Toys | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_curfew | Curfew | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2328,11 +2328,11 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | counting_sheep | Counting Sheep | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cowering_in_fear | Cowering in Fear | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | defanged_queen | Defanged Queen | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| devil_on_shoulder | Devil on Your Shoulder | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| domino | Domino | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| devil_on_shoulder | Devil on Your Shoulder | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| domino | Domino | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | drag | Drag | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | echo_chamber | Echo Chamber | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| exclusivity_clause | Exclusivity Clause | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| exclusivity_clause | Exclusivity Clause | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | eye_for_an_eye | Eye for an Eye | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | eye_of_sauron | Eye of Sauron | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | feast_or_famine | Feast or Famine | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2342,7 +2342,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | fresh_faces | Fresh Faces | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | friendly_fire | Friendly Fire | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | going_the_distance | Going the Distance | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| guerilla_tactics | Guerilla Tactics | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| guerilla_tactics | Guerilla Tactics | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hand_and_brainless | Hand and Brainless | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hedonic_treadmill | Hedonic Treadmill | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | helicopter_parent | Helicopter Parent | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2365,19 +2365,19 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | my_kingdom_for_a_horse | My Kingdom for a Horse | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | myopic_bishops | Myopic Bishops | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_clean_trades | No Clean Trades | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_hanging_pieces | No Hanging Pieces | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_hanging_pieces | No Hanging Pieces | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | no_mans_land | No Man's Land | nerf | 6 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier2.ts | 3 | - | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | no_retreat_ever | No Retreat Ever | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | noble_steed | Noble Steed | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nurturer | Nurturer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | obsession | Obsession | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| paranoid | Paranoid | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| paranoid | Paranoid | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | pawn_storm | Pawn Storm | nerf | 6 | passive-rule | match | self | passive | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | pawns_do_the_dirty_work | Pawns Do the Dirty Work | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | predatory_knights | Predatory Knights | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | reconnaissance | Reconnaissance | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | relay_race | Relay Race | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| restless_crown | Restless Crown | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| restless_crown | Restless Crown | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | rhythm_master | Rhythm Master | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | rising_water | Rising Water | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | royal_berth | Royal Berth | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2390,9 +2390,9 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | spread_out | Spread Out | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | stand_your_ground | Stand Your Ground | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | statue_king | Statue King | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| straight_and_narrow | Straight and Narrow | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| straight_and_narrow | Straight and Narrow | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | stunted_rooks | Stunted Rooks | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| taking_turns | Taking Turns | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| taking_turns | Taking Turns | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | thunderdome | Thunderdome | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | torchlight | Torchlight | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | tower_defense | Tower Defense | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2405,8 +2405,8 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | wn_bodyguard | Bodyguard | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_bottom_feeder | Bottom Feeder | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_daisy_chain | Daisy Chain | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_deadline_queen | Deadline | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_equalizer | Equalizer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_deadline_queen | Deadline | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| wn_equalizer | Equalizer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wn_follow_the_leader | Follow the Leader | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_glass_queen | Glass Queen | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_kings_leash | King's Leash | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2416,15 +2416,15 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | abstinence | Abstinence | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | always_check_it_might_be_mate | Always Check, It Might Be Mate | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | boastful | Boastful | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| compulsory_capture | No Restraint | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| compulsory_capture | No Restraint | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | cowardly | Cowardly | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| deer_in_headlights | Deer in the Headlights | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| deer_in_headlights | Deer in the Headlights | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | fischer_random_endgame | Fischer Random Endgame | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | fog_of_war_old | Fog of War (extended) | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | glorious_battle | Glorious Battle | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_chameleon | Chameleon | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_grandstanding | Grandstanding | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| nw2_metronome | Metronome | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| nw2_metronome | Metronome | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | nw2_royal_entourage | Royal Entourage | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_shield_wall | Shield Wall | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | onward_only | Onward Only | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2432,7 +2432,7 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | reckless_monarch | Reckless Monarch | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | reflective | Reflective | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | relentless_hunter | Relentless Hunter | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| velociraptor | Velociraptor | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| velociraptor | Velociraptor | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | war_footing | War Footing | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_kingpin | Kingpin | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_pin_cushion | Pin Cushion | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2446,9 +2446,9 @@ Flags: 262 duplicate-signature, 206 near-duplicate, 88 dominated-candidates, 0 m
 | nw2_doomsday_clock | Doomsday Clock | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_killing_spree | Killing Spree | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_pyrrhic_victories | Pyrrhic Victories | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| own_half_only | Own Half Only | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| own_half_only | Own Half Only | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | serf_labor | Serf Labor | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| total_pacifism | Total Pacifism | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| total_pacifism | Total Pacifism | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wagon_train | Wagon Train | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_floor_is_lava | The Floor Is Lava | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_glass_army | Glass Army | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |

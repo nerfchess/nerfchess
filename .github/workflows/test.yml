@@ -163,6 +163,12 @@ jobs:
       - name: Passive piece icons
         run: npm run test:passive-motifs
 
+      # Category keywords match at a word boundary: "spawns" is not a pawn card
+      # and "attacking" is not a king card, so the codex chips and the
+      # "Affects your ..." line cannot claim pieces a nerf never touches.
+      - name: Nerf category keywords
+        run: npm run test:nerf-categories
+
       # Standing house rule: no em dashes in user-visible text.
       - name: Em dash guard
         run: npm run test:emdash

@@ -1733,7 +1733,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   bn4_keys_to_the_city: S(KeysToTheCityScene, {
     ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true,
-    sound: "clockcage", anchor: "cast",
+    sound: "clockcage", anchor: "board",
   }),
 
   // --- mechanisms wound, bought or ratcheted forward ---
@@ -1765,7 +1765,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // --- mechanisms that measure two sides against each other ---
   bn4_meek_inherit: S(MeekInheritScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "snooze", anchor: "cast",
+    sound: "snooze", anchor: "board",
   }),
   bn4_unequal_treaty: S(UnequalTreatyScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,

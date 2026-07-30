@@ -293,7 +293,18 @@ export function allowedAnchors(category: string, rule: string): readonly Anchor[
   //
   // The time exclusion matters: "every 3 turns" and "every time" quantify a
   // CADENCE, not a set of pieces.
-  const decisive = /\bevery (?!turn|time|other|second|third|fourth|\d)/.test(head);
+  //
+  // "all but one" is a NEAR-UNIVERSAL quantifier, not a singular, and it
+  // contains the literal substring "one of" -- so Honey Spill ("all but one of
+  // your opponent's knights are stuck fast") read as a single-target card when
+  // it freezes a whole piece class. And "your whole army" is as open as a set
+  // gets, but no marker covered it, which left Total Warp ("teleport your whole
+  // army except the king anywhere you like") asking to be staged on one square.
+  const decisive = [
+    /\bevery (?!turn|time|other|second|third|fourth|\d)/,
+    /\ball but (?:one|two|three|four|\d)\b/,
+    /\b(?:whole|entire) army\b/,
+  ].some((re) => re.test(head));
   const headOpen =
     decisive ||
     (!matchesAny(head, FEW_MARKERS) &&

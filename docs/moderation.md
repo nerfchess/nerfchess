@@ -3,6 +3,32 @@
 Lichess-inspired moderation: players file reports, moderators work a queue at
 `/mod`, and actions (warn / mute / ban) are written to an audit log.
 
+## The console
+
+`/mod` is a grouped console rather than a row of tabs. Sections are addressable
+by hash, so `/mod#reports` links straight to the report queue and the back
+button walks through the sections you visited.
+
+| Group | Sections |
+| --- | --- |
+| Queue | Dashboard, Reports, Chat flags |
+| People | Players, Audit log |
+| Activity | Game archive, [Site stats](/mod/stats) |
+| Cards | Nerf verdicts, Buff verdicts, Player ideas, [Card editor](/mod/cards) |
+| Site | Controls, [House personas](/mod/house) |
+
+Site controls (the house-bot switch, the filler-game count, per-tier strength,
+the owner god panel, and the moderator webhook) live under **Site → Controls**.
+They are live switches, so they are kept out of the way of the queue rather than
+pinned above every section.
+
+The nav badges and the dashboard share one `/api/mod/overview` request, refetched
+whenever a moderator resolves a report or reviews a chat flag.
+
+The section components live in `src/components/mod/`; `src/app/mod/page.tsx` is
+the shell that owns the mod check, that overview payload, and the handoffs
+between sections (a chat flag's "inspect" opens the author in Players).
+
 ## Roles
 
 `users.role` is one of `user` (default), `mod`, or `admin`.

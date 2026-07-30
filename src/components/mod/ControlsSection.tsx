@@ -1,0 +1,423 @@
+"use client";
+
+// Every switch that changes how nerfchess behaves, collected in one place.
+//
+// These used to be pinned above the tab strip, so the house-bot slider and the
+// strength table were on screen while you worked a report queue — permanent
+// clutter, and a live control one stray click away from the queue you were
+// reading. They belong in their own section: you come here deliberately.
+//
+// Ordered by blast radius: what every visitor sees (house bots), then who the
+// bots are, then the owner's private toggle, then the outbound webhook.
+
+import { useEffect, useState } from "react";
+import type { HouseState, PresetMap } from "./types";
+import { ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
+
+export function ControlsSection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: boolean }) {
+  return (
+    <div className="space-y-8">
+      <HouseBotsControl />
+      <PersonasLink isAdmin={isAdmin} />
+      {isOwner && <GodPanelControl />}
+      <NotificationsControl />
+    </div>
+  );
+}
+
+// ---------------- house bots ----------------
+
+// The house bots: the engine-driven roster that keeps the lobby warm. The switch
+// writes app_settings.house_enabled; the game server reads it within a few
+// seconds, stops advertising bot seeks, and winds down any bot game already in
+// progress. Persisted, so it survives redeploys.
+function HouseBotsControl() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [games, setGames] = useState<number | null>(null);
+  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 0, max: 70 });
+  const [strength, setStrength] = useState<Pick<
+    HouseState,
+    "clamp" | "presets" | "skillTiers"
+  > | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const ingest = (data: HouseState) => {
+    setEnabled(data.enabled);
+    setGames(data.games);
+    setBounds({ min: data.min, max: data.max });
+    setStrength({ clamp: data.clamp, presets: data.presets, skillTiers: data.skillTiers });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/house")
+      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : null))
+      .then((data) => {
+        if (!cancelled && data) ingest(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const post = async (body: Record<string, unknown>) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mod/house", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
+      ingest((await res.json()) as HouseState);
+    } catch {
+      setError("Could not update. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const commitGames = (n: number) => {
+    if (!saving && Number.isFinite(n)) post({ games: n });
+  };
+
+  return (
+    <section className="plate space-y-4 p-4">
+      <SectionHead
+        title="House bots"
+        blurb="The engine roster that keeps the lobby warm. Turning them off clears bot seeks within a few seconds and winds down bot games already running."
+        actions={
+          <ModToggle
+            label="House bots"
+            on={enabled}
+            busy={saving}
+            onToggle={() => {
+              if (enabled !== null && !saving) post({ enabled: !enabled });
+            }}
+          />
+        }
+      />
+      {error && <p className="text-xs text-oxblood-glow">{error}</p>}
+
+      {/* Active games: how many house-vs-house filler games run at once — the
+          games that keep the Watch tab / lobby looking busy. The slider pins a
+          target in the min..max range the API returns (0 = no filler games;
+          human-vs-bot pickups still work). Lowering it lets the extra games drain
+          out over a few minutes. Commits on release. Turning the bots off (above)
+          clears them from the lobby entirely. */}
+      <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
+        <div className="flex items-center justify-between">
+          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
+            Filler games running at once ({bounds.min}–{bounds.max})
+          </label>
+          <span className="font-mono text-sm tabular-nums text-gold-leaf">{games ?? "…"}</span>
+        </div>
+        <input
+          id="house-games"
+          type="range"
+          min={bounds.min}
+          max={bounds.max}
+          step={1}
+          value={games ?? bounds.min}
+          disabled={games === null || saving}
+          onChange={(e) => setGames(Number(e.target.value))}
+          onPointerUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
+          onKeyUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
+          className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
+        />
+      </div>
+
+      {strength && (
+        <HouseStrengthEditor
+          state={strength}
+          saving={saving}
+          disabled={enabled === false}
+          onSave={post}
+        />
+      )}
+    </section>
+  );
+}
+
+// The editable strength fields shown in the tier table. `pct` fields are stored
+// as a 0-1 fraction but edited as a percentage. sampleWindowCp is intentionally
+// omitted (advanced; left at its default) to keep the row compact.
+const STRENGTH_FIELDS = [
+  { key: "maxDepth", label: "depth", step: 1, pct: false },
+  { key: "budgetMs", label: "ms", step: 10, pct: false },
+  { key: "topK", label: "topK", step: 1, pct: false },
+  { key: "temperatureCp", label: "temp", step: 10, pct: false },
+  { key: "evalNoiseCp", label: "noise", step: 5, pct: false },
+  { key: "blunderChance", label: "blndr%", step: 1, pct: true },
+] as const;
+
+type StrengthFieldKey = (typeof STRENGTH_FIELDS)[number]["key"];
+
+// Per-tier house-bot strength tuning. Presets fill the whole override map in one
+// click; the table edits any single field live. Effective values come straight
+// from the API's resolved profiles, so what is shown is exactly what plays.
+// Changes reach live games within ~15s (the DO's settings cache TTL).
+function HouseStrengthEditor({
+  state,
+  saving,
+  disabled,
+  onSave,
+}: {
+  state: Pick<HouseState, "clamp" | "presets" | "skillTiers">;
+  saving: boolean;
+  disabled: boolean;
+  onSave: (body: Record<string, unknown>) => void;
+}) {
+  const { clamp, presets, skillTiers } = state;
+
+  // Apply a named preset: set every tier the preset names, and null every tier
+  // it doesn't, so applying a preset always fully replaces prior overrides.
+  const applyPreset = (preset: PresetMap) => {
+    if (saving) return;
+    const map: Record<string, Record<string, number | boolean> | null> = {};
+    for (const t of skillTiers) map[String(t.skill)] = preset[String(t.skill)] ?? null;
+    onSave({ skillOverrides: map });
+  };
+
+  const commitField = (skill: number, field: StrengthFieldKey, pct: boolean, raw: number) => {
+    if (saving || !Number.isFinite(raw)) return;
+    const value = pct ? raw / 100 : raw;
+    onSave({ skillOverrides: { [String(skill)]: { [field]: value } } });
+  };
+
+  const resetTier = (skill: number) => {
+    if (!saving) onSave({ skillOverrides: { [String(skill)]: null } });
+  };
+
+  const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
+
+  return (
+    <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="smallcaps text-[11px] text-parchment-400">Strength by tier</span>
+        <div className="flex flex-wrap gap-1.5">
+          <ModButton
+            size="sm"
+            disabled={saving || !anyOverride}
+            onClick={() => onSave({ resetSkillOverrides: true })}
+          >
+            Reset all
+          </ModButton>
+          <ModButton tone="primary" size="sm" disabled={saving} onClick={() => applyPreset(presets.weakened)}>
+            Weakened 50/30/20
+          </ModButton>
+          <ModButton tone="danger" size="sm" disabled={saving} onClick={() => applyPreset(presets.veryWeak)}>
+            Very weak
+          </ModButton>
+        </div>
+      </div>
+
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[420px] border-collapse text-[11px]">
+          <thead>
+            <tr className="text-parchment-400">
+              <th className="smallcaps py-1 pr-2 text-left font-normal">Tier</th>
+              {STRENGTH_FIELDS.map((f) => (
+                <th key={f.key} className="px-1 py-1 text-right font-normal">
+                  {f.label}
+                </th>
+              ))}
+              <th className="pl-1" />
+            </tr>
+          </thead>
+          <tbody className="font-mono tabular-nums">
+            {skillTiers.map((t) => {
+              const over = t.overrides ?? {};
+              const touched = Object.keys(over).length > 0;
+              return (
+                <tr key={t.skill} className="border-t border-white/5">
+                  <td className={"py-1 pr-2 " + (touched ? "text-gold-leaf" : "text-parchment-200")}>
+                    {t.skill}
+                  </td>
+                  {STRENGTH_FIELDS.map((f) => {
+                    const [lo, hi] = clamp[f.key] ?? [0, 9999];
+                    const eff = t.effective[f.key] as number;
+                    const def = t.defaults[f.key] as number;
+                    const shown = f.pct ? Math.round(eff * 100) : eff;
+                    const defShown = f.pct ? Math.round(def * 100) : def;
+                    const isOver = Object.prototype.hasOwnProperty.call(over, f.key);
+                    return (
+                      <td key={f.key} className="px-1 py-1 text-right">
+                        <input
+                          type="number"
+                          min={f.pct ? lo * 100 : lo}
+                          max={f.pct ? hi * 100 : hi}
+                          step={f.step}
+                          defaultValue={shown}
+                          key={`${t.skill}-${f.key}-${shown}`}
+                          disabled={saving}
+                          title={`default ${defShown}`}
+                          onBlur={(e) => {
+                            const v = Number(e.target.value);
+                            if (v !== shown) commitField(t.skill, f.key, f.pct, v);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                          className={
+                            "w-12 rounded border bg-black/20 px-1 py-0.5 text-right outline-none focus:border-gold-leaf/60 " +
+                            (isOver
+                              ? "border-gold-leaf/50 text-gold-leaf"
+                              : "border-white/10 text-parchment-300")
+                          }
+                        />
+                      </td>
+                    );
+                  })}
+                  <td className="pl-1 text-right">
+                    <button
+                      type="button"
+                      disabled={saving || !touched}
+                      onClick={() => resetTier(t.skill)}
+                      title="Reset this tier to baked default"
+                      className="press px-1 text-parchment-400 disabled:opacity-25"
+                    >
+                      ↺
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-[10px] leading-snug text-parchment-500">
+        Move-quality weakening (topK / temp / noise), not just time. Changes reach live games within
+        ~15s. Ratings drift is expected after a strength change. Gold = overridden.
+      </p>
+    </div>
+  );
+}
+
+// ---------------- personas ----------------
+
+function PersonasLink({ isAdmin }: { isAdmin: boolean }) {
+  if (!isAdmin) return null;
+  return (
+    <section className="plate p-4">
+      <SectionHead
+        title="House personas"
+        blurb="Rename a bot, change its avatar, or write it a profile bio. Edits land on the persona's account immediately."
+        actions={
+          <ModLinkButton href="/mod/house" size="sm">
+            Open persona editor ↗
+          </ModLinkButton>
+        }
+      />
+    </section>
+  );
+}
+
+// ---------------- god panel ----------------
+
+// The owner god panel is hidden by default; it switches on here and mounts in
+// the owner's next draft game.
+function GodPanelControl() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mod/god-panel")
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((data) => {
+        if (!cancelled && data) setEnabled(data.enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggle = async () => {
+    if (enabled === null || saving) return;
+    const next = !enabled;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/mod/god-panel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!res.ok) throw new Error();
+      setEnabled(((await res.json()) as { enabled: boolean }).enabled);
+    } catch {
+      setError("Could not update. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="plate p-4">
+      <SectionHead
+        title="God panel"
+        blurb="Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it."
+        actions={<ModToggle label="God panel" on={enabled} busy={saving} onToggle={toggle} />}
+      />
+      {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
+    </section>
+  );
+}
+
+// ---------------- notifications ----------------
+
+// Moved off the dashboard: this is a setting to check on, not a number to read
+// every morning.
+function NotificationsControl() {
+  const [webhook, setWebhook] = useState<boolean | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/mod/notify-test")
+      .then((r) => (r.ok ? (r.json() as Promise<{ configured: boolean }>) : { configured: false }))
+      .then((j) => setWebhook(!!j.configured))
+      .catch(() => setWebhook(false));
+  }, []);
+
+  return (
+    <section className="plate p-4">
+      <SectionHead
+        title="Notifications"
+        blurb={
+          webhook === null
+            ? "Checking…"
+            : webhook
+              ? "A webhook is configured: every moderator action appends a row to the sheet."
+              : "No webhook configured. See docs/mod-notifications.md to point MOD_WEBHOOK_URL at a Google Apps Script."
+        }
+        actions={
+          <ModButton
+            size="sm"
+            disabled={!webhook || testing === "sending"}
+            onClick={async () => {
+              setTesting("sending");
+              try {
+                const res = await fetch("/api/mod/notify-test", { method: "POST" });
+                const json = (await res.json()) as { sent?: boolean; error?: string };
+                setTesting(json.sent ? "Sent. Check the spreadsheet." : (json.error ?? "Failed."));
+              } catch {
+                setTesting("Failed to send.");
+              }
+            }}
+          >
+            {testing === "sending" ? "Sending…" : "Send test event"}
+          </ModButton>
+        }
+      />
+      {testing && testing !== "sending" && (
+        <p className="mt-2 text-[12px] text-parchment-300">{testing}</p>
+      )}
+    </section>
+  );
+}

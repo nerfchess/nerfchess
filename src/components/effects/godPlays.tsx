@@ -4940,6 +4940,6 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "slow", anchor: "board",
   }),
   sabbatical: G(SabbaticalScene, ["#5fc9b0", "#fff7de", "#ffd76a"], GLYPH.sabbatical, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", anchor: "cast",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", anchor: "board",
   }),
 };

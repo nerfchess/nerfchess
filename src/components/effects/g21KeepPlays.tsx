@@ -1631,7 +1631,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "wall", anchor: "aim",
   }),
   op_siege_survey: S(Dovecote, {
-    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "cathedral", anchor: "cast",
+    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "cathedral", anchor: "board",
   }),
   op_tower_bridge: S(ClothesLine, {
     ordering: "line", staggerMs: 50, victims: ["r"], hasLead: true, sound: "clockcage", anchor: "aim",

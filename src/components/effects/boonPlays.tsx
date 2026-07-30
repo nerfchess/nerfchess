@@ -2866,7 +2866,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "futures"),
   bw3_castle_in_the_storm: G(PactScroll, ["#4a5a7a", "#cdd6ff", "#1c2436"], GLYPH.bw3_castle_in_the_storm, {
     ordering: "radial", staggerMs: 0, victims: ["k", "r"], hasLead: true, sound: "wall",
-    anchor: "aim",
+    anchor: "board",
   }, "stormcastle"),
   bw3_last_muster: G(PactScroll, ["#7a6a4a", "#e8dcc0", "#2a2216"], GLYPH.bw3_last_muster, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
@@ -2915,8 +2915,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     anchor: "board",
   }),
   bw3_the_homecoming: S(HomecomingScene, {
+    // Exactly two pieces come back (the best captured major and the best
+    // captured minor), so the return is a pair of arrivals rather than a
+    // board-wide event. The rule is right about this one.
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon",
-    anchor: "board",
+    anchor: "aim",
   }),
   bw3_turn_the_tide: S(TurnTheTideScene, {
     ordering: "sweep", staggerMs: 45, victims: ["p"], hasLead: true, sound: "siege",

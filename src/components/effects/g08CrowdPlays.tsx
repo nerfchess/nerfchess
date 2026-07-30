@@ -1697,7 +1697,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "blitz", anchor: "aim",
   }),
   op_fresh_footprints: S(LookBack, {
-    ordering: "sweep", staggerMs: 50, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast",
+    ordering: "sweep", staggerMs: 50, victims: ["p"], hasLead: true, sound: "shades", anchor: "board",
   }),
   op_gallery_row: S(OvationRow, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast",

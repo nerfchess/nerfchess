@@ -1620,7 +1620,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_house_arrest: S(HouseArrestScene, { ordering: "radial", staggerMs: 65, victims: ["k"], hasLead: true, sound: "wall", anchor: "cast" }),
   op_garden_door: S(GardenDoorScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "petrifiedforest", anchor: "aim" }),
   op_garden_scarecrow: S(GardenScarecrowScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast" }),
-  ov_loose_floorboard: S(LooseFloorboardScene, { ordering: "line", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
+  ov_loose_floorboard: S(LooseFloorboardScene, { ordering: "line", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   bn4_garden_fence: S(GardenFenceScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   hx4_buttoned_scabbard: S(ButtonedScabbardScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "petrify", anchor: "cast" }),
   op_garden_gate: S(GardenGateScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrifiedforest", anchor: "board" }),

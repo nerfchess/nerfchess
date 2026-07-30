@@ -5253,7 +5253,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "board",
   }),
   wardens_bribe: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wardens_bribe, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "cast",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }, "bribe"),
   iron_will: G(CardRite, ["#8a94a8", "#c9cdd6", "#3a3a40"], GLYPH.iron_will, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "board",

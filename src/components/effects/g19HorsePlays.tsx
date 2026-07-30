@@ -1470,7 +1470,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_camel_fair: S(CamelFairScene, { ordering: "line", staggerMs: 80, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }),
   op_colts_gallop: S(ColtsGallopScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
   op_dromedary_post: S(DromedaryPostScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
-  op_field_sketch: S(FieldSketchScene, { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "cast" }),
+  op_field_sketch: S(FieldSketchScene, { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "board" }),
   op_giraffe_keeper: S(GiraffeKeeperScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }),
   op_green_room: S(GreenRoomScene, { ordering: "line", staggerMs: 75, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
   op_hired_muscle: S(HiredMuscleScene, { ordering: "line", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "aim" }),

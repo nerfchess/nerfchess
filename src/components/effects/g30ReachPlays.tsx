@@ -1522,7 +1522,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "octagon", staggerMs: 50, victims: ["q"], hasLead: true, sound: "crownrain", anchor: "cast",
   }),
   op_portrait_of_a_lady: S(PortraitFlash, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "blitz", anchor: "cast",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   op_queens_holiday: S(HolidayShades, {
     ordering: "radial", staggerMs: 45, victims: ["q"], hasLead: true, sound: "blitz", anchor: "board",

@@ -1491,7 +1491,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_foxtrot_slide: S(FoxtrotSlideScene, { ordering: "line", staggerMs: 60, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
   op_gate_ledger: S(GateLedgerScene, { ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "siege", anchor: "cast" }),
   op_golden_aria: S(GoldenAriaScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  op_grandfathers_watch: S(GrandfathersWatchScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", anchor: "cast" }),
+  op_grandfathers_watch: S(GrandfathersWatchScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", anchor: "board" }),
   op_halo_moon: S(HaloMoonScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "bust", anchor: "board" }),
   op_hoofbeat_log: S(HoofbeatLogScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", anchor: "board" }),
   op_house_lights_up: S(HouseLightsUpScene, { ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true, sound: "crashrocket", anchor: "cast" }),

@@ -1171,7 +1171,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_hiccups: S(HiccupsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha", source: "slow", anchor: "cast" }),
   hx4_pigeon_perch: S(PigeonPerchScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "gacha", anchor: "cast" }),
   op_champions_shades: S(ChampionsShadesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  op_night_census: S(NightCensusScene, { ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "slots", anchor: "cast" }),
+  op_night_census: S(NightCensusScene, { ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "slots", anchor: "board" }),
   op_night_court: S(NightCourtScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wheel", anchor: "board" }),
   op_night_custodian: S(NightCustodianScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "vault", anchor: "cast" }),
   op_wrong_game_night: S(WrongGameNightScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "slots", anchor: "board" }),

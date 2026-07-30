@@ -2109,12 +2109,12 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
-  op_border_report: S(BorderReportScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
-  op_day_census: S(DayCensusScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "slots", anchor: "cast" }),
-  op_left_bank_atlas: S(LeftBankAtlasScene, { ordering: "line", staggerMs: 75, victims: "all", hasLead: true, sound: "shades", anchor: "aim" }),
-  op_palace_floor_plan: S(PalaceFloorPlanScene, { ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
+  op_border_report: S(BorderReportScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
+  op_day_census: S(DayCensusScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "slots", anchor: "board" }),
+  op_left_bank_atlas: S(LeftBankAtlasScene, { ordering: "line", staggerMs: 75, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
+  op_palace_floor_plan: S(PalaceFloorPlanScene, { ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "board" }),
   op_pep_talk: S(PepTalkScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "colossus", anchor: "board" }),
-  op_threat_ledger: S(ThreatLedgerScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
+  op_threat_ledger: S(ThreatLedgerScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   op_ticker_tape: S(TickerTapeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel", anchor: "board" }),
   ov_sugar_glider: S(SugarGliderScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "crownrain", anchor: "cast" }),
   op_do_si_do: S(DoSiDoScene, { ordering: "line", staggerMs: 70, victims: ["k"], hasLead: true, sound: "coinflip", anchor: "aim" }),
@@ -2135,7 +2135,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_menagerie_stampede: S(MenagerieStampedeScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "rampage", anchor: "cast" }),
   op_closed_for_cleaning: S(ClosedForCleaningScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
   op_do_not_disturb: S(DoNotDisturbScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "cast" }),
-  op_margin_notes: S(MarginNotesScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
+  op_margin_notes: S(MarginNotesScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
   op_reserved_table: S(ReservedTableScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
   op_ribbon_cutting: S(RibbonCuttingScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
   op_the_management: S(TheManagementScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "vault", anchor: "board" }),

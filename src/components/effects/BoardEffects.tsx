@@ -1883,7 +1883,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   dragons_breath: { ordering: "line", staggerMs: 80, victims: "all", mover: "r", visual: "dragonfire", hasLead: true, sound: "atomic", anchor: "board" },
   wyverns_dive: { ordering: "line", staggerMs: 90, victims: "all", mover: "n", visual: "dive", hasLead: false, sound: "rampage", anchor: "cast" },
   soul_harvest: { ordering: "line", staggerMs: 95, victims: "all", mover: "q", visual: "scythe", hasLead: true, sound: "rampage", anchor: "board" },
-  chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning", anchor: "cast" },
+  chain_lightning: { ordering: "line", staggerMs: 110, victims: "all", mover: "b", visual: "arclight", hasLead: true, sound: "lightning", anchor: "board" },
   judgment_day: { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], visual: "smite", hasLead: true, sound: "lightning", anchor: "cast" },
   heavens_wrath: { ordering: "sweep", staggerMs: 150, victims: ["n", "b", "r", "q"], visual: "tribolt", hasLead: true, sound: "lightning", anchor: "board" },
 
@@ -1960,7 +1960,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
 
   // STORM (wild/elemental): targeted bolts and a summoned thunderhead.
   we_lightning_bolt: { ordering: "line", staggerMs: 0, victims: "all", mover: "q", visual: "boltcharge", hasLead: false, sound: "lightning", anchor: "board" },
-  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "jacobsladder", hasLead: true, sound: "lightning", anchor: "aim" },
+  we_arc_lightning: { ordering: "line", staggerMs: 100, victims: "all", mover: "r", visual: "jacobsladder", hasLead: true, sound: "lightning", anchor: "board" },
   we_thunderhead: { ordering: "radial", staggerMs: 0, victims: "all", visual: "stormcloud", hasLead: false, sound: "wall", source: "summon", anchor: "cast" },
 
   // WARFARE (wild/warfare): charges, bombardment, reinforcement, siege lines.
@@ -2074,7 +2074,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   // across the whole board trailing steam (was a generic portal pop).
   pizza_delivery: { ordering: "radial", staggerMs: 0, victims: "all", visual: "pizzarun", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
   wc_clown_car: { ordering: "radial", staggerMs: 60, victims: "all", visual: "portal", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
-  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "rubberbounce", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
+  wc_rubber_duck_squad: { ordering: "radial", staggerMs: 60, victims: "all", visual: "rubberbounce", hasLead: true, sound: "wall", source: "summon", anchor: "board" },
   wc_attack_goose: { ordering: "radial", staggerMs: 0, victims: "all", visual: "goosecharge", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
 
   // Teleports / relocations (summon zone: the landing squares gain a piece).
@@ -2324,7 +2324,7 @@ export const SIGNATURES: Record<string, SignatureConfig> = {
   overclocked: { ordering: "radial", staggerMs: 50, victims: "all", visual: "overclock", hasLead: true, sound: "blitz", source: "rally", anchor: "board" },
 
   // PT gambling / faustian market (rally = a bet on our own tempo).
-  all_in: { ordering: "radial", staggerMs: 0, victims: "all", visual: "allin", hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
+  all_in: { ordering: "radial", staggerMs: 0, victims: "all", visual: "allin", hasLead: true, sound: "blitz", source: "rally", anchor: "board" },
   double_or_nothing: { ordering: "radial", staggerMs: 0, victims: "all", visual: "coinflip", hasLead: true, sound: "snooze", source: "rally", anchor: "cast" },
   mystery_box: { ordering: "radial", staggerMs: 0, victims: "all", visual: "mysterybox", hasLead: true, sound: "snooze", source: "rally", anchor: "board" },
   swap_meet: { ordering: "radial", staggerMs: 0, victims: "all", visual: "swapmeet", hasLead: true, sound: "snooze", source: "rally", anchor: "cast" },

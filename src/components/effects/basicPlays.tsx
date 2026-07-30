@@ -2254,13 +2254,13 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- BellToll ---------------------------------------------------------- */
   // Deep Breath (t1 nerf)
-  deep_breath: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "deep_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "hand_bell"),
+  deep_breath: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "deep_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "hand_bell"),
   // Reprieve (t1 nerf)
   reprieve: B(BellToll, ["#ffcf4d","#fff4d6","#7a5c2e"], "reprieve", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "warhorn"),
   // Small Mercies (t1 nerf)
   small_mercies: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "small_mercies", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "drum"),
   // Defiance (t2 nerf)
-  defiance: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "defiance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "candle"),
+  defiance: B(BellToll, ["#f2c34a","#fdf4dc","#655022"], "defiance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "candle"),
   // Held Breath (t2 nerf)
   held_breath: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "held_breath", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "chalice"),
   // Hunter's Relief (t2 nerf)
@@ -2269,13 +2269,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Slack in the Chain (t2 nerf)
   slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "feather"),
   // Break the Nerf (t3 nerf)
-  break_the_nerf: B(BellToll, ["#ffcf4d","#fff4d6","#7a5c2e"], "break_the_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "mirror"),
+  break_the_nerf: B(BellToll, ["#ffcf4d","#fff4d6","#7a5c2e"], "break_the_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "mirror"),
   // Grace Period (t3 nerf)
   grace_period: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "grace_period", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "crown"),
   // Half Measure (t3 nerf)
   // Piece Parole (t3 nerf)
   // Timely Lull (t3 nerf)
-  timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "beehive"),
+  timely_lull: B(BellToll, ["#ffd76a","#fff7de","#8a6a3a"], "timely_lull", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "beehive"),
   // Underdog's Grit (t3 nerf)
   underdogs_grit: B(BellToll, ["#ffcf4d","#fff4d6","#7a5c2e"], "underdogs_grit", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "obelisk"),
   // Adrenaline (t4 nerf)
@@ -2283,7 +2283,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Counter-Nerf (t4 nerf)
   counter_nerf: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "counter_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "torch", true),
   // Respite (t4 nerf)
-  respite: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "respite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }, "buoy", true),
+  respite: B(BellToll, ["#f7c95a","#fff2c9","#6e5528"], "respite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "buoy", true),
 
   /* --- LeafSpin ---------------------------------------------------------- */
   // Durian (t3 hex)

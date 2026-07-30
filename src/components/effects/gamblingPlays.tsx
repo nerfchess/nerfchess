@@ -3099,7 +3099,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: JackpotPawnPlay,
   },
   gm_double_down_draft: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "board" },
     Render: DoubleDownDraftPlay,
   },
   gm_crash_game: {

@@ -1636,11 +1636,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_crystal_ball: S(CrystalBallScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
-    sound: "gacha", anchor: "cast",
+    sound: "gacha", anchor: "board",
   }),
   op_dowsing_rod: S(DowsingRodScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "dice", anchor: "aim",
+    sound: "dice", anchor: "board",
   }),
   op_evil_eye_bead: S(EvilEyeBeadScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
@@ -1652,7 +1652,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_four_leaf_clover: S(FourLeafCloverScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "coinflip", anchor: "cast",
+    sound: "coinflip", anchor: "board",
   }),
   op_gossip_charm: S(GossipCharmScene, {
     ordering: "radial", staggerMs: 40, victims: "all", hasLead: true,
@@ -1660,19 +1660,19 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_horseshoe_nail: S(HorseshoeNailScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "chips", anchor: "cast",
+    sound: "chips", anchor: "board",
   }),
   op_private_booth: S(PrivateBoothScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "vault", anchor: "cast",
+    sound: "vault", anchor: "board",
   }),
   op_rabbits_foot: S(RabbitsFootScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "dice", anchor: "cast",
+    sound: "dice", anchor: "board",
   }),
   op_starboard_chart: S(StarboardChartScene, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
-    sound: "wheel", anchor: "aim",
+    sound: "wheel", anchor: "board",
   }),
   op_sunday_best: S(SundayBestScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true,
@@ -1680,11 +1680,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
   op_tea_leaves: S(TeaLeavesScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "wheel", anchor: "cast",
+    sound: "wheel", anchor: "board",
   }),
   op_wishbone: S(WishboneScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
-    sound: "coinflip", anchor: "cast",
+    sound: "coinflip", anchor: "board",
   }),
 
   // --- the wager on a single pawn ---

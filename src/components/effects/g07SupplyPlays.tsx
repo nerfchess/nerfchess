@@ -1737,7 +1737,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_polite_infantry: S(CounterFlapScene, { ordering: "file", staggerMs: 65, victims: ["p"], hasLead: true, sound: "petrify", anchor: "board" }),
   op_airmail: S(PigeonLoftScene, { ordering: "line", staggerMs: 50, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   op_back_alley: S(HurricaneLampScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast" }),
-  op_bread_for_the_table: S(BreadOvenScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "cast" }),
+  op_bread_for_the_table: S(BreadOvenScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board" }),
   op_bricklayer: S(PackingCaseScene, { ordering: "file", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", anchor: "cast" }),
   op_bulk_postage: S(MailSackScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "slots", anchor: "board" }),
   op_cellar_hatch: S(CellarHatchScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" }),
