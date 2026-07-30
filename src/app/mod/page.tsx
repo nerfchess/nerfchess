@@ -1,133 +1,116 @@
 "use client";
 
-// Moderation panel (Lichess-inspired): report queue, flagged chat, player
-// lookup with mute/ban actions, rule suggestions, and the audit log.
-// Server-side authorization happens in the /api/mod routes; this page just
-// hides itself from non-mods.
+// The moderation console.
+//
+// It replaces a single row of nine flat tabs (with the house-bot controls pinned
+// above all of them) with a grouped rail: Queue, People, Activity, Cards, Site.
+// Sections are addressable — /mod#reports opens the report queue — so a link in
+// a chat message lands someone on the right screen, and the browser's back
+// button walks back through the sections you visited.
+//
+// The shell owns three things the sections cannot own individually: the mod
+// check, the overview payload (one fetch, feeding both the nav badges and the
+// dashboard), and handoffs between sections — the dashboard's "work 3 reports"
+// button and the chat flag's "inspect this player" both land you in another
+// section with its state already set.
+//
+// Server-side authorization happens in the /api/mod routes; this page just hides
+// itself from non-mods.
 
-import type { Nerf } from "@/engine/nerf";
-import type { Buff } from "@/engine/buff";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { isGodPanelUser } from "@/lib/godPanel";
-import { OverviewTab } from "@/components/mod/OverviewTab";
-import { ModeBadge } from "@/components/ModeBadge";
-
-type Tab = "overview" | "reports" | "games" | "chat" | "users" | "suggestions" | "rules" | "buffs" | "log";
-
-interface Report {
-  id: string;
-  reporter_name: string;
-  reported_name: string;
-  reason: string;
-  description: string;
-  game_id: string | null;
-  status: string;
-  handled_by: string | null;
-  created_at: number;
-}
-
-interface ChatFlag {
-  id: string;
-  match_id: string;
-  username: string;
-  text: string;
-  matched_words: string;
-  created_at: number;
-  reviewed: number;
-}
-
-interface ModUser {
-  id: string;
-  username: string;
-  role: string;
-  rating: number;
-  games: number;
-  created_at: number;
-  muted_until: number | null;
-  banned_until: number | null;
-  // 1 for transient guest accounts (users.is_guest); 0/undefined for members.
-  is_guest?: number;
-}
-
-interface HistoryEntry {
-  mod_name: string;
-  target_name?: string;
-  action: string;
-  expires_at: number | null;
-  note: string | null;
-  created_at: number;
-}
-
-interface Suggestion {
-  id: string;
-  name: string;
-  description: string;
-  contact: string | null;
-  username: string | null;
-  created_at: number;
-  // 'nerf' or 'buff'; rows from before the buff form default to 'nerf'.
-  kind: string | null;
-  // For buff ideas: 'buff' (Buff mode card) or 'boon' (Nerf-mode boon).
-  pool: string | null;
-}
-
-const DURATIONS: { label: string; ms: number | null }[] = [
-  { label: "1 hour", ms: 60 * 60 * 1000 },
-  { label: "1 day", ms: 24 * 60 * 60 * 1000 },
-  { label: "7 days", ms: 7 * 24 * 60 * 60 * 1000 },
-  { label: "30 days", ms: 30 * 24 * 60 * 60 * 1000 },
-  { label: "Permanent", ms: null },
-];
-
-function when(ts: number): string {
-  return new Date(ts).toLocaleString();
-}
-
-function untilLabel(ts: number | null): string {
-  if (!ts || ts <= Date.now()) return "";
-  return ts > Date.now() + 50 * 365 * 24 * 60 * 60 * 1000 ? "permanently" : `until ${when(ts)}`;
-}
-
-async function postJson(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return { ok: res.ok, error: data.error };
-}
+import { AuditLogSection } from "@/components/mod/AuditLogSection";
+import { ChatFlagsSection } from "@/components/mod/ChatFlagsSection";
+import { ControlsSection } from "@/components/mod/ControlsSection";
+import { DashboardSection } from "@/components/mod/DashboardSection";
+import { BuffFeedbackSection, NerfFeedbackSection } from "@/components/mod/FeedbackSection";
+import { GamesSection } from "@/components/mod/GamesSection";
+import { IdeasSection } from "@/components/mod/IdeasSection";
+import { PlayersSection } from "@/components/mod/PlayersSection";
+import { ReportsSection } from "@/components/mod/ReportsSection";
+import { NAV_GROUPS, SECTION_TITLE, isSectionId, type NavItem, type SectionId } from "@/components/mod/nav";
+import type { Overview } from "@/components/mod/types";
+import { CountBadge, Pill } from "@/components/mod/ui";
 
 export default function ModPage() {
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
-  // Opens on the overview, not the report queue: a moderator arriving cold needs
-  // "is anything wrong" before "here is the oldest report".
-  const [tab, setTab] = useState<Tab>("overview");
+  // Opens on the dashboard, not the report queue: a moderator arriving cold
+  // needs "is anything wrong" before "here is the oldest report".
+  const [section, setSection] = useState<SectionId>("dashboard");
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [overviewFailed, setOverviewFailed] = useState(false);
+  // A username handed from one section to another (chat flag → player lookup).
+  const [pendingPlayer, setPendingPlayer] = useState<string | undefined>();
 
   useEffect(() => {
     fetchMe().then(setMe);
   }, []);
 
   const isMod = me && (me.role === "mod" || me.role === "admin");
+  const isAdmin = me?.role === "admin";
   // The god panel is the owners' personal tool, so its toggle only shows for a
   // god-panel account (matched case-insensitively, like the game server).
   const isOwner = !!me && isGodPanelUser(me.username);
 
+  const loadOverview = useCallback(() => {
+    fetch("/api/mod/overview")
+      .then((r) => (r.ok ? (r.json() as Promise<Overview>) : Promise.reject(new Error(String(r.status)))))
+      .then((json) => {
+        setOverview(json);
+        setOverviewFailed(false);
+      })
+      .catch(() => setOverviewFailed(true));
+  }, []);
+
+  useEffect(() => {
+    if (isMod) loadOverview();
+  }, [isMod, loadOverview]);
+
+  // Sections are addressable via the hash, and the hash is the single source of
+  // truth — clicking a rail item writes it, and back/forward reads it back.
+  useEffect(() => {
+    const apply = () => {
+      const id = window.location.hash.replace(/^#/, "");
+      if (isSectionId(id)) setSection(id);
+    };
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, []);
+
+  const go = useCallback((next: SectionId) => {
+    setSection(next);
+    if (window.location.hash.replace(/^#/, "") !== next) window.location.hash = next;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const inspectPlayer = useCallback(
+    (username: string) => {
+      setPendingPlayer(username);
+      go("players");
+    },
+    [go],
+  );
+
   return (
     <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
+      <nav className="flex items-center justify-between px-5 py-6 sm:px-10">
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-          <Link href="/leaderboard" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Leaderboard</Link>
+          <Link href="/lobby" className="px-3 py-1.5 text-parchment-100 hover:bg-white/5">
+            Play
+          </Link>
+          <Link href="/leaderboard" className="px-3 py-1.5 text-parchment-100 hover:bg-white/5">
+            Leaderboard
+          </Link>
         </div>
       </nav>
 
-      <section className="max-w-4xl mx-auto px-6 py-8">
+      <section className="mx-auto max-w-6xl px-6 py-8">
         {me === undefined ? (
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
@@ -136,73 +119,63 @@ export default function ModPage() {
             <p className="mt-3 text-parchment-200">
               This page is for moderators.{" "}
               {!me && (
-                <Link href="/login" className="text-gold-leaf hover:underline">Sign in</Link>
+                <Link href="/login" className="text-gold-leaf hover:underline">
+                  Sign in
+                </Link>
               )}
             </p>
           </>
         ) : (
           <>
-            <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div className="flex flex-wrap items-end justify-between gap-3">
               <h1 className="font-display text-4xl">Moderation</h1>
-              <span className="flex items-center gap-3">
-                <Link href="/mod/cards" className="text-sm text-gold-leaf hover:underline">
-                  Card editor
-                </Link>
-                {me.role === "admin" && (
-                  <Link href="/mod/house" className="text-sm text-gold-leaf hover:underline">
-                    House bots
-                  </Link>
-                )}
-                <Link href="/mod/stats" className="text-sm text-gold-leaf hover:underline">
-                  Site stats
-                </Link>
-                <span className="smallcaps text-xs text-parchment-400">
-                  signed in as {me.username} · {me.role}
-                </span>
+              <span className="flex items-center gap-2">
+                <span className="smallcaps text-xs text-parchment-400">{me.username}</span>
+                <Pill tone="gold">{me.role}</Pill>
               </span>
             </div>
 
-            <HouseBotsToggle />
-            {isOwner && <GodPanelToggle />}
+            <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:gap-8">
+              <ModNav
+                current={section}
+                isAdmin={!!isAdmin}
+                openReports={overview?.queue.openReports ?? 0}
+                chatFlags={overview?.queue.unreviewedChatFlags ?? 0}
+                onGo={go}
+              />
 
-            <div className="mt-6 flex flex-wrap gap-1 border-b border-white/10 pb-px">
-              {(
-                [
-                  ["overview", "Overview"],
-                  ["reports", "Reports"],
-                  ["games", "Games"],
-                  ["chat", "Chat flags"],
-                  ["users", "Players"],
-                  ["suggestions", "Suggestions"],
-                  ["rules", "Nerf feedback"],
-                  ["buffs", "Buff feedback"],
-                  ["log", "Mod log"],
-                ] as [Tab, string][]
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setTab(key)}
-                  className={`px-4 py-2 text-sm font-display border-b-2 transition ${
-                    tab === key
-                      ? "border-gold text-gold-leaf"
-                      : "border-transparent text-parchment-300 hover:text-parchment-100"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6">
-              {tab === "overview" && <OverviewTab />}
-              {tab === "reports" && <ReportsTab />}
-              {tab === "games" && <GamesTab />}
-              {tab === "chat" && <ChatFlagsTab />}
-              {tab === "users" && <UsersTab isAdmin={me.role === "admin"} />}
-              {tab === "suggestions" && <SuggestionsTab />}
-              {tab === "rules" && <RuleFeedbackTab />}
-              {tab === "buffs" && <BuffFeedbackTab />}
-              {tab === "log" && <LogTab />}
+              <div className="min-w-0 flex-1">
+                <h2 className="smallcaps border-b border-white/10 pb-2 text-xs text-parchment-400">
+                  {SECTION_TITLE[section]}
+                </h2>
+                <div className="mt-5">
+                  {section === "dashboard" && (
+                    <DashboardSection data={overview} failed={overviewFailed} onGo={go} />
+                  )}
+                  {section === "reports" && <ReportsSection onHandled={loadOverview} />}
+                  {section === "chat" && (
+                    <ChatFlagsSection onHandled={loadOverview} onInspectPlayer={inspectPlayer} />
+                  )}
+                  {/* Keyed on the handed-over player so each handoff mounts a
+                      fresh lookup rather than editing the open one. */}
+                  {section === "players" && (
+                    <PlayersSection
+                      key={pendingPlayer ?? "roster"}
+                      isAdmin={!!isAdmin}
+                      initialQuery={pendingPlayer}
+                      onActed={loadOverview}
+                    />
+                  )}
+                  {section === "log" && <AuditLogSection />}
+                  {section === "games" && <GamesSection />}
+                  {section === "nerfs" && <NerfFeedbackSection />}
+                  {section === "buffs" && <BuffFeedbackSection />}
+                  {section === "ideas" && <IdeasSection />}
+                  {section === "controls" && (
+                    <ControlsSection isOwner={isOwner} isAdmin={!!isAdmin} />
+                  )}
+                </div>
+              </div>
             </div>
           </>
         )}
@@ -211,1540 +184,133 @@ export default function ModPage() {
   );
 }
 
-// ---------------- rule feedback ----------------
+// ---------------- navigation ----------------
 
-type NerfFeedbackTotal = { nerf_id: string; up: number; down: number; last_at: number };
-type NerfFeedbackVote = {
-  nerf_id: string;
-  vote: number;
-  username: string | null;
-  game_id: string | null;
-  created_at: number;
-};
-
-// Post-game thumbs from players, aggregated per rule. The sort favours the
-// most-voted rules so the ones that need rebalancing surface first.
-function RuleFeedbackTab() {
-  const [totals, setTotals] = useState<NerfFeedbackTotal[] | null>(null);
-  const [recent, setRecent] = useState<NerfFeedbackVote[]>([]);
-  // The nerf library is lazy-loaded so the ~26k-line card engine stays out of
-  // the /mod bundle; this tab only mounts for a moderator who opens it.
-  const [nerfs, setNerfs] = useState<Nerf[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/mod/nerf-feedback")
-      .then((res) => (res.ok ? (res.json() as Promise<{ totals: NerfFeedbackTotal[]; recent: NerfFeedbackVote[] }>) : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        setTotals(data.totals);
-        setRecent(data.recent);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    import("@/engine/nerfs/library").then((m) => {
-      if (!cancelled) setNerfs(m.ALL_NERFS);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const nerf = (id: string) => nerfs?.find((n) => n.id === id);
-
-  if (!totals || !nerfs) return <p className="text-sm text-parchment-400">Loading rule feedback…</p>;
-  if (totals.length === 0) {
-    return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their rule post-game.</p>;
-  }
-
-  const rows: FeedbackRow[] = totals.map((t) => ({
-    id: t.nerf_id,
-    name: nerf(t.nerf_id)?.name ?? t.nerf_id,
-    tier: nerf(t.nerf_id)?.tier ?? null,
-    up: t.up,
-    down: t.down,
-    last_at: t.last_at,
-  }));
-  const recentRows: FeedbackRecentRow[] = recent.map((v) => ({
-    id: v.nerf_id,
-    name: nerf(v.nerf_id)?.name ?? v.nerf_id,
-    vote: v.vote,
-    username: v.username,
-    created_at: v.created_at,
-  }));
-
-  return <FeedbackTable label="Rule" rows={rows} recent={recentRows} />;
-}
-
-// ---------------- buff feedback ----------------
-
-type BuffFeedbackTotal = { buff_id: string; up: number; down: number; last_at: number };
-type BuffFeedbackVote = {
-  buff_id: string;
-  vote: number;
-  username: string | null;
-  game_id: string | null;
-  created_at: number;
-};
-
-// Post-game thumbs from players, aggregated per buff. Same shape as the nerf
-// feedback tab: most-voted buffs first so unfair or unfun cards surface.
-function BuffFeedbackTab() {
-  const [totals, setTotals] = useState<BuffFeedbackTotal[] | null>(null);
-  const [recent, setRecent] = useState<BuffFeedbackVote[]>([]);
-  // Lazy-load the buff library so the card engine stays out of the /mod bundle.
-  const [buffs, setBuffs] = useState<Record<string, Buff> | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/mod/buff-feedback")
-      .then((res) => (res.ok ? (res.json() as Promise<{ totals: BuffFeedbackTotal[]; recent: BuffFeedbackVote[] }>) : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        setTotals(data.totals);
-        setRecent(data.recent);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    import("@/engine/buffs/library").then((m) => {
-      if (!cancelled) setBuffs(m.BUFF_BY_ID);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const buff = (id: string) => buffs?.[id];
-
-  if (!totals || !buffs) return <p className="text-sm text-parchment-400">Loading buff feedback…</p>;
-  if (totals.length === 0) {
-    return <p className="text-sm text-parchment-400">No feedback yet. Votes appear after players rate their buffs post-game.</p>;
-  }
-
-  const rows: FeedbackRow[] = totals.map((t) => ({
-    id: t.buff_id,
-    name: buff(t.buff_id)?.name ?? t.buff_id,
-    tier: buff(t.buff_id)?.tier ?? null,
-    up: t.up,
-    down: t.down,
-    last_at: t.last_at,
-  }));
-  const recentRows: FeedbackRecentRow[] = recent.map((v) => ({
-    id: v.buff_id,
-    name: buff(v.buff_id)?.name ?? v.buff_id,
-    vote: v.vote,
-    username: v.username,
-    created_at: v.created_at,
-  }));
-
-  return <FeedbackTable label="Buff" rows={rows} recent={recentRows} />;
-}
-
-// ---------------- shared feedback table ----------------
-
-// One aggregated card row with its library tier resolved. The nerf and buff
-// tabs differ only in labels and where each row's name/tier comes from, so
-// both feed their rows through FeedbackTable.
-type FeedbackRow = {
-  id: string;
-  name: string;
-  tier: number | null;
-  up: number;
-  down: number;
-  last_at: number;
-};
-
-type FeedbackRecentRow = {
-  id: string;
-  name: string;
-  vote: number;
-  username: string | null;
-  created_at: number;
-};
-
-type FeedbackSortKey = "name" | "tier" | "up" | "down" | "score" | "last";
-
-// Sortable, tier-filterable table of post-game thumbs. Click a column header to
-// sort by it (toggling ascending/descending); the tier chips above filter the
-// rows to a single library tier.
-function FeedbackTable({
-  label,
-  rows,
-  recent,
+// A rail on desktop, a scrolling strip on phones. Both render the same grouped
+// list from nav.ts, so there is one place to add a section.
+function ModNav({
+  current,
+  isAdmin,
+  openReports,
+  chatFlags,
+  onGo,
 }: {
-  label: string;
-  rows: FeedbackRow[];
-  recent: FeedbackRecentRow[];
+  current: SectionId;
+  isAdmin: boolean;
+  openReports: number;
+  chatFlags: number;
+  onGo: (id: SectionId) => void;
 }) {
-  const [sort, setSort] = useState<FeedbackSortKey>("score");
-  const [dir, setDir] = useState<"asc" | "desc">("desc");
-  const [tier, setTier] = useState<number | "all">("all");
+  const badgeFor = (item: NavItem) =>
+    item.kind === "section" && item.badge
+      ? item.badge === "reports"
+        ? openReports
+        : chatFlags
+      : 0;
 
-  const score = (r: FeedbackRow) => r.up - r.down;
-
-  const tiers = Array.from(
-    new Set(rows.map((r) => r.tier).filter((t): t is number => t !== null)),
-  ).sort((a, b) => a - b);
-
-  const filtered = tier === "all" ? rows : rows.filter((r) => r.tier === tier);
-  const sorted = [...filtered].sort((a, b) => {
-    let cmp: number;
-    switch (sort) {
-      case "name":
-        cmp = a.name.localeCompare(b.name);
-        break;
-      case "tier":
-        cmp = (a.tier ?? 0) - (b.tier ?? 0);
-        break;
-      case "up":
-        cmp = a.up - b.up;
-        break;
-      case "down":
-        cmp = a.down - b.down;
-        break;
-      case "last":
-        cmp = a.last_at - b.last_at;
-        break;
-      default:
-        cmp = score(a) - score(b);
-    }
-    // Break ties on score so equal columns still land in a stable, useful order.
-    if (cmp === 0) cmp = score(a) - score(b);
-    return dir === "asc" ? cmp : -cmp;
-  });
-
-  const toggle = (key: FeedbackSortKey) => {
-    if (sort === key) {
-      setDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSort(key);
-      // Names read best A–Z; numeric columns default to biggest-first.
-      setDir(key === "name" ? "asc" : "desc");
-    }
-  };
-
-  const arrow = (key: FeedbackSortKey) => (sort === key ? (dir === "asc" ? " ↑" : " ↓") : "");
+  const groups = NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((i) => !i.adminOnly || isAdmin),
+  })).filter((g) => g.items.length > 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="smallcaps text-[10px] text-parchment-400">Tier</span>
-        <FilterButton active={tier === "all"} onClick={() => setTier("all")}>
-          All
-        </FilterButton>
-        {tiers.map((t) => (
-          <FilterButton key={t} active={tier === t} onClick={() => setTier(t)}>
-            {t}
-          </FilterButton>
-        ))}
-      </div>
-
-      <div className="plate overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="smallcaps text-[9px] text-parchment-400">
-              <FeedbackHeader align="left" active={sort === "name"} onClick={() => toggle("name")}>
-                {label}
-                {arrow("name")}
-              </FeedbackHeader>
-              <FeedbackHeader align="right" active={sort === "tier"} onClick={() => toggle("tier")}>
-                Tier{arrow("tier")}
-              </FeedbackHeader>
-              <FeedbackHeader align="right" active={sort === "up"} onClick={() => toggle("up")}>
-                Liked{arrow("up")}
-              </FeedbackHeader>
-              <FeedbackHeader align="right" active={sort === "down"} onClick={() => toggle("down")}>
-                Disliked{arrow("down")}
-              </FeedbackHeader>
-              <FeedbackHeader align="right" active={sort === "score"} onClick={() => toggle("score")}>
-                Score{arrow("score")}
-              </FeedbackHeader>
-              <FeedbackHeader align="right" active={sort === "last"} onClick={() => toggle("last")}>
-                Last vote{arrow("last")}
-              </FeedbackHeader>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {sorted.map((row) => (
-              <tr key={row.id}>
-                <td className="px-4 py-2 text-parchment-100">{row.name}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-300">
-                  {row.tier ?? "-"}
-                </td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-verdigris-glow">{row.up}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-oxblood-glow">{row.down}</td>
-                <td className="px-4 py-2 text-right font-mono tabular-nums text-parchment-100">
-                  {score(row) > 0 ? "+" : ""}
-                  {score(row)}
-                </td>
-                <td className="px-4 py-2 text-right text-xs text-parchment-400">
-                  {new Date(row.last_at).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-            {sorted.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-3 text-parchment-400">
-                  No cards in this tier.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {recent.length > 0 && (
-        <div>
-          <h3 className="smallcaps text-xs text-parchment-400">Recent votes</h3>
-          <ul className="mt-2 plate divide-y divide-white/5 text-sm">
-            {recent.map((v, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
-                <span className="min-w-0 truncate text-parchment-100">
-                  <span className={v.vote > 0 ? "text-verdigris-glow" : "text-oxblood-glow"}>
-                    {v.vote > 0 ? "+1" : "-1"}
-                  </span>{" "}
-                  {v.name}
-                  <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
-                </span>
-                <span className="shrink-0 text-xs text-parchment-400">
-                  {new Date(v.created_at).toLocaleString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FeedbackHeader({
-  align,
-  active,
-  onClick,
-  children,
-}: {
-  align: "left" | "right";
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <th className={`px-4 py-2 font-normal ${align === "left" ? "text-left" : "text-right"}`}>
-      <button
-        onClick={onClick}
-        className={`smallcaps transition hover:text-parchment-100 ${active ? "text-gold-leaf" : ""}`}
-      >
-        {children}
-      </button>
-    </th>
-  );
-}
-
-// ---------------- human games ----------------
-
-type SeatKind = "member" | "guest" | "anon" | "house";
-
-interface ModGameSeat {
-  name: string;
-  userId: string | null;
-  kind: SeatKind;
-  ratingBefore: number | null;
-  ratingAfter: number | null;
-}
-
-interface ModGame {
-  id: string;
-  white: ModGameSeat;
-  black: ModGameSeat;
-  winner: "w" | "b" | "draw" | null;
-  reason: string;
-  rated: boolean;
-  ruleset: string;
-  category: string | null;
-  timeSec: number;
-  incrementSec: number;
-  moveCount: number;
-  replayable: boolean;
-  durationMs: number;
-  startedAt: number;
-  completedAt: number;
-}
-
-interface GamesStats {
-  today: { total: number; humanVsHuman: number; humanVsHouse: number };
-  week: { total: number; humanVsHuman: number; humanVsHouse: number };
-  averageGame: { moves: number | null; durationMs: number | null };
-  topMode: { label: string; games: number } | null;
-  humansToday: { members: number; guests: number; anonSeatGames: number };
-  // Guest accounts minted today / this rolling week (engaged visitors who
-  // opened the lobby or started a bot game, not just finished games).
-  // Optional so a cached older payload shape still renders.
-  guestsCreated?: { today: number; week: number };
-  lastHumanGame: { id: string; completedAt: number } | null;
-}
-
-function fmtDuration(ms: number | null): string {
-  if (ms === null || !Number.isFinite(ms) || ms < 0) return "-";
-  const totalSec = Math.round(ms / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}m`;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
-function tcLabel(baseSec: number, incSec: number): string {
-  if (baseSec <= 0) return "∞";
-  const base = baseSec < 60 ? `${baseSec}s` : `${Math.round(baseSec / 60)}`;
-  return `${base}+${incSec}`;
-}
-
-function resultLabel(winner: ModGame["winner"]): string {
-  return winner === "w" ? "1–0" : winner === "b" ? "0–1" : winner === "draw" ? "½–½" : "-";
-}
-
-function ratingDelta(seat: ModGameSeat): string | null {
-  if (seat.ratingBefore === null || seat.ratingAfter === null) return null;
-  const d = Math.round(seat.ratingAfter) - Math.round(seat.ratingBefore);
-  return `${d >= 0 ? "+" : ""}${d}`;
-}
-
-// Small identity pill after a seat's name: who (or what) was sitting there.
-// Registered members get no pill — they are the default. Guests are shown by
-// their real guest username (moderator surface; public surfaces already show
-// these names too), just marked as guests.
-function SeatBadge({ kind }: { kind: SeatKind }) {
-  if (kind === "member") return null;
-  const style =
-    kind === "house"
-      ? "border-bruise-glow/40 text-bruise-glow"
-      : kind === "guest"
-        ? "border-white/20 text-parchment-300"
-        : "border-white/15 text-parchment-400";
-  const label = kind === "house" ? "house bot" : kind === "guest" ? "guest" : "anon";
-  return (
-    <span className={`smallcaps text-[9px] px-1.5 py-px rounded-[1px] border ${style}`}>{label}</span>
-  );
-}
-
-function GameStatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="plate p-4">
-      <div className="smallcaps text-[10px] text-parchment-400">{label}</div>
-      <div className="mt-1 font-display text-xl text-parchment-50">{value}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-parchment-400">{sub}</div>}
-    </div>
-  );
-}
-
-// Every archived game with at least one HUMAN seat (member, guest, or an
-// anonymous seat) — so human-vs-house-bot games count and bot-vs-bot filler
-// doesn't. Newest first; the most recent human game is pinned on top. Rows
-// link to /game/{id}, the archive replay viewer.
-function GamesTab() {
-  const [stats, setStats] = useState<GamesStats | null>(null);
-  const [games, setGames] = useState<ModGame[] | null>(null);
-  const [nextBefore, setNextBefore] = useState<number | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/mod/games/stats")
-      .then((res) => (res.ok ? (res.json() as Promise<GamesStats>) : Promise.reject()))
-      .then((data) => {
-        if (!cancelled) setStats(data);
-      })
-      .catch(() => {});
-    fetch("/api/mod/games")
-      .then((res) =>
-        res.ok ? (res.json() as Promise<{ games: ModGame[]; nextBefore: number | null }>) : Promise.reject(),
-      )
-      .then((data) => {
-        if (cancelled) return;
-        setGames(data.games);
-        setNextBefore(data.nextBefore);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const loadMore = async () => {
-    if (nextBefore === null || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      const res = await fetch(`/api/mod/games?before=${nextBefore}`);
-      if (!res.ok) throw new Error();
-      const data = (await res.json()) as { games: ModGame[]; nextBefore: number | null };
-      setGames((prev) => [...(prev ?? []), ...data.games]);
-      setNextBefore(data.nextBefore);
-    } catch {
-      // Leave the cursor as-is so the button can be tried again.
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  if (failed) return <p className="text-sm text-parchment-400">Could not load the game archive. Try again in a minute.</p>;
-
-  return (
-    <div>
-      {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <GameStatCard
-            label="Human games today"
-            value={String(stats.today.total)}
-            sub={`${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`}
-          />
-          <GameStatCard
-            label="This week"
-            value={String(stats.week.total)}
-            sub={`${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`}
-          />
-          <GameStatCard
-            label="Avg. game (7d)"
-            value={stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-"}
-            sub={fmtDuration(stats.averageGame.durationMs)}
-          />
-          <GameStatCard
-            label="Most played mode (7d)"
-            value={stats.topMode ? stats.topMode.label : "-"}
-            sub={stats.topMode ? `${stats.topMode.games} games` : undefined}
-          />
-          <GameStatCard
-            label="Humans today"
-            value={`${stats.humansToday.members + stats.humansToday.guests}`}
-            sub={`${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
-              stats.humansToday.anonSeatGames > 0 ? ` · ${stats.humansToday.anonSeatGames} anon-seat games` : ""
-            }`}
-          />
-          {stats.guestsCreated && (
-            <GameStatCard
-              label="Guests created"
-              value={`${stats.guestsCreated.today} today`}
-              sub={`${stats.guestsCreated.week} this week`}
-            />
-          )}
-          <GameStatCard
-            label="Last human game"
-            value={stats.lastHumanGame ? when(stats.lastHumanGame.completedAt) : "none yet"}
-          />
-        </div>
-      )}
-
-      {!games ? (
-        <p className="mt-6 text-parchment-300">Loading…</p>
-      ) : games.length === 0 ? (
-        <p className="mt-6 text-parchment-300">No human games recorded yet.</p>
-      ) : (
-        <>
-          <div className="mt-6 space-y-2">
-            {games.map((g, i) => (
-              <div
-                key={g.id}
-                className={`plate p-4 ${i === 0 ? "border border-gold/40" : ""}`}
-              >
-                {i === 0 && (
-                  <div className="smallcaps text-[10px] text-gold-leaf">Last human game</div>
-                )}
-                <div className={`flex flex-wrap items-center gap-2 text-sm ${i === 0 ? "mt-1" : ""}`}>
-                  <span className="font-display font-semibold text-parchment-50">
-                    {g.white.kind === "member" || g.white.kind === "guest" ? (
-                      <Link href={`/u/${g.white.name}`} className="hover:underline">{g.white.name}</Link>
-                    ) : (
-                      g.white.name
-                    )}
-                  </span>
-                  <SeatBadge kind={g.white.kind} />
-                  <span className="font-mono tabular-nums text-parchment-200">{resultLabel(g.winner)}</span>
-                  <span className="font-display font-semibold text-parchment-50">
-                    {g.black.kind === "member" || g.black.kind === "guest" ? (
-                      <Link href={`/u/${g.black.name}`} className="hover:underline">{g.black.name}</Link>
-                    ) : (
-                      g.black.name
-                    )}
-                  </span>
-                  <SeatBadge kind={g.black.kind} />
-                  <ModeBadge mode={g.category === "nerf" || g.category === "buff" ? g.category : undefined} />
-                  <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/15 text-parchment-300">
-                    {g.rated ? "rated" : "casual"}
-                  </span>
-                  <span className="ml-auto text-xs text-parchment-400">{when(g.completedAt)}</span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-parchment-400">
-                  <span>{g.reason}</span>
-                  <span>{tcLabel(g.timeSec, g.incrementSec)}</span>
-                  <span>{g.moveCount} moves</span>
-                  <span>{fmtDuration(g.durationMs)}</span>
-                  {ratingDelta(g.white) && (
-                    <span className="font-mono tabular-nums">
-                      {g.white.name} {ratingDelta(g.white)}
-                    </span>
-                  )}
-                  {ratingDelta(g.black) && (
-                    <span className="font-mono tabular-nums">
-                      {g.black.name} {ratingDelta(g.black)}
-                    </span>
-                  )}
-                  {g.replayable ? (
-                    <Link href={`/game/${g.id}`} className="ml-auto text-gold-leaf hover:underline">
-                      Replay
-                    </Link>
-                  ) : (
-                    <span className="ml-auto text-parchment-400/60" title="This game was archived without its move list.">
-                      no moves stored
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          {nextBefore !== null && (
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="mt-4 px-4 py-1.5 rounded-sm btn-ghost text-sm disabled:opacity-60"
-            >
-              {loadingMore ? "Loading…" : "Load older games"}
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-// ---------------- reports ----------------
-
-function ReportsTab() {
-  const [status, setStatus] = useState<"open" | "all">("open");
-  const [reports, setReports] = useState<Report[] | null>(null);
-
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
-    if (res.ok) setReports(((await res.json()) as { reports: Report[] }).reports);
-  }, [status]);
-
-  useEffect(() => {
-    void (async () => {
-      await load();
-    })();
-  }, [load]);
-
-  const close = async (id: string, next: "resolved" | "dismissed") => {
-    await postJson("/api/mod/reports", { id, status: next });
-    load();
-  };
-
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-sm">
-        <FilterButton active={status === "open"} onClick={() => setStatus("open")}>Open</FilterButton>
-        <FilterButton active={status === "all"} onClick={() => setStatus("all")}>All</FilterButton>
-      </div>
-      {!reports ? (
-        <p className="mt-4 text-parchment-300">Loading…</p>
-      ) : reports.length === 0 ? (
-        <p className="mt-4 text-parchment-300">No reports.</p>
-      ) : (
-        <div className="mt-4 space-y-2">
-          {reports.map((r) => (
-            <div key={r.id} className="plate p-4">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Link href={`/u/${r.reported_name}`} className="font-display font-semibold text-gold-leaf hover:underline">
-                  {r.reported_name}
-                </Link>
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/15 text-parchment-300">
-                  {r.reason}
-                </span>
-                <span className="text-parchment-400">
-                  reported by {r.reporter_name} · {when(r.created_at)}
-                </span>
-                {r.status !== "open" && (
-                  <span className="text-parchment-400">· {r.status} by {r.handled_by}</span>
-                )}
-              </div>
-              <p className="mt-2 text-parchment-100 text-sm whitespace-pre-wrap">{r.description}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                {r.game_id && (
-                  <Link href={`/game/${r.game_id}`} className="px-3 py-1 rounded-sm btn-ghost">
-                    View game
-                  </Link>
-                )}
-                {r.status === "open" && (
-                  <>
-                    <button onClick={() => close(r.id, "resolved")} className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf">
-                      Resolve
-                    </button>
-                    <button onClick={() => close(r.id, "dismissed")} className="px-3 py-1 rounded-sm btn-ghost">
-                      Dismiss
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------- chat flags ----------------
-
-function ChatFlagsTab() {
-  const [all, setAll] = useState(false);
-  const [flags, setFlags] = useState<ChatFlag[] | null>(null);
-
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
-    if (res.ok) setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
-  }, [all]);
-
-  useEffect(() => {
-    void (async () => {
-      await load();
-    })();
-  }, [load]);
-
-  const review = async (id: string) => {
-    await postJson("/api/mod/chat-flags", { id });
-    load();
-  };
-
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-sm">
-        <FilterButton active={!all} onClick={() => setAll(false)}>Unreviewed</FilterButton>
-        <FilterButton active={all} onClick={() => setAll(true)}>All</FilterButton>
-        {flags && flags.some((f) => !f.reviewed) && (
-          <button
-            onClick={async () => {
-              await postJson("/api/mod/chat-flags", { all: true });
-              load();
-            }}
-            className="ml-auto px-3 py-1 rounded-sm btn-ghost"
-          >
-            Mark all reviewed
-          </button>
-        )}
-      </div>
-      {!flags ? (
-        <p className="mt-4 text-parchment-300">Loading…</p>
-      ) : flags.length === 0 ? (
-        <p className="mt-4 text-parchment-300">Nothing flagged.</p>
-      ) : (
-        <div className="mt-4 plate divide-y divide-white/5">
-          {flags.map((f) => (
-            <div key={f.id} className="px-4 py-3 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-sm">
-                  <span className="font-display font-semibold">{f.username}</span>
-                  <span className="text-parchment-400"> · game {f.match_id} · {when(f.created_at)}</span>
-                </div>
-                <p className="mt-1 text-parchment-100 text-sm break-words">{f.text}</p>
-                <p className="mt-1 text-oxblood-glow text-xs">matched: {f.matched_words}</p>
-              </div>
-              {!f.reviewed ? (
-                <button onClick={() => review(f.id)} className="shrink-0 px-3 py-1 rounded-sm btn-ghost text-sm">
-                  Reviewed
-                </button>
-              ) : (
-                <span className="shrink-0 text-parchment-400 text-xs">reviewed</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------- house bots ----------------
-
-// A moderator switch for the house bots: the engine-driven roster that keeps
-// the lobby warm. Flipping it writes app_settings.house_enabled; the game
-// server reads it within a few seconds, stops advertising bot seeks, and winds
-// down any bot game already in progress. Persisted, so it survives redeploys.
-// Shape of a resolved strength profile (matches ResolvedSkillProfile in
-// bots.ts) and the per-tier state the /mod API returns.
-type ResolvedProfile = {
-  level: string;
-  budgetMs: number;
-  blunderChance: number;
-  maxDepth: number;
-  extendedEval: boolean;
-  topK: number;
-  temperatureCp: number;
-  sampleWindowCp: number;
-  evalNoiseCp: number;
-};
-type SkillTier = {
-  skill: number;
-  defaults: ResolvedProfile;
-  overrides: Record<string, unknown> | null;
-  effective: ResolvedProfile;
-};
-type PresetMap = Record<string, Record<string, number | boolean>>;
-type HouseState = {
-  enabled: boolean;
-  games: number;
-  min: number;
-  max: number;
-  clamp: Record<string, [number, number]>;
-  presets: { weakened: PresetMap; veryWeak: PresetMap };
-  skillTiers: SkillTier[];
-};
-
-function HouseBotsToggle() {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [games, setGames] = useState<number | null>(null);
-  const [bounds, setBounds] = useState<{ min: number; max: number }>({ min: 0, max: 70 });
-  const [strength, setStrength] = useState<Pick<
-    HouseState,
-    "clamp" | "presets" | "skillTiers"
-  > | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const ingest = (data: HouseState) => {
-    setEnabled(data.enabled);
-    setGames(data.games);
-    setBounds({ min: data.min, max: data.max });
-    setStrength({ clamp: data.clamp, presets: data.presets, skillTiers: data.skillTiers });
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/mod/house")
-      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : null))
-      .then((data) => {
-        if (!cancelled && data) ingest(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const post = async (body: Record<string, unknown>) => {
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/mod/house", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error();
-      ingest((await res.json()) as HouseState);
-    } catch {
-      setError("Could not update. Try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggle = () => {
-    if (enabled !== null && !saving) post({ enabled: !enabled });
-  };
-  const commitGames = (n: number) => {
-    if (!saving && Number.isFinite(n)) post({ games: n });
-  };
-
-  return (
-    <div className="mt-4 plate space-y-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-display text-sm font-semibold text-parchment-50">House bots</div>
-          {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
-        </div>
-        <button
-          type="button"
-          onClick={toggle}
-          disabled={enabled === null || saving}
-          aria-pressed={enabled === true}
-          title={enabled === null ? "Loading…" : enabled ? "House bots are on. Click to turn off." : "House bots are off. Click to turn on."}
-          className={
-            "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
-            (enabled === null
-              ? "border-white/15 text-parchment-400"
-              : enabled
-                ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
-                : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
-          }
-        >
-          <span
-            aria-hidden
-            className={
-              "h-2 w-2 rounded-full " +
-              (enabled === null
-                ? "bg-parchment-400"
-                : enabled
-                  ? "bg-verdigris-glow animate-flicker"
-                  : "bg-oxblood-glow")
-            }
-          />
-          {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
-        </button>
-      </div>
-      {/* Active games: how many house-vs-house filler games run at once — the
-          games that keep the Watch tab / lobby looking busy. The slider pins a
-          target in the min..max range the API returns (0 = no filler games;
-          human-vs-bot pickups still work). Lowering it lets the extra games drain
-          out over a few minutes. Commits on release. Turning the bots off (above)
-          clears them from the lobby entirely. */}
-      <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
-        <div className="flex items-center justify-between">
-          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
-            Active games playing ({bounds.min}–{bounds.max})
-          </label>
-          <span className="font-mono text-sm text-gold-leaf tabular-nums">{games ?? "…"}</span>
-        </div>
-        <input
-          id="house-games"
-          type="range"
-          min={bounds.min}
-          max={bounds.max}
-          step={1}
-          value={games ?? bounds.min}
-          disabled={games === null || saving}
-          onChange={(e) => setGames(Number(e.target.value))}
-          onPointerUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
-          onKeyUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
-          className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
-        />
-      </div>
-      {strength && (
-        <HouseStrengthEditor
-          state={strength}
-          saving={saving}
-          disabled={enabled === false}
-          onSave={post}
-        />
-      )}
-    </div>
-  );
-}
-
-// The editable strength fields shown in the tier table. `pct` fields are stored
-// as a 0-1 fraction but edited as a percentage. sampleWindowCp is intentionally
-// omitted (advanced; left at its default) to keep the row compact.
-const STRENGTH_FIELDS = [
-  { key: "maxDepth", label: "depth", step: 1, pct: false },
-  { key: "budgetMs", label: "ms", step: 10, pct: false },
-  { key: "topK", label: "topK", step: 1, pct: false },
-  { key: "temperatureCp", label: "temp", step: 10, pct: false },
-  { key: "evalNoiseCp", label: "noise", step: 5, pct: false },
-  { key: "blunderChance", label: "blndr%", step: 1, pct: true },
-] as const;
-
-type StrengthFieldKey = (typeof STRENGTH_FIELDS)[number]["key"];
-
-// Per-tier house-bot strength tuning. Presets fill the whole override map in one
-// click; the table edits any single field live. Effective values come straight
-// from the API's resolved profiles, so what is shown is exactly what plays.
-// Changes reach live games within ~15s (the DO's settings cache TTL).
-function HouseStrengthEditor({
-  state,
-  saving,
-  disabled,
-  onSave,
-}: {
-  state: Pick<HouseState, "clamp" | "presets" | "skillTiers">;
-  saving: boolean;
-  disabled: boolean;
-  onSave: (body: Record<string, unknown>) => void;
-}) {
-  const { clamp, presets, skillTiers } = state;
-
-  // Apply a named preset: set every tier the preset names, and null every tier
-  // it doesn't, so applying a preset always fully replaces prior overrides.
-  const applyPreset = (preset: PresetMap) => {
-    if (saving) return;
-    const map: Record<string, Record<string, number | boolean> | null> = {};
-    for (const t of skillTiers) map[String(t.skill)] = preset[String(t.skill)] ?? null;
-    onSave({ skillOverrides: map });
-  };
-
-  const commitField = (skill: number, field: StrengthFieldKey, pct: boolean, raw: number) => {
-    if (saving || !Number.isFinite(raw)) return;
-    const value = pct ? raw / 100 : raw;
-    onSave({ skillOverrides: { [String(skill)]: { [field]: value } } });
-  };
-
-  const resetTier = (skill: number) => {
-    if (!saving) onSave({ skillOverrides: { [String(skill)]: null } });
-  };
-
-  const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
-
-  return (
-    <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="smallcaps text-[11px] text-parchment-400">House bot strength</span>
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            disabled={saving || !anyOverride}
-            onClick={() => onSave({ resetSkillOverrides: true })}
-            className="press border border-white/15 px-2 py-1 text-[11px] text-parchment-300 disabled:opacity-40"
-          >
-            Default
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => applyPreset(presets.weakened)}
-            className="press border border-gold-leaf/40 bg-gold-leaf/10 px-2 py-1 text-[11px] text-gold-leaf disabled:opacity-40"
-          >
-            Weakened 50/30/20
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => applyPreset(presets.veryWeak)}
-            className="press border border-oxblood-glow/40 bg-oxblood/10 px-2 py-1 text-[11px] text-oxblood-glow disabled:opacity-40"
-          >
-            Very weak
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-2 overflow-x-auto">
-        <table className="w-full min-w-[420px] border-collapse text-[11px]">
-          <thead>
-            <tr className="text-parchment-400">
-              <th className="py-1 pr-2 text-left font-normal smallcaps">Tier</th>
-              {STRENGTH_FIELDS.map((f) => (
-                <th key={f.key} className="px-1 py-1 text-right font-normal">
-                  {f.label}
-                </th>
-              ))}
-              <th className="pl-1" />
-            </tr>
-          </thead>
-          <tbody className="font-mono tabular-nums">
-            {skillTiers.map((t) => {
-              const over = t.overrides ?? {};
-              const touched = Object.keys(over).length > 0;
-              return (
-                <tr key={t.skill} className="border-t border-white/5">
-                  <td className={"py-1 pr-2 " + (touched ? "text-gold-leaf" : "text-parchment-200")}>
-                    {t.skill}
-                  </td>
-                  {STRENGTH_FIELDS.map((f) => {
-                    const [lo, hi] = clamp[f.key] ?? [0, 9999];
-                    const eff = t.effective[f.key] as number;
-                    const def = t.defaults[f.key] as number;
-                    const shown = f.pct ? Math.round(eff * 100) : eff;
-                    const defShown = f.pct ? Math.round(def * 100) : def;
-                    const isOver = Object.prototype.hasOwnProperty.call(over, f.key);
-                    return (
-                      <td key={f.key} className="px-1 py-1 text-right">
-                        <input
-                          type="number"
-                          min={f.pct ? lo * 100 : lo}
-                          max={f.pct ? hi * 100 : hi}
-                          step={f.step}
-                          defaultValue={shown}
-                          key={`${t.skill}-${f.key}-${shown}`}
-                          disabled={saving}
-                          title={`default ${defShown}`}
-                          onBlur={(e) => {
-                            const v = Number(e.target.value);
-                            if (v !== shown) commitField(t.skill, f.key, f.pct, v);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
-                          className={
-                            "w-12 rounded border bg-black/20 px-1 py-0.5 text-right outline-none focus:border-gold-leaf/60 " +
-                            (isOver ? "border-gold-leaf/50 text-gold-leaf" : "border-white/10 text-parchment-300")
-                          }
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="pl-1 text-right">
-                    <button
-                      type="button"
-                      disabled={saving || !touched}
-                      onClick={() => resetTier(t.skill)}
-                      title="Reset this tier to baked default"
-                      className="press px-1 text-parchment-400 disabled:opacity-25"
-                    >
-                      ↺
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-2 text-[10px] leading-snug text-parchment-500">
-        Move-quality weakening (topK / temp / noise), not just time. Changes reach live games within
-        ~15s. Ratings drift is expected after a strength change. Gold = overridden.
-      </p>
-    </div>
-  );
-}
-
-// The owner god panel is hidden by default; ilovenewjeans switches it on here
-// when he wants it, and it mounts in his next game. Mirrors HouseBotsToggle but
-// hits the owner-gated /api/mod/god-panel and defaults to off.
-function GodPanelToggle() {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/mod/god-panel")
-      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
-      .then((data) => {
-        if (!cancelled && data) setEnabled(data.enabled);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const toggle = async () => {
-    if (enabled === null || saving) return;
-    const next = !enabled;
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/mod/god-panel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: next }),
-      });
-      if (!res.ok) throw new Error();
-      const data = (await res.json()) as { enabled: boolean };
-      setEnabled(data.enabled);
-    } catch {
-      setError("Could not update. Try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 plate flex flex-wrap items-center justify-between gap-3 p-4">
-      <div className="min-w-0">
-        <div className="font-display text-sm font-semibold text-parchment-50">God panel</div>
-        <p className="mt-0.5 max-w-md text-xs text-parchment-400">
-          Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it
-          on here and it mounts in your next draft game. Only you can see or use it.
-        </p>
-        {error && <p className="mt-1 text-xs text-oxblood-glow">{error}</p>}
-      </div>
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={enabled === null || saving}
-        aria-pressed={enabled === true}
-        title={enabled === null ? "Loading…" : enabled ? "God panel is on. Click to hide it." : "God panel is off. Click to show it."}
-        className={
-          "press shrink-0 inline-flex items-center gap-2 border px-4 py-2 font-display text-sm font-semibold transition disabled:opacity-60 " +
-          (enabled === null
-            ? "border-white/15 text-parchment-400"
-            : enabled
-              ? "border-verdigris/50 bg-verdigris/15 text-verdigris-glow"
-              : "border-oxblood-glow/50 bg-oxblood/15 text-oxblood-glow")
-        }
-      >
-        <span
-          aria-hidden
-          className={
-            "h-2 w-2 rounded-full " +
-            (enabled === null
-              ? "bg-parchment-400"
-              : enabled
-                ? "bg-verdigris-glow animate-flicker"
-                : "bg-oxblood-glow")
-          }
-        />
-        {enabled === null ? "…" : saving ? "Saving…" : enabled ? "On" : "Off"}
-      </button>
-    </div>
-  );
-}
-
-// ---------------- players ----------------
-
-type UserFilter = "all" | "members" | "guests";
-
-function UsersTab({ isAdmin }: { isAdmin: boolean }) {
-  const [query, setQuery] = useState("");
-  // Roster scope: recent members and guests together by default, narrowable to
-  // either side. Applies to the default roster and to searches alike.
-  const [filter, setFilter] = useState<UserFilter>("all");
-  const [users, setUsers] = useState<ModUser[]>([]);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [reports, setReports] = useState<{ reporter_name: string; reason: string; description: string; status: string; created_at: number }[]>([]);
-  const [selected, setSelected] = useState<ModUser | null>(null);
-  const [action, setAction] = useState<"warn" | "mute" | "ban">("mute");
-  const [duration, setDuration] = useState<number | null>(DURATIONS[2].ms);
-  const [note, setNote] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  // Current time on a slow tick so ban/mute expiry badges stay live without
-  // calling Date.now() during render.
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const search = useCallback(
-    async (q: string) => {
-      // An empty query loads the default roster (recent members AND guests)
-      // rather than clearing the list, so the panel always opens on something
-      // browsable. The filter chips narrow both the roster and searches.
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
-      if (filter !== "all") params.set("filter", filter);
-      const qs = params.toString();
-      const res = await fetch(`/api/mod/users${qs ? `?${qs}` : ""}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        users: ModUser[];
-        history: HistoryEntry[];
-        reports: { reporter_name: string; reason: string; description: string; status: string; created_at: number }[];
-      };
-      setUsers(data.users);
-      setHistory(data.history);
-      setReports(data.reports);
-    },
-    [filter],
-  );
-
-  useEffect(() => {
-    const t = setTimeout(() => search(query), 300);
-    return () => clearTimeout(t);
-  }, [query, search]);
-
-  const act = async (username: string, body: Record<string, unknown>) => {
-    setMessage(null);
-    const res = await postJson("/api/mod/users", { username, ...body });
-    setMessage(res.ok ? "Done." : res.error ?? "Failed.");
-    search(query);
-    if (selected) {
-      const refreshed = await fetch(`/api/mod/users?q=${encodeURIComponent(selected.username)}`);
-      if (refreshed.ok) {
-        const data = (await refreshed.json()) as { users: ModUser[] };
-        setSelected(data.users.find((u) => u.username === selected.username) ?? null);
-      }
-    }
-  };
-
-  return (
-    <div>
-      <input
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setSelected(null);
-        }}
-        placeholder="Search players…"
-        className="w-full max-w-sm bg-transparent plate px-4 py-2 text-sm outline-none focus:border-gold/40"
-      />
-
-      <div className="mt-3 flex items-center gap-2 text-sm">
-        <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
-        <FilterButton active={filter === "members"} onClick={() => setFilter("members")}>Members</FilterButton>
-        <FilterButton active={filter === "guests"} onClick={() => setFilter("guests")}>Guests</FilterButton>
-      </div>
-
-      {!query.trim() && (
-        <p className="mt-2 smallcaps text-[10px] text-parchment-400">
-          Recent players
-        </p>
-      )}
-      {users.length === 0 && (
-        <p className="mt-4 text-sm text-parchment-400">
-          {query.trim() ? "No players match that search." : "No players yet."}
-        </p>
-      )}
-
-      {users.length > 0 && (
-        <div className="mt-4 plate divide-y divide-white/5">
-          {users.map((u) => (
-            <button
-              key={u.id}
-              onClick={() => setSelected(u)}
-              className={`w-full text-left px-4 py-3 flex flex-wrap items-center gap-2 hover:bg-white/[0.03] transition ${
-                selected?.id === u.id ? "bg-white/[0.04]" : ""
-              }`}
-            >
-              <span className="font-display font-semibold">{u.username}</span>
-              {u.role !== "user" && <RoleBadge role={u.role} />}
-              {!!u.is_guest && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/20 text-parchment-300">
-                  guest
-                </span>
-              )}
-              {u.banned_until && u.banned_until > now && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] bg-oxblood-glow/20 text-oxblood-glow">
-                  banned {untilLabel(u.banned_until)}
-                </span>
-              )}
-              {u.muted_until && u.muted_until > now && (
-                <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] bg-bruise-glow/20 text-bruise-glow">
-                  muted {untilLabel(u.muted_until)}
-                </span>
-              )}
-              <span className="ml-auto text-parchment-400 text-sm">
-                {Math.round(u.rating)} · {u.games} games · joined {new Date(u.created_at).toLocaleDateString()}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {selected && (
-        <div className="mt-4 plate p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/u/${selected.username}`} className="font-display text-xl text-gold-leaf hover:underline">
-              {selected.username}
-            </Link>
-            {selected.role !== "user" && <RoleBadge role={selected.role} />}
-            {!!selected.is_guest && (
-              <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-white/20 text-parchment-300">
-                guest
-              </span>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-            <select
-              value={action}
-              onChange={(e) => setAction(e.target.value as typeof action)}
-              className="bg-transparent plate px-3 py-1.5 outline-none"
-            >
-              <option value="warn">Warn (log only)</option>
-              <option value="mute">Mute chat</option>
-              <option value="ban">Ban account</option>
-            </select>
-            {action !== "warn" && (
-              <select
-                value={duration === null ? "perm" : String(duration)}
-                onChange={(e) => setDuration(e.target.value === "perm" ? null : Number(e.target.value))}
-                className="bg-transparent plate px-3 py-1.5 outline-none"
-              >
-                {DURATIONS.map((d) => (
-                  <option key={d.label} value={d.ms === null ? "perm" : String(d.ms)}>
-                    {d.label}
-                  </option>
+    <>
+      {/* Desktop rail */}
+      <aside className="hidden w-52 shrink-0 lg:block">
+        <div className="sticky top-6 space-y-5">
+          {groups.map((group) => (
+            <div key={group.title}>
+              <div className="smallcaps px-2 text-[10px] text-parchment-500">{group.title}</div>
+              <ul className="mt-1 space-y-px">
+                {group.items.map((item) => (
+                  <li key={item.kind === "section" ? item.id : item.href}>
+                    <NavEntry
+                      item={item}
+                      active={item.kind === "section" && item.id === current}
+                      badge={badgeFor(item)}
+                      onGo={onGo}
+                    />
+                  </li>
                 ))}
-              </select>
-            )}
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Note (for the mod log)"
-              className="flex-1 min-w-[160px] bg-transparent plate px-3 py-1.5 outline-none"
-            />
-            <button
-              onClick={() => act(selected.username, { action, durationMs: duration, note })}
-              className="px-4 py-1.5 rounded-sm btn-ghost text-oxblood-glow font-display"
-            >
-              Apply
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <button
-              onClick={() => act(selected.username, { action: "flag_name", note })}
-              title="Requires the owner to pick a new name; the account, ratings, games, and achievements are kept"
-              className="px-3 py-1 rounded-sm btn-ghost text-oxblood-glow"
-            >
-              Flag username
-            </button>
-            <button
-              onClick={() => act(selected.username, { action: "unflag_name" })}
-              title="Clear a username flag (false positive)"
-              className="px-3 py-1 rounded-sm btn-ghost"
-            >
-              Unflag
-            </button>
-            {selected.muted_until && selected.muted_until > now && (
-              <button onClick={() => act(selected.username, { action: "unmute" })} className="px-3 py-1 rounded-sm btn-ghost">
-                Unmute
-              </button>
-            )}
-            {selected.banned_until && selected.banned_until > now && (
-              <button onClick={() => act(selected.username, { action: "unban" })} className="px-3 py-1 rounded-sm btn-ghost">
-                Unban
-              </button>
-            )}
-            {isAdmin && selected.role === "user" && (
-              <button
-                onClick={() => act(selected.username, { action: "set_role", role: "mod" })}
-                className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf"
-              >
-                Make moderator
-              </button>
-            )}
-            {isAdmin && selected.role === "mod" && (
-              <button
-                onClick={() => act(selected.username, { action: "set_role", role: "user" })}
-                className="px-3 py-1 rounded-sm btn-ghost"
-              >
-                Remove moderator
-              </button>
-            )}
-          </div>
-
-          {message && <p className="mt-3 text-sm text-parchment-200">{message}</p>}
-
-          {(history.length > 0 || reports.length > 0) && (
-            <div className="mt-5 grid sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <h3 className="smallcaps text-xs text-parchment-400">Mod history</h3>
-                {history.length === 0 ? (
-                  <p className="mt-2 text-parchment-300">Clean record.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1.5">
-                    {history.map((h, i) => (
-                      <li key={i} className="text-parchment-200">
-                        <span className="text-gold-leaf">{h.action}</span> by {h.mod_name} · {when(h.created_at)}
-                        {h.note && <span className="text-parchment-400">: {h.note}</span>}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <h3 className="smallcaps text-xs text-parchment-400">Reports against them</h3>
-                {reports.length === 0 ? (
-                  <p className="mt-2 text-parchment-300">None.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1.5">
-                    {reports.map((r, i) => (
-                      <li key={i} className="text-parchment-200">
-                        <span className="text-oxblood-glow">{r.reason}</span> by {r.reporter_name} ({r.status}) ·{" "}
-                        {when(r.created_at)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              </ul>
             </div>
-          )}
+          ))}
         </div>
+      </aside>
+
+      {/* Phone / tablet strip: same order, scrolled sideways, group titles kept
+          as inline separators so the grouping survives the flattening. */}
+      <div className="-mx-6 overflow-x-auto px-6 lg:hidden">
+        <div className="flex w-max items-center gap-1.5 border-b border-white/10 pb-3">
+          {groups.map((group, gi) => (
+            <div key={group.title} className="flex items-center gap-1.5">
+              {gi > 0 && <span className="mx-1 h-4 w-px bg-white/10" aria-hidden />}
+              <span className="smallcaps text-[9px] text-parchment-500">{group.title}</span>
+              {group.items.map((item) => (
+                <NavEntry
+                  key={item.kind === "section" ? item.id : item.href}
+                  item={item}
+                  active={item.kind === "section" && item.id === current}
+                  badge={badgeFor(item)}
+                  onGo={onGo}
+                  compact
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function NavEntry({
+  item,
+  active,
+  badge,
+  onGo,
+  compact,
+}: {
+  item: NavItem;
+  active: boolean;
+  badge: number;
+  onGo: (id: SectionId) => void;
+  compact?: boolean;
+}) {
+  const base =
+    "press flex items-center gap-2 rounded-[1px] border text-sm transition " +
+    (compact ? "whitespace-nowrap px-2.5 py-1" : "w-full px-2 py-1.5") +
+    " " +
+    (active
+      ? "border-gold/40 bg-gold-leaf/10 text-gold-leaf"
+      : "border-transparent text-parchment-300 hover:border-white/10 hover:bg-white/[0.03] hover:text-parchment-50");
+
+  const inner = (
+    <>
+      <span aria-hidden className="w-3.5 shrink-0 text-center text-[11px] opacity-70">
+        {item.glyph}
+      </span>
+      <span className="font-display">{item.label}</span>
+      {item.kind === "link" ? (
+        <span aria-hidden className="ml-auto text-[10px] text-parchment-500">
+          ↗
+        </span>
+      ) : (
+        <CountBadge n={badge} />
       )}
-    </div>
+    </>
   );
-}
 
-// ---------------- suggestions ----------------
-
-function SuggestionsTab() {
-  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
-
-  useEffect(() => {
-    fetch("/api/mod/suggestions").then(async (res) => {
-      if (res.ok) setSuggestions(((await res.json()) as { suggestions: Suggestion[] }).suggestions);
-    });
-  }, []);
-
-  if (!suggestions) return <p className="text-parchment-300">Loading…</p>;
-  if (suggestions.length === 0) return <p className="text-parchment-300">No suggestions yet.</p>;
+  if (item.kind === "link") {
+    return (
+      <Link href={item.href} className={base}>
+        {inner}
+      </Link>
+    );
+  }
   return (
-    <div className="space-y-2">
-      {suggestions.map((s) => (
-        <div key={s.id} className="plate p-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <ModeBadge mode={s.kind === "buff" ? "buff" : "nerf"} />
-            <span className="font-display font-semibold text-gold-leaf">{s.name}</span>
-            {s.kind === "buff" && (
-              <span className="smallcaps text-[9px] text-parchment-400 border border-white/10 px-1.5 py-px">
-                {s.pool === "boon" ? "Nerf-mode boon" : "Buff mode card"}
-              </span>
-            )}
-            <span className="text-parchment-400">
-              by {s.username ?? "anonymous"}
-              {s.contact ? ` (${s.contact})` : ""} · {when(s.created_at)}
-            </span>
-          </div>
-          <p className="mt-2 text-parchment-100 text-sm whitespace-pre-wrap">{s.description}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------- mod log ----------------
-
-function LogTab() {
-  const [log, setLog] = useState<HistoryEntry[] | null>(null);
-
-  useEffect(() => {
-    fetch("/api/mod/log").then(async (res) => {
-      if (res.ok) setLog(((await res.json()) as { log: HistoryEntry[] }).log);
-    });
-  }, []);
-
-  if (!log) return <p className="text-parchment-300">Loading…</p>;
-  if (log.length === 0) return <p className="text-parchment-300">No moderation actions yet.</p>;
-  return (
-    <div className="plate divide-y divide-white/5">
-      {log.map((entry, i) => (
-        <div key={i} className="px-4 py-3 text-sm flex flex-wrap items-baseline gap-x-2">
-          <span className="font-display font-semibold">{entry.mod_name}</span>
-          <span className="text-gold-leaf">{entry.action}</span>
-          <Link href={`/u/${entry.target_name}`} className="font-display font-semibold hover:underline">
-            {entry.target_name}
-          </Link>
-          {entry.expires_at && <span className="text-parchment-400">{untilLabel(entry.expires_at)}</span>}
-          {entry.note && <span className="text-parchment-400">{entry.note}</span>}
-          <span className="ml-auto text-parchment-400">{when(entry.created_at)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------- shared bits ----------------
-
-function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1 rounded-[1px] border transition ${
-        active ? "border-gold/50 text-gold-leaf" : "border-white/15 text-parchment-300 hover:text-parchment-100"
-      }`}
-    >
-      {children}
+    <button type="button" onClick={() => onGo(item.id)} aria-current={active ? "page" : undefined} className={base}>
+      {inner}
     </button>
-  );
-}
-
-function RoleBadge({ role }: { role: string }) {
-  return (
-    <span className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf">
-      {role === "admin" ? "Admin" : "Moderator"}
-    </span>
   );
 }
