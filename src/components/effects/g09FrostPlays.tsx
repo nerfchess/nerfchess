@@ -238,7 +238,7 @@ function LongWinterScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <circle cx="20" cy="15" r="8" fill="none" stroke={C_LW.core} strokeWidth="2.4" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 200)}>
+        <g className="g09-arrive2" style={dm(delayMs, 150)}>
           <path d="M3 28q9-7 17-3t17-3v13H3z" fill={C_LW.glow} stroke={C_LW.deep} strokeWidth="1.5" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 380)}>
@@ -301,7 +301,7 @@ function WinterGarrisonScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M14 34V16l6-6 6 6v18z" fill={C_WG.core} stroke={C_WG.deep} strokeWidth="2" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M8 17h24" stroke={C_WG.glow} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -312,7 +312,7 @@ function WinterGarrisonScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M13 35V15l7-7 7 7v20z" fill={C_WG.deep} stroke={C_WG.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 200)}>
+        <g className="g09-arrive2" style={dm(delayMs, 150)}>
           <path d="M13 21h14" stroke={C_WG.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 390)}>
@@ -388,7 +388,7 @@ function BloodPriceScene({ role, delayMs }: SceneProps) {
           <path d="M20 7v22M9 13h22" stroke={C_BP.core} strokeWidth="2.6" strokeLinecap="round" />
           <path d="M12 13l-4 8h8z" fill={C_BP.glow} />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M28 13l-4 8h8z" fill={C_BP.deep} stroke={C_BP.core} strokeWidth="1.6" strokeLinejoin="round" />
         </g>
       </Sq>
@@ -399,7 +399,7 @@ function BloodPriceScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M20 6v24M8 12h24" stroke={C_BP.core} strokeWidth="2.8" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M20 8l3 5h-6z" fill={C_BP.deep} />
           <circle cx="20" cy="20" r="3" fill={C_BP.deep} />
         </g>
@@ -460,7 +460,7 @@ function BurnedKeepScene({ role, delayMs }: SceneProps) {
           <path d="M8 6h24v6H8z" fill={C_BK.core} />
           <path d="M11 12l3 9 3-9M20 12l3 11 3-11M29 12l2 8" stroke={C_BK.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 210)}>
+        <g className="g09-hit2" style={dm(delayMs, 155)}>
           <path d="M7 31h26" stroke={C_BK.deep} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -471,7 +471,7 @@ function BurnedKeepScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M10 34V17a10 10 0 0 1 20 0v17z" fill={C_BK.deep} stroke={C_BK.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 200)}>
+        <g className="g09-arrive2" style={dm(delayMs, 150)}>
           <path d="M13 15l2 9 2-9M20 15l2 11 2-11M27 16l1 7" stroke={C_BK.core} strokeWidth="2.2" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 390)}>
@@ -544,7 +544,7 @@ function DoomsdayClockScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="20" r="12" fill="none" stroke={C_DC.core} strokeWidth="2.6" />
           <path d="M20 20V11" stroke={C_DC.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M20 20l8 5" stroke={C_DC.deep} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -555,7 +555,7 @@ function DoomsdayClockScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <circle cx="20" cy="20" r="13" fill={C_DC.deep} stroke={C_DC.core} strokeWidth="2.6" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M20 20V10M20 20l7 4" stroke={C_DC.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -627,7 +627,7 @@ function EternalTollScene({ role, delayMs }: SceneProps) {
           <path d="M4 18h32" stroke={C_ET.core} strokeWidth="3.4" strokeLinecap="round" />
           <circle cx="20" cy="18" r="4" fill="none" stroke={C_ET.glow} strokeWidth="2.4" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 210)}>
+        <g className="g09-hit2" style={dm(delayMs, 155)}>
           <path d="M12 20l-2 9M28 20l2 9" stroke={C_ET.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -638,7 +638,7 @@ function EternalTollScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M9 12v18M31 12v18" stroke={C_ET.core} strokeWidth="3" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 200)}>
+        <g className="g09-arrive2" style={dm(delayMs, 150)}>
           <path d="M9 17h22" stroke={C_ET.glow} strokeWidth="3" strokeLinecap="round" />
           <circle cx="20" cy="17" r="3.4" fill="none" stroke={C_ET.deep} strokeWidth="2" />
         </g>
@@ -706,7 +706,7 @@ function FrozenReservesScene({ role, delayMs }: SceneProps) {
           <path d={FIG} fill={C_FR.core} stroke={C_FR.deep} strokeWidth="1.8" strokeLinejoin="round" />
           <path d={FIG_BASE} fill={C_FR.deep} />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M11 33h18v-8H11z" fill={C_FR.glow} opacity="0.9" />
         </g>
       </Sq>
@@ -717,7 +717,7 @@ function FrozenReservesScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d={FIG} fill="none" stroke={C_FR.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M11 34h18v-10H11z" fill={C_FR.glow} opacity="0.85" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -780,7 +780,7 @@ function GlassPrisonScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <rect x="7" y="6" width="26" height="28" fill={C_GP.glow} opacity="0.42" stroke={C_GP.core} strokeWidth="2" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d={FIG} fill={C_GP.deep} opacity="0.8" />
         </g>
       </Sq>
@@ -791,7 +791,7 @@ function GlassPrisonScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d={FIG} fill={C_GP.core} />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <rect x="6" y="5" width="28" height="30" fill="none" stroke={C_GP.glow} strokeWidth="2.6" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -862,7 +862,7 @@ function GreatGlacierScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M2 30l7-14 6 8 6-12 7 12 6-6 4 12z" fill={C_GG.core} stroke={C_GG.deep} strokeWidth="1.8" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M4 34h32" stroke={C_GG.glow} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -873,7 +873,7 @@ function GreatGlacierScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M4 32l8-16 7 9 6-13 8 14 3-5v11z" fill={C_GG.deep} stroke={C_GG.core} strokeWidth="2.2" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M12 16l3 16M25 12l2 20" stroke={C_GG.glow} strokeWidth="1.8" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -933,7 +933,7 @@ function KingsRansomScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="20" r="10" fill={C_KR.glow} stroke={C_KR.deep} strokeWidth="2.2" />
           <path d="M16 20h8M20 16v8" stroke={C_KR.core} strokeWidth="2.2" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M8 30q12 6 24 0" fill="none" stroke={C_KR.core} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -945,7 +945,7 @@ function KingsRansomScene({ role, delayMs }: SceneProps) {
           <rect x="7" y="17" width="26" height="16" fill={C_KR.deep} stroke={C_KR.core} strokeWidth="2.4" />
           <rect x="17" y="21" width="6" height="8" fill={C_KR.core} />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M7 17V13a13 13 0 0 1 26 0v4z" fill={C_KR.core} stroke={C_KR.deep} strokeWidth="2" strokeLinejoin="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1018,7 +1018,7 @@ function OathbreakersBrandScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="20" r="11" fill="none" stroke={C_OB.core} strokeWidth="2.6" />
           <path d="M14 26L26 14M14 14l12 12" stroke={C_OB.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M20 4v6" stroke={C_OB.deep} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1030,7 +1030,7 @@ function OathbreakersBrandScene({ role, delayMs }: SceneProps) {
           <rect x="18" y="3" width="4" height="16" fill={C_OB.deep} />
           <circle cx="20" cy="26" r="9" fill="none" stroke={C_OB.core} strokeWidth="3" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M15 26h10M20 21v10" stroke={C_OB.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1101,7 +1101,7 @@ function ReapersDueScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M4 10q18-2 30 12" fill="none" stroke={C_RD.core} strokeWidth="3.4" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M12 34V20M20 34V17M28 34v-12" stroke={C_RD.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1112,7 +1112,7 @@ function ReapersDueScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M26 6v28" stroke={C_RD.deep} strokeWidth="3" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M26 9q-16 0-20 14" fill="none" stroke={C_RD.core} strokeWidth="3.4" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1186,7 +1186,7 @@ function ShatteredCouncilScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <circle cx="20" cy="20" r="12" fill={C_SC.core} stroke={C_SC.deep} strokeWidth="2.2" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M20 8v24M9 15l22 10" stroke={C_SC.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1197,7 +1197,7 @@ function ShatteredCouncilScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <ellipse cx="20" cy="21" rx="14" ry="8" fill={C_SC.deep} stroke={C_SC.core} strokeWidth="2.4" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M7 21h26" stroke={C_SC.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1273,7 +1273,7 @@ function SpidersParlorScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M20 20L4 6M20 20l16-14M20 20L6 34M20 20l14 14" stroke={C_SP.core} strokeWidth="2" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M11 13q9 5 18 0M9 27q11-6 22 0" fill="none" stroke={C_SP.glow} strokeWidth="2" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1284,7 +1284,7 @@ function SpidersParlorScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M20 4v32M4 20h32M8 8l24 24M32 8L8 32" stroke={C_SP.core} strokeWidth="1.8" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <circle cx="20" cy="20" r="9" fill="none" stroke={C_SP.glow} strokeWidth="2.2" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1356,7 +1356,7 @@ function TempestScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M8 10l24 6-6 18-20-8z" fill={C_TP.core} stroke={C_TP.deep} strokeWidth="2" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M4 32q10 5 32-2" fill="none" stroke={C_TP.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1367,7 +1367,7 @@ function TempestScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M6 14l26 4-4 18-22-6z" fill={C_TP.deep} stroke={C_TP.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M4 8q14-5 30 0M4 14q10-3 20-1" fill="none" stroke={C_TP.glow} strokeWidth="2.2" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1440,7 +1440,7 @@ function TollingThirdsScene({ role, delayMs }: SceneProps) {
           <path d="M11 28V19a9 9 0 0 1 18 0v9z" fill={C_TT.core} stroke={C_TT.deep} strokeWidth="2.2" strokeLinejoin="round" />
           <path d="M8 28h24" stroke={C_TT.deep} strokeWidth="2.6" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <circle cx="20" cy="32" r="2.6" fill={C_TT.glow} />
         </g>
       </Sq>
@@ -1451,7 +1451,7 @@ function TollingThirdsScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M10 29V18a10 10 0 0 1 20 0v11z" fill={C_TT.deep} stroke={C_TT.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M7 29h26" stroke={C_TT.glow} strokeWidth="2.8" strokeLinecap="round" />
           <circle cx="20" cy="33" r="2.6" fill={C_TT.core} />
         </g>
@@ -1515,7 +1515,7 @@ function WinterThatStaysScene({ role, delayMs }: SceneProps) {
           <ellipse cx="15" cy="16" rx="5" ry="7.5" fill={C_WS.core} />
           <ellipse cx="26" cy="26" rx="5" ry="7.5" fill={C_WS.core} />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M6 34q14 4 28 0" fill="none" stroke={C_WS.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1527,7 +1527,7 @@ function WinterThatStaysScene({ role, delayMs }: SceneProps) {
           <ellipse cx="14" cy="14" rx="5" ry="7.5" fill="none" stroke={C_WS.core} strokeWidth="2.4" />
           <ellipse cx="26" cy="25" rx="5" ry="7.5" fill="none" stroke={C_WS.core} strokeWidth="2.4" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <ellipse cx="26" cy="25" rx="5" ry="7.5" fill={C_WS.glow} opacity="0.8" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1585,7 +1585,7 @@ function DeusExMachinaScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M13 34V17l3-9 3 9v-4l3-6 3 6v3l4 4v14z" fill={C_DX.core} stroke={C_DX.deep} strokeWidth="1.8" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M6 10l4 4M34 10l-4 4" stroke={C_DX.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1597,7 +1597,7 @@ function DeusExMachinaScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="20" r="10" fill="none" stroke={C_DX.core} strokeWidth="3" />
           <path d="M20 6v5M20 29v5M6 20h5M29 20h5" stroke={C_DX.core} strokeWidth="3" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <circle cx="20" cy="20" r="4.4" fill={C_DX.glow} />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1667,7 +1667,7 @@ function FrozenMoatScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <ellipse cx="20" cy="22" rx="15" ry="9" fill={C_FM.deep} />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <ellipse cx="20" cy="22" rx="13" ry="7.4" fill={C_FM.glow} opacity="0.85" />
           <path d="M20 15v14M9 22h22" stroke={C_FM.core} strokeWidth="1.8" strokeLinecap="round" />
         </g>
@@ -1679,7 +1679,7 @@ function FrozenMoatScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <ellipse cx="20" cy="22" rx="15" ry="9" fill="none" stroke={C_FM.core} strokeWidth="2.4" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <ellipse cx="20" cy="22" rx="10" ry="6" fill={C_FM.glow} opacity="0.8" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1739,7 +1739,7 @@ function FrozenHarborScene({ role, delayMs }: SceneProps) {
           <path d="M6 20h28l-5 11H11z" fill={C_FH.core} stroke={C_FH.deep} strokeWidth="2" strokeLinejoin="round" />
           <path d="M20 20V7" stroke={C_FH.deep} strokeWidth="2.4" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M3 34h34" stroke={C_FH.glow} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1750,7 +1750,7 @@ function FrozenHarborScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M5 21h30l-6 12H11z" fill={C_FH.deep} stroke={C_FH.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M20 21V6l9 9z" fill={C_FH.core} />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1811,7 +1811,7 @@ function HearthFrostScene({ role, delayMs }: SceneProps) {
           <path d="M8 32h24v4H8z" fill={C_HF.deep} />
           <path d="M14 32q0-8 6-12 6 4 6 12z" fill={C_HF.glow} />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M20 6v12M14 10l6 6 6-6" fill="none" stroke={C_HF.core} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -1822,7 +1822,7 @@ function HearthFrostScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M7 33V16h26v17z" fill="none" stroke={C_HF.deep} strokeWidth="3" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M14 33q0-9 6-13 6 4 6 13z" fill={C_HF.glow} />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -1845,7 +1845,7 @@ function HearthFrostScene({ role, delayMs }: SceneProps) {
         y={62}
         w={16}
         h={6}
-        style={{ ...dm(delayMs, 200), background: `radial-gradient(ellipse, ${C_HF.glow}, transparent 72%)` }}
+        style={{ ...dm(delayMs, 120), background: `radial-gradient(ellipse, , transparent 72%)` }}
       />
       {HF_FLOWERS.map((f, i) => (
         <P
@@ -1903,7 +1903,7 @@ function KrakenArmsScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M14 36V18a7 7 0 0 1 14 0q0 10-9 10" fill="none" stroke={C_KA.core} strokeWidth="4" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <circle cx="19" cy="27" r="2.4" fill={C_KA.glow} />
           <circle cx="16" cy="33" r="2.4" fill={C_KA.glow} />
         </g>
@@ -1915,7 +1915,7 @@ function KrakenArmsScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M12 36V16a8 8 0 0 1 16 0q0 12-10 12" fill="none" stroke={C_KA.core} strokeWidth="4.4" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <circle cx="19" cy="26" r="2.6" fill={C_KA.glow} />
           <circle cx="15" cy="33" r="2.6" fill={C_KA.glow} />
         </g>
@@ -1989,7 +1989,7 @@ function LeadRainScene({ role, delayMs }: SceneProps) {
           <path d="M20 4v22l-3 8h6l-3-8z" fill={C_LR.core} stroke={C_LR.deep} strokeWidth="1.8" strokeLinejoin="round" />
           <path d="M13 8h14" stroke={C_LR.deep} strokeWidth="3" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M8 34q12 4 24 0" fill="none" stroke={C_LR.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2000,7 +2000,7 @@ function LeadRainScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M20 6v20l-4 9h8l-4-9z" fill={C_LR.deep} stroke={C_LR.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M11 9h18" stroke={C_LR.core} strokeWidth="3.4" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2056,7 +2056,7 @@ function LovestruckMajestyScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M20 33c-8-6-12-10-12-15a6 6 0 0 1 12-3 6 6 0 0 1 12 3c0 5-4 9-12 15z" fill={C_LM.core} stroke={C_LM.deep} strokeWidth="1.8" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M20 9V4M13 12l-4-3M27 12l4-3" stroke={C_LM.glow} strokeWidth="2.2" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2067,7 +2067,7 @@ function LovestruckMajestyScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M11 16l-2-8 5 4 6-7 6 7 5-4-2 8z" fill={C_LM.core} stroke={C_LM.deep} strokeWidth="2" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M20 35c-6-5-9-8-9-12a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c0 4-3 7-9 12z" fill={C_LM.glow} />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2126,7 +2126,7 @@ function PoachersSnareScene({ role, delayMs }: SceneProps) {
           <path d="M6 22q14-10 28 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
           <path d="M6 26q14 10 28 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M13 22v4M20 21v6M27 22v4" stroke={C_PS.glow} strokeWidth="2.4" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2138,7 +2138,7 @@ function PoachersSnareScene({ role, delayMs }: SceneProps) {
           <path d="M5 16q15-12 30 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
           <path d="M5 30q15 12 30 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <circle cx="20" cy="23" r="5" fill={C_PS.deep} stroke={C_PS.glow} strokeWidth="2.2" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2162,7 +2162,7 @@ function PoachersSnareScene({ role, delayMs }: SceneProps) {
           <path d="M4 36q46-38 92 0" fill="none" stroke={C_PS.core} strokeWidth="8" strokeLinecap="round" />
         </svg>
       </P>
-      <P cls="g09-ps-jawr" x={50} y={56} w={24} h={9} style={dm(delayMs, 210)}>
+      <P cls="g09-ps-jawr" x={50} y={56} w={24} h={9} style={dm(delayMs, 155)}>
         <svg viewBox="0 0 100 40" className="block h-full w-full">
           <path d="M4 4q46 38 92 0" fill="none" stroke={C_PS.core} strokeWidth="8" strokeLinecap="round" />
         </svg>
@@ -2202,7 +2202,7 @@ function TributeDemandScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="19" r="9" fill={C_TD.glow} stroke={C_TD.deep} strokeWidth="2.2" />
           <path d="M20 12v14M15 19h10" stroke={C_TD.core} strokeWidth="2.2" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M9 31q11 5 22 0" fill="none" stroke={C_TD.core} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2213,7 +2213,7 @@ function TributeDemandScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M10 34V20a4 4 0 0 1 8 0v-6a4 4 0 0 1 8 0v6a4 4 0 0 1 4 4v10z" fill={C_TD.deep} stroke={C_TD.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <circle cx="20" cy="10" r="5" fill={C_TD.glow} stroke={C_TD.core} strokeWidth="2" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2279,7 +2279,7 @@ function WatchmansWhistleScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M8 26l10-14 6 5 8-9" fill="none" stroke={C_WW.core} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M6 33h28" stroke={C_WW.glow} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2290,7 +2290,7 @@ function WatchmansWhistleScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M8 22h16a5 5 0 0 1 0 10H13z" fill={C_WW.deep} stroke={C_WW.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M26 18q7-4 10 0" fill="none" stroke={C_WW.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2352,7 +2352,7 @@ function WheelOfIceScene({ role, delayMs }: SceneProps) {
           <circle cx="20" cy="20" r="11" fill="none" stroke={C_WI.core} strokeWidth="3" />
           <path d="M20 9v22M9 20h22" stroke={C_WI.glow} strokeWidth="2.2" strokeLinecap="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M4 34h32" stroke={C_WI.deep} strokeWidth="3" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2363,7 +2363,7 @@ function WheelOfIceScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <circle cx="20" cy="20" r="13" fill="none" stroke={C_WI.core} strokeWidth="3.4" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 130)}>
           <path d="M20 7v26M7 20h26M11 11l18 18M29 11L11 29" stroke={C_WI.glow} strokeWidth="2" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
@@ -2433,7 +2433,7 @@ function GlacierCalvingScene({ role, delayMs }: SceneProps) {
         <g className="g09-hit" style={dm(delayMs, 0)}>
           <path d="M6 14l12-6 9 8 7-4v18H6z" fill={C_GC.core} stroke={C_GC.deep} strokeWidth="2" strokeLinejoin="round" />
         </g>
-        <g className="g09-hit2" style={dm(delayMs, 200)}>
+        <g className="g09-hit2" style={dm(delayMs, 150)}>
           <path d="M4 33q9-5 18 0t14 0" fill="none" stroke={C_GC.glow} strokeWidth="2.6" strokeLinecap="round" />
         </g>
       </Sq>
@@ -2444,7 +2444,7 @@ function GlacierCalvingScene({ role, delayMs }: SceneProps) {
         <g className="g09-arrive" style={dm(delayMs, 0)}>
           <path d="M5 16l13-8 8 9 9-5v16H5z" fill={C_GC.deep} stroke={C_GC.core} strokeWidth="2.4" strokeLinejoin="round" />
         </g>
-        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+        <g className="g09-arrive2" style={dm(delayMs, 155)}>
           <path d="M18 9v19M26 17v11" stroke={C_GC.glow} strokeWidth="2" strokeLinecap="round" />
         </g>
         <g className="g09-arrive-soft" style={dm(delayMs, 400)}>

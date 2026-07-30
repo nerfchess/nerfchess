@@ -1494,4 +1494,45 @@ function PocketMetronomeScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/* CARDS_REGISTRY */
+/* =============================================================================
+   Registry. Every entry declares an anchor; every `sound` is an existing
+   SigSoundKey drawn from the machine-room voices (clockcage, blitz, siege,
+   vault, chips). `source` is deliberately omitted throughout: these cards
+   carry no removal diff, so their play is the cast lead on the square they
+   were played on, exactly as the generated family resolved before.
+   ========================================================================== */
+
+/** Bind one bespoke scene to its config. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
+  return { config, Render };
+}
+
+export const PLAYS: Record<string, SigPlugin> = {
+  ov_board_of_directors: S(BoardOfDirectorsScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
+  ov_deja_vu: S(DejaVuScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  bn4_genie_lamp: S(GenieLampScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "cast" }),
+  ov_chess_boxing: S(ChessBoxingScene, { ordering: "octagon", staggerMs: 60, victims: ["k"], hasLead: true, sound: "siege", anchor: "cast" }),
+  ov_mod_powers: S(ModPowersScene, { ordering: "file", staggerMs: 90, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
+  bn4_relay_baton: S(RelayBatonScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
+  ov_democracy: S(DemocracyScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  ov_dev_console: S(DevConsoleScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
+  ov_nerfchess_the_musical: S(MusicalScene, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  ov_standing_ovation: S(StandingOvationScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "cast" }),
+  ov_the_tutorial: S(TutorialScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  ov_wish_fish: S(WishFishScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
+  ov_algorithm_boost: S(AlgorithmBoostScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
+  ov_coliseum: S(ColiseumScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "cast" }),
+  ov_fourth_wall_crew: S(FourthWallCrewScene, { ordering: "line", staggerMs: 75, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
+  ov_insider_trading: S(InsiderTradingScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "chips", anchor: "aim" }),
+  ov_prophecy_engine: S(ProphecyEngineScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim" }),
+  ov_speedhack: S(SpeedhackScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
+  bn4_grandfather_clock: S(GrandfatherClockScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+  ov_golden_goose: S(GoldenGooseScene, { ordering: "radial", staggerMs: 55, victims: ["p"], hasLead: true, sound: "chips", anchor: "cast" }),
+  ov_midas_gauntlet: S(MidasGauntletScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "chips", anchor: "aim" }),
+  ov_private_gallery: S(PrivateGalleryScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
+  ov_rage_bait: S(RageBaitScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
+  ov_stack_overflow: S(StackOverflowScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "cast" }),
+  ov_vampire_court: S(VampireCourtScene, { ordering: "octagon", staggerMs: 65, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "cast" }),
+  bn4_overtime_claim: S(OvertimeClaimScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
+  bn4_pocket_metronome: S(PocketMetronomeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
+};

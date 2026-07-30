@@ -639,3 +639,549 @@
   100% { opacity: 0; transform: scale(1.45); }
 }
 .g09-tp-bridge { animation: g09-tp-bridge calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 16. The Tolling Thirds ------------------------------------------------ */
+
+@keyframes g09-tt-bell {
+  0% { opacity: 0; transform: rotate(0deg); }
+  14% { opacity: 1; transform: rotate(calc(var(--g09-side, 1) * -13deg)); }
+  30% { transform: rotate(calc(var(--g09-side, 1) * 11deg)); }
+  46% { transform: rotate(calc(var(--g09-side, 1) * -16deg)); }
+  62% { transform: rotate(calc(var(--g09-side, 1) * 6deg)); }
+  80% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g09-tt-bell {
+  transform-origin: 50% 6%;
+  animation: g09-tt-bell calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.4, 0.3, 1) both;
+}
+
+@keyframes g09-tt-clapper {
+  0% { opacity: 0; transform: translateX(-140%) scale(0.6); }
+  38% { opacity: 1; transform: translateX(20%) scale(1.2); }
+  54% { transform: translateX(-10%) scale(1); }
+  72% { transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0) scale(0.9); }
+}
+.g09-tt-clapper { animation: g09-tt-clapper calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.3, 1) both; }
+
+@keyframes g09-tt-crack {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(1.6); }
+  36% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.04) scaleY(1); }
+}
+.g09-tt-crack { animation: g09-tt-crack calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+@keyframes g09-tt-ring {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 0.9; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+.g09-tt-ring { animation: g09-tt-ring calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 17. The Winter That Stays --------------------------------------------- */
+
+@keyframes g09-ws-track {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  36% { opacity: 0.85; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g09-ws-track {
+  transform-origin: 0% 50%;
+  animation: g09-ws-track calc(0.8s * var(--fx-dur, 1)) ease-out both;
+}
+
+@keyframes g09-ws-print {
+  0% { opacity: 0; transform: translateX(calc(var(--g09-len, 3) * -3%)) scale(1.7); }
+  40% { opacity: 1; transform: translateX(0) scale(0.92); }
+  56% { transform: translateX(0) scale(1.04); }
+  74% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-ws-print { animation: g09-ws-print calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.25, 1) both; }
+
+@keyframes g09-ws-boot {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-16deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  54% { transform: rotate(-3deg); }
+  68% { transform: rotate(1deg); }
+  82% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g09-ws-boot { animation: g09-ws-boot calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.75, 0.25, 1) both; }
+
+@keyframes g09-ws-crust {
+  0% { opacity: 0; transform: scale(0.15); }
+  40% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g09-ws-crust { animation: g09-ws-crust calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 18. Deus Ex Machina --------------------------------------------------- */
+
+@keyframes g09-dx-gear {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  30% { opacity: 1; transform: rotate(30deg) scale(1); }
+  56% { transform: rotate(60deg); }
+  80% { transform: rotate(92deg); }
+  100% { opacity: 0; transform: rotate(96deg); }
+}
+.g09-dx-gear { animation: g09-dx-gear calc(1.3s * var(--fx-dur, 1)) steps(1, end) both; }
+
+@keyframes g09-dx-hand {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -175%)) scale(1.1); }
+  46% { opacity: 1; transform: translateY(0) scale(0.96); }
+  60% { transform: translateY(0) scale(1.03); }
+  76% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-dx-hand { animation: g09-dx-hand calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.25, 1) both; }
+
+@keyframes g09-dx-snap {
+  0% { opacity: 0; transform: scale(0.22); }
+  28% { opacity: 1; transform: scale(0.85); }
+  100% { opacity: 0; transform: scale(1.75); }
+}
+.g09-dx-snap { animation: g09-dx-snap calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-dx-shed {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg) scaleY(1); }
+  22% { opacity: 1; transform: translateY(20%) rotate(14deg); }
+  100% { opacity: 0; transform: translateY(190%) rotate(64deg) scaleY(0.7); }
+}
+.g09-dx-shed { animation: g09-dx-shed calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.7, 1) both; }
+
+/* --- 19. Frozen Moat ------------------------------------------------------- */
+
+@keyframes g09-fm-water {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 12%)) scaleY(0.8); }
+  32% { opacity: 0.95; transform: translateY(calc(var(--g09-side, 1) * 6%)) scaleY(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 6%)) scaleY(1); }
+}
+.g09-fm-water { animation: g09-fm-water calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-fm-skin {
+  0% { opacity: 0; transform: scale(0.06); }
+  20% { opacity: 1; }
+  62% { transform: scale(1.04); }
+  78% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-fm-skin { animation: g09-fm-skin calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.85, 0.25, 1) both; }
+
+@keyframes g09-fm-vein {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  34% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g09-fm-vein { animation: g09-fm-vein calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+
+@keyframes g09-fm-rim {
+  0% { opacity: 0; transform: scale(0.82); }
+  40% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+.g09-fm-rim { animation: g09-fm-rim calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 20. Frozen Harbor ----------------------------------------------------- */
+
+@keyframes g09-fh-hull {
+  0% { opacity: 0; transform: rotate(-5deg); }
+  22% { opacity: 1; transform: rotate(4deg); }
+  40% { transform: rotate(-3deg); }
+  58% { transform: rotate(1.5deg); }
+  74% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g09-fh-hull {
+  transform-origin: 50% 90%;
+  animation: g09-fh-hull calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.5, 0.25, 1) both;
+}
+
+@keyframes g09-fh-sheet {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -112%)); }
+  36% { opacity: 0.9; }
+  70% { transform: translateY(calc(var(--g09-side, 1) * -6%)); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g09-fh-sheet { animation: g09-fh-sheet calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.25, 1) both; }
+
+@keyframes g09-fh-grip {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(24%); }
+  44% { opacity: 1; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1) translateY(0); }
+}
+.g09-fh-grip { animation: g09-fh-grip calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g09-fh-rope {
+  0% { opacity: 0; transform: scaleY(0.4) translateY(20%); }
+  40% { opacity: 1; transform: scaleY(1.1) translateY(-8%); }
+  60% { transform: scaleY(0.95) translateY(0); }
+  78% { transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g09-fh-rope { animation: g09-fh-rope calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* --- 21. Hearth Frost ------------------------------------------------------ */
+
+@keyframes g09-hf-grate {
+  0% { opacity: 0; transform: translateY(10%) scale(0.94); }
+  34% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-hf-grate { animation: g09-hf-grate calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-hf-ember {
+  0% { opacity: 0; transform: scale(0.7); }
+  16% { opacity: 1; transform: scale(1.12); }
+  32% { opacity: 0.7; transform: scale(0.95); }
+  56% { opacity: 0.2; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(0.6); }
+}
+.g09-hf-ember { animation: g09-hf-ember calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-hf-flower {
+  0% { opacity: 0; transform: scale(0.05) rotate(-40deg); }
+  44% { opacity: 1; transform: scale(1.08) rotate(6deg); }
+  62% { transform: scale(0.98) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g09-hf-flower { animation: g09-hf-flower calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
+@keyframes g09-hf-poker {
+  0% { opacity: 0; transform: rotate(calc(var(--g09-side, 1) * 16deg)) translateY(-16%); }
+  42% { opacity: 1; transform: rotate(calc(var(--g09-side, 1) * -4deg)) translateY(0); }
+  60% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g09-hf-poker {
+  transform-origin: 20% 90%;
+  animation: g09-hf-poker calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both;
+}
+
+/* --- 22. Kraken Arms ------------------------------------------------------- */
+
+@keyframes g09-ka-breach {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  38% { opacity: 0.9; transform: scaleX(1.1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g09-ka-breach { animation: g09-ka-breach calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-ka-arm {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 118%)) rotate(-14deg) scaleY(0.6); }
+  40% { opacity: 1; transform: translateY(calc(var(--g09-side, 1) * -8%)) rotate(8deg) scaleY(1.08); }
+  58% { transform: translateY(0) rotate(-4deg) scaleY(0.98); }
+  76% { transform: translateY(0) rotate(0deg) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g09-ka-arm {
+  transform-origin: 50% 100%;
+  animation: g09-ka-arm calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+@keyframes g09-ka-grip {
+  0% { opacity: 0; transform: scale(1.7); }
+  38% { opacity: 1; transform: scale(0.94); }
+  54% { transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-ka-grip { animation: g09-ka-grip calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g09-ka-spray {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  26% { opacity: 1; transform: translate(-70%, -90%) scale(1); }
+  100% { opacity: 0; transform: translate(-230%, 60%) scale(0.5); }
+}
+.g09-ka-spray { animation: g09-ka-spray calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.6, 0.6, 1) both; }
+
+/* --- 23. Lead Rain --------------------------------------------------------- */
+
+@keyframes g09-lr-band {
+  0% { opacity: 0; transform: translate(calc(var(--g09-side, 1) * -20%), -14%); }
+  30% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(calc(var(--g09-side, 1) * 20%), 14%); }
+}
+.g09-lr-band { animation: g09-lr-band calc(1.35s * var(--fx-dur, 1)) linear both; }
+
+@keyframes g09-lr-nail {
+  0% { opacity: 0; transform: translateY(-260%) scaleY(1.4); }
+  42% { opacity: 1; transform: translateY(0) scaleY(0.9); }
+  54% { transform: translateY(0) scaleY(1.06); }
+  70% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g09-lr-nail {
+  transform-origin: 50% 100%;
+  animation: g09-lr-nail calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.25, 1) both;
+}
+
+@keyframes g09-lr-splash {
+  0% { opacity: 0; transform: scale(0.3); }
+  32% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+.g09-lr-splash { animation: g09-lr-splash calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-lr-glaze {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.g09-lr-glaze { animation: g09-lr-glaze calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 24. Lovestruck Majesty ------------------------------------------------ */
+
+@keyframes g09-lm-crown {
+  0% { opacity: 0; transform: rotate(0deg) translateY(-12%); }
+  30% { opacity: 1; transform: rotate(-6deg) translateY(0); }
+  58% { transform: rotate(-15deg) translateY(6%); }
+  80% { transform: rotate(-18deg) translateY(8%); }
+  100% { opacity: 0; transform: rotate(-18deg) translateY(8%); }
+}
+.g09-lm-crown { animation: g09-lm-crown calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.6, 0.25, 1) both; }
+
+@keyframes g09-lm-breath {
+  0% { opacity: 0; transform: scale(0.3) translateY(calc(var(--g09-side, 1) * 8%)); }
+  36% { opacity: 0.9; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(1.5) translateY(calc(var(--g09-side, 1) * -18%)); }
+}
+.g09-lm-breath { animation: g09-lm-breath calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-lm-heart {
+  0% { opacity: 0; transform: scale(0.1); }
+  34% { opacity: 1; transform: scale(1.16); }
+  46% { transform: scale(0.96); }
+  58% { transform: scale(1.08); }
+  74% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-lm-heart { animation: g09-lm-heart calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
+@keyframes g09-lm-sway {
+  0% { opacity: 0; transform: rotate(0deg); }
+  26% { opacity: 1; transform: rotate(8deg); }
+  48% { transform: rotate(-7deg); }
+  66% { transform: rotate(5deg); }
+  76% { transform: rotate(5deg); }
+  100% { opacity: 0; transform: rotate(5deg); }
+}
+.g09-lm-sway {
+  transform-origin: 50% 100%;
+  animation: g09-lm-sway calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+/* --- 25. Poacher's Snare --------------------------------------------------- */
+
+@keyframes g09-ps-snow {
+  0% { opacity: 0; transform: scale(1.2); }
+  34% { opacity: 0.9; transform: scale(1); }
+  56% { transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(0.94); }
+}
+.g09-ps-snow { animation: g09-ps-snow calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-ps-jawl {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -60%)) rotate(-26deg); }
+  36% { opacity: 1; transform: translateY(6%) rotate(4deg); }
+  50% { transform: translateY(-2%) rotate(-2deg); }
+  68% { transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g09-ps-jawl { animation: g09-ps-jawl calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.2, 1) both; }
+
+@keyframes g09-ps-jawr {
+  0% { opacity: 0; transform: translateY(70%) rotate(26deg); }
+  36% { opacity: 1; transform: translateY(-6%) rotate(-4deg); }
+  50% { transform: translateY(2%) rotate(2deg); }
+  68% { transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g09-ps-jawr { animation: g09-ps-jawr calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.2, 1) both; }
+
+@keyframes g09-ps-tooth {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  32% { opacity: 1; transform: scaleY(1.15); }
+  50% { transform: scaleY(0.95); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g09-ps-tooth { animation: g09-ps-tooth calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; }
+
+@keyframes g09-ps-chain {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  38% { opacity: 1; transform: scaleX(1.06); }
+  56% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g09-ps-chain {
+  transform-origin: 0% 50%;
+  animation: g09-ps-chain calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.95, 0.2, 1) both;
+}
+
+/* --- 26. Tribute Demand ---------------------------------------------------- */
+
+@keyframes g09-td-hand {
+  0% { opacity: 0; transform: translateY(16%) scale(0.92); }
+  34% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-td-hand { animation: g09-td-hand calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-td-coin {
+  0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -220%)) rotate(-40deg) scale(0.7); }
+  44% { opacity: 1; transform: translateY(8%) rotate(6deg) scale(1.06); }
+  58% { transform: translateY(0) rotate(0deg) scale(0.96); }
+  74% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-td-coin { animation: g09-td-coin calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.25, 1) both; }
+
+@keyframes g09-td-close {
+  0% { opacity: 0; transform: scaleY(0.15) translateY(-30%); }
+  44% { opacity: 1; transform: scaleY(1.08) translateY(0); }
+  60% { transform: scaleY(0.96); }
+  76% { transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g09-td-close {
+  transform-origin: 50% 0%;
+  animation: g09-td-close calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.25, 1) both;
+}
+
+@keyframes g09-td-creep {
+  0% { opacity: 0; transform: scaleY(0.05); }
+  44% { opacity: 0.95; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.1); }
+}
+.g09-td-creep {
+  transform-origin: 50% 100%;
+  animation: g09-td-creep calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+
+/* --- 27. Watchman's Whistle ------------------------------------------------ */
+
+@keyframes g09-ww-lamp {
+  0% { opacity: 0; transform: translateY(28%) rotate(-10deg); }
+  32% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  52% { transform: rotate(-4deg); }
+  72% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g09-ww-lamp {
+  transform-origin: 50% 8%;
+  animation: g09-ww-lamp calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+
+@keyframes g09-ww-puff {
+  0% { opacity: 0; transform: scale(0.7); }
+  34% { opacity: 1; transform: scale(1.12); }
+  52% { transform: scale(0.98); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g09-ww-puff { animation: g09-ww-puff calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g09-ww-cone {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(0.3); }
+  36% { opacity: 0.95; transform: scaleX(calc(0.35 + var(--g09-len, 3) / 9)) scaleY(1); }
+  66% { transform: scaleX(calc(0.32 + var(--g09-len, 3) / 9)) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(calc(0.32 + var(--g09-len, 3) / 9)) scaleY(1.1); }
+}
+.g09-ww-cone {
+  transform-origin: 0% 50%;
+  animation: g09-ww-cone calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.85, 0.25, 1) both;
+}
+
+@keyframes g09-ww-strider {
+  0% { opacity: 0; transform: translateX(-120%) scaleX(1); }
+  34% { opacity: 1; transform: translateX(-16%); }
+  48% { transform: translateX(0) scaleX(0.94); }
+  56% { transform: translateX(0) scaleX(1.02); }
+  64% { transform: translateX(1%); }
+  70% { transform: translateX(-1%); }
+  78% { transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g09-ww-strider { animation: g09-ww-strider calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+
+/* --- 28. Wheel of Ice ------------------------------------------------------ */
+
+@keyframes g09-wi-track {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  32% { opacity: 0.55; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g09-wi-track {
+  transform-origin: 50% 0%;
+  animation: g09-wi-track calc(1.25s * var(--fx-dur, 1)) ease-out both;
+}
+
+@keyframes g09-wi-rim {
+  0% { opacity: 0; transform: translateY(calc(140% - var(--g09-i, 0) * 18%)) rotate(0deg); }
+  30% { opacity: 1; }
+  72% { transform: translateY(calc(-90% - var(--g09-i, 0) * 18%)) rotate(300deg); }
+  100% { opacity: 0; transform: translateY(calc(-120% - var(--g09-i, 0) * 18%)) rotate(360deg); }
+}
+.g09-wi-rim { animation: g09-wi-rim calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+@keyframes g09-wi-spoke {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
+  30% { opacity: 1; transform: rotate(90deg) scale(1); }
+  56% { transform: rotate(190deg); }
+  80% { transform: rotate(280deg); }
+  100% { opacity: 0; transform: rotate(320deg); }
+}
+.g09-wi-spoke { animation: g09-wi-spoke calc(1.05s * var(--fx-dur, 1)) steps(1, end) both; }
+
+@keyframes g09-wi-ribbon {
+  0% { opacity: 0; transform: scaleY(0.02); }
+  46% { opacity: 0.85; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g09-wi-ribbon {
+  transform-origin: 50% 100%;
+  animation: g09-wi-ribbon calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+
+/* --- 29. Glacier Calving --------------------------------------------------- */
+
+@keyframes g09-gc-shelf {
+  0% { opacity: 0; transform: translateY(-8%) scale(0.95); }
+  26% { opacity: 1; transform: translateY(0) scale(1); }
+  40% { transform: translateX(1.5%); }
+  50% { transform: translateX(-1.5%); }
+  62% { transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g09-gc-shelf { animation: g09-gc-shelf calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g09-gc-chunk {
+  0% { opacity: 0; transform: translate(0, -40%) rotate(0deg) scale(0.9); }
+  26% { opacity: 1; transform: translate(0, 0) rotate(14deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--g09-side, 1) * -30%), 190%) rotate(96deg) scale(0.85); }
+}
+.g09-gc-chunk { animation: g09-gc-chunk calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.6, 1) both; }
+
+@keyframes g09-gc-spray {
+  0% { opacity: 0; transform: scaleY(0.1) scaleX(0.5); }
+  38% { opacity: 1; transform: scaleY(1.15) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(0.7) scaleX(1.2); }
+}
+.g09-gc-spray {
+  transform-origin: 50% 100%;
+  animation: g09-gc-spray calc(0.85s * var(--fx-dur, 1)) ease-out both;
+}
+
+@keyframes g09-gc-swell {
+  0% { opacity: 0; transform: scaleX(0.1) translateY(-40%); }
+  40% { opacity: 0.9; transform: scaleX(1) translateY(0); }
+  100% { opacity: 0; transform: scaleX(1) translateY(60%); }
+}
+.g09-gc-swell { animation: g09-gc-swell calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Kill switch ------------------------------------------------------------
+   Settings animation toggle: park every g09-* element outright. */
+html[data-anim="off"] [class^="g09-"],
+html[data-anim="off"] [class*=" g09-"] {
+  animation: none !important;
+  opacity: 0 !important;
+}

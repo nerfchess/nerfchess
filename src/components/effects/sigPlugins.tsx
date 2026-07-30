@@ -223,6 +223,13 @@ export const PLUGIN_IDS: readonly string[] = [
   "hw3_inverted_crown",
   // creatorPlays.tsx (5)
   "cr_stalling_bishop", "cr_oh_no_my_queen", "cr_family_game_night", "cr_speedrun_protocol", "cr_chat_picks",
+  // g01HourglassPlays.tsx (32)
+  "bn4_council_of_peace", "bn4_great_armistice", "bn4_hundred_year_lease", "bn4_royal_we", "hx4_royal_lockdown", "hx4_tithe_of_silence",
+  "bn4_liberators_march", "bn4_escape_artist", "bn4_jubilee", "bn4_keys_to_the_city", "bn4_royal_privilege", "bn4_midas_charter",
+  "bn4_year_of_jubilee", "bn4_hundred_days", "bn4_debtors_holiday", "bn4_crown_jubilee", "bn4_meek_inherit", "bn4_unequal_treaty",
+  "bn4_grand_bargain", "bn4_patrons_favor", "bn4_queens_aegis", "bn4_masked_ball", "bn4_flag_on_their_wall", "bn4_siege_mentality",
+  "bn4_champions_rest", "bn4_half_moon_charter", "bn4_moonlit_reprieve", "bn4_pact_of_the_dawn", "bn4_second_spring", "hx4_debt_of_crowns",
+  "hx4_last_toll", "ov_time_heist",
   // g05PawnTidePlays.tsx (30)
   "bn4_endless_militia", "bn4_menagerie_gates", "bn4_drawbridge_crew", "bn4_field_hospital", "bn4_letters_home", "bn4_small_consolation",
   "bn4_stray_cat", "bn4_florists_trick", "bn4_changeling_child", "hx4_field_of_spears", "bn4_leapfrog", "ov_rapture_of_pawns",
