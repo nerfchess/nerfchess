@@ -17,7 +17,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | [zone-denial](#zone-denial) | Closes off squares, ranks or files | 98 | 16 | 40 | 2 | - | 1 | 39 |
 | [enemy-movement-restriction](#enemy-movement-restriction) | Narrows how the opponent may move | 97 | 15 | 72 | 10 | - | - | - |
 | [instant-piece-spawn](#instant-piece-spawn) | Instantly spawns a piece | 95 | 58 | 2 | 19 | 9 | 2 | 5 |
-| [extra-move](#extra-move) | Grants an extra move inside your turn | 92 | 24 | 2 | 20 | 42 | 1 | 3 |
+| [extra-move](#extra-move) | Grants an extra move inside your turn | 91 | 24 | 2 | 20 | 42 | 1 | 2 |
 | [movement-phase-jump](#movement-phase-jump) | Lets a piece jump or pass through pieces | 87 | 44 | 34 | 8 | - | 1 | - |
 | [draft-advantage](#draft-advantage) | Improves your own drafts | 86 | 50 | 3 | 27 | 6 | - | - |
 | [forced-move](#forced-move) | Forces a specific move | 71 | - | 10 | - | - | 1 | 60 |
@@ -40,9 +40,9 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | [draft-denial](#draft-denial) | Takes drafts away from the opponent | 28 | 15 | 10 | 3 | - | - | - |
 | [piece-swap](#piece-swap) | Swaps two pieces | 28 | 19 | 1 | 2 | 6 | - | - |
 | [no-op-cosmetic](#no-op-cosmetic) | Purely cosmetic, no mechanical effect | 26 | 2 | - | - | 24 | - | - |
+| [capture-condition](#capture-condition) | Puts a condition on capturing | 22 | - | 2 | - | - | - | 20 |
 | [direction-geometry-lock](#direction-geometry-lock) | Locks movement to a direction or colour | 22 | - | 7 | - | - | - | 15 |
 | [randomness-gamble](#randomness-gamble) | Rolls the dice | 22 | 19 | 1 | - | 2 | - | - |
-| [capture-condition](#capture-condition) | Puts a condition on capturing | 21 | - | 2 | - | - | - | 19 |
 | [forced-sacrifice](#forced-sacrifice) | Costs you one of your own pieces | 19 | 10 | - | 9 | - | - | - |
 | [king-protection](#king-protection) | Shields the king specifically | 19 | 5 | - | 13 | - | - | 1 |
 | [piece-mind-control](#piece-mind-control) | Takes control of an enemy piece | 19 | 15 | 4 | - | - | - | - |
@@ -1162,7 +1162,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Grants an extra move inside your turn** - A free action or bonus move that does not cost the holder their turn.
 
-92 cards.
+91 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -1226,7 +1226,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | ov_growth_potion | Growth Potion | buff | 4 | activated | Choose one of your knights: it is a Warhorse for 5 of your turns. Each time it captures a pawn, you immediately move again, but that bonus move cannot capture. |
 | quicksand | Quicksand | nerf | 4 | passive-rule | The 4th and 5th ranks are quicksand, shown on the board. If one of your pieces lands on the same 4th- or 5th-rank square for the second time in the game, tracing that piece's own path, it is stuck there for good and can never move again. |
 | respite | Respite | boon | 4 | activated | Free action: suspend your nerf for your next 4 turns, used at the moment you choose. |
-| solar_flare | Solar Flare | nerf | 4 | passive-rule | You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start. |
 | sugar_rush | Sugar Rush | buff | 4 | activated | Slam a sugar rush: take three extra moves right now. Then comes the sugar crash and you skip your next turn. |
 | timely_lull | Timely Lull | boon | 4 | activated | Free action: a lull settles over the whole board: both players' nerfs are suspended for their next 3 turns, used at the moment you choose. |
 | vampiric | Vampiric | nerf | 4 | passive-rule | You can only capture on dark squares, starting on your second move. The forbidden light squares are shown from the start. |
@@ -1574,8 +1573,8 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_gentlemens_agreement | Gentlemen's Agreement | boon | 5 | instant | Suspend your nerf for your next 5 turns. As a courtesy, your opponent gains 1 draft reroll. |
 | bn4_open_season | Open Season | boon | 5 | passive | For the rest of the game, every capture you make suspends your nerf for your next turn. |
 | bn4_royal_household | Royal Household | boon | 5 | passive | After your opponent's next move, the next 5 times you move your queen your nerf is suspended for your next turn. |
-| bn4_salt_in_the_wound | Salt in the Wound | boon | 5 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
-| bn4_smoke_break_union | Smoke Break Union | boon | 5 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_salt_in_the_wound | Salt in the Wound | boon | 5 | passive | Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock. |
+| bn4_smoke_break_union | Smoke Break Union | boon | 5 | passive | Suspend your nerf for your next 6 turns. Each capture you make while it is suspended adds 2 more turns, up to 18 in total. |
 | rehab | Rehab | boon | 5 | instant | Check into rehab: your nerf is suspended permanently for the rest of the game, but your next two drafts are skipped. |
 | bn4_diplomatic_pouch | Diplomatic Pouch | boon | 6 | instant | Suspend your nerf for your next 5 turns, and see the cards in your opponent's next draft offer. |
 | bn4_hidden_clause | Hidden Clause | boon | 6 | passive | After your next 8 turns, a buried clause activates: your nerf is suspended for the 12 turns that follow. |
@@ -1588,7 +1587,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | long_leash | Long Leash | boon | 6 | instant | Suspend your nerf for your next 7 turns. |
 | nerf_breaker | Nerf Breaker | boon | 6 | instant | Suspend your nerf for your next 10 turns. |
 | bn4_champions_rest | Champion's Rest | boon | 7 | passive | For the rest of the game, every rook or queen you capture suspends your nerf for your next 4 turns. |
-| bn4_debtors_holiday | Debtor's Holiday | boon | 7 | instant | Suspend your nerf for your next 8 turns; your next draft offer rolls one tier higher. |
+| bn4_debtors_holiday | Debtor's Holiday | boon | 7 | instant | Suspend your nerf for your next 12 turns, and gain 2 draft rerolls. |
 | bn4_grand_bargain | The Grand Bargain | boon | 7 | instant | Suspend your nerf for your next 14 turns, and your next draft shows three cards, of which you keep one. |
 | bn4_half_moon_charter | Half-Moon Charter | boon | 7 | passive | For the rest of the game, your nerf is suspended on every other one of your turns, starting with your next. The charter costs you your next two drafts, which are skipped. |
 | bn4_hundred_days | The Hundred Days | boon | 7 | instant | Suspend your nerf for your next 11 turns. |
@@ -1600,12 +1599,12 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_flag_on_their_wall | Flag on Their Wall | boon | 8 | passive | While any piece of yours stands on your opponent's back rank, your nerf is suspended. |
 | bn4_great_armistice | The Great Armistice | boon | 8 | instant | Both players' nerfs are suspended for their next 10 turns, and neither side's pieces can be captured on the opponent's next turn. |
 | bn4_hundred_year_lease | Hundred-Year Lease | boon | 8 | passive | After your opponent's next move, the lease begins: your nerf is suspended for the 30 turns that follow. |
-| bn4_liberators_march | Liberator's March | boon | 8 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_liberators_march | Liberator's March | boon | 8 | passive | Suspend your nerf for your next 18 turns. Each capture you make while it is suspended gains you 1 draft reroll, up to 3. |
 | bn4_queens_aegis | Queen's Aegis | boon | 8 | passive | While your queen stands on the board, your nerf is suspended. Lose her, and it returns. |
 | bn4_royal_privilege | Royal Privilege | boon | 8 | passive | For the rest of the game, every time you move your queen, your nerf is suspended for your next 2 turns. Your next 2 drafts are skipped. |
 | bn4_unequal_treaty | The Unequal Treaty | boon | 8 | instant | Your nerf is suspended for your next 10 turns; your opponent's is suspended for their next 3. Diplomacy, as practiced. |
 | bn4_written_in_stone | Written in Stone | boon | 8 | passive | After your next 10 turns, the inscription takes effect: your nerf is suspended for the 20 turns that follow. |
-| bn4_year_of_jubilee | Year of Jubilee | boon | 8 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_year_of_jubilee | Year of Jubilee | boon | 8 | passive | Suspend your nerf for your next 25 turns. When it returns, gain 1 draft reroll. |
 | transcendence | Transcendence | boon | 8 | instant | Suspend your nerf for your next 20 turns, then it returns. Your next draft shows three cards. |
 
 ## piece-downgrade-transform
@@ -2503,6 +2502,37 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | ov_left_on_read | Left on Read | item | 2 | instant | For your opponent's next 3 turns, a typing indicator hangs over their king. It does nothing. It is devastating. |
 | ov_counterfeit_crown | Counterfeit Crown | item | 3 | instant | For 5 turns your king and queen wear each other's crowns and lying labels. Purely cosmetic: rules, legality and hitboxes are completely unaffected. |
 
+## capture-condition
+
+**Puts a condition on capturing** - Capturing is allowed only when some extra requirement is met.
+
+22 cards.
+
+| id | name | family | tier | trigger | rule |
+|---|---|---|---|---|---|
+| leaden_queen | Leaden Queen | hex | 2 | passive | Your opponent's queen can only capture at arm's length: for their next 3 turns her captures must be exactly one square away. The first capture the curse would deny is allowed once. |
+| femme_fatale | Femme Fatale | nerf | 3 | passive-rule | You can only capture the enemy king with your queen. |
+| cheerleaders | Cheerleaders | nerf | 4 | passive-rule | Non-pawns can only capture if adjacent to one of your pawns. |
+| chivalry | Chivalry | nerf | 4 | passive-rule | Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3. |
+| covering_fire | Covering Fire | nerf | 4 | passive-rule | Can only capture a piece if you can capture it two different ways. |
+| oddball | Oddball | nerf | 4 | passive-rule | Can only capture on odd-numbered moves. |
+| snipers | Snipers | nerf | 4 | passive-rule | Bishops can only capture from distance ≥ 4. |
+| solar_flare | Solar Flare | nerf | 4 | passive-rule | The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up. |
+| doctor_octopus | Doctor Octopus | nerf | 5 | passive-rule | Can only capture non-king pieces 8 times total. |
+| even_keeled | Even Keeled | nerf | 5 | passive-rule | Can only capture on even-numbered moves. |
+| horse_eats_first | Horse Eats First | nerf | 5 | passive-rule | As long as you have a knight, you can only capture with knights. This activates only after your move 3. |
+| left_for_dead | Left for Dead | nerf | 5 | passive-rule | Can only capture leftward (file decreasing). |
+| theocracy | Theocracy | nerf | 5 | passive-rule | On odd/even moves, can only capture with bishops. This activates only after your move 3. |
+| triple_play | Triple Play | nerf | 5 | passive-rule | Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves. |
+| ascetic | Ascetic | nerf | 6 | passive-rule | You can capture at most one piece per piece type. If no move complies, your king may move instead. |
+| centralized_command | Centralized Command | nerf | 6 | passive-rule | Can only capture if you moved your king in the last 3 turns. If that would leave you no legal move, a king move is allowed. |
+| monkey_see | Monkey See | nerf | 6 | passive-rule | Can only capture with piece types your opponent has captured with. If that leaves no legal move, a king move is allowed. |
+| pawns_do_the_dirty_work | Pawns Do the Dirty Work | nerf | 6 | passive-rule | Only your pawns may capture; none of your other pieces can capture. |
+| reconnaissance | Reconnaissance | nerf | 6 | passive-rule | Start unable to capture. After seeing each opponent piece type move, you may capture that type. |
+| stand_your_ground | Stand Your Ground | nerf | 6 | passive-rule | Pieces can only capture if attacked. |
+| total_whiteout | Total Whiteout | hex | 7 | passive | A blizzard buries every sightline: for their next 3 turns, your opponent's pieces can only capture at arm's length, exactly one square away. |
+| wn_kingpin | Kingpin | nerf | 7 | passive-rule | Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move. |
+
 ## direction-geometry-lock
 
 **Locks movement to a direction or colour** - Moves must, or must not, run a particular way: forward only, dark squares only, no repeats.
@@ -2564,36 +2594,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | ov_monks_of_the_fifth_bell | Monks of the Fifth Bell | buff | 7 | passive | Permanent: every fifth of your turns the bell tolls and one random pawn of yours takes a free step forward. |
 | ov_pandemonium_carnival | Pandemonium Carnival | item | 8 | passive | The carnival parks beside the board for 4 of your turns. After every move by either side the wheel spins a minor act: a random pawn wanders sideways, a random piece naps for a turn, a random square is roped off, or confetti falls and nothing happens. |
 | ov_the_fool | The Fool | item | 8 | activated | The Fool takes an empty square nearest the enemy king for 6 of your turns: nobody may enter his square, and after each of your moves there is a 1 in 4 chance an enemy piece beside him is too embarrassed to move on your opponent's next turn. |
-
-## capture-condition
-
-**Puts a condition on capturing** - Capturing is allowed only when some extra requirement is met.
-
-21 cards.
-
-| id | name | family | tier | trigger | rule |
-|---|---|---|---|---|---|
-| leaden_queen | Leaden Queen | hex | 2 | passive | Your opponent's queen can only capture at arm's length: for their next 3 turns her captures must be exactly one square away. The first capture the curse would deny is allowed once. |
-| femme_fatale | Femme Fatale | nerf | 3 | passive-rule | You can only capture the enemy king with your queen. |
-| cheerleaders | Cheerleaders | nerf | 4 | passive-rule | Non-pawns can only capture if adjacent to one of your pawns. |
-| chivalry | Chivalry | nerf | 4 | passive-rule | Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3. |
-| covering_fire | Covering Fire | nerf | 4 | passive-rule | Can only capture a piece if you can capture it two different ways. |
-| oddball | Oddball | nerf | 4 | passive-rule | Can only capture on odd-numbered moves. |
-| snipers | Snipers | nerf | 4 | passive-rule | Bishops can only capture from distance ≥ 4. |
-| doctor_octopus | Doctor Octopus | nerf | 5 | passive-rule | Can only capture non-king pieces 8 times total. |
-| even_keeled | Even Keeled | nerf | 5 | passive-rule | Can only capture on even-numbered moves. |
-| horse_eats_first | Horse Eats First | nerf | 5 | passive-rule | As long as you have a knight, you can only capture with knights. This activates only after your move 3. |
-| left_for_dead | Left for Dead | nerf | 5 | passive-rule | Can only capture leftward (file decreasing). |
-| theocracy | Theocracy | nerf | 5 | passive-rule | On odd/even moves, can only capture with bishops. This activates only after your move 3. |
-| triple_play | Triple Play | nerf | 5 | passive-rule | Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves. |
-| ascetic | Ascetic | nerf | 6 | passive-rule | You can capture at most one piece per piece type. If no move complies, your king may move instead. |
-| centralized_command | Centralized Command | nerf | 6 | passive-rule | Can only capture if you moved your king in the last 3 turns. If that would leave you no legal move, a king move is allowed. |
-| monkey_see | Monkey See | nerf | 6 | passive-rule | Can only capture with piece types your opponent has captured with. If that leaves no legal move, a king move is allowed. |
-| pawns_do_the_dirty_work | Pawns Do the Dirty Work | nerf | 6 | passive-rule | Only your pawns may capture; none of your other pieces can capture. |
-| reconnaissance | Reconnaissance | nerf | 6 | passive-rule | Start unable to capture. After seeing each opponent piece type move, you may capture that type. |
-| stand_your_ground | Stand Your Ground | nerf | 6 | passive-rule | Pieces can only capture if attacked. |
-| total_whiteout | Total Whiteout | hex | 7 | passive | A blizzard buries every sightline: for their next 3 turns, your opponent's pieces can only capture at arm's length, exactly one square away. |
-| wn_kingpin | Kingpin | nerf | 7 | passive-rule | Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move. |
 
 ## forced-sacrifice
 
