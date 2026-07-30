@@ -168,7 +168,12 @@ function Cell({ row, mode }: { row: Row; mode: Mode }) {
 }
 
 export function PlaysGallery() {
-  const all = React.useMemo(() => rows(), []);
+  // Rebuilt AFTER the play modules land, not memoized on mount: a card's
+  // declared anchor lives in its module, and PLUGIN_SIGNATURES is populated as
+  // modules load. Reading it once at mount reported every card as "board",
+  // which is the default for an unregistered card and exactly the thing this
+  // page exists to check.
+  const [all, setAll] = React.useState<Row[]>([]);
   const [q, setQ] = React.useState("");
   const [tier, setTier] = React.useState(0);
   // Anchor comparison is the default view: it is the only way to see whether a
@@ -181,7 +186,10 @@ export function PlaysGallery() {
     // every play module, not just the ones in a hand.
     prefetchSignatureVisuals();
     void import("@/components/effects/sigPluginsMerged").then((m) =>
-      m.loadAllPluginModules().then(() => setReady(true)),
+      m.loadAllPluginModules().then(() => {
+        setAll(rows());
+        setReady(true);
+      }),
     );
   }, []);
   const shown = all.filter(
