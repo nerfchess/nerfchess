@@ -206,11 +206,25 @@ const VERB_TERMS = [
   "seconds", "time", "pawn", "knight", "bishop", "rook", "queen", "king",
   "rank", "file", "square", "adjacent", "random", "draw", "nullify", "cleanse",
   "jump", "leap", "slide", "push", "pull", "castle", "check", "checkmate",
+  // Compounds that must keep matching now that terms are boundary-anchored
+  // (see descTerms): without these, "asleep" would stop counting as a sleep
+  // card, "recaptured" as a capture card, "nightrooks" as a rook card.
+  "asleep", "recaptur", "nightrook", "unmoved", "redraw", "untimed", "overtime",
+  "replacement",
 ];
+
+// Terms match at a WORD BOUNDARY. A bare `lc.includes(t)` found them inside
+// unrelated words on 125 of the 2448 cards and polluted the dedupe fingerprint:
+// "remove"/"removed" also counted as a `move` card (on top of the `remove` term
+// it already earns), "spawns" as a `pawn` card, "taking"/"attacking"/"checking"
+// as a `king` card, "swallows" as a `wall` card, "misfiled" as a `file` card,
+// "crank" as a `rank` card. Two cards sharing only a phantom term looked like
+// duplicates of each other.
+const TERM_RES = VERB_TERMS.map((t) => ({ t, re: new RegExp(`\\b${t}`) }));
 
 function descTerms(desc: string): string[] {
   const lc = desc.toLowerCase();
-  const terms = VERB_TERMS.filter((t) => lc.includes(t));
+  const terms = TERM_RES.filter(({ re }) => re.test(lc)).map(({ t }) => t);
   // Parameters count as mechanics: "the c-file pawn" and "the f-file pawn"
   // are different cards, as are "2 squares" and "3 squares". Without these
   // tokens every parametrized family (openers especially) collapses into one

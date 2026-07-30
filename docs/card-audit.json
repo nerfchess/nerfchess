@@ -10,15 +10,15 @@
    "nerf": 360
   },
   "flagged": {
-   "duplicateSignature": 273,
-   "nearDuplicate": 248,
-   "dominatedCandidates": 90,
+   "duplicateSignature": 278,
+   "nearDuplicate": 247,
+   "dominatedCandidates": 92,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2387
+  "reviewed": 2384
  },
  "rows": [
   {
@@ -306,7 +306,7 @@
    "trigger": "passive",
    "duration": "10-turns",
    "targets": "self",
-   "signature": "attack|passive|init+onMove|10-turns|self|king,move,n:10,pawn,remove",
+   "signature": "attack|passive|init+onMove|10-turns|self|king,n:10,pawn,remove",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t8.ts",
    "tests": [
@@ -364,7 +364,7 @@
    "trigger": "activated",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|next-turn|enemy|move,queen,remove,see",
+   "signature": "attack|activated|effect+targets|next-turn|enemy|queen,remove,see",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
@@ -830,7 +830,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|instant|effect|unstated|self|clock,draft,n:15,n:2,reroll,seconds,time",
+   "signature": "tempo|instant|effect|unstated|self|clock,draft,n:15,n:2,reroll,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -1181,7 +1181,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|activated|effect|unstated|self|advance,draft,n:20,n:30,n:50,pawn,random,reroll,square,time",
+   "signature": "tempo|activated|effect|unstated|self|advance,draft,n:20,n:30,n:50,pawn,random,reroll,square",
    "animation": "plugin",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
@@ -1464,7 +1464,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:20,reroll,reveal,seconds,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:20,reroll,reveal,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -1542,7 +1542,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|instant|effect|unstated|self|clock,n:30,seconds,time",
+   "signature": "tempo|instant|effect|unstated|self|clock,n:30,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -2006,7 +2006,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|passive|onMove|unstated|self|clock,n:30,pawn,promote,seconds,time",
+   "signature": "tempo|passive|onMove|unstated|self|clock,n:30,pawn,promote,seconds,time,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -2668,7 +2668,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|instant|effect|unstated|self|clock,n:45,seconds,time",
+   "signature": "tempo|instant|effect|unstated|self|clock,n:45,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -2689,7 +2689,7 @@
    "trigger": "activated",
    "duration": "6-turns",
    "targets": "self",
-   "signature": "nerf|activated|effect+targets|6-turns|self|move,n:6,pawn,remove",
+   "signature": "nerf|activated|effect+targets|6-turns|self|n:6,pawn,remove",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -2707,7 +2707,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:25,reroll,reveal,seconds,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:1,n:25,reroll,reveal,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -3129,7 +3129,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|passive|onMove|unstated|enemy|clock,n:45,rank,seconds,time",
+   "signature": "tempo|passive|onMove|unstated|enemy|clock,n:45,rank,seconds,time,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -3469,8 +3469,10 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "duplicate-signature(bn4_lighthouse_beam)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "bn4_bread_and_salt",
@@ -3523,7 +3525,7 @@
    "trigger": "instant",
    "duration": "3-turns",
    "targets": "self",
-   "signature": "nerf|instant|effect|3-turns|self|draft,file,n:3",
+   "signature": "nerf|instant|effect|3-turns|self|draft,n:3",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -3660,7 +3662,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "tempo|instant|effect|unstated|self|clock,n:60,seconds,time",
+   "signature": "tempo|instant|effect|unstated|self|clock,n:60,seconds,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -3870,7 +3872,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|activated|effect+targets|unstated|self|knight,move,pawn,remove",
+   "signature": "pieces|activated|effect+targets|unstated|self|knight,pawn,remove",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -4168,7 +4170,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|unstated|enemy|capture,clock,n:3,n:8,seconds,steal,time",
+   "signature": "tempo|passive|init+onMove|unstated|enemy|capture,clock,n:3,n:8,seconds,steal,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/boons2.ts",
    "tests": [
@@ -4870,14 +4872,17 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|king,square",
+   "signature": "info|instant|effect|unstated|enemy|square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "duplicate-signature(bn4_border_survey)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "bn4_logjam",
@@ -5137,7 +5142,7 @@
    "trigger": "activated/lingering",
    "duration": "12-turns",
    "targets": "self",
-   "signature": "nerf|activated|effect+targets+onMove|12-turns|self|bishop,king,knight,move,n:12,remove,square",
+   "signature": "nerf|activated|effect+targets+onMove|12-turns|self|bishop,king,knight,n:12,remove,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -5193,7 +5198,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,n:30,seconds,steal,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,n:30,seconds,steal,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -5309,7 +5314,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|bishop,knight,move,remove,rook",
+   "signature": "attack|activated|effect+targets|unstated|enemy|bishop,knight,remove,rook",
    "animation": "generated",
    "location": "src/engine/buffs/boons2.ts",
    "tests": [
@@ -5892,7 +5897,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,n:30,n:60,seconds,steal,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,n:30,n:60,seconds,steal,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -6232,7 +6237,7 @@
    "trigger": "instant",
    "duration": "9-turns",
    "targets": "enemy",
-   "signature": "nerf|instant|effect|9-turns|enemy|clock,n:20,n:9,seconds,steal,time",
+   "signature": "nerf|instant|effect|9-turns|enemy|clock,n:20,n:9,seconds,steal,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -6250,7 +6255,7 @@
    "trigger": "activated",
    "duration": "14-turns",
    "targets": "self",
-   "signature": "nerf|activated|effect+targets|14-turns|self|move,n:14,remove,rook",
+   "signature": "nerf|activated|effect+targets|14-turns|self|n:14,remove,rook",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -6398,7 +6403,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|adjacent,destroy,king,move,remove,shield,square",
+   "signature": "attack|activated|effect+targets|unstated|enemy|adjacent,destroy,king,remove,shield,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -6498,7 +6503,7 @@
    "trigger": "passive",
    "duration": "permanent",
    "targets": "self",
-   "signature": "nerf|passive|init+onMove|permanent|self|move,n:10,remove",
+   "signature": "nerf|passive|init+onMove|permanent|self|n:10,remove",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -6934,7 +6939,7 @@
    "trigger": "activated",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "movement|activated|effect+targets|next-turn|enemy|capture,draw,king,move,n:3,square",
+   "signature": "movement|activated|effect+targets|next-turn|enemy|capture,king,move,n:3,redraw,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -7083,7 +7088,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "protection|activated|effect+targets+onMove|unstated|enemy|capture,king,move,remove,square",
+   "signature": "protection|activated|effect+targets+onMove|unstated|enemy|capture,king,remove,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -7338,7 +7343,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|king,move,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|king,remove",
    "animation": "generated",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -7392,7 +7397,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|bishop,destroy,knight,move,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|bishop,destroy,knight,remove",
    "animation": "generated",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -8334,7 +8339,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|instant|effect|unstated|enemy|king,move,remove",
+   "signature": "attack|instant|effect|unstated|enemy|king,remove",
    "animation": "generated",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -8388,7 +8393,7 @@
    "trigger": "instant",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|instant|effect|one-shot|enemy|bishop,king,knight,move,pawn,queen,remove,rook",
+   "signature": "attack|instant|effect|one-shot|enemy|bishop,king,knight,pawn,queen,remove,rook",
    "animation": "generated",
    "location": "src/engine/buffs/boons3.ts",
    "tests": [
@@ -8624,7 +8629,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "unstated",
-   "signature": "movement|passive|init+aug+onMove|unstated|unstated|block,jump,king,pawn",
+   "signature": "movement|passive|init+aug+onMove|unstated|unstated|block,jump,pawn",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -8714,7 +8719,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|check,draft,king,reroll,time",
+   "signature": "movement|passive|init+onMove|unstated|enemy|check,draft,reroll,time",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -8923,7 +8928,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|capture,move,protect,remove,shield",
+   "signature": "movement|passive|init+onMove|unstated|enemy|capture,protect,remove,shield",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -9190,7 +9195,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "movement|passive|init+aug+onMove|one-shot|enemy|capture,draft,file,file:f,n:5,pawn,reroll,seconds,time",
+   "signature": "movement|passive|init+aug+onMove|one-shot|enemy|capture,draft,file,file:f,n:5,pawn,reroll,seconds,untimed",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -9340,7 +9345,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|bishop,move,protect,queen,rank,remove,rook,shield",
+   "signature": "movement|passive|init+onMove|unstated|enemy|bishop,protect,queen,rank,remove,rook,shield",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -9704,7 +9709,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|check,king,move,remove,shield,square,time",
+   "signature": "movement|passive|init+onMove|unstated|enemy|check,king,remove,shield,square,time",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -9740,7 +9745,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|capture,king,n:5,seconds",
+   "signature": "movement|passive|init+onMove|unstated|enemy|capture,n:5,seconds",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10023,7 +10028,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
-   "signature": "movement|passive|init+onMove|unstated|self|check,clock,draft,n:8,reroll,reveal,seconds,time",
+   "signature": "movement|passive|init+onMove|unstated|self|check,clock,draft,n:8,reroll,reveal,seconds,time,untimed",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10119,7 +10124,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|king,move,pawn,rank,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|move,pawn,rank,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10260,7 +10265,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|bishop,king,n:1,rank,reroll,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|bishop,n:1,rank,reroll,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10397,7 +10402,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
-   "signature": "movement|passive|init+onMove|unstated|self|advance,file,move,n:15,n:2,pawn,random,reroll,seconds,square,time",
+   "signature": "movement|passive|init+onMove|unstated|self|advance,file,move,n:15,n:2,pawn,random,reroll,seconds,square,untimed",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10670,7 +10675,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|king,knight,n:2,rank,reroll,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|knight,n:2,rank,reroll,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -10961,7 +10966,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|adjacent,bishop,king,knight,reroll,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|adjacent,bishop,knight,reroll,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
@@ -11206,7 +11211,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "protection|passive|onMove|unstated|enemy|bishop,capture,knight,move,pawn,random,remove,shield,time",
+   "signature": "protection|passive|onMove|unstated|enemy|bishop,capture,knight,pawn,random,remove,shield,time",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t2.ts",
    "tests": [
@@ -11260,7 +11265,7 @@
    "trigger": "activated/free/lingering",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+filter+onMove|next-turn|enemy|move,pawn,square",
+   "signature": "attack|activated|effect+targets+filter+onMove|next-turn|enemy|move,pawn,square,unmoved",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11278,7 +11283,7 @@
    "trigger": "passive",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "info|passive|init+onMove|3-turns|enemy|king,n:3,queen,shield",
+   "signature": "info|passive|init+onMove|3-turns|enemy|n:3,queen,shield",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11296,7 +11301,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,move,n:10,reroll,seconds,steal,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,move,n:10,reroll,seconds,steal,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -11802,7 +11807,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|enemy|capture,file,jump,king,move,rank,rook",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|enemy|capture,file,jump,move,rank,rook",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -11912,7 +11917,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|one-shot|enemy|capture,clock,n:15,n:3,seconds,time",
+   "signature": "tempo|passive|init+onMove|one-shot|enemy|capture,clock,n:15,n:3,overtime,seconds",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/funny/clock.ts",
    "tests": [
@@ -13703,7 +13708,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|file,file:a,file:h,move,pawn,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|file,file:a,file:h,pawn,remove,unmoved",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t1.ts",
    "tests": [
@@ -14148,7 +14153,7 @@
    "trigger": "activated/lingering",
    "duration": "permanent",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|permanent|enemy|king,square,wall",
+   "signature": "attack|activated|effect+targets+onMove|permanent|enemy|king,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/chaos.ts",
    "tests": [
@@ -14738,7 +14743,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:30,reroll,reveal,seconds,see,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:30,reroll,reveal,seconds,see,untimed",
    "animation": "plugin",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
@@ -14864,7 +14869,7 @@
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "info|passive|init+onMove|next-turn|enemy|advance,draft,move,n:13,pawn,reroll,seconds,square,time",
+   "signature": "info|passive|init+onMove|next-turn|enemy|advance,draft,move,n:13,pawn,reroll,seconds,square,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t3.ts",
    "tests": [
@@ -14882,7 +14887,7 @@
    "trigger": "passive",
    "duration": "5-turns",
    "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|5-turns|enemy|draft,move,n:15,n:5,n:5,pawn,reroll,reveal,seconds,see,time",
+   "signature": "tempo|passive|init+onMove|5-turns|enemy|draft,move,n:15,n:5,n:5,pawn,reroll,reveal,seconds,see,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t3.ts",
    "tests": [
@@ -14972,7 +14977,7 @@
    "trigger": "instant",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "draft|instant|effect|one-shot|self|advance,draft,n:2,n:3,n:30,pawn,reroll,seconds,square,time",
+   "signature": "draft|instant|effect|one-shot|self|advance,draft,n:2,n:3,n:30,pawn,reroll,seconds,square,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t3.ts",
    "tests": [
@@ -15262,7 +15267,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|draft,n:15,n:50,reroll,reveal,seconds,see,time",
+   "signature": "tempo|instant|effect|unstated|enemy|draft,n:15,n:50,reroll,reveal,seconds,see,untimed",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t3.ts",
    "tests": [
@@ -15316,7 +15321,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,move,n:35,reroll,seconds,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,move,n:35,overtime,reroll,seconds,untimed",
    "animation": "bespoke",
    "location": "src/engine/buffs/funny/clock.ts",
    "tests": [
@@ -15426,7 +15431,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:10,n:25,reroll,reveal,seconds,see,time",
+   "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:10,n:25,reroll,reveal,seconds,see,untimed",
    "animation": "plugin",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
@@ -16232,7 +16237,7 @@
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|move,pawn,remove",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|pawn,remove",
    "animation": "bespoke",
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
@@ -16378,7 +16383,7 @@
    "trigger": "passive",
    "duration": "3-turns",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|3-turns|self|bishop,king,n:3,square",
+   "signature": "movement|passive|init+aug+onMove|3-turns|self|bishop,n:3,square",
    "animation": "passive",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
@@ -17276,7 +17281,7 @@
    "trigger": "activated",
    "duration": "1-turns",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|1-turns|enemy|move,n:1,n:3,pawn,remove,return,square,stun",
+   "signature": "attack|activated|effect+targets|1-turns|enemy|n:1,n:3,pawn,remove,return,square,stun",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t3.ts",
    "tests": [
@@ -17546,7 +17551,7 @@
    "trigger": "activated/lingering",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "tempo|activated|effect+targets+onMove|3-turns|enemy|adjacent,bishop,capture,knight,move,n:3,sleep",
+   "signature": "tempo|activated|effect+targets+onMove|3-turns|enemy|adjacent,asleep,bishop,capture,knight,move,n:3",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t4.ts",
    "tests": [
@@ -17855,7 +17860,7 @@
    "trigger": "activated",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|next-turn|enemy|freeze,move,pawn,remove",
+   "signature": "attack|activated|effect+targets|next-turn|enemy|freeze,pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -17929,7 +17934,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|instant|effect|unstated|enemy|king,move,random,remove,time",
+   "signature": "attack|instant|effect|unstated|enemy|king,random,remove,time",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/funny/chaos.ts",
    "tests": [
@@ -18001,7 +18006,7 @@
    "trigger": "activated",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "tempo|activated|effect+targets|next-turn|enemy|file,king,move,sleep",
+   "signature": "tempo|activated|effect+targets|next-turn|enemy|asleep,file,king,move,sleep",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/curseschaos.ts",
    "tests": [
@@ -18212,7 +18217,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "unstated",
-   "signature": "movement|passive|aug|unstated|unstated|become,knight,rook",
+   "signature": "movement|passive|aug|unstated|unstated|become,knight,nightrook",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -18996,7 +19001,7 @@
    "trigger": "instant",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|2-turns|enemy|clock,knight,move,n:2,n:2,n:55,n:55,random,remove,seconds,sleep",
+   "signature": "tempo|instant|effect|2-turns|enemy|asleep,clock,knight,n:2,n:2,n:55,n:55,random,remove,seconds",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/curseschaos.ts",
    "tests": [
@@ -19248,7 +19253,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|king,square,wall",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|king,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -19486,7 +19491,7 @@
    "trigger": "activated",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "pieces|activated|effect+targets|2-turns|enemy|king,n:2,pawn,square",
+   "signature": "pieces|activated|effect+targets|2-turns|enemy|n:2,pawn,square",
    "animation": "plugin",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
@@ -19949,7 +19954,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|destroy,king,move,n:8,remove,see,shield,square",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|destroy,king,n:8,remove,see,shield,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/funny/chaos.ts",
    "tests": [
@@ -20004,7 +20009,7 @@
    "trigger": "activated/lingering",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|activated|effect+targets+aug+onMove|one-shot|self|bishop,king,move,slide",
+   "signature": "movement|activated|effect+targets+aug+onMove|one-shot|self|bishop,move,slide",
    "animation": "plugin",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
@@ -20076,7 +20081,7 @@
    "trigger": "activated/free",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "info|activated|effect|one-shot|enemy|draft,king,reroll",
+   "signature": "info|activated|effect|one-shot|enemy|draft,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t5.ts",
    "tests": [
@@ -20094,7 +20099,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|king,move,n:10,remove,seconds",
+   "signature": "attack|activated|effect+targets|unstated|enemy|king,n:10,remove,seconds",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t7.ts",
    "tests": [
@@ -20526,7 +20531,7 @@
    "trigger": "instant",
    "duration": "3-turns",
    "targets": "self",
-   "signature": "tempo|instant|effect|3-turns|self|clock,move,n:3,n:75,rank,seconds,square",
+   "signature": "tempo|instant|effect|3-turns|self|clock,move,n:3,n:75,seconds,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/timefaustian.ts",
    "tests": [
@@ -21406,7 +21411,7 @@
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|move,pawn,remove",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
@@ -21608,7 +21613,7 @@
    "trigger": "activated",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|2-turns|enemy|freeze,move,n:2,queen,remove",
+   "signature": "attack|activated|effect+targets|2-turns|enemy|freeze,n:2,queen,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -21644,7 +21649,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|passive|init+onMove|unstated|enemy|capture,king,move,n:8,pawn,remove,square",
+   "signature": "attack|passive|init+onMove|unstated|enemy|capture,king,n:8,pawn,remove,square",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -21662,7 +21667,7 @@
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|passive|init+onMove|one-shot|enemy|capture,king,move,remove,square",
+   "signature": "attack|passive|init+onMove|one-shot|enemy|capture,king,remove,square",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -21790,7 +21795,7 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|passive|init+onMove|unstated|enemy|adjacent,capture,king,move,remove,square",
+   "signature": "attack|passive|init+onMove|unstated|enemy|adjacent,capture,king,remove,square",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -21828,7 +21833,7 @@
    "trigger": "activated",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "pieces|activated|effect+targets|2-turns|enemy|bishop,capture,king,knight,n:2,rook,shield",
+   "signature": "pieces|activated|effect+targets|2-turns|enemy|bishop,king,knight,n:2,recaptur,rook,shield",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/fantasy/divine.ts",
    "tests": [
@@ -22504,7 +22509,7 @@
    "trigger": "passive",
    "duration": "3-turns",
    "targets": "self",
-   "signature": "tempo|passive|init+onMove|3-turns|self|move,n:3,n:8,pawn,random,seconds,time",
+   "signature": "tempo|passive|init+onMove|3-turns|self|move,n:3,n:8,pawn,random,seconds",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t8.ts",
    "tests": [
@@ -22648,7 +22653,7 @@
    "trigger": "passive",
    "duration": "8-turns",
    "targets": "enemy",
-   "signature": "protection|passive|init+onMove|8-turns|enemy|check,file,king,move,n:8,random,square",
+   "signature": "protection|passive|init+onMove|8-turns|enemy|check,king,move,n:8,random,square",
    "animation": "passive",
    "location": "src/engine/buffs/overhaul/t7.ts",
    "tests": [
@@ -22883,7 +22888,7 @@
    "trigger": "activated/lingering",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+aug+onMove|3-turns|enemy|bishop,king,move,n:3,n:50,remove",
+   "signature": "attack|activated|effect+targets+aug+onMove|3-turns|enemy|bishop,king,n:3,n:50,remove",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t5.ts",
    "tests": [
@@ -22940,7 +22945,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|activated|effect+targets|unstated|self|bishop,draft,king,knight,rook,skip,square",
+   "signature": "pieces|activated|effect+targets|unstated|self|bishop,draft,knight,rook,skip,square",
    "animation": "plugin",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
@@ -22976,7 +22981,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|move,queen,rank,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|queen,rank,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -22996,7 +23001,7 @@
    "trigger": "activated",
    "duration": "1-turns",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|1-turns|enemy|freeze,move,n:1,pawn,remove",
+   "signature": "attack|activated|effect+targets|1-turns|enemy|freeze,n:1,pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -23286,7 +23291,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|bishop,king,knight,pawn,square,wall",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|bishop,king,knight,pawn,square",
    "animation": "canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -23511,7 +23516,7 @@
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,knight,move,pawn,remove",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,knight,pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
@@ -23621,7 +23626,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|king,move,n:8,pawn,remove,shield,square",
+   "signature": "attack|activated|effect+targets|unstated|enemy|king,n:8,pawn,remove,shield,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
@@ -23639,7 +23644,7 @@
    "trigger": "activated/lingering",
    "duration": "permanent",
    "targets": "enemy",
-   "signature": "tempo|activated|effect+targets+onMove|permanent|enemy|king,move,n:3,remove,square",
+   "signature": "tempo|activated|effect+targets+onMove|permanent|enemy|king,n:3,remove,square",
    "animation": "canvas",
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
@@ -23675,7 +23680,7 @@
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,knight,move,pawn,remove",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,knight,pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
@@ -23767,7 +23772,7 @@
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,move,remove,rook",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|bishop,remove,rook",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
@@ -24503,7 +24508,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|file,king,move,rank,remove,square",
+   "signature": "attack|activated|effect+targets|unstated|enemy|file,king,rank,remove,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -24863,7 +24868,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|move,queen,rank,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|queen,rank,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -25289,7 +25294,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|move,queen,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|queen,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -25400,7 +25405,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|destroy,king,move,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|destroy,king,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -25454,7 +25459,7 @@
    "trigger": "activated",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "pieces|activated|effect|2-turns|enemy|king,n:2,n:30,queen,seconds,square",
+   "signature": "pieces|activated|effect|2-turns|enemy|n:2,n:30,queen,seconds,square",
    "animation": "plugin",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -25585,7 +25590,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|instant|effect|unstated|enemy|move,pawn,remove",
+   "signature": "attack|instant|effect|unstated|enemy|pawn,remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -25621,7 +25626,7 @@
    "trigger": "instant",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|instant|effect|unstated|self|draft,place,skip,square",
+   "signature": "pieces|instant|effect|unstated|self|draft,replacement,skip,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -26057,7 +26062,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|move,remove",
+   "signature": "attack|activated|effect+targets|unstated|enemy|remove",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -26221,7 +26226,7 @@
    "trigger": "activated",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|unstated|enemy|adjacent,king,move,pawn,remove,shield,square",
+   "signature": "attack|activated|effect+targets|unstated|enemy|adjacent,king,pawn,remove,shield,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -26278,7 +26283,7 @@
    "trigger": "activated/lingering",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|become,king,square,wall",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|become,king,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -27060,15 +27065,17 @@
    "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "hex|passive|init+onMove|unstated|enemy|draft,file,reroll",
+   "signature": "hex|passive|init+onMove|unstated|enemy|draft,reroll",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "duplicate-signature(hx4_paper_orders)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "hx4_royal_nametag",
@@ -27117,7 +27124,7 @@
    "trigger": "passive",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+onMove|2-turns|enemy|file,move,n:2,pawn,random,sleep",
+   "signature": "hex|passive|init+onMove|2-turns|enemy|asleep,file,move,n:2,pawn,random",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -27428,7 +27435,7 @@
    "trigger": "passive",
    "duration": "6-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+onMove|6-turns|enemy|capture,clock,draft,n:12,n:6,n:6,reroll,seconds,time",
+   "signature": "hex|passive|init+onMove|6-turns|enemy|capture,clock,draft,n:12,n:6,n:6,reroll,seconds,time,untimed",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave2.ts",
    "tests": [
@@ -27738,7 +27745,7 @@
    "trigger": "passive",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,king,move,n:2,n:3,square,wall",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,king,move,n:2,n:3,square",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -28626,6 +28633,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/tier3.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "lab-run-all.ts",
     "test-hexes.cjs",
     "test-nerfs.cjs"
@@ -29500,7 +29508,7 @@
    "trigger": "passive",
    "duration": "4-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|capture,move,n:4,square",
+   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|capture,move,n:4,recaptur,square",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -30642,7 +30650,7 @@
    "trigger": "passive",
    "duration": "4-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|file,king,move,n:4,rank,rook",
+   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|file,move,n:4,rank,rook",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
    "tests": [
@@ -31286,7 +31294,7 @@
    "trigger": "passive",
    "duration": "permanent",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter|permanent|enemy|move,pawn,remove,square,time",
+   "signature": "hex|passive|init+filter|permanent|enemy|pawn,remove,square,time",
    "animation": "passive",
    "location": "src/engine/buffs/crossref.ts",
    "tests": [
@@ -31905,7 +31913,7 @@
    "trigger": "instant",
    "duration": "6-turns",
    "targets": "enemy",
-   "signature": "hex|instant|init+onMove|6-turns|enemy|king,n:6,square,wall",
+   "signature": "hex|instant|init+onMove|6-turns|enemy|king,n:6,square",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
@@ -32521,7 +32529,10 @@
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
-   "flags": [],
+   "flags": [
+    "duplicate-signature(hx4_red_tape)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
    "action": "REBALANCED: 4 offers; 2 duplicated Sealed Orders (T2)"
   },
   {
@@ -33579,7 +33590,7 @@
    "trigger": "activated/lingering",
    "duration": "8-turns",
    "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|8-turns|enemy|king,n:2,n:8,pawn,spawn",
+   "signature": "hex|activated|effect+targets+onMove|8-turns|enemy|king,n:2,n:8,spawn",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
@@ -34046,7 +34057,7 @@
    "trigger": "instant",
    "duration": "1-turns",
    "targets": "enemy",
-   "signature": "hex|instant|effect|1-turns|enemy|king,n:1,random,sleep",
+   "signature": "hex|instant|effect|1-turns|enemy|asleep,king,n:1,random",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -34888,7 +34899,7 @@
    "trigger": "activated/lingering",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,move,n:3,remove",
+   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,n:3,remove",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave2.ts",
    "tests": [
@@ -34926,7 +34937,7 @@
    "trigger": "passive",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+onMove|3-turns|enemy|move,n:3,rank,wall",
+   "signature": "hex|passive|init+onMove|3-turns|enemy|move,n:3,rank",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave2.ts",
    "tests": [
@@ -35532,7 +35543,7 @@
    "trigger": "passive",
    "duration": "2-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,king,move,n:1,n:2,square,wall",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,king,move,n:1,n:2,square",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -35943,7 +35954,7 @@
    "trigger": "passive",
    "duration": "4-turns",
    "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|advance,move,n:4,pawn,remove",
+   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|advance,n:4,pawn,remove",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/hexes/tier8.ts",
    "tests": [
@@ -37140,13 +37151,12 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_margin_notes)",
+    "duplicate-signature(op_margin_notes,op_threat_ledger)",
     "near-duplicate(op_palace_floor_plan:0.78)",
     "near-duplicate(op_day_census:0.78)",
     "near-duplicate(op_night_census:0.78)",
     "near-duplicate(op_left_bank_atlas:0.78)",
-    "near-duplicate(op_starboard_chart:0.78)",
-    "near-duplicate(op_threat_ledger:0.79)"
+    "near-duplicate(op_starboard_chart:0.78)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -37894,13 +37904,12 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_border_report)",
+    "duplicate-signature(op_threat_ledger,op_border_report)",
     "near-duplicate(op_palace_floor_plan:0.78)",
     "near-duplicate(op_day_census:0.78)",
     "near-duplicate(op_night_census:0.78)",
     "near-duplicate(op_left_bank_atlas:0.78)",
-    "near-duplicate(op_starboard_chart:0.78)",
-    "near-duplicate(op_threat_ledger:0.79)"
+    "near-duplicate(op_starboard_chart:0.78)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -38661,15 +38670,14 @@
    "trigger": "activated/free",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "item|activated|effect|one-shot|enemy|king",
+   "signature": "item|activated|effect|one-shot|enemy|",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_margin_notes:0.79)",
-    "near-duplicate(op_border_report:0.79)"
+    "duplicate-signature(op_margin_notes,op_border_report)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -39778,6 +39786,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -39923,6 +39932,7 @@
    "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "sim-hexes-items.ts",
+    "test-nerf-categories.ts",
     "validate-tv-snapshots.cjs",
     "test-nerfs.cjs"
    ],
@@ -39978,6 +39988,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier1.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -40370,10 +40381,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|king,move,random,square",
+   "signature": "nerf|unstated|move,random,square",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -41493,6 +41505,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -42377,6 +42390,7 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/tier3.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "lab-run-all.ts",
     "test-hexes.cjs",
     "test-nerfs.cjs"
@@ -42699,10 +42713,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,king",
+   "signature": "nerf|unstated|capture",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier4.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43185,10 +43200,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|king,move,n:15,rank,rook",
+   "signature": "nerf|one-shot|move,n:15,rank,rook",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43297,6 +43313,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43455,10 +43472,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture",
+   "signature": "nerf|unstated|recaptur",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43797,10 +43815,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|7-turns|move,n:7,pawn,spawn,teleport",
+   "signature": "nerf|7-turns|move,n:7,spawn,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43815,10 +43834,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|adjacent,move,pawn,spawn,teleport",
+   "signature": "nerf|one-shot|adjacent,move,spawn,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43869,10 +43889,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,pawn,spawn,square,teleport",
+   "signature": "nerf|one-shot|move,spawn,square,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44053,6 +44074,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44446,7 +44468,7 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|capture,square",
+   "signature": "nerf|one-shot|capture,recaptur,square",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier6.ts",
    "tests": [
@@ -44468,6 +44490,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier6.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44574,10 +44597,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|king,pawn,spawn,teleport",
+   "signature": "nerf|unstated|king,spawn,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44687,6 +44711,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier5.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44924,6 +44949,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier7.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44956,10 +44982,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,pawn,spawn,teleport,time",
+   "signature": "nerf|one-shot|move,spawn,teleport,time,unmoved",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45190,10 +45217,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,move,pawn,queen,spawn",
+   "signature": "nerf|unstated|capture,move,queen,spawn",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45208,10 +45236,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|n:3,pawn,spawn",
+   "signature": "nerf|unstated|n:3,spawn",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45388,10 +45417,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,check,king,move",
+   "signature": "nerf|unstated|capture,check,move",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier7.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45428,6 +45458,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45532,10 +45563,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|king,knight,move,pawn,spawn,square,teleport",
+   "signature": "nerf|one-shot|king,knight,move,spawn,square,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/wave2.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45676,10 +45708,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|capture,move,n:3,pawn,spawn,teleport",
+   "signature": "nerf|one-shot|capture,move,n:3,spawn,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45928,10 +45961,11 @@
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,pawn,rank,spawn,teleport",
+   "signature": "nerf|unstated|move,rank,spawn,teleport",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45968,6 +46002,7 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
