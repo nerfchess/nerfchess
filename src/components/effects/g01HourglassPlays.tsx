@@ -263,14 +263,7 @@ function CouncilOfPeaceScene({ role, delayMs }: SceneProps) {
           <path d="M34 12q-12-5-24 2v14q12 6 24-2z" fill={C_CP.glow} stroke={C_CP.deep} strokeWidth="3" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={50}
-        w={33}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_CP.glow, ...dm(delayMs, 620) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })}
-      />
+      <P x={50} y={50} w={33} h={1.4} cls="g01-lean" style={sv({ background: C_CP.glow, ...dm(delayMs, 620) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })} />
       <Drift color={C_CP.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -329,33 +322,7 @@ function CrownJubileeScene({ role, delayMs }: SceneProps) {
       </P>
       <P x={50} y={61} w={4} h={4} cls="g01-cj-ember" style={{ background: C_CJ.glow, borderRadius: "50%", ...dm(delayMs, 260) }} />
       {CJ_ROCKETS.map((r, i) => (
-        <P
-          key={i}
-          x={r.x}
-          y={58}
-          w={3}
-          h={9}
-          cls="g01-fling"
-          style={sv(dm(delayMs, 380 + i * 90), { "--g01-mx": r.mx, "--g01-my": r.my, "--g01-mr": r.mr })}
-        >
-          <svg viewBox="0 0 20 60" className="block h-full w-full">
-            <path d="M10 2l6 16v34H4V18z" fill={C_CJ.core} stroke={C_CJ.deep} strokeWidth="3" {...SJ} />
-          </svg>
-        </P>
-      ))}
-      <P x={50} y={26} w={11} h={11} cls="g01-cj-catch" style={dm(delayMs, 660)}>
-        <svg viewBox="0 0 60 60" className="block h-full w-full">
-          <path d="M8 40l4-20 9 9 9-15 9 15 9-9 4 20z" fill={C_CJ.glow} stroke={C_CJ.deep} strokeWidth="4" {...SJ} />
-        </svg>
-      </P>
-      <P
-        x={50}
-        y={44}
-        w={26}
-        h={1.6}
-        cls="g01-lean"
-        style={sv({ background: C_CJ.core, ...dm(delayMs, 760) }, { "--g01-lean": "calc(var(--fx-side, 1) * -300%)" })}
-      />
+        <P key={i} x={r.x} y={58} w={3} h={9} cls="g01-fling" style={sv(dm(delayMs, 380 + i * 90), { "--g01-mx": r.mx, "--g01-my": r.my, "--g01-mr": r.mr })} > <svg viewBox="0 0 20 60" className="block h-full w-full"> <path d="M10 2l6 16v34H4V18z" fill={C_CJ.core} stroke={C_CJ.deep} strokeWidth="3" {...SJ} /> </svg> </P> ))} <P x={50} y={26} w={11} h={11} cls="g01-cj-catch" style={dm(delayMs, 660)}> <svg viewBox="0 0 60 60" className="block h-full w-full"> <path d="M8 40l4-20 9 9 9-15 9 15 9-9 4 20z" fill={C_CJ.glow} stroke={C_CJ.deep} strokeWidth="4" {...SJ} /> </svg> </P> <P x={50} y={44} w={26} h={1.6} cls="g01-lean" style={sv({ background: C_CJ.core, ...dm(delayMs, 760) }, { "--g01-lean": "calc(var(--fx-side, 1) * -300%)" })} />
     </Wide>
   );
 }
@@ -417,14 +384,7 @@ function FlagOnTheirWallScene({ role, delayMs }: SceneProps) {
           <path d="M12 8h24l-7 10 7 10H12z" fill={C_FW.core} stroke={C_FW.deep} strokeWidth="4" {...SJ} />
         </svg>
       </P>
-      <P
-        x={62}
-        y={54}
-        w={24}
-        h={2}
-        cls="g01-reach"
-        style={sv({ background: C_FW.deep, transformOrigin: "0% 50%", ...dm(delayMs, 520) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })}
-      />
+      <P x={62} y={54} w={24} h={2} cls="g01-reach" style={sv({ background: C_FW.deep, transformOrigin: "0% 50%", ...dm(delayMs, 520) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })} />
       <Drift color={C_FW.glow} delayMs={delayMs + 660} n={4} />
     </Aim>
   );
@@ -477,34 +437,7 @@ function GreatArmisticeScene({ role, delayMs }: SceneProps) {
         </P>
       ))}
       {[41, 59].map((x, i) => (
-        <P
-          key={i}
-          x={x}
-          y={54}
-          w={4}
-          h={17}
-          cls="g01-ga-arm"
-          style={sv(dm(delayMs, 200), { "--g01-a": i === 0 ? "17deg" : "-17deg" })}
-        >
-          <svg viewBox="0 0 20 90" className="block h-full w-full">
-            <path d="M10 88V4" stroke={C_GA.glow} strokeWidth="5" {...SJ} />
-            <rect x="3" y="26" width="14" height="9" fill={C_GA.core} />
-          </svg>
-        </P>
-      ))}
-      <P x={50} y={42} w={34} h={3.4} cls="g01-ga-bar" style={dm(delayMs, 400)}>
-        <svg viewBox="0 0 200 20" className="block h-full w-full" preserveAspectRatio="none">
-          <rect x="0" y="3" width="200" height="14" fill={C_GA.core} stroke={C_GA.deep} strokeWidth="3" />
-        </svg>
-      </P>
-      <P
-        x={50}
-        y={50}
-        w={30}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_GA.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })}
-      />
+        <P key={i} x={x} y={54} w={4} h={17} cls="g01-ga-arm" style={sv(dm(delayMs, 200), { "--g01-a": i === 0 ? "17deg" : "-17deg" })} > <svg viewBox="0 0 20 90" className="block h-full w-full"> <path d="M10 88V4" stroke={C_GA.glow} strokeWidth="5" {...SJ} /> <rect x="3" y="26" width="14" height="9" fill={C_GA.core} /> </svg> </P> ))} <P x={50} y={42} w={34} h={3.4} cls="g01-ga-bar" style={dm(delayMs, 400)}> <svg viewBox="0 0 200 20" className="block h-full w-full" preserveAspectRatio="none"> <rect x="0" y="3" width="200" height="14" fill={C_GA.core} stroke={C_GA.deep} strokeWidth="3" /> </svg> </P> <P x={50} y={50} w={30} h={1.4} cls="g01-lean" style={sv({ background: C_GA.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
       <Drift color={C_GA.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -562,14 +495,7 @@ function HundredYearLeaseScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       <P x={50} y={51} w={16} h={1.8} cls="g01-hl-level" style={{ background: C_HL.core, ...dm(delayMs, 520) }} />
-      <P
-        x={50}
-        y={44}
-        w={26}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_HL.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -280%)" })}
-      />
+      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_HL.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -280%)" })} />
       <Drift color={C_HL.glow} delayMs={delayMs + 720} n={4} />
     </Wide>
   );
@@ -631,28 +557,7 @@ function LiberatorsMarchScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1, 2, 3].map((i) => (
-        <P
-          key={i}
-          x={58}
-          y={52}
-          w={3.4}
-          h={3.4}
-          cls="g01-fling"
-          style={sv(dm(delayMs, 420 + i * 80), { "--g01-mx": `${200 + i * 90}%`, "--g01-my": "0%", "--g01-mr": "180deg" })}
-        >
-          <svg viewBox="0 0 20 20" className="block h-full w-full">
-            <path d="M10 2l7 16H3z" fill={C_LM.core} stroke={C_LM.deep} strokeWidth="2" {...SJ} />
-          </svg>
-        </P>
-      ))}
-      <P
-        x={62}
-        y={52}
-        w={22}
-        h={1.6}
-        cls="g01-reach"
-        style={sv({ background: C_LM.glow, transformOrigin: "0% 50%", ...dm(delayMs, 700) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })}
-      />
+        <P key={i} x={58} y={52} w={3.4} h={3.4} cls="g01-fling" style={sv(dm(delayMs, 420 + i * 80), { "--g01-mx": `${200 + i * 90}%`, "--g01-my": "0%", "--g01-mr": "180deg" })} > <svg viewBox="0 0 20 20" className="block h-full w-full"> <path d="M10 2l7 16H3z" fill={C_LM.core} stroke={C_LM.deep} strokeWidth="2" {...SJ} /> </svg> </P> ))} <P x={62} y={52} w={22} h={1.6} cls="g01-reach" style={sv({ background: C_LM.glow, transformOrigin: "0% 50%", ...dm(delayMs, 700) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })} />
     </Aim>
   );
 }
@@ -719,14 +624,7 @@ function MaskedBallScene({ role, delayMs }: SceneProps) {
           <path d="M46 18h26c0 16-6 24-13 24s-13-8-13-24z" fill={C_MB.core} stroke={C_MB.deep} strokeWidth="4" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={68}
-        w={22}
-        h={2}
-        cls="g01-lean"
-        style={sv({ background: C_MB.glow, ...dm(delayMs, 620) }, { "--g01-lean": "calc(var(--fx-side, 1) * -180%)" })}
-      />
+      <P x={50} y={68} w={22} h={2} cls="g01-lean" style={sv({ background: C_MB.glow, ...dm(delayMs, 620) }, { "--g01-lean": "calc(var(--fx-side, 1) * -180%)" })} />
       <Drift color={C_MB.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -791,14 +689,7 @@ function MeekInheritScene({ role, delayMs }: SceneProps) {
           <path d="M50 22v28l18 10" fill="none" stroke={C_MI.core} strokeWidth="5" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={46}
-        w={28}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_MI.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -220%)" })}
-      />
+      <P x={50} y={46} w={28} h={1.4} cls="g01-lean" style={sv({ background: C_MI.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -220%)" })} />
       <Drift color={C_MI.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -858,24 +749,9 @@ function MidasCharterScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1].map((i) => (
-        <P
-          key={i}
-          x={50}
-          y={68}
-          w={6}
-          h={4}
-          cls="g01-fling"
-          style={sv(dm(delayMs, 560 + i * 90), { "--g01-mx": i === 0 ? "-190%" : "190%", "--g01-my": "170%", "--g01-mr": i === 0 ? "-40deg" : "40deg", background: C_MC.deep })}
-        />
+        <P key={i} x={50} y={68} w={6} h={4} cls="g01-fling" style={sv(dm(delayMs, 560 + i * 90), { "--g01-mx": i === 0 ? "-190%" : "190%", "--g01-my": "170%", "--g01-mr": i === 0 ? "-40deg" : "40deg", background: C_MC.deep })} />
       ))}
-      <P
-        x={50}
-        y={44}
-        w={26}
-        h={1.6}
-        cls="g01-lean"
-        style={sv({ background: C_MC.core, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })}
-      />
+      <P x={50} y={44} w={26} h={1.6} cls="g01-lean" style={sv({ background: C_MC.core, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })} />
       <Drift color={C_MC.glow} delayMs={delayMs + 760} n={4} />
     </Wide>
   );
@@ -942,14 +818,7 @@ function PactOfTheDawnScene({ role, delayMs }: SceneProps) {
           <path d="M18 28q22-18 44 0t44 0" fill="none" stroke={C_PD.glow} strokeWidth="5" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={62}
-        w={30}
-        h={1.6}
-        cls="g01-lean"
-        style={sv({ background: C_PD.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -300%)" })}
-      />
+      <P x={50} y={62} w={30} h={1.6} cls="g01-lean" style={sv({ background: C_PD.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -300%)" })} />
       <Drift color={C_PD.glow} delayMs={delayMs + 720} n={4} />
     </Wide>
   );
@@ -1020,14 +889,7 @@ function QueensAegisScene({ role, delayMs }: SceneProps) {
           <circle cx="25" cy="25" r="19" fill="none" stroke={C_QA.glow} strokeWidth="6" strokeDasharray="6 6" />
         </svg>
       </P>
-      <P
-        x={50}
-        y={44}
-        w={24}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_QA.glow, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })}
-      />
+      <P x={50} y={44} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_QA.glow, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
     </Wide>
   );
 }
@@ -1095,24 +957,9 @@ function RoyalPrivilegeScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1].map((i) => (
-        <P
-          key={i}
-          x={50}
-          y={52}
-          w={4}
-          h={4}
-          cls="g01-fling"
-          style={sv(dm(delayMs, 540 + i * 110), { "--g01-mx": i === 0 ? "-330%" : "330%", "--g01-my": "-190%", "--g01-mr": "180deg", background: C_RP.glow, borderRadius: "50%" })}
-        />
+        <P key={i} x={50} y={52} w={4} h={4} cls="g01-fling" style={sv(dm(delayMs, 540 + i * 110), { "--g01-mx": i === 0 ? "-330%" : "330%", "--g01-my": "-190%", "--g01-mr": "180deg", background: C_RP.glow, borderRadius: "50%" })} />
       ))}
-      <P
-        x={50}
-        y={44}
-        w={24}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_RP.core, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })}
-      />
+      <P x={50} y={44} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_RP.core, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })} />
     </Wide>
   );
 }
@@ -1181,14 +1028,7 @@ function RoyalWeScene({ role, delayMs }: SceneProps) {
           <path d="M6 38L10 8l10 10 10-14 10 14 10-10 4 30z" fill={C_RW.glow} stroke={C_RW.deep} strokeWidth="4" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={54}
-        w={26}
-        h={1.6}
-        cls="g01-lean"
-        style={sv({ background: C_RW.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -230%)" })}
-      />
+      <P x={50} y={54} w={26} h={1.6} cls="g01-lean" style={sv({ background: C_RW.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -230%)" })} />
       <Drift color={C_RW.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -1247,22 +1087,15 @@ function SiegeMentalityScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={42 + i * 8}
-          y={52}
-          w={2.6}
-          h={5}
-          cls="g01-sm-notch"
-          style={{ background: C_SM.glow, animationDelay: `calc(${delayMs + 380}ms + var(--fx-index, 0) * 40ms + ${i * 90}ms)` }}
-        />
+        <P key={i} x={42 + i * 8} y={52} w={2.6} h={5} cls="g01-sm-notch" style={{ background: C_SM.glow, animationDelay: `calc(${delayMs + 380}ms + var(--fx-index, 0) * 40ms + ${i * 90}ms)` }} />
       ))}
       <P x={50} y={58} w={30} h={20} cls="g01-flash" style={dm(delayMs, 360)}>
         <svg viewBox="0 0 140 90" className="block h-full w-full">
           <ellipse cx="70" cy="30" rx="64" ry="24" fill="none" stroke={C_SM.glow} strokeWidth="5" />
         </svg>
       </P>
-      <Drift color={C_SM.glow} delayMs={delayMs + 660} n={4} />
+      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_SM.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
+      <Drift color={C_SM.glow} delayMs={delayMs + 720} n={4} />
     </Wide>
   );
 }
@@ -1330,14 +1163,7 @@ function UnequalTreatyScene({ role, delayMs }: SceneProps) {
           <path d="M12 2c6 8 2 11 2 14a6 6 0 0 1-12 0c0-5 6-6 10-14z" fill={C_UT.core} />
         </svg>
       </P>
-      <P
-        x={57}
-        y={68}
-        w={9}
-        h={3}
-        cls="g01-lean"
-        style={sv({ background: C_UT.glow, borderRadius: "50%", ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -120%)" })}
-      />
+      <P x={57} y={68} w={9} h={3} cls="g01-lean" style={sv({ background: C_UT.glow, borderRadius: "50%", ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -120%)" })} />
       <Drift color={C_UT.glow} delayMs={delayMs + 700} n={4} />
     </Wide>
   );
@@ -1403,14 +1229,7 @@ function YearOfJubileeScene({ role, delayMs }: SceneProps) {
           <path d="M4 2h18v88l-9-10-9 10z" fill={C_YJ.core} stroke={C_YJ.deep} strokeWidth="4" {...SJ} />
         </svg>
       </P>
-      <P
-        x={50}
-        y={44}
-        w={26}
-        h={1.4}
-        cls="g01-lean"
-        style={sv({ background: C_YJ.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })}
-      />
+      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_YJ.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })} />
     </Wide>
   );
 }
@@ -1475,14 +1294,7 @@ function DebtOfCrownsScene({ role, delayMs }: SceneProps) {
           <path d="M98 6H2l14 10L2 26h96z" fill={C_DC.glow} stroke={C_DC.deep} strokeWidth="4" {...SJ} />
         </svg>
       </P>
-      <P
-        x={62}
-        y={52}
-        w={22}
-        h={1.6}
-        cls="g01-reach"
-        style={sv({ background: C_DC.glow, transformOrigin: "0% 50%", ...dm(delayMs, 620) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })}
-      />
+      <P x={62} y={52} w={22} h={1.6} cls="g01-reach" style={sv({ background: C_DC.glow, transformOrigin: "0% 50%", ...dm(delayMs, 620) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })} />
       <Drift color={C_DC.glow} delayMs={delayMs + 700} n={4} />
     </Aim>
   );

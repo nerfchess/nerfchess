@@ -61,7 +61,7 @@
 @keyframes g05-chaff {
   0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
   22% { opacity: 0.95; transform: translate(0, 0) scale(1); }
-  100% { opacity: 0; transform: translate(40%, calc(var(--g05-adv, -1) * 520%)) scale(0.6); }
+  100% { opacity: 0; transform: translate(40%, calc(var(--fx-side, 1) * -520%)) scale(0.6); }
 }
 .g05-chaff { animation: g05-chaff calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 

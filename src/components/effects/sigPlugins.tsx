@@ -223,6 +223,12 @@ export const PLUGIN_IDS: readonly string[] = [
   "hw3_inverted_crown",
   // creatorPlays.tsx (5)
   "cr_stalling_bishop", "cr_oh_no_my_queen", "cr_family_game_night", "cr_speedrun_protocol", "cr_chat_picks",
+  // g05PawnTidePlays.tsx (30)
+  "bn4_endless_militia", "bn4_menagerie_gates", "bn4_drawbridge_crew", "bn4_field_hospital", "bn4_letters_home", "bn4_small_consolation",
+  "bn4_stray_cat", "bn4_florists_trick", "bn4_changeling_child", "hx4_field_of_spears", "bn4_leapfrog", "ov_rapture_of_pawns",
+  "bn4_matryoshka_surprise", "ov_trojan_pawn", "ov_great_migration", "hx4_famine_year", "hx4_pawn_embargo", "hx4_famine",
+  "hx4_no_doubling", "hx4_one_ladle_each", "hx4_pied_piper", "hx4_echo_of_bells", "hx4_candle_curfew", "hx4_understudy_rule",
+  "ov_pied_piper", "ov_cloud_serpent", "ov_locust_swarm", "ov_volcanic_vent", "ov_fireworks_barge", "ov_boomerang",
   // g20RampartPlays.tsx (24)
   "bn4_dukes_patent", "bn4_wall_of_faith", "hx4_dead_march", "hx4_the_long_siege", "ov_world_serpent", "bn4_clay_colossus",
   "bn4_palace_walls", "bn4_castle_ditch", "bn4_dowry", "hx4_banquet_of_dust", "hx4_ivory_tower", "hx4_moat_diggers",

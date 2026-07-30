@@ -392,15 +392,7 @@ function FamineYearScene({ role, delayMs }: SceneProps) {
       ))}
       <P x={50} y={62} w={34} h={1.6} cls="g05-fy-crack" style={{ background: C_FY.deep, ...d(delayMs, 640) }} />
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={44 + i * 6}
-          y={50}
-          w={3.4}
-          h={2.4}
-          cls="g05-fy-husk"
-          style={{ ...adv, background: C_FY.glow, borderRadius: "50%", ...d(delayMs, 700 + i * 90) }}
-        />
+        <P key={i} x={44 + i * 6} y={50} w={3.4} h={2.4} cls="g05-fy-husk" style={{ ...adv, background: C_FY.glow, borderRadius: "50%", ...d(delayMs, 700 + i * 90) }} />
       ))}
       <Chaff color={C_FY.core} delayMs={delayMs + 860} />
     </Wide>
@@ -513,15 +505,7 @@ function RaptureOfPawnsScene({ role, delayMs }: SceneProps) {
     <Wide>
       <Field tint="rgba(203,176,240,0.3)" delayMs={delayMs} />
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={41 + i * 9}
-          y={62}
-          w={8}
-          h={2.6}
-          cls="g05-tell"
-          style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, 60) }}
-        />
+        <P key={i} x={41 + i * 9} y={62} w={8} h={2.6} cls="g05-tell" style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, 60) }} />
       ))}
       {[0, 1, 2].map((i) => (
         <P key={i} x={41 + i * 9} y={40} w={7} h={30} cls="g05-rp-beam" style={d(delayMs, 190 + i * 90)}>
@@ -535,18 +519,10 @@ function RaptureOfPawnsScene({ role, delayMs }: SceneProps) {
           <Pawn fill={C_RP.core} stroke={C_RP.deep} />
         </P>
       ))}
-      {[0, 1, 2, 3].map((i) => (
-        <P
-          key={i}
-          x={36 + i * 9.4}
-          y={64}
-          w={4.4}
-          h={2.4}
-          cls="g05-rp-print"
-          style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, 680 + i * 80) }}
-        />
+      {[0, 1].map((i) => (
+        <P key={i} x={36 + i * 28} y={64} w={4.4} h={2.4} cls="g05-rp-print" style={{ background: C_RP.deep, borderRadius: "50%", ...d(delayMs, 680 + i * 80) }} />
       ))}
-      <Chaff color={C_RP.glow} delayMs={delayMs + 820} />
+      <Chaff color={C_RP.glow} delayMs={delayMs + 820} n={2} />
     </Wide>
   );
 }
@@ -660,8 +636,8 @@ function DrawbridgeCrewScene({ role, delayMs }: SceneProps) {
       <Field tint="rgba(185,138,82,0.26)" delayMs={delayMs} />
       <Furrow color="rgba(44,28,14,0.5)" delayMs={delayMs + 60} y={64} h={5} />
       <P x={50} y={66} w={30} h={3} cls="g05-tell" style={{ background: C_DC.deep, borderRadius: "50%", ...d(delayMs, 90) }} />
-      {[0, 1, 2, 3, 4].map((i) => (
-        <P key={i} x={38 + i * 6} y={60} w={3} h={8} cls="g05-dc-heads" style={{ background: C_DC.core, ...d(delayMs, i * 70) }} />
+      {[0, 1, 2, 3].map((i) => (
+        <P key={i} x={39 + i * 7.4} y={60} w={3} h={8} cls="g05-dc-heads" style={{ background: C_DC.core, ...d(delayMs, i * 70) }} />
       ))}
       <P x={50} y={50} w={34} h={4.4} cls="g05-dc-plank" style={{ ...adv, ...d(delayMs, 280) }}>
         <svg viewBox="0 0 180 24" className="block h-full w-full">
@@ -1132,28 +1108,12 @@ function VolcanicVentScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {VV_PUSH.map((v, i) => (
-        <P
-          key={i}
-          x={v.x}
-          y={v.y}
-          w={6}
-          h={9}
-          cls="g05-vv-push"
-          style={{ "--g05-mx": v.mx, "--g05-my": v.my, ...d(delayMs, 520 + i * 70) } as CSSProperties}
-        >
+        <P key={i} x={v.x} y={v.y} w={6} h={9} cls="g05-vv-push" style={{ "--g05-mx": v.mx, "--g05-my": v.my, ...d(delayMs, 520 + i * 70) } as CSSProperties}>
           <Pawn fill={C_VV.core} stroke={C_VV.deep} />
         </P>
       ))}
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={45 + i * 5}
-          y={44}
-          w={3}
-          h={3}
-          cls="g05-vv-ash"
-          style={{ ...adv, background: C_VV.glow, borderRadius: "50%", ...d(delayMs, 720 + i * 90) }}
-        />
+        <P key={i} x={45 + i * 5} y={44} w={3} h={3} cls="g05-vv-ash" style={{ ...adv, background: C_VV.glow, borderRadius: "50%", ...d(delayMs, 720 + i * 90) }} />
       ))}
     </Wide>
   );
@@ -1275,15 +1235,7 @@ function LettersHomeScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={44 + i * 6}
-          y={50}
-          w={8}
-          h={6}
-          cls="g05-lh-letter"
-          style={{ "--g05-mr": `${[-32, 8, 34][i]}deg`, ...d(delayMs, 200 + i * 100) } as CSSProperties}
-        >
+        <P key={i} x={44 + i * 6} y={50} w={8} h={6} cls="g05-lh-letter" style={{ "--g05-mr": `${[-32, 8, 34][i]}deg`, ...d(delayMs, 200 + i * 100) } as CSSProperties}>
           <svg viewBox="0 0 60 44" className="block h-full w-full">
             <rect x="4" y="4" width="52" height="36" fill={C_LH.glow} stroke={C_LH.deep} strokeWidth="4" />
             <path d="M4 4l26 20L56 4" fill="none" stroke={C_LH.deep} strokeWidth="4" />
@@ -1359,15 +1311,7 @@ function SmallConsolationScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {SC_RUBBLE.map((r, i) => (
-        <P
-          key={i}
-          x={r.x}
-          y={62}
-          w={4.4}
-          h={4}
-          cls="g05-sc-rubble"
-          style={{ "--g05-mx": r.mx, "--g05-mr": r.mr, background: C_SC.core, ...d(delayMs, 420 + i * 70) } as CSSProperties}
-        />
+        <P key={i} x={r.x} y={62} w={4.4} h={4} cls="g05-sc-rubble" style={{ "--g05-mx": r.mx, "--g05-mr": r.mr, background: C_SC.core, ...d(delayMs, 420 + i * 70) } as CSSProperties} />
       ))}
       <P x={50} y={60} w={22} h={7} cls="g05-sc-sift" style={{ ...home, ...d(delayMs, 620) }}>
         <svg viewBox="0 0 120 40" className="block h-full w-full">
@@ -1443,15 +1387,7 @@ function StrayCatScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1, 2, 3].map((i) => (
-        <P
-          key={i}
-          x={38 + i * 8}
-          y={46}
-          w={7}
-          h={7}
-          cls="g05-ct-hush"
-          style={{ border: `2px solid ${C_CT.glow}`, borderRadius: "50%", ...d(delayMs, 720 + i * 80) }}
-        />
+        <P key={i} x={38 + i * 8} y={46} w={7} h={7} cls="g05-ct-hush" style={{ border: `2px solid ${C_CT.glow}`, borderRadius: "50%", ...d(delayMs, 720 + i * 80) }} />
       ))}
     </Wide>
   );
@@ -1647,15 +1583,7 @@ function FireworksBargeScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1, 2, 3].map((i) => (
-        <P
-          key={i}
-          x={i < 2 ? 43 : 57}
-          y={i % 2 ? 57 : 43}
-          w={6}
-          h={9}
-          cls="g05-fb-push"
-          style={{ "--g05-mx": i < 2 ? "-130%" : "130%", "--g05-my": i % 2 ? "110%" : "-110%", ...d(delayMs, 740 + i * 60) } as CSSProperties}
-        >
+        <P key={i} x={i < 2 ? 43 : 57} y={i % 2 ? 57 : 43} w={6} h={9} cls="g05-fb-push" style={{ "--g05-mx": i < 2 ? "-130%" : "130%", "--g05-my": i % 2 ? "110%" : "-110%", ...d(delayMs, 740 + i * 60) } as CSSProperties}>
           <Pawn fill={C_FB.core} stroke={C_FB.deep} />
         </P>
       ))}
@@ -1740,7 +1668,7 @@ function TrojanPawnScene({ role, delayMs }: SceneProps) {
           <path d={PAWN_D} fill={C_TJ.core} stroke={C_TJ.deep} strokeWidth="2.4" transform="translate(10 4) scale(0.5)" />
           <path d="M20 12v20" stroke={C_TJ.glow} strokeWidth="2" strokeDasharray="3 2" />
         </g>
-        <g className="g05-tj-leap" style={d(delayMs, 220)}>
+        <g className="g05-tj-leap" style={{ ...adv, ...d(delayMs, 220) } as CSSProperties}>
           <circle cx="10" cy="16" r="4" fill={C_TJ.glow} />
           <circle cx="30" cy="16" r="4" fill={C_TJ.glow} />
         </g>
@@ -1773,15 +1701,7 @@ function TrojanPawnScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1].map((i) => (
-        <P
-          key={i}
-          x={50}
-          y={56}
-          w={7}
-          h={11}
-          cls="g05-tj-leap"
-          style={{ ...adv, "--g05-mx": i ? "160%" : "-160%", ...d(delayMs, 460 + i * 110) } as CSSProperties}
-        >
+        <P key={i} x={50} y={56} w={7} h={11} cls="g05-tj-leap" style={{ ...adv, "--g05-mx": i ? "160%" : "-160%", ...d(delayMs, 460 + i * 110) } as CSSProperties}>
           <Pawn fill={C_TJ.glow} stroke={C_TJ.deep} />
         </P>
       ))}
@@ -1846,15 +1766,7 @@ function FloristsTrickScene({ role, delayMs }: SceneProps) {
       </P>
       <P x={54} y={58} w={26} h={2.4} cls="g05-ft-cut" style={{ ...adv, background: C_FT.deep, ...d(delayMs, 220) }} />
       {[0, 1, 2].map((i) => (
-        <P
-          key={i}
-          x={48 + i * 6}
-          y={54}
-          w={2.6}
-          h={2.6}
-          cls="g05-ft-seed"
-          style={{ background: C_FT.glow, borderRadius: "50%", ...d(delayMs, 360 + i * 90) }}
-        />
+        <P key={i} x={48 + i * 6} y={54} w={2.6} h={2.6} cls="g05-ft-seed" style={{ background: C_FT.glow, borderRadius: "50%", ...d(delayMs, 360 + i * 90) }} />
       ))}
       <P x={54} y={52} w={13} h={13} cls="g05-ft-bloom" style={d(delayMs, 600)}>
         <svg viewBox="0 0 70 70" className="block h-full w-full">
@@ -1951,7 +1863,7 @@ function MatryoshkaScene({ role, delayMs }: SceneProps) {
           <path d="M20 5q9 0 9 12t-3 17H14q-3-5-3-17T20 5z" fill={C_MS.core} stroke={C_MS.deep} strokeWidth="2.4" strokeLinejoin="round" />
           <circle cx="20" cy="14" r="5" fill={C_MS.glow} />
         </g>
-        <g className="g05-ms-pop" style={d(delayMs, 220)}>
+        <g className="g05-ms-pop" style={{ ...adv, ...d(delayMs, 220) } as CSSProperties}>
           <circle cx="10" cy="28" r="5" fill={C_MS.glow} stroke={C_MS.deep} strokeWidth="2" />
           <circle cx="30" cy="28" r="5" fill={C_MS.glow} stroke={C_MS.deep} strokeWidth="2" />
         </g>
@@ -1989,15 +1901,7 @@ function MatryoshkaScene({ role, delayMs }: SceneProps) {
         </svg>
       </P>
       {[0, 1].map((i) => (
-        <P
-          key={i}
-          x={50}
-          y={57}
-          w={8}
-          h={11}
-          cls="g05-ms-pop"
-          style={{ ...adv, "--g05-mx": i ? "150%" : "-150%", ...d(delayMs, 480 + i * 110) } as CSSProperties}
-        >
+        <P key={i} x={50} y={57} w={8} h={11} cls="g05-ms-pop" style={{ ...adv, "--g05-mx": i ? "150%" : "-150%", ...d(delayMs, 480 + i * 110) } as CSSProperties}>
           <svg viewBox="0 0 40 56" className="block h-full w-full">
             <path d="M20 4q11 0 11 16t-4 32H13q-4-16-4-32T20 4z" fill={C_MS.glow} stroke={C_MS.deep} strokeWidth="4" strokeLinejoin="round" />
             <circle cx="20" cy="18" r="6" fill={C_MS.core} />
@@ -2085,7 +1989,7 @@ function OneLadleEachScene({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
-        <g className="g05-ol-queue" style={{ animationDelay: `calc(${delayMs}ms + var(--fx-index, 0) * 80ms)` }}>
+        <g className="g05-ol-queue" style={{ ...adv, animationDelay: `calc(${delayMs}ms + var(--fx-index, 0) * 80ms)` } as CSSProperties}>
           <path d={PAWN_D} fill={C_OL.core} stroke={C_OL.deep} strokeWidth="2.4" transform="translate(10 4) scale(0.5)" />
         </g>
         <g className="g05-ol-flip" style={d(delayMs, 220)}>

@@ -2107,3 +2107,526 @@ function LovestruckMajestyScene({ role, delayMs }: SceneProps) {
     </BoardWideStage>
   );
 }
+
+/* =============================================================================
+   25. Poacher's Snare (t7) — THE JAWS UNDER THE SNOW. Tell: a smooth patch of
+   snow dimples where the plate sits. Strike: both jaws spring shut and the ice
+   teeth interlock with a flash. Settle: the anchor chain snaps taut and snow
+   is thrown off the trip.
+   ========================================================================== */
+
+const C_PS = { core: "#93c2ce", glow: "#eff7f6", deep: "#16292c" };
+const PS_TEETH = [-12, -4, 4, 12];
+
+function PoachersSnareScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <path d="M6 22q14-10 28 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M6 26q14 10 28 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 200)}>
+          <path d="M13 22v4M20 21v6M27 22v4" stroke={C_PS.glow} strokeWidth="2.4" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M5 16q15-12 30 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
+          <path d="M5 30q15 12 30 0" fill="none" stroke={C_PS.core} strokeWidth="3.4" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+          <circle cx="20" cy="23" r="5" fill={C_PS.deep} stroke={C_PS.glow} strokeWidth="2.2" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M20 28v9" stroke={C_PS.glow} strokeWidth="2.4" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(147,194,206,0.26)" base={delayMs} off={0} />
+      <P cls="g09-ps-snow" x={50} y={52} w={22} h={7} style={{ ...dm(delayMs, 0), background: `radial-gradient(ellipse, ${C_PS.glow}, transparent 76%)` }} />
+      <P
+        cls="g09-ps-jawl"
+        x={50}
+        y={48}
+        w={24}
+        h={9}
+        style={dv(delayMs, 210, { "--g09-side": "var(--fx-side, 1)" })}
+      >
+        <svg viewBox="0 0 100 40" className="block h-full w-full">
+          <path d="M4 36q46-38 92 0" fill="none" stroke={C_PS.core} strokeWidth="8" strokeLinecap="round" />
+        </svg>
+      </P>
+      <P cls="g09-ps-jawr" x={50} y={56} w={24} h={9} style={dm(delayMs, 210)}>
+        <svg viewBox="0 0 100 40" className="block h-full w-full">
+          <path d="M4 4q46 38 92 0" fill="none" stroke={C_PS.core} strokeWidth="8" strokeLinecap="round" />
+        </svg>
+      </P>
+      {PS_TEETH.map((o, i) => (
+        <P
+          key={i}
+          cls="g09-ps-tooth"
+          x={50 + o * 0.75}
+          y={52}
+          w={1.8}
+          h={5}
+          style={{ background: C_PS.glow, animationDelay: `${delayMs + i * 70 + 390}ms` }}
+        />
+      ))}
+      <P cls="g09-ps-chain" x={64} y={58} w={17} h={1.6} style={{ ...dm(delayMs, 550), background: C_PS.deep, borderRadius: "999px" }} />
+      <Motes cls="g09-mote" color={C_PS.glow} base={delayMs} off={710} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
+   26. Tribute Demand (t7) — THE GAUNTLET THAT WILL NOT OPEN AGAIN. Tell: a
+   frozen gauntlet is held out, fingers apart. Strike: a rimed coin is pressed
+   into the palm and the fingers close on it. Settle: frost runs up the wrist in
+   three tongues and the hand stops.
+   ========================================================================== */
+
+const C_TD = { core: "#a8c2d0", glow: "#f4eeda", deep: "#182634" };
+const TD_CREEP = [-7, 0, 7];
+
+function TributeDemandScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="19" r="9" fill={C_TD.glow} stroke={C_TD.deep} strokeWidth="2.2" />
+          <path d="M20 12v14M15 19h10" stroke={C_TD.core} strokeWidth="2.2" strokeLinecap="round" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 200)}>
+          <path d="M9 31q11 5 22 0" fill="none" stroke={C_TD.core} strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M10 34V20a4 4 0 0 1 8 0v-6a4 4 0 0 1 8 0v6a4 4 0 0 1 4 4v10z" fill={C_TD.deep} stroke={C_TD.core} strokeWidth="2.4" strokeLinejoin="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+          <circle cx="20" cy="10" r="5" fill={C_TD.glow} stroke={C_TD.core} strokeWidth="2" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M12 27h16" stroke={C_TD.core} strokeWidth="2.4" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(168,194,208,0.26)" base={delayMs} off={0} />
+      <P cls="g09-td-hand" x={50} y={56} w={20} h={18} style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 80 72" className="block h-full w-full">
+          <path d="M16 70V38a7 7 0 0 1 14 0V24a7 7 0 0 1 14 0v14a7 7 0 0 1 14 0v32z" fill={C_TD.deep} stroke={C_TD.core} strokeWidth="5" strokeLinejoin="round" />
+        </svg>
+      </P>
+      <P
+        cls="g09-td-coin"
+        x={50}
+        y={42}
+        w={8}
+        h={8}
+        style={dv(delayMs, 230, { "--g09-side": "var(--fx-side, 1)" })}
+      >
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          <circle cx="20" cy="20" r="17" fill={C_TD.glow} stroke={C_TD.core} strokeWidth="4" />
+          <path d="M20 8v24M8 20h24M11 11l18 18" stroke={C_TD.deep} strokeWidth="2.6" strokeLinecap="round" />
+        </svg>
+      </P>
+      <P cls="g09-td-close" x={50} y={50} w={20} h={9} style={dm(delayMs, 410)}>
+        <svg viewBox="0 0 80 36" className="block h-full w-full">
+          <path d="M6 6q34 30 68 0" fill="none" stroke={C_TD.core} strokeWidth="9" strokeLinecap="round" />
+        </svg>
+      </P>
+      {TD_CREEP.map((o, i) => (
+        <P
+          key={i}
+          cls="g09-td-creep"
+          x={50 + o * 0.5}
+          y={66}
+          w={2.2}
+          h={9}
+          style={{ background: `linear-gradient(0deg, ${C_TD.glow}, transparent)`, animationDelay: `${delayMs + i * 90 + 550}ms` }}
+        />
+      ))}
+      <Motes cls="g09-mote" color={C_TD.core} base={delayMs} off={720} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
+   27. Watchman's Whistle (t7) — CAUGHT MID-STRIDE. Tell: the lantern comes up
+   and the whistle is set to the lip. Strike: the breath goes out as a cone of
+   frost down the attack vector, its reach scaled by the real leg length.
+   Settle: the runner is locked mid-stride and rime dust falls off him.
+   ========================================================================== */
+
+const C_WW = { core: "#a2cfe0", glow: "#f4f8fb", deep: "#14273a" };
+
+function WatchmansWhistleScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <path d="M8 26l10-14 6 5 8-9" fill="none" stroke={C_WW.core} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 200)}>
+          <path d="M6 33h28" stroke={C_WW.glow} strokeWidth="3" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M8 22h16a5 5 0 0 1 0 10H13z" fill={C_WW.deep} stroke={C_WW.core} strokeWidth="2.4" strokeLinejoin="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+          <path d="M26 18q7-4 10 0" fill="none" stroke={C_WW.glow} strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M28 9q5-3 8 0M24 6q7-4 12 0" fill="none" stroke={C_WW.core} strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <AimStage>
+      <Wash cls="g09-wash" tint="rgba(162,207,224,0.26)" base={delayMs} off={0} />
+      <P cls="g09-ww-lamp" x={40} y={44} w={8} h={11} style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 40 56" className="block h-full w-full">
+          <path d="M14 6h12M20 6v6" stroke={C_WW.deep} strokeWidth="4" strokeLinecap="round" />
+          <path d="M8 50V22h24v28z" fill={C_WW.glow} stroke={C_WW.core} strokeWidth="4" strokeLinejoin="round" />
+        </svg>
+      </P>
+      <P cls="g09-ww-puff" x={46} y={52} w={9} h={9} style={dm(delayMs, 180)}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          <path d="M6 26h16a6 6 0 0 1 0 12H12z" fill={C_WW.deep} stroke={C_WW.core} strokeWidth="3.4" strokeLinejoin="round" />
+        </svg>
+      </P>
+      <P
+        cls="g09-ww-cone"
+        x={62}
+        y={50}
+        w={30}
+        h={16}
+        style={{
+          ...dv(delayMs, 320, { "--g09-len": "var(--fx-len, 3)" }),
+          background: `linear-gradient(90deg, ${C_WW.glow}, rgba(162,207,224,0.35) 58%, transparent 92%)`,
+        }}
+      />
+      <P cls="g09-ww-strider" x={74} y={50} w={11} h={13} style={dm(delayMs, 520)}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          <circle cx="20" cy="8" r="5" fill={C_WW.core} />
+          <path d="M20 13v12M20 25l-7 12M20 25l8 12M9 18l11 3 11-6" fill="none" stroke={C_WW.core} strokeWidth="3.4" strokeLinecap="round" />
+        </svg>
+      </P>
+      <Motes cls="g09-mote" color={C_WW.glow} base={delayMs} off={700} />
+    </AimStage>
+  );
+}
+
+/* =============================================================================
+   28. Wheel of Ice (t7) — THE RIBBON ROLLS ONE FILE ON. Tell: the file the ice
+   is due on is scored top to bottom. Strike: a wheel rim rolls up it, its
+   position taken from this square's place in the order. Settle: the ribbon of
+   ice unrolls behind the rim and the spokes tick to a stop.
+   ========================================================================== */
+
+const C_WI = { core: "#93cede", glow: "#eff9fd", deep: "#123040" };
+const WI_SPOKES = [0, 45, 90, 135];
+
+function WheelOfIceScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="11" fill="none" stroke={C_WI.core} strokeWidth="3" />
+          <path d="M20 9v22M9 20h22" stroke={C_WI.glow} strokeWidth="2.2" strokeLinecap="round" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 200)}>
+          <path d="M4 34h32" stroke={C_WI.deep} strokeWidth="3" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <circle cx="20" cy="20" r="13" fill="none" stroke={C_WI.core} strokeWidth="3.4" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+          <path d="M20 7v26M7 20h26M11 11l18 18M29 11L11 29" stroke={C_WI.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <circle cx="20" cy="20" r="4" fill={C_WI.deep} />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(147,206,222,0.26)" base={delayMs} off={0} />
+      <BoardFrame>
+        <span
+          className="g09-wi-track absolute block"
+          style={{ left: "44%", top: 0, width: "12%", height: "100%", background: C_WI.deep, animationDelay: `${delayMs}ms` }}
+        />
+      </BoardFrame>
+      <P
+        cls="g09-wi-rim"
+        x={50}
+        y={50}
+        w={15}
+        h={15}
+        style={{ ...dv(delayMs, 220, { "--g09-i": "var(--fx-index, 0)" }), border: `3px solid ${C_WI.core}`, borderRadius: "50%" }}
+      />
+      <P cls="g09-wi-spoke" x={50} y={50} w={15} h={15} style={dm(delayMs, 330)}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          {WI_SPOKES.map((a, i) => (
+            <path key={i} d="M20 4v32" stroke={C_WI.glow} strokeWidth="2.4" strokeLinecap="round" transform={`rotate(${a} 20 20)`} />
+          ))}
+        </svg>
+      </P>
+      <BoardFrame>
+        <span
+          className="g09-wi-ribbon absolute block"
+          style={{
+            left: "44%",
+            top: 0,
+            width: "12%",
+            height: "100%",
+            background: `linear-gradient(180deg, ${C_WI.glow}, rgba(147,206,222,0.45))`,
+            animationDelay: `${delayMs + 400}ms`,
+          }}
+        />
+      </BoardFrame>
+      <Motes cls="g09-mote" color={C_WI.core} base={delayMs} off={620} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
+   29. Glacier Calving (t6) — THE SHELF LETS GO. Tell: a hairline crack runs the
+   length of the shelf. Strike: three chunks break off and drop into the water.
+   Settle: cold spray is thrown up and a swell rolls out across the board.
+   ========================================================================== */
+
+const C_GC = { core: "#8ccbe4", glow: "#eef9ff", deep: "#0f2a3c" };
+const GC_CHUNKS = [
+  { x: 43, w: 7 },
+  { x: 52, w: 9 },
+  { x: 61, w: 6 },
+];
+
+function GlacierCalvingScene({ role, delayMs }: SceneProps) {
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <path d="M6 14l12-6 9 8 7-4v18H6z" fill={C_GC.core} stroke={C_GC.deep} strokeWidth="2" strokeLinejoin="round" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 200)}>
+          <path d="M4 33q9-5 18 0t14 0" fill="none" stroke={C_GC.glow} strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M5 16l13-8 8 9 9-5v16H5z" fill={C_GC.deep} stroke={C_GC.core} strokeWidth="2.4" strokeLinejoin="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 210)}>
+          <path d="M18 9v19M26 17v11" stroke={C_GC.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M4 34q9-5 18 0t14 0" fill="none" stroke={C_GC.core} strokeWidth="2.4" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(140,203,228,0.26)" base={delayMs} off={0} />
+      <P cls="g09-gc-shelf" x={50} y={45} w={30} h={13} style={dm(delayMs, 0)}>
+        <svg viewBox="0 0 120 52" className="block h-full w-full">
+          <path d="M4 50V18L28 4l20 16 22-14 24 20 18-8v32z" fill={C_GC.glow} stroke={C_GC.core} strokeWidth="5" strokeLinejoin="round" />
+          <path d="M10 30l24 4 26-8 26 8 22-4" fill="none" stroke={C_GC.deep} strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      </P>
+      {GC_CHUNKS.map((c, i) => (
+        <P
+          key={i}
+          cls="g09-gc-chunk"
+          x={c.x}
+          y={53}
+          w={c.w}
+          h={c.w}
+          style={
+            {
+              animationDelay: `${delayMs + i * 110 + 240}ms`,
+              "--g09-side": "var(--fx-side, 1)",
+            } as CSSProperties
+          }
+        >
+          <svg viewBox="0 0 40 40" className="block h-full w-full">
+            <path d="M4 30L14 6l16 4 6 20-14 8z" fill={C_GC.core} stroke={C_GC.deep} strokeWidth="3.4" strokeLinejoin="round" />
+          </svg>
+        </P>
+      ))}
+      <P cls="g09-gc-spray" x={52} y={60} w={22} h={9} style={{ ...dm(delayMs, 520), background: `radial-gradient(ellipse at 50% 100%, ${C_GC.glow}, transparent 74%)` }} />
+      <Band cls="g09-gc-swell" color={C_GC.core} y={62} h={2.4} base={delayMs} off={640} />
+      <Motes cls="g09-mote" color={C_GC.glow} base={delayMs} off={760} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
+   Registry — scene + config per card id. Every `sound` is an existing
+   SigSoundKey, every `source` an existing SigZone, and every entry declares an
+   anchor. Most of these cards decorate pieces that stay on the board, so they
+   read their squares from the frozen / stun / summon zones.
+   ========================================================================== */
+
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
+  return { config, Render };
+}
+
+export const PLAYS: Record<string, SigPlugin> = {
+  // --- the season arriving: washes and garrisons ---
+  bn4_long_winter: S(LongWinterScene, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  bn4_winter_garrison: S(WinterGarrisonScene, {
+    ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
+    sound: "wall", source: "summon", anchor: "cast",
+  }),
+  bn4_frozen_moat: S(FrozenMoatScene, {
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  bn4_glacier_calving: S(GlacierCalvingScene, {
+    ordering: "radial", staggerMs: 65, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+
+  // --- tolls, prices and ransoms: the cold collects ---
+  hx4_blood_price: S(BloodPriceScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+  hx4_eternal_toll: S(EternalTollScene, {
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+  hx4_kings_ransom: S(KingsRansomScene, {
+    ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+  hx4_tribute_demand: S(TributeDemandScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+
+  // --- clocks and bells: the cold on a count ---
+  hx4_doomsday_clock: S(DoomsdayClockScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+  hx4_tolling_thirds: S(TollingThirdsScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+  ov_deus_ex_machina: S(DeusExMachinaScene, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "clockice", source: "stun", anchor: "cast",
+  }),
+
+  // --- gates, keeps and councils: the cold seizes the works ---
+  hx4_burned_keep: S(BurnedKeepScene, {
+    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true,
+    sound: "wall", source: "frozen", anchor: "cast",
+  }),
+  hx4_oathbreakers_brand: S(OathbreakersBrandScene, {
+    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true,
+    sound: "petrify", source: "frozen", anchor: "cast",
+  }),
+  hx4_shattered_council: S(ShatteredCouncilScene, {
+    ordering: "radial", staggerMs: 65, victims: ["q", "r"], hasLead: true,
+    sound: "petrify", source: "frozen", anchor: "cast",
+  }),
+  hx4_frozen_reserves: S(FrozenReservesScene, {
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  hx4_hearth_frost: S(HearthFrostScene, {
+    ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true,
+    sound: "petrify", source: "frozen", anchor: "cast",
+  }),
+
+  // --- the cold that travels: fronts, scythes and tracks ---
+  hx4_great_glacier: S(GreatGlacierScene, {
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "aim",
+  }),
+  hx4_reapers_due: S(ReapersDueScene, {
+    ordering: "line", staggerMs: 70, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "aim",
+  }),
+  hx4_winter_that_stays: S(WinterThatStaysScene, {
+    ordering: "line", staggerMs: 65, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "aim",
+  }),
+  hx4_watchmans_whistle: S(WatchmansWhistleScene, {
+    ordering: "line", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "aim",
+  }),
+  hx4_wheel_of_ice: S(WheelOfIceScene, {
+    ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "wall", source: "frozen", anchor: "cast",
+  }),
+
+  // --- traps, webs and holds: the cold takes one thing ---
+  hx4_glass_prison: S(GlassPrisonScene, {
+    ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true,
+    sound: "petrify", source: "frozen", anchor: "cast",
+  }),
+  hx4_spiders_parlor: S(SpidersParlorScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  hx4_poachers_snare: S(PoachersSnareScene, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
+    sound: "petrify", source: "frozen", anchor: "cast",
+  }),
+  hx4_kraken_arms: S(KrakenArmsScene, {
+    ordering: "radial", staggerMs: 75, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  hx4_lovestruck_majesty: S(LovestruckMajestyScene, {
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
+    sound: "clockice", source: "frozen", anchor: "cast",
+  }),
+
+  // --- weather: the cold falling out of the sky ---
+  hx4_tempest: S(TempestScene, {
+    ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "stun", anchor: "cast",
+  }),
+  hx4_lead_rain: S(LeadRainScene, {
+    ordering: "radial", staggerMs: 65, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "frozen", anchor: "cast",
+  }),
+  hx4_frozen_harbor: S(FrozenHarborScene, {
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
+    sound: "wall", source: "frozen", anchor: "cast",
+  }),
+};
