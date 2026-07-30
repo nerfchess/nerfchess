@@ -57,6 +57,7 @@ import { pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
 import {
   UNRESTRICTED_NERF,
   acquireBuff,
+  aiActivateBuffs,
   enableDraftMode,
   newGame,
   playMove,
@@ -73,7 +74,13 @@ const flag = (name: string, dflt: string): string => {
 };
 const GAMES = Number(flag("games", "20"));
 const ONLY = flag("only", "");
-const MAX_PLIES = Number(flag("plies", "120"));
+/** Ply cap. 240 rather than the old 120, because the cap was silently eating
+ *  the sample: at 90 plies a card whose games run long (Warp Legion) voided 7
+ *  of 8 pairs, and the pairs that survived were the ones that happened to end
+ *  FAST -- a biased slice, not a smaller one. At 240 the same card voids none,
+ *  and it costs nothing on cards whose games end naturally (11s for 4 pairs at
+ *  either cap), because the cap only bites on the games it was discarding. */
+const MAX_PLIES = Number(flag("plies", "240"));
 const WRITE = args.includes("--write");
 /** `--shard i/n` measures only every n-th card starting at i. One process per
  *  core: a full sweep is hours of CPU and the box has four of them, so the
@@ -100,16 +107,35 @@ function mulberry32(seed: number): () => number {
 type Outcome = "w" | "b" | "draw" | "unfinished";
 
 /**
+ * One game's result, plus whether the card under test ever actually FIRED.
+ *
+ * This flag is the validity guard the harness was missing. A card that is
+ * never used scores a delta of zero, which is indistinguishable from a card
+ * that is used and does nothing -- and for 752 activated cards the harness was
+ * silently reporting the first as if it were the second. Carrying "did it
+ * fire" alongside the outcome means an unused card can be reported as NOT
+ * MEASURED instead of as measured-zero, and it generalises to any card whose
+ * trigger conditions simply never come up in bot play.
+ */
+interface GameRun {
+  outcome: Outcome;
+  fired: boolean;
+}
+
+/**
  * One game. `cardId` is granted to White at the start when given.
  *
  * Both seats use the same skill and the same RNG stream, so with the same seed
  * and no card the two runs of a pair are identical move for move. That is what
  * makes the delta attributable to the card rather than to the seed.
  */
-function playGame(seed: number, cardId: string | null, tier: Tier): Outcome {
+function playGame(seed: number, cardId: string | null, tier: Tier): GameRun {
   const game: NerfGame = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
   enableDraftMode(game, seed);
   if (cardId) acquireBuff(game, "w", cardId, tier);
+  // An `instant` fires inside acquireBuff, so it has already been used by the
+  // time the first move is picked.
+  let fired = cardId ? BUFF_BY_ID[cardId]?.kind === "instant" : false;
 
   // The SAME stream in both arms of a pair. It used to be seeded with
   // `seed * 7919 + (cardId ? 1 : 0)`, which gave the treatment and the control
@@ -121,6 +147,29 @@ function playGame(seed: number, cardId: string | null, tier: Tier): Outcome {
   const pick = (max: number): number => Math.floor(rnd() * max);
 
   for (let ply = 0; ply < MAX_PLIES && !game.result; ply++) {
+    // Give the side to move a chance to FIRE a held card before it moves.
+    //
+    // Without this the harness measured nothing at all for the 752 activated
+    // cards: pickHouseMove only picks chess moves and never touches the buff
+    // system, so a card like Warp Legion ("up to three of your pieces teleport
+    // to empty squares beside your king") sat in hand for the whole game and
+    // scored a delta of exactly zero. Not "weak" -- unused.
+    //
+    // aiActivateBuffs is the engine's OWN policy, the same one the house bots
+    // use online: it auto-picks targets by value, makes offensive one-shots
+    // hold out for a knight's worth of value, and makes protective cards wait
+    // for real danger. That makes this a measurement of the card as players
+    // actually meet it, rather than of a policy invented for the benchmark.
+    const mover = game.board.turn;
+    try {
+      if (aiActivateBuffs(game, mover)) fired = true;
+    } catch (err) {
+      if (process.env.DEBUG) console.error("activate failed:", err);
+    }
+    // Activating can end the turn (or the game), so re-check before moving.
+    if (game.result) break;
+    if (game.board.turn !== mover) continue;
+
     let move;
     try {
       move = pickHouseMove(game, SKILL, pick);
@@ -129,18 +178,18 @@ function playGame(seed: number, cardId: string | null, tier: Tier): Outcome {
       // rather than taking the whole run down: one card is not worth losing
       // the other 2,447 measurements. DEBUG=1 surfaces why.
       if (process.env.DEBUG) console.error("pick failed:", err);
-      return "unfinished";
+      return { outcome: "unfinished", fired };
     }
     if (!move) break;
     try {
       playMove(game, move);
     } catch (err) {
       if (process.env.DEBUG) console.error("play failed:", err);
-      return "unfinished";
+      return { outcome: "unfinished", fired };
     }
   }
-  if (!game.result) return "unfinished";
-  return game.result.winner as Outcome;
+  if (!game.result) return { outcome: "unfinished", fired };
+  return { outcome: game.result.winner as Outcome, fired };
 }
 
 /** White's score for one game: 1 win, 0.5 draw, 0 loss. */
@@ -165,6 +214,9 @@ interface Row {
    *  move. Reported, because a card measured on 2 of 20 pairs is not the same
    *  claim as one measured on 20. */
   voided: number;
+  /** Pairs in which the card actually FIRED. Zero means the card was never
+   *  used, so its delta is not a measurement of the card at all. */
+  firedPairs: number;
   /** One EMPIRICAL standard error on that delta, in points. */
   stderr: number;
 }
@@ -176,10 +228,14 @@ function measure(id: string): Row | null {
   // measurement error, and it cannot be recovered from the total.
   const deltas: number[] = [];
   let voided = 0;
+  let firedPairs = 0;
   for (let i = 0; i < GAMES; i++) {
     const seed = 1000 + i * 31;
-    const a = score(playGame(seed, id, def.tier));
-    const b = score(playGame(seed, null, def.tier));
+    const withCard = playGame(seed, id, def.tier);
+    const without = playGame(seed, null, def.tier);
+    if (withCard.fired) firedPairs++;
+    const a = score(withCard.outcome);
+    const b = score(without.outcome);
     if (a == null || b == null) {
       voided++; // the pair is only usable if both games finished
       continue;
@@ -217,6 +273,7 @@ function measure(id: string): Row | null {
     delta: mean * 100,
     pairs,
     voided,
+    firedPairs,
     stderr: 100 * Math.sqrt(variance / pairs),
   };
 }
@@ -247,8 +304,23 @@ function main(): void {
   // even at the same N. Two standard errors is the bar for calling a card
   // moved, and anything inside it is "not measured" rather than "measured
   // zero" - saying so is the whole point.
+  // A card that never fired is NOT MEASURED, whatever its delta says. Reporting
+  // it as a zero would be the harness's own silence dressed up as a finding.
+  const unused = rows.filter((r) => r.firedPairs === 0);
+  const usable = rows.filter((r) => r.firedPairs > 0);
+  if (unused.length) {
+    console.log(
+      `\nNOT MEASURED: ${unused.length} cards never fired in any pair, so their ` +
+        "delta says nothing about the card. By kind: " +
+        ["passive", "activated", "instant"]
+          .map((k) => `${k} ${unused.filter((r) => r.kind === k).length}`)
+          .join(", "),
+    );
+    for (const r of unused.slice(0, 10)) console.log(`  t${r.tier}  ${r.id}  (${r.category})`);
+  }
+
   const isStrong = (r: Row): boolean => Math.abs(r.delta) > 2 * r.stderr;
-  const strong = rows.filter(isStrong);
+  const strong = usable.filter(isStrong);
   const voidedTotal = rows.reduce((s, r) => s + r.voided, 0);
   const medErr = [...rows].sort((a, b) => a.stderr - b.stderr)[Math.floor(rows.length / 2)];
   console.log(
@@ -269,7 +341,7 @@ function main(): void {
   // The tier ladder is an assertion about power; this is the check of it.
   console.log("\nmean delta by tier (the ladder should rise):");
   for (let t = 1; t <= 10; t++) {
-    const at = rows.filter((r) => r.tier === t);
+    const at = usable.filter((r) => r.tier === t);
     if (!at.length) continue;
     const mean = at.reduce((a, r) => a + r.delta, 0) / at.length;
     console.log(`  t${t}  ${mean >= 0 ? "+" : ""}${mean.toFixed(1)}pt  (${at.length} cards)`);
@@ -277,7 +349,7 @@ function main(): void {
 
   console.log("\nmean delta by kind:");
   for (const k of ["passive", "activated", "instant"]) {
-    const at = rows.filter((r) => r.kind === k);
+    const at = usable.filter((r) => r.kind === k);
     if (!at.length) continue;
     const mean = at.reduce((a, r) => a + r.delta, 0) / at.length;
     console.log(`  ${k.padEnd(10)} ${mean >= 0 ? "+" : ""}${mean.toFixed(1)}pt  (${at.length} cards)`);
