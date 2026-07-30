@@ -205,7 +205,7 @@ function GreatWaltzScene({ role, delayMs }: SceneProps) {
     return (
       <Cut d={delayMs}>
         <V c="g22-ent-drop" l={10} t={20} w={80} h={48} d={40}>{mask}</V>
-        {GW_TILES.map(([l], i) => (
+        {GW_TILES.map((_, i) => (
           <L key={i} c="g22-gw-tile" l={8 + i * 30} t={64} w={22} h={22} d={240 + i * 90} st={{ background: "#241a30" }} />
         ))}
         <V c="g22-ent-pop" l={34} t={30} w={34} h={44} d={470}>{pair}</V>

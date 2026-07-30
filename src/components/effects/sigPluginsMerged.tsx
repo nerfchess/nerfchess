@@ -23,18 +23,25 @@ import { PLAYS as GAMBLING_PLAYS } from "./gamblingPlays";
 import { PLAYS as BOON_PLAYS } from "./boonPlays";
 import { PLAYS as CURSE_PLAYS } from "./cursePlays";
 import { PLAYS as CREATOR_PLAYS } from "./creatorPlays";
-// Bespoke-coverage waves: modules replacing the generated-signature fallback.
+// Bespoke-coverage waves: modules replacing the generated-signature
+// fallback. Kept in one sorted block so concurrent batches land
+// predictably; regenerate PLUGIN_IDS after any change here.
 import { PLAYS as G01_HOURGLASS_PLAYS } from "./g01HourglassPlays";
 import { PLAYS as G05_PAWNTIDE_PLAYS } from "./g05PawnTidePlays";
+import { PLAYS as G09_FROST_PLAYS } from "./g09FrostPlays";
+import { PLAYS as G12_CLOCKWORK_PLAYS } from "./g12ClockworkPlays";
 import { PLAYS as G20_RAMPART_PLAYS } from "./g20RampartPlays";
+import { PLAYS as G22_VEIL_PLAYS } from "./g22VeilPlays";
 import { PLAYS as G26_SHIELD_PLAYS } from "./g26ShieldPlays";
+import { PLAYS as G27_THORN_PLAYS } from "./g27ThornPlays";
+import { PLAYS as G29_RALLY_PLAYS } from "./g29RallyPlays";
 import { PLAYS as G31_CHANCE_PLAYS } from "./g31ChancePlays";
 
 // Later spreads win within plugins; core SIGNATURES always beat plugins at
 // the resolve site. Merge order: god-tier set, tier 5-6 set, funny/meta set,
 // personal set, meme (brainrot batch 2) set, then the revived-stub, prank,
 // and casino sets.
-const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS, ...GAMBLING_PLAYS, ...BOON_PLAYS, ...CURSE_PLAYS, ...CREATOR_PLAYS, ...G01_HOURGLASS_PLAYS, ...G05_PAWNTIDE_PLAYS, ...G20_RAMPART_PLAYS, ...G26_SHIELD_PLAYS, ...G31_CHANCE_PLAYS };
+const MERGED: Record<string, SigPlugin> = { ...BASIC_PLAYS, ...GOD_PLAYS, ...GREAT_PLAYS, ...FUNNY_PLAYS, ...PERSONAL_PLAYS, ...MEME_PLAYS, ...STUB_PLAYS, ...PRANK_PLAYS, ...CASINO_PLAYS, ...GAMBLING_PLAYS, ...BOON_PLAYS, ...CURSE_PLAYS, ...CREATOR_PLAYS, ...G01_HOURGLASS_PLAYS, ...G05_PAWNTIDE_PLAYS, ...G09_FROST_PLAYS, ...G12_CLOCKWORK_PLAYS, ...G20_RAMPART_PLAYS, ...G22_VEIL_PLAYS, ...G26_SHIELD_PLAYS, ...G27_THORN_PLAYS, ...G29_RALLY_PLAYS, ...G31_CHANCE_PLAYS };
 
 // Publish the full SignatureConfig per plugin card id into the eager
 // registry, visual keyed back to this module. Deterministic: same inputs,

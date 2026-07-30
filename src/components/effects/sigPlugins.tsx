@@ -236,11 +236,28 @@ export const PLUGIN_IDS: readonly string[] = [
   "bn4_matryoshka_surprise", "ov_trojan_pawn", "ov_great_migration", "hx4_famine_year", "hx4_pawn_embargo", "hx4_famine",
   "hx4_no_doubling", "hx4_one_ladle_each", "hx4_pied_piper", "hx4_echo_of_bells", "hx4_candle_curfew", "hx4_understudy_rule",
   "ov_pied_piper", "ov_cloud_serpent", "ov_locust_swarm", "ov_volcanic_vent", "ov_fireworks_barge", "ov_boomerang",
+  // g09FrostPlays.tsx (29)
+  "bn4_long_winter", "bn4_winter_garrison", "bn4_frozen_moat", "bn4_glacier_calving", "hx4_blood_price", "hx4_eternal_toll",
+  "hx4_kings_ransom", "hx4_tribute_demand", "hx4_doomsday_clock", "hx4_tolling_thirds", "ov_deus_ex_machina", "hx4_burned_keep",
+  "hx4_oathbreakers_brand", "hx4_shattered_council", "hx4_frozen_reserves", "hx4_hearth_frost", "hx4_great_glacier", "hx4_reapers_due",
+  "hx4_winter_that_stays", "hx4_watchmans_whistle", "hx4_wheel_of_ice", "hx4_glass_prison", "hx4_spiders_parlor", "hx4_poachers_snare",
+  "hx4_kraken_arms", "hx4_lovestruck_majesty", "hx4_tempest", "hx4_lead_rain", "hx4_frozen_harbor",
+  // g12ClockworkPlays.tsx (27)
+  "ov_board_of_directors", "ov_deja_vu", "bn4_genie_lamp", "ov_chess_boxing", "ov_mod_powers", "bn4_relay_baton",
+  "ov_democracy", "ov_dev_console", "ov_nerfchess_the_musical", "ov_standing_ovation", "ov_the_tutorial", "ov_wish_fish",
+  "ov_algorithm_boost", "ov_coliseum", "ov_fourth_wall_crew", "ov_insider_trading", "ov_prophecy_engine", "ov_speedhack",
+  "bn4_grandfather_clock", "ov_golden_goose", "ov_midas_gauntlet", "ov_private_gallery", "ov_rage_bait", "ov_stack_overflow",
+  "ov_vampire_court", "bn4_overtime_claim", "bn4_pocket_metronome",
   // g20RampartPlays.tsx (24)
   "bn4_dukes_patent", "bn4_wall_of_faith", "hx4_dead_march", "hx4_the_long_siege", "ov_world_serpent", "bn4_clay_colossus",
   "bn4_palace_walls", "bn4_castle_ditch", "bn4_dowry", "hx4_banquet_of_dust", "hx4_ivory_tower", "hx4_moat_diggers",
   "hx4_rusted_battlements", "hx4_wagon_ruts", "bn4_charm_bracelet", "bn4_pawn_bulwark", "bn4_town_walls", "hx4_feuding_towers",
   "hx4_wet_powder", "ov_siege_ladder", "bn4_causeway", "bn4_rampart_watch", "bn4_rook_nest", "hx4_crooked_arrow",
+  // g22VeilPlays.tsx (21)
+  "hx4_great_waltz", "hx4_donkey_ears", "hx4_eclipse", "hx4_falling_rubble", "hx4_glass_floor", "hx4_the_long_night",
+  "ov_big_nap", "bn4_hourglass_throne", "bn4_tithe_of_time", "hx4_white_flag_hour", "bn4_smoke_break_union", "bn4_stolen_hour",
+  "hx4_court_in_session", "hx4_drawn_curtain", "hx4_lockstep", "hx4_night_ledger", "hx4_night_watch_rota", "hx4_censors_ink",
+  "hx4_moth_eaten_gloves", "hx4_night_soil", "hx4_slack_bowstrings",
   // g26ShieldPlays.tsx (32)
   "bn4_age_of_peace", "bn4_guardian_of_the_line", "bn4_saints_procession", "bn4_warding_circle", "ov_plot_armor", "bn4_ancestral_shield",
   "bn4_shieldmaidens", "bn4_bodyguard_detail", "bn4_color_guard", "bn4_old_guard", "bn4_confetti_cannon", "bn4_quilted_armor",
@@ -248,6 +265,17 @@ export const PLUGIN_IDS: readonly string[] = [
   "op_gallery_docent", "op_lady_in_waiting", "op_lighthouse_keeper", "op_ordination_day", "op_parade_marshal", "op_riding_certificate",
   "op_stable_groom", "op_stage_armor", "op_tower_inspection", "op_victory_lap", "ov_traffic_cone", "bn4_doorstop",
   "op_guardian_sprite", "ov_wet_paint",
+  // g27ThornPlays.tsx (27)
+  "hx4_echo_chamber", "hx4_iron_ring", "hx4_maze_of_thorns", "hx4_sealed_meridian", "ov_terraform", "bn4_sting_of_the_wasp",
+  "hx4_signal_jam", "bn4_keep_gate", "hx4_ford_crossing", "hx4_no_homecoming", "hx4_no_return", "hx4_tar_pits",
+  "hx4_fresh_crater", "hx4_prowlers_bell", "hx4_bramble_patch", "hx4_restless_blades", "hx4_rope_bridge", "bn4_thorn_hedge",
+  "hx4_gnat_cloud", "hx4_house_arrest", "op_garden_door", "op_garden_scarecrow", "ov_loose_floorboard", "bn4_garden_fence",
+  "hx4_buttoned_scabbard", "op_garden_gate", "op_garden_hedge",
+  // g29RallyPlays.tsx (24)
+  "ov_elder_wyrm", "bn4_house_of_banners", "ov_symphony_of_the_legion", "bn4_life_insurance", "hx4_siren_song", "bn4_forward_banners",
+  "bn4_war_room_map", "hx4_soggy_invaders", "hx4_elbow_room", "hx4_moths_in_the_banner", "ov_moat_digger", "ov_second_breakfast",
+  "op_bridle_path", "op_drawbridge_in", "op_edge_of_the_map", "op_freight_elevator", "op_grand_march", "op_harbor_walk",
+  "op_old_post_road", "op_palace_gate", "op_quickstep", "op_squires_errand", "op_team_photo", "op_waltz_left",
   // g31ChancePlays.tsx (20)
   "bn4_costume_trunk", "bn4_bottled_courage", "hx4_ferrymans_coin", "bn4_rubber_duck", "bn4_lucky_coin", "op_chairs_on_tables",
   "op_crystal_ball", "op_dowsing_rod", "op_evil_eye_bead", "op_fools_gold", "op_four_leaf_clover", "op_gossip_charm",
