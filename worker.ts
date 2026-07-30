@@ -82,6 +82,11 @@ import {
   type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
 import { resolveArenaSeat } from "./src/lib/server/arenaSeat";
+import {
+  chargePauseBudget,
+  pauseGrantMs,
+  releaseExpiredPause,
+} from "./src/lib/server/clockPause";
 import { moveByUci, type EngineMatch } from "./src/engine/replay";
 import { triggersOwnNerfLoss } from "./src/engine/moveSafety";
 import type { BuffInstance, BuffMatchState, BuffPick, DraftMode } from "./src/engine/buff";
@@ -220,6 +225,13 @@ type StoredMatch = {
   result: Result;
   clocks: Record<Color, number>;
   runningSince: number | null;
+  /** When a disconnect-pause must end even if the player has not come back
+   * (ms epoch). The clock resumes on its own at this point so an absent player
+   * can still flag; absent while the game is not paused for absence. */
+  pauseUntil?: number | null;
+  /** Total disconnect-paused time already granted to each seat this game, so
+   * repeated background/foreground cycles cannot chain unlimited free pauses. */
+  pausedTotalMs?: Partial<Record<Color, number>>;
   drawOfferBy: Color | null;
   // Seat that aborted the game (result.winner null, reason "aborted"), kept so
   // the archived row can attribute the abort for abuse tracking.
@@ -2115,6 +2127,16 @@ export class GameServer extends DurableObject<Env> {
     // bot's turn and it never timed out — the "bot gets all its time back, the
     // game hangs forever" report. Only the mover ever risks an unfair flag, so
     // pausing on the mover's own turn is all the human protection this needs.
+    //
+    // The pause is also BOUNDED, in two ways: one absence buys at most
+    // PAUSE_MAX_MS, and a seat gets at most PAUSE_BUDGET_MS across the whole
+    // game (both in src/lib/server/clockPause.ts). Both exist because it used
+    // to be
+    // open-ended and self-sustaining: nothing resumed it except the player
+    // coming back, so five minutes away cost only the socket's close-detection
+    // window, and backgrounding a phone tab (which closes the socket and is
+    // indistinguishable from a real disconnect) froze the clock indefinitely.
+    // pauseUntil is registered with the alarm, so the clock restarts itself.
     if (
       match.bots &&
       !match.bots[session.color] &&
@@ -2123,8 +2145,15 @@ export class GameServer extends DurableObject<Env> {
       match.runningSince !== null &&
       this.chargedColor(match) === session.color
     ) {
-      match.clocks = this.currentClocks(match, Date.now());
-      match.runningSince = null;
+      const grant = pauseGrantMs(match, session.color);
+      // Budget exhausted: no pause at all, the clock simply keeps running.
+      if (grant > 0) {
+        const now = Date.now();
+        match.clocks = this.currentClocks(match, now);
+        match.runningSince = null;
+        match.pauseUntil = now + grant;
+        await this.armAlarmBy(match.pauseUntil);
+      }
     }
     await this.saveMatch(match);
   }
@@ -3429,8 +3458,10 @@ export class GameServer extends DurableObject<Env> {
     ) {
       const offerHolding = !!match.dtDeadline && Date.now() < match.dtDeadline;
       if (!offerHolding) {
-        match.runningSince = Date.now();
-        this.armBotAction(match, null, Date.now());
+        const now = Date.now();
+        chargePauseBudget(match, color, now);
+        match.runningSince = now;
+        this.armBotAction(match, null, now);
         await this.saveMatch(match);
       }
     }
@@ -8218,6 +8249,10 @@ export class GameServer extends DurableObject<Env> {
     const watchedId = session.matchId ?? session.watching;
     const match = watchedId ? await this.loadMatch(watchedId) : null;
     if (!match) return send(ws, "n");
+    // A client heartbeat is also a chance to notice that a disconnect-pause has
+    // outlived its grant, so the opponent's ping alone is enough to restart an
+    // absent player's clock even if the alarm chain hiccuped.
+    if (releaseExpiredPause(match, Date.now())) await this.saveMatch(match, false);
     if (await this.finishOnFlag(match)) return;
     // Self-heal from the client heartbeat (~every 10s): re-arm this game's own
     // alarm so a pending house-bot move or a clock deadline keeps firing even if
@@ -8241,6 +8276,12 @@ export class GameServer extends DurableObject<Env> {
       const active = this.chargedColor(match);
       const grace = this.movesByColor(match, active) === 0 ? firstMoveGraceMs : 0;
       candidates.push(match.runningSince + match.clocks[active] + grace);
+    }
+    // The end of a disconnect-pause. This candidate is what makes the pause
+    // bounded at all: while runningSince is null the flag candidate above is
+    // skipped, so without this nothing would ever wake up to restart the clock.
+    if (!match.result && match.pauseUntil != null && match.runningSince === null) {
+      candidates.push(match.pauseUntil);
     }
     // Draft lock-in deadlines: overdue picks auto-resolve from the alarm.
     if (!match.result) {
@@ -8405,7 +8446,11 @@ export class GameServer extends DurableObject<Env> {
       // flag enforcement for every other live game or break the alarm chain.
       try {
         await this.enforceDraftDeadlines(match, now);
-        let changed = await this.finishOnFlag(match, now, false);
+        // Restart a disconnect-pause that has outlived its grant BEFORE the
+        // flag check, so the clock the flag check reads is running again and an
+        // absent player can actually time out.
+        let changed = releaseExpiredPause(match, now);
+        changed = (await this.finishOnFlag(match, now, false)) || changed;
         for (const color of ["w", "b"] as Color[]) {
           const disconnectedAt = match.disconnectedAt[color];
           const opponent = this.connectedSession(match.id, color === "w" ? "b" : "w");

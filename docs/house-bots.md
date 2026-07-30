@@ -242,9 +242,17 @@ blip. Both switches must be on for the roster to run.
    then buff/hex offers are resolved every few moves as they come.
 4. On the bot's turn the alarm, after the pacing delay, either fires a held buff
    (40% coin) or plays a move from the capped engine search.
-5. If the human seat disconnects, that game's clock pauses so the human never
-   flags while away; the bot resumes when they return. If the server is updated
-   mid-game, the game ends as a drawn, unrated result.
+5. If the human seat disconnects **during its own turn**, that game's clock
+   pauses so a dropped socket never flags them mid-move, and the bot resumes
+   when they return. The pause is **bounded**: one absence buys at most 45
+   seconds and a seat gets at most 90 seconds across the whole game
+   (`src/lib/server/clockPause.ts`). Past that the clock restarts itself from
+   the alarm and the ordinary flag path applies, so an absent player can lose on
+   time like anyone else. Without those bounds nothing could ever end the pause
+   (`currentClocks` returns banked values while it holds and `candidateAlarm`
+   arms no flag), so five minutes away cost only the ~10s the socket took to
+   notice, and backgrounding a phone tab froze the clock indefinitely. If the
+   server is updated mid-game, the game ends as a drawn, unrated result.
 
 ---
 
