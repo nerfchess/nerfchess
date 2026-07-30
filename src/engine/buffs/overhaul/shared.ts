@@ -76,6 +76,8 @@ import {
 export type Mech = Partial<Buff> & Pick<Buff, "kind">;
 
 export type OvMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

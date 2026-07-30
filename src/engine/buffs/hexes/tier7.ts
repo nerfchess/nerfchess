@@ -193,7 +193,8 @@ export const HEXES_T7: Buff[] = [
     {
       id: "statue_garden",
       name: "Statue Garden",
-      description: "Your opponent's knights and bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time. The first one struck may make one move first: it is petrified only after your opponent's next move, and escapes if they move it away.",
+      description: "Your opponent's knights and bishops turn to walnuts for 3 of their turns, shuffling one square at a time. The first one struck petrifies only after your opponent's next move, and escapes if they move it away.",
+      tip: "That one grace move is the whole defence: move the first piece the gaze touches.",
       flavor: "Every horse and prelate set among the topiary.",
       // Board already paints walnuts; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -217,7 +218,8 @@ export const HEXES_T7: Buff[] = [
     {
       id: "cockatrice_gaze",
       name: "Cockatrice Gaze",
-      description: "Every enemy knight and bishop standing in your half of the board turns to a walnut for 4 of their turns. The minors still in their own half only catch the reflection: they are frozen for 1 turn. The first piece the gaze lands on may make one move first, taking effect only after your opponent's next move, and it escapes if they move it away.",
+      description: "Every enemy knight and bishop in your half turns to a walnut for 4 of their turns. Minors still in their own half only catch the reflection and are frozen for 1 turn. The first piece the gaze lands on petrifies only after their next move, and escapes if moved.",
+      tip: "Keeping their minors at home turns four turns of stone into one turn of ice.",
       flavor: "The ones who crossed the fence met its eyes first.",
       // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -328,7 +330,8 @@ export const HEXES_T7: Buff[] = [
     {
       id: "frozen_solid",
       name: "Frozen Solid",
-      description: "Freeze one enemy piece you target and one enemy piece standing next to it for 3 of their turns each. Kings cannot be chosen. The piece you target may make one move first: its freeze lands only after your opponent's next move, and it escapes if they move it away.",
+      description: "Freeze one enemy piece and one enemy piece next to it for 3 of their turns each. Kings cannot be chosen. The piece you target freezes only after your opponent's next move, and escapes if they move it away.",
+      tip: "Target something they cannot afford to move, or the freeze slips off.",
       flavor: "The frost jumps from one body to the next.",
     },
     activated(

@@ -19,6 +19,11 @@ export interface Nerf {
   id: string;
   name: string;
   description: string;
+  /** Advice, not a rule: how to live with the handicap. One sentence, shown
+   * small and dim under the rule text. See the same field on Buff for why it
+   * exists — it keeps strategy hints out of the rule paragraph. Nothing here
+   * may change what the engine does. */
+  tip?: string;
   flavor?: string;
   tier: Tier;
   icon?: string;

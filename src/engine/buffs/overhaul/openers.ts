@@ -71,6 +71,9 @@ export function opener(
   meta: OpenerMeta,
   description: string,
   mech: Parameters<typeof card>[1],
+  /** Advice, not a rule (see Buff.tip). Families that used to append strategy
+   * notes to `description` pass them here instead, so the rule stays short. */
+  tip?: string,
 ): Buff {
   return {
     ...card(
@@ -78,6 +81,7 @@ export function opener(
         id: `op_${meta.id}`,
         name: meta.name,
         description,
+        tip,
         tier: meta.tier ?? 1,
         category: mech.kind === "passive" ? "movement" : "item",
         icon: meta.icon,

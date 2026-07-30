@@ -173,8 +173,8 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "groundhog_day",
       icon: "Repeat",
       name: "Groundhog Day",
-      description:
-        "The board hits a VHS rewind on your opponent: whichever piece they move on their next turn is caught in a loop. Their very next turn after that is one free escape and they may move anything, but on the turn after it they must move that same piece again. If that piece can no longer move, the loop is skipped.",
+      description: "Whichever piece your opponent moves on their next turn is caught in a loop. Their turn after that is one free escape, but on the turn after it they must move that same piece again. If that piece can no longer move, the loop is skipped.",
+      tip: "It bites hardest when the piece they most want to move is one they cannot afford to move twice.",
       tier: 6,
       category: "hex",
       flavor: "Didn't we just do this?",
@@ -904,8 +904,8 @@ export const PT_CURSE_CARDS: Buff[] = [
       id: "wheel_of_fortune",
       icon: "Ticket",
       name: "Wheel of Fortune",
-      description:
-        "Spin the wheel for one of six random effects: plus 55 seconds to your clock, minus 55 seconds off your opponent's, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for their next 2 turns, or two random enemy pieces other than the king removed.",
+      description: "Spin for one of six random effects: plus 55 seconds to your clock, minus 55 from theirs, your army uncapturable for their next 2 turns, a new knight in your half, every enemy piece asleep for 2 turns, or two random enemy pieces removed.",
+      tip: "Every outcome is good for you, so the only question is how good.",
       tier: 4,
       category: "tempo",
       flavor: "Big money, big money, no whammies.",

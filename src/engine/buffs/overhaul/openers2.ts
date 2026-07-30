@@ -480,7 +480,7 @@ const OVERTURES: Array<OpenerMeta & { what: string; ride: (move: Move, api: Buff
   { id: "opening_chord", name: "Opening Chord", flavor: "The hall goes quiet. The clock does not, but it slows.", icon: "Music", what: "gain 8 seconds on your clock, plus a draft reroll and a look at the tier of your next draft offer; in untimed games only the reroll and the reveal apply", ride: (_move, api) => { api.adjustClock({ addSelfSec: 8 }); api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } },
   { id: "stage_armor", name: "Stage Armor", flavor: "Prop steel, real confidence.", icon: "Shield", tier: 2, what: "the piece that gave check cannot be captured during your opponent's next turn", ride: (move, api) => shield1(api, move.to) },
   { id: "golden_aria", name: "Golden Aria", flavor: "Hit the high note, keep the costume.", icon: "Star", what: "the piece that gave check is gilded, purely cosmetically, forever, every enemy piece it can capture flashes until your opponent replies, and you gain 5 seconds", ride: (move, api) => { pinCosmetic(api, move.to, api.me, "gilded", null); const caps = capturesFrom(api, move.to, api.opp); if (caps.length > 0) flashSquares(api, caps); api.adjustClock({ addSelfSec: 5 }); } },
-  { id: "understudy_list", name: "Understudy List", flavor: "Know exactly who is covering the lead tonight.", icon: "Drama", what: "every enemy piece defending the enemy king's square flashes until your opponent replies; if none defends it, so the flash would reveal nothing you could act on, you instead gain a draft reroll and learn the tier of your next draft offer", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); const defenders = k == null ? [] : attackersOf(api.board, api.opp, k); if (defenders.length > 0) { flashSquares(api, defenders); } else { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } } },
+  { id: "understudy_list", name: "Understudy List", flavor: "Know exactly who is covering the lead tonight.", icon: "Drama", what: "every enemy piece defending the enemy king's square flashes until your opponent replies; if none defends it you instead gain a draft reroll and learn the tier of your next draft offer", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); const defenders = k == null ? [] : attackersOf(api.board, api.opp, k); if (defenders.length > 0) { flashSquares(api, defenders); } else { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; api.mine.flags.seeOppTier = true; } } },
   { id: "intermission", name: "Intermission", flavor: "Stretch your legs, revisit the merchandise stand.", icon: "Ticket", what: "gain a draft reroll", ride: (_move, api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, charges: 2 },
   { id: "house_lights_up", name: "House Lights Up", flavor: "Suddenly everyone can see exactly where the exits are.", icon: "Lamp", what: "every square around the enemy king flashes until your opponent replies, and any temporary shield on those squares is removed", ride: (_move, api) => { const k = kingSquare(api.board, api.opp); if (k != null) { const ring = ringAround(k); flashSquares(api, ring); stripTempShields(api, ring, api.opp); } } },
 ];
@@ -982,19 +982,29 @@ const SPRING_THAW: Array<
   { id: "snowdrop", name: "Snowdrop", flavor: "The first green thing on the queenside every year.", icon: "Flower2", after: 6, files: [0, 1, 2, 3], who: "queenside (files a through d)", doubleRoll: true, jackpotAlt: (api) => { api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If none can advance, you instead gain a draft reroll." },
   { id: "first_robin", name: "First Robin", flavor: "It lands kingside and declares the season open.", icon: "Bird", after: 6, files: [4, 5, 6, 7], who: "kingside (files e through h)", bankRetry: true, consolationSec: 15 },
   { id: "river_breakup", name: "River Breakup", flavor: "When the center ice cracks, something always floats forward.", icon: "Waves", after: 7, files: [2, 3, 4, 5], who: "central (files c through f)", bankRetry: true, consolationSec: 15, consolationRerolls: 2 },
-  { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)", doubleRoll: true, jackpotAlt: (api) => { api.mine.flags.seeOppTier = true; api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If none can advance, you instead learn the tier of your opponent's next draft offer and gain a draft reroll." },
-  { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "Each eligible pawn is equally likely. If none can advance, the guaranteed floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns." },
-  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "(any file)", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "Each eligible pawn is equally likely. If none can advance, the guaranteed floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns." },
+  { id: "hedgerow_buds", name: "Hedgerow Buds", flavor: "The outer lanes green up when nobody is looking.", icon: "Leaf", after: 8, files: [0, 1, 6, 7], who: "outer-file (a, b, g or h)", doubleRoll: true, jackpotAlt: (api) => { api.mine.flags.seeOppTier = true; api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1; }, altDesc: "If none can, you instead learn your opponent's next offer tier and gain a reroll." },
+  { id: "sap_run", name: "Sap Run", flavor: "Tap the two center trunks and stand back.", icon: "Droplet", after: 5, files: [3, 4], who: "d- or e-file", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns." },
+  { id: "late_spring", name: "Late Spring", flavor: "It always comes. It just files the paperwork slowly.", icon: "Sunrise", after: 9, files: null, who: "", jackpotAlt: (api) => { const rank2 = mySquares(api.board, api.me, "p").filter((sq) => relRank(api.me, sq) === 2); if (rank2.length > 0) addEffect(api, { kind: "shield", owner: api.me, squares: [rank2[api.rng.int(rank2.length)]], turns: 4 }); }, altDesc: "If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns." },
 ];
 
 function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
-  const base = `After your ${entry.after}th move, one of your ${entry.who} pawns with an empty square ahead, chosen at random, advances one square automatically.`;
+  // The description carries the rule only. The old template appended the
+  // roll-fairness note, the "that is the jackpot" aside and the retry
+  // behaviour to the same paragraph, which is how these cards reached 350-430
+  // characters; the asides now go to `tip`.
+  const who = entry.who ? `${entry.who} ` : "";
+  const base = `After your ${entry.after}th move, one of your ${who}pawns with an empty square ahead advances one square at random.`;
   let desc = entry.doubleRoll
-    ? `After your ${entry.after}th move, two of your ${entry.who} pawns with an empty square ahead are rolled independently and uniformly at random, and the one nearer promotion advances one square (ties go to the first roll). While at least one such pawn can advance this always fires: that is the jackpot.`
+    ? `After your ${entry.after}th move, two of your ${who}pawns with an empty square ahead are rolled at random, and the one nearer promotion advances one square.`
     : entry.bankRetry
-      ? `${base} It always fires when at least one such pawn exists (that is the jackpot).${entry.consolationRerolls != null ? " Each eligible pawn is equally likely." : ""} If none can advance the turn it ripens, you gain ${entry.consolationSec} seconds${entry.consolationRerolls != null ? `, or ${entry.consolationRerolls} draft rerolls in untimed games,` : ""} and the card keeps trying after each of your later moves until one can.`
+      ? `${base} If none can, you gain ${entry.consolationSec} seconds${entry.consolationRerolls != null ? ` (or ${entry.consolationRerolls} rerolls in untimed games)` : ""} and it retries after each later move.`
       : base;
   if (entry.altDesc) desc += ` ${entry.altDesc}`;
+  const tip = entry.doubleRoll
+    ? "Two rolls, ties to the first, so a blocked pawn rarely stops it. It always fires while at least one pawn can advance."
+    : entry.bankRetry
+      ? "It never expires unpaid: a blocked file just delays it and pays you the consolation instead."
+      : "Every eligible pawn is equally likely, so it may not pick the one you wanted.";
   return opener(entry, desc, {
     kind: "passive",
     init: (inst) => {
@@ -1042,7 +1052,7 @@ function springThaw(entry: (typeof SPRING_THAW)[number]): Buff {
       // Otherwise keep the card alive and retry on a later move.
     },
     status: (inst) => `sprouts in ${turnsLeft(inst)} of your moves`,
-  });
+  }, tip);
 }
 
 // ---------------------------------------------------------------------------

@@ -773,8 +773,8 @@ export const OVERHAUL_T5: Buff[] = [
     {
       id: "ov_ghost_ship",
       name: "Ghost Ship",
-      description:
-        "A ghost ship sails a chosen file from your back rank, one square per your turn for 6 turns, passing through everything: any enemy piece except a king on the square it crosses is frozen for 1 turn. As it sets sail, one of your pieces may take a free step to an empty adjacent square.",
+      description: "A ghost ship sails a chosen file from your back rank, one square per your turn for 6 turns, passing through everything: any enemy piece except a king on the square it crosses is frozen for 1 turn. One of your pieces may take a free step as it sails.",
+      tip: "Pick a file their pieces have to use; the ship cannot be blocked or captured.",
       tier: 5,
       category: "tempo",
       icon: "Ship",

@@ -527,6 +527,19 @@ export interface Buff {
   id: string;
   name: string;
   description: string;
+  /**
+   * Advice, not a rule: how to play the card, or how to play against it. One
+   * sentence, shown small and dim under the rule text.
+   *
+   * This field exists to shorten `description`. The longest card texts in the
+   * library were long because they crammed three different kinds of
+   * information into one paragraph — the rule, an exemption, and a strategy
+   * hint ("The early turns are the time to act", "Route around its shadow") —
+   * and a player reading a card on a 20-second clock needs the rule first.
+   * Nothing here may change what the engine does; if a sentence is load-bearing
+   * it belongs in `description`.
+   */
+  tip?: string;
   /** One-line flavor text, shown quoted at the foot of the full card. */
   flavor?: string;
   /** Optional per-card icon (a lucide-react icon name, e.g. "Bomb", "Snail").

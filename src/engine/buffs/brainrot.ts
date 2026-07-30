@@ -201,8 +201,8 @@ export const BRAINROT: Buff[] = [
       id: "tralalero_dash",
       icon: "Footprints",
       name: "Tralalero Tralala",
-      description:
-        "The shark in sneakers sprints: dash any piece except the king to an empty square along its rank, file, or diagonal, blurring straight past anything between. For your opponent's next 2 turns it cannot be captured, but this speed-blur burns out early once the sprinter has captured twice. Once.",
+      description: "Dash any piece except the king to an empty square along its rank, file, or diagonal, blurring straight past anything between. For your opponent's next 2 turns it cannot be captured, but the blur burns out early once the sprinter has captured twice. Once.",
+      tip: "The pass-through is the point: it lands a piece behind their lines and shields it there.",
       tier: 4,
       category: "movement",
       flavor: "Nike Air, straight through the traffic.",
@@ -291,8 +291,8 @@ export const BRAINROT: Buff[] = [
       id: "bombardiro_croc",
       icon: "Bomb",
       name: "Bombardiro Crocodilo",
-      description:
-        "The bomber-croc paints a square, then drops its payload after your opponent's next move: up to four enemy pieces except kings in the 5 by 5 area centred on it (that square and the 24 around it) are destroyed, the four nearest the centre first. Anything that flees the area before it lands is spared.",
+      description: "Paint a square, then the payload drops after your opponent's next move: up to four enemy pieces except kings in the 5 by 5 area centred on it are destroyed, the four nearest the centre first. Anything that flees the area before it lands is spared.",
+      tip: "They get one move of warning, so paint a square their pieces cannot all leave.",
       tier: 8,
       category: "attack",
       flavor: "Cleared for the run, no survivors below.",

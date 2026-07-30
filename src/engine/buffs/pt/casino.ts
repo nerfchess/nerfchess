@@ -180,8 +180,8 @@ export const PT_CASINO_CARDS: Buff[] = [
       id: "cs_blackjack",
       icon: "Spade",
       name: "Blackjack",
-      description:
-        "The dealer feeds you cards until your hand reaches seventeen, then you stand. Hit twenty one for a rook in your pocket and 45 seconds. Stand on seventeen to twenty for a minor piece in your pocket. Bust over twenty one and the house takes your weakest piece while you cool off for two turns.",
+      description: "The dealer feeds you cards until your hand reaches seventeen, then you stand. Twenty one pays a rook in your pocket and 45 seconds. Seventeen to twenty pays a minor piece. Bust and the house takes your weakest piece while you cool off for two turns.",
+      tip: "The bust is the real cost: two turns unable to act, plus a piece.",
       tier: 4,
       category: "pieces",
       flavor: "Hit me. No, once more.",
@@ -265,8 +265,8 @@ export const PT_CASINO_CARDS: Buff[] = [
       id: "cs_let_it_ride",
       icon: "CircleDollarSign",
       name: "Let It Ride",
-      description:
-        "Flip a coin and let your winnings ride. Each heads bumps the prize and flips again, up to three. One heads pays 40 seconds. Two heads pays a knight in your pocket. Three heads pays a knight and a bishop plus 20 seconds. Tails on the first flip loses the ante, your weakest pawn.",
+      description: "Flip a coin and let your winnings ride. Each heads bumps the prize and flips again, up to three. One heads pays 40 seconds, two a knight in your pocket, three a knight and a bishop plus 20 seconds. Tails first loses the ante, your weakest pawn.",
+      tip: "Half the time you lose a pawn; the other half you are at least 40 seconds up.",
       tier: 2,
       category: "pieces",
       flavor: "Let it ride, let it ride.",
@@ -302,8 +302,8 @@ export const PT_CASINO_CARDS: Buff[] = [
       id: "cs_loot_box",
       icon: "Package",
       name: "Loot Box",
-      description:
-        "Pay to crack the crate and pray to the drop table. Legendary (rare) grants a random apex card. Epic grants a bishop and 30 seconds. Rare grants a knight. Common grants a pawn. But almost one crate in three is a mimic that bites off your weakest piece and leaves you shaken for two turns.",
+      description: "Crack the crate and pray to the drop table. Legendary, the rarest, grants a random apex card. Epic grants a bishop and 30 seconds. Rare grants a knight. Common grants a pawn. Almost one in three is a mimic that bites off your weakest piece.",
+      tip: "Two thirds of the time you profit, and the apex pull is what you are really paying for.",
       tier: 5,
       category: "pieces",
       flavor: "The next one is guaranteed legendary. Probably.",
@@ -341,8 +341,8 @@ export const PT_CASINO_CARDS: Buff[] = [
       id: "cs_poker_bluff",
       icon: "Diamond",
       name: "Poker Bluff",
-      description:
-        "You shove all in holding nothing and stare them down. Roughly forty five times in a hundred they fold and you rake one of their pieces into the pot along with 20 seconds. The rest of the time they call your bluff, and you pay your weakest piece and take a two turn walk of shame.",
+      description: "Shove all in holding nothing. Roughly forty five times in a hundred they fold, and you rake one of their pieces into the pot along with 20 seconds. The rest of the time they call, and you pay your weakest piece and take a two turn walk of shame.",
+      tip: "Close to a coin flip for a whole piece, so play it when a piece is what you need.",
       tier: 4,
       category: "pieces",
       flavor: "I had it the whole time. Obviously.",

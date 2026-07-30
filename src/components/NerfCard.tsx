@@ -118,6 +118,13 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
           </div>
         </div>
       )}
+      {/* How to live with the handicap. Advice, never a rule. */}
+      {!compact && nerf.tip && (
+        <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
+          <span className="smallcaps text-parchment-300">Tip</span>{" "}
+          <GlossaryText text={nerf.tip} />
+        </p>
+      )}
       {!compact && nerf.flavor && (
         <p className={`font-display border-l-2 border-white/15 pl-3 text-parchment-300/85 ${dense ? "mt-2 text-[11px] italic" : "mt-3 text-[13px]"}`}>
           &ldquo;{nerf.flavor}&rdquo;

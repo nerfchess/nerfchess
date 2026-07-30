@@ -142,6 +142,8 @@ export type {
 
 /** Metadata for a fantasy card. Like a funny card, the category is per card. */
 export type FantasyMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

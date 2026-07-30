@@ -49,6 +49,8 @@ import {
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
 
 type ChaosMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -513,7 +515,8 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_stage_fright",
       name: "Stage Fright",
-      description: "The spotlight waits for her: the next time your opponent's queen moves, she freezes where she lands for one of their turns. But if that move gives check, stage fright hits harder and she becomes a walnut that can only shuffle one square at a time for two of their turns instead.",
+      description: "The next time your opponent's queen moves, she freezes where she lands for one of their turns. If that move gives check, stage fright hits harder and she becomes a walnut, shuffling one square at a time, for two of their turns instead.",
+      tip: "It rewards them for playing quietly, so it pairs well with your own threats.",
       tier: 3,
       category: "hex",
       flavor: "All those eyes, and she just blanks.",
@@ -1392,7 +1395,8 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_banana_peel_trail",
       icon: "Banana",
       name: "Banana Peel Trail",
-      description: "Grease one file with banana peels: pieces may still enter it, but the first enemy piece to do so slips one square back toward its own home rank and is too dazed to move on its next turn. An enemy king is too dignified to slip, but it still treads the peels flat and spends them.",
+      description: "Grease one file with banana peels: pieces may still enter, but the first enemy piece to do so slips one square back toward its home rank and cannot move next turn. An enemy king is too dignified to slip, but still treads the peels flat and spends them.",
+      tip: "Grease a file they must cross, then keep your own pieces off it.",
       tier: 4,
       category: "tempo",
       flavor: "Whoops. Whoops. Whoops.",
@@ -1450,7 +1454,8 @@ export const WILD_CHAOS: Buff[] = [
     {
       id: "wc_panic_button",
       name: "Panic Button",
-      description: "Slam the big red button: your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess. The shield is defensive only: if a move leaves your king next to the enemy king, giving check, the shield pops at once.",
+      description: "Your king cannot be captured on your opponent's next turn, and you take one extra move right now to sort out the mess. The shield is defensive only: if a move leaves your king next to the enemy king, giving check, the shield pops at once.",
+      tip: "One turn of safety plus a free move, which is usually enough to untangle a mating net.",
       tier: 4,
       category: "protection",
       flavor: "That is what it is there for.",

@@ -163,8 +163,8 @@ const T1: Buff[] = [
       tier: 2,
       id: "hw3_wrong_foot",
       name: "Wrong Foot",
-      description:
-        "Their dance is thrown off: for your opponent's next 4 turns, each piece they move must land on a square of the opposite color to wherever they landed last turn (light, then dark, then light). Their king is exempt, and if no legal move fits the pattern they may move freely that turn. Plan the sequence and it costs nothing.",
+      description: "For your opponent's next 4 turns, every piece they move must land on the opposite colour square to their last landing: light, then dark, then light. Their king is exempt, and if no legal move fits the pattern they move freely that turn.",
+      tip: "Planning the sequence ahead costs them nothing, so it bites hardest when they are forced to react.",
       flavor: "Left foot, right foot, and never the two in a row.",
       fx: { motif: "anchor", pieces: "all" },
     },
@@ -189,8 +189,8 @@ const T1: Buff[] = [
     {
       id: "hw3_no_retreat",
       name: "No Retreat",
-      description:
-        "A banner of no surrender is nailed up: for your opponent's next 4 turns, none of their pieces may move toward their own back rank (no retreating or sidestepping backward). They may advance or move straight across; the king is exempt, and a piece with no forward move is freed for that turn. Wait it out, or press forward on the curse's own terms.",
+      description: "For your opponent's next 4 turns, none of their pieces may move toward their own back rank: no retreating, no sidestepping backward. They may advance or move straight across. The king is exempt, and a piece with no forward move is freed for that turn.",
+      tip: "They can wait it out, or press forward on the curse's own terms.",
       flavor: "The bridge behind them is already burning.",
       fx: { motif: "anchor", pieces: "all" },
     },
@@ -207,8 +207,8 @@ const T1: Buff[] = [
     {
       id: "hw3_overexertion",
       name: "Overexertion",
-      description:
-        "The curse hates a workhorse, but bides its time: it takes hold only after your opponent's next move, and then for their next 5 turns, whenever they move the same piece they moved on their previous turn, it seizes up and is frozen for 1 of their turns. Simply alternating which piece they develop avoids it completely. Kings never seize.",
+      description: "It takes hold after your opponent's next move, then for their next 5 turns: whenever they move the same piece they moved on their previous turn, it seizes up and is frozen for 1 of their turns. Kings never seize.",
+      tip: "Alternating which piece they develop avoids it completely.",
       flavor: "One more errand, it sighed, and sat straight down.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -247,8 +247,8 @@ const T1: Buff[] = [
       tier: 2,
       id: "hw3_toll_road",
       name: "Toll Road",
-      description:
-        "A toll is set on the border: for your opponent's next 6 turns, any turn they move a piece out of their own half and into yours, their following turn is taxed - they may move only a pawn or their king. Developing at home is free; invading costs a beat of tempo. Kings crossing pay the same toll.",
+      description: "For your opponent's next 6 turns, any turn they move a piece out of their own half and into yours, their following turn is taxed: they may move only a pawn or their king. Kings crossing pay the same toll.",
+      tip: "Developing at home is free; invading costs them a beat of tempo.",
       flavor: "Cross the river and the ferryman wants his coin.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -288,8 +288,8 @@ const T2: Buff[] = [
     {
       id: "hw3_fifth_column",
       name: "Fifth Column",
-      description:
-        "Turn one enemy pawn to your cause: mark it, and it gets one move of its own before it turns. The first time your opponent moves the marked pawn, it defects and fights under your banner for your next 3 turns, then its conscience returns and it goes back to your opponent. You move it on your turns; if it is captured while it serves you, the plot simply ends. Kings and other pieces are beyond the recruiter's reach.",
+      description: "Mark one enemy pawn. It gets one move of its own, then the first time your opponent moves it again it defects and fights under your banner for your next 3 turns before going back. You move it on your turns. Only pawns can be recruited.",
+      tip: "If it is captured while it serves you, the plot simply ends.",
       flavor: "Every camp has one soul already halfway out the gate.",
       fx: { motif: "jail", pieces: ["p"] },
     },
@@ -353,8 +353,8 @@ const T2: Buff[] = [
     {
       id: "hw3_binding_oath",
       name: "Binding Oath",
-      description:
-        "Swear two enemy pieces to a pact of restraint: for your opponent's next 6 turns, so long as both still stand, neither of the pair may capture anything, save that the first of the two to strike is allowed one capture before the pact takes hold. The oath breaks the instant one of them leaves the board, freeing the survivor. They can trade one away to release the other, or simply attack with their other pieces. Kings cannot be sworn.",
+      description: "For your opponent's next 6 turns, two enemy pieces may not capture while both still stand, though the first of the pair gets one capture before the pact bites. The oath breaks the moment one of them leaves the board. Kings cannot be sworn.",
+      tip: "They can trade one away to release the other, or simply attack with their other pieces.",
       flavor: "Two blades crossed and bound: draw one and both must still.",
       fx: { motif: "muzzle" },
     },
@@ -428,8 +428,8 @@ const T2: Buff[] = [
       tier: 3,
       id: "hw3_slow_poison",
       name: "Slow Poison",
-      description:
-        "Slip poison into one enemy queen, rook or bishop. In 4 of their turns it withers a full rank: a queen sinks to a rook, a rook to a bishop, a bishop to a knight. One dose of blood is the antidote: if the poisoned piece captures anything before then, the poison is purged. They see the fuse the whole time - feed it a capture, trade the piece off, or let it wither.",
+      description: "Poison one enemy queen, rook or bishop. In 4 of their turns it withers a full rank: queen to rook, rook to bishop, bishop to knight. One capture is the antidote: if the poisoned piece takes anything before then, the poison is purged.",
+      tip: "They see the fuse the whole time: feed it a capture, trade the piece off, or let it wither.",
       flavor: "It felt fine at first. That is the whole trick of it.",
       fx: { motif: "slow", pieces: ["q", "r", "b"] },
     },
@@ -499,8 +499,8 @@ const T2: Buff[] = [
     {
       id: "hw3_bloodlust",
       name: "Bloodlust",
-      description:
-        "A taste for blood takes hold: for your opponent's next 3 turns, any piece that captures is seized by frenzy and, on their very next turn, must capture again if any capture is open to it. If that piece has no capture available, the frenzy passes and they move freely. Capturing with a piece that cannot follow up, or not capturing at all, keeps them in control.",
+      description: "For your opponent's next 3 turns, any piece that captures is seized by frenzy and must capture again on their very next turn if any capture is open to it. If it has none, the frenzy passes and they move freely.",
+      tip: "Capturing with a piece that cannot follow up, or not capturing at all, keeps them in control.",
       flavor: "The first kill is a choice. The second is an appetite.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -533,8 +533,8 @@ const T2: Buff[] = [
     {
       id: "hw3_curse_hop",
       name: "Handed Down",
-      description:
-        "A clinging curse settles on one enemy piece: for your opponent's next 5 turns the bearer is hobbled and may move at most 2 squares at a time. Trading it away does not end the curse - the moment you capture the bearer, the curse leaps to whichever of their pieces is nearest. To be rid of it they must strand the bearer far from the rest of the army, then let it die alone. Kings never take it.",
+      description: "For your opponent's next 5 turns one enemy piece is hobbled to at most 2 squares a move. Capturing the bearer does not end it: the curse leaps to whichever of their pieces is nearest. Kings never take it.",
+      tip: "To be rid of it they must strand the bearer far from the army, then let it die alone.",
       flavor: "Nobody wanted it. Everybody passed it along.",
       fx: { motif: "anchor" },
     },
@@ -605,8 +605,8 @@ const T3: Buff[] = [
     {
       id: "hw3_wandering_sentry",
       name: "Wandering Sentry",
-      description:
-        "Conjure a spectral sentry that paces a rank in your opponent's half: the square it stands on is barred to their pieces, and every turn it steps one file across, turning back when it reaches the edge. It patrols for 4 of their turns, then dissolves. Its beat is fixed and fully visible - time your moves through the gap behind it.",
+      description: "A spectral sentry paces a rank in your opponent's half for 4 of their turns: the square it stands on is barred to their pieces, and every turn it steps one file across, turning back when it reaches the edge.",
+      tip: "Its beat is fixed and fully visible, so they can time their moves through the gap behind it.",
       flavor: "Back and forth, back and forth, and it never once blinks.",
       fx: { motif: "blindfold" },
     },
@@ -660,8 +660,8 @@ const T3: Buff[] = [
     {
       id: "hw3_bloodbond",
       name: "Blood Bond",
-      description:
-        "Bind two enemy pieces in a bond of shared pain: for your opponent's next 6 turns, whenever one of the pair captures anything, the other is frozen for 2 of their turns, though the very first capture by either is free and spares its partner. They may march the pair around all they like; only fighting with one punishes the other. Trade either away and the bond is cut. Kings cannot be bound.",
+      description: "For your opponent's next 6 turns, whenever one of two bound enemy pieces captures anything, the other is frozen for 2 of their turns. The very first capture by either is free. Trade either away and the bond is cut. Kings cannot be bound.",
+      tip: "Marching the pair around is free; only fighting with one punishes the other.",
       flavor: "Strike with the left hand and the right hand bleeds.",
       fx: { motif: "slow" },
     },
@@ -733,8 +733,8 @@ const T3: Buff[] = [
     {
       id: "hw3_exiles_mark",
       name: "Exile's Mark",
-      description:
-        "Brand one enemy knight, bishop or rook as an exile: every move it makes must carry it closer to your side of the board, and if it has not set foot in your half within 5 of their turns, it crumbles to dust. The mark lifts the instant it stands in your half. They can march it forward into danger, trade it away, or spend the other pieces while it withers. Kings are never exiled.",
+      description: "Brand one enemy knight, bishop or rook: every move it makes must carry it closer to your side, and if it has not set foot in your half within 5 of their turns it crumbles to dust. The mark lifts the moment it stands in your half. Kings are never exiled.",
+      tip: "They can march it forward into danger, trade it away, or spend other pieces while it withers.",
       flavor: "Cross the line or be scattered to the wind. Those are the terms.",
       fx: { motif: "anchor" },
     },
@@ -811,8 +811,8 @@ const T3: Buff[] = [
       tier: 4,
       id: "hw3_debtors_mark",
       name: "Debtor's Mark",
-      description:
-        "Mark one enemy piece as a debtor: for your opponent's next 6 turns, every turn they leave it standing idle it runs up one turn of debt (up to 4). The instant they finally move it, the debt comes due and it is frozen for that many of their turns, then the slate is cleared. Moving it every turn keeps the debt at zero; leaving it parked forever costs nothing but a dead piece. Kings keep no debts.",
+      description: "Mark one enemy piece. For your opponent's next 6 turns, every turn they leave it idle it runs up one turn of debt, up to 4. The moment they move it the debt comes due: it is frozen for that many of their turns, then the slate clears. Kings keep no debts.",
+      tip: "Moving it every turn keeps the debt at zero; leaving it parked costs only a dead piece.",
       flavor: "Interest never sleeps, even when the debtor does.",
       fx: { motif: "slow" },
     },
@@ -876,8 +876,8 @@ const T3: Buff[] = [
     {
       id: "hw3_jammed_castle",
       name: "Jammed Portcullis",
-      description:
-        "A hex sits over their castle gate for the next 10 of their turns: if your opponent castles, the portcullis jams behind them. Two of their turns later the portcullis begins to fall: the rook that castled may make one last move to relocate, then it grinds to a halt and is frozen for 3 of their turns. It is a delayed, fully visible price on castling; if they never castle, or accept a stranded rook, the curse simply idles. Kings are never frozen.",
+      description: "For the next 10 of their turns, if your opponent castles the portcullis jams behind them. Two of their turns later the rook that castled may make one last move to relocate, then it grinds to a halt and is frozen for 3 of their turns. Kings are never frozen.",
+      tip: "A fully visible price on castling: if they never castle, or accept a stranded rook, it just idles.",
       flavor: "The gate came down a heartbeat after the king was through.",
       fx: { motif: "slow", pieces: ["r"] },
     },
@@ -940,8 +940,8 @@ const T3: Buff[] = [
       tier: 4,
       id: "hw3_coronation_tax",
       name: "Coronation Tax",
-      description:
-        "Their crownings come with a hidden levy: for your opponent's next 6 turns, each time they promote a pawn, one of their other pieces (chosen by the curse) is called to the ceremony and frozen for 2 of their turns. The new-crowned piece is untouched; the cost is paid elsewhere in the army. Delay the promotion, or pay the levy knowingly. Kings never attend.",
+      description: "For your opponent's next 6 turns, each time they promote a pawn one of their other pieces is called to the ceremony and frozen for 2 of their turns. The new-crowned piece itself is untouched. Kings never attend.",
+      tip: "They can delay the promotion, or pay the levy knowingly.",
       flavor: "Every coronation is funded by a tax nobody voted for.",
       fx: { motif: "slow", pieces: ["p"] },
     },
@@ -978,8 +978,8 @@ const T4: Buff[] = [
     {
       id: "hw3_mutiny",
       name: "Mutiny",
-      description:
-        "Sow mutiny in the cavalry: it takes hold only after your opponent's next move, and then for their next 6 turns, the first time one of their knights captures a piece, it turns its coat on the spot and fights for you for your next 3 turns, then rides back to them. They can deny it by capturing with anything but a knight, or by keeping their knights out of the fray. If it is captured while it serves you, the mutiny simply ends.",
+      description: "It takes hold after your opponent's next move, then for their next 6 turns: the first time one of their knights captures a piece, it turns its coat on the spot and fights for you for your next 3 turns, then rides back to them.",
+      tip: "They deny it by capturing with anything but a knight. If it is captured while it serves you, the mutiny ends.",
       flavor: "A knight that will kill for pay will kill for a better offer.",
       fx: { motif: "jail", pieces: ["n"] },
     },
@@ -1028,8 +1028,8 @@ const T4: Buff[] = [
     {
       id: "hw3_sinking_mire",
       name: "Sinking Mire",
-      description:
-        "Conjure a sucking mire in your opponent's half: a patch of four squares no enemy piece may step onto (pieces caught inside may still climb out). Unlike a spreading rot the mire drains away, losing one square on each of their turns until nothing is left, over 4 of their turns. Route around the puddle and wait it out, or fight past its edge.",
+      description: "A mire of four squares opens in your opponent's half: no enemy piece may step onto it, though pieces caught inside may still climb out. It drains away one square on each of their turns until nothing is left, over 4 of their turns.",
+      tip: "Route around the puddle and wait it out, or fight past its edge.",
       flavor: "Give it a week and it is just a damp patch and a smell.",
       fx: { motif: "blindfold" },
     },
@@ -1081,8 +1081,8 @@ const T4: Buff[] = [
     {
       id: "hw3_time_bomb",
       name: "Powder Keg",
-      description:
-        "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When the fuse burns out, it detonates: every enemy piece (except the king) standing on or next to that square is blown off the board, and you gain one draft reroll. The count is on the card the whole time - clear their pieces out of the blast before it goes, or lose whatever lingers.",
+      description: "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When it blows, every enemy piece except the king standing on or next to that square is blown off the board, and you gain one draft reroll.",
+      tip: "The count is on the card throughout: they must clear the blast, or lose whatever lingers.",
       flavor: "Plenty of time to move. That is what everyone says.",
       fx: { motif: "blindfold" },
     },
@@ -1141,8 +1141,8 @@ const T4: Buff[] = [
     {
       id: "hw3_pilgrimage",
       name: "Forced Pilgrimage",
-      description:
-        "Lay a geas on one enemy piece and name a shrine square it must reach: if that piece stands on the shrine within 5 of their turns, the geas lifts. If the deadline passes and it has not, the piece collapses in exhaustion and is frozen for 3 of their turns. Its other pieces are free; the victim can walk the pilgrim to the shrine, trade it, or let it fall. Kings take no geas.",
+      description: "Name a shrine square that one enemy piece must reach. If it stands on the shrine within 5 of their turns the geas lifts; if the deadline passes it collapses in exhaustion and is frozen for 3 of their turns. Kings take no geas.",
+      tip: "They can walk the pilgrim to the shrine, trade it away, or let it fall.",
       flavor: "Reach the shrine or sleep where you stand. Choose.",
       fx: { motif: "anchor" },
     },
@@ -1216,8 +1216,8 @@ const T4: Buff[] = [
     {
       id: "hw3_aging_blade",
       name: "Aging Blade",
-      description:
-        "Every kill costs them a little youth, once the curse settles in: it takes hold only after your opponent's next move, and then for their next 6 turns, whenever a queen, rook or bishop captures, it ages one rank on the spot - a queen becomes a rook, a rook a bishop, a bishop a knight. Knights and pawns are already too humble to age, so trading with them is safe. Capturing with their heavy pieces slowly grinds the army down.",
+      description: "It takes hold after your opponent's next move, then for their next 6 turns: whenever a queen, rook or bishop captures, it ages one rank on the spot. Queen to rook, rook to bishop, bishop to knight. Knights and pawns never age.",
+      tip: "Trading with their light pieces is safe; fighting with the heavy ones grinds the army down.",
       flavor: "The sword drinks, and the hand that holds it withers.",
       fx: { motif: "muzzle", pieces: ["q", "r", "b"] },
     },
@@ -1252,8 +1252,8 @@ const T4: Buff[] = [
     {
       id: "hw3_miasma",
       name: "Miasma",
-      description:
-        "A sickly fog settles over their ranks: for your opponent's next 5 turns, each time they move a piece so it ends adjacent to another of their pieces, that piece breathes in the miasma and grows more sick. On its third breath it succumbs and is frozen for 2 of their turns, and its lungs clear again. Keeping their pieces spread apart is the whole cure. Kings do not sicken.",
+      description: "For your opponent's next 5 turns, each time they move a piece so it ends adjacent to another of their pieces, it breathes in the miasma. On its third breath it is frozen for 2 of their turns and its lungs clear again. Kings do not sicken.",
+      tip: "Keeping their pieces spread apart is the whole cure.",
       flavor: "Crowd together for safety and share the same bad air.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -1315,8 +1315,8 @@ const T5: Buff[] = [
     {
       id: "hw3_defectors_mark",
       name: "Sleeper Cell",
-      description:
-        "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: it becomes yours to command for your next 3 turns, then slips back to your opponent. Until it turns, it is still theirs - they can root out the plot by capturing or trading the marked piece before the fuse ends. Kings are never turned.",
+      description: "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: yours to command for your next 3 turns, then it slips back. Until it turns it is still theirs. Kings are never turned.",
+      tip: "They can root out the plot by capturing or trading the marked piece before the fuse ends.",
       flavor: "It smiled and saluted for two days. On the third it did not.",
       fx: { motif: "jail" },
     },
@@ -1381,8 +1381,8 @@ const T5: Buff[] = [
     {
       id: "hw3_roaming_void",
       name: "Roaming Maw",
-      description:
-        "Tear open a hungry void in your opponent's half. Each of their turns it drifts one square toward their nearest piece, and no enemy piece may move onto the square it occupies. If it reaches a piece (never the king), that piece is swallowed off the board. The defender keeps one bridge: a single safe square, the central crossing one rank deeper in their half, that the void can never bar or swallow. It hunts for 6 of their turns, then closes. Its next step is always plain to see - keep pieces clear of its path.",
+      description: "A void opens in your opponent's half. Each of their turns it drifts one square toward their nearest piece, bars the square it holds, and swallows any piece it reaches, never the king. The central crossing deeper in their half stays safe. Hunts 6 turns.",
+      tip: "Its next step is always plain to see, so they can keep pieces clear of its path.",
       flavor: "It does not chase so much as insist.",
       fx: { motif: "blindfold" },
     },
@@ -1440,8 +1440,8 @@ const T5: Buff[] = [
     {
       id: "hw3_shared_fate",
       name: "Shared Fate",
-      description:
-        "Stitch the fates of two enemy pieces together for the next 8 of their turns: if you capture one of the pair, the other is doomed, but granted one escape: if they move that piece on their very next turn it slips free, otherwise it drops dead wherever it stands. They can also break the link by trading one of the two away themselves, or by keeping the pair well guarded so you never take either. A king can never be fate-bound.",
+      description: "Stitch two enemy pieces together for the next 8 of their turns: if you capture one, the other is doomed, with one escape. If they move it on their very next turn it slips free, otherwise it drops dead where it stands. A king can never be fate-bound.",
+      tip: "They can break the link by trading one away themselves, or guard the pair so you never take either.",
       flavor: "Cut one thread and the whole tapestry unravels.",
       fx: { motif: "slow" },
     },
@@ -1524,8 +1524,8 @@ const T5: Buff[] = [
     {
       id: "hw3_collapsing_floor",
       name: "Collapsing Floor",
-      description:
-        "Curse one rank in your opponent's half with a slow crack: it lies quiet until after their next move, then after 3 of their turns the floor gives way, and every piece of theirs still standing on that rank is caught in the rubble and frozen for 2 of their turns. Their king is never trapped. The rank and the count are both plain to read - march their pieces off it before it caves in.",
+      description: "Crack one rank in your opponent's half. It lies quiet until after their next move, then 3 of their turns later the floor gives way and every piece of theirs still standing on that rank is frozen for 2 of their turns. Their king is never trapped.",
+      tip: "The rank and the count are both plain to read, so they can march pieces off before it caves in.",
       flavor: "You could hear it groaning for three days before it went.",
       fx: { motif: "blindfold" },
     },
@@ -1584,8 +1584,8 @@ const T5: Buff[] = [
     {
       id: "hw3_bounty_mark",
       name: "Bounty Mark",
-      description:
-        "Paint a bounty on one enemy piece for the next 5 of their turns: whenever the marked piece captures anything, it is swarmed by bounty hunters and frozen for 2 of their turns afterward. Marching it around is free; only using it to fight is punished. They can keep it out of combat, or trade it away to shed the mark. Kings carry no bounty.",
+      description: "Paint a bounty on one enemy piece for the next 5 of their turns: whenever the marked piece captures anything, it is swarmed by bounty hunters and frozen for 2 of their turns afterward. Kings carry no bounty.",
+      tip: "Marching it around is free; only fighting with it is punished, and trading it away sheds the mark.",
       flavor: "Dead or alive, but preferably exhausted first.",
       fx: { motif: "muzzle" },
     },
@@ -1642,8 +1642,8 @@ const T5: Buff[] = [
     {
       id: "hw3_wildfire",
       name: "Wildfire Rot",
-      description:
-        "Set a rot on one enemy piece: for your opponent's next 6 turns, no rotten piece may capture, though the first piece you rot is granted one move before the rot bites and may still capture that once. On each of their turns the rot spreads to one more of their pieces standing beside an infected one. Left in a huddle it consumes the whole cluster; kept apart it cannot jump the gap. Capturing a rotten piece burns that infection away. Kings never rot.",
+      description: "Rot one enemy piece; it gets one move first. For your opponent's next 6 turns rotten pieces cannot capture, the rot spreads each of their turns to one more piece beside an infected one, and capturing a rotten piece burns that infection out. Kings never rot.",
+      tip: "Left in a huddle it consumes the whole cluster; kept apart it cannot jump the gap.",
       flavor: "One spark in dry grass and the whole field is gone by noon.",
       fx: { motif: "muzzle" },
     },
@@ -1728,8 +1728,8 @@ const T6: Buff[] = [
     {
       id: "hw3_effigy_of_dread",
       name: "Effigy of Dread",
-      description:
-        "Raise a leering effigy on an empty square in your opponent's half. While it stands, no enemy piece may step onto the ring of squares around it, though a piece already caught inside that ring may leave normally. The dread lingers for 6 of their turns before it topples. It is not invincible: the effigy is a piece they can capture, and smashing it ends the curse at once. Route around its shadow, or send a piece to break it.",
+      description: "Raise a leering effigy on an empty square in your opponent's half. No enemy piece may step onto the ring around it, though a piece already inside may leave. It stands 6 of their turns, and it is a piece they can capture: smashing it ends the curse.",
+      tip: "Route around its shadow, or send a piece to break it.",
       flavor: "Knock it down. It would like to see you try.",
       fx: { motif: "blindfold" },
     },
@@ -1796,8 +1796,8 @@ const T6: Buff[] = [
     {
       id: "hw3_avalanche",
       name: "Avalanche",
-      description:
-        "Snow gathers silently over their half for 3 of their turns, then comes down all at once. For the 3 turns after it falls, their pieces may not move onto any empty square in their own half - only captures and moves into your half remain - except the first piece they move once it falls gets one legal escape move onto open ground. Whatever ground they already hold is safe footing, so spreading out before it drops is the counter. If it ever leaves them no move, they play freely that turn.",
+      description: "Snow gathers over their half for 3 of their turns, then falls. For the 3 turns after, their pieces may only capture or move into your half, never onto an empty square at home. The first piece they move once it falls gets one escape onto open ground.",
+      tip: "Ground they already hold is safe footing, so spreading out before it drops is the counter.",
       flavor: "Quiet, quiet, quiet, and then the whole mountainside.",
       fx: { motif: "blindfold" },
     },
@@ -1842,8 +1842,8 @@ const T6: Buff[] = [
     {
       id: "hw3_kings_guard",
       name: "Standing Guard",
-      description:
-        "A cruel duty binds their bodyguard: for your opponent's next 6 turns, every time their king moves, whichever of their pieces stands nearest the king is frozen in place for 1 of their turns, rooted to watch over the empty throne. The first piece caught this way is spared, left free to make one move instead. Keeping the king still keeps the guard free. The king itself is never frozen.",
+      description: "For your opponent's next 6 turns, every time their king moves, whichever of their pieces stands nearest it is frozen for 1 of their turns. The first piece caught this way is spared and makes one move instead. The king itself is never frozen.",
+      tip: "Keeping the king still keeps the guard free.",
       flavor: "The king may wander. Someone must always mind the chair.",
       fx: { motif: "slow", pieces: ["k"] },
     },
@@ -1879,8 +1879,8 @@ const T6: Buff[] = [
       tier: 7,
       id: "hw3_feeding_frenzy",
       name: "Feeding Frenzy",
-      description:
-        "A parasite curse that feeds on other curses: for your opponent's next 5 turns, their bishops, rooks and queen have their reach capped, and the cap tightens for every other curse-effect already afflicting them (each frozen or petrified piece, sealed square, or royal edict). On a clean board it barely bites; on a board buried in hexes it clamps their long pieces to a crawl. Cleansing the other curses loosens this one.",
+      description: "For your opponent's next 5 turns their bishops, rooks and queen have their reach capped, and the cap tightens for every other curse already afflicting them: each frozen or petrified piece, sealed square, or royal edict.",
+      tip: "On a clean board it barely bites; on a hexed board it clamps them to a crawl, so cleansing the other curses loosens this one.",
       flavor: "It grows fat on the misery of its neighbors.",
       fx: { motif: "anchor", pieces: ["b", "r", "q"] },
     },
@@ -1899,8 +1899,8 @@ const T6: Buff[] = [
     {
       id: "hw3_doomed_vow",
       name: "Doomed Vow",
-      description:
-        "Condemn one enemy piece with a vow only their king can answer: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it before then, which breaks the vow at once. Their king must leave shelter to save it - or they abandon the piece and keep the king safe. The count is on the card throughout. Kings themselves cannot be condemned.",
+      description: "Condemn one enemy piece: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it first, which breaks the vow at once. Kings themselves cannot be condemned.",
+      tip: "Their king must leave shelter to save it, or they abandon the piece and keep the king safe.",
       flavor: "It will die on the fourth toll unless the crown itself kneels beside it.",
       fx: { motif: "slow" },
     },
@@ -1966,8 +1966,8 @@ const T7: Buff[] = [
     {
       id: "hw3_enemy_within",
       name: "The Enemy Within",
-      description:
-        "Whisper treason to one enemy rook or queen. The whisper holds off until after their next move; then over the next 8 of their turns, the third time they move that piece, its patience snaps and it defects: it serves you for your next 4 turns, then returns to them. Working it hard is what turns it - they can leave it standing, or trade it away, to keep it loyal. If it is captured while it fights for you, the treason ends. Kings never turn.",
+      description: "Whisper treason to one enemy rook or queen. It holds off until after their next move, then over the next 8 of their turns the third time they move that piece it defects: it serves you for your next 4 turns, then returns. Kings never turn.",
+      tip: "Working it hard turns it, so they can leave it standing or trade it away. If it is captured while it fights for you, the treason ends.",
       flavor: "You lean on your strongest arm until the day it lets you fall.",
       fx: { motif: "jail", pieces: ["r", "q"] },
     },
@@ -2044,8 +2044,8 @@ const T7: Buff[] = [
     {
       id: "hw3_eclipse",
       name: "The Long Eclipse",
-      description:
-        "A shadow crosses the sun over their army. It holds off until after their next move; then for their next 3 turns nothing seems wrong, and after that, for the following 3 of their turns their bishops and queen are blind and cannot move at all. The knights, rooks, pawns and king see fine throughout. The schedule is fixed - use the diagonal pieces before the dark, and rely on the others during it.",
+      description: "It holds off until after their next move. Then for their next 3 turns nothing seems wrong, and for the 3 turns after that their bishops and queen are blind and cannot move at all. Knights, rooks, pawns and king see fine throughout.",
+      tip: "The schedule is fixed: use the diagonal pieces before the dark, and the others during it.",
       flavor: "The astronomers warned them. The astronomers always do.",
       fx: { motif: "jail", pieces: ["b", "q"] },
     },
@@ -2091,8 +2091,8 @@ const T7: Buff[] = [
     {
       id: "hw3_hydra_hex",
       name: "Hydra Hex",
-      description:
-        "Brand one enemy piece as the hydra's head, for the next 8 of their turns. If you cut it off (capture the branded piece), two heads grow back: the two enemy pieces nearest where it fell are frozen for 2 of their turns each. Leaving the head alone lets the curse expire harmlessly; capturing it while it stands alone, far from help, gives the new heads nothing to seize. Kings are neither head nor spawn.",
+      description: "Brand one enemy piece as the hydra's head for the next 8 of their turns. If you cut it off, two heads grow back: the two enemy pieces nearest where it fell are each frozen for 2 of their turns. Kings are neither head nor spawn.",
+      tip: "Leaving the head alone lets it expire harmlessly; taking it while it stands alone gives the new heads nothing to seize.",
       flavor: "Strike, and the wound answers with two more mouths.",
       fx: { motif: "slow" },
     },
@@ -2157,8 +2157,8 @@ const T7: Buff[] = [
     {
       id: "hw3_pyrrhic_toll",
       name: "Pyrrhic Toll",
-      description:
-        "Victory itself is cursed: for your opponent's next 5 turns, each time any of their pieces captures, the army mourns and one of their other pieces (chosen by the curse) is frozen for 1 of their turns. Every kill they take costs them a beat somewhere else on the board. Refusing trades avoids the toll entirely; a grinding, capture-heavy game bleeds them dry. Kings never mourn.",
+      description: "For your opponent's next 5 turns, each time any of their pieces captures, the army mourns and one of their other pieces is frozen for 1 of their turns. Kings never mourn.",
+      tip: "Refusing trades avoids the toll entirely; a grinding, capture-heavy game bleeds them dry.",
       flavor: "Another such victory and we are undone.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -2195,8 +2195,8 @@ const T8: Buff[] = [
     {
       id: "hw3_martyrs_crown",
       name: "Martyr's Crown",
-      description:
-        "A patient briar guards your king for your opponent's next 6 turns. A single check passes unpunished, but on the second time they place your king in check, the thorns lash out: every enemy piece standing next to your king is frozen for 2 of their turns, and the count resets. The defender resists with their two most valuable pieces next to your king: those two are spared, the rest are caught. Persistent, hammering checks are what trigger it - a single decisive check, or threats aimed elsewhere, cost them nothing.",
+      description: "A patient briar guards your king for your opponent's next 6 turns. The first check passes; on the second, every enemy piece standing next to your king is frozen for 2 of their turns and the count resets. Their two best pieces there are spared.",
+      tip: "Hammering checks are what trigger it; one decisive check, or threats aimed elsewhere, cost them nothing.",
       flavor: "Crown me in thorns. I will wear them, and so will you.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -2250,8 +2250,8 @@ const T8: Buff[] = [
       special: true,
       id: "hw3_curse_engine",
       name: "The Curse Engine",
-      description:
-        "A grinding machine of malice runs over their army for the next 9 of their turns. Every turn it winds one notch tighter; on every third notch it discharges, freezing whichever of their pieces is strongest for 2 of their turns, then resets. It cannot be reasoned with, only outlasted - three discharges across its life, each snuffing their best piece for a spell. Their king is never seized.",
+      description: "A grinding machine of malice runs over their army for the next 9 of their turns. Every turn it winds one notch tighter, and on every third notch it freezes whichever of their pieces is strongest for 2 of their turns, then resets. Their king is never seized.",
+      tip: "It cannot be reasoned with, only outlasted: three discharges across its life.",
       flavor: "Tick. Tick. Tick. Clang.",
       fx: { motif: "slow", pieces: "all" },
     },
@@ -2298,8 +2298,8 @@ const T8: Buff[] = [
     {
       id: "hw3_blood_tithe",
       name: "Blood Tithe",
-      description:
-        "A tithe is levied on every kill, though it holds off until after their next move: then for their next 6 turns, whenever they capture anything larger than a pawn, one of their own pawns (chosen by the curse) is claimed as tribute and removed from the board. Trading pawn for pawn is untaxed; every heavier trade quietly costs them a pawn on top. Once they have no pawns left, the tithe goes unpaid. Refusing trades starves it entirely.",
+      description: "It holds off until after their next move, then for their next 6 turns: whenever they capture anything larger than a pawn, one of their own pawns is claimed as tribute and removed from the board. Once they have no pawns left, the tithe goes unpaid.",
+      tip: "Trading pawn for pawn is untaxed; refusing the heavier trades starves it entirely.",
       flavor: "The tax collector takes his cut of every corpse.",
       fx: { motif: "muzzle", pieces: "all" },
     },
@@ -2340,8 +2340,8 @@ const T8: Buff[] = [
       tier: 6,
       id: "hw3_inverted_crown",
       name: "The Inverted Crown",
-      description:
-        "The rules of coronation are turned upside down: for your opponent's next 6 turns, any pawn that reaches the last rank is crowned not as they choose but as a mere knight, no matter what they promote to. A knight is still a piece, but never the queen they hoped for. Holding a pawn back until the curse lifts restores a proper coronation.",
+      description: "For your opponent's next 6 turns, any pawn that reaches the last rank is crowned a mere knight, no matter what they choose to promote to.",
+      tip: "Holding a pawn back until the curse lifts restores a proper coronation.",
       flavor: "By royal decree, all new crowns are made of tin.",
       fx: { motif: "slow", pieces: ["p"] },
     },

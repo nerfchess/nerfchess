@@ -237,7 +237,8 @@ const CHAMELEON: Nerf = nerf(
     name: "Chameleon",
     tier: 7,
     icon: "copy",
-    description: "Every move must end on the same color square it started on. That means your knights can never move, your pawns can only double-step or capture, and your king and rooks step diagonally or an even number of squares. If no color-preserving move exists, your king may move to any square instead.",
+    description: "Every move must end on the same colour square it started on. Your knights can never move, your pawns can only double-step or capture, and your king and rooks step diagonally or an even number of squares. With no such move, your king may move anywhere.",
+      tip: "Your knights are dead weight, so trade them off early.",
     flavor: "Blend in. Never break pattern.",
   },
   {
@@ -292,7 +293,8 @@ const METRONOME: Nerf = nerf(
     name: "Metronome",
     tier: 7,
     icon: "music",
-    description: "Each move must travel exactly as many squares (king-steps) as your previous move, whenever such a move exists. A knight's move always counts as two. Spawning a piece does not reset the beat: a spawned or teleported piece must move on the ongoing tempo immediately.",
+    description: "Each move must travel exactly as many squares, in king-steps, as your previous move, whenever such a move exists. A knight's move always counts as two. A spawned or teleported piece must move on the ongoing tempo immediately.",
+      tip: "Short moves are easier to repeat, so setting a beat of one keeps you flexible.",
     flavor: "Tick. Tock. Same beat, forever.",
   },
   {
@@ -381,7 +383,8 @@ const KILLING_SPREE: Nerf = nerf(
     name: "Killing Spree",
     tier: 8,
     icon: "swords",
-    description: "Once you capture, the spree begins: every one of your following turns must also capture, or you lose. Declining a capture that was available, or starting a turn mid-spree with no capture at all, loses immediately. Capturing the enemy king ends the spree in victory.",
+    description: "Once you capture, the spree begins: every one of your following turns must also capture, or you lose. Declining an available capture, or starting a turn mid-spree with no capture at all, loses immediately. Capturing the enemy king ends the spree in victory.",
+      tip: "Do not take the first capture until you can see the chain through to the end.",
     flavor: "The first taste is free. After that, the hunger owns you.",
   },
   {

@@ -58,6 +58,8 @@ import {
 export const APEX_MYTHIC_CHANCE = 0.1;
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -127,8 +129,8 @@ export const REGICIDE: Buff = {
     id: "regicide",
     icon: "Crown",
     name: "Regicide",
-    description:
-      "Your queen teleports to an empty square next to the enemy king (or the nearest empty square to it) and cannot be captured for your opponent's next 2 turns, and every enemy piece beside the king freezes for those 2 turns. Move one additional friendly piece to an empty square; the moved pieces cannot capture the king until your opponent replies.",
+    description: "Your queen teleports to an empty square next to the enemy king, or the nearest empty square to it, and cannot be captured for your opponent's next 2 turns. Every enemy piece beside the king freezes for those 2 turns. Also move one other piece.",
+      tip: "The moved pieces cannot capture the king until your opponent replies, so it sets up rather than finishes.",
     category: "attack",
     tier: 8,
     implemented: true,
@@ -251,8 +253,8 @@ export const TIER9: Buff[] = [
       id: "resurrection",
       icon: "Sparkles",
       name: "Resurrection",
-      description:
-        "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward and spilling into the rest of the board if your half runs out of room. One of your pieces may first take a free non-capturing king-step to an empty square beside it.",
+      description: "Every piece your opponent has captured returns to the board, filling empty squares in your half from your back rank outward, spilling into the rest of the board if your half runs out of room.",
+      tip: "One of your pieces may first take a free non-capturing king-step to an empty square beside it.",
       category: "pieces",
       flavor: "Rise, and rise again.",
     },

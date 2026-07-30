@@ -59,6 +59,8 @@ import {
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
 
 type WildMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;
@@ -1080,8 +1082,8 @@ export const WILD_ELEMENTAL: Buff[] = [
     {
       id: "we_stone_grip",
       name: "Stone Grip",
-      description:
-        "Turn one enemy piece (never a king) to a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it (up, down, left, or right) cannot capture for their next 2 turns. Using this spends your next draft reroll, if you have one.",
+      description: "Turn one enemy piece, never a king, into a walnut for 3 of their turns: it can only shuffle one square at a time. The enemy pieces directly beside it, up, down, left or right, cannot capture for their next 2 turns. Spends your next reroll if you have one.",
+      tip: "Aim it at a defender in a crowd, so the no-capture ring lands on their guards too.",
       tier: 3,
       category: "tempo",
       flavor: "The ground closes over its feet, and the rock spreads.",

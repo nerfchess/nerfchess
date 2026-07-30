@@ -142,6 +142,8 @@ export type {
 
 /** Metadata for a mystic card. Like a fantasy card, the category is per card. */
 export type MysticMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

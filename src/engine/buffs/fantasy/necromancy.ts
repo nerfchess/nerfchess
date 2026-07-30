@@ -127,8 +127,8 @@ export const FANTASY_NECROMANCY: Buff[] = [
       id: "raise_dead",
       icon: "Ghost",
       name: "Raise Dead",
-      description:
-        "Speak the words of unmaking over enemy soil: choose an empty square in your OPPONENT'S half now, and one of your fallen pawns, knights, or bishops rises there after your opponent's next move, once. If the square is taken by then, the revival fizzles and the charge is still spent.",
+      description: "Choose an empty square in your OPPONENT'S half now, and one of your fallen pawns, knights, or bishops rises there after your opponent's next move, once. If the square is taken by then, the revival fizzles and the charge is still spent.",
+      tip: "Pick a square they have no reason to want, or they will simply sit on it.",
       tier: 3,
       category: "pieces",
       flavor: "The grave was only ever a suggestion. So was the border.",

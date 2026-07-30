@@ -69,6 +69,8 @@ import { BOON_WAVE4B } from "./boons4b";
 // --- Local plumbing ----------------------------------------------------------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

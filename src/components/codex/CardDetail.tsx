@@ -315,6 +315,12 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
           {draftLine} {turnCostMeaning(buff)}
         </p>
         <p>As a {cat.label.toLowerCase()} card, it {cat.blurb}</p>
+        {buff.tip && (
+          <p>
+            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <GlossaryText text={buff.tip} />
+          </p>
+        )}
         {buff.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{buff.flavor}&rdquo;</p>}
       </InfoSection>
 
@@ -374,6 +380,12 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
           by accident. Your opponent never sees which nerf you took until the game ends, so every move you
           make is also a clue they are trying to read.
         </p>
+        {nerf.tip && (
+          <p>
+            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <GlossaryText text={nerf.tip} />
+          </p>
+        )}
         {nerf.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{nerf.flavor}&rdquo;</p>}
       </InfoSection>
 

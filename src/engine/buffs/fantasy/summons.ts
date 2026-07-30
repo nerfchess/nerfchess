@@ -246,8 +246,8 @@ export const FANTASY_SUMMONS: Buff[] = [
       id: "summoning_circle",
       icon: "Hexagon",
       name: "Summoning Circle",
-      description:
-        "Chalk the circle and speak a greater name: an Amazon steps through onto an empty square in your half and serves for four of your turns, moving as queen and knight both, then fades back through the circle. Whoever fells her is frozen in place for one of their turns instead of destroyed. Kings are too large to freeze in the circle.",
+      description: "An Amazon steps through onto an empty square in your half and serves for four of your turns, moving as queen and knight both, then fades back through the circle. Whoever fells her is frozen in place for one of their turns.",
+      tip: "Four turns of the strongest piece in the game: plan the attack before you cast it.",
       tier: 8,
       category: "pieces",
       flavor: "One name spoken, and the candles all lean away.",
@@ -321,8 +321,8 @@ export const FANTASY_SUMMONS: Buff[] = [
       id: "summon_dragon",
       icon: "Sparkle",
       name: "Summon Dragon",
-      description:
-        "An actual dragon answers, but takes a beat to descend: choose an empty square in your half now, and after your opponent's next move a new queen lands there, so she cannot capture until they have replied. Whenever she captures, she breathes fire: every enemy piece except a king on the 8 squares around her kill is also removed. Shielded pieces resist the flame.",
+      description: "Choose an empty square in your half now, and after your opponent's next move a new queen lands there, so she cannot capture until they reply. Whenever she captures she breathes fire: every enemy piece except a king on the 8 squares around her kill dies too.",
+      tip: "Shielded pieces resist the flame. One capture can clear a cluster, so aim her at their crowded side.",
       tier: 7,
       category: "pieces",
       flavor: "The oldest thing on the board, and the hungriest.",

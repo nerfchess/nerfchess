@@ -2,7 +2,7 @@
 
 Total cards: 2443. buffs 966, hexes 543, boons 418, items 129, apex 27, nerfs 360.
 
-Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 misleading, 0 broken, 0 without direct test references, 0 without any animation.
+Flags: 273 duplicate-signature, 248 near-duplicate, 90 dominated-candidates, 0 misleading, 0 broken, 0 without direct test references, 0 without any animation.
 
 | id | name | kind | tier | trigger | duration | targets | animation | location | tests | flags | action |
 |----|------|------|------|---------|----------|---------|-----------|----------|-------|-------|--------|
@@ -118,7 +118,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | held_breath | Held Breath | boon | 2 | activated/free | next-turn | self | generated | src/engine/buffs/library.ts | 1 | - | REBALANCED: 3 turns; Measured Breath (2 turns plus reroll, same tier) no longer strictly dominates |
 | hunters_relief | Hunter's Relief | boon | 2 | passive | next-turn | self | passive | src/engine/buffs/library.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | loosen_the_leash | Loosen the Leash | boon | 2 | passive | next-turn | enemy | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| oracles_eye | Oracle's Eye | boon | 2 | instant | unstated | enemy | generated | src/engine/buffs/mystic/fate.ts | 1 | duplicate-signature(draft_supremacy,riddle_game,wa_disrupt_ritual) | keep: bank-improvement axis at T2 |
+| oracles_eye | Oracle's Eye | boon | 2 | instant | unstated | enemy | generated | src/engine/buffs/mystic/fate.ts | 1 | duplicate-signature(draft_supremacy,riddle_game,wa_disrupt_ritual,gamble) | keep: bank-improvement axis at T2 |
 | pawn_shield | Pawn Shield | boon | 2 | activated | 4-turns | enemy | generated | src/engine/buffs/library.ts | 1 | near-duplicate(reinforce:0.80) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | slack_chain | Slack in the Chain | boon | 2 | instant | 3-turns | self | generated | src/engine/buffs/library.ts | 1 | duplicate-signature(bn4_prison_break) near-duplicate(long_leash:1.00) near-duplicate(nerf_breaker:1.00) near-duplicate(bn4_paid_leave:1.00) near-duplicate(bn4_hundred_days:1.00) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | small_mercies | Small Mercies | boon | 2 | passive | next-turn | enemy | passive | src/engine/buffs/library.ts | 1 | - | keep: relief-on-capture ladder T1 (2 procs) |
@@ -173,7 +173,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | bw3_deep_position | Deep Position | boon | 3 | passive | unstated | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_eleventh_hour | Eleventh Hour | boon | 3 | passive | unstated | self | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_field_knighting | Field Knighting | boon | 3 | activated | unstated | self | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bw3_forced_march | Forced March | boon | 3 | passive | 2-turns | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bw3_forced_march | Forced March | boon | 3 | passive | 2-turns | self | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_home_guard | Home Guard | boon | 3 | instant | permanent | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_kings_shield | King's Shield | boon | 3 | passive | unstated | self | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_martyrs_gift | Martyr's Gift | boon | 3 | passive | unstated | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -394,7 +394,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | bw3_kings_sanctuary | King's Sanctuary | boon | 7 | instant | unstated | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_kingsguard_duel | Kingsguard Duel | boon | 7 | activated | unstated | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_last_muster | Last Muster | boon | 7 | activated | unstated | self | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bw3_last_stand | Last Stand | boon | 7 | passive | 3-turns | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bw3_last_stand | Last Stand | boon | 7 | passive | 3-turns | self | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_martyrdom | Martyrdom | boon | 7 | activated | unstated | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_the_homecoming | The Homecoming | boon | 7 | instant | unstated | self | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_vantage_point | Vantage Point | boon | 7 | passive | unstated | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -441,10 +441,10 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | bn4_worldgate | Worldgate | boon | 8 | activated | one-shot | self | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_written_in_stone | Written in Stone | boon | 8 | passive | 10-turns | self | passive | src/engine/buffs/boons4b.ts | 1 | near-duplicate(bn4_third_wind:0.77) near-duplicate(bn4_forty_winks:0.77) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_year_of_jubilee | Year of Jubilee | boon | 8 | passive | 18-turns | self | passive | src/engine/buffs/boons4b.ts | 1 | duplicate-signature(bn4_smoke_break_union,bn4_salt_in_the_wound,bn4_liberators_march) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
-| bw2_eternal_keep | The Eternal Keep | boon | 8 | passive | 4-turns | self | passive | src/engine/buffs/boons2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bw2_eternal_keep | The Eternal Keep | boon | 8 | passive | 4-turns | enemy | passive | src/engine/buffs/boons2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw2_great_return | The Great Return | boon | 8 | instant | next-turn | self | generated | src/engine/buffs/boons2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw2_long_truce | The Long Truce | boon | 8 | instant | 3-turns | self | generated | src/engine/buffs/boons2.ts | 1 | - | POOL: excluded from buff mode via NERF_REVEAL (nerf-suspension rider is dead text there); fully alive in nerf mode |
-| bw2_shadow_reserve | Shadow Reserve | boon | 8 | instant | one-shot | enemy | generated | src/engine/buffs/boons2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bw2_shadow_reserve | Shadow Reserve | boon | 8 | instant | unstated | enemy | generated | src/engine/buffs/boons2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_drive_them_out | Drive Them Out | boon | 8 | instant | unstated | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_mummers_dance | Mummers' Dance | boon | 8 | activated | next-turn | enemy | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_pretender | Pretender to the Throne | boon | 8 | instant | unstated | self | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -492,7 +492,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | op_ferry_crossing | Ferry Crossing | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_towpath:1.00) near-duplicate(op_corduroy_road:1.00) near-duplicate(op_pilgrim_road:1.00) near-duplicate(op_goat_track:1.00) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_fire_escape | Fire Escape | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | duplicate-signature(op_drawbridge_in) near-duplicate(op_palace_gate:0.92) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_first_class_stamp | First Class Stamp | buff | 1 | passive | one-shot | enemy | passive | UNKNOWN | 1 | - | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
-| op_first_robin | First Robin | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | near-duplicate(op_river_breakup:0.79) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_first_robin | First Robin | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | near-duplicate(op_river_breakup:0.76) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_foxtrot_slide | Foxtrot Slide | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_freight_elevator | Freight Elevator | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_fresh_sod | Fresh Sod | buff | 1 | passive | next-turn | enemy | passive | UNKNOWN | 1 | near-duplicate(op_personal_space:0.76) | pending-review |
@@ -512,7 +512,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | op_harborside_h | Lighthouse Walk | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_back_alley:0.87) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_harborside_rider | Harborside Rider | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_hearth_blessing | Hearth Blessing | buff | 1 | passive | one-shot | enemy | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
-| op_hedgerow_buds | Hedgerow Buds | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | near-duplicate(op_snowdrop:0.77) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_hedgerow_buds | Hedgerow Buds | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_home_office | Home Office | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
 | op_homesick_private | Homesick Private | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | duplicate-signature(op_regroup_at_camp) near-duplicate(op_tactical_withdrawal:0.92) near-duplicate(op_second_thoughts:0.79) near-duplicate(op_sidestep_and_bow:0.77) | REBALANCED: band retreats now run twice (see op_second_thoughts) |
 | op_homing_pigeon | Homing Pigeon | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | - | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
@@ -527,7 +527,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | op_kings_road_watch | King's Road Watch | buff | 1 | passive | 5-turns | enemy | passive | UNKNOWN | 1 | near-duplicate(op_ladys_escort:0.86) near-duplicate(op_plaza_lantern:0.75) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_ladys_escort | Lady's Escort | buff | 1 | passive | 4-turns | enemy | passive | UNKNOWN | 1 | near-duplicate(op_plaza_lantern:0.78) near-duplicate(op_kings_road_watch:0.86) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_late_bloom | Late Bloom | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
-| op_late_spring | Late Spring | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | near-duplicate(op_sap_run:0.92) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_late_spring | Late Spring | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | near-duplicate(op_sap_run:0.90) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_locker_room_nickname | Locker Room Nickname | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_long_jump | Long Jump | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | duplicate-signature(op_pole_vault) near-duplicate(op_parade_elephant:0.77) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_lucky_stirrup | Lucky Stirrup | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
@@ -554,9 +554,9 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | op_regroup_at_camp | Regroup at Camp | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | duplicate-signature(op_homesick_private) near-duplicate(op_tactical_withdrawal:0.92) near-duplicate(op_second_thoughts:0.79) near-duplicate(op_sidestep_and_bow:0.77) | REBALANCED: band retreats now run twice (see op_second_thoughts) |
 | op_revolving_door | Revolving Door | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | duplicate-signature(op_servants_entrance,op_garden_door,op_cellar_hatch,op_storm_door) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_ripe_for_picking | Ripe for Picking | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
-| op_river_breakup | River Breakup | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | near-duplicate(op_first_robin:0.79) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_river_breakup | River Breakup | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | near-duplicate(op_first_robin:0.76) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_rolling_gantry | Rolling Gantry | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_window_washer:0.80) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
-| op_sap_run | Sap Run | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | near-duplicate(op_late_spring:0.92) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_sap_run | Sap Run | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | near-duplicate(op_late_spring:0.90) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_second_harvest | Second Harvest | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | duplicate-signature(op_slow_burn) | REBALANCED: latest threshold now pays 2 rerolls; Slow Burn no longer strictly dominates |
 | op_second_thoughts | Second Thoughts | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_tactical_withdrawal:0.85) near-duplicate(op_homesick_private:0.79) near-duplicate(op_regroup_at_camp:0.79) | REBALANCED: band retreats now run twice; the any-file Tactical Withdrawal no longer strictly dominates |
 | op_second_wind_sip | Water Break | buff | 1 | passive | unstated | enemy | passive | UNKNOWN | 1 | - | keep (auto: no flags, harness-executed) |
@@ -566,7 +566,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | op_signal_rocket | Signal Rocket | buff | 1 | passive | next-turn | enemy | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_silk_curtain | Silk Curtain | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | - | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_smugglers_lane | Smugglers' Lane | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
-| op_snowdrop | Snowdrop | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | near-duplicate(op_hedgerow_buds:0.77) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| op_snowdrop | Snowdrop | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | op_squires_errand | Squire's Errand | buff | 1 | passive | unstated | self | passive | UNKNOWN | 1 | - | REBALANCED: band retreats now run twice (see op_second_thoughts) |
 | op_stage_left | Stage Left | buff | 1 | passive | one-shot | self | passive | UNKNOWN | 1 | near-duplicate(op_prompt_corner:0.86) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | op_star_dressing_room | Star Dressing Room | buff | 1 | passive | next-turn | enemy | passive | UNKNOWN | 1 | near-duplicate(op_green_room:0.86) near-duplicate(op_set_change:0.93) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
@@ -773,7 +773,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | emotional_support_pawn | Emotional Support Pawn | buff | 3 | activated | unstated | self | plugin | src/engine/buffs/funny/meta.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | fork_guard | Fork Guard | buff | 3 | passive | unstated | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | frost | Frost | buff | 3 | activated/lingering | 1-turns | enemy | plugin | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| gamble | Gamble | buff | 3 | instant | unstated | enemy | bespoke+canvas | src/engine/buffs/pt/timefaustian.ts | 1 | - | keep: coin-flip take-both variant, random axis |
+| gamble | Gamble | buff | 3 | instant | unstated | enemy | bespoke+canvas | src/engine/buffs/pt/timefaustian.ts | 1 | duplicate-signature(draft_supremacy,riddle_game,oracles_eye,wa_disrupt_ritual) | keep: coin-flip take-both variant, random axis |
 | glamour | Glamour | buff | 3 | activated | unstated | enemy | generated | src/engine/buffs/fantasy/fey.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | gm_jackpot_pawn | Jackpot Pawn | buff | 3 | activated/lingering | 5-turns | self | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | gm_piece_roulette | Piece Roulette | buff | 3 | activated | unstated | self | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1041,7 +1041,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | bombombini_gusini | Bombombini Gusini | buff | 5 | activated | 2-turns | enemy | bespoke+canvas | src/engine/buffs/brainrot.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | borrowed_time | Borrowed Time | buff | 5 | instant | unstated | self | bespoke+canvas | src/engine/buffs/funny/tradeoffs.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | buff_thief | Buff Thief | buff | 5 | activated | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep: steal family T5 (any tier) |
-| cavalry_charge | Cavalry Charge | buff | 5 | activated | one-shot | enemy | bespoke+canvas+passive | src/engine/buffs/funny/summons.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| cavalry_charge | Cavalry Charge | buff | 5 | activated | unstated | enemy | bespoke+canvas+passive | src/engine/buffs/funny/summons.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | checkmate_immunity | Checkmate Immunity | buff | 5 | passive | one-shot | self | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | clone_army | Clone Army | buff | 5 | instant | unstated | self | bespoke+canvas | src/engine/buffs/funny/summons.ts | 1 | duplicate-signature(kings_guard,second_army,bn4_spare_button,bn4_twin_buttons) dominated-candidate(higher-tier-of-duplicate-pair) | keep: pocket-pawn ladder T6 (4) |
 | cs_loot_box | Loot Box | buff | 5 | instant | unstated | self | plugin | src/engine/buffs/pt/casino.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1110,7 +1110,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | reinforcements | Reinforcements | buff | 5 | activated | one-shot | self | bespoke+canvas | src/engine/buffs/funny/summons.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | rent_a_rook | Rent-a-Rook | buff | 5 | activated/lingering | 5-turns | self | bespoke+canvas | src/engine/buffs/funny/summons.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | resurrect_major | Resurrect Major | buff | 5 | activated | one-shot | unstated | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| riddle_game | Riddle Game | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/fantasy/legends.ts | 1 | duplicate-signature(draft_supremacy,oracles_eye,wa_disrupt_ritual) | keep: draft-denial family T5 (skip 2, gated by combo tags) |
+| riddle_game | Riddle Game | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/fantasy/legends.ts | 1 | duplicate-signature(draft_supremacy,oracles_eye,wa_disrupt_ritual,gamble) | keep: draft-denial family T5 (skip 2, gated by combo tags) |
 | round_table | The Round Table | buff | 5 | instant | unstated | self | canvas | src/engine/buffs/fantasy/legends.ts | 1 | duplicate-signature(bodyguard,bn4_reserve_officer) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | rubiks_cube | Rubik's Cube | buff | 5 | activated/lingering | next-turn | enemy | plugin | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | second_army | Second Army | buff | 5 | instant | unstated | self | bespoke+canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(kings_guard,bn4_spare_button,bn4_twin_buttons,clone_army) dominated-candidate(higher-tier-of-duplicate-pair) | keep: pocket-pawn ladder T4 (2) |
@@ -1127,7 +1127,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | wa_border_ward | Border Ward | buff | 5 | passive | 2-turns | enemy | bespoke+canvas+passive | src/engine/buffs/wild/arcane.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wa_conjure_rook | Conjured Rook | buff | 5 | instant | unstated | self | canvas | src/engine/buffs/wild/arcane.ts | 1 | duplicate-signature(starfall) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | wa_disjunction | Disjunction | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/wild/arcane.ts | 1 | - | keep: pocket-removal axis at T4 |
-| wa_disrupt_ritual | Disrupt Ritual | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/wild/arcane.ts | 1 | duplicate-signature(draft_supremacy,riddle_game,oracles_eye) | keep: draft-denial family T4 (skip 1 + self 3-card) |
+| wa_disrupt_ritual | Disrupt Ritual | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/wild/arcane.ts | 1 | duplicate-signature(draft_supremacy,riddle_game,oracles_eye,gamble) | keep: draft-denial family T4 (skip 1 + self 3-card) |
 | wa_quicken | Quicken | buff | 5 | instant | unstated | self | bespoke+canvas | src/engine/buffs/wild/arcane.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wa_sabotage | Sabotage | buff | 5 | instant | unstated | enemy | canvas | src/engine/buffs/wild/arcane.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wa_spelltheft | Spelltheft | buff | 5 | activated | unstated | enemy | canvas | src/engine/buffs/wild/arcane.ts | 1 | - | keep: steal family T5 variant with payment rider |
@@ -1370,7 +1370,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | check_out_our_socials | Check Out Our Socials | buff | 8 | activated/free | next-turn | enemy | bespoke | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | divine_fortress | Divine Fortress | buff | 8 | passive | 3-turns | self | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | divine_right | Divine Right | buff | 8 | activated/lingering | 5-turns | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | near-duplicate(wa_royal_aegis:0.77) | pending-review |
-| draft_supremacy | Draft Supremacy | buff | 8 | instant | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(riddle_game,oracles_eye,wa_disrupt_ritual) dominated-candidate(higher-tier-of-duplicate-pair) | keep: T8 top of the take-both ladder (two drafts plus denial) |
+| draft_supremacy | Draft Supremacy | buff | 8 | instant | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(riddle_game,oracles_eye,wa_disrupt_ritual,gamble) dominated-candidate(higher-tier-of-duplicate-pair) | keep: T8 top of the take-both ladder (two drafts plus denial) |
 | endless_turn | Endless Turn | buff | 8 | activated/free/lingering | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | eternal_reign | Eternal Reign | buff | 8 | passive | permanent | self | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | extinction | Extinction | buff | 8 | instant | unstated | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1383,7 +1383,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | immortal_king | Immortal King | buff | 8 | passive | 8-turns | enemy | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | mass_mind_control | Mass Mind Control | buff | 8 | activated/lingering | next-turn | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | onslaught | Onslaught | buff | 8 | passive | 3-turns | self | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| ov_board_of_directors | Board of Directors | buff | 8 | activated/lingering | 6-turns | enemy | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| ov_board_of_directors | Board of Directors | buff | 8 | activated/lingering | 6-turns | self | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_cartographers_vault | Cartographer's Vault | buff | 8 | passive | unstated | self | passive | src/engine/buffs/overhaul/t7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_crown_of_the_undying | Crown of the Undying | buff | 8 | passive | one-shot | enemy | passive | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_deja_vu | Deja Vu | buff | 8 | activated/free | next-turn | enemy | generated | src/engine/buffs/overhaul/t7.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1473,7 +1473,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | hw2_long_road_home | The Long Road Home | hex | 2 | activated/lingering | 5-turns | enemy | generated | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_tarnished_crown | Tarnished Crown | hex | 2 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw3_binding_oath | Binding Oath | hex | 2 | activated/lingering | 6-turns | enemy | generated | src/engine/buffs/hexes/wave3.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hw3_bloodlust | Bloodlust | hex | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave3.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hw3_bloodlust | Bloodlust | hex | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave3.ts | 2 | duplicate-signature(withered_hands,hx4_waste_not,hx4_sleepwalkers) | pending-review |
 | hw3_curse_hop | Handed Down | hex | 2 | activated/lingering | 5-turns | enemy | generated | src/engine/buffs/hexes/wave3.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw3_fifth_column | Fifth Column | hex | 2 | activated/lingering | 3-turns | enemy | generated | src/engine/buffs/hexes/wave3.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw3_toll_road | Toll Road | hex | 2 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave3.ts | 2 | duplicate-signature(hx4_candle_curfew,hx4_echo_of_bells) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
@@ -1624,7 +1624,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_broken_oars | Broken Oars | hex | 4 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_gnat_cloud,hx4_pigeon_perch,hx4_lockstep,hx4_broken_compass,hx4_smoke_line,hx4_grim_procession) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_candle_curfew | Candle Curfew | hex | 4 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hw3_toll_road,hx4_echo_of_bells) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_caught_mid_stride | Caught Mid Stride | hex | 4 | instant | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_censors_ink | Censor's Ink | hex | 4 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hx4_wheel_of_ice) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
+| hx4_censors_ink | Censor's Ink | hex | 4 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_circling_vultures | Circling Vultures | hex | 4 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_coronation_bill | Coronation Bill | hex | 4 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_cracked_lens | Cracked Lens | hex | 4 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1742,7 +1742,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_toy_box | The Toy Box | hex | 5 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_undertow | Undertow | hex | 5 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_wagon_ruts | Wagon Ruts | hex | 5 | passive | 5-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_waste_not | Waste Not | hex | 5 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(withered_hands,hx4_sleepwalkers) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| hx4_waste_not | Waste Not | hex | 5 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4.ts | 2 | duplicate-signature(hw3_bloodlust,withered_hands,hx4_sleepwalkers) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_widows_veil | Widow's Veil | hex | 5 | passive | 5-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | REBALANCED: 6 turns of mourning; was identical to Butterfingers (T1) |
 | lava_floor | Lava Floor | hex | 5 | activated | 4-turns | enemy | bespoke+canvas | src/engine/buffs/funny/chaos.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | lone_sovereign | Lone Sovereign | hex | 5 | passive | next-turn | enemy | canvas+passive | src/engine/buffs/hexes/tier5.ts | 2 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
@@ -1777,7 +1777,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | groundhog_day | Groundhog Day | hex | 6 | passive | next-turn | enemy | bespoke+canvas+passive | src/engine/buffs/pt/curseschaos.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_beacon_of_woe | Beacon of Woe | hex | 6 | activated/lingering | 2-turns | enemy | generated | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_bound_court | Chains of the Court | hex | 6 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hw2_gathering_storm | Gathering Storm | hex | 6 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| hw2_gathering_storm | Gathering Storm | hex | 6 | passive | next-turn | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_gilded_rot | Gilded Rot | hex | 6 | passive | 5-turns | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_gravebloom | Gravebloom | hex | 6 | passive | 6-turns | enemy | passive | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hw2_pauper_crown | Pauper's Crown | hex | 6 | activated/lingering | 4-turns | enemy | generated | src/engine/buffs/hexes/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1819,7 +1819,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_signal_jam | Signal Jam | hex | 6 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hx4_deja_vu) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_silken_net | Silken Net | hex | 6 | activated | 1-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_siren_song | Siren Song | hex | 6 | activated/lingering | 2-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(allergies) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
-| hx4_sleepwalkers | Sleepwalkers | hex | 6 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(withered_hands,hx4_waste_not) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| hx4_sleepwalkers | Sleepwalkers | hex | 6 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hw3_bloodlust,withered_hands,hx4_waste_not) | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | hx4_tar_flood | Tar Flood | hex | 6 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 3 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | hx4_thunderhead | Thunderhead | hex | 6 | passive | 1-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_walnut_crown | The Walnut Crown | hex | 6 | instant | 2-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -1892,7 +1892,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | hx4_veil_of_moths | Veil of Moths | hex | 7 | passive | 3-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hx4_sated_blades) | REBALANCED: 4 turns; Withered Hands (full capture ban, 3 turns, same tier) no longer strictly dominates |
 | hx4_velvet_rope | Velvet Rope | hex | 7 | instant | 3-turns | enemy | generated | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hx4_watchmans_whistle | Watchman's Whistle | hex | 7 | passive | 5-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| hx4_wheel_of_ice | Wheel of Ice | hex | 7 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | duplicate-signature(hx4_censors_ink) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
+| hx4_wheel_of_ice | Wheel of Ice | hex | 7 | passive | 4-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | molten_heart | Molten Heart | hex | 7 | passive | unstated | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | noble_rout | Noble Rout | hex | 7 | passive | 3-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | salted_earth | Salted Earth | hex | 7 | passive | 4-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | duplicate-signature(hx4_the_long_siege) | pending-review |
@@ -1902,7 +1902,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | throne_and_silence | Throne and Silence | hex | 7 | passive | next-turn | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | total_whiteout | Total Whiteout | hex | 7 | passive | 3-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier6.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wc_sticky_floor | Sticky Floor | hex | 7 | passive | 2-turns | enemy | canvas+passive | src/engine/buffs/wild/chaos.ts | 2 | duplicate-signature(leaden_limbs,wa_jinx) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
-| withered_hands | Withered Hands | hex | 7 | passive | 3-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | duplicate-signature(hx4_waste_not,hx4_sleepwalkers) dominated-candidate(higher-tier-of-duplicate-pair) | keep: full capture ban T7; Veil of Moths now runs 4 turns on the half-board axis |
+| withered_hands | Withered Hands | hex | 7 | passive | 3-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier7.ts | 2 | duplicate-signature(hw3_bloodlust,hx4_waste_not,hx4_sleepwalkers) dominated-candidate(higher-tier-of-duplicate-pair) | keep: full capture ban T7; Veil of Moths now runs 4 turns on the half-board axis |
 | abdication_edict | Abdication Edict | hex | 8 | passive | next-turn | enemy | canvas+passive | src/engine/buffs/hexes/tier8.ts | 2 | duplicate-signature(vertigo) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | absolute_zero | Absolute Zero | hex | 8 | passive | 2-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | blighted_furrows | Blighted Furrows | hex | 8 | passive | 4-turns | enemy | canvas+passive | src/engine/buffs/hexes/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -2085,7 +2085,7 @@ Flags: 273 duplicate-signature, 250 near-duplicate, 91 dominated-candidates, 0 m
 | gm_devils_deck | Devil's Deck | item | 7 | activated | 2-turns | enemy | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_cornucopia | Cornucopia | item | 8 | activated | unstated | self | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_crown_of_masks | Crown of Masks | item | 8 | activated | next-turn | enemy | generated | src/engine/buffs/boons4b.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| gm_wheel_of_the_cosmos | Wheel of the Cosmos | item | 8 | activated | 2-turns | enemy | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| gm_wheel_of_the_cosmos | Wheel of the Cosmos | item | 8 | activated | one-shot | enemy | plugin | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_cousin_from_out_of_town | My Cousin From Out of Town | item | 8 | activated/lingering | 8-turns | self | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_pandemonium_carnival | Pandemonium Carnival | item | 8 | passive | 4-turns | self | passive | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_the_fool | The Fool | item | 8 | activated/lingering | 6-turns | enemy | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |

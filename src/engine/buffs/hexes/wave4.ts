@@ -974,7 +974,8 @@ const T2: Buff[] = [
     },
   ),
   H2(
-    { id: "hx4_tea_break", name: "Tea Break", description: "The first piece your opponent tries to move from more than 2 squares off their king slips through as one escape. After that, for their next turn, only pieces within 2 squares of their king may move. Everyone else is at tea, and the pot goes cold if nobody strays.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
+    { id: "hx4_tea_break", name: "Tea Break", description: "For your opponent's next turn, only pieces within 2 squares of their king may move. The first piece they try to move from further out slips through as one escape.",
+      tip: "A one-turn tempo theft: best when their king is far from the action.", flavor: "The kettle outranks the general.", icon: "Coffee", fx: { motif: "slow", pieces: "all" } },
     escapeCurseBoard(1, (moves, api) => {
       const k = oppKing(api);
       if (k == null) return moves;
@@ -1726,7 +1727,8 @@ const T4: Buff[] = [
     ),
   ),
   H4(
-    { id: "hx4_broken_compass", name: "Broken Compass", description: "For your opponent's next 3 turns, every move must end in a different quadrant of the board than it started in. The first piece to break the rule slips through as one escape, then the restriction holds. The needle spins and nobody trusts a short walk. Their king is exempt.", flavor: "North is a matter of opinion now.", icon: "Compass", fx: { motif: "anchor", pieces: "all" } },
+    { id: "hx4_broken_compass", name: "Broken Compass", description: "For your opponent's next 3 turns, every move must end in a different quadrant of the board than it started in. The first piece to break the rule slips through as one escape, then the restriction holds. Their king is exempt.",
+      tip: "Short repositioning walks are what it forbids, so it punishes a cramped position.", flavor: "North is a matter of opinion now.", icon: "Compass", fx: { motif: "anchor", pieces: "all" } },
     escapeCurse(3, (m) => m.piece === "k" || quadOf(m.from) !== quadOf(m.to)),
   ),
   H4(
@@ -1808,7 +1810,8 @@ const T4: Buff[] = [
     },
   ),
   H4(
-    { id: "hx4_dead_mans_boots", name: "Dead Man's Boots", description: "For your opponent's next 3 turns, their pieces refuse to stand where anyone has died: they may not end a move on any square where a piece has been captured this game. The first piece to step onto a grave slips through as one escape, then the restriction holds. Their king is exempt.", flavor: "The board remembers every square that went quiet.", icon: "Skull", fx: { motif: "blindfold", pieces: "all" } },
+    { id: "hx4_dead_mans_boots", name: "Dead Man's Boots", description: "For your opponent's next 3 turns, their pieces may not end a move on any square where a piece has been captured this game. The first piece to step onto a grave slips through as one escape, then the restriction holds. Their king is exempt.",
+      tip: "It grows teeth as the game goes on, so it is strongest after a bloodbath.", flavor: "The board remembers every square that went quiet.", icon: "Skull", fx: { motif: "blindfold", pieces: "all" } },
     escapeCurseBoard(3, (moves, api) => {
       const graves = new Set<Square>();
       for (const h of api.board.history) {

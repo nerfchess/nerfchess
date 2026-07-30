@@ -45,6 +45,8 @@ import {
 type Mech = Partial<Buff> & Pick<Buff, "kind">;
 
 type WildMeta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

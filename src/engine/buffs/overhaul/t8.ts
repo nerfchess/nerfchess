@@ -238,8 +238,8 @@ export const OVERHAUL_T8: Buff[] = [
     {
       id: "ov_board_of_directors",
       name: "Board of Directors",
-      description:
-        "Convene the Board and appoint two of its four departments for 6 of your turns. After each of your moves your chosen departments report: Operations advances one of your pawns every third turn; Intelligence reveals enemy pieces you attack that stand undefended; Treasury adds 12 seconds to your clock; Drafting grants a reroll and lifts your next draft one tier. You pick the two departments, not the Board.",
+      description: "Appoint two of the Board's four departments for 6 of your turns, reporting after each of your moves. Operations advances a pawn every third turn. Intelligence marks undefended pieces you attack. Treasury adds 12 seconds. Drafting grants a reroll and a tier.",
+      tip: "You pick the two departments, not the Board, so match them to what the game needs.",
       tier: 8,
       category: "info",
       icon: "Briefcase",
@@ -449,8 +449,8 @@ export const OVERHAUL_T8: Buff[] = [
     {
       id: "ov_deus_ex_machina",
       name: "Deus Ex Machina",
-      description:
-        "The machine god intervenes once: if your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn. Using it spends the card even if the intervention finds nothing to do.",
+      description: "The machine god intervenes once. If your queen has fallen she is restored to an empty square of your first two ranks. Otherwise every freeze on your army is cleansed and the last two enemy pieces that moved are stunned for 1 turn.",
+      tip: "It spends the card even if the intervention finds nothing to do, so hold it until it matters.",
       tier: 8,
       category: "pieces",
       icon: "Cog",
@@ -491,8 +491,8 @@ export const OVERHAUL_T8: Buff[] = [
     {
       id: "ov_pandemonium_carnival",
       name: "Pandemonium Carnival",
-      description:
-        "The carnival parks beside the board for 4 of your turns. After every move by either side the wheel spins a minor act: a random pawn wanders sideways, a random piece naps for a turn, a random square is roped off for a turn, or confetti falls and nothing happens at all.",
+      description: "The carnival parks beside the board for 4 of your turns. After every move by either side the wheel spins a minor act: a random pawn wanders sideways, a random piece naps for a turn, a random square is roped off, or confetti falls and nothing happens.",
+      tip: "It is chaos with no favourite, so play it when a messy board suits you more than them.",
       tier: 8,
       category: "item",
       icon: "FerrisWheel",
@@ -548,8 +548,8 @@ export const OVERHAUL_T8: Buff[] = [
     {
       id: "ov_ninth_rank",
       name: "The Ninth Rank",
-      description:
-        "The phantom rank opens behind your first: as a free action, reposition one of your pieces onto an empty square of your back rank, and enemy pieces cannot set foot anywhere on your back rank for your opponent's next 6 turns. If you reposition a piece, you may not capture the enemy king until your opponent replies.",
+      description: "As a free action, reposition one of your pieces onto an empty square of your back rank, and enemy pieces cannot set foot on your back rank for your opponent's next 6 turns. If you reposition, you may not capture the enemy king until they reply.",
+      tip: "Six turns of an untouchable back rank kills every back-rank threat outright.",
       tier: 8,
       category: "protection",
       icon: "DoorClosed",
@@ -780,8 +780,8 @@ export const OVERHAUL_T8: Buff[] = [
     {
       id: "ov_symphony_of_the_legion",
       name: "Symphony of the Legion",
-      description:
-        "Three movements, each a free action, at most one per your turn, played in order: first every pawn you own advances a square; second each of your knights and bishops drifts one random empty step; third your rooks and queen may pass through friendly pieces until your turn ends.",
+      description: "Three movements, each a free action, at most one per your turn, in order: first every pawn you own advances a square; second each of your knights and bishops drifts one random empty step; third your rooks and queen may pass through friendly pieces this turn.",
+      tip: "Three turns of free actions, so plan the whole sequence before you start it.",
       tier: 7,
       category: "tempo",
       icon: "Music2",

@@ -8,6 +8,8 @@ type Stub = {
   id: string;
   name: string;
   description: string;
+  /** Advice, not a rule (see Nerf.tip). */
+  tip?: string;
   flavor?: string;
   tier: Tier;
   icon?: string;
@@ -134,7 +136,8 @@ const STUBS: Stub[] = [
   { id: "leaps_and_bounds", name: "Leaps and Bounds", description: "Can't move a piece to a square adjacent to where it just was.", tier: 6 },
   { id: "colorblind", name: "Colorblind", description: "Can't move to one random color of squares, re-randomized each turn.", tier: 5 },
   { id: "inching_forward", name: "Inching Forward", description: "From your 6th move on, you lose if your king has not advanced far enough: it must be at least on your 2nd rank by move 6, your 3rd rank by move 12, and one rank further for every additional 6 of your moves.", tier: 6 },
-  { id: "ichthyophobe", name: "Ichthyophobe", description: "Can't play the move a simple greedy engine would pick (its single best one-ply move).", tier: 3 },
+  { id: "ichthyophobe", name: "Ichthyophobe", description: "From your move 3 on, you cannot play the move a simple greedy engine would pick: its single best move on a one-ply look, the most valuable safe capture, or a basic developing move when there is no capture. Every other legal move is fine.",
+      tip: "If that one move is your only legal move you may still play it, so it can never strand you.", tier: 3 },
   { id: "left_to_right", name: "Left to Right", description: "Unless you just moved to the rightmost file, must move right of your last move's destination.", tier: 6 },
   { id: "friendly_fire", name: "Friendly Fire", description: "Can only move to squares defended by another of your pieces.", tier: 6 },
   { id: "going_the_distance", name: "Going the Distance", description: "Must move at least as far as opponent's last move, if able.", tier: 6 },
@@ -161,7 +164,8 @@ const STUBS: Stub[] = [
   { id: "nurturer", name: "Nurturer", description: "Can't capture the enemy king until you've promoted a pawn.", tier: 6 },
   { id: "prince_charming", name: "Prince Charming", description: "If your queen is attacked, must move a knight if possible.", tier: 4 },
   { id: "absolution", name: "Absolution", description: "After a non-bishop captures, it must start a turn adjacent to a bishop before it can capture again.", tier: 6 },
-  { id: "quicksand", name: "Quicksand", description: "The 4th and 5th ranks are quicksand. If one of your pieces lands on the same 4th- or 5th-rank square for the second time in the game (tracing that piece's own path, not necessarily on consecutive moves), it is stuck and can never move from that square again.", tier: 4 },
+  { id: "quicksand", name: "Quicksand", description: "The 4th and 5th ranks are quicksand, shown on the board. If one of your pieces lands on the same 4th- or 5th-rank square for the second time in the game, tracing that piece's own path, it is stuck there for good and can never move again.",
+      tip: "A piece one visit from being stuck is flagged the move before, so you always get a warning.", tier: 4 },
   { id: "rook_fan_club", name: "Rook Fan Club", description: "Must promote to rooks. King/queen can't move diagonally.", tier: 4 },
   { id: "ladies_first", name: "Ladies First", description: "Can only move king if you moved queen on previous turn.", tier: 4 },
   { id: "inside_the_lines", name: "Inside the Lines", description: "Can't move onto the rim (moves staying on rim are fine).", tier: 4 },
@@ -169,12 +173,14 @@ const STUBS: Stub[] = [
   { id: "royal_berth", name: "Royal Berth", description: "Can't place a piece adjacent to your king.", tier: 5 },
   { id: "velociraptor", name: "Velociraptor", description: "Can only capture a piece type if opponent moved that type in their last 3 moves.", tier: 7 },
   { id: "secret_garden", name: "Secret Garden", description: "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.", tier: 6 },
-  { id: "thunderdome", name: "Thunderdome", description: "The center 16 squares (files c-f, ranks 3-6) are the thunderdome. Once one of your pieces is on those squares it can't move out of the zone for the rest of the game; it may still move within the zone.", tier: 6 },
+  { id: "thunderdome", name: "Thunderdome", description: "The centre 16 squares (files c to f, ranks 3 to 6) are the thunderdome. Once one of your pieces is inside, it can never leave the zone for the rest of the game, though it may still move within it. A move granted by another card cannot carry a piece out either.",
+      tip: "Pieces enter; pieces do not leave. Send in only what you are happy to leave there.", tier: 6 },
   { id: "indecisive", name: "Indecisive", description: "Pieces can't capture if they have multiple possible capture moves.", tier: 5 },
   { id: "unrequited_love", name: "Unrequited Love", description: "King can't move away from queen; queen can't move toward king.", tier: 6 },
   { id: "torpedoes", name: "Torpedoes", description: "If you made a non-capturing pawn move last turn and can move it again, you must.", tier: 4 },
   { id: "theocracy", name: "Theocracy", description: "On every turn of one fixed parity (all your odd-numbered turns, or all your even-numbered turns, chosen at random at game start), only your bishops may capture.", tier: 5 },
-  { id: "bottled_lightning", name: "Bottled Lightning", description: "If you can move your king, you must.", tier: 8 },
+  { id: "bottled_lightning", name: "Bottled Lightning", description: "If your king can move forward or sideways, it must, and it may never move backward toward your own side. When every king move would go backward you may move another piece instead, but the move right after any non-king move must be a king move.",
+      tip: "The king moves backward only as a last resort, with no other legal move at all.", tier: 8 },
 ];
 
 export const ALL_NERFS: Nerf[] = (() => {

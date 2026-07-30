@@ -141,8 +141,8 @@ export const FUNNY_PRANKS: Buff[] = [
     {
       id: "pr_donation_alert",
       name: "Subscriber Raid",
-      description:
-        "A fake donation alert blasts across the board and the raid pours in: add 25 seconds to your clock while your opponent loses 10 to the chaos. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply.",
+      description: "A fake donation alert blasts across the board: add 25 seconds to your clock while your opponent loses 10 to the chaos. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply.",
+      tip: "A pure clock and information card: it changes nothing on the board.",
       tier: 3,
       category: "tempo",
       flavor: "ChessLord420 donated 5 dollars: get good lmao",

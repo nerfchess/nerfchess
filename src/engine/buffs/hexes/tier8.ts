@@ -185,7 +185,8 @@ export const HEXES_T8: Buff[] = [
     {
       id: "petrified_forest",
       name: "Petrified Forest",
-      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may make one move before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is entangled and frozen for 1 turn.",
+      description: "Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may move once before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is frozen for 1 turn.",
+      tip: "The roots punish crowding, so their surviving pieces need room.",
       flavor: "The trees were cavalry once. They still take prisoners.",
       // Board already paints walnuts and freezes; fx carried for consistency.
       fx: { motif: "jail", pieces: ["n", "b"] },
@@ -327,7 +328,8 @@ export const HEXES_T8: Buff[] = [
     {
       id: "blighted_furrows",
       name: "Blighted Furrows",
-      description: "The blight takes whatever ripened first: every enemy pawn standing in your half of the board rots away and is removed, and their remaining pawns cannot advance for their next 4 turns, though the first pawn to try may make one advance before the lock takes hold.",
+      description: "Every enemy pawn standing in your half rots away and is removed, and their remaining pawns cannot advance for their next 4 turns, though the first pawn to try may make one advance before the lock takes hold.",
+      tip: "It hits hardest against an army that has pushed its pawns up the board.",
       flavor: "The fields are poisoned; the tallest stalks fall first.",
       fx: { motif: "anchor", pieces: ["p"] },
     },

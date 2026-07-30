@@ -78,6 +78,8 @@ import {
 // ---------------------------------------------------------------------------
 
 type Meta = {
+  /** Advice, not a rule (see Buff.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

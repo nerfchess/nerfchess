@@ -52,6 +52,8 @@ export const onRim = (sq: Square) =>
   FILE(sq) === 0 || FILE(sq) === 7 || RANK(sq) === 0 || RANK(sq) === 7;
 
 export type NerfMeta = {
+  /** Advice, not a rule (see Nerf.tip). */
+  tip?: string;
   id: string;
   name: string;
   description: string;

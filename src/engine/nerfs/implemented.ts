@@ -388,7 +388,8 @@ export const CHAMPING_AT_THE_BIT: Nerf = db({
 export const UNTITLED_DUCK: Nerf = db({
   id: "untitled_duck",
   name: "Untitled duck nerf",
-  description: "A duck occupies one random square, marked on the board from the opening turn (a full turn before it can matter), all game. No piece may land on it and sliding pieces can't pass through it, but knights may still leap over it. If the duck would leave you fewer than three legal moves, it steps aside for that turn.",
+  description: "A duck occupies one random square, marked from the opening turn, all game. No piece may land on it and sliders cannot pass through it, though knights may leap over. If the duck would leave you fewer than three legal moves, it steps aside for that turn.",
+      tip: "You see the square a full turn before it can matter, so build your plans around it.",
   flavor: "Quack.",
   tier: 1,
   icon: "bird",
