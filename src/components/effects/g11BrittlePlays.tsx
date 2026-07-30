@@ -20,7 +20,10 @@
 // edge frost) live inside <BoardFrame>, never at a fixed percentage of the
 // stage. Cards whose fiction runs along a line — dew beads on a wire, a
 // glazier's score, jam smeared down a rank, a horseshoe caught mid gallop —
-// use <AimStage> and author their art pointing RIGHT.
+// use <AimStage> and author their art pointing RIGHT. A card that REACHES for
+// named victims while its subject must stay upright (the puddle-freeze hand
+// mirror) keeps the upright <Lead> and rotates one run-out layer only, via
+// <Reach>.
 //
 // Every scene runs three beats — tell, strike, settle — in all three roles
 // ("lead", "target", "entrance"): a hairline or a ring or a bead of tension
@@ -141,6 +144,26 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
         </BoardWideStage>
       ) : null}
       <AimStage>{children}</AimStage>
+    </span>
+  );
+}
+
+/**
+ * ONE reaching layer inside a cast-anchored <Lead>.
+ *
+ * `fx-aim` is the same rotation <AimStage> applies internally, so art authored
+ * pointing RIGHT is turned onto the real source -> target vector and can run
+ * out to the victim by --fx-len. It is applied to a single layer rather than
+ * by swapping the whole scene to <AimLead> because everything upright in the
+ * scene — a hand mirror, a lantern, a bottle — would otherwise be laid on its
+ * side. The rotation pivots on the stage centre, which IS the cast square, so
+ * the run starts where the card was played. Only ONE of these per scene: a
+ * second staging box would multiply the 14-cell canvas by 14 again.
+ */
+function Reach({ children }: { children: ReactNode }) {
+  return (
+    <span className="fx-aim absolute inset-0 block" aria-hidden="true">
+      {children}
     </span>
   );
 }
@@ -661,6 +684,13 @@ function KettleOnScene({ role, delayMs }: SceneProps) {
    A hand mirror; the silvering behind the glass blooms black crackle from two
    points, two hairlines run out to meet, and the reflection locks half a beat
    after the face does. Palette: #b7c6e0 / #fff2de / #171b2a.
+
+   AIM. The card names its two victims ("two enemy pawns of your choice"), so
+   the lead reaches for them: a hairline leaves the cast square and runs out by
+   --fx-len inside <Reach>, which carries the --fx-ang rotation alone. The
+   mirror stays in the upright <Lead> stage — a hand mirror rotated onto the
+   attack vector would lie on its side — and the wash stays inside
+   <BoardFrame>, so it remains exactly the board at any anchor.
    ========================================================================== */
 function PuddleFreezeScene({ role, delayMs }: SceneProps) {
   const mirror = (
@@ -691,6 +721,9 @@ function PuddleFreezeScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<Wash tone="rgba(183,198,224,0.28)" />}>
+      <Reach>
+        <L c="g11-runout" l={50} t={49.3} w={24} h={1.4} d={60} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2de, rgba(255,242,222,0))", transformOrigin: "0% 50%" }} />
+      </Reach>
       <V c="g11-pf-glass" l={43} t={36} w={14} h={22} d={90}>{mirror}</V>
       {[0, 1].map((i) => (
         <L key={i} c="g11-pf-tarnish" l={45 + i * 6} t={39 + i * 3} w={5} h={5} d={230 + i * 120} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(23,27,42,0.92), transparent 70%)" }} />
@@ -1667,8 +1700,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: KettleOnScene,
   },
+  // Two NAMED enemy pawns, so the play lasers them down rather than blooming
+  // on the caster's own square: see PuddleFreezeScene's <Reach>.
   bn4_puddle_freeze: {
-    config: { ordering: "radial", staggerMs: 90, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
+    config: { ordering: "radial", staggerMs: 90, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
     Render: PuddleFreezeScene,
   },
   hx4_carrion_crows: {

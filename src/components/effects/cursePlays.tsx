@@ -2785,9 +2785,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "bloodprice"),
+  // The tarnish takes each promoting pawn one at a time, on the promotion
+  // square, so the seal is stamped there. HexBrand's only board-scale layer is
+  // <Wash> (inside <BoardFrame>); everything else is composed about the stage
+  // centre, so it travels to a corner cast intact.
   hw2_tarnished_crown: G(HexBrand, ["#4a3a22", "#e8b04b", "#2a2a30"], GLYPH.hw2_tarnished_crown, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice",
-    anchor: "board",
+    anchor: "cast",
   }, "tarnish"),
   hw2_war_rations: G(HexBrand, ["#8a7a63", "#e8dcc0", "#3a3026"], GLYPH.hw2_war_rations, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
@@ -2811,15 +2815,23 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
     anchor: "board",
   }, "midnight"),
+  // One overworked piece collapses at a time, where it stands. OmenBell hangs
+  // its bell, ripples and glyph about the stage centre and puts nothing
+  // board-scale outside <BoardFrame>, so the bell simply tolls over the cast
+  // square instead of the middle of the board.
   hw2_weight_of_toil: G(OmenBell, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.hw2_weight_of_toil, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify",
-    anchor: "board",
+    anchor: "cast",
   }, "toil"),
 
   /* --- BlightGarden (cursed and remembering ground) ------------------------ */
+  // The ice takes the SQUARE a piece just left — a single square per trigger —
+  // so the rot spreads from the cast square outward. BlightGarden's tiles,
+  // weeds and glyph all sit about the stage centre; only <Wash> is board-scale
+  // and it is already inside <BoardFrame>.
   hw2_cold_footprints: G(BlightGarden, ["#2c3e6b", "#9fd8ff", "#e8f8ff"], GLYPH.hw2_cold_footprints, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice",
-    anchor: "board",
+    anchor: "cast",
   }, "footprints"),
   hw2_creeping_blight: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw2_creeping_blight, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
@@ -2899,17 +2911,26 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "wrongfoot"),
+  // The seizure takes ONE piece — the one moved twice running — and freezes it
+  // where it stands, so the brand is stamped on that square. Anchor-safe:
+  // HexBrand keeps <Wash> in <BoardFrame> and nothing else claims the board.
   hw3_overexertion: G(HexBrand, ["#3a3a44", "#8a94a8", "#12121a"], GLYPH.hw3_overexertion, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
-    anchor: "board",
+    anchor: "cast",
   }, "overexert"),
   hw3_toll_road: G(HexBrand, ["#5a6b8f", "#c9a84c", "#2b2218"], GLYPH.hw3_toll_road, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "tollroad"),
+  // The frenzy COMPELS a piece onto its next victim, so the play is a vector,
+  // not a bloom: "aim" gives HexBrand its <ChainLeg>, which reaches from the
+  // branded square down the real source -> target leg by --fx-len. The
+  // "bloodlust" flourish already drags its queen rightward, the authored-right
+  // convention the leg's `fx-aim` rotation assumes; the queen herself stays
+  // upright (only the leg is rotated), and <Wash> stays in <BoardFrame>.
   hw3_bloodlust: G(HexBrand, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.hw3_bloodlust, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
-    anchor: "board",
+    anchor: "aim",
   }, "bloodlust"),
   hw3_exiles_mark: G(HexBrand, ["#5a6b8f", "#c9a84c", "#1c2418"], GLYPH.hw3_exiles_mark, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
@@ -2919,9 +2940,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "cast",
   }, "debtor"),
+  // Each coronation freezes ONE other piece, on its own square, so the tax is
+  // levied there rather than over the whole board. Anchor-safe for the same
+  // reason as its HexBrand siblings: only <Wash> means "the board", and it is
+  // inside <BoardFrame>.
   hw3_coronation_tax: G(HexBrand, ["#4a3a22", "#e8b04b", "#2c3e6b"], GLYPH.hw3_coronation_tax, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen",
-    anchor: "board",
+    anchor: "cast",
   }, "coronationtax"),
   hw3_pilgrimage: G(HexBrand, ["#5b2b8f", "#c9b0e8", "#1c0f18"], GLYPH.hw3_pilgrimage, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
@@ -2967,9 +2992,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "mire"),
+  // The miasma is breathed in by the one piece that crowds a neighbour, and it
+  // is that piece's square that rots. BlightGarden spreads its tiles from the
+  // stage centre outward, so the rot now spreads from the cast square; <Wash>
+  // is the only board-scale layer and lives in <BoardFrame>.
   hw3_miasma: G(BlightGarden, ["#2f3a26", "#8faf4a", "#6f9a3a"], GLYPH.hw3_miasma, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
-    anchor: "board",
+    anchor: "cast",
   }, "miasma"),
   hw3_roaming_void: G(BlightGarden, ["#12081f", "#8f6bff", "#5b2b8f"], GLYPH.hw3_roaming_void, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
@@ -3019,17 +3048,24 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "handeddown"),
+  // ONE knight turns its coat, on the spot, the first time it captures — a
+  // single square, not a board state. MidasVeil's curtain sweep, gilded rank
+  // and glyph are all composed about the stage centre, and its only
+  // board-scale layer, <Wash>, is inside <BoardFrame>.
   hw3_mutiny: G(MidasVeil, ["#42264a", "#a07bff", "#1c1024"], GLYPH.hw3_mutiny, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades",
-    anchor: "board",
+    anchor: "cast",
   }, "mutiny"),
   hw3_defectors_mark: G(MidasVeil, ["#32284a", "#8f6bff", "#160f24"], GLYPH.hw3_defectors_mark, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
     anchor: "cast",
   }, "sleeper"),
+  // The blade ages the capturing piece "on the spot" — one piece, one square,
+  // per trigger — so the veil passes over that square. Anchor-safe: <Wash> is
+  // the only layer that means the board and it is inside <BoardFrame>.
   hw3_aging_blade: G(MidasVeil, ["#3a3026", "#c9cdd6", "#5a6b8f"], GLYPH.hw3_aging_blade, {
     ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
-    anchor: "board",
+    anchor: "cast",
   }, "agingblade"),
 
   /* --- Tier 7-8 bespoke scenes -------------------------------------------- */

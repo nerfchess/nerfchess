@@ -2636,9 +2636,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral",
     anchor: "board",
   }, "edict"),
+  // The banner plants where a piece CROSSES, one piece at a time, so the scene
+  // belongs on that square rather than in the middle of the board. Safe to
+  // anchor: DawnHalo's only board-scale layer is <Wash>, which is inside
+  // <BoardFrame>, and the "banner" flourish is composed about the stage centre.
   bw2_pioneers_banner: G(DawnHalo, ["#7c8a4a", "#ffd166", "#3a3526"], GLYPH.bw2_pioneers_banner, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
-    anchor: "board",
+    anchor: "cast",
   }, "banner"),
   bw2_diplomatic_immunity: G(DawnHalo, ["#5a8fc0", "#dfe8ff", "#2c3e6b"], GLYPH.bw2_diplomatic_immunity, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",

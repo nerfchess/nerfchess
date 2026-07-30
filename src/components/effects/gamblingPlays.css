@@ -18,6 +18,53 @@
 
 /* --- shared stage tracks ---------------------------------------------------- */
 
+/* --- the cast square's own beats --------------------------------------------
+ * The table skit is pinned to the BOARD for the cards that land on a square
+ * (gamblingPlays.tsx `Framed` -> BoardFrame), so these three one-cell layers
+ * are what says WHERE the bet was placed: a ring inhales on the square, the
+ * square flashes as the bet resolves, and a chip-coloured mote drifts off it.
+ *
+ * The drift is the module's directional layer: it leans along --fx-side, which
+ * is +1 when the caster's home rank is drawn at the bottom of the screen and
+ * -1 when it is at the top. "Down the screen" would be right for one seat and
+ * backwards for the other. */
+@keyframes gsp-spot-tell {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 0.9; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.gsp-spot-tell { animation: gsp-spot-tell calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes gsp-spot-hit {
+  0% { opacity: 0; transform: scale(0.35); }
+  26% { opacity: 0.95; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.gsp-spot-hit { animation: gsp-spot-hit calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes gsp-spot-drift {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
+}
+.gsp-spot-drift { animation: gsp-spot-drift calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- the entrance cut ------------------------------------------------------- */
+@keyframes gsp-arrive-ring {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.gsp-arrive-ring { animation: gsp-arrive-ring calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes gsp-arrive {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 32%)) scale(0.62); }
+  52% { opacity: 1; transform: translateY(-3%) scale(1.06); }
+  78% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+}
+.gsp-arrive { animation: gsp-arrive calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both; }
+
 @keyframes gsp-wash {
   0% { opacity: 0; transform: scale(1.04); }
   16% { opacity: 0.85; transform: scale(1); }
@@ -79,12 +126,16 @@
 .gsp-puff { animation: gsp-puff calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
 
 /* Winnings pour toward the player's rail (per-coin --px/--py lanes). */
+/* Winnings arc toward the player's OWN rail. --fx-side is +1 when the caster
+   sits at the bottom of the screen and -1 when at the top, so multiplying the
+   downward leg by it pays the right way in both seats; the hard-coded "down"
+   this replaces paid into the opponent's lap half the time. */
 @keyframes gsp-payout {
   0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
-  14% { opacity: 1; transform: translate(calc(var(--px, 0%) * 0.3), 60%) scale(1); }
-  55% { transform: translate(calc(var(--px, 0%) * 0.8), var(--py, 480%)); }
-  68% { transform: translate(calc(var(--px, 0%) * 0.88), calc(var(--py, 480%) * 0.85)); }
-  100% { opacity: 0; transform: translate(var(--px, 0%), calc(var(--py, 480%) * 1.12)) scale(0.95); }
+  14% { opacity: 1; transform: translate(calc(var(--px, 0%) * 0.3), calc(var(--fx-side, 1) * 60%)) scale(1); }
+  55% { transform: translate(calc(var(--px, 0%) * 0.8), calc(var(--py, 480%) * var(--fx-side, 1))); }
+  68% { transform: translate(calc(var(--px, 0%) * 0.88), calc(var(--py, 480%) * 0.85 * var(--fx-side, 1))); }
+  100% { opacity: 0; transform: translate(var(--px, 0%), calc(var(--py, 480%) * 1.12 * var(--fx-side, 1))) scale(0.95); }
 }
 .gsp-payout { animation: gsp-payout calc(1.05s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
 

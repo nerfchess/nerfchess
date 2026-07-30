@@ -18,7 +18,8 @@
 
 import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame } from "./stage";
 import { takeGamblingOutcome } from "./gamblingOutcome";
 import "./gamblingPlays.css";
 
@@ -75,6 +76,7 @@ const oArr = (o: Record<string, unknown> | null, key: string): unknown[] | null 
 
 interface PlayProps {
   lead: boolean;
+  role: SigRole;
   delayMs: number;
 }
 
@@ -100,6 +102,90 @@ function Wide({ children }: { children: ReactNode }) {
   return (
     <span className="gsp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+    </span>
+  );
+}
+
+/** The same 14-cell composition for a lead that declares `anchor: "cast"`,
+ * pinned to the BOARD.
+ *
+ * Every scene in this module is one table-scale prop (a cabinet, a wheel, a
+ * vault door) authored to fill the crop, so it is a board-scale layer in the
+ * sense of the design brief and belongs in a `BoardFrame` rather than at a
+ * fixed percentage of an anchored canvas. The canvas is 14 cells and the board
+ * is the middle 8, so the art is re-expanded to 175% of the frame and offset
+ * -37.5%: that reproduces the pre-anchoring composition EXACTLY while making
+ * it independent of which square the card was cast on. The cast square then
+ * carries the play's own local beats; see `Spot`. */
+function Framed({ children }: { children: ReactNode }) {
+  return (
+    <span className="gsp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        <BoardFrame>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+        </BoardFrame>
+      </span>
+    </span>
+  );
+}
+
+/** The cast square's own three beats, at one-cell scale on the square the card
+ * was actually played on: a ring inhales (tell), the square flashes as the bet
+ * resolves (strike), and a chip-coloured mote drifts off it (settle).
+ *
+ * The drift is the module's directional layer. --fx-side is +1 when the
+ * caster's home rank is drawn at the bottom of the screen and -1 when it is at
+ * the top, so the mote always trails back toward the player who placed the bet
+ * rather than "down", which would be backwards for one of the two seats. */
+function Spot({
+  tell,
+  hit,
+  settle,
+  tone,
+  glow,
+}: {
+  tell: CSSProperties;
+  hit: CSSProperties;
+  settle: CSSProperties;
+  tone: string;
+  glow: string;
+}) {
+  return (
+    <span className="gsp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="gsp-spot-tell absolute block"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", borderRadius: "50%", border: `2px solid ${glow}`, ...tell }}
+      />
+      <span
+        className="gsp-spot-hit absolute inset-0 block"
+        style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 62%)`, ...hit }}
+      />
+      <span
+        className="gsp-spot-drift absolute block"
+        style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
+      />
+    </span>
+  );
+}
+
+/** The entrance cut: the card arriving in a hand. The play's OWN central glyph
+ * (the same one its per-square cut uses, authored in the same 40x40 space) at
+ * ~56% of the crop, riding in from the caster's side with one mote settling
+ * after it. No board takeover and no table. */
+function Arrival({ delayMs, tone, glow, children }: { delayMs: number; tone: string; glow: string; children: ReactNode }) {
+  return (
+    <span className="gsp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="gsp-arrive-ring absolute block"
+        style={{ left: "20%", top: "20%", width: "60%", height: "60%", borderRadius: "50%", border: `2px solid ${glow}`, ...d(delayMs + 40) }}
+      />
+      <span className="gsp-arrive absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", ...d(delayMs + 170) }}>
+        <svg viewBox="0 0 40 40" className="h-full w-full">{children}</svg>
+      </span>
+      <span
+        className="gsp-spot-drift absolute block"
+        style={{ left: "34%", top: "34%", width: "32%", height: "32%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...d(delayMs + 640) }}
+      />
     </span>
   );
 }
@@ -142,7 +228,7 @@ function Chip({ cx, cy, r = 6, fill = "#d6234f", edge = DEEP_RED }: { cx: number
     <g transform={`translate(${cx} ${cy})`}>
       <ellipse cx={0} cy={r * 0.42} rx={r} ry={r * 0.42} fill={edge} />
       <ellipse cx={0} cy={0} rx={r} ry={r * 0.42} fill={fill} stroke={edge} strokeWidth={0.5} />
-      <ellipse cx={0} cy={0} rx={r * 0.6} ry={r * 0.25} fill="none" stroke="#fff" strokeWidth={0.7} strokeDasharray="1.4 1.2" opacity={0.85} />
+      <ellipse cx={0} cy={0} rx={r * 0.6} ry={r * 0.25} fill="none" stroke="#fff4d6" strokeWidth={0.7} strokeDasharray="1.4 1.2" opacity={0.85} />
     </g>
   );
 }
@@ -376,7 +462,7 @@ function SlotReel({ x, delayMs, spinMs, final }: { x: number; delayMs: number; s
 /* 1. Penny Slots (t1) - the reels stop on what the lever actually paid       */
 /* ========================================================================= */
 
-function PennySlotsPlay({ lead, delayMs }: PlayProps) {
+function PennySlotsPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_penny_slots");
   const result = oStr(o, "result"); // blank | sidestep | jackpot | null
   const finals =
@@ -384,6 +470,16 @@ function PennySlotsPlay({ lead, delayMs }: PlayProps) {
     : result === "sidestep" ? ["★", "★", "★"]
     : result === "blank" ? ["7", "★", "♣"]
     : ["♦", "★", "♣"];
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#e04b63">
+        <rect x={9} y={13} width={22} height={14} rx={2} fill="#1b2333" stroke="#3a475f" strokeWidth={1.2} />
+        <text x={20} y={24} fontSize={8} fontWeight={800} fill={result === "blank" ? GREY : GOLD} textAnchor="middle">
+          {result === "jackpot" ? "777" : result === "blank" ? "7-★" : "★★★"}
+        </text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -395,7 +491,8 @@ function PennySlotsPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,10,20,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -446,7 +543,9 @@ function PennySlotsPlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 90)} hit={d(delayMs + 1150)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -454,10 +553,18 @@ function PennySlotsPlay({ lead, delayMs }: PlayProps) {
 /* 2. Heads or Tails (t1) - the coin lands on the TRUE face                   */
 /* ========================================================================= */
 
-function HeadsOrTailsPlay({ lead, delayMs }: PlayProps) {
+function HeadsOrTailsPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_heads_or_tails");
   const result = oStr(o, "result"); // heads | tails | null
   const face = result === "heads" ? "H" : result === "tails" ? "T" : "?";
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#7fa0e0">
+        <circle cx={20} cy={20} r={8} fill={GOLD} stroke={GOLD_EDGE} strokeWidth={1.2} />
+        <text x={20} y={23.2} fontSize={9} fontWeight={800} fill="#8a5a10" textAnchor="middle">{face}</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -467,7 +574,8 @@ function HeadsOrTailsPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -502,7 +610,9 @@ function HeadsOrTailsPlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#7fa0e0" tell={d(delayMs + 80)} hit={d(delayMs + 950)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -533,7 +643,7 @@ function PeekCard({ s = 1 }: { s?: number }) {
   );
 }
 
-function ClawMachinePlay({ lead, delayMs }: PlayProps) {
+function ClawMachinePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_claw_machine");
   const result = oStr(o, "result"); // plush | peek | pawn | null
   const prize =
@@ -541,6 +651,14 @@ function ClawMachinePlay({ lead, delayMs }: PlayProps) {
     : result === "peek" ? <PeekCard s={0.9} />
     : result === "pawn" ? <PawnSil fill={CREAM} s={0.9} />
     : <text x={0} y={2.6} fontSize={7} fontWeight={800} fill={GREY} textAnchor="middle">?</text>;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#7fa0e0" glow="#ffd76a">
+        <path d="M20 8 v6 M16 14 l4 6 4 -6" stroke="#8a94a8" strokeWidth={1.8} fill="none" strokeLinecap="round" />
+        <g transform="translate(20 27)">{prize}</g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -550,7 +668,8 @@ function ClawMachinePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(10,14,30,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -593,7 +712,9 @@ function ClawMachinePlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Wide>
+      <Spot tone="#7fa0e0" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -601,9 +722,17 @@ function ClawMachinePlay({ lead, delayMs }: PlayProps) {
 /* 4. Raffle Ticket (t2) - drum tumbles, a winning stub flies out             */
 /* ========================================================================= */
 
-function RaffleTicketPlay({ lead, delayMs }: PlayProps) {
+function RaffleTicketPlay({ lead, role, delayMs }: PlayProps) {
   // Fires only when a draw actually paid (the hook mutates the board on a
   // win), so the choreography is always the winning draw.
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#e04b63">
+        <rect x={11} y={15} width={18} height={10} rx={1.6} fill={GOLD} stroke={GOLD_EDGE} strokeWidth={1} transform="rotate(-8 20 20)" />
+        <circle cx={20} cy={20} r={2.2} fill="none" stroke={GOLD_EDGE} strokeWidth={0.8} strokeDasharray="1.2 1" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -613,7 +742,8 @@ function RaffleTicketPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -647,7 +777,9 @@ function RaffleTicketPlay({ lead, delayMs }: PlayProps) {
         <g className="gsp-star" style={d(delayMs + 1650)}><Star x={64} y={24} s={1.1} /></g>
         <Tag x={50} y={90} w={52} text="WINNER: A FREE MARCH" delayMs={delayMs + 1550} color={GREEN} />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -655,9 +787,18 @@ function RaffleTicketPlay({ lead, delayMs }: PlayProps) {
 /* 5. Card Counting (t2) - the streak flips exactly as many hits as it hit    */
 /* ========================================================================= */
 
-function CardCountingPlay({ lead, delayMs }: PlayProps) {
+function CardCountingPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_card_counting");
   const hits = oNum(o, "result"); // 0..3 | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#7fa0e0" glow="#e8dcc0">
+        <g transform="translate(15 20) scale(0.62) rotate(-10)"><CardBack /></g>
+        <g transform="translate(21 20) scale(0.62)"><CardFace label="♠" pip={INK} /></g>
+        <text x={31} y={13} fontSize={7} fontWeight={800} fill={GOLD} textAnchor="middle">{hits ?? "?"}</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -670,7 +811,8 @@ function CardCountingPlay({ lead, delayMs }: PlayProps) {
   const known = hits != null;
   const verdictAt = (i: number) => delayMs + 500 + i * 420;
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -732,7 +874,9 @@ function CardCountingPlay({ lead, delayMs }: PlayProps) {
         />
         {known && hits === 0 && <SadPuffs x={32} y={44} delayMs={delayMs + 1450} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#7fa0e0" glow="#e8dcc0" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -740,12 +884,20 @@ function CardCountingPlay({ lead, delayMs }: PlayProps) {
 /* 6. Loaded Dice (t2) - the bones settle on the TRUE total                   */
 /* ========================================================================= */
 
-function LoadedDicePlay({ lead, delayMs }: PlayProps) {
+function LoadedDicePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_loaded_dice");
   const total = oNum(o, "result"); // 2..12 | null
   const rerolled = o?.rerolled === true;
   const a = total == null ? null : Math.max(1, Math.min(6, Math.round(total / 2)));
   const b = total == null || a == null ? null : Math.max(1, Math.min(6, total - a));
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e04b63" glow="#ffd76a">
+        <g transform="translate(14 20) rotate(-8) scale(0.85)"><Die v={a} /></g>
+        <g transform="translate(26 21) rotate(7) scale(0.85)"><Die v={b} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -757,7 +909,8 @@ function LoadedDicePlay({ lead, delayMs }: PlayProps) {
   const win = total != null && total >= 7;
   const boxcars = total === 12;
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -799,7 +952,9 @@ function LoadedDicePlay({ lead, delayMs }: PlayProps) {
           color={total == null ? GREY : boxcars ? GOLD : win ? GREEN : GREY}
         />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 80)} hit={d(delayMs + 980)} settle={d(delayMs + 1950)} />
+    </>
   );
 }
 
@@ -814,10 +969,19 @@ const RARITY_COLOR: Record<string, string> = {
   legendary: GOLD,
 };
 
-function LootboxPlay({ lead, delayMs }: PlayProps) {
+function LootboxPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_lootbox");
   const rarity = oStr(o, "rarity"); // common | rare | epic | legendary | null
   const beam = rarity ? RARITY_COLOR[rarity] ?? "#e8e8f0" : "#e8e8f0";
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b98cff" glow="#ffd76a">
+        <rect x={12} y={18} width={16} height={11} rx={1.6} fill={WOOD} stroke={WOOD_DARK} strokeWidth={1.1} />
+        <rect x={12} y={14} width={16} height={4.4} rx={1.4} fill="#a06a34" stroke={WOOD_DARK} strokeWidth={1} />
+        <circle cx={20} cy={11} r={2.6} fill={beam} opacity={0.9} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -850,7 +1014,8 @@ function LootboxPlay({ lead, delayMs }: PlayProps) {
       <text x={0} y={3} fontSize={9} fontWeight={800} fill={GREY} textAnchor="middle">?</text>
     );
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(18,10,30,0.55)" /></g>
         {/* rarity rays, tinted by what the box ACTUALLY held */}
@@ -908,7 +1073,9 @@ function LootboxPlay({ lead, delayMs }: PlayProps) {
           color={beam}
         />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
+    </>
   );
 }
 
@@ -916,9 +1083,18 @@ function LootboxPlay({ lead, delayMs }: PlayProps) {
 /* 8. Three-Card Monte (t3) - the shuffle, then the card you actually found   */
 /* ========================================================================= */
 
-function ThreeCardMontePlay({ lead, delayMs }: PlayProps) {
+function ThreeCardMontePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_three_card_monte");
   const result = oStr(o, "result"); // found | lost | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e04b63" glow="#e8dcc0">
+        <g transform="translate(13 21) scale(0.55) rotate(-8)"><CardBack /></g>
+        <g transform="translate(20 20) scale(0.55)"><CardBack /></g>
+        <g transform="translate(27 21) scale(0.55) rotate(8)"><CardBack /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -929,7 +1105,8 @@ function ThreeCardMontePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -979,7 +1156,9 @@ function ThreeCardMontePlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Wide>
+      <Spot tone="#e04b63" glow="#e8dcc0" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -987,11 +1166,19 @@ function ThreeCardMontePlay({ lead, delayMs }: PlayProps) {
 /* 9. Underdog Parlay (t3) - the slip is stamped leg by TRUE leg              */
 /* ========================================================================= */
 
-function UnderdogParlayPlay({ lead, delayMs }: PlayProps) {
+function UnderdogParlayPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_underdog_parlay");
   const hits = oNum(o, "result"); // 0 | 1 | 2 | null
   const checkHit = o?.check === true;
   const capHit = o?.cap === true;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#4fd08a" glow="#ffd76a">
+        <rect x={11} y={12} width={18} height={16} rx={1.6} fill="#f4ecd6" stroke="#c2a24a" strokeWidth={1} transform="rotate(-6 20 20)" />
+        <text x={20} y={22} fontSize={7} fontWeight={800} fill={hits != null && hits > 0 ? GREEN : GREY} textAnchor="middle">{hits ?? "?"}✓</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1007,7 +1194,8 @@ function UnderdogParlayPlay({ lead, delayMs }: PlayProps) {
     </g>
   );
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1043,7 +1231,9 @@ function UnderdogParlayPlay({ lead, delayMs }: PlayProps) {
         )}
         {hits == null && <Tag x={50} y={90} w={44} text="LEGS STILL OPEN" delayMs={delayMs + 1500} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#4fd08a" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
+    </>
   );
 }
 
@@ -1053,13 +1243,21 @@ function UnderdogParlayPlay({ lead, delayMs }: PlayProps) {
 
 const RANK_LABEL = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
-function RiverCardPlay({ lead, delayMs }: PlayProps) {
+function RiverCardPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_river_card");
   const mine = oNum(o, "mine");
   const theirs = oNum(o, "theirs");
   const known = mine != null && theirs != null;
   const iWin = known && mine > theirs;
   const theyWin = known && theirs > mine;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#7fa0e0" glow="#ffd76a">
+        <g transform="translate(15 20) scale(0.6) rotate(-8)"><CardFace label={mine != null ? RANK_LABEL[mine] : "?"} /></g>
+        <g transform="translate(26 20) scale(0.6) rotate(8)"><CardFace label={theirs != null ? RANK_LABEL[theirs] : "?"} pip={INK} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1069,7 +1267,8 @@ function RiverCardPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1106,7 +1305,9 @@ function RiverCardPlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#7fa0e0" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -1121,11 +1322,25 @@ const ROULETTE_SEGS = [
   { key: "lost", fill: "#2a0d14", label: "X", labelFill: RED },
 ];
 
-function PieceRoulettePlay({ lead, delayMs }: PlayProps) {
+function PieceRoulettePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_piece_roulette");
   const result = oStr(o, "result"); // knight | rook | nothing | lost | null
   const seg = Math.max(0, ROULETTE_SEGS.findIndex((s) => s.key === result));
   const segIdx = result ? seg : 2;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#e04b63">
+        <g transform="translate(20 20)">
+          <g className="gsp-spinvar" style={dv(delayMs, { "--turn": turnFor(segIdx, 4, 2) })}>
+            {ROULETTE_SEGS.map((s, i) => (
+              <path key={i} d={segPath(12, -90 + i * 90, -90 + (i + 1) * 90)} fill={s.fill} stroke={GOLD_EDGE} strokeWidth={0.6} />
+            ))}
+          </g>
+          <path d="M-2.4 -15 h4.8 l-2.4 5 Z" fill={GOLD} />
+        </g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1141,7 +1356,8 @@ function PieceRoulettePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1174,7 +1390,7 @@ function PieceRoulettePlay({ lead, delayMs }: PlayProps) {
           {/* ball riding the rim, clattering into the pocket */}
           <g className="gsp-balltrack" style={d(delayMs + 150)}>
             <g className="gsp-balldrop" style={d(delayMs + 150)}>
-              <circle cx={0} cy={-23} r={2.6} fill="#fff" stroke="#c9c2ac" strokeWidth={0.6} />
+              <circle cx={0} cy={-23} r={2.6} fill="#fff4d6" stroke="#c9c2ac" strokeWidth={0.6} />
             </g>
           </g>
           <Pointer cy={-31} delayMs={delayMs + 150} />
@@ -1206,7 +1422,9 @@ function PieceRoulettePlay({ lead, delayMs }: PlayProps) {
         )}
         {result == null && <Tag x={50} y={94} w={44} text="ROUND AND ROUND" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
+    </>
   );
 }
 
@@ -1214,12 +1432,21 @@ function PieceRoulettePlay({ lead, delayMs }: PlayProps) {
 /* 12. Jackpot Pawn (t4) - reels bolt on; later spins pay what they paid      */
 /* ========================================================================= */
 
-function JackpotPawnPlay({ lead, delayMs }: PlayProps) {
+function JackpotPawnPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_jackpot_pawn");
   const charges = oNum(o, "charges") ?? 0;
   const promoted = o?.__spent === true && charges <= 0 && oNum(o, "turns") != null && (oNum(o, "turns") as number) > 0;
   const banked = charges > 0;
   const finals = promoted ? ["7", "7", "7"] : banked ? ["★", "★", "★"] : ["♦", "★", "♣"];
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#4fd08a">
+        <g transform="translate(20 18)"><PawnSil s={1.05} /></g>
+        <rect x={13} y={20} width={14} height={7} rx={1.4} fill="#1b2333" stroke={GOLD} strokeWidth={0.9} />
+        <text x={20} y={25.4} fontSize={4.6} fontWeight={800} fill={promoted ? "#ff4d6d" : GOLD} textAnchor="middle">{finals.join("")}</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1230,7 +1457,8 @@ function JackpotPawnPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,10,20,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1269,7 +1497,9 @@ function JackpotPawnPlay({ lead, delayMs }: PlayProps) {
         )}
         {!banked && !promoted && <Tag x={50} y={90} w={56} text="REELS FITTED: 5 SPINS AHEAD" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#4fd08a" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -1277,9 +1507,20 @@ function JackpotPawnPlay({ lead, delayMs }: PlayProps) {
 /* 13. Double Down Draft (t5) - both cards taken, or the round swept away     */
 /* ========================================================================= */
 
-function DoubleDownDraftPlay({ lead, delayMs }: PlayProps) {
+function DoubleDownDraftPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_double_down_draft");
   const result = oStr(o, "result"); // both | bust | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b98cff" glow="#ffd76a">
+        <g transform="translate(16 20) scale(0.62) rotate(-10)"><CardBack /></g>
+        <g transform="translate(24 20) scale(0.62) rotate(10)"><CardBack /></g>
+        <text x={20} y={35} fontSize={6} fontWeight={800} fill={result === "both" ? GREEN : result === "bust" ? RED : GREY} textAnchor="middle">
+          {result === "both" ? "x2" : result === "bust" ? "--" : "?"}
+        </text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1292,7 +1533,8 @@ function DoubleDownDraftPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1339,7 +1581,9 @@ function DoubleDownDraftPlay({ lead, delayMs }: PlayProps) {
         )}
         {result === "bust" && <Tag x={50} y={92} w={52} text="THE DEALER SMILES" delayMs={delayMs + 2350} color={RED} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1150)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -1355,11 +1599,22 @@ const CRASH_PAYLOAD: Record<string, { sil: keyof typeof PIECE_SIL; text: string;
   "5x": { sil: "rook", text: "5x! IT LANDS A ROOK", color: GOLD },
 };
 
-function CrashGamePlay({ lead, delayMs }: PlayProps) {
+function CrashGamePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_crash_game");
   const result = oStr(o, "result"); // 1.5x | 2x | 3x | 5x | crash | null
   const crashed = result === "crash";
   const payload = result != null && result !== "crash" ? CRASH_PAYLOAD[result] : null;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e04b63" glow="#4fd08a">
+        <g transform={`translate(20 20) rotate(${crashed ? 90 : 30})`}>
+          <path d="M0 -8 q4 4 2.6 10 h-5.2 q-1.4 -6 2.6 -10 Z" fill={crashed ? GREY : CREAM} stroke="#8a94a8" strokeWidth={0.8} />
+          <path d="M-2.6 2 l-2.6 4 M2.6 2 l2.6 4" stroke={RED} strokeWidth={1.4} />
+        </g>
+        {crashed && <g className="gsp-boom" style={d(delayMs + 300)}><Star x={20} y={20} s={1.6} fill={RED} /></g>}
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1373,7 +1628,8 @@ function CrashGamePlay({ lead, delayMs }: PlayProps) {
   }
   const SilComp = payload ? PIECE_SIL[payload.sil] : null;
   return (
-    <Wide>
+    <>
+      <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(6,10,26,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1439,7 +1695,9 @@ function CrashGamePlay({ lead, delayMs }: PlayProps) {
           <Tag x={50} y={92} w={44} text="LET IT RIDE..." delayMs={delayMs + 1900} color={GREY} />
         )}
       </svg>
-    </Wide>
+      </Wide>
+      <Spot tone="#e04b63" glow="#4fd08a" tell={d(delayMs + 100)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
+    </>
   );
 }
 
@@ -1447,9 +1705,19 @@ function CrashGamePlay({ lead, delayMs }: PlayProps) {
 /* 15. Blood Wager (t5) - the dais returns a rook, feeds, or DELIGHTS         */
 /* ========================================================================= */
 
-function BloodWagerPlay({ lead, delayMs }: PlayProps) {
+function BloodWagerPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_blood_wager");
   const result = oStr(o, "result"); // rook | taken | delighted | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8a1230" glow="#e04b63">
+        <rect x={10} y={26} width={20} height={4} rx={1.4} fill="#3a1524" stroke={DEEP_RED} strokeWidth={0.9} />
+        <g transform="translate(20 19)">
+          {result === "taken" ? <BishopSil fill={GREY} s={0.9} /> : <RookSil fill={result ? "#e08a9a" : CREAM} s={0.9} />}
+        </g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1461,7 +1729,8 @@ function BloodWagerPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,6,14,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1517,7 +1786,9 @@ function BloodWagerPlay({ lead, delayMs }: PlayProps) {
         )}
         {result == null && <Tag x={50} y={90} w={44} text="THE DAIS DECIDES" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#8a1230" glow="#e04b63" tell={d(delayMs + 110)} hit={d(delayMs + 1150)} settle={d(delayMs + 2250)} />
+    </>
   );
 }
 
@@ -1525,12 +1796,20 @@ function BloodWagerPlay({ lead, delayMs }: PlayProps) {
 /* 16. Progressive Jackpot (t6) - the pot pays out exactly what it held       */
 /* ========================================================================= */
 
-function ProgressiveJackpotPlay({ lead, delayMs }: PlayProps) {
+function ProgressiveJackpotPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_progressive_jackpot");
   const pot = oNum(o, "pot") ?? 0;
   const known = o != null;
   const prizeType: keyof typeof PIECE_SIL | null = pot >= 6 ? "rook" : pot >= 4 ? "knight" : pot >= 2 ? "pawn" : null;
   const Prize = prizeType ? PIECE_SIL[prizeType] : null;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#b98cff">
+        <path d="M12 18 q8 -6 16 0 l-2 9 q-6 4 -12 0 Z" fill="#3a1524" stroke={GOLD} strokeWidth={1.1} />
+        <text x={20} y={26} fontSize={6.4} fontWeight={800} fill={GOLD} textAnchor="middle">{known ? pot : "?"}</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1540,7 +1819,8 @@ function ProgressiveJackpotPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(20,8,26,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1576,7 +1856,9 @@ function ProgressiveJackpotPlay({ lead, delayMs }: PlayProps) {
         )}
         {!known && <Tag x={50} y={90} w={48} text="COUNTING SOULS" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#b98cff" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
+    </>
   );
 }
 
@@ -1584,9 +1866,17 @@ function ProgressiveJackpotPlay({ lead, delayMs }: PlayProps) {
 /* 17. The House (t6) - the rake collects, the rake pays a pawn               */
 /* ========================================================================= */
 
-function TheHousePlay({ lead, delayMs }: PlayProps) {
+function TheHousePlay({ lead, role, delayMs }: PlayProps) {
   // Fires only when the rake actually bought a board payout (a fresh pawn):
   // reroll purchases change no squares, so no signature plays for them.
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#12070d" glow="#ffd76a">
+        <path d="M11 22 L20 13 L29 22" stroke={GOLD} strokeWidth={1.8} fill="none" />
+        <rect x={14} y={22} width={12} height={7} rx={1.2} fill="#1b2333" stroke={GOLD} strokeWidth={1} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1596,7 +1886,8 @@ function TheHousePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1620,7 +1911,9 @@ function TheHousePlay({ lead, delayMs }: PlayProps) {
         <Payout x={50} y={78} delayMs={delayMs + 1750} n={4} />
         <Tag x={50} y={94} w={58} text="RAKE CASHED: A FRESH PAWN" delayMs={delayMs + 1800} />
       </svg>
-    </Wide>
+      </Wide>
+      <Spot tone="#12070d" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
+    </>
   );
 }
 
@@ -1631,10 +1924,22 @@ function TheHousePlay({ lead, delayMs }: PlayProps) {
 const PULL_COLOR: Record<string, string> = { common: "#b9c2d0", rare: "#4aa3ff", epic: PURPLE, ssr: GOLD };
 const PULL_LETTER: Record<string, string> = { common: "C", rare: "R", epic: "E", ssr: "SSR" };
 
-function GachaBannerPlay({ lead, delayMs }: PlayProps) {
+function GachaBannerPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_gacha_banner");
   const rawPulls = oArr(o, "pulls");
   const pulls = rawPulls ? rawPulls.filter((p): p is string => typeof p === "string").slice(0, 3) : null;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b98cff" glow="#ffd76a">
+        {[0, 1, 2].map((i) => (
+          <g key={i} transform={`translate(${12 + i * 8} 22)`}>
+            <circle r={3.4} fill={pulls?.[i] ? PULL_COLOR[pulls[i]] ?? GREY : GREY} stroke={INK} strokeWidth={0.6} />
+            <path d="M-3.4 0 h6.8" stroke={INK} strokeWidth={0.5} />
+          </g>
+        ))}
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1649,7 +1954,8 @@ function GachaBannerPlay({ lead, delayMs }: PlayProps) {
   }
   const hasSSR = pulls?.includes("ssr") ?? false;
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(18,10,30,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1726,7 +2032,9 @@ function GachaBannerPlay({ lead, delayMs }: PlayProps) {
           color={hasSSR ? GOLD : pulls ? CREAM : GREY}
         />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2350)} />
+    </>
   );
 }
 
@@ -1736,10 +2044,19 @@ function GachaBannerPlay({ lead, delayMs }: PlayProps) {
 
 const CASE_SLOT: Record<string, number> = { pawn: 1, knight: 2, bishop: 3, rook: 4, intel: 5, dud: 6 };
 
-function SevenCasesPlay({ lead, delayMs }: PlayProps) {
+function SevenCasesPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_seven_cases");
   const result = oStr(o, "result"); // pawn | knight | bishop | rook | intel | dud | null
   const openIdx = result ? CASE_SLOT[result] ?? 3 : -1;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#7fa0e0">
+        <rect x={11} y={16} width={18} height={12} rx={1.8} fill="#2c2416" stroke={GOLD} strokeWidth={1.1} />
+        <rect x={17} y={13} width={6} height={3.4} rx={1.2} fill="none" stroke={GOLD} strokeWidth={1.1} />
+        <text x={20} y={25} fontSize={6} fontWeight={800} fill={GOLD} textAnchor="middle">7</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1750,7 +2067,8 @@ function SevenCasesPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(14,12,8,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1807,7 +2125,9 @@ function SevenCasesPlay({ lead, delayMs }: PlayProps) {
           color={result === "dud" ? GREY : result ? GOLD : GREY}
         />
       </svg>
-    </Wide>
+      </Wide>
+      <Spot tone="#ffd76a" glow="#7fa0e0" tell={d(delayMs + 110)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
+    </>
   );
 }
 
@@ -1823,9 +2143,21 @@ const MARTINGALE_PRIZE = [
   "FOUR WINS: ROOK + KNIGHT",
 ];
 
-function MartingalePlay({ lead, delayMs }: PlayProps) {
+function MartingalePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_martingale");
   const wins = oNum(o, "wins"); // 0..4 | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e04b63" glow="#ffd76a">
+        <Chip cx={13} cy={27} r={4} />
+        <Chip cx={20} cy={27} r={4} fill="#5fc9b0" edge="#2a7a68" />
+        <Chip cx={20} cy={22.6} r={4} fill="#5fc9b0" edge="#2a7a68" />
+        <Chip cx={27} cy={27} r={4} fill={GOLD} edge={GOLD_EDGE} />
+        <Chip cx={27} cy={22.6} r={4} fill={GOLD} edge={GOLD_EDGE} />
+        <Chip cx={27} cy={18.2} r={4} fill={GOLD} edge={GOLD_EDGE} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1842,7 +2174,8 @@ function MartingalePlay({ lead, delayMs }: PlayProps) {
   const stacks = [1, 2, 3, 4]; // drawn chips per rung (the ladder doubling)
   const stackColor = [["#d6234f", DEEP_RED], ["#5fc9b0", "#2a7a68"], ["#7fa0e0", "#2c4f9e"], [GOLD, GOLD_EDGE]] as const;
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1902,7 +2235,9 @@ function MartingalePlay({ lead, delayMs }: PlayProps) {
         )}
         <Tag x={50} y={94} w={62} text={known ? MARTINGALE_PRIZE[wins] : "FLIPPING..."} delayMs={delayMs + (known ? 350 + Math.min(wins + 1, 4) * 380 + 400 : 1600)} color={known ? (wins === 0 ? RED : GOLD) : GREY} />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
+    </>
   );
 }
 
@@ -1960,10 +2295,20 @@ const DEVIL_FACE: Record<string, { glyph: ReactNode; curse: boolean; short: stri
   },
 };
 
-function DevilsDeckPlay({ lead, delayMs }: PlayProps) {
+function DevilsDeckPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_devils_deck");
   const rawDrawn = oArr(o, "drawn");
   const drawn = rawDrawn ? rawDrawn.filter((c): c is string => typeof c === "string").slice(0, 3) : null;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8a1230" glow="#ffd76a">
+        <g transform="translate(14 21) scale(0.55) rotate(-12)"><CardBack /></g>
+        <g transform="translate(20 20) scale(0.55)"><CardBack /></g>
+        <g transform="translate(26 21) scale(0.55) rotate(12)"><CardBack /></g>
+        <path d="M30 10 q4 -2 3 3 q-0.6 2.6 -3.4 2" stroke={RED} strokeWidth={1.2} fill="none" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -1976,7 +2321,8 @@ function DevilsDeckPlay({ lead, delayMs }: PlayProps) {
   }
   const flipSlots = [1, 2, 4]; // which of the six fanned cards flip
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(26,4,10,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2032,7 +2378,9 @@ function DevilsDeckPlay({ lead, delayMs }: PlayProps) {
         )}
         {!drawn && <Tag x={50} y={90} w={48} text="THREE CARDS DRAW" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#8a1230" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 1300)} settle={d(delayMs + 2500)} />
+    </>
   );
 }
 
@@ -2052,10 +2400,19 @@ function ChainsClamp({ x, y, delayMs }: { x: number; y: number; delayMs: number 
   );
 }
 
-function BreakTheBankPlay({ lead, delayMs }: PlayProps) {
+function BreakTheBankPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_break_the_bank");
   const hits = oNum(o, "hits"); // 0..3 | null
   const known = hits != null;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#b9bec9">
+        <circle cx={20} cy={20} r={9} fill="#39496e" stroke="#c3cad6" strokeWidth={1.4} />
+        <circle cx={20} cy={20} r={4} fill="none" stroke="#c3cad6" strokeWidth={1.1} />
+        <path d="M20 16 v8 M16 20 h8" stroke="#c3cad6" strokeWidth={1.1} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2066,7 +2423,8 @@ function BreakTheBankPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(6,10,22,0.62)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2140,7 +2498,9 @@ function BreakTheBankPlay({ lead, delayMs }: PlayProps) {
         )}
         {!known && <Tag x={50} y={92} w={48} text="THE PLAN HAD ONE JOB" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#b9bec9" tell={d(delayMs + 120)} hit={d(delayMs + 1350)} settle={d(delayMs + 2550)} />
+    </>
   );
 }
 
@@ -2164,12 +2524,26 @@ const COSMOS_TAGS = [
 ];
 const COSMOS_KIND = ["#233a63", "#1d2f52", "#2a2454", "#1f3a5e", "#232f63", "#2a2454", "#1d2f52", "#233a63"];
 
-function WheelOfTheCosmosPlay({ lead, delayMs }: PlayProps) {
+function WheelOfTheCosmosPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_wheel_of_the_cosmos");
   const segment = oNum(o, "segment"); // 0..11 | null
   const known = segment != null && segment >= 0 && segment < 12;
   const seg = known ? segment : 2;
   const cruel = known && segment >= 8;
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b98cff" glow="#ffd76a">
+        <g transform="translate(20 21)">
+          <g className="gsp-spinvar" style={dv(delayMs, { "--turn": turnFor(seg, 12, 2) })}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <path key={i} d={segPath(12, -90 + i * 30, -90 + (i + 1) * 30)} fill={i >= 8 ? "#3a0d18" : COSMOS_KIND[i]} stroke={PURPLE} strokeWidth={0.4} />
+            ))}
+          </g>
+          <path d="M-2.2 -15.4 h4.4 l-2.2 4.6 Z" fill={GOLD} />
+        </g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2185,7 +2559,8 @@ function WheelOfTheCosmosPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(10,6,26,0.62)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2238,7 +2613,9 @@ function WheelOfTheCosmosPlay({ lead, delayMs }: PlayProps) {
           color={!known ? GREY : cruel ? RED : GOLD}
         />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 130)} hit={d(delayMs + 1400)} settle={d(delayMs + 2600)} />
+    </>
   );
 }
 
@@ -2263,9 +2640,17 @@ function BoneDie({ grin }: { grin: boolean }) {
   );
 }
 
-function CursedDicePlay({ lead, delayMs }: PlayProps) {
+function CursedDicePlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_cursed_dice");
   const result = oStr(o, "result"); // freeze | stumble | grin | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8a1230" glow="#e8dcc0">
+        <g transform="translate(14 20) rotate(-9) scale(0.9)"><BoneDie grin={result === "grin"} /></g>
+        <g transform="translate(26 21) rotate(8) scale(0.9)"><BoneDie grin={result === "grin"} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2275,7 +2660,8 @@ function CursedDicePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(26,4,12,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2323,7 +2709,9 @@ function CursedDicePlay({ lead, delayMs }: PlayProps) {
         )}
         {result == null && <Tag x={50} y={90} w={44} text="THE BONES DECIDE" delayMs={delayMs + 1750} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#8a1230" glow="#e8dcc0" tell={d(delayMs + 100)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -2331,9 +2719,18 @@ function CursedDicePlay({ lead, delayMs }: PlayProps) {
 /* 25. Rigged Raffle (t5 hex) - the glue prize finds its unwilling winner     */
 /* ========================================================================= */
 
-function RiggedRafflePlay({ lead, delayMs }: PlayProps) {
+function RiggedRafflePlay({ lead, role, delayMs }: PlayProps) {
   // Fires only when a draw actually glued the piece the opponent just moved
   // (the hook mutates the board only then), so the splat is always earned.
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e04b63" glow="#ffd76a">
+        <g className="gsp-splat" style={d(delayMs)}>
+          <path d="M20 14 q6 2 5 8 q3 1 1 4 q-3 3 -6 1 q-5 2 -7 -2 q-3 -4 1 -6 q0 -4 6 -5 Z" fill="#b8e05a" opacity={0.9} />
+        </g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2344,7 +2741,8 @@ function RiggedRafflePlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(20,22,6,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2378,7 +2776,9 @@ function RiggedRafflePlay({ lead, delayMs }: PlayProps) {
         </g>
         <Tag x={50} y={92} w={62} text="GLUED IN PLACE FOR A TURN" delayMs={delayMs + 1900} color="#b8e05a" />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -2386,9 +2786,17 @@ function RiggedRafflePlay({ lead, delayMs }: PlayProps) {
 /* 26. Consolation Scratcher (t2 boon) - the foil reveals the TRUE prize      */
 /* ========================================================================= */
 
-function ConsolationScratcherPlay({ lead, delayMs }: PlayProps) {
+function ConsolationScratcherPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_consolation_scratcher");
   const result = oStr(o, "result"); // advance | reroll | dust | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b9bec9" glow="#ffd76a">
+        <rect x={9} y={14} width={22} height={12} rx={1.8} fill="#f4ecd6" stroke="#c2a24a" strokeWidth={1} />
+        <g className="gsp-scratch" style={d(delayMs)}><rect x={9} y={14} width={22} height={12} rx={1.8} fill={GREY} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2398,7 +2806,8 @@ function ConsolationScratcherPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className={result === "dust" ? "gsp-slump" : "gsp-linger gsp-linger--long"} style={d(delayMs + (result === "dust" ? 1200 : 0))}>
@@ -2445,7 +2854,9 @@ function ConsolationScratcherPlay({ lead, delayMs }: PlayProps) {
         )}
         {result == null && <Tag x={50} y={90} w={44} text="SCRATCHING..." delayMs={delayMs + 1650} color={GREY} />}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#b9bec9" glow="#ffd76a" tell={d(delayMs + 80)} hit={d(delayMs + 950)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -2453,9 +2864,18 @@ function ConsolationScratcherPlay({ lead, delayMs }: PlayProps) {
 /* 27. Hardship Jackpot (t4 boon) - the piggy pays what misery earned         */
 /* ========================================================================= */
 
-function HardshipJackpotPlay({ lead, delayMs }: PlayProps) {
+function HardshipJackpotPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_hardship_jackpot");
   const result = oStr(o, "result"); // pawn | thaw | double | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#4fd08a">
+        <ellipse cx={20} cy={22} rx={9} ry={7} fill="#f2a2c0" stroke="#d67ba0" strokeWidth={1.1} />
+        <ellipse cx={12} cy={22} rx={2.6} ry={2.2} fill="#f7bcd3" stroke="#d67ba0" strokeWidth={0.9} />
+        <rect x={17.6} y={13.4} width={4.8} height={1.6} rx={0.8} fill="#d67ba0" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2468,7 +2888,8 @@ function HardshipJackpotPlay({ lead, delayMs }: PlayProps) {
   const showPawn = result === "pawn" || result === "double";
   const showThaw = result === "thaw" || result === "double";
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,12,20,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2488,7 +2909,7 @@ function HardshipJackpotPlay({ lead, delayMs }: PlayProps) {
         </g>
         {/* the crack of the payout */}
         <g className="gsp-flash" style={d(delayMs + 900)}>
-          <path d="M50 42 l3 5 -4 3 5 5" stroke="#fff" strokeWidth={1.4} fill="none" />
+          <path d="M50 42 l3 5 -4 3 5 5" stroke="#fff4d6" strokeWidth={1.4} fill="none" />
         </g>
         {showPawn && (
           <g className="gsp-loot" style={d(delayMs)}>
@@ -2528,7 +2949,9 @@ function HardshipJackpotPlay({ lead, delayMs }: PlayProps) {
           color={result === "double" ? GOLD : result ? "#f2a2c0" : GREY}
         />
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#4fd08a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
+    </>
   );
 }
 
@@ -2536,9 +2959,16 @@ function HardshipJackpotPlay({ lead, delayMs }: PlayProps) {
 /* 28. The Last Bet (t8) - the queen returns gilded, or the door shuts        */
 /* ========================================================================= */
 
-function TheLastBetPlay({ lead, delayMs }: PlayProps) {
+function TheLastBetPlay({ lead, role, delayMs }: PlayProps) {
   const o = useOutcome("gm_the_last_bet");
   const result = oStr(o, "result"); // empowered | backroom | null
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8a1230" glow="#ffd76a">
+        <g transform="translate(20 19)"><QueenSil fill={result === "backroom" ? GREY : GOLD} s={1.1} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Mini delayMs={delayMs}>
@@ -2547,7 +2977,8 @@ function TheLastBetPlay({ lead, delayMs }: PlayProps) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.58)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2608,7 +3039,9 @@ function TheLastBetPlay({ lead, delayMs }: PlayProps) {
           </>
         )}
       </svg>
-    </Wide>
+      </Framed>
+      <Spot tone="#8a1230" glow="#ffd76a" tell={d(delayMs + 130)} hit={d(delayMs + 1400)} settle={d(delayMs + 2600)} />
+    </>
   );
 }
 
@@ -2618,115 +3051,115 @@ function TheLastBetPlay({ lead, delayMs }: PlayProps) {
 
 export const PLAYS: Record<string, SigPlugin> = {
   gm_penny_slots: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" },
     Render: PennySlotsPlay,
   },
   gm_heads_or_tails: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip", anchor: "cast" },
     Render: HeadsOrTailsPlay,
   },
   gm_claw_machine: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha", anchor: "board" },
     Render: ClawMachinePlay,
   },
   gm_raffle_ticket: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel", anchor: "cast" },
     Render: RaffleTicketPlay,
   },
   gm_card_counting: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: CardCountingPlay,
   },
   gm_loaded_dice: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "dice" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "dice", anchor: "cast" },
     Render: LoadedDicePlay,
   },
   gm_lootbox: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha", anchor: "cast" },
     Render: LootboxPlay,
   },
   gm_three_card_monte: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "board" },
     Render: ThreeCardMontePlay,
   },
   gm_underdog_parlay: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: UnderdogParlayPlay,
   },
   gm_river_card: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: RiverCardPlay,
   },
   gm_piece_roulette: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel", anchor: "cast" },
     Render: PieceRoulettePlay,
   },
   gm_jackpot_pawn: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" },
     Render: JackpotPawnPlay,
   },
   gm_double_down_draft: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: DoubleDownDraftPlay,
   },
   gm_crash_game: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crashrocket" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crashrocket", anchor: "board" },
     Render: CrashGamePlay,
   },
   gm_blood_wager: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" },
     Render: BloodWagerPlay,
   },
   gm_progressive_jackpot: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: ProgressiveJackpotPlay,
   },
   gm_the_house: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "board" },
     Render: TheHousePlay,
   },
   gm_gacha_banner: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha", anchor: "cast" },
     Render: GachaBannerPlay,
   },
   gm_seven_cases: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "gacha", anchor: "board" },
     Render: SevenCasesPlay,
   },
   gm_martingale: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: MartingalePlay,
   },
   gm_devils_deck: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" },
     Render: DevilsDeckPlay,
   },
   gm_break_the_bank: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "cast" },
     Render: BreakTheBankPlay,
   },
   gm_wheel_of_the_cosmos: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel", anchor: "cast" },
     Render: WheelOfTheCosmosPlay,
   },
   gm_cursed_dice: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "dice" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "dice", anchor: "cast" },
     Render: CursedDicePlay,
   },
   gm_rigged_raffle: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wheel", anchor: "cast" },
     Render: RiggedRafflePlay,
   },
   gm_consolation_scratcher: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "bust" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "bust", anchor: "cast" },
     Render: ConsolationScratcherPlay,
   },
   gm_hardship_jackpot: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" },
     Render: HardshipJackpotPlay,
   },
   gm_the_last_bet: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" },
     Render: TheLastBetPlay,
   },
 };

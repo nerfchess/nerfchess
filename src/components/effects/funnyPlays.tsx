@@ -13,7 +13,8 @@
 // register lead-only configs so they light up with the same wiring.
 
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame } from "./stage";
 import "./funnyPlays.css";
 
 /* ------------------------------------------------------------------------- */
@@ -34,14 +35,105 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
   );
 }
 
-/** Board-crop stage for wide leads: oversized around the lead square so the
- * skit takes over the whole visible board (the caller's crop clips it). Same
- * geometry as the core BoardWideStage, rebuilt here to avoid the import
- * cycle. */
+/** Board-crop stage for a lead that declares `anchor: "board"`: oversized
+ * around the lead square so the skit takes over the whole visible board.
+ *
+ * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
+ * so this canvas must NOT correct itself a second time. Cast-anchored leads
+ * use `Framed`. */
 function Wide({ children }: { children: ReactNode }) {
   return (
     <span className="fnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+    </span>
+  );
+}
+
+/** The same 14-cell composition for a lead that declares `anchor: "cast"`,
+ * pinned to the BOARD.
+ *
+ * These skits are full-crop chrome — a card terminal, a mute overlay, a
+ * spotlight rig — and the design brief is explicit that a layer meaning "the
+ * board" belongs in a `BoardFrame`, not at a fixed percentage of an anchored
+ * canvas. The canvas is 14 cells and the board is the middle 8, so the art is
+ * re-expanded to 175% of the frame and offset -37.5%, which reproduces the old
+ * framing exactly at any anchor. The cast square then carries the play's own
+ * local beats; see `Spot`. */
+function Framed({ children }: { children: ReactNode }) {
+  return (
+    <span className="fnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        <BoardFrame>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+        </BoardFrame>
+      </span>
+    </span>
+  );
+}
+
+interface SceneProps {
+  lead: boolean;
+  role: SigRole;
+  delayMs: number;
+}
+
+/** The cast square's own three beats, at one-cell scale on the square the card
+ * was actually played on: a ring inhales (tell), the square pops (strike), and
+ * a mote drifts off it (settle). The gap between them is deliberately wide —
+ * these are the joke cards, and the hold before the punchline is the joke.
+ *
+ * The drift is the module's directional layer. --fx-side is +1 when the
+ * caster's home rank is drawn at the bottom of the screen and -1 when it is at
+ * the top, so the mote trails back toward the player who played the card
+ * rather than "down", which is backwards for one of the two seats. */
+function Spot({
+  tell,
+  hit,
+  settle,
+  tone,
+  glow,
+}: {
+  tell: CSSProperties;
+  hit: CSSProperties;
+  settle: CSSProperties;
+  tone: string;
+  glow: string;
+}) {
+  return (
+    <span className="fnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="fnp-spot-tell absolute block"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", borderRadius: "50%", border: `2px solid ${glow}`, ...tell }}
+      />
+      <span
+        className="fnp-spot-hit absolute inset-0 block"
+        style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 62%)`, ...hit }}
+      />
+      <span
+        className="fnp-spot-drift absolute block"
+        style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
+      />
+    </span>
+  );
+}
+
+/** The entrance cut: the card arriving in a hand. The play's own central prop
+ * at ~56% of the crop, popping in from the caster's side, one mote after it.
+ * No board takeover. */
+function Arrival({ delayMs, tone, glow, children }: { delayMs: number; tone: string; glow: string; children: ReactNode }) {
+  return (
+    <span className="fnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="fnp-arrive-ring absolute block"
+        style={{ left: "20%", top: "20%", width: "60%", height: "60%", borderRadius: "50%", border: `2px solid ${glow}`, ...d(delayMs + 40) }}
+      />
+      <span className="fnp-arrive absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", ...d(delayMs + 170) }}>
+        <svg viewBox="0 0 100 100" className="h-full w-full">{children}</svg>
+      </span>
+      <span
+        className="fnp-spot-drift absolute block"
+        style={{ left: "34%", top: "34%", width: "32%", height: "32%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...d(delayMs + 660) }}
+      />
     </span>
   );
 }
@@ -118,7 +210,7 @@ function WindowFrame({
       <rect x={w - 19} y={4} width={6} height={5.5} rx={1.2} fill="rgba(245,247,251,0.35)" />
       <g className={closeAnim ? "fnp-deny" : undefined} style={closeAnim ? d(650) : undefined}>
         <rect x={w - 11} y={4} width={7} height={5.5} rx={1.2} fill={accent} />
-        <path d={`M${w - 9.4} 5.2 l3.8 3.1 m0 -3.1 l-3.8 3.1`} stroke="#fff" strokeWidth={1.1} strokeLinecap="round" />
+        <path d={`M${w - 9.4} 5.2 l3.8 3.1 m0 -3.1 l-3.8 3.1`} stroke="#fff4d6" strokeWidth={1.1} strokeLinecap="round" />
       </g>
       {children}
     </>
@@ -146,7 +238,16 @@ function Heart({ x, y, fill = "#f2778f" }: { x: number; y: number; fill?: string
   return <path d={`M${x} ${y} c-1.4 -2.4 -4.6 -1.4 -4.6 0.9 c0 1.9 2.6 3.6 4.6 5 c2 -1.4 4.6 -3.1 4.6 -5 c0 -2.3 -3.2 -3.3 -4.6 -0.9 Z`} fill={fill} />;
 }
 
-function EmotionalSupportPawnPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function EmotionalSupportPawnPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8fd0a0" glow="#fff2c9">
+        <g transform="translate(50 56) scale(2.4)"><PalPawn /></g>
+        <Heart x={72} y={26} />
+        <Heart x={28} y={32} fill="#ffb3c1" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -158,7 +259,8 @@ function EmotionalSupportPawnPlay({ lead, delayMs }: { lead: boolean; delayMs: n
     );
   }
   return (
-    <Stage inset="-60%">
+    <>
+      <Stage inset="-60%">
       <svg viewBox="0 0 80 80" className="h-full w-full">
         {/* pocket: a stitched flap the pal dives into */}
         <g className="fnp-linger" style={d(delayMs)}>
@@ -173,7 +275,9 @@ function EmotionalSupportPawnPlay({ lead, delayMs }: { lead: boolean; delayMs: n
         <g className="fnp-rise" style={d(delayMs + 700)}><Heart x={56} y={22} fill="#ffb3c1" /></g>
         <g className="fnp-rise" style={d(delayMs + 880)}><Heart x={40} y={16} fill="#f2909f" /></g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#8fd0a0" glow="#fff2c9" tell={d(delayMs + 80)} hit={d(delayMs + 700)} settle={d(delayMs + 1700)} />
+    </>
   );
 }
 
@@ -192,7 +296,14 @@ function Reticle({ r = 15, color = "#e84d5b" }: { r?: number; color?: string }) 
   );
 }
 
-function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function StreamSniperPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e84d5b" glow="#ffd76a">
+        <g transform="translate(50 50) scale(2.6)"><Reticle r={15} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -205,7 +316,8 @@ function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Stage inset="-110%">
+    <>
+      <Stage inset="-110%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* their stream: player cam + chat, LIVE badge blinking */}
         <g className="fnp-linger" style={d(delayMs)}>
@@ -221,8 +333,8 @@ function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           {/* LIVE badge */}
           <g className="fnp-blink" style={d(delayMs + 100)}>
             <rect x={13} y={10} width={24} height={9} rx={2.5} fill="#e84d5b" />
-            <circle cx={18.5} cy={14.5} r={1.8} fill="#fff" />
-            <text x={22.5} y={17} fontSize={6.4} fontWeight={800} fill="#fff">LIVE</text>
+            <circle cx={18.5} cy={14.5} r={1.8} fill="#fff4d6" />
+            <text x={22.5} y={17} fontSize={6.4} fontWeight={800} fill="#fff4d6">LIVE</text>
           </g>
         </g>
         {/* the sniper's scope hunts, then locks on the streamer */}
@@ -233,7 +345,9 @@ function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           <path d="M36 30 l2.4 8.2 8.2 2.4 -8.2 2.4 -2.4 8.2 -2.4 -8.2 -8.2 -2.4 8.2 -2.4 Z" fill="#ffd76a" transform="translate(0 3.4)" />
         </g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#e84d5b" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 760)} settle={d(delayMs + 1800)} />
+    </>
   );
 }
 
@@ -241,7 +355,17 @@ function StreamSniperPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 /* 3. Lag Spike (t3) — the signal bars die, the spinner seizes, -25s          */
 /* ------------------------------------------------------------------------- */
 
-function LagSpikePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function LagSpikePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#5aa0e8" glow="#e8edf6">
+        <rect x={18} y={62} width={13} height={20} rx={3} fill="#8fd0a0" />
+        <rect x={36} y={46} width={13} height={36} rx={3} fill="#8fd0a0" />
+        <rect x={54} y={28} width={13} height={54} rx={3} fill="#e8a24d" />
+        <text x={80} y={40} fontSize={26} fontWeight={800} fill="#e84d5b" textAnchor="middle">!</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -259,7 +383,8 @@ function LagSpikePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Stage inset="-100%">
+    <>
+      <Stage inset="-100%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* connection HUD: it stutters, drops bars, and hard-freezes */}
         <g className="fnp-jitter" style={d(delayMs)}>
@@ -278,13 +403,15 @@ function LagSpikePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         {/* the damage: -25s rips off their clock */}
         <g className="fnp-rise" style={d(delayMs + 980)}>
           <rect x={33} y={8} width={34} height={13} rx={6.5} fill="#e84d5b" />
-          <text x={50} y={17.6} fontSize={8.5} fontWeight={800} fill="#fff" textAnchor="middle">-25s</text>
+          <text x={50} y={17.6} fontSize={8.5} fontWeight={800} fill="#fff4d6" textAnchor="middle">-25s</text>
         </g>
         <g className="fnp-star" style={d(delayMs + 700)}>
           <path d="M50 24 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8 -5 -5 -1.8 5 -1.8 Z" fill="#ffd76a" />
         </g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#5aa0e8" glow="#e8edf6" tell={d(delayMs + 100)} hit={d(delayMs + 820)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -310,7 +437,16 @@ function GhostPawn({ x, y, s = 1, fill = "#cfe0f5" }: { x: number; y: number; s?
   );
 }
 
-function CtrlZPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function CtrlZPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8fb4ff" glow="#e6efff">
+        <path d="M72 30 a26 26 0 1 0 8 24" fill="none" stroke="#5aa0e8" strokeWidth={8} strokeLinecap="round" />
+        <path d="M72 12 L74 33 54 29 Z" fill="#5aa0e8" />
+        <g transform="translate(0 12)"><GhostPawn x={50} y={56} s={2.2} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -327,7 +463,8 @@ function CtrlZPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Stage inset="-100%">
+    <>
+      <Stage inset="-100%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* the shortcut: Ctrl, then Z, pressed in order */}
         <g className="fnp-press" style={d(delayMs)}><Keycap x={16} y={70} w={26} label="Ctrl" /></g>
@@ -349,7 +486,9 @@ function CtrlZPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <path d="M50 24 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8 -5 -5 -1.8 5 -1.8 Z" fill="#bfe0ff" />
         </g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#8fb4ff" glow="#e6efff" tell={d(delayMs + 80)} hit={d(delayMs + 700)} settle={d(delayMs + 1750)} />
+    </>
   );
 }
 
@@ -384,7 +523,15 @@ function BonkStar({ x, y, s = 1, label }: { x: number; y: number; s?: number; la
   );
 }
 
-function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function RubberChickenPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#e84d5b">
+        <g transform="translate(30 78) rotate(-10)"><Chicken s={1.5} /></g>
+        <BonkStar x={76} y={30} s={1.6} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-25%">
@@ -401,7 +548,8 @@ function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
     );
   }
   return (
-    <Stage inset="-85%">
+    <>
+      <Stage inset="-85%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="fnp-bonk" style={d(delayMs)}>
           <g transform="translate(8 72) rotate(-10)"><Chicken s={1.05} /></g>
@@ -417,7 +565,9 @@ function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
           <path d="M78 38 q4 -7 1 -14 q-5 6 -1 14 Z" fill="#ffe08a" stroke="#a8821c" strokeWidth={0.9} />
         </g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#ffd76a" glow="#e84d5b" tell={d(delayMs + 110)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -425,7 +575,14 @@ function RubberChickenPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
 /* 6. Day One Patch (t4) — the update bar fills and their new card gets nerfed */
 /* ------------------------------------------------------------------------- */
 
-function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function DayOnePatchPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8fd0a0" glow="#e8a24d">
+        <path d="M50 84 L24 52 h16 V16 h20 v36 h16 Z" fill="#9aa5ba" stroke="#5c6880" strokeWidth={4} strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -438,7 +595,8 @@ function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
       <Prop left="33%" top="34%" width="34%" height="26%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -456,7 +614,7 @@ function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           {/* their fresh card gets stamped flat: colored card swaps to grey husk */}
           <g className="fnp-swap-out" style={d(delayMs + 200)}>
             <rect x={38} y={56} width={13} height={17} rx={2} fill="#b98cff" stroke="#6c4bb0" strokeWidth={1.4} />
-            <circle cx={44.5} cy={62} r={2.6} fill="#fff" opacity={0.85} />
+            <circle cx={44.5} cy={62} r={2.6} fill="#fff4d6" opacity={0.85} />
           </g>
           <g className="fnp-swap-in" style={d(delayMs + 200)}>
             <rect x={38} y={56} width={13} height={17} rx={2} fill="#aab2c2" stroke="#6d7688" strokeWidth={1.4} />
@@ -468,7 +626,9 @@ function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
         </svg>
       </Prop>
       <Boom color="rgba(154,165,186,0.85)" delayMs={delayMs + 1020} />
-    </Wide>
+      </Wide>
+      <Spot tone="#8fd0a0" glow="#e8a24d" tell={d(delayMs + 90)} hit={d(delayMs + 840)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -476,7 +636,14 @@ function DayOnePatchPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 /* 7. Battle Pass (t4) — season track tiers ding, the +45s reward drops       */
 /* ------------------------------------------------------------------------- */
 
-function BattlePassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function BattlePassPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#b98cff" glow="#ffd76a">
+        <path d="M50 14 l8 21 22 1 -17 14 6 21 -19 -12 -19 12 6 -21 -17 -14 22 -1 Z" fill="#ffd76a" stroke="#c9931d" strokeWidth={3.4} strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -489,7 +656,8 @@ function BattlePassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(201,147,29,0.16)" delayMs={delayMs} />
       <Prop left="32%" top="36%" width="36%" height="22%">
         <svg viewBox="0 0 110 64" className="h-full w-full">
@@ -531,7 +699,9 @@ function BattlePassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1200} />
-    </Wide>
+      </Wide>
+      <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 880)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -549,7 +719,16 @@ function KnightSilhouette({ x, y, s = 1, fill = "#39435c" }: { x: number; y: num
   );
 }
 
-function PopUpAdPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function PopUpAdPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e8a24d" glow="#e84d5b">
+        <rect x={12} y={22} width={76} height={56} rx={5} fill="#ffe9a8" stroke="#c9931d" strokeWidth={3} />
+        <rect x={12} y={22} width={76} height={15} rx={5} fill="#e8a24d" />
+        <KnightSilhouette x={50} y={60} s={1.5} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-12%">
@@ -558,7 +737,7 @@ function PopUpAdPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <rect x={5} y={10} width={40} height={30} rx={3} fill="#ffe9a8" stroke="#c9931d" strokeWidth={1.6} />
             <rect x={5} y={10} width={40} height={8} rx={3} fill="#e8a24d" />
             <rect x={38} y={11.5} width={5} height={5} rx={1.2} fill="#e84d5b" />
-            <path d="M39.2 12.7 l2.6 2.6 m0 -2.6 l-2.6 2.6" stroke="#fff" strokeWidth={0.9} strokeLinecap="round" />
+            <path d="M39.2 12.7 l2.6 2.6 m0 -2.6 l-2.6 2.6" stroke="#fff4d6" strokeWidth={0.9} strokeLinecap="round" />
             <KnightSilhouette x={25} y={30} s={0.75} />
           </g>
         </svg>
@@ -566,7 +745,8 @@ function PopUpAdPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(232,162,77,0.16)" delayMs={delayMs} />
       {/* second ad sneaks in behind, offset */}
       <Prop left="45%" top="42%" width="22%" height="16%">
@@ -586,13 +766,15 @@ function PopUpAdPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
               <text x={38} y={30} fontSize={10} fontWeight={900} fill="#b56a10" textAnchor="middle">YOU WON!</text>
               <KnightSilhouette x={75} y={38} s={1.1} fill="#8a5a10" />
               <rect x={14} y={48} width={48} height={13} rx={6.5} fill="#6abf5f" stroke="#3f7a3a" strokeWidth={1.5} />
-              <text x={38} y={57.2} fontSize={7} fontWeight={800} fill="#fff" textAnchor="middle">FREE KNIGHT</text>
+              <text x={38} y={57.2} fontSize={7} fontWeight={800} fill="#fff4d6" textAnchor="middle">FREE KNIGHT</text>
             </WindowFrame>
           </g>
         </svg>
       </Prop>
       <Boom color="rgba(232,162,77,0.85)" delayMs={delayMs + 350} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e8a24d" glow="#e84d5b" tell={d(delayMs + 80)} hit={d(delayMs + 760)} settle={d(delayMs + 1850)} />
+    </>
   );
 }
 
@@ -604,7 +786,16 @@ function SpeakerCone({ fill = "#39435c" }: { fill?: string }) {
   return <path d="M8 24 h9 l12 -11 v34 l-12 -11 h-9 Z" fill={fill} strokeLinejoin="round" />;
 }
 
-function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MuteButtonPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e84d5b" glow="#c3cddd">
+        <g transform="translate(28 22) scale(0.8)"><SpeakerCone /></g>
+        <circle cx={50} cy={50} r={34} fill="none" stroke="#e84d5b" strokeWidth={6} />
+        <path d="M26 74 L74 26" stroke="#e84d5b" strokeWidth={6} strokeLinecap="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -619,7 +810,8 @@ function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(232,77,91,0.14)" delayMs={delayMs} />
       <Prop left="37%" top="35%" width="26%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -648,7 +840,9 @@ function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 980} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e84d5b" glow="#c3cddd" tell={d(delayMs + 90)} hit={d(delayMs + 800)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -656,7 +850,15 @@ function MuteButtonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 10. Skill Issue (t4) — the skill gauge flops to rock bottom. diagnosis: L   */
 /* ------------------------------------------------------------------------- */
 
-function SkillIssuePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function SkillIssuePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e84d5b" glow="#ffd76a">
+        <path d="M26 22 l24 24 24 -24" fill="none" stroke="#e8a24d" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M26 52 l24 24 24 -24" fill="none" stroke="#e84d5b" strokeWidth={9} strokeLinecap="round" strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -672,7 +874,8 @@ function SkillIssuePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(232,162,77,0.14)" delayMs={delayMs} />
       <Prop left="35%" top="34%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -697,7 +900,9 @@ function SkillIssuePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.8)" delayMs={delayMs + 1150} />
-    </Wide>
+      </Wide>
+      <Spot tone="#e84d5b" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 900)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -705,7 +910,16 @@ function SkillIssuePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 11. Alt+F4 (t5) — Alt, F4, and their draft window slams shut. gg.          */
 /* ------------------------------------------------------------------------- */
 
-function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function AltF4Play({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#5aa0e8" glow="#e8edf6">
+        <rect x={14} y={24} width={72} height={56} rx={5} fill="#e8edf6" stroke="#39445c" strokeWidth={3.6} />
+        <rect x={14} y={24} width={72} height={16} rx={5} fill="#39445c" />
+        <rect x={72} y={27} width={11} height={10} rx={2} fill="#e84d5b" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -722,7 +936,8 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(57,68,92,0.22)" delayMs={delayMs} />
       {/* their draft client, mid-draft */}
       <Prop left="34%" top="32%" width="30%" height="24%">
@@ -733,8 +948,8 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
               {[16, 42, 68].map((x, i) => (
                 <g key={x}>
                   <rect x={x} y={22} width={17} height={24} rx={2.4} fill={["#b98cff", "#5aa0e8", "#8fd0a0"][i]} stroke="#39445c" strokeWidth={1.3} />
-                  <circle cx={x + 8.5} cy={30} r={3.2} fill="#fff" opacity={0.85} />
-                  <rect x={x + 3} y={37} width={11} height={2.4} rx={1.2} fill="#fff" opacity={0.7} />
+                  <circle cx={x + 8.5} cy={30} r={3.2} fill="#fff4d6" opacity={0.85} />
+                  <rect x={x + 3} y={37} width={11} height={2.4} rx={1.2} fill="#fff4d6" opacity={0.7} />
                 </g>
               ))}
               <rect x={16} y={52} width={69} height={9} rx={4.5} fill="#c3cddd" />
@@ -756,7 +971,9 @@ function AltF4Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 1100} />
-    </Wide>
+      </Wide>
+      <Spot tone="#5aa0e8" glow="#e8edf6" tell={d(delayMs + 90)} hit={d(delayMs + 820)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -776,14 +993,23 @@ function Daisy({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       {[0, 60, 120, 180, 240, 300].map((a) => (
-        <ellipse key={a} cx={0} cy={-3.6} rx={1.7} ry={3.4} fill="#fff" stroke="#c9cdd8" strokeWidth={0.5} transform={`rotate(${a})`} />
+        <ellipse key={a} cx={0} cy={-3.6} rx={1.7} ry={3.4} fill="#fff4d6" stroke="#c9cdd8" strokeWidth={0.5} transform={`rotate(${a})`} />
       ))}
       <circle r={2.2} fill="#ffd23f" stroke="#c9931d" strokeWidth={0.7} />
     </g>
   );
 }
 
-function TouchGrassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function TouchGrassPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#8fd0a0" glow="#ffd76a">
+        <g transform="scale(2.5)"><GrassTuft x={14} y={34} s={1.1} /></g>
+        <g transform="scale(2.5)"><GrassTuft x={26} y={35} s={0.8} tone="#6fbf5f" /></g>
+        <g transform="scale(2.5)"><Daisy x={20} y={24} s={0.9} /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -796,7 +1022,8 @@ function TouchGrassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(95,174,82,0.18)" delayMs={delayMs} />
       <Prop left="30%" top="30%" width="40%" height="34%">
         <svg viewBox="0 0 140 120" className="h-full w-full">
@@ -840,7 +1067,9 @@ function TouchGrassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(111,191,95,0.85)" delayMs={delayMs + 850} />
-    </Wide>
+      </Wide>
+      <Spot tone="#8fd0a0" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 940)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -848,7 +1077,15 @@ function TouchGrassPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 13. Main Character (t5) — clapperboard, spotlight, plot armor              */
 /* ------------------------------------------------------------------------- */
 
-function MainCharacterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MainCharacterPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#f2909f">
+        <path d="M50 -4 L20 88 a48 18 0 0 0 60 0 Z" fill="rgba(255,232,150,0.5)" />
+        <path d="M50 52 l4.5 12 13 0.7 -10 8 3.4 12.6 -10.9 -7.2 -10.9 7.2 3.4 -12.6 -10 -8 13 -0.7 Z" fill="#ffd76a" stroke="#c9931d" strokeWidth={2.4} strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-15%">
@@ -865,7 +1102,8 @@ function MainCharacterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(30,26,48,0.3)" delayMs={delayMs} />
       <Prop left="35%" top="31%" width="30%" height="27%">
         <svg viewBox="0 0 100 90" className="h-full w-full">
@@ -906,7 +1144,9 @@ function MainCharacterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
         </svg>
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1000} />
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#f2909f" tell={d(delayMs + 100)} hit={d(delayMs + 880)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -925,7 +1165,15 @@ function Sunglasses({ w = 26 }: { w?: number }) {
   );
 }
 
-function SmurfAccountPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function SmurfAccountPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#5aa0e8" glow="#8fd0a0">
+        <circle cx={50} cy={46} r={26} fill="#5aa0e8" stroke="#2c5f9e" strokeWidth={3.4} />
+        <g transform="translate(50 46) scale(1.9)"><Sunglasses /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -941,7 +1189,8 @@ function SmurfAccountPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(90,160,232,0.16)" delayMs={delayMs} />
       <Prop left="34%" top="33%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -973,7 +1222,9 @@ function SmurfAccountPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </svg>
       </Prop>
       <Boom color="rgba(90,160,232,0.85)" delayMs={delayMs + 1200} />
-    </Wide>
+      </Framed>
+      <Spot tone="#5aa0e8" glow="#8fd0a0" tell={d(delayMs + 90)} hit={d(delayMs + 840)} settle={d(delayMs + 1950)} />
+    </>
   );
 }
 
@@ -981,7 +1232,18 @@ function SmurfAccountPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 /* 15. Pay to Win (t6) — card swipes, register dings, BOTH cards fan out      */
 /* ------------------------------------------------------------------------- */
 
-function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function PayToWinPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#b98cff">
+        <g transform="translate(50 50) scale(2.2)">
+          <rect x={-16} y={-10} width={32} height={20} rx={3} fill="#ffd76a" stroke="#c9931d" strokeWidth={1.6} />
+          <rect x={-16} y={-5.5} width={32} height={4.4} fill="#8a5a10" />
+          <rect x={-12} y={2.5} width={13} height={2.6} rx={1.3} fill="#fff2c9" />
+        </g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1001,7 +1263,8 @@ function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(201,147,29,0.18)" delayMs={delayMs} />
       <Prop left="34%" top="32%" width="30%" height="26%">
         <svg viewBox="0 0 100 88" className="h-full w-full">
@@ -1037,11 +1300,11 @@ function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           ))}
           <g className="fnp-fan" style={dv(delayMs + 1000, { "--fnp-r": "-13deg" })}>
             <rect x={30} y={56} width={17} height={25} rx={2.6} fill="#b98cff" stroke="#ffd76a" strokeWidth={1.8} />
-            <circle cx={38.5} cy={64} r={3.2} fill="#fff" opacity={0.85} />
+            <circle cx={38.5} cy={64} r={3.2} fill="#fff4d6" opacity={0.85} />
           </g>
           <g className="fnp-fan" style={dv(delayMs + 1100, { "--fnp-r": "13deg" })}>
             <rect x={53} y={56} width={17} height={25} rx={2.6} fill="#5aa0e8" stroke="#ffd76a" strokeWidth={1.8} />
-            <circle cx={61.5} cy={64} r={3.2} fill="#fff" opacity={0.85} />
+            <circle cx={61.5} cy={64} r={3.2} fill="#fff4d6" opacity={0.85} />
           </g>
           <g className="fnp-rise" style={d(delayMs + 1250)}>
             <text x={50} y={12} fontSize={8.4} fontWeight={900} fill="#ffd76a" textAnchor="middle">TAKE BOTH</text>
@@ -1049,7 +1312,9 @@ function PayToWinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1050} />
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#b98cff" tell={d(delayMs + 100)} hit={d(delayMs + 920)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -1071,7 +1336,15 @@ function RookGlyph({ fill, stroke }: { fill: string; stroke: string }) {
   );
 }
 
-function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ExpansionPermitPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e8a24d" glow="#8fd0a0">
+        <rect x={16} y={20} width={68} height={60} rx={3} fill="#f4ecd6" stroke="#c2a24a" strokeWidth={3} />
+        <g transform="translate(50 52) scale(2.6)"><RookGlyph fill="#e8a24d" stroke="#8a5a10" /></g>
+      </Arrival>
+    );
+  }
   if (!lead) {
     // Square-local: a permit stamp thunks down.
     return (
@@ -1088,7 +1361,8 @@ function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number
   }
   const caution = "#ffb454";
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(201,147,29,0.16)" delayMs={delayMs} />
       <Prop left="30%" top="30%" width="40%" height="34%">
         <svg viewBox="0 0 120 88" className="h-full w-full">
@@ -1135,7 +1409,9 @@ function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number
         </svg>
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1180} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e8a24d" glow="#8fd0a0" tell={d(delayMs + 90)} hit={d(delayMs + 860)} settle={d(delayMs + 1950)} />
+    </>
   );
 }
 
@@ -1151,63 +1427,63 @@ function ExpansionPermitPlay({ lead, delayMs }: { lead: boolean; delayMs: number
 // existing SigSoundKeys.
 export const PLAYS: Record<string, SigPlugin> = {
   emotional_support_pawn: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
     Render: EmotionalSupportPawnPlay,
   },
   stream_sniper: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" },
     Render: StreamSniperPlay,
   },
   lag_spike: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", source: "stun" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", source: "stun", anchor: "board" },
     Render: LagSpikePlay,
   },
   ctrl_z: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], hasLead: true, sound: "wall", source: "summon" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b"], hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
     Render: CtrlZPlay,
   },
   rubber_chicken: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "siege", source: "walnut" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "siege", source: "walnut", anchor: "board" },
     Render: RubberChickenPlay,
   },
   day_one_patch: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" },
     Render: DayOnePatchPlay,
   },
   battle_pass: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "rally" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "rally", anchor: "board" },
     Render: BattlePassPlay,
   },
   pop_up_ad: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", source: "summon" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
     Render: PopUpAdPlay,
   },
   mute_button: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true, sound: "snooze" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true, sound: "snooze", anchor: "cast" },
     Render: MuteButtonPlay,
   },
   skill_issue: {
-    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "snooze", source: "slow" },
+    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "snooze", source: "slow", anchor: "board" },
     Render: SkillIssuePlay,
   },
   alt_f4: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "board" },
     Render: AltF4Play,
   },
   touch_grass: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", source: "stun", anchor: "board" },
     Render: TouchGrassPlay,
   },
   main_character: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast" },
     Render: MainCharacterPlay,
   },
   smurf_account: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", source: "summon" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
     Render: SmurfAccountPlay,
   },
   pay_to_win: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
     Render: PayToWinPlay,
   },
   // Expansion Permit (t5 movement): self-buff, no removal diff, so a lead-only
@@ -1215,7 +1491,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // when the card is cast. "wall" is the closest voice for the construction
   // bolt-on.
   expansion_permit: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
     Render: ExpansionPermitPlay,
   },
 };

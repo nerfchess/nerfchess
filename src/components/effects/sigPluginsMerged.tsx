@@ -78,6 +78,7 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   g41PrismPlays: () => import("./g41PrismPlays"),
   g42ChainPlays: () => import("./g42ChainPlays"),
   g43WaterPlays: () => import("./g43WaterPlays"),
+  g44SpacePlays: () => import("./g44SpacePlays"),
 };
 // </plugin-modules:generated>
 

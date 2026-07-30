@@ -18,7 +18,10 @@
 // the square the card was played on. Board-scale layers (washes, edge gilt)
 // live inside <BoardFrame>, never at a fixed percentage of the stage. The
 // cards that travel (the wyrm down a rank, the flung pail, the ghost ship down
-// a file) use <AimStage> and author their art pointing RIGHT.
+// a file) use <AimStage> and author their art pointing RIGHT. A card that
+// REACHES for its victims while its subject stays upright (the winter palace
+// stair) keeps the upright <Lead> and rotates one run-out layer only, via
+// <Reach>.
 //
 // Every scene runs three beats — tell, strike, settle — in all three roles,
 // and every lead carries at least one layer driven by the geometry vars
@@ -138,6 +141,26 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
         </BoardWideStage>
       ) : null}
       <AimStage>{children}</AimStage>
+    </span>
+  );
+}
+
+/**
+ * ONE reaching layer inside a cast-anchored <Lead>.
+ *
+ * `fx-aim` is the same rotation <AimStage> applies internally, so art authored
+ * pointing RIGHT is turned onto the real source -> target vector and can run
+ * out to the victim by --fx-len. It is applied to a single layer rather than
+ * by swapping the whole scene to <AimLead> because everything upright in the
+ * scene — a stair, a mirror, a lamp — would otherwise be laid on its side.
+ * The rotation pivots on the stage centre, which IS the cast square, so the
+ * run starts where the card was played. Only ONE of these per scene: a second
+ * staging box would multiply the 14-cell canvas by 14 again.
+ */
+function Reach({ children }: { children: ReactNode }) {
+  return (
+    <span className="fx-aim absolute inset-0 block" aria-hidden="true">
+      {children}
     </span>
   );
 }
@@ -1435,7 +1458,14 @@ function GhostShipScene({ role, delayMs }: SceneProps) {
 /* --- 29. Winter Palace (t5) — THE LIGHT WITHDRAWS UP THE STAIRS -------------
    The warm rectangle lying across the two lowest flights of the palace stair
    shortens and climbs away toward the caster's own end, and the treads it
-   leaves behind take frost. Palette: #e8c081 / #fff1d1 / #1a2230. */
+   leaves behind take frost. Palette: #e8c081 / #fff1d1 / #1a2230.
+
+   AIM. The ward seizes whatever ENDS ITS MOVE on the back ranks, so the play
+   is a reach, not a bloom: a rime-run leaves the cast square and runs out to
+   the victim by --fx-len inside <Reach>, which carries the --fx-ang rotation
+   alone. The stair itself stays in the upright <Lead> stage — a staircase
+   rotated onto the attack vector would lie on its side — and the wash and rim
+   stay inside <BoardFrame>, so they remain exactly the board at any anchor. */
 const OW_TREADS = [0, 1, 2, 3];
 
 function WinterPalaceOvScene({ role, delayMs }: SceneProps) {
@@ -1465,6 +1495,9 @@ function WinterPalaceOvScene({ role, delayMs }: SceneProps) {
   }
   return (
     <Lead d={delayMs} frame={<><Wash tone="rgba(232,192,129,0.26)" /><Rim tone="rgba(26,34,48,0.42)" d={620} /></>}>
+      <Reach>
+        <L c="g10-runout" l={50} t={49.3} w={26} h={1.4} d={60} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff1d1, rgba(255,241,209,0))", transformOrigin: "0% 50%" }} />
+      </Reach>
       <V c="g10-ow-stair" l={38} t={40} w={24} h={18} d={80}>{stair}</V>
       <L c="g10-ow-light" l={39} t={46} w={20} h={8} d={230} st={{ background: "linear-gradient(90deg, rgba(232,192,129,0.85), transparent)", transformOrigin: "100% 50%" }} />
       <L c="g10-drawdown" l={42} t={40} w={16} h={12} d={400} st={{ background: "linear-gradient(180deg, rgba(255,241,209,0.5), transparent)" }} />
@@ -1597,8 +1630,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     config: { ordering: "line", staggerMs: 90, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "wall", anchor: "aim" },
     Render: GhostShipScene,
   },
+  // The ice seizes named enemy pieces the moment they end a move in the back
+  // ranks, so the play reaches for them: see WinterPalaceOvScene's <Reach>.
   ov_winter_palace: {
-    config: { ordering: "sweep", staggerMs: 75, victims: "all", hasLead: true, sound: "massfreeze", anchor: "cast" },
+    config: { ordering: "sweep", staggerMs: 75, victims: "all", hasLead: true, sound: "massfreeze", anchor: "aim" },
     Render: WinterPalaceOvScene,
   },
 };

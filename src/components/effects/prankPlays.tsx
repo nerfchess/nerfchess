@@ -14,8 +14,15 @@
 // (oversized-clipped stage); the two freeze cards also carry a per-square hit.
 
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { AimStage, BoardFrame } from "./stage";
 import "./prankPlays.css";
+
+interface SceneProps {
+  lead: boolean;
+  role: SigRole;
+  delayMs: number;
+}
 
 /* ------------------------------------------------------------------------- */
 /* Shared staging (rebuilt locally to avoid the BoardEffects import cycle)    */
@@ -34,12 +41,99 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
   );
 }
 
-/** Board-crop stage for wide leads: oversized around the lead square so the
- * skit takes over the whole visible board (the caller's crop clips it). */
+/** Board-crop stage for a lead that declares `anchor: "board"`: oversized
+ * around the lead square so the skit takes over the whole visible board.
+ *
+ * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
+ * so this canvas must NOT correct itself a second time. Cast- and aim-anchored
+ * leads use `Framed` instead. */
 function Wide({ children }: { children: ReactNode }) {
   return (
     <span className="prk pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+    </span>
+  );
+}
+
+/** The same 14-cell composition for a lead that declares `anchor: "cast"` or
+ * `"aim"`, pinned to the BOARD.
+ *
+ * Each of those leads is one full-crop piece of chrome (an inbox, a BSOD, a
+ * modal, a cascade of ad windows) authored to fill the visible board, which
+ * makes it a board-scale layer in the sense of the design brief: it belongs in
+ * a `BoardFrame`, not at a fixed percentage of an anchored canvas. The canvas
+ * is 14 cells and the board is the middle 8, so the art is re-expanded to 175%
+ * of the frame and offset -37.5% — that reproduces the old framing exactly
+ * while making it independent of the square the card was cast on. The cast
+ * square then carries the play's own local beats; see `Spot`. */
+function Framed({ children }: { children: ReactNode }) {
+  return (
+    <span className="prk pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        <BoardFrame>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+        </BoardFrame>
+      </span>
+    </span>
+  );
+}
+
+/** The cast square's own three beats, at one-cell scale on the square the
+ * card was actually played on: a ring inhales (tell), the square flashes as
+ * the junk lands (strike), and a mote drifts off it (settle).
+ *
+ * The drift is the module's directional layer. --fx-side is +1 when the
+ * caster's home rank is drawn at the bottom of the screen and -1 when it is at
+ * the top, so the mote always trails back toward the player who sent the
+ * prank rather than "down", which is backwards for one of the two seats. */
+function Spot({
+  tell,
+  hit,
+  settle,
+  tone,
+  glow,
+}: {
+  tell: CSSProperties;
+  hit: CSSProperties;
+  settle: CSSProperties;
+  tone: string;
+  glow: string;
+}) {
+  return (
+    <span className="prk pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="prk-spot-tell absolute block"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", borderRadius: "50%", border: `2px solid ${glow}`, ...tell }}
+      />
+      <span
+        className="prk-spot-hit absolute inset-0 block"
+        style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 62%)`, ...hit }}
+      />
+      <span
+        className="prk-spot-drift absolute block"
+        style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
+      />
+    </span>
+  );
+}
+
+/** The entrance cut: the card arriving in a hand. The play's own central prop
+ * at ~56% of the crop, sliding in from the caster's side, one mote after it.
+ * No board takeover, no chrome spilling past the square. */
+function Arrival({ delayMs, tone, glow, children }: { delayMs: number; tone: string; glow: string; children: ReactNode }) {
+  return (
+    <span className="prk pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="prk-arrive-ring absolute block"
+        style={{ left: "20%", top: "20%", width: "60%", height: "60%", borderRadius: "50%", border: `2px solid ${glow}`, ...d(delayMs + 40) }}
+      />
+      <span className="prk-arrive absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", ...d(delayMs + 160) }}>
+        <svg viewBox="0 0 100 100" className="h-full w-full">{children}</svg>
+      </span>
+      <span
+        className="prk-spot-drift absolute block"
+        style={{ left: "34%", top: "34%", width: "32%", height: "32%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...d(delayMs + 620) }}
+      />
     </span>
   );
 }
@@ -110,7 +204,7 @@ function WindowFrame({
       <rect x={w - 27} y={4} width={6} height={5.5} rx={1.2} fill="rgba(245,247,251,0.35)" />
       <rect x={w - 19} y={4} width={6} height={5.5} rx={1.2} fill="rgba(245,247,251,0.35)" />
       <rect x={w - 11} y={4} width={7} height={5.5} rx={1.2} fill={accent} />
-      <path d={`M${w - 9.4} 5.2 l3.8 3.1 m0 -3.1 l-3.8 3.1`} stroke="#fff" strokeWidth={1.1} strokeLinecap="round" />
+      <path d={`M${w - 9.4} 5.2 l3.8 3.1 m0 -3.1 l-3.8 3.1`} stroke="#fff4d6" strokeWidth={1.1} strokeLinecap="round" />
       {children}
     </>
   );
@@ -119,7 +213,7 @@ function WindowFrame({
 function ClockChip({ x, y, label, tone = "bad" }: { x: number; y: number; label: string; tone?: "bad" | "good" }) {
   const fill = tone === "bad" ? "#e84d5b" : "#8fd0a0";
   const stroke = tone === "bad" ? "#a5303b" : "#3f7a52";
-  const text = tone === "bad" ? "#fff" : "#1f4a2e";
+  const text = tone === "bad" ? "#fff4d6" : "#1f4a2e";
   return (
     <g>
       <rect x={x} y={y} width={34} height={13} rx={6.5} fill={fill} stroke={stroke} strokeWidth={1.4} />
@@ -151,7 +245,15 @@ function Envelope({ x, y, s = 1, flap = false }: { x: number; y: number; s?: num
   );
 }
 
-function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function PhishingPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e84d5b" glow="#7c88a4">
+        <Envelope x={50} y={58} s={2.4} />
+        <path d="M50 -6 V44 a9 9 0 0 0 14 0" fill="none" stroke="#7c88a4" strokeWidth={4} strokeLinecap="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -165,7 +267,8 @@ function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
       <Prop left="31%" top="33%" width="38%" height="30%">
         <svg viewBox="0 0 110 78" className="h-full w-full">
@@ -187,7 +290,7 @@ function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* the stolen secret: a red nerf card flips face-up */}
           <g className="prk-flip" style={d(delayMs + 980)}>
             <rect x={44} y={50} width={22} height={28} rx={2.6} fill="#e84d5b" stroke="#a5303b" strokeWidth={1.6} />
-            <circle cx={55} cy={60} r={4.6} fill="#fff" opacity={0.9} />
+            <circle cx={55} cy={60} r={4.6} fill="#fff4d6" opacity={0.9} />
             <path d="M52.4 60 h5.2 M55 57.4 v5.2" stroke="#e84d5b" strokeWidth={1.6} strokeLinecap="round" />
             <rect x={47} y={69} width={16} height={2.6} rx={1.3} fill="rgba(255,255,255,0.75)" />
           </g>
@@ -200,7 +303,9 @@ function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.7)" delayMs={delayMs + 1100} />
-    </Wide>
+      </Wide>
+      <Spot tone="#e84d5b" glow="#7c88a4" tell={d(delayMs + 100)} hit={d(delayMs + 1000)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -208,14 +313,24 @@ function PhishingPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 2. Subscriber Raid - a donation banner drops, hype rains, +20 / -10        */
 /* ------------------------------------------------------------------------- */
 
-function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function RaidPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#ffd76a" glow="#9147ff">
+        <rect x={8} y={34} width={84} height={32} rx={8} fill="#2a2140" stroke="#9147ff" strokeWidth={3} />
+        <circle cx={26} cy={50} r={10} fill="#9147ff" />
+        <path d="M26 44 v12 M20 50 h12" stroke="#fff4d6" strokeWidth={2.6} strokeLinecap="round" />
+        <text x={44} y={54} fontSize={11} fontWeight={900} fill="#e7d8ff">RAID</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
         <svg viewBox="0 0 40 40" className="h-full w-full">
           <g className="prk-pop" style={d(delayMs)}>
             <rect x={7} y={15} width={26} height={11} rx={5.5} fill="#9147ff" />
-            <text x={20} y={23} fontSize={6.4} fontWeight={900} fill="#fff" textAnchor="middle">RAID</text>
+            <text x={20} y={23} fontSize={6.4} fontWeight={900} fill="#fff4d6" textAnchor="middle">RAID</text>
           </g>
           <g className="prk-rise" style={d(delayMs + 260)}><circle cx={13} cy={30} r={2.4} fill="#ffd76a" /></g>
           <g className="prk-rise" style={d(delayMs + 380)}><circle cx={27} cy={30} r={2} fill="#8fd0a0" /></g>
@@ -224,7 +339,8 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(145,71,255,0.2)" delayMs={delayMs} />
       <Prop left="28%" top="30%" width="44%" height="20%">
         <svg viewBox="0 0 130 58" className="h-full w-full">
@@ -232,7 +348,7 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <g className="prk-window" style={d(delayMs)}>
             <rect x={4} y={8} width={122} height={30} rx={7} fill="#2a2140" stroke="#9147ff" strokeWidth={2.4} />
             <circle cx={22} cy={23} r={9} fill="#9147ff" />
-            <path d="M22 18 v10 M17 23 h10" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" />
+            <path d="M22 18 v10 M17 23 h10" stroke="#fff4d6" strokeWidth={2.2} strokeLinecap="round" />
             <text x={38} y={20} fontSize={7.4} fontWeight={900} fill="#e7d8ff">SUBSCRIBER RAID</text>
             <text x={38} y={31} fontSize={5.6} fontWeight={700} fill="#b79aff">ChessLord420 + 4,120 raiders</text>
           </g>
@@ -258,7 +374,9 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <svg viewBox="0 0 120 40" className="h-full w-full"><rect x={p.cx} y={16} width={5} height={3.2} rx={1} fill={p.c} /></svg>
         </Prop>
       ))}
-    </Wide>
+      </Wide>
+      <Spot tone="#ffd76a" glow="#9147ff" tell={d(delayMs + 90)} hit={d(delayMs + 860)} settle={d(delayMs + 1700)} />
+    </>
   );
 }
 
@@ -266,7 +384,16 @@ function RaidPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 3. Blue Screen of Death - the board crashes, collects error info, reboots  */
 /* ------------------------------------------------------------------------- */
 
-function BsodPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function BsodPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#dbe7ff" glow="#9fc0ff">
+        <rect x={10} y={22} width={80} height={56} rx={4} fill="#1247c8" />
+        <text x={22} y={62} fontSize={38} fontWeight={800} fill="#dbe7ff">:(</text>
+        <rect x={20} y={66} width={60} height={5} rx={2.5} fill="rgba(219,231,255,0.35)" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -280,7 +407,8 @@ function BsodPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       {/* the whole board goes BSOD blue */}
       <span className="prk-glitch absolute inset-0 block" style={{ background: "#1247c8", ...d(delayMs) }} />
       <Prop left="26%" top="28%" width="48%" height="40%">
@@ -309,7 +437,9 @@ function BsodPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       <Prop left="42%" top="70%" width="16%" height="8%" className="prk-rise" style={d(delayMs + 1450)}>
         <svg viewBox="0 0 34 13" className="h-full w-full"><ClockChip x={0} y={0} label="-35s" tone="bad" /></svg>
       </Prop>
-    </Wide>
+      </Wide>
+      <Spot tone="#dbe7ff" glow="#9fc0ff" tell={d(delayMs + 80)} hit={d(delayMs + 900)} settle={d(delayMs + 1800)} />
+    </>
   );
 }
 
@@ -332,7 +462,17 @@ function Gear({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   );
 }
 
-function ForcedUpdatePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ForcedUpdatePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#5aa0e8" glow="#e8a24d">
+        <rect x={10} y={26} width={80} height={48} rx={5} fill="#eef2f9" stroke="rgba(20,24,34,0.9)" strokeWidth={2.4} />
+        <g transform="translate(32 48)"><Gear x={0} y={0} s={1.8} /></g>
+        <rect x={48} y={44} width={34} height={7} rx={3.5} fill="#c3cddd" />
+        <rect x={48} y={44} width={20} height={7} rx={3.5} fill="#5aa0e8" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -345,7 +485,8 @@ function ForcedUpdatePlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(70,84,116,0.18)" delayMs={delayMs} />
       <Prop left="30%" top="34%" width="40%" height="28%">
         <svg viewBox="0 0 116 74" className="h-full w-full">
@@ -370,7 +511,9 @@ function ForcedUpdatePlay({ lead, delayMs }: { lead: boolean; delayMs: number })
           <g className="prk-rise" style={d(delayMs + 1400)}><ClockChip x={41} y={-2} label="-8s" tone="bad" /></g>
         </svg>
       </Prop>
-    </Wide>
+      </Wide>
+      <Spot tone="#5aa0e8" glow="#e8a24d" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 1850)} />
+    </>
   );
 }
 
@@ -392,7 +535,15 @@ function QuarantineBubble({ vb = 40 }: { vb?: number }) {
   );
 }
 
-function DefenderPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function DefenderPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#4be08a" glow="#e84d5b">
+        <path d="M50 14 l26 8 v24 q0 24 -26 34 q-26 -10 -26 -34 V22 Z" fill="#8fd0a0" stroke="#3f7a52" strokeWidth={3} strokeLinejoin="round" />
+        <path d="M37 48 l10 10 20 -22" fill="none" stroke="#1f6f43" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     // Per-quarantined-piece hit: a bubble seals over the frozen piece.
     return (
@@ -404,7 +555,8 @@ function DefenderPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(90,160,232,0.16)" delayMs={delayMs} />
       <Prop left="29%" top="31%" width="42%" height="34%">
         <svg viewBox="0 0 116 92" className="h-full w-full">
@@ -423,19 +575,21 @@ function DefenderPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* THREAT DETECTED toast */}
           <g className="prk-pop" style={d(delayMs + 980)}>
             <rect x={16} y={2} width={84} height={16} rx={4} fill="#e84d5b" />
-            <path d="M24 6 l4 8 h-8 Z" fill="#fff" /><circle cx={24} cy={12.6} r={0.9} fill="#e84d5b" />
-            <text x={34} y={13} fontSize={7} fontWeight={900} fill="#fff">THREAT DETECTED</text>
+            <path d="M24 6 l4 8 h-8 Z" fill="#fff4d6" /><circle cx={24} cy={12.6} r={0.9} fill="#e84d5b" />
+            <text x={34} y={13} fontSize={7} fontWeight={900} fill="#fff4d6">THREAT DETECTED</text>
           </g>
           {/* escalation: it keeps finding more */}
           <g className="prk-pop prk-pop--hold" style={d(delayMs + 1450)}>
             <rect x={28} y={20} width={60} height={13} rx={3.5} fill="#a5303b" />
-            <text x={58} y={29.4} fontSize={6} fontWeight={900} fill="#fff" textAnchor="middle">+46 MORE FOUND</text>
+            <text x={58} y={29.4} fontSize={6} fontWeight={900} fill="#fff4d6" textAnchor="middle">+46 MORE FOUND</text>
           </g>
           <g className="prk-star" style={d(delayMs + 1700)}><Sparkle x={58} y={16} s={1} fill="#4be08a" /></g>
         </svg>
       </Prop>
       <Boom color="rgba(75,224,138,0.7)" delayMs={delayMs + 1150} />
-    </Wide>
+      </Framed>
+      <Spot tone="#4be08a" glow="#e84d5b" tell={d(delayMs + 110)} hit={d(delayMs + 1050)} settle={d(delayMs + 1950)} />
+    </>
   );
 }
 
@@ -443,8 +597,18 @@ function DefenderPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 6. Captcha Check - select all the horsies, verification fails, padlock     */
 /* ------------------------------------------------------------------------- */
 
-function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function CaptchaPlay({ lead, role, delayMs }: SceneProps) {
   const tiles = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e8a24d" glow="#4a76c8">
+        <rect x={16} y={12} width={68} height={76} rx={5} fill="#eef2f9" stroke="#8895b0" strokeWidth={2.4} />
+        <rect x={16} y={12} width={68} height={18} rx={5} fill="#4a76c8" />
+        <path d="M38 56 v-8 a12 12 0 0 1 24 0 v8" fill="none" stroke="#39435c" strokeWidth={4} />
+        <rect x={36} y={54} width={28} height={22} rx={3} fill="#e8a24d" stroke="#a86a1e" strokeWidth={2.4} />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -459,7 +623,8 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
       <Prop left="32%" top="30%" width="36%" height="36%">
         <svg viewBox="0 0 96 100" className="h-full w-full">
@@ -467,7 +632,7 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
             <rect x={2} y={2} width={92} height={96} rx={4} fill="#eef2f9" stroke="#8895b0" strokeWidth={1.6} />
             <rect x={2} y={2} width={92} height={20} rx={4} fill="#4a76c8" />
             <text x={8} y={11} fontSize={5.4} fontWeight={700} fill="#dbe7ff">Select all squares</text>
-            <text x={8} y={18} fontSize={6.6} fontWeight={900} fill="#fff">with a HORSEY</text>
+            <text x={8} y={18} fontSize={6.6} fontWeight={900} fill="#fff4d6">with a HORSEY</text>
             {/* 3x3 image grid, some ticked */}
             {tiles.map((i) => {
               const gx = 8 + (i % 3) * 27;
@@ -480,14 +645,14 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
                   {horse ? (
                     <g className="prk-pop" style={d(delayMs + 300 + i * 90)}>
                       <circle cx={gx + 19} cy={gy + 4.5} r={3.6} fill="#4a76c8" />
-                      <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff" strokeWidth={1.2} strokeLinecap="round" fill="none" />
+                      <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff4d6" strokeWidth={1.2} strokeLinecap="round" fill="none" />
                     </g>
                   ) : null}
                   {/* escalation: this tile can't decide if it's a horsey */}
                   {i === 5 ? (
                     <g className="prk-flicker" style={d(delayMs + 620)}>
                       <circle cx={gx + 19} cy={gy + 4.5} r={3.6} fill="#4a76c8" />
-                      <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff" strokeWidth={1.2} strokeLinecap="round" fill="none" />
+                      <path d={`M${gx + 17} ${gy + 4.5} l1.4 1.6 2.6 -3`} stroke="#fff4d6" strokeWidth={1.2} strokeLinecap="round" fill="none" />
                     </g>
                   ) : null}
                 </g>
@@ -497,7 +662,7 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* verification fails, a padlock slams on */}
           <g className="prk-stamp" style={d(delayMs + 1100)}>
             <rect x={24} y={40} width={48} height={16} rx={3} fill="#e84d5b" />
-            <text x={48} y={51.5} fontSize={7.2} fontWeight={900} fill="#fff" textAnchor="middle">FAILED</text>
+            <text x={48} y={51.5} fontSize={7.2} fontWeight={900} fill="#fff4d6" textAnchor="middle">FAILED</text>
           </g>
           {/* escalation: this has happened before. it will happen again. */}
           <g className="prk-rise" style={d(delayMs + 1600)}>
@@ -507,7 +672,9 @@ function CaptchaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.65)" delayMs={delayMs + 1250} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e8a24d" glow="#4a76c8" tell={d(delayMs + 90)} hit={d(delayMs + 1150)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -527,7 +694,16 @@ function AdWindow({ tint, label }: { tint: string; label: string }) {
   );
 }
 
-function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function PopupStormPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e8a24d" glow="#e84d5b">
+        <rect x={12} y={24} width={76} height={52} rx={4} fill="#fff7ea" stroke="#a86a1e" strokeWidth={2.6} />
+        <rect x={12} y={24} width={76} height={14} rx={4} fill="#e8a24d" />
+        <text x={50} y={60} fontSize={14} fontWeight={900} fill="#e84d5b" textAnchor="middle">FREE!</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-20%">
@@ -552,7 +728,8 @@ function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     { left: "58%", top: "22%", tint: "#e84d5b", label: "FREE?!?", delay: 1280 },
   ];
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(168,106,30,0.16)" delayMs={delayMs} />
       {ads.map((a, i) => (
         <Prop key={i} left={a.left} top={a.top} width="22%" height="16%" className="prk-cascade" style={d(delayMs + a.delay)}>
@@ -560,7 +737,10 @@ function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </Prop>
       ))}
       <Boom color="rgba(232,77,91,0.6)" delayMs={delayMs + 1450} />
-    </Wide>
+      </Framed>
+      {/* the planted window sits on ONE square: that square gets the beats */}
+      <Spot tone="#e8a24d" glow="#e84d5b" tell={d(delayMs + 80)} hit={d(delayMs + 780)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -568,7 +748,15 @@ function PopupStormPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 8. Chain Letter - FWD: FWD: FWD: an envelope hops piece to piece           */
 /* ------------------------------------------------------------------------- */
 
-function ChainLetterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ChainLetterPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#f2909f" glow="#c25b74">
+        <Envelope x={50} y={50} s={2.6} flap />
+        <text x={50} y={88} fontSize={12} fontWeight={900} fill="#c25b74" textAnchor="middle">FWD:</text>
+      </Arrival>
+    );
+  }
   if (!lead) {
     // Per-frozen-piece hit: a forwarded envelope lands and a petal-freeze sets.
     return (
@@ -583,7 +771,8 @@ function ChainLetterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(242,119,143,0.18)" delayMs={delayMs} />
       <Prop left="28%" top="34%" width="44%" height="26%">
         <svg viewBox="0 0 130 70" className="h-full w-full">
@@ -619,7 +808,28 @@ function ChainLetterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
           ))}
         </svg>
       </Prop>
-    </Wide>
+      </Wide>
+      {/* The letter TRAVELS piece to piece. This card freezes a fresh random
+          victim every turn, so it is a mass freeze with no one leg to point
+          down and stays board-anchored; the hop still reads as travel, and
+          how far each forward carries is scaled by --fx-len so a play whose
+          victims are spread across the board throws further than one whose
+          victims are huddled together. */}
+      {[0, 1, 2].map((i) => (
+        <Prop
+          key={i}
+          left="42%"
+          top="47%"
+          width="4.4%"
+          height="4.4%"
+          className="prk-forward"
+          style={dv(delayMs + 520 + i * 220, { "--prk-run": `${(i + 1) * 34}` })}
+        >
+          <svg viewBox="0 0 40 40" className="h-full w-full"><Envelope x={20} y={20} s={0.9} flap /></svg>
+        </Prop>
+      ))}
+      <Spot tone="#f2909f" glow="#c25b74" tell={d(delayMs + 100)} hit={d(delayMs + 900)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -627,7 +837,17 @@ function ChainLetterPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 /* 9. Ratio'd - the reply count buries the likes, an arrow bonks it home      */
 /* ------------------------------------------------------------------------- */
 
-function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function RatioPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="#e84d5b" glow="#ffd23f">
+        <rect x={8} y={22} width={84} height={44} rx={5} fill="#eef2f9" stroke="#8895b0" strokeWidth={2.4} />
+        <circle cx={26} cy={38} r={8} fill="#9aa8c4" />
+        <rect x={40} y={32} width={40} height={5} rx={2.5} fill="#c3cddd" />
+        <path d="M76 82 H26 M40 68 l-14 14 14 14" fill="none" stroke="#e84d5b" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-10%">
@@ -643,7 +863,8 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(232,77,91,0.18)" delayMs={delayMs} />
       <Prop left="30%" top="30%" width="40%" height="26%">
         <svg viewBox="0 0 120 70" className="h-full w-full">
@@ -672,7 +893,7 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           {/* RATIO stamp */}
           <g className="prk-stamp" style={d(delayMs + 1250)}>
             <rect x={34} y={52} width={52} height={16} rx={3} fill="#e84d5b" />
-            <text x={60} y={63.5} fontSize={8} fontWeight={900} fill="#fff" textAnchor="middle">{"RATIO'D"}</text>
+            <text x={60} y={63.5} fontSize={8} fontWeight={900} fill="#fff4d6" textAnchor="middle">{"RATIO'D"}</text>
           </g>
         </svg>
       </Prop>
@@ -683,7 +904,32 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Boom color="rgba(232,77,91,0.66)" delayMs={delayMs + 1450} />
-    </Wide>
+      </Framed>
+      {/* THE SHOVE ITSELF. The quote-tweet above is upright chrome and stays
+          square with the board; only the travelling part goes in an AimStage,
+          authored pointing RIGHT so it rotates onto the real capture leg. The
+          shove runs BACKWARDS down that leg (the capturing piece is bonked
+          toward its own side), and --fx-len is how far it is sent: a piece
+          that reached across the board gets thrown further home. */}
+      <AimStage>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="prk-shovehome absolute block"
+            style={{
+              left: "47%",
+              top: "48.6%",
+              width: "6%",
+              height: "2.8%",
+              borderRadius: "999px",
+              background: "linear-gradient(270deg, #e84d5b, rgba(232,77,91,0))",
+              ...dv(delayMs + 620 + i * 140, { "--prk-run": `${(i + 1) * 26}` }),
+            }}
+          />
+        ))}
+      </AimStage>
+      <Spot tone="#e84d5b" glow="#ffd23f" tell={d(delayMs + 120)} hit={d(delayMs + 1300)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -697,39 +943,39 @@ function RatioPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 // Every `sound` is an existing SigSoundKey.
 export const PLAYS: Record<string, SigPlugin> = {
   pr_phishing: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" },
     Render: PhishingPlay,
   },
   pr_donation_alert: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" },
     Render: RaidPlay,
   },
   pr_bsod: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "stun" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "stun", anchor: "board" },
     Render: BsodPlay,
   },
   pr_forced_update: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", source: "stun" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", source: "stun", anchor: "board" },
     Render: ForcedUpdatePlay,
   },
   pr_defender_scan: {
-    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
+    config: { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
     Render: DefenderPlay,
   },
   pr_captcha: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "cast" },
     Render: CaptchaPlay,
   },
   pr_popup_storm: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
     Render: PopupStormPlay,
   },
   pr_chain_letter: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: ChainLetterPlay,
   },
   pr_ratiod: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "aim" },
     Render: RatioPlay,
   },
 };

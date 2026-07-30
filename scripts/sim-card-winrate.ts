@@ -34,11 +34,23 @@
 //
 // It is not a ladder simulation and the absolute numbers are not win rates
 // against humans. Bots play a narrow, deterministic style, so a card that
-// rewards long-horizon planning will under-measure here. The sampling error at
-// small N is large and is REPORTED rather than hidden: at N pairs the standard
-// error on a delta of proportions is roughly `100 * sqrt(0.5/N)` points, which
-// is +-11 points at N=20 and +-5 at N=100. Treat anything inside the error bar
-// as "not measured", not as "measured zero".
+// rewards long-horizon planning will under-measure here.
+//
+// The sampling error is REPORTED rather than hidden, and it is measured rather
+// than assumed. Each card's error bar is the empirical spread of its own pair
+// deltas. That matters more than it sounds: quoting the textbook
+// `100*sqrt(0.5/N)` bound for unpaired proportions - which this script did at
+// first - throws away the entire benefit of pairing. Both runs of a pair share
+// a seed, an opening and a bot, so a card that changes nothing scores a delta
+// of exactly zero instead of two noisy win rates that have to cancel. Most
+// pairs do exactly that, so the real bar is far tighter than the worst case,
+// and the pessimistic formula was understating every measurement the harness
+// can make.
+//
+// A card counts as moved when its delta exceeds twice its own standard error.
+// Treat anything inside that as "not measured", not as "measured zero". Pairs
+// voided by the ply cap are counted and reported too: a card measured on 2 of
+// 20 pairs is not the same claim as one measured on 20.
 
 import { BUFF_BY_ID, ALL_BUFFS } from "../src/engine/buffs/library";
 import { pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
@@ -143,36 +155,55 @@ interface Row {
   delta: number;
   /** Pairs that actually produced two finished games. */
   pairs: number;
-  /** One standard error on that delta, in points. */
+  /** Pairs thrown away because a game hit the ply cap or the bot could not
+   *  move. Reported, because a card measured on 2 of 20 pairs is not the same
+   *  claim as one measured on 20. */
+  voided: number;
+  /** One EMPIRICAL standard error on that delta, in points. */
   stderr: number;
 }
 
 function measure(id: string): Row | null {
   const def = BUFF_BY_ID[id];
   if (!def?.implemented) return null;
-  let withSum = 0;
-  let withoutSum = 0;
-  let pairs = 0;
+  // Per-pair deltas, kept rather than summed: the spread of these IS the
+  // measurement error, and it cannot be recovered from the total.
+  const deltas: number[] = [];
+  let voided = 0;
   for (let i = 0; i < GAMES; i++) {
     const seed = 1000 + i * 31;
     const a = score(playGame(seed, id, def.tier));
     const b = score(playGame(seed, null, def.tier));
-    if (a == null || b == null) continue; // the pair is only usable if both finished
-    withSum += a;
-    withoutSum += b;
-    pairs++;
+    if (a == null || b == null) {
+      voided++; // the pair is only usable if both games finished
+      continue;
+    }
+    deltas.push(a - b);
   }
+  const pairs = deltas.length;
   if (pairs === 0) return null;
+
+  const mean = deltas.reduce((s, d) => s + d, 0) / pairs;
+  // EMPIRICAL standard error, not the worst-case formula for unpaired
+  // proportions. Pairing is the whole design: both runs share a seed, an
+  // opening and a bot, so a card that changes nothing produces a delta of
+  // exactly zero rather than two noisy win rates that have to cancel. Most
+  // pairs do exactly that, so the real spread is far below the +-100*sqrt(0.5/N)
+  // worst case, and quoting the worst case understated every measurement this
+  // harness can make. With one pair there is no spread to measure, so the
+  // pessimistic bound is the honest answer.
+  const variance =
+    pairs > 1 ? deltas.reduce((s, d) => s + (d - mean) ** 2, 0) / (pairs - 1) : 0.5;
   return {
     id,
     name: def.name,
     tier: def.tier,
     category: (def as { category?: string }).category ?? "?",
     kind: def.kind,
-    delta: ((withSum - withoutSum) / pairs) * 100,
+    delta: mean * 100,
     pairs,
-    // Standard error of a paired difference of proportions, worst case p=0.5.
-    stderr: 100 * Math.sqrt(0.5 / pairs),
+    voided,
+    stderr: 100 * Math.sqrt(variance / pairs),
   };
 }
 
@@ -183,8 +214,8 @@ function main(): void {
   const pool = SHARD ? all.filter((_, i) => i % SHARD_N === SHARD_I) : all;
   console.log(
     `[sim-card-winrate] ${pool.length} cards x ${GAMES} paired games ` +
-      `(skill ${SKILL}, ${MAX_PLIES}-ply cap). +-${(100 * Math.sqrt(0.5 / GAMES)).toFixed(1)} ` +
-      `points of standard error at this N.`,
+      `(skill ${SKILL}, ${MAX_PLIES}-ply cap). Each card's error bar is measured ` +
+      `from its own pairs, not assumed from N.`,
   );
 
   const rows: Row[] = [];
@@ -196,28 +227,30 @@ function main(): void {
   }
 
   rows.sort((a, b) => b.delta - a.delta);
-  const band = 100 * Math.sqrt(0.5 / GAMES);
 
-  // Only report what the sample can actually support. Anything inside the
-  // error bar is "not measured", and saying so is the whole point.
-  const strong = rows.filter((r) => Math.abs(r.delta) > band);
+  // Each card gets its OWN error bar, because each card earned one. A card
+  // whose pairs all agreed is measured; a card whose pairs disagreed is not,
+  // even at the same N. Two standard errors is the bar for calling a card
+  // moved, and anything inside it is "not measured" rather than "measured
+  // zero" - saying so is the whole point.
+  const isStrong = (r: Row): boolean => Math.abs(r.delta) > 2 * r.stderr;
+  const strong = rows.filter(isStrong);
+  const voidedTotal = rows.reduce((s, r) => s + r.voided, 0);
+  const medErr = [...rows].sort((a, b) => a.stderr - b.stderr)[Math.floor(rows.length / 2)];
   console.log(
-    `\nmeasured ${rows.length} cards; ${strong.length} moved further than the ` +
-      `+-${band.toFixed(1)} point error bar, ${rows.length - strong.length} did not`,
+    `\nmeasured ${rows.length} cards; ${strong.length} moved further than twice ` +
+      `their own standard error, ${rows.length - strong.length} did not. ` +
+      `median error bar +-${(medErr?.stderr ?? 0).toFixed(1)} points; ` +
+      `${voidedTotal} pairs voided (unfinished at the ${MAX_PLIES}-ply cap).`,
   );
 
+  const line = (r: Row): string =>
+    `  ${r.delta >= 0 ? "+" : ""}${r.delta.toFixed(1)}pt +-${r.stderr.toFixed(1)}  ` +
+    `t${r.tier}  ${r.id}  (${r.category}, ${r.pairs} pairs)`;
   console.log("\nstrongest positive (card helps its holder most):");
-  for (const r of strong.slice(0, 15)) {
-    console.log(
-      `  ${r.delta >= 0 ? "+" : ""}${r.delta.toFixed(1)}pt  t${r.tier}  ${r.id}  (${r.category}, ${r.pairs} pairs)`,
-    );
-  }
+  for (const r of strong.slice(0, 15)) console.log(line(r));
   console.log("\nstrongest negative (card HURTS its holder - broken or backwards):");
-  for (const r of strong.slice(-15).reverse()) {
-    console.log(
-      `  ${r.delta >= 0 ? "+" : ""}${r.delta.toFixed(1)}pt  t${r.tier}  ${r.id}  (${r.category}, ${r.pairs} pairs)`,
-    );
-  }
+  for (const r of strong.slice(-15).reverse()) console.log(line(r));
 
   // The tier ladder is an assertion about power; this is the check of it.
   console.log("\nmean delta by tier (the ladder should rise):");
@@ -247,7 +280,7 @@ function main(): void {
     );
     fs.writeFileSync(
       out,
-      `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, errorBar: band, rows }, null, 1)}\n`,
+      `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, rows }, null, 1)}\n`,
     );
     console.log(`\nwrote ${out}`);
   }

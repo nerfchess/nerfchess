@@ -127,7 +127,10 @@ const BY_CATEGORY: Record<string, readonly Anchor[]> = {
   "movement-upgrade": ["aim", "cast"],
 
   // --- A named few: laser them down ---------------------------------------
-  "multi-piece-freeze": ["aim"],
+  // Not a bare ["aim"]: a standing trap that freezes whatever wanders into a
+  // region is a zone, and leaving this with a single option gave a card whose
+  // art could not honestly aim nowhere to go.
+  "multi-piece-freeze": ["aim", "cast"],
   "forced-sacrifice": ["aim", "cast"],
   "conditional-piece-removal": ["aim", "cast"],
   "capture-punishment": ["aim", "cast"],
@@ -161,7 +164,35 @@ const OPEN_SET_MARKERS = [
   /\bnone of (?:your|their)\b/,
   /\bno (?:piece|pieces) (?:may|can)\b/,
   /\bboth (?:players|armies|sides)\b/,
-  /\byour (?:pieces|pawns) (?:cannot|can't|are)\b/,
+  // Clause material can sit between the subject and its verb: Eternal Keep
+  // says "your pieces standing on your first rank cannot be captured", and
+  // warding a whole rank of the army is not a single square.
+  /\byour (?:pieces|pawns)\b[^.]{0,48}?\b(?:cannot|can't|are)\b/,
+  /\b(?:your|their) captured pieces\b/,
+  // A bare plural piece class is a whole class: Eclipse blinding "their
+  // bishops and queen" is piece-class-lockdown wearing another category's
+  // name. Guarded by the singular check below, so "one of your knights" does
+  // not reach here.
+  /\b(?:your|their|enemy) (?:pawns|knights|bishops|rooks|queens)\b/,
+];
+
+/**
+ * The payload is a clock or a draft, whatever the category says.
+ *
+ * The taxonomy files a card by its most distinctive hook, and for a handful
+ * that hook is the TRIGGER rather than the EFFECT. Coronation Bonus is filed
+ * promotion-grant and pays "+30 seconds on your clock"; Blood Price is filed
+ * capture-punishment and takes 12 seconds and a reroll. The rule's own
+ * doctrine already sends clock and draft cards to "board" because they happen
+ * nowhere on the board, so a card whose payload is one of those gets the same
+ * option no matter which door it came in through.
+ */
+const META_PAYLOAD_MARKERS = [
+  /\bseconds (?:on|from|to) (?:your|their|the)\b/,
+  /\bon your clock\b/,
+  /\bdraft (?:reroll|offer|rerolls)\b/,
+  /\bdrafts? (?:is|are) skipped\b/,
+  /\bnext draft\b/,
 ];
 
 /** "all your knights", "every piece", "each enemy pawn", "the whole board". */
@@ -180,12 +211,15 @@ const GLOBAL_MARKERS = [
 
 /** "one of your", "a single", "choose a knight", "the enemy queen". */
 const SINGLE_MARKERS = [
-  /\bone of (?:your|their|the)\b/,
+  // "every one of your pieces" contains "one of your". Without the lookbehind
+  // that substring made three whole-army tableaux read as single-target, and
+  // the rule went on to demand they be staged on one square.
+  /(?<!every )\bone of (?:your|their|the)\b/,
   /\ba single\b/,
   /\bchoose (?:a|an|one)\b/,
   /\bthe (?:enemy|opposing) (?:king|queen|rook|bishop|knight|pawn)\b/,
   /\bthat (?:piece|pawn|square)\b/,
-  /\bone (?:enemy|friendly|of)\b/,
+  /(?<!every )\bone (?:enemy|friendly|of)\b/,
 ];
 
 /** "two of", "three enemy", "up to four", "the 3 nearest". */
@@ -210,10 +244,20 @@ export function allowedAnchors(category: string, rule: string): readonly Anchor[
   const base = BY_CATEGORY[category] ?? ALL;
   const text = rule.toLowerCase();
 
-  // Scope beats kind. A card whose text names an open set is board-scale even
-  // when its category says single-target, so "board" is re-admitted rather
-  // than the card being told its own art is wrong.
-  if (!base.includes("board") && matchesAny(text, OPEN_SET_MARKERS)) {
+  // An explicit count or an explicit singular always beats a bare plural, and
+  // both are settled first so nothing below can widen past them. "Choose one
+  // of your knights" must not read as a whole class just because it contains
+  // the words "your knights".
+  const few = matchesAny(text, FEW_MARKERS);
+  const single = matchesAny(text, SINGLE_MARKERS);
+  const openSet = !few && !single && matchesAny(text, OPEN_SET_MARKERS);
+  const meta = matchesAny(text, META_PAYLOAD_MARKERS);
+
+  // Scope beats kind. A card whose text names an open set, or whose payload is
+  // a clock or a draft, is board-scale even when its category says
+  // single-target, so "board" is re-admitted rather than the card being told
+  // its own art is wrong.
+  if (!base.includes("board") && (openSet || meta)) {
     return [...base, "board"];
   }
 
@@ -223,22 +267,18 @@ export function allowedAnchors(category: string, rule: string): readonly Anchor[
   // but a zone is still a region rather than the whole board, and letting the
   // text override would replace a considered answer with a keyword match.
   if (base !== ALL) return base;
-  const few = matchesAny(text, FEW_MARKERS);
-  const single = matchesAny(text, SINGLE_MARKERS);
-  // A count beats a bare plural: "freeze two of their knights" is aimed at two
-  // pieces even though "their knights" reads as global.
-  const global = !few && !single && matchesAny(text, GLOBAL_MARKERS);
 
-  let refined: readonly Anchor[];
-  if (few) refined = ["aim", "cast"];
-  else if (single) refined = ["cast", "aim"];
-  else if (global) refined = ["board"];
-  else return base;
+  // A board-side TRIGGER with an off-board payload can honestly be staged
+  // either way: Coronation Bonus fires when a pawn promotes and pays a clock
+  // bonus, so both the promoting square and a centred flourish are truthful.
+  // Narrowing it on the trigger alone would forbid the one that matches what
+  // the card is actually for.
+  if (meta) return ALL;
 
-  // The refinement narrows the category's set; it never widens it. A rule that
-  // says "all" cannot make a single-piece-shield board-wide.
-  const both = base.filter((a) => refined.includes(a));
-  return both.length ? both : base;
+  if (few) return ["aim", "cast"];
+  if (single) return ["cast", "aim"];
+  if (matchesAny(text, GLOBAL_MARKERS)) return ["board"];
+  return base;
 }
 
 /** The anchor to author when writing a card from scratch. */
