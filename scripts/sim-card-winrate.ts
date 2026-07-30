@@ -111,7 +111,13 @@ function playGame(seed: number, cardId: string | null, tier: Tier): Outcome {
   enableDraftMode(game, seed);
   if (cardId) acquireBuff(game, "w", cardId, tier);
 
-  const rnd = mulberry32(seed * 7919 + (cardId ? 1 : 0));
+  // The SAME stream in both arms of a pair. It used to be seeded with
+  // `seed * 7919 + (cardId ? 1 : 0)`, which gave the treatment and the control
+  // different random streams and so destroyed the pairing outright: the two
+  // games diverged from the first tie-broken choice for reasons that had
+  // nothing to do with the card. The header claimed they were "identical move
+  // for move"; they never were.
+  const rnd = mulberry32(seed * 7919);
   const pick = (max: number): number => Math.floor(rnd() * max);
 
   for (let ply = 0; ply < MAX_PLIES && !game.result; ply++) {
@@ -192,8 +198,16 @@ function measure(id: string): Row | null {
   // worst case, and quoting the worst case understated every measurement this
   // harness can make. With one pair there is no spread to measure, so the
   // pessimistic bound is the honest answer.
+  // Empirical spread, but only once there is enough of it to believe. Two
+  // pairs that happen to agree have an empirical standard deviation of exactly
+  // zero, and the first run of this reported several cards as "+50.0pt +-0.0"
+  // off two games -- infinite confidence from no evidence. Below the
+  // threshold the conservative bound is the honest answer.
+  const MIN_PAIRS_FOR_EMPIRICAL = 8;
   const variance =
-    pairs > 1 ? deltas.reduce((s, d) => s + (d - mean) ** 2, 0) / (pairs - 1) : 0.5;
+    pairs >= MIN_PAIRS_FOR_EMPIRICAL
+      ? deltas.reduce((s, d) => s + (d - mean) ** 2, 0) / (pairs - 1)
+      : 0.5;
   return {
     id,
     name: def.name,
