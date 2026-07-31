@@ -18,6 +18,7 @@ import {
   PieceTheme,
   SITE_THEMES,
   SiteTheme,
+  isFlagshipTheme,
   loadSettings,
   sanitizeCustomBgUrl,
   saveSettings,
@@ -329,6 +330,11 @@ const pickerCardClass = (selected: boolean) =>
 /** Full-site theme picker: a swatch card per theme showing the page background,
  *  a floating panel chip, and the theme's glow color — so each mood previews at
  *  a glance before it's applied. */
+// Themes come in two kinds and the picker says so, because they promise
+// different things. A flagship changes the accent, the material and the motion;
+// a tint only shifts the background. Fifteen identical tiles in one grid would
+// hide that, and a player picking "Neon" expecting a repaint would be surprised
+// by how much moves.
 function SiteThemePicker({
   value,
   onChange,
@@ -336,9 +342,13 @@ function SiteThemePicker({
   value: SiteTheme;
   onChange: (theme: SiteTheme) => void;
 }) {
-  return (
+  const all = Object.keys(SITE_THEMES) as SiteTheme[];
+  const flagships = all.filter((k) => isFlagshipTheme(k));
+  const tints = all.filter((k) => !isFlagshipTheme(k));
+
+  const grid = (ids: SiteTheme[]) => (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {(Object.keys(SITE_THEMES) as SiteTheme[]).map((k) => {
+      {ids.map((k) => {
         const t = SITE_THEMES[k];
         const selected = value === k;
         return (
@@ -376,6 +386,25 @@ function SiteThemePicker({
           </button>
         );
       })}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="smallcaps text-[10px] text-parchment-400">Flagship</div>
+        <p className="mb-2 mt-0.5 text-[12px] leading-snug text-parchment-500">
+          Its own accent, surface and motion, down to the draft chests.
+        </p>
+        {grid(flagships)}
+      </div>
+      <div>
+        <div className="smallcaps text-[10px] text-parchment-400">Tints</div>
+        <p className="mb-2 mt-0.5 text-[12px] leading-snug text-parchment-500">
+          The base palette in a different shade.
+        </p>
+        {grid(tints)}
+      </div>
     </div>
   );
 }

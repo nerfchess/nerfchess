@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModeBadge } from "@/components/ModeBadge";
 import type { Suggestion } from "./types";
-import { Empty, FilterChip, Loading, Pill, when } from "./ui";
+import { Empty, FilterChip, Loading, Pill, when, whenShort } from "./ui";
 
 type Pool = "all" | "nerf" | "buff" | "boon";
 
@@ -67,9 +67,12 @@ export function IdeasSection() {
                 {s.kind === "buff" && (
                   <Pill>{s.pool === "boon" ? "Nerf-mode boon" : "Buff mode card"}</Pill>
                 )}
-                <span className="ml-auto text-parchment-400">
+                <span
+                  className="w-full text-parchment-400 sm:ml-auto sm:w-auto"
+                  title={when(s.created_at)}
+                >
                   by {s.username ?? "anonymous"}
-                  {s.contact ? ` (${s.contact})` : ""} · {when(s.created_at)}
+                  {s.contact ? ` (${s.contact})` : ""} · {whenShort(s.created_at)}
                 </span>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-parchment-100">{s.description}</p>

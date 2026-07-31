@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { HistoryEntry } from "./types";
-import { Empty, FilterChip, Loading, Pill, untilLabel, when } from "./ui";
+import { Empty, FilterChip, Loading, Pill, untilShort, when, whenShort } from "./ui";
 
 type Kind = "all" | "ban" | "mute" | "warn" | "role";
 
@@ -76,7 +76,7 @@ export function AuditLogSection() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Filter by name or note…"
-          className="plate ml-auto w-full max-w-xs bg-transparent px-3 py-1.5 text-sm outline-none focus:border-gold/40"
+          className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-gold/40 sm:ml-auto sm:max-w-xs sm:py-1.5"
         />
       </div>
 
@@ -97,10 +97,15 @@ export function AuditLogSection() {
                 </Link>
               )}
               {entry.expires_at && (
-                <span className="text-parchment-400">{untilLabel(entry.expires_at)}</span>
+                <span className="text-parchment-400">{untilShort(entry.expires_at)}</span>
               )}
               {entry.note && <span className="text-parchment-400">“{entry.note}”</span>}
-              <span className="ml-auto text-parchment-400">{when(entry.created_at)}</span>
+              <span
+                className="w-full text-[12px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm"
+                title={when(entry.created_at)}
+              >
+                {whenShort(entry.created_at)}
+              </span>
             </div>
           ))}
         </div>
