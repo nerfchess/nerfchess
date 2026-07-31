@@ -274,9 +274,18 @@ function playGame(seed: number, cardId: string | null, tier: Tier): GameRun {
   const game: NerfGame = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
   enableDraftMode(game, seed);
   if (cardId) acquireBuff(game, "w", cardId, tier);
-  // An `instant` fires inside acquireBuff, so it has already been used by the
-  // time the first move is picked.
-  let fired = cardId ? BUFF_BY_ID[cardId]?.kind === "instant" : false;
+  // "Fired" means the card got its chance to matter, and that means something
+  // different for each kind:
+  //   instant   resolves inside acquireBuff, so it has already acted.
+  //   passive   is in force continuously from acquire; it never "fires" at a
+  //             moment, so demanding one would discard all 973 of them -- and
+  //             passives are the population this harness measures BEST, since
+  //             they depend on no activation policy at all.
+  //   activated only counts once the bot actually uses it.
+  // Getting this wrong is the difference between "measured zero" and "not
+  // measured", which is the whole point of the flag.
+  const kind = cardId ? BUFF_BY_ID[cardId]?.kind : undefined;
+  let fired = kind === "instant" || kind === "passive";
 
   // The SAME stream in both arms of a pair. It used to be seeded with
   // `seed * 7919 + (cardId ? 1 : 0)`, which gave the treatment and the control
