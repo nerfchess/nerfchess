@@ -2007,6 +2007,8 @@ export function aiChooseBuffActivation(
   if (!bs || bs.diff || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
   const inDanger = gameInCheck(game, color);
+  // Computed lazily: most calls never reach the protection branch.
+  let oppAttacks: Set<Square> | null = null;
   for (let i = 0; i < ps.buffs.length; i++) {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
@@ -2042,8 +2044,30 @@ export function aiChooseBuffActivation(
     });
     // Offensive one-shots hold out for a knight's worth of value.
     if (hitsEnemy && collected.value < 3) continue;
-    // Protective cards wait for actual danger instead of firing blind.
-    if (!hitsEnemy && def.category === "protection" && !inDanger) continue;
+    // In check, the turn is not spare. A turn-consuming activation costs this
+    // move (see activateBuff), and nothing here makes the check go away, so
+    // firing one leaves the king still attacked with the escape move already
+    // spent. That was near-fatal every time, and the rule below made it the
+    // COMMON case: protective cards only fire when in danger, and "in danger"
+    // is exactly being in check, so this bot reliably answered a check by
+    // raising a shield that does not even cover the king.
+    //
+    // Free actions are exempt because they cost no turn, so the escape is
+    // still available afterwards.
+    if (inDanger && !def.freeAction) continue;
+    // Protective cards wait for actual danger instead of firing blind -- but
+    // "danger" is a piece of theirs actually under attack, NOT being in check.
+    // Keying it to check was what forced the bad trade above: the only moment
+    // a shield was allowed to fire was the one moment its turn could not be
+    // spared. A threatened piece is the real cue, and it leaves the escape
+    // move free.
+    if (!hitsEnemy && def.category === "protection") {
+      if (!oppAttacks) oppAttacks = attackedBy(game.board, color === "w" ? "b" : "w");
+      const threatened = collected.picks.some(
+        (p) => p.square !== undefined && oppAttacks!.has(p.square),
+      );
+      if (!threatened) continue;
+    }
     return { buffIndex: i, picks: collected.picks };
   }
   return null;
