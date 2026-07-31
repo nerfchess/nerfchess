@@ -107,6 +107,58 @@ const SKILL: HouseSkill = 1350;
  *  enough that the write is not the bottleneck. */
 const FLUSH_EVERY = 10;
 
+/**
+ * A fingerprint of the code whose behaviour is being measured.
+ *
+ * The resume cache was keyed on games and ply cap alone, which cannot see the
+ * thing most likely to invalidate a result: a change to the engine. Fixing the
+ * bot's activation policy moved Pawn Shield from -35 to 0, and the very next
+ * sweep happily resumed 90 rows measured under the old policy and reported
+ * them as current. Settings matched, so the cache saw no reason to object.
+ *
+ * Hashing the sources that decide a game -- the harness, the rules, the
+ * search, the bot, and every card definition -- means a resume is refused
+ * whenever any of them changes, which is exactly when the old numbers stop
+ * describing the current game.
+ */
+function codeFingerprint(): string {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const crypto = require("node:crypto") as typeof import("node:crypto");
+  const root = path.join(__dirname, "..");
+  const files: string[] = [
+    path.join(__dirname, "sim-card-winrate.ts"),
+    path.join(root, "src", "engine", "game.ts"),
+    path.join(root, "src", "engine", "ai.ts"),
+    path.join(root, "src", "engine", "board.ts"),
+    path.join(root, "src", "lib", "server", "bots.ts"),
+  ];
+  const buffDir = path.join(root, "src", "engine", "buffs");
+  const walk = (dir: string): void => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".ts")) files.push(p);
+    }
+  };
+  try {
+    walk(buffDir);
+  } catch {
+    /* missing dir: the hash is still useful for the rest */
+  }
+  const h = crypto.createHash("sha256");
+  for (const f of files.sort()) {
+    try {
+      h.update(fs.readFileSync(f));
+    } catch {
+      /* ignore unreadable */
+    }
+  }
+  return h.digest("hex").slice(0, 16);
+}
+
+const CODE_HASH = codeFingerprint();
+
 function partialPath(): string {
   const path = require("node:path") as typeof import("node:path");
   return path.join(
@@ -135,11 +187,17 @@ function loadPartial(): Row[] {
     const raw = JSON.parse(fs.readFileSync(partialPath(), "utf8")) as {
       games?: number;
       plyCap?: number;
+      codeHash?: string;
       rows?: Row[];
     };
-    // Only resume from a file measured under the SAME settings. Stitching a
-    // 90-ply run onto a 240-ply one would silently mix two populations.
+    // Same settings AND the same code. Settings alone let a sweep resume rows
+    // measured before an engine fix and present them as current; stitching a
+    // 90-ply run onto a 240-ply one would mix two populations the same way.
     if (raw.games !== GAMES || raw.plyCap !== MAX_PLIES) return [];
+    if (raw.codeHash !== CODE_HASH) {
+      console.log("[resume] engine changed since those results; measuring fresh");
+      return [];
+    }
     return raw.rows ?? [];
   } catch {
     return [];
@@ -151,7 +209,7 @@ function savePartial(rows: Row[]): void {
   const fs = require("node:fs") as typeof import("node:fs");
   fs.writeFileSync(
     partialPath(),
-    `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, rows }, null, 1)}\n`,
+    `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, codeHash: CODE_HASH, rows }, null, 1)}\n`,
   );
 }
 
@@ -465,7 +523,7 @@ function main(): void {
     );
     fs.writeFileSync(
       out,
-      `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, rows }, null, 1)}\n`,
+      `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, codeHash: CODE_HASH, rows }, null, 1)}\n`,
     );
     console.log(`\nwrote ${out}`);
   }
