@@ -5,10 +5,19 @@
 // that "bespoke one-off button styles are retired". The codebase is not there:
 // dozens of files hand-roll a button out of inline Tailwind instead.
 //
-// That matters more than tidiness now that each flagship theme owns its own
-// button material. A themed material is authored once against .btn-*; a button
-// that hand-rolls `border border-white/15 bg-white/[0.03]` is invisible to it
-// and will stay looking like the old theme in all five.
+// What a bespoke button does and does not miss is worth being precise about,
+// because the count below is otherwise easy to over-read. Tailwind's palette is
+// var-backed (`gold` is `rgb(var(--accent-gold-rgb) / <alpha-value>)`), so a
+// hand-rolled `border-gold/40 text-parchment` DOES follow the theme's accent
+// already. What it misses is the theme's MATERIAL — the top light, the floor,
+// the rivet glints, the face treatment in the --btn-* contract — which is
+// authored once against .btn-* and cannot reach an element that never wears it.
+//
+// So this is a real debt, but it is a "these buttons are made of the wrong
+// stuff" debt, not a "these buttons are the wrong colour" one. Some findings
+// are also legitimately not buttons: an identity chip with a hairline and a
+// name in it is an affordance, and converting it to a slab would be a
+// regression. Judgement per call-site; the list is a map, not a work order.
 //
 // Two things are reported:
 //
