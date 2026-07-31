@@ -82,6 +82,16 @@ const ONLY = flag("only", "");
  *  either cap), because the cap only bites on the games it was discarding. */
 const MAX_PLIES = Number(flag("plies", "240"));
 const WRITE = args.includes("--write");
+/**
+ * `--no-activate` holds the card but never fires it.
+ *
+ * This is the diagnostic that separates a BAD CARD from a BAD POLICY, which
+ * the delta alone cannot do. Firm Footing measured -40 points: either the card
+ * hurts its owner, or the bot is choosing to fire it at a terrible moment.
+ * Running the same card both ways answers that directly, because the only
+ * difference between the two runs is the decision to use it.
+ */
+const NO_ACTIVATE = args.includes("--no-activate");
 /** `--shard i/n` measures only every n-th card starting at i. One process per
  *  core: a full sweep is hours of CPU and the box has four of them, so the
  *  sweep is sharded rather than run single-file. Shards write separate JSON
@@ -107,8 +117,19 @@ function partialPath(): string {
   );
 }
 
-/** Rows measured by an earlier run of this same shard, if any. */
+/**
+ * Rows measured by an earlier run of this same shard, if any.
+ *
+ * Gated on --write, and that gate is load-bearing. Without it every ad-hoc
+ * diagnostic run both read and wrote the shared file, so a one-card
+ * investigation replayed a cached number instead of measuring anything: two
+ * runs of the same card with the activation policy ON and OFF returned
+ * byte-identical results because NEITHER had re-measured. A cache that
+ * survives a change to the code under test is not a cache, it is a way to
+ * keep believing an old answer.
+ */
 function loadPartial(): Row[] {
+  if (!WRITE) return [];
   const fs = require("node:fs") as typeof import("node:fs");
   try {
     const raw = JSON.parse(fs.readFileSync(partialPath(), "utf8")) as {
@@ -126,12 +147,34 @@ function loadPartial(): Row[] {
 }
 
 function savePartial(rows: Row[]): void {
+  if (!WRITE) return;
   const fs = require("node:fs") as typeof import("node:fs");
   fs.writeFileSync(
     partialPath(),
     `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, rows }, null, 1)}\n`,
   );
 }
+
+/**
+ * Freeze the clock, because the search is cut off by WALL TIME.
+ *
+ * engine/ai.ts stops iterative deepening on `Date.now() - start > budget`. Under
+ * a real clock the same position searches to different depths depending on how
+ * busy the machine is, so the same seed produces different games -- and with
+ * four shards competing for four cores, wildly so. That is fatal here rather
+ * than merely untidy: the entire paired design rests on the control and the
+ * treatment being the same game until the card acts, and a load-dependent
+ * search means they never were. A control-versus-control run diverged at ply 8.
+ *
+ * Freezing Date.now makes the time check never fire, so the search runs to its
+ * configured depth every time and a pair is reproducible. This is not a hack
+ * bolted on for the benchmark: ai.ts's own comment notes that on Cloudflare
+ * Workers, where this game actually runs, Date.now() is frozen during
+ * synchronous compute. The harness now matches production instead of drifting
+ * with local CPU load.
+ */
+const FROZEN_NOW = Date.now();
+Date.now = () => FROZEN_NOW;
 
 /** Deterministic PRNG, so a run is reproducible and a pair is truly paired. */
 function mulberry32(seed: number): () => number {
@@ -202,7 +245,7 @@ function playGame(seed: number, cardId: string | null, tier: Tier): GameRun {
     // actually meet it, rather than of a policy invented for the benchmark.
     const mover = game.board.turn;
     try {
-      if (aiActivateBuffs(game, mover)) fired = true;
+      if (!NO_ACTIVATE && aiActivateBuffs(game, mover)) fired = true;
     } catch (err) {
       if (process.env.DEBUG) console.error("activate failed:", err);
     }
