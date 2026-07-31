@@ -93,6 +93,46 @@ const [SHARD_I, SHARD_N] = SHARD ? SHARD.split("/").map(Number) : [0, 1];
  *  games finish inside the ply cap. */
 const SKILL: HouseSkill = 1350;
 
+/** Cards between partial saves. Small enough that a kill costs minutes, large
+ *  enough that the write is not the bottleneck. */
+const FLUSH_EVERY = 10;
+
+function partialPath(): string {
+  const path = require("node:path") as typeof import("node:path");
+  return path.join(
+    __dirname,
+    "..",
+    "docs",
+    SHARD ? `card-winrate.shard${SHARD_I}.json` : "card-winrate.json",
+  );
+}
+
+/** Rows measured by an earlier run of this same shard, if any. */
+function loadPartial(): Row[] {
+  const fs = require("node:fs") as typeof import("node:fs");
+  try {
+    const raw = JSON.parse(fs.readFileSync(partialPath(), "utf8")) as {
+      games?: number;
+      plyCap?: number;
+      rows?: Row[];
+    };
+    // Only resume from a file measured under the SAME settings. Stitching a
+    // 90-ply run onto a 240-ply one would silently mix two populations.
+    if (raw.games !== GAMES || raw.plyCap !== MAX_PLIES) return [];
+    return raw.rows ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function savePartial(rows: Row[]): void {
+  const fs = require("node:fs") as typeof import("node:fs");
+  fs.writeFileSync(
+    partialPath(),
+    `${JSON.stringify({ games: GAMES, skill: SKILL, plyCap: MAX_PLIES, rows }, null, 1)}\n`,
+  );
+}
+
 /** Deterministic PRNG, so a run is reproducible and a pair is truly paired. */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -289,13 +329,29 @@ function main(): void {
       `from its own pairs, not assumed from N.`,
   );
 
-  const rows: Row[] = [];
-  let done = 0;
+  // RESUMABLE, because a multi-hour sweep does not get to assume it will be
+  // left alone. Three separate launches of this were reaped mid-run, each
+  // losing every card it had measured, because results only existed in memory
+  // until the final write. Partial results are now flushed as they accumulate
+  // and reloaded on the next start, so a kill costs one flush interval instead
+  // of the whole run.
+  const rows: Row[] = [...loadPartial()];
+  const alreadyDone = new Set(rows.map((r) => r.id));
+  if (alreadyDone.size) {
+    console.log(`[resume] ${alreadyDone.size} cards already measured, continuing`);
+  }
+  let done = alreadyDone.size;
   for (const b of pool) {
+    if (alreadyDone.has(b.id)) continue;
     const r = measure(b.id);
     if (r) rows.push(r);
-    if (++done % 50 === 0) console.log(`  ${done}/${pool.length}...`);
+    done++;
+    if (done % FLUSH_EVERY === 0) {
+      savePartial(rows);
+      console.log(`  ${done}/${pool.length}... (saved)`);
+    }
   }
+  savePartial(rows);
 
   rows.sort((a, b) => b.delta - a.delta);
 
