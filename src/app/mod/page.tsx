@@ -110,7 +110,7 @@ export default function ModPage() {
         </div>
       </nav>
 
-      <section className="mx-auto max-w-6xl px-6 py-8">
+      <section className="mx-auto max-w-6xl px-4 pb-10 pt-2 sm:px-6 sm:pt-8">
         {me === undefined ? (
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
@@ -127,15 +127,19 @@ export default function ModPage() {
           </>
         ) : (
           <>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h1 className="font-display text-4xl">Moderation</h1>
+            {/* One line on a phone: the title and who you are signed in as
+                share a row rather than eating two. */}
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="font-display text-2xl sm:text-4xl">Moderation</h1>
               <span className="flex items-center gap-2">
-                <span className="smallcaps text-xs text-parchment-400">{me.username}</span>
+                <span className="smallcaps hidden text-xs text-parchment-400 sm:inline">
+                  {me.username}
+                </span>
                 <Pill tone="gold">{me.role}</Pill>
               </span>
             </div>
 
-            <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:gap-8">
+            <div className="mt-3 flex flex-col gap-4 sm:mt-6 lg:flex-row lg:gap-8">
               <ModNav
                 current={section}
                 isAdmin={!!isAdmin}
@@ -145,10 +149,12 @@ export default function ModPage() {
               />
 
               <div className="min-w-0 flex-1">
-                <h2 className="smallcaps border-b border-white/10 pb-2 text-xs text-parchment-400">
+                {/* Phones read the section name off the picker above, so this
+                    heading is desktop-only rather than a repeat. */}
+                <h2 className="smallcaps hidden border-b border-white/10 pb-2 text-xs text-parchment-400 lg:block">
                   {SECTION_TITLE[section]}
                 </h2>
-                <div className="mt-5">
+                <div className="mt-4 lg:mt-5">
                   {section === "dashboard" && (
                     <DashboardSection data={overview} failed={overviewFailed} onGo={go} />
                   )}
@@ -186,8 +192,14 @@ export default function ModPage() {
 
 // ---------------- navigation ----------------
 
-// A rail on desktop, a scrolling strip on phones. Both render the same grouped
+// A rail on desktop, a section picker on phones. Both render the same grouped
 // list from nav.ts, so there is one place to add a section.
+//
+// The phone version is deliberately NOT a sideways-scrolling strip. Ten sections
+// in a strip means seven of them sit past the right edge with nothing to say so;
+// a moderator on a phone would never find the audit log. Instead the current
+// section is a full-width sticky button that opens the whole grouped list —
+// every section one tap away, with its badge, from anywhere on a long page.
 function ModNav({
   current,
   isAdmin,
@@ -201,6 +213,8 @@ function ModNav({
   chatFlags: number;
   onGo: (id: SectionId) => void;
 }) {
+  const [open, setOpen] = useState(false);
+
   const badgeFor = (item: NavItem) =>
     item.kind === "section" && item.badge
       ? item.badge === "reports"
@@ -212,6 +226,16 @@ function ModNav({
     ...g,
     items: g.items.filter((i) => !i.adminOnly || isAdmin),
   })).filter((g) => g.items.length > 0);
+
+  const currentItem = groups
+    .flatMap((g) => g.items)
+    .find((i) => i.kind === "section" && i.id === current);
+  const pending = openReports + chatFlags;
+
+  const pick = (id: SectionId) => {
+    setOpen(false);
+    onGo(id);
+  };
 
   return (
     <>
@@ -238,27 +262,73 @@ function ModNav({
         </div>
       </aside>
 
-      {/* Phone / tablet strip: same order, scrolled sideways, group titles kept
-          as inline separators so the grouping survives the flattening. */}
-      <div className="-mx-6 overflow-x-auto px-6 lg:hidden">
-        <div className="flex w-max items-center gap-1.5 border-b border-white/10 pb-3">
-          {groups.map((group, gi) => (
-            <div key={group.title} className="flex items-center gap-1.5">
-              {gi > 0 && <span className="mx-1 h-4 w-px bg-white/10" aria-hidden />}
-              <span className="smallcaps text-[9px] text-parchment-500">{group.title}</span>
-              {group.items.map((item) => (
-                <NavEntry
-                  key={item.kind === "section" ? item.id : item.href}
-                  item={item}
-                  active={item.kind === "section" && item.id === current}
-                  badge={badgeFor(item)}
-                  onGo={onGo}
-                  compact
-                />
+      {/* Phone / tablet picker. Sticky, so jumping sections never means
+          scrolling back up through a screen of statistics first. */}
+      {/* Opaque page-base fill plus a hairline, so section content scrolls
+          cleanly under the bar instead of ghosting through it. */}
+      <div className="sticky top-0 z-30 -mx-4 border-b border-white/10 bg-[var(--bg-base)] px-4 pb-2 pt-2 sm:-mx-6 sm:px-6 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          className="press plate flex min-h-[46px] w-full items-center gap-2.5 px-3.5 py-2 text-left"
+        >
+          <span aria-hidden className="text-[13px] text-gold-leaf opacity-80">
+            {currentItem?.glyph ?? "◈"}
+          </span>
+          <span className="font-display text-base text-parchment-50">
+            {SECTION_TITLE[current]}
+          </span>
+          {!open && pending > 0 && (
+            <span className="ml-auto shrink-0 rounded-[1px] bg-oxblood-glow/20 px-1.5 py-px font-mono text-[10px] tabular-nums text-oxblood-glow">
+              {pending} waiting
+            </span>
+          )}
+          <span
+            aria-hidden
+            className={
+              "shrink-0 text-[10px] text-parchment-400 transition-transform " +
+              (open ? "rotate-180" : "") +
+              (pending > 0 && !open ? " ml-1.5" : " ml-auto")
+            }
+          >
+            ▼
+          </span>
+        </button>
+
+        {open && (
+          <>
+            {/* Tapping anywhere else dismisses, the way a menu should. */}
+            <div
+              className="fixed inset-0 cursor-default"
+              aria-hidden
+              onClick={() => setOpen(false)}
+            />
+            <div className="plate mt-1 max-h-[78vh] overflow-y-auto p-1.5">
+              {groups.map((group) => (
+                <div key={group.title} className="px-1 py-0.5">
+                  <div className="smallcaps px-1.5 text-[10px] text-parchment-500">
+                    {group.title}
+                  </div>
+                  <ul className="mt-0.5 space-y-px">
+                    {group.items.map((item) => (
+                      <li key={item.kind === "section" ? item.id : item.href}>
+                        <NavEntry
+                          item={item}
+                          active={item.kind === "section" && item.id === current}
+                          badge={badgeFor(item)}
+                          onGo={pick}
+                          roomy
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -269,17 +339,17 @@ function NavEntry({
   active,
   badge,
   onGo,
-  compact,
+  roomy,
 }: {
   item: NavItem;
   active: boolean;
   badge: number;
   onGo: (id: SectionId) => void;
-  compact?: boolean;
+  roomy?: boolean;
 }) {
   const base =
-    "press flex items-center gap-2 rounded-[1px] border text-sm transition " +
-    (compact ? "whitespace-nowrap px-2.5 py-1" : "w-full px-2 py-1.5") +
+    "press flex w-full items-center gap-2.5 rounded-[1px] border text-sm transition " +
+    (roomy ? "min-h-[40px] px-2.5 py-1.5" : "px-2 py-1.5") +
     " " +
     (active
       ? "border-gold/40 bg-gold-leaf/10 text-gold-leaf"

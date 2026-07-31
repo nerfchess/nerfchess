@@ -257,7 +257,66 @@ function FeedbackTable({
         )}
       </div>
 
-      <div className="plate overflow-x-auto">
+      {/* Sorting on a phone, where there are no column headers to click. The
+          four that matter; the desktop table keeps all six. */}
+      <div className="flex flex-wrap items-center gap-2 sm:hidden">
+        <span className="smallcaps text-[10px] text-parchment-400">Sort</span>
+        {(
+          [
+            ["score", "Score"],
+            ["down", "Disliked"],
+            ["up", "Liked"],
+            ["last", "Recent"],
+          ] as [SortKey, string][]
+        ).map(([key, label]) => (
+          <FilterChip
+            key={key}
+            active={sort === key}
+            onClick={() => {
+              setSort(key);
+              setDir("desc");
+            }}
+          >
+            {label}
+          </FilterChip>
+        ))}
+      </div>
+
+      {/* Phones get one row per card instead of a seven-column table: name and
+          verdict on top, the vote counts underneath. Sorting still applies, so
+          the chips and the desktop headers agree on what you are looking at. */}
+      <ul className="plate divide-y divide-white/5 sm:hidden">
+        {sorted.map((row) => {
+          const v = verdict(row);
+          return (
+            <li key={row.id} className="px-3.5 py-2.5">
+              <div className="flex items-start gap-2">
+                <span className="min-w-0 flex-1 text-sm text-parchment-100">{row.name}</span>
+                <Pill tone={v.tone === "warn" ? "warn" : v.tone === "good" ? "good" : "neutral"}>
+                  {v.text}
+                </Pill>
+              </div>
+              <div className="mt-1 flex items-center gap-3 font-mono text-[11px] tabular-nums">
+                <span className="text-verdigris-glow">+{row.up}</span>
+                <span className="text-oxblood-glow">-{row.down}</span>
+                <span className="text-parchment-100">
+                  {score(row) > 0 ? "+" : ""}
+                  {score(row)}
+                </span>
+                <span className="ml-auto text-parchment-400">
+                  {row.tier !== null ? `tier ${row.tier} · ` : ""}
+                  {new Date(row.last_at).toLocaleDateString()}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+        {sorted.length === 0 && (
+          <li className="px-3.5 py-3 text-sm text-parchment-400">Nothing matches that filter.</li>
+        )}
+      </ul>
+
+      <div className="plate hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="smallcaps text-[9px] text-parchment-400">

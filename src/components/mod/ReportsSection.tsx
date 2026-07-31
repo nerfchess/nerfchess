@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Report } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, Pill, postJson, when } from "./ui";
+import { Empty, FilterChip, Loading, ModButton, ModLinkButton, Pill, postJson, when, whenShort } from "./ui";
 
 export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
   const [status, setStatus] = useState<"open" | "all">("open");
@@ -70,8 +70,8 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
                   {r.reported_name}
                 </Link>
                 <Pill tone={r.status === "open" ? "warn" : "neutral"}>{r.reason}</Pill>
-                <span className="text-parchment-400">
-                  reported by {r.reporter_name} · {when(r.created_at)}
+                <span className="text-parchment-400" title={when(r.created_at)}>
+                  by {r.reporter_name} · {whenShort(r.created_at)}
                 </span>
                 {r.status !== "open" && (
                   <Pill>
